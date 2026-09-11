@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../routes/app_routes.dart';
-import '../state/hajicare_state.dart';
+import '../state/hajicare_controller.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
@@ -9,7 +9,7 @@ import '../theme/app_typography.dart';
 
 class HajiCareBottomNavBar extends StatelessWidget {
   final int currentIndex;
-  final Function(int)? onTap;
+  final ValueChanged<int>? onTap;
 
   const HajiCareBottomNavBar({
     super.key,
@@ -22,13 +22,15 @@ class HajiCareBottomNavBar extends StatelessWidget {
 
     if (onTap != null) {
       onTap!(index);
+      return;
     }
 
+    // Fallback if rendered outside of an IndexedStack shell
+    final hajicare = Get.find<HajiCareController>();
     String route;
     switch (index) {
       case 0:
-        final state = Provider.of<HajiCareState>(context, listen: false);
-        route = state.role == UserRole.jamaah
+        route = hajicare.role == UserRole.jamaah
             ? AppRoutes.dashboardJamaah
             : AppRoutes.dashboardPendamping;
         break;
@@ -45,7 +47,7 @@ class HajiCareBottomNavBar extends StatelessWidget {
         return;
     }
 
-    Navigator.of(context).pushReplacementNamed(route);
+    Get.offNamed(route);
   }
 
   @override
@@ -73,10 +75,10 @@ class HajiCareBottomNavBar extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(context, 0, Icons.home_rounded, 'Beranda'),
-              _buildNavItem(context, 1, Icons.near_me_rounded, 'Peta & Arah'),
-              _buildNavItem(context, 2, Icons.schedule_rounded, 'Jadwal'),
-              _buildNavItem(context, 3, Icons.person_rounded, 'Profil'),
+              _buildNavItem(context, 0, Icons.home_rounded, 'beranda'.tr),
+              _buildNavItem(context, 1, Icons.near_me_rounded, 'petaArah'.tr),
+              _buildNavItem(context, 2, Icons.schedule_rounded, 'jadwal'.tr),
+              _buildNavItem(context, 3, Icons.person_rounded, 'profil'.tr),
             ],
           ),
         ),

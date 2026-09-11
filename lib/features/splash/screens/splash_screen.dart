@@ -5,6 +5,9 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 
+import 'package:get/get.dart';
+import '../../../core/routes/app_routes.dart';
+
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -27,7 +30,7 @@ class _SplashScreenState extends State<SplashScreen>
     // Simulate loading and navigate
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/onboarding');
+        Get.offAllNamed(AppRoutes.onboarding);
       }
     });
   }

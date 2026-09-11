@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../../core/state/hajicare_state.dart';
+import '../../../core/routes/app_routes.dart';
+import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
+import '../../map/screens/interactive_map_screen.dart';
+import '../../prayer/screens/prayer_times_screen.dart';
+import '../../profile/screens/profile_screen.dart';
 import '../widgets/jamaah_distance_card.dart';
 import '../widgets/jamaah_prayer_card.dart';
 import '../widgets/jamaah_profile_header.dart';
@@ -25,9 +29,35 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<HajiCareState>();
-    final jamaah = state.self;
+    final state = Get.find<HajiCareController>();
 
+    return Obx(() {
+      final jamaah = state.self;
+
+      return Scaffold(
+        backgroundColor: AppColors.canvasCream,
+        body: IndexedStack(
+          index: _currentIndex,
+          children: [
+            _buildJamaahHome(state, jamaah),
+            const InteractiveMapScreen(showBottomNav: false),
+            const PrayerTimesScreen(showBottomNav: false),
+            const ProfileScreen(showBottomNav: false),
+          ],
+        ),
+        bottomNavigationBar: HajiCareBottomNavBar(
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+        ),
+      );
+    });
+  }
+
+  Widget _buildJamaahHome(HajiCareController state, JamaahData jamaah) {
     return Scaffold(
       backgroundColor: AppColors.canvasCream,
       appBar: AppBar(
@@ -69,7 +99,7 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
             children: [
               IconButton(
                 icon: const Icon(Icons.notifications_outlined, color: AppColors.espressoDark),
-                onPressed: () => Navigator.of(context).pushNamed('/notification'),
+                onPressed: () => Get.toNamed(AppRoutes.notification),
               ),
               if (jamaah.separatedMode)
                 Positioned(
@@ -95,7 +125,7 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
               child: IconButton(
                 icon: const Icon(Icons.sos, color: AppColors.sosEmergency, size: 20),
                 padding: EdgeInsets.zero,
-                onPressed: () => Navigator.of(context).pushNamed('/sos-modal'),
+                onPressed: () => Get.toNamed(AppRoutes.modalSos),
               ),
             ),
           ),
@@ -112,7 +142,7 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
           const SizedBox(height: AppSpacing.lg),
           JamaahDistanceCard(
             jamaah: jamaah,
-            onViewMap: () => Navigator.of(context).pushNamed('/map'),
+            onViewMap: () => setState(() => _currentIndex = 1),
           ),
           const SizedBox(height: AppSpacing.lg),
           JamaahSosBanner(state: state),
@@ -124,14 +154,6 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
           _buildTipsBanner(),
           const SizedBox(height: AppConstants.space3xl),
         ],
-      ),
-      bottomNavigationBar: HajiCareBottomNavBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
       ),
     );
   }

@@ -1,11 +1,11 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:get/get.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../core/widgets/bottom_nav_bar.dart';
 
 class MoneyRecognitionScreen extends StatefulWidget {
   const MoneyRecognitionScreen({super.key});
@@ -90,7 +90,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.close, color: Colors.white),
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () => Get.back(),
                       ),
                       Text(
                         'Pindai Uang Riyal',
@@ -257,7 +257,6 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: const HajiCareBottomNavBar(currentIndex: 0),
     );
   }
 }

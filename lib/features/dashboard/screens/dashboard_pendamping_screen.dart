@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../../core/state/hajicare_state.dart';
+import '../../../core/routes/app_routes.dart';
+import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
+import '../../map/screens/interactive_map_screen.dart';
+import '../../prayer/screens/prayer_times_screen.dart';
+import '../../profile/screens/profile_screen.dart';
 import '../widgets/pendamping_greeting_header.dart';
 import '../widgets/pendamping_jamaah_selector.dart';
 import '../widgets/pendamping_radar_card.dart';
@@ -27,9 +31,37 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<HajiCareState>();
-    final selectedJamaah = state.jamaahList[_selectedJamaahIndex];
+    final state = Get.find<HajiCareController>();
 
+    return Obx(() {
+      final selectedJamaah = state.jamaahList.length > _selectedJamaahIndex
+          ? state.jamaahList[_selectedJamaahIndex]
+          : state.jamaahList.first;
+
+      return Scaffold(
+        backgroundColor: AppColors.canvasCream,
+        body: IndexedStack(
+          index: _currentIndex,
+          children: [
+            _buildPendampingHome(state, selectedJamaah),
+            const InteractiveMapScreen(showBottomNav: false),
+            const PrayerTimesScreen(showBottomNav: false),
+            const ProfileScreen(showBottomNav: false),
+          ],
+        ),
+        bottomNavigationBar: HajiCareBottomNavBar(
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+        ),
+      );
+    });
+  }
+
+  Widget _buildPendampingHome(HajiCareController state, JamaahData selectedJamaah) {
     return Scaffold(
       backgroundColor: AppColors.canvasCream,
       appBar: AppBar(
@@ -85,7 +117,7 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
                   Icons.notifications_outlined,
                   color: AppColors.espressoDark,
                 ),
-                onPressed: () => Navigator.of(context).pushNamed('/notification'),
+                onPressed: () => Get.toNamed(AppRoutes.notification),
               ),
               if (state.anySosActive)
                 Positioned(
@@ -139,7 +171,7 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
           const SizedBox(height: AppSpacing.lg),
           PendampingRadarCard(
             jamaah: selectedJamaah,
-            onTrackMap: () => Navigator.of(context).pushNamed('/map'),
+            onTrackMap: () => setState(() => _currentIndex = 1),
           ),
           const SizedBox(height: AppSpacing.lg),
           PendampingSosBanner(state: state),
@@ -150,18 +182,10 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
           const SizedBox(height: AppConstants.space3xl),
         ],
       ),
-      bottomNavigationBar: HajiCareBottomNavBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-      ),
     );
   }
 
-  Widget _buildSeparatedBanner(HajiCareState state) {
+  Widget _buildSeparatedBanner(HajiCareController state) {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.lg),
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -208,62 +232,121 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
                 ],
               ),
               Text(
-                'Area Mina Sektor 3',
-                style: AppTypography.caption.copyWith(color: AppColors.textBody),
+                'GPS Akurat ±3m',
+                style: AppTypography.captionSmall.copyWith(
+                  color: AppColors.statusSafe,
+                ),
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          InkWell(
-            onTap: () => Navigator.of(context).pushNamed('/map'),
+          // Interactive Map Preview Canvas
+          ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.md),
             child: Container(
               height: 160,
               width: double.infinity,
-              decoration: BoxDecoration(
-                color: AppColors.canvasCreamSubtle,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(
-                  color: AppColors.goldLight.withValues(alpha: 0.6),
-                ),
-              ),
+              color: AppColors.canvasCreamSubtle,
               child: Stack(
                 children: [
-                  const Center(
-                    child: Icon(Icons.map, size: 48, color: AppColors.tanMedium),
+                  // Grid Pattern Simulation
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: _MiniMapPainter(),
+                    ),
                   ),
+                  // Jamaah marker pin
                   Positioned(
-                    bottom: 10,
-                    left: 10,
-                    right: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceWhite.withValues(alpha: 0.95),
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 4,
+                    top: 50,
+                    left: 90,
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
                           ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.open_in_full,
-                            size: 16,
+                          decoration: BoxDecoration(
                             color: AppColors.espressoDark,
+                            borderRadius: BorderRadius.circular(4),
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Buka Navigasi Penuh & Jalur Evakuasi',
+                          child: Text(
+                            'Ayah (80m)',
                             style: AppTypography.captionSmall.copyWith(
-                              color: AppColors.espressoDark,
+                              color: AppColors.surfaceWhite,
+                              fontSize: 10,
                             ),
                           ),
-                        ],
+                        ),
+                        const Icon(
+                          Icons.location_on,
+                          color: AppColors.statusSafe,
+                          size: 28,
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Pendamping (Self) marker pin
+                  Positioned(
+                    bottom: 30,
+                    right: 80,
+                    child: Column(
+                      children: [
+                        const Icon(
+                          Icons.my_location,
+                          color: AppColors.accentGoldStar,
+                          size: 24,
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.espressoDark,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'Anda',
+                            style: AppTypography.captionSmall.copyWith(
+                              color: AppColors.surfaceWhite,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Expand Button Overlay
+                  Positioned(
+                    bottom: 8,
+                    left: 8,
+                    right: 8,
+                    child: InkWell(
+                      onTap: () => setState(() => _currentIndex = 1),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceWhite.withValues(alpha: 0.9),
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.open_in_full,
+                              size: 16,
+                              color: AppColors.espressoDark,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Buka Navigasi Penuh & Jalur Evakuasi',
+                              style: AppTypography.captionSmall.copyWith(
+                                color: AppColors.espressoDark,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -306,25 +389,29 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
         'title': 'Peta Terpadu Sektor',
         'subtitle': 'Posko medis & jalur evakuasi',
         'icon': Icons.map,
-        'route': '/map',
+        'tabIndex': 1,
+        'route': null,
       },
       {
         'title': 'Jamaah & Gelang',
         'subtitle': 'Status baterai & sensor nadi',
         'icon': Icons.devices_other,
+        'tabIndex': null,
         'route': null,
       },
       {
         'title': 'Jadwal & Agenda',
         'subtitle': 'Waktu Jamarat & titik kumpul',
         'icon': Icons.event_note,
-        'route': '/prayer',
+        'tabIndex': 2,
+        'route': null,
       },
       {
         'title': 'Kontak Petugas Maktab',
         'subtitle': 'Akses instan layanan darurat',
         'icon': Icons.contact_phone,
-        'route': '/communication',
+        'tabIndex': null,
+        'route': AppRoutes.communication,
       },
     ];
 
@@ -358,9 +445,15 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
                 final item = features[index];
                 return AppCard(
                   padding: const EdgeInsets.all(AppSpacing.md),
-                  onTap: item['route'] != null
-                      ? () => Navigator.of(context).pushNamed(item['route'] as String)
-                      : null,
+                  onTap: () {
+                    if (item['tabIndex'] != null) {
+                      setState(() {
+                        _currentIndex = item['tabIndex'] as int;
+                      });
+                    } else if (item['route'] != null) {
+                      Get.toNamed(item['route'] as String);
+                    }
+                  },
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -410,4 +503,34 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
       ],
     );
   }
+}
+
+class _MiniMapPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = AppColors.tanMedium.withValues(alpha: 0.15)
+      ..strokeWidth = 1;
+
+    for (double x = 0; x < size.width; x += 20) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    for (double y = 0; y < size.height; y += 20) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+
+    // Draw route line
+    final routePaint = Paint()
+      ..color = AppColors.accentGoldStar.withValues(alpha: 0.6)
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke;
+
+    final path = Path()
+      ..moveTo(90, 70)
+      ..quadraticBezierTo(140, 100, size.width - 80, size.height - 30);
+    canvas.drawPath(path, routePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

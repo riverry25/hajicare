@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../../../core/routes/app_routes.dart';
+import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -142,7 +145,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: AppColors.primary,
                       ),
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 6),
                     Text(
                       'Silakan masuk untuk terhubung dengan keluarga dan pendamping ibadah di Tanah Suci.',
                       textAlign: TextAlign.center,
@@ -235,7 +238,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(width: 5),
                         Expanded(
                           child: Text(
-                            'Gunakan nomor WhatsApp aktif untuk menerima kode verifikasi cepat',
+                            'nomor WhatsApp aktif untuk menerima kode verifikasi',
                             style: AppTypography.captionSmall.copyWith(
                               color: AppColors.textBody,
                             ),
@@ -311,13 +314,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: AppSpacing.sm),
                     PillButton(
-                      label: 'Masuk ke Aplikasi',
+                      label: 'btnLogin'.tr.isEmpty ? 'Masuk ke Aplikasi' : 'btnLogin'.tr,
                       icon: Icons.login,
                       onPressed: () {
-                        Navigator.of(context).pushReplacementNamed(
+                        final hajicare = Get.find<HajiCareController>();
+                        hajicare.setRole(_selectedRole == 'jamaah'
+                            ? UserRole.jamaah
+                            : UserRole.pendamping);
+                        Get.offAllNamed(
                           _selectedRole == 'jamaah'
-                              ? '/dashboard_jamaah'
-                              : '/dashboard_pendamping',
+                              ? AppRoutes.dashboardJamaah
+                              : AppRoutes.dashboardPendamping,
                         );
                       },
                     ),
@@ -401,7 +408,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     GestureDetector(
                       onTap: () {
-                        Navigator.of(context).pushNamed('/register');
+                        Get.toNamed(AppRoutes.register);
                       },
                       child: RichText(
                         text: TextSpan(
@@ -455,10 +462,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
-                          Icons.verified,
-                          color: AppColors.statusPositive,
-                          size: 16,
+                        Center(
+                          child: const Icon(
+                            Icons.verified,
+                            color: AppColors.statusPositive,
+                            size: 16,
+                          ),
                         ),
                         const SizedBox(width: 4),
                         Expanded(

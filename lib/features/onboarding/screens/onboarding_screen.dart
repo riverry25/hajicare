@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_sizes.dart';
@@ -33,7 +35,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      Navigator.of(context).pushReplacementNamed('/login');
+      Get.offAllNamed(AppRoutes.login);
     }
   }
 
@@ -80,7 +82,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             ),
                           ),
                           Text(
-                            'Pendamping Keselamatan Haji',
+                            'appTagline'.tr,
                             style: AppTypography.caption.copyWith(
                               color: AppColors.tanMedium,
                             ),
@@ -91,8 +93,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                   // Skip button
                   TextButton(
-                    onPressed: () =>
-                        Navigator.of(context).pushReplacementNamed('/login'),
+                    onPressed: () => Get.offAllNamed(AppRoutes.login),
                     style: TextButton.styleFrom(
                       backgroundColor: AppColors.surfaceWhite,
                       minimumSize: const Size(48, 36),
@@ -184,10 +185,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         children: [
                           Text(
                             _currentPage == 0
-                                ? 'Lanjut ke Pengenalan Fitur'
+                                ? 'btnNextFeature'.tr
                                 : _currentPage == 1
-                                ? 'Lanjut ke Fitur Aksesibilitas'
-                                : 'Mulai Sekarang',
+                                ? 'btnNextAccess'.tr
+                                : 'btnStartNow'.tr,
                             style: AppTypography.labelLarge.copyWith(
                               color: AppColors.surfaceWhite,
                             ),

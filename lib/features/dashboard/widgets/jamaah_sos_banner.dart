@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../../../core/state/hajicare_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -28,7 +29,7 @@ class JamaahSosBanner extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
+            onPressed: () => Get.back(result: false),
             child: Text(
               'Batal',
               style: AppTypography.labelLarge.copyWith(color: AppColors.textBody),
@@ -39,7 +40,7 @@ class JamaahSosBanner extends StatelessWidget {
               backgroundColor: AppColors.sosEmergency,
               foregroundColor: AppColors.surfaceWhite,
             ),
-            onPressed: () => Navigator.of(ctx).pop(true),
+            onPressed: () => Get.back(result: true),
             child: Text(
               'Kirim SOS',
               style: AppTypography.labelLarge.copyWith(color: AppColors.surfaceWhite),

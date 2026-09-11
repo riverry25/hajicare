@@ -115,7 +115,6 @@ class AuthRoleCard extends StatelessWidget {
                     style: AppTypography.caption.copyWith(
                       color: AppColors.textBody,
                     ),
-                    textAlign: TextAlign.left,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),

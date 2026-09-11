@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import 'core/theme/app_theme.dart';
-import 'core/routes/app_routes.dart';
-import 'core/state/hajicare_state.dart';
+import 'core/routes/app_pages.dart';
+import 'core/bindings/app_binding.dart';
+import 'core/state/app_settings_controller.dart';
+import 'core/locales/app_translations.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final settings = Get.put(AppSettingsController(), permanent: true);
+  await settings.loadSettings();
   runApp(const HajiCareApp());
 }
 
@@ -13,17 +18,39 @@ class HajiCareApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => HajiCareState()),
-      ],
-      child: MaterialApp(
-        title: 'HajiCare',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        initialRoute: AppRoutes.splash,
-        routes: AppRoutes.routes,
-      ),
+    final settings = Get.find<AppSettingsController>();
+
+    return GetMaterialApp(
+      title: 'HajiCare',
+      debugShowCheckedModeBanner: false,
+
+      // Theming
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: settings.currentThemeMode,
+
+      // Localization
+      translations: AppTranslations(),
+      locale: settings.currentLocale,
+      fallbackLocale: AppTranslations.fallbackLocale,
+
+      // Bindings & Routing
+      initialBinding: AppBinding(),
+      initialRoute: AppPages.initial,
+      getPages: AppPages.pages,
+
+      // Global text scale clamping — dynamically reactive via Obx only inside builder
+      builder: (context, child) {
+        return Obx(() {
+          final factor = settings.textScaleFactor;
+          return MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              textScaler: TextScaler.linear(factor),
+            ),
+            child: child ?? const SizedBox.shrink(),
+          );
+        });
+      },
     );
   }
 }

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/state/app_settings_controller.dart';
 import 'onboarding_hero_banner.dart';
 
 class OnboardingSlideLanguage extends StatefulWidget {
@@ -20,27 +22,22 @@ class OnboardingSlideLanguage extends StatefulWidget {
 class _OnboardingSlideLanguageState extends State<OnboardingSlideLanguage> {
   int _selectedLanguageIndex = 0;
 
-  final List<Map<String, String>> _languages = const [
-    {
-      'title': 'Bahasa Indonesia',
-      'subtitle': 'Baku & Lengkap',
-      'type': 'Bahasa Utama',
-    },
-    {
-      'title': 'Basa Jawi',
-      'subtitle': 'Unggah-ungguh',
-      'type': 'Daerah',
-    },
-    {
-      'title': 'Basa Sunda',
-      'subtitle': 'Lemes & Santun',
-      'type': 'Daerah',
-    },
-    {
-      'title': 'العربية / English',
-      'subtitle': 'Dual Global',
-      'type': 'Global',
-    },
+  @override
+  void initState() {
+    super.initState();
+    final current = Get.find<AppSettingsController>().currentLocale.languageCode;
+    final idx = _languages.indexWhere((l) => l.$1 == current);
+    if (idx != -1) {
+      _selectedLanguageIndex = idx;
+    }
+  }
+
+  // locale code, display title, subtitle, type badge
+  static const List<(String, String, String, String)> _languages = [
+    ('id', 'Bahasa Indonesia', 'Baku & Lengkap',    'Bahasa Utama'),
+    ('jv', 'Basa Jawi',        'Unggah-ungguh',     'Daerah'),
+    ('su', 'Basa Sunda',       'Lemes & Santun',    'Daerah'),
+    ('en', 'English',          'Global Standard',   'Global'),
   ];
 
   @override
@@ -138,11 +135,16 @@ class _OnboardingSlideLanguageState extends State<OnboardingSlideLanguage> {
                 final lang = _languages[index];
                 final isSelected = _selectedLanguageIndex == index;
                 return _buildLanguageCard(
-                  title: lang['title']!,
-                  subtitle: lang['subtitle']!,
-                  type: lang['type']!,
+                  title: lang.$2,
+                  subtitle: lang.$3,
+                  type: lang.$4,
                   isSelected: isSelected,
-                  onTap: () => setState(() => _selectedLanguageIndex = index),
+                  onTap: () {
+                    setState(() => _selectedLanguageIndex = index);
+                    // Immediately apply and persist the chosen language globally
+                    Get.find<AppSettingsController>()
+                        .setLocale(Locale(lang.$1));
+                  },
                 );
               },
             ),

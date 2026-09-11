@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../../core/widgets/bottom_nav_bar.dart';
 
 class NotificationScreen extends StatelessWidget {
   const NotificationScreen({super.key});
@@ -16,7 +16,12 @@ class NotificationScreen extends StatelessWidget {
         appBar: AppBar(
           backgroundColor: AppColors.surfaceWhite,
           elevation: 1,
-          title: Text('Notifikasi & Bantuan', style: AppTypography.headlineMd.copyWith(color: AppColors.espressoDark)),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppColors.espressoDark),
+            onPressed: () => Get.back(),
+          ),
+          title: Text('Notifikasi & Bantuan',
+              style: AppTypography.headlineMd.copyWith(color: AppColors.espressoDark)),
           centerTitle: true,
           bottom: const TabBar(
             indicatorColor: AppColors.espressoDark,
@@ -34,7 +39,6 @@ class NotificationScreen extends StatelessWidget {
             _buildFaqList(),
           ],
         ),
-        bottomNavigationBar: const HajiCareBottomNavBar(currentIndex: 0),
       ),
     );
   }
