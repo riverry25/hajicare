@@ -23,7 +23,7 @@ class LocationDetailSheet extends StatelessWidget {
             child: Container(
               width: 40,
               height: 4,
-              margin: const EdgeInsets.bottom(AppConstants.spaceLg),
+              margin: const EdgeInsets.only(bottom: AppConstants.spaceLg),
               decoration: BoxDecoration(
                 color: AppColors.outlineVariant,
                 borderRadius: BorderRadius.circular(AppConstants.radiusPill),
@@ -56,7 +56,7 @@ class LocationDetailSheet extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.statusPositive.withOpacity(0.15),
+                        color: AppColors.statusPositive.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(AppConstants.radiusPill),
                       ),
                       child: Text('Sangat Ramai', style: AppTypography.captionBold.copyWith(color: AppColors.statusPositive, fontSize: 10)),

@@ -1,0 +1,257 @@
+<!DOCTYPE html><html lang="id"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>HajiCare - Splash Screen</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS with custom theme -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "inverse-surface": "#3a2e22",
+            "canvas-cream-subtle": "#EDE4D3",
+            "primary-container": "#4a3428",
+            "tertiary-fixed": "#ffdead",
+            "primary-fixed": "#ffdbca",
+            "outline-variant": "#d3c3bc",
+            "outline": "#81746f",
+            "on-secondary-fixed-variant": "#5a431f",
+            "secondary-fixed": "#ffddb1",
+            "on-secondary-container": "#795e38",
+            "tertiary-container": "#4b350d",
+            "surface-bright": "#fff8f4",
+            "secondary-container": "#fedaaa",
+            "distance-warning": "#F4A259",
+            "on-tertiary": "#ffffff",
+            "on-primary": "#ffffff",
+            "on-error-container": "#93000a",
+            "surface-tint": "#73594b",
+            "tertiary": "#322000",
+            "on-error": "#ffffff",
+            "secondary": "#745a34",
+            "surface-container": "#feebd8",
+            "inverse-on-surface": "#ffeedf",
+            "secondary-fixed-dim": "#e3c193",
+            "on-primary-container": "#bb9c8c",
+            "surface-variant": "#f3dfcd",
+            "error-container": "#ffdad6",
+            "canvas-cream": "#F0E8DC",
+            "on-surface-variant": "#4f453f",
+            "sos-emergency": "#E63946",
+            "tertiary-fixed-dim": "#e4c18d",
+            "surface-container-highest": "#f3dfcd",
+            "on-tertiary-container": "#be9e6c",
+            "on-primary-fixed": "#29170d",
+            "surface": "#fff8f4",
+            "on-tertiary-fixed": "#281900",
+            "primary": "#321f14",
+            "surface-container-high": "#f9e5d3",
+            "surface-dim": "#ead7c5",
+            "tan-medium": "#A67C52",
+            "on-secondary-fixed": "#291800",
+            "gold-light": "#D4B896",
+            "status-positive": "#4CAF50",
+            "error": "#ba1a1a",
+            "background": "#fff8f4",
+            "on-background": "#231a0f",
+            "text-heading": "#2B1F16",
+            "espresso-dark": "#3D2B1F",
+            "surface-container-lowest": "#ffffff",
+            "accent-gold-star": "#D4A857",
+            "on-tertiary-fixed-variant": "#5a431a",
+            "inverse-primary": "#e1c0af",
+            "surface-white": "#FFFFFF",
+            "on-surface": "#231a0f",
+            "on-primary-fixed-variant": "#594235",
+            "on-secondary": "#ffffff",
+            "surface-container-low": "#fff1e6",
+            "text-body": "#6B5D4F",
+            "primary-fixed-dim": "#e1c0af"
+          },
+          "borderRadius": {
+            "DEFAULT": "1rem",
+            "lg": "2rem",
+            "xl": "3rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "card-padding": "1.25rem",
+            "space-2xs": "0.25rem",
+            "space-2xl": "2rem",
+            "touch-target-min": "3rem",
+            "space-sm": "0.75rem",
+            "space-3xl": "2.5rem",
+            "space-md": "1rem",
+            "space-xs": "0.5rem",
+            "screen-edge-gutter": "1rem",
+            "space-xl": "1.5rem",
+            "space-lg": "1.25rem"
+          },
+          "fontFamily": {
+            "caption-bold": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "display-hero": ["Plus Jakarta Sans"],
+            "label-pill": ["Plus Jakarta Sans"],
+            "title-sm": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "caption": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "amiri": ["Amiri", "serif"]
+          },
+          "fontSize": {
+            "caption-bold": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "700" }],
+            "body-md": ["15px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "body-lg": ["16px", { "lineHeight": "26px", "fontWeight": "400" }],
+            "headline-lg": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "display-hero": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "label-pill": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "700" }],
+            "title-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "body-sm": ["13px", { "lineHeight": "20px", "fontWeight": "500" }],
+            "caption": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "headline-md": ["18px", { "lineHeight": "26px", "fontWeight": "700" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    
+    /* Islamic arabesque radial starburst and vignette */
+    .bg-pattern-ornament {
+      background-image: 
+        radial-gradient(circle at center, rgba(212, 184, 150, 0.16) 0%, rgba(74, 52, 40, 0) 65%),
+        repeating-conic-gradient(from 0deg, rgba(212, 184, 150, 0.03) 0deg 15deg, transparent 15deg 30deg);
+    }
+    
+    /* Smooth pulsating aura around the emblem */
+    @keyframes subtle-breathe {
+      0%, 100% { transform: scale(1); opacity: 0.85; }
+      50% { transform: scale(1.04); opacity: 1; }
+    }
+    
+    .animate-breathe {
+      animation: subtle-breathe 4s ease-in-out infinite;
+    }
+
+    /* Subtle shimmer on progress */
+    @keyframes progress-flow {
+      0% { width: 12%; }
+      50% { width: 68%; }
+      100% { width: 94%; }
+    }
+    .animate-progress {
+      animation: progress-flow 3.2s cubic-bezier(0.4, 0, 0.2, 1) forwards infinite;
+    }
+  </style>
+</head>
+<body class="bg-espresso-dark min-h-screen flex items-center justify-center p-0 m-0 font-body-md selection:bg-gold-light selection:text-espresso-dark">
+<!-- Mobile Device Container (Portrait Prototype Frame) -->
+<main class="relative w-full max-w-md h-screen max-h-[920px] bg-gradient-to-b from-espresso-dark via-primary-container to-primary overflow-hidden flex flex-col justify-between shadow-2xl">
+<!-- Atmospheric Islamic Pattern & Radial Aura -->
+<div class="absolute inset-0 bg-pattern-ornament pointer-events-none"></div>
+<div class="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-96 bg-gold-light/10 rounded-full blur-3xl pointer-events-none"></div>
+<div class="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-accent-gold-star/15 rounded-full blur-2xl pointer-events-none animate-breathe"></div>
+<!-- Top Status Bar & Subtle Holy Guidance Emblem -->
+<header class="relative z-10 pt-space-xl px-space-lg flex justify-between items-center text-gold-light/70">
+<div class="flex items-center gap-space-xs">
+<span class="inline-block w-2 h-2 rounded-full bg-status-positive animate-pulse"></span>
+<span class="font-caption-bold text-caption-bold tracking-wider text-canvas-cream-subtle uppercase">Koneksi Aman</span>
+</div>
+<div class="flex items-center gap-space-xs bg-espresso-dark/60 backdrop-blur-md px-space-sm py-space-2xs rounded-full border border-gold-light/20">
+<span class="material-symbols-outlined text-sm text-gold-light" data-icon="mosque">mosque</span>
+<span class="font-caption text-caption text-canvas-cream">Makkah Al-Mukarramah</span>
+</div>
+</header>
+<!-- Center Spiritual Emblem & Core Identity -->
+<section class="relative z-10 flex-1 flex flex-col items-center justify-center px-space-lg text-center my-auto">
+<!-- Monogram Emblem (Ka'bah, Care Shield & Crescent) -->
+<div class="relative mb-space-xl group">
+<!-- Outer Glowing Ring -->
+<div class="w-36 h-36 rounded-full border border-gold-light/30 flex items-center justify-center p-2.5 shadow-2xl relative">
+<!-- Inner Decorative Rotating Ring Accent -->
+<div class="w-full h-full rounded-full border border-dashed border-accent-gold-star/40 flex items-center justify-center">
+<!-- Center Shield Surface with Sacred Monogram -->
+<div class="w-24 h-24 rounded-full bg-gradient-to-tr from-espresso-dark via-primary-container to-secondary flex flex-col items-center justify-center shadow-lg border border-gold-light/40 relative overflow-hidden">
+<div class="absolute inset-0 bg-gold-light/10"></div>
+<!-- Emblem SVG / Composition -->
+<div class="relative flex flex-col items-center">
+<!-- Golden Crescent & Protective Arch -->
+<span class="material-symbols-outlined text-3xl text-gold-light drop-shadow-sm mb-0.5" data-icon="shield_with_heart" style="font-variation-settings: 'FILL' 1;">shield_with_heart</span>
+<div class="w-5 h-5 bg-text-heading border border-gold-light rounded-sm flex items-center justify-center shadow-inner -mt-1">
+<!-- Ka'bah Kiswah Gold Stripe Accent -->
+<div class="w-full h-0.5 bg-accent-gold-star mb-1"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Small Star Accents on Ring Perimeter -->
+<span class="absolute -top-1 left-1/2 -translate-x-1/2 text-accent-gold-star text-xs font-bold">✦</span>
+<span class="absolute -bottom-1 left-1/2 -translate-x-1/2 text-accent-gold-star text-xs font-bold">✦</span>
+<span class="absolute top-1/2 -left-1 -translate-y-1/2 text-accent-gold-star text-xs font-bold">✦</span>
+<span class="absolute top-1/2 -right-1 -translate-y-1/2 text-accent-gold-star text-xs font-bold">✦</span>
+</div>
+</div>
+<!-- Arabic Calligraphic Banner inspired by Tawaf Design -->
+<div class="mb-space-xs">
+<span class="font-amiri text-xl md:text-2xl text-gold-light tracking-wide font-normal drop-shadow">
+          رِعَايَةُ الحَجِيجِ وَالمُعْتَمِرِينَ
+        </span>
+</div>
+<!-- Brand Identity Typography -->
+<h1 class="font-display-hero text-display-hero font-extrabold text-surface-white tracking-tight flex items-center justify-center gap-1.5 drop-shadow-md">
+<span class="">Haji</span><span class="text-gold-light">Care</span>
+</h1>
+<!-- Sacred Pillar Divider -->
+<div class="flex items-center justify-center gap-3 my-space-sm w-44 opacity-80">
+<div class="h-px flex-1 bg-gradient-to-r from-transparent via-gold-light/60 to-gold-light"></div>
+<span class="text-accent-gold-star text-xs">◈</span>
+<div class="h-px flex-1 bg-gradient-to-l from-transparent via-gold-light/60 to-gold-light"></div>
+</div>
+<!-- Tagline / Purpose (Elderly & Caretaker Friendly Accessibility) -->
+<p class="font-headline-md text-headline-md font-medium text-canvas-cream max-w-xs leading-relaxed drop-shadow-sm">
+        Sahabat Setia &amp; Amanah di Tanah Suci
+      </p>
+<p class="font-caption text-caption text-on-primary-container max-w-[280px] mt-space-2xs">
+        Pendampingan ramah lansia, keselamatan, dan aksesibilitas ibadah
+      </p>
+</section>
+<!-- Bottom Section: Loading Indicator, Government / Initiative Endorsement & Version -->
+<footer class="relative z-10 pb-space-2xl px-space-xl flex flex-col items-center">
+<!-- Subtle Golden Progress Bar -->
+<div class="w-full max-w-[220px] mb-space-md">
+<div class="flex justify-between items-center text-xs font-caption-bold text-gold-light/80 mb-space-2xs">
+<span class="">Menyiapkan Layanan</span>
+<span class="font-body-sm text-body-sm text-gold-light font-bold">Harmoni</span>
+</div>
+<!-- Progress Track -->
+<div class="w-full h-1.5 bg-black/40 rounded-full overflow-hidden p-0.5 border border-gold-light/25 shadow-inner">
+<div class="h-full bg-gradient-to-r from-tan-medium via-gold-light to-accent-gold-star rounded-full animate-progress shadow-sm"></div>
+</div>
+</div>
+<!-- Endorsement Badge -->
+<div class="flex items-center gap-space-xs text-center text-canvas-cream-subtle/80 mb-space-xs">
+<span class="material-symbols-outlined text-gold-light text-base" data-icon="verified_user">verified_user</span>
+<span class="font-caption text-caption">Didukung oleh Inisiatif Pelayanan Jamaah</span>
+</div>
+<!-- App Meta / Version -->
+
+</footer>
+<!-- Bottom Decorative Border Contour (Tawaf Golden Arc) -->
+<div class="absolute -bottom-12 left-1/2 -translate-x-1/2 w-[120%] h-20 bg-gradient-to-t from-gold-light/10 to-transparent rounded-t-full pointer-events-none"></div>
+</main>
+
+
+</body></html>

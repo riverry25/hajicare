@@ -3,6 +3,9 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
+import '../../../core/state/hajicare_state.dart';
+import 'package:provider/provider.dart';
+import 'package:vibration/vibration.dart';
 
 class DashboardPendampingScreen extends StatefulWidget {
   const DashboardPendampingScreen({super.key});
@@ -16,6 +19,8 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<HajiCareState>();
+
     return Scaffold(
       backgroundColor: AppColors.canvasCream,
       appBar: AppBar(
@@ -61,19 +66,20 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
                 icon: const Icon(Icons.notifications, color: AppColors.espressoDark),
                 onPressed: () {},
               ),
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: AppColors.sosEmergency,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.canvasCream, width: 2),
+              if (state.anySosActive)
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: AppColors.sosEmergency,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.canvasCream, width: 2),
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
           Padding(
@@ -94,13 +100,14 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
       body: ListView(
         padding: const EdgeInsets.all(AppConstants.spaceMd),
         children: [
-          _buildGreeting(),
+          _buildGreeting(state),
           const SizedBox(height: AppConstants.spaceMd),
-          _buildJamaahSelector(),
+          if (state.anyJamaahSeparated) _buildSeparatedBanner(state),
+          _buildJamaahSelector(state),
           const SizedBox(height: AppConstants.spaceMd),
-          _buildRadarCard(),
+          _buildRadarCard(state),
           const SizedBox(height: AppConstants.spaceMd),
-          _buildSosStandbyBanner(),
+          if (state.anySosActive) _buildSosActiveBanner(state) else _buildSosStandbyBanner(),
           const SizedBox(height: AppConstants.spaceMd),
           _buildMapCard(),
           const SizedBox(height: AppConstants.spaceMd),
@@ -119,7 +126,31 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
     );
   }
 
-  Widget _buildGreeting() {
+  Widget _buildSeparatedBanner(HajiCareState state) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppConstants.spaceMd),
+      padding: const EdgeInsets.all(AppConstants.spaceSm),
+      decoration: BoxDecoration(
+        color: AppColors.errorContainer,
+        borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+        border: Border.all(color: AppColors.sosEmergency.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.warning, color: AppColors.sosEmergency),
+          const SizedBox(width: AppConstants.spaceSm),
+          Expanded(
+            child: Text(
+              'Peringatan: ${state.separatedJamaahName} berada di luar radius aman (Terlalu jauh).',
+              style: AppTypography.captionBold.copyWith(color: AppColors.sosEmergency),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGreeting(HajiCareState state) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -144,19 +175,19 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
           ],
         ),
         const SizedBox(height: AppConstants.spaceXs),
-        Text('Assalamu’alaikum, Siti', style: AppTypography.headlineLg.copyWith(color: AppColors.espressoDark)),
+        Text('Assalamu’alaikum, ${state.pendampingName.split(' ')[0]}', style: AppTypography.headlineLg.copyWith(color: AppColors.espressoDark)),
         Text('Pantau keselamatan dan pergerakan jamaah binaan Anda secara real-time.', style: AppTypography.bodySm.copyWith(color: AppColors.textBody)),
       ],
     );
   }
 
-  Widget _buildJamaahSelector() {
+  Widget _buildJamaahSelector(HajiCareState state) {
     return Column(
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Jamaah Dipantau (2)', style: AppTypography.titleSm.copyWith(color: AppColors.espressoDark)),
+            Text('Jamaah Dipantau (${state.jamaahList.length})', style: AppTypography.titleSm.copyWith(color: AppColors.espressoDark)),
             Text('Sinkron Gelang Pintar', style: AppTypography.caption.copyWith(color: AppColors.secondary, fontWeight: FontWeight.bold)),
           ],
         ),
@@ -165,17 +196,16 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-              _buildJamaahPill('H. Ahmad Dahlan (Ayah)', '120m', true),
-              const SizedBox(width: AppConstants.spaceXs),
-              _buildJamaahPill('Hj. Siti Fatimah (Ibu)', '85m', false),
-              const SizedBox(width: AppConstants.spaceXs),
+              for (int i = 0; i < state.jamaahList.length; i++) ...[
+                _buildJamaahPill(state.jamaahList[i].shortLabel, '${state.jamaahList[i].distance.toInt()}m', i == 0, state.jamaahList[i].tier),
+                const SizedBox(width: AppConstants.spaceXs),
+              ],
               Container(
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(color: AppColors.tanMedium, width: 2, style: BorderStyle.none),
-                  // Draw dashed conceptually with styling, using solid for now
                 ),
                 child: const Icon(Icons.person_add, color: AppColors.tanMedium),
               ),
@@ -186,18 +216,18 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
     );
   }
 
-  Widget _buildJamaahPill(String name, String distance, bool isActive) {
+  Widget _buildJamaahPill(String name, String distance, bool isActive, DistanceTier tier) {
     return Container(
       padding: const EdgeInsets.only(left: 4, top: 4, bottom: 4, right: AppConstants.spaceMd),
       decoration: BoxDecoration(
-        color: isActive ? AppColors.surfaceWhite : AppColors.surfaceWhite.withOpacity(0.75),
+        color: isActive ? AppColors.surfaceWhite : AppColors.surfaceWhite.withValues(alpha: 0.75),
         borderRadius: BorderRadius.circular(AppConstants.radiusPill),
         border: Border.all(
           color: isActive ? AppColors.espressoDark : AppColors.goldLight,
           width: isActive ? 2 : 1,
         ),
         boxShadow: isActive ? [
-          BoxShadow(color: AppColors.espressoDark.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))
+          BoxShadow(color: AppColors.espressoDark.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2))
         ] : null,
       ),
       child: Row(
@@ -222,16 +252,16 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
                   Container(
                     width: 6,
                     height: 6,
-                    decoration: const BoxDecoration(
-                      color: AppColors.statusPositive,
+                    decoration: BoxDecoration(
+                      color: tier.color,
                       shape: BoxShape.circle,
                     ),
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    'Terhubung • $distance',
+                    '${tier.label} • $distance',
                     style: AppTypography.captionBold.copyWith(
-                      color: isActive ? AppColors.statusPositive : AppColors.textBody,
+                      color: isActive ? tier.color : AppColors.textBody,
                     ),
                   ),
                 ],
@@ -243,7 +273,10 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
     );
   }
 
-  Widget _buildRadarCard() {
+  Widget _buildRadarCard(HajiCareState state) {
+    // Show stats for the first jamaah
+    final jamaah = state.jamaahList[0];
+    
     return Container(
       padding: const EdgeInsets.all(AppConstants.spaceMd),
       decoration: BoxDecoration(
@@ -251,7 +284,7 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
         borderRadius: BorderRadius.circular(AppConstants.radiusCard),
         border: Border.all(color: AppColors.canvasCreamSubtle),
         boxShadow: [
-          BoxShadow(color: AppColors.espressoDark.withOpacity(0.07), blurRadius: 16, offset: const Offset(0, 4)),
+          BoxShadow(color: AppColors.espressoDark.withValues(alpha: 0.07), blurRadius: 16, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -279,14 +312,10 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
                         children: [
                           Text('RADAR JARAK JAMAAH', style: AppTypography.captionBold.copyWith(color: AppColors.textBody)),
                           const SizedBox(width: 6),
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(color: AppColors.statusPositive, shape: BoxShape.circle),
-                          ),
+                          _PulsingDot(color: jamaah.tier.color),
                         ],
                       ),
-                      Text('H. Ahmad Dahlan', style: AppTypography.headlineMd.copyWith(color: AppColors.espressoDark)),
+                      Text(jamaah.name, style: AppTypography.headlineMd.copyWith(color: AppColors.espressoDark, fontSize: 16)),
                     ],
                   ),
                 ],
@@ -294,14 +323,14 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.statusPositive.withOpacity(0.15),
+                  color: jamaah.tier.color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(AppConstants.radiusPill),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.check_circle, color: AppColors.statusPositive, size: 14),
+                    Icon(jamaah.tier.icon, color: jamaah.tier.color, size: 14),
                     const SizedBox(width: 4),
-                    Text('Dalam Radius Aman', style: AppTypography.captionBold.copyWith(color: AppColors.statusPositive, fontSize: 10)),
+                    Text(jamaah.tier.label, style: AppTypography.captionBold.copyWith(color: jamaah.tier.color, fontSize: 10)),
                   ],
                 ),
               ),
@@ -311,9 +340,9 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
           Container(
             padding: const EdgeInsets.all(AppConstants.spaceMd),
             decoration: BoxDecoration(
-              color: AppColors.canvasCream.withOpacity(0.5),
+              color: AppColors.canvasCream.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-              border: Border.all(color: AppColors.goldLight.withOpacity(0.4)),
+              border: Border.all(color: AppColors.goldLight.withValues(alpha: 0.4)),
             ),
             child: Column(
               children: [
@@ -326,7 +355,7 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
                       crossAxisAlignment: CrossAxisAlignment.baseline,
                       textBaseline: TextBaseline.alphabetic,
                       children: [
-                        Text('120', style: AppTypography.displayHero.copyWith(color: AppColors.espressoDark)),
+                        Text('${jamaah.distance.toInt()}', style: AppTypography.displayHero.copyWith(color: jamaah.tier.color)),
                         const SizedBox(width: 4),
                         Text('meter', style: AppTypography.headlineMd.copyWith(color: AppColors.textBody)),
                       ],
@@ -341,12 +370,20 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
                   ],
                 ),
                 const SizedBox(height: AppConstants.spaceSm),
-                LinearProgressIndicator(
-                  value: 0.6,
-                  backgroundColor: AppColors.surfaceWhite,
-                  color: AppColors.statusPositive,
-                  minHeight: 12,
-                  borderRadius: BorderRadius.circular(AppConstants.radiusPill),
+                Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceWhite,
+                    borderRadius: BorderRadius.circular(AppConstants.radiusPill),
+                    border: Border.all(color: AppColors.goldLight.withValues(alpha: 0.5)),
+                  ),
+                  child: LinearProgressIndicator(
+                    value: (jamaah.distance / 200).clamp(0.0, 1.0),
+                    backgroundColor: Colors.transparent,
+                    color: jamaah.tier.color,
+                    minHeight: 12,
+                    borderRadius: BorderRadius.circular(AppConstants.radiusPill),
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Row(
@@ -438,15 +475,72 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
     );
   }
 
+  Widget _buildSosActiveBanner(HajiCareState state) {
+    Vibration.vibrate(); // Vibrate when SOS is active on this screen
+    final sosJamaah = state.jamaahList.firstWhere((j) => j.sosActive, orElse: () => state.jamaahList.first);
+    
+    return Container(
+      padding: const EdgeInsets.all(AppConstants.spaceMd),
+      decoration: BoxDecoration(
+        color: AppColors.sosEmergency,
+        borderRadius: BorderRadius.circular(AppConstants.radiusCard),
+        boxShadow: [
+          BoxShadow(color: AppColors.sosEmergency.withValues(alpha: 0.4), blurRadius: 16, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.warning, color: AppColors.surfaceWhite, size: 36),
+              const SizedBox(width: AppConstants.spaceSm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('DARURAT SOS AKTIF!', style: AppTypography.titleSm.copyWith(color: AppColors.surfaceWhite, fontWeight: FontWeight.bold)),
+                    Text('${sosJamaah.name} membutuhkan bantuan.', style: AppTypography.bodySm.copyWith(color: AppColors.surfaceWhite.withValues(alpha: 0.9))),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppConstants.spaceMd),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    // Call Maktab
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.surfaceWhite, foregroundColor: AppColors.sosEmergency),
+                  child: const Text('Hubungi Petugas'),
+                ),
+              ),
+              const SizedBox(width: AppConstants.spaceSm),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => state.dismissSos(sosJamaah.id),
+                  style: OutlinedButton.styleFrom(foregroundColor: AppColors.surfaceWhite, side: const BorderSide(color: AppColors.surfaceWhite)),
+                  child: const Text('Akhiri SOS'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSosStandbyBanner() {
     return Container(
       padding: const EdgeInsets.all(AppConstants.spaceMd),
       decoration: BoxDecoration(
         color: AppColors.surfaceWhite,
         borderRadius: BorderRadius.circular(AppConstants.radiusCard),
-        border: Border.all(color: AppColors.distanceWarning.withOpacity(0.4)),
+        border: Border.all(color: AppColors.distanceWarning.withValues(alpha: 0.4)),
         boxShadow: [
-          BoxShadow(color: AppColors.espressoDark.withOpacity(0.07), blurRadius: 16, offset: const Offset(0, 4)),
+          BoxShadow(color: AppColors.espressoDark.withValues(alpha: 0.07), blurRadius: 16, offset: const Offset(0, 4)),
         ],
       ),
       child: Stack(
@@ -463,10 +557,10 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: AppColors.distanceWarning.withOpacity(0.2),
+                  color: AppColors.distanceWarning.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.shield, color: AppColors.distanceWarning),
+                child: const Icon(Icons.health_and_safety, color: AppColors.distanceWarning),
               ),
               const SizedBox(width: AppConstants.spaceSm),
               Expanded(
@@ -497,7 +591,7 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
                       children: [
                         _buildSmallBtn(Icons.volume_up, 'Uji Sinyal Alarm', AppColors.canvasCream, AppColors.espressoDark, false),
                         const SizedBox(width: AppConstants.spaceXs),
-                        _buildSmallBtn(Icons.call, 'Pusat Tanggap', Colors.transparent, AppColors.sosEmergency, true, borderColor: AppColors.sosEmergency.withOpacity(0.3)),
+                        _buildSmallBtn(Icons.call, 'Pusat Tanggap', Colors.transparent, AppColors.sosEmergency, true, borderColor: AppColors.sosEmergency.withValues(alpha: 0.3)),
                       ],
                     ),
                   ],
@@ -558,7 +652,7 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
             decoration: BoxDecoration(
               color: AppColors.canvasCreamSubtle,
               borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-              border: Border.all(color: AppColors.goldLight.withOpacity(0.6)),
+              border: Border.all(color: AppColors.goldLight.withValues(alpha: 0.6)),
             ),
             child: Stack(
               children: [
@@ -570,10 +664,10 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceWhite.withOpacity(0.95),
+                      color: AppColors.surfaceWhite.withValues(alpha: 0.95),
                       borderRadius: BorderRadius.circular(AppConstants.radiusPill),
                       boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4),
+                        BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4),
                       ],
                     ),
                     child: Row(
@@ -673,6 +767,57 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _PulsingDot extends StatefulWidget {
+  final Color color;
+  const _PulsingDot({required this.color});
+
+  @override
+  State<_PulsingDot> createState() => _PulsingDotState();
+}
+
+class _PulsingDotState extends State<_PulsingDot> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _opacityAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 2500))..repeat(reverse: true);
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.05).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    _opacityAnimation = Tween<double>(begin: 0.8, end: 0.3).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scaleAnimation.value,
+          child: Opacity(
+            opacity: _opacityAnimation.value,
+            child: Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: widget.color,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

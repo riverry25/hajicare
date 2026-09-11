@@ -3,6 +3,9 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
+import '../../../core/state/hajicare_state.dart';
+import 'package:provider/provider.dart';
+import 'package:vibration/vibration.dart';
 
 class DashboardJamaahScreen extends StatefulWidget {
   const DashboardJamaahScreen({super.key});
@@ -16,6 +19,9 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<HajiCareState>();
+    final jamaah = state.self;
+
     return Scaffold(
       backgroundColor: AppColors.canvasCream,
       appBar: AppBar(
@@ -52,19 +58,20 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
                 icon: const Icon(Icons.notifications, color: AppColors.espressoDark),
                 onPressed: () {},
               ),
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: AppColors.sosEmergency,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.canvasCream, width: 2),
+              if (jamaah.separatedMode)
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: AppColors.sosEmergency,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.canvasCream, width: 2),
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
           Padding(
@@ -75,10 +82,7 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
               child: IconButton(
                 icon: const Icon(Icons.sos, color: AppColors.sosEmergency, size: 24),
                 padding: EdgeInsets.zero,
-                onPressed: () {
-                  // Show modal SOS
-                  Navigator.of(context).pushNamed('/modal_sos');
-                },
+                onPressed: () => _handleSosTrigger(context, state),
               ),
             ),
           ),
@@ -87,11 +91,12 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
       body: ListView(
         padding: const EdgeInsets.all(AppConstants.spaceMd),
         children: [
-          _buildProfileHeader(),
+          if (jamaah.separatedMode) _buildSeparatedBanner(context),
+          _buildProfileHeader(state),
           const SizedBox(height: AppConstants.spaceMd),
-          _buildDistanceStatus(),
+          _buildDistanceStatus(jamaah),
           const SizedBox(height: AppConstants.spaceMd),
-          _buildSosButton(),
+          _buildSosButton(state),
           const SizedBox(height: AppConstants.spaceMd),
           _buildPrayerTimes(),
           const SizedBox(height: AppConstants.spaceMd),
@@ -112,16 +117,40 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
     );
   }
 
-  Widget _buildProfileHeader() {
+  Widget _buildSeparatedBanner(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppConstants.spaceMd),
+      padding: const EdgeInsets.all(AppConstants.spaceSm),
+      decoration: BoxDecoration(
+        color: AppColors.errorContainer,
+        borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+        border: Border.all(color: AppColors.sosEmergency.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.warning, color: AppColors.sosEmergency),
+          const SizedBox(width: AppConstants.spaceSm),
+          Expanded(
+            child: Text(
+              'Kemungkinan terpisah dari pendamping! Tetap tenang di tempat Anda.',
+              style: AppTypography.captionBold.copyWith(color: AppColors.sosEmergency),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileHeader(HajiCareState state) {
     return Container(
       padding: const EdgeInsets.all(AppConstants.spaceMd),
       decoration: BoxDecoration(
         color: AppColors.surfaceWhite,
         borderRadius: BorderRadius.circular(AppConstants.radiusCard),
-        border: Border.all(color: AppColors.outlineVariant.withOpacity(0.3)),
+        border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.3)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.espressoDark.withOpacity(0.04),
+            color: AppColors.espressoDark.withValues(alpha: 0.04),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -138,7 +167,7 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
                 decoration: BoxDecoration(
                   color: AppColors.surfaceContainerHigh,
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.tanMedium.withOpacity(0.4), width: 2),
+                  border: Border.all(color: AppColors.tanMedium.withValues(alpha: 0.4), width: 2),
                 ),
                 child: const Icon(Icons.account_circle, color: AppColors.primary, size: 36),
               ),
@@ -149,7 +178,7 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
                   children: [
                     Row(
                       children: [
-                        Text('H. Ahmad Dahlan', style: AppTypography.headlineMd.copyWith(color: AppColors.espressoDark)),
+                        Text('H. Ahmad Dahlan', style: AppTypography.headlineMd.copyWith(color: AppColors.espressoDark, fontWeight: FontWeight.bold)),
                         const SizedBox(width: 4),
                         const Icon(Icons.verified, color: AppColors.statusPositive, size: 16),
                       ],
@@ -173,18 +202,11 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
             decoration: BoxDecoration(
               color: AppColors.surfaceContainerLow,
               borderRadius: BorderRadius.circular(AppConstants.radiusPill),
-              border: Border.all(color: AppColors.statusPositive.withOpacity(0.3)),
+              border: Border.all(color: AppColors.statusPositive.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
-                Container(
-                  width: 12,
-                  height: 12,
-                  decoration: const BoxDecoration(
-                    color: AppColors.statusPositive,
-                    shape: BoxShape.circle,
-                  ),
-                ),
+                _PulsingDot(),
                 const SizedBox(width: 8),
                 Expanded(
                   child: RichText(
@@ -193,7 +215,7 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
                       style: AppTypography.caption.copyWith(color: AppColors.espressoDark),
                       children: [
                         TextSpan(
-                          text: 'Siti Aminah (Putri)',
+                          text: state.pendampingName,
                           style: AppTypography.captionBold.copyWith(color: AppColors.textHeading),
                         ),
                       ],
@@ -205,7 +227,7 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: AppColors.statusPositive.withOpacity(0.15),
+                    color: AppColors.statusPositive.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(AppConstants.radiusPill),
                   ),
                   child: Text(
@@ -221,13 +243,13 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
     );
   }
 
-  Widget _buildDistanceStatus() {
+  Widget _buildDistanceStatus(JamaahData jamaah) {
     return Container(
       padding: const EdgeInsets.all(AppConstants.spaceMd),
       decoration: BoxDecoration(
         color: AppColors.surfaceWhite,
         borderRadius: BorderRadius.circular(AppConstants.radiusCard),
-        border: Border.all(color: AppColors.outlineVariant.withOpacity(0.3)),
+        border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
@@ -253,7 +275,7 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
                       crossAxisAlignment: CrossAxisAlignment.baseline,
                       textBaseline: TextBaseline.alphabetic,
                       children: [
-                        Text('120', style: AppTypography.headlineMd.copyWith(color: AppColors.espressoDark, fontSize: 24, fontWeight: FontWeight.w800)),
+                        Text('${jamaah.distance.toInt()}', style: AppTypography.headlineMd.copyWith(color: jamaah.tier.color, fontSize: 24, fontWeight: FontWeight.w800)),
                         const SizedBox(width: 4),
                         Text('meter', style: AppTypography.bodySm.copyWith(color: AppColors.textBody, fontWeight: FontWeight.w600)),
                       ],
@@ -264,15 +286,15 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.statusPositive.withOpacity(0.1),
+                  color: jamaah.tier.color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppConstants.radiusPill),
-                  border: Border.all(color: AppColors.statusPositive.withOpacity(0.2)),
+                  border: Border.all(color: jamaah.tier.color.withValues(alpha: 0.2)),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.check_circle, color: AppColors.statusPositive, size: 14),
+                    Icon(jamaah.tier.icon, color: jamaah.tier.color, size: 14),
                     const SizedBox(width: 4),
-                    Text('Radius Aman', style: AppTypography.captionBold.copyWith(color: AppColors.statusPositive, fontSize: 11)),
+                    Text(jamaah.tier.label, style: AppTypography.captionBold.copyWith(color: jamaah.tier.color, fontSize: 11)),
                   ],
                 ),
               ),
@@ -280,9 +302,9 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
           ),
           const SizedBox(height: AppConstants.spaceSm),
           LinearProgressIndicator(
-            value: 0.6, // 120 / 200
+            value: (jamaah.distance / 200).clamp(0.0, 1.0),
             backgroundColor: AppColors.surfaceVariant,
-            color: AppColors.statusPositive,
+            color: jamaah.tier.color,
             minHeight: 10,
             borderRadius: BorderRadius.circular(AppConstants.radiusPill),
           ),
@@ -305,99 +327,113 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
     );
   }
 
-  Widget _buildSosButton() {
+  Widget _buildSosButton(HajiCareState state) {
     return GestureDetector(
-      onTap: () {
-        Navigator.of(context).pushNamed('/modal_sos');
-      },
-      child: Container(
-        padding: const EdgeInsets.all(AppConstants.spaceMd),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceWhite,
-          borderRadius: BorderRadius.circular(AppConstants.radiusCard),
-          border: Border.all(color: AppColors.sosEmergency.withOpacity(0.2), width: 2),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.sosEmergency.withOpacity(0.1),
-              blurRadius: 20,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceSm, vertical: AppConstants.spaceSm),
+      onTap: () => _handleSosTrigger(context, state),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -20,
+            top: -20,
+            child: Container(
+              width: 112,
+              height: 112,
               decoration: BoxDecoration(
-                color: AppColors.sosEmergency,
-                borderRadius: BorderRadius.circular(AppConstants.radiusPill),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.sosEmergency.withOpacity(0.3),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceWhite.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.emergency_share, color: AppColors.surfaceWhite, size: 30),
-                  ),
-                  const SizedBox(width: AppConstants.spaceSm),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('TOMBOL DARURAT SOS', style: AppTypography.headlineMd.copyWith(color: AppColors.surfaceWhite, fontWeight: FontWeight.w800)),
-                        Text('Tekan Langsung Saat Butuh Pertolongan', style: AppTypography.caption.copyWith(color: AppColors.surfaceWhite.withOpacity(0.9))),
-                      ],
-                    ),
-                  ),
-                ],
+                color: AppColors.sosEmergency.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
               ),
             ),
-            const SizedBox(height: AppConstants.spaceSm),
-            RichText(
-              textAlign: TextAlign.center,
-              text: TextSpan(
-                style: AppTypography.bodySm.copyWith(color: AppColors.textHeading),
-                children: [
-                  const TextSpan(text: 'Sinyal GPS darurat akan seketika diteruskan ke '),
-                  TextSpan(text: 'Petugas Maktab 48', style: AppTypography.bodySm.copyWith(fontWeight: FontWeight.bold, color: AppColors.espressoDark)),
-                  const TextSpan(text: ' dan '),
-                  TextSpan(text: 'Pendamping Keluarga.', style: AppTypography.bodySm.copyWith(fontWeight: FontWeight.bold, color: AppColors.espressoDark)),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppConstants.spaceXs),
-            const Divider(color: AppColors.outlineVariant),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: AppColors.sosEmergency,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Respons Cepat 24 Jam • Sektor Khusus Masjidil Haram',
-                  style: AppTypography.caption.copyWith(color: AppColors.textBody, fontSize: 11),
+          ),
+          Container(
+            padding: const EdgeInsets.all(AppConstants.spaceMd),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceWhite,
+              borderRadius: BorderRadius.circular(AppConstants.radiusSheet),
+              border: Border.all(color: AppColors.sosEmergency.withValues(alpha: 0.2), width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.sosEmergency.withValues(alpha: 0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
-          ],
-        ),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceSm, vertical: AppConstants.spaceSm),
+                  decoration: BoxDecoration(
+                    color: AppColors.sosEmergency,
+                    borderRadius: BorderRadius.circular(AppConstants.radiusPill),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.sosEmergency.withValues(alpha: 0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceWhite.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.emergency_share, color: AppColors.surfaceWhite, size: 30),
+                      ),
+                      const SizedBox(width: AppConstants.spaceSm),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('TOMBOL DARURAT SOS', style: AppTypography.headlineMd.copyWith(color: AppColors.surfaceWhite, fontWeight: FontWeight.w800)),
+                            Text('Tekan Langsung Saat Butuh Pertolongan', style: AppTypography.caption.copyWith(color: AppColors.surfaceWhite.withValues(alpha: 0.9))),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppConstants.spaceSm),
+                RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    style: AppTypography.bodySm.copyWith(color: AppColors.textHeading),
+                    children: [
+                      const TextSpan(text: 'Sinyal GPS darurat akan seketika diteruskan ke '),
+                      TextSpan(text: 'Petugas Maktab 48', style: AppTypography.bodySm.copyWith(fontWeight: FontWeight.bold, color: AppColors.espressoDark)),
+                      const TextSpan(text: ' dan '),
+                      TextSpan(text: 'Pendamping Keluarga.', style: AppTypography.bodySm.copyWith(fontWeight: FontWeight.bold, color: AppColors.espressoDark)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppConstants.spaceXs),
+                const Divider(color: AppColors.outlineVariant),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: AppColors.sosEmergency,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Respons Cepat 24 Jam • Sektor Khusus Masjidil Haram',
+                      style: AppTypography.caption.copyWith(color: AppColors.textBody, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -408,7 +444,7 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppConstants.radiusCard),
-        border: Border.all(color: AppColors.goldLight.withOpacity(0.4)),
+        border: Border.all(color: AppColors.goldLight.withValues(alpha: 0.4)),
       ),
       child: Column(
         children: [
@@ -425,9 +461,9 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceWhite.withOpacity(0.8),
+                  color: AppColors.surfaceWhite.withValues(alpha: 0.8),
                   borderRadius: BorderRadius.circular(AppConstants.radiusPill),
-                  border: Border.all(color: AppColors.goldLight.withOpacity(0.5)),
+                  border: Border.all(color: AppColors.goldLight.withValues(alpha: 0.5)),
                 ),
                 child: Row(
                   children: [
@@ -443,7 +479,7 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
           Container(
             padding: const EdgeInsets.all(AppConstants.spaceSm),
             decoration: BoxDecoration(
-              color: AppColors.surfaceWhite.withOpacity(0.7),
+              color: AppColors.surfaceWhite.withValues(alpha: 0.7),
               borderRadius: BorderRadius.circular(AppConstants.radiusMd),
             ),
             child: Row(
@@ -493,41 +529,43 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
   }
 
   Widget _buildPrayerMiniTime(String name, String time, bool isActive) {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 2),
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: isActive ? AppColors.primaryContainer : AppColors.surfaceWhite.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-          border: isActive ? Border.all(color: AppColors.goldLight) : Border.all(color: Colors.transparent),
-          boxShadow: isActive ? [
-            BoxShadow(
-              color: AppColors.primaryContainer.withOpacity(0.2),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            )
-          ] : null,
-        ),
-        child: Column(
-          children: [
-            Text(
-              name,
-              style: AppTypography.caption.copyWith(
-                color: isActive ? AppColors.accentGoldStar : AppColors.textBody,
-                fontSize: 11,
-                fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-              ),
-            ),
-            Text(
-              time,
-              style: AppTypography.captionBold.copyWith(
-                color: isActive ? AppColors.surfaceWhite : AppColors.textHeading,
-              ),
-            ),
-          ],
-        ),
+    Widget content = Container(
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        color: isActive ? AppColors.primaryContainer : AppColors.surfaceWhite.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+        border: isActive ? Border.all(color: AppColors.goldLight) : Border.all(color: Colors.transparent),
+        boxShadow: isActive ? [
+          BoxShadow(
+            color: AppColors.primaryContainer.withValues(alpha: 0.2),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          )
+        ] : null,
       ),
+      child: Column(
+        children: [
+          Text(
+            name,
+            style: AppTypography.caption.copyWith(
+              color: isActive ? AppColors.accentGoldStar : AppColors.textBody,
+              fontSize: 11,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+            ),
+          ),
+          Text(
+            time,
+            style: AppTypography.captionBold.copyWith(
+              color: isActive ? AppColors.surfaceWhite : AppColors.textHeading,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return Expanded(
+      child: isActive ? Transform.scale(scale: 1.05, child: content) : content,
     );
   }
 
@@ -546,7 +584,7 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
           crossAxisCount: 2,
           crossAxisSpacing: AppConstants.spaceSm,
           mainAxisSpacing: AppConstants.spaceSm,
-          childAspectRatio: 1.3,
+          childAspectRatio: 1.15,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           children: [
@@ -568,10 +606,10 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
       decoration: BoxDecoration(
         color: AppColors.surfaceWhite,
         borderRadius: BorderRadius.circular(AppConstants.radiusCard),
-        border: Border.all(color: AppColors.outlineVariant.withOpacity(0.3)),
+        border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.3)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.espressoDark.withOpacity(0.04),
+            color: AppColors.espressoDark.withValues(alpha: 0.04),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -627,7 +665,7 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.tanMedium.withOpacity(0.2),
+              color: AppColors.tanMedium.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.lightbulb, color: AppColors.espressoDark),
@@ -648,6 +686,87 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _handleSosTrigger(BuildContext context, HajiCareState state) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Kirim Sinyal SOS?'),
+        content: const Text('Apakah Anda yakin ingin mengirim sinyal darurat ke pendamping?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Batal')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.sosEmergency, foregroundColor: Colors.white),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Kirim SOS'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      if (await Vibration.hasVibrator()) {
+        Vibration.vibrate(pattern: [0, 200, 100, 200]);
+      }
+      state.triggerSos();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('SOS terkirim ke ${state.pendampingName}'),
+            backgroundColor: AppColors.sosEmergency,
+          ),
+        );
+      }
+    }
+  }
+}
+
+class _PulsingDot extends StatefulWidget {
+  @override
+  State<_PulsingDot> createState() => _PulsingDotState();
+}
+
+class _PulsingDotState extends State<_PulsingDot> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _opacityAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 2500))..repeat(reverse: true);
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.05).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    _opacityAnimation = Tween<double>(begin: 0.8, end: 0.3).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scaleAnimation.value,
+          child: Opacity(
+            opacity: _opacityAnimation.value,
+            child: Container(
+              width: 12,
+              height: 12,
+              decoration: const BoxDecoration(
+                color: AppColors.statusPositive,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

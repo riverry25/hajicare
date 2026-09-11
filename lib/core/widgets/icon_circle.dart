@@ -26,8 +26,8 @@ class IconCircle extends StatelessWidget {
         shape: BoxShape.circle,
         color: backgroundColor ?? AppColors.canvasCream,
         border: hasBorder
-            ? Border.withConfiguration(
-                color: AppColors.goldLight.withOpacity(0.5),
+            ? Border.all(
+                color: AppColors.goldLight.withValues(alpha: 0.5),
                 width: 1.5,
               )
             : null,
