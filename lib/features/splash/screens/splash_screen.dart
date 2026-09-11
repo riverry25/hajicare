@@ -68,7 +68,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 height: 384,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.goldLight.withOpacity(0.1),
+                  color: AppColors.goldLight.withValues(alpha: 0.1),
                 ),
               ),
             ),
@@ -112,9 +112,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                           vertical: AppConstants.space2xs,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.espressoDark.withOpacity(0.6),
+                          color: AppColors.espressoDark.withValues(alpha: 0.6),
                           borderRadius: BorderRadius.circular(AppConstants.radiusPill),
-                          border: Border.all(color: AppColors.goldLight.withOpacity(0.2)),
+                          border: Border.all(color: AppColors.goldLight.withValues(alpha: 0.2)),
                         ),
                         child: Row(
                           children: [
@@ -142,14 +142,14 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         height: 144,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.goldLight.withOpacity(0.3)),
+                          border: Border.all(color: AppColors.goldLight.withValues(alpha: 0.3)),
                         ),
                         padding: const EdgeInsets.all(10),
                         child: Container(
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: AppColors.accentGoldStar.withOpacity(0.4),
+                              color: AppColors.accentGoldStar.withValues(alpha: 0.4),
                               style: BorderStyle.solid, // Should be dashed but solid for simplicity
                             ),
                           ),
@@ -176,10 +176,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                                       AppColors.secondary,
                                     ],
                                   ),
-                                  border: Border.all(color: AppColors.goldLight.withOpacity(0.4)),
+                                  border: Border.all(color: AppColors.goldLight.withValues(alpha: 0.4)),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.2),
+                                      color: Colors.black.withValues(alpha: 0.2),
                                       blurRadius: 10,
                                       spreadRadius: 2,
                                     ),
@@ -239,7 +239,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                               height: 1,
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
-                                  colors: [Colors.transparent, AppColors.goldLight.withOpacity(0.6), AppColors.goldLight],
+                                  colors: [Colors.transparent, AppColors.goldLight.withValues(alpha: 0.6), AppColors.goldLight],
                                 ),
                               ),
                             ),
@@ -252,7 +252,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                               height: 1,
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
-                                  colors: [AppColors.goldLight, AppColors.goldLight.withOpacity(0.6), Colors.transparent],
+                                  colors: [AppColors.goldLight, AppColors.goldLight.withValues(alpha: 0.6), Colors.transparent],
                                 ),
                               ),
                             ),
@@ -302,7 +302,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                                 Text(
                                   'Menyiapkan Layanan',
                                   style: AppTypography.captionBold.copyWith(
-                                    color: AppColors.goldLight.withOpacity(0.8),
+                                    color: AppColors.goldLight.withValues(alpha: 0.8),
                                   ),
                                 ),
                                 Text(
@@ -318,9 +318,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                             Container(
                               height: 6,
                               decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.4),
+                                color: Colors.black.withValues(alpha: 0.4),
                                 borderRadius: BorderRadius.circular(AppConstants.radiusPill),
-                                border: Border.all(color: AppColors.goldLight.withOpacity(0.25)),
+                                border: Border.all(color: AppColors.goldLight.withValues(alpha: 0.25)),
                               ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(AppConstants.radiusPill),
@@ -342,7 +342,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                           Text(
                             'Didukung oleh Inisiatif Pelayanan Jamaah',
                             style: AppTypography.caption.copyWith(
-                              color: AppColors.canvasCreamSubtle.withOpacity(0.8),
+                              color: AppColors.canvasCreamSubtle.withValues(alpha: 0.8),
                             ),
                           ),
                         ],

@@ -20,9 +20,9 @@ class AppConstants {
   static const double buttonHeightSecondary = 48.0;
 
   // Border Radius
-  static const double radiusSm = 8.0;
-  static const double radiusMd = 12.0;
-  static const double radiusCard = 20.0; // Standard card radius
+  static const double radiusSm = 12.0;
+  static const double radiusMd = 16.0;
+  static const double radiusCard = 16.0; // Standard card radius
   static const double radiusSheet = 24.0;
   static const double radiusPill = 9999.0;
 }

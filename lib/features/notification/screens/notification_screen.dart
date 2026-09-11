@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/widgets/bottom_nav_bar.dart';
 
 class NotificationScreen extends StatelessWidget {
   const NotificationScreen({super.key});
@@ -33,6 +34,7 @@ class NotificationScreen extends StatelessWidget {
             _buildFaqList(),
           ],
         ),
+        bottomNavigationBar: const HajiCareBottomNavBar(currentIndex: 0),
       ),
     );
   }
@@ -86,7 +88,7 @@ class NotificationScreen extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: AppConstants.spaceSm),
       padding: const EdgeInsets.all(AppConstants.spaceMd),
       decoration: BoxDecoration(
-        color: isUnread ? AppColors.surfaceWhite : AppColors.surfaceWhite.withOpacity(0.6),
+        color: isUnread ? AppColors.surfaceWhite : AppColors.surfaceWhite.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(AppConstants.radiusCard),
         border: Border.all(color: isUnread ? AppColors.goldLight : AppColors.canvasCreamSubtle),
       ),
@@ -96,7 +98,7 @@ class NotificationScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
+              color: iconColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: iconColor, size: 24),

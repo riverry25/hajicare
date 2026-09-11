@@ -60,7 +60,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                 borderRadius: BorderRadius.circular(AppConstants.radiusCard),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.espressoDark.withOpacity(0.2),
+                    color: AppColors.espressoDark.withValues(alpha: 0.2),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -76,7 +76,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceMd, vertical: 8),
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceWhite.withOpacity(0.15),
+                      color: AppColors.surfaceWhite.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(AppConstants.radiusPill),
                     ),
                     child: Text('Waktu tersisa: 48 Menit 12 Detik', style: AppTypography.bodyMd.copyWith(color: AppColors.surfaceWhite)),
@@ -95,7 +95,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                 border: Border.all(color: AppColors.canvasCreamSubtle),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.espressoDark.withOpacity(0.04),
+                    color: AppColors.espressoDark.withValues(alpha: 0.04),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -186,8 +186,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceMd, vertical: AppConstants.spaceSm),
       decoration: BoxDecoration(
-        color: isActive ? AppColors.secondaryContainer.withOpacity(0.4) : Colors.transparent,
-        border: Border(bottom: BorderSide(color: AppColors.canvasCreamSubtle.withOpacity(0.5))),
+        color: isActive ? AppColors.secondaryContainer.withValues(alpha: 0.4) : Colors.transparent,
+        border: Border(bottom: BorderSide(color: AppColors.canvasCreamSubtle.withValues(alpha: 0.5))),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

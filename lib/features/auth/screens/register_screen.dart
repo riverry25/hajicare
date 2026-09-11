@@ -49,7 +49,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   border: Border.all(color: AppColors.canvasCreamSubtle),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.espressoDark.withOpacity(0.04),
+                      color: AppColors.espressoDark.withValues(alpha: 0.04),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -146,7 +146,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceSm),
             decoration: BoxDecoration(
-              color: AppColors.canvasCreamSubtle.withOpacity(0.7),
+              color: AppColors.canvasCreamSubtle.withValues(alpha: 0.7),
               border: Border.all(color: AppColors.goldLight, width: 1),
               borderRadius: const BorderRadius.horizontal(left: Radius.circular(AppConstants.radiusPill)),
             ),

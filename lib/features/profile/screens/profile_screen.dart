@@ -36,7 +36,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               border: Border.all(color: AppColors.canvasCreamSubtle),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.espressoDark.withOpacity(0.04),
+                  color: AppColors.espressoDark.withValues(alpha: 0.04),
                   blurRadius: 6,
                   offset: const Offset(0, 2),
                 ),
@@ -74,7 +74,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceMd, vertical: 8),
                   decoration: BoxDecoration(
-                    color: AppColors.secondaryContainer.withOpacity(0.5),
+                    color: AppColors.secondaryContainer.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(AppConstants.radiusPill),
                   ),
                   child: Text('Gelang Pintar Terhubung (Baterai 92%)', style: AppTypography.captionBold.copyWith(color: AppColors.espressoDark)),

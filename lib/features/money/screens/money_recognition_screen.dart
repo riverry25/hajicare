@@ -2,9 +2,62 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/widgets/bottom_nav_bar.dart';
 
-class MoneyRecognitionScreen extends StatelessWidget {
+import 'package:camera/camera.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+
+class MoneyRecognitionScreen extends StatefulWidget {
   const MoneyRecognitionScreen({super.key});
+
+  @override
+  State<MoneyRecognitionScreen> createState() => _MoneyRecognitionScreenState();
+}
+
+class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
+  CameraController? _cameraController;
+  FlutterTts? _tts;
+  bool _isCameraInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initCamera();
+    _initTts();
+  }
+
+  Future<void> _initCamera() async {
+    try {
+      final cameras = await availableCameras();
+      if (cameras.isEmpty) return;
+      _cameraController = CameraController(cameras.first, ResolutionPreset.medium);
+      await _cameraController!.initialize();
+      if (mounted) {
+        setState(() {
+          _isCameraInitialized = true;
+        });
+      }
+    } catch (e) {
+      debugPrint('Camera init error: $e');
+    }
+  }
+
+  Future<void> _initTts() async {
+    _tts = FlutterTts();
+    await _tts!.setLanguage('id-ID');
+    await _tts!.setPitch(1.0);
+  }
+
+  void _speak() {
+    _tts?.speak('Lima Puluh Riyal');
+  }
+
+  @override
+  void dispose() {
+    _cameraController?.dispose();
+    _tts?.stop();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,14 +65,16 @@ class MoneyRecognitionScreen extends StatelessWidget {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Simulated Camera Feed
+          // Live Camera Feed
           Container(
             color: Colors.black,
             width: double.infinity,
             height: double.infinity,
-            child: const Center(
-              child: Icon(Icons.camera_alt, color: Colors.white24, size: 100),
-            ),
+            child: _isCameraInitialized && _cameraController != null
+                ? CameraPreview(_cameraController!)
+                : const Center(
+                    child: CircularProgressIndicator(color: AppColors.tanMedium),
+                  ),
           ),
           
           // Camera Guide Overlay
@@ -58,7 +113,7 @@ class MoneyRecognitionScreen extends StatelessWidget {
                   width: 300,
                   height: 200,
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.goldLight.withOpacity(0.8), width: 3),
+                    border: Border.all(color: AppColors.goldLight.withValues(alpha: 0.8), width: 3),
                     borderRadius: BorderRadius.circular(AppConstants.radiusMd),
                   ),
                   child: Stack(
@@ -128,7 +183,7 @@ class MoneyRecognitionScreen extends StatelessWidget {
                       
                       // Audio Feedback Button
                       ElevatedButton(
-                        onPressed: () {},
+                        onPressed: _speak,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryContainer,
                           shape: const CircleBorder(),
@@ -146,6 +201,7 @@ class MoneyRecognitionScreen extends StatelessWidget {
           ),
         ],
       ),
+      bottomNavigationBar: const HajiCareBottomNavBar(currentIndex: 0),
     );
   }
 }

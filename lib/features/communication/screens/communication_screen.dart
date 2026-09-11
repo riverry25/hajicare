@@ -2,9 +2,35 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/widgets/bottom_nav_bar.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
-class CommunicationScreen extends StatelessWidget {
+class CommunicationScreen extends StatefulWidget {
   const CommunicationScreen({super.key});
+
+  @override
+  State<CommunicationScreen> createState() => _CommunicationScreenState();
+}
+
+class _CommunicationScreenState extends State<CommunicationScreen> {
+  late FlutterTts _tts;
+
+  @override
+  void initState() {
+    super.initState();
+    _tts = FlutterTts();
+    _tts.setLanguage('ar-SA');
+  }
+
+  @override
+  void dispose() {
+    _tts.stop();
+    super.dispose();
+  }
+
+  void _speak(String text) {
+    _tts.speak(text);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +68,7 @@ class CommunicationScreen extends StatelessWidget {
           _buildPhraseCard('Terima kasih', 'Shukran', 'شكراً', false),
         ],
       ),
+      bottomNavigationBar: const HajiCareBottomNavBar(currentIndex: 0),
     );
   }
 
@@ -59,10 +86,10 @@ class CommunicationScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: isUrgent ? AppColors.errorContainer : AppColors.surfaceWhite,
         borderRadius: BorderRadius.circular(AppConstants.radiusCard),
-        border: Border.all(color: isUrgent ? AppColors.sosEmergency.withOpacity(0.3) : AppColors.canvasCreamSubtle),
+        border: Border.all(color: isUrgent ? AppColors.sosEmergency.withValues(alpha: 0.3) : AppColors.canvasCreamSubtle),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -93,7 +120,7 @@ class CommunicationScreen extends StatelessWidget {
             ),
             child: IconButton(
               icon: const Icon(Icons.volume_up, color: Colors.white),
-              onPressed: () {},
+              onPressed: () => _speak(arabic),
             ),
           ),
         ],

@@ -41,7 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       border: Border.all(color: AppColors.goldLight, width: 4),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.espressoDark.withOpacity(0.1),
+                          color: AppColors.espressoDark.withValues(alpha: 0.1),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -85,11 +85,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 padding: const EdgeInsets.all(AppConstants.spaceMd),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceWhite,
-                  borderRadius: BorderRadius.circular(AppConstants.radiusSm),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppColors.canvasCreamSubtle),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.espressoDark.withOpacity(0.04),
+                      color: AppColors.espressoDark.withValues(alpha: 0.04),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -100,7 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.secondaryContainer.withOpacity(0.5),
+                        color: AppColors.secondaryContainer.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(AppConstants.radiusPill),
                       ),
                       child: Row(
@@ -152,9 +152,9 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: AppConstants.spaceXs),
               Row(
                 children: [
-                  Expanded(child: _buildRoleCard('jamaah', 'Jamaah', 'Saya Jamaah Haji/Umrah yang membutuhkan navigasi', Icons.person)),
+                  Expanded(child: _buildRoleCard('jamaah', 'Jamaah', 'Saya Jamaah Haji/Umrah yang membutuhkan navigasi dan pendampingan', Icons.person)),
                   const SizedBox(width: AppConstants.spaceSm),
-                  Expanded(child: _buildRoleCard('pendamping', 'Pendamping', 'Keluarga atau muthawif yang memantau keselamatan jamaah', Icons.shield)),
+                  Expanded(child: _buildRoleCard('pendamping', 'Pendamping', 'Keluarga atau muthawif yang memantau keselamatan jamaah', Icons.health_and_safety)),
                 ],
               ),
               const SizedBox(height: AppConstants.spaceMd),
@@ -164,11 +164,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 padding: const EdgeInsets.all(AppConstants.spaceMd),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceWhite,
-                  borderRadius: BorderRadius.circular(AppConstants.radiusSm),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppColors.canvasCreamSubtle),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.espressoDark.withOpacity(0.04),
+                      color: AppColors.espressoDark.withValues(alpha: 0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 4),
+                    ),
+                    BoxShadow(
+                      color: AppColors.espressoDark.withValues(alpha: 0.04),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -191,7 +196,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceSm),
                             decoration: BoxDecoration(
-                              color: AppColors.canvasCreamSubtle.withOpacity(0.7),
+                              color: AppColors.canvasCreamSubtle.withValues(alpha: 0.7),
                               border: Border.all(color: AppColors.goldLight, width: 1),
                               borderRadius: const BorderRadius.horizontal(left: Radius.circular(AppConstants.radiusPill)),
                             ),
@@ -330,13 +335,37 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
 
-                    PillButton(
-                      label: 'Masuk Cepat via WhatsApp',
-                      onPressed: () {},
-                      isOutline: true,
-                      color: AppColors.goldLight,
-                      textColor: AppColors.espressoDark,
-                      icon: Icons.chat, // Assume WhatsApp icon or standard chat
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: OutlinedButton(
+                        onPressed: () {},
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: AppColors.goldLight, width: 2),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppConstants.radiusPill),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 28,
+                              height: 28,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF25D366),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.chat, color: Colors.white, size: 16),
+                            ),
+                            const SizedBox(width: AppConstants.spaceSm),
+                            Text(
+                              'Masuk Cepat via WhatsApp',
+                              style: AppTypography.labelPill.copyWith(color: AppColors.espressoDark),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -413,74 +442,81 @@ class _LoginScreenState extends State<LoginScreen> {
           _selectedRole = roleId;
         });
       },
-      child: Container(
-        height: 156,
-        padding: const EdgeInsets.all(AppConstants.spaceMd),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceWhite,
-          borderRadius: BorderRadius.circular(AppConstants.radiusSm),
-          border: Border.all(
-            color: isSelected ? AppColors.espressoDark : AppColors.outlineVariant.withOpacity(0.6),
-            width: isSelected ? 2 : 1,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 150),
+        opacity: isSelected ? 1.0 : 0.85,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 148),
+          padding: const EdgeInsets.all(AppConstants.spaceMd),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceWhite,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isSelected ? AppColors.espressoDark : AppColors.outlineVariant.withValues(alpha: 0.6),
+              width: isSelected ? 2 : 1,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: AppColors.primaryContainer.withValues(alpha: 0.16),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: AppColors.espressoDark.withValues(alpha: 0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 4),
+                    ),
+                    BoxShadow(
+                      color: AppColors.espressoDark.withValues(alpha: 0.04),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
           ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: AppColors.primaryContainer.withOpacity(0.16),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
-                  )
-                ]
-              : [
-                  BoxShadow(
-                    color: AppColors.primaryContainer.withOpacity(0.04),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  )
-                ],
-        ),
-        child: Stack(
-          children: [
-            if (isSelected)
-              Positioned(
-                top: 0,
-                right: 0,
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primaryContainer,
-                    shape: BoxShape.circle,
+          child: Stack(
+            children: [
+              if (isSelected)
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: const BoxDecoration(
+                      color: AppColors.primaryContainer,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.check_circle, color: Colors.white, size: 16),
                   ),
-                  child: const Icon(Icons.check_circle, color: Colors.white, size: 16),
                 ),
-              ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: isSelected ? AppColors.secondaryContainer : AppColors.canvasCream,
-                    shape: BoxShape.circle,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppColors.secondaryContainer : AppColors.canvasCream,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, color: AppColors.espressoDark, size: 24),
                   ),
-                  child: Icon(icon, color: AppColors.espressoDark),
-                ),
-                const SizedBox(height: AppConstants.spaceXs),
-                Text(title, style: AppTypography.headlineMd.copyWith(color: AppColors.espressoDark)),
-                const SizedBox(height: 2),
-                Expanded(
-                  child: Text(
+                  const SizedBox(height: AppConstants.spaceXs),
+                  Text(title, style: AppTypography.headlineMd.copyWith(color: AppColors.espressoDark)),
+                  const SizedBox(height: 2),
+                  Text(
                     desc,
                     style: AppTypography.caption.copyWith(color: AppColors.textBody),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
