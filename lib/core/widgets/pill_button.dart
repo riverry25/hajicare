@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
-import '../constants/app_constants.dart';
+import '../theme/app_radius.dart';
+import '../theme/app_sizes.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_typography.dart';
 
 class PillButton extends StatelessWidget {
   final String label;
@@ -30,9 +33,14 @@ class PillButton extends StatelessWidget {
       children: [
         if (icon != null) ...[
           Icon(icon, size: 20),
-          const SizedBox(width: AppConstants.spaceXs),
+          const SizedBox(width: AppSpacing.sm),
         ],
-        Text(label),
+        Text(
+          label,
+          style: AppTypography.labelLarge.copyWith(
+            color: textColor ?? (isOutline ? (color ?? AppColors.primaryContainer) : AppColors.surfaceWhite),
+          ),
+        ),
       ],
     );
 
@@ -46,13 +54,13 @@ class PillButton extends StatelessWidget {
           ),
           foregroundColor: textColor ?? AppColors.primaryContainer,
           minimumSize: Size(
-            isFullWidth ? double.infinity : AppConstants.touchTargetMin,
-            AppConstants.buttonHeightSecondary,
+            isFullWidth ? double.infinity : AppSizes.touchTargetMin,
+            AppSizes.buttonHeightSecondary,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppConstants.radiusPill),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceXl),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl2),
         ),
         child: buttonChild,
       );
@@ -64,15 +72,16 @@ class PillButton extends StatelessWidget {
         backgroundColor: color ?? AppColors.primaryContainer,
         foregroundColor: textColor ?? AppColors.surfaceWhite,
         minimumSize: Size(
-          isFullWidth ? double.infinity : AppConstants.touchTargetMin,
-          AppConstants.buttonHeightPrimary,
+          isFullWidth ? double.infinity : AppSizes.touchTargetMin,
+          AppSizes.buttonHeightPrimary,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.radiusPill),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceXl),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl2),
       ),
       child: buttonChild,
     );
   }
 }
+

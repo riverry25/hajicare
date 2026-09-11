@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../core/constants/app_constants.dart';
+import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/pill_button.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -27,58 +29,87 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         title: Text(
           'Daftar Akun Baru',
-          style: AppTypography.headlineMd.copyWith(color: AppColors.espressoDark),
+          style: AppTypography.titleLarge.copyWith(
+            color: AppColors.espressoDark,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppConstants.spaceMd,
-            vertical: AppConstants.spaceLg,
+            horizontal: AppSpacing.screenEdgeGutter,
+            vertical: AppSpacing.lg,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Form
-              Container(
-                padding: const EdgeInsets.all(AppConstants.spaceMd),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceWhite,
-                  borderRadius: BorderRadius.circular(AppConstants.radiusSm),
-                  border: Border.all(color: AppColors.canvasCreamSubtle),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.espressoDark.withValues(alpha: 0.04),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
+              AppCard(
+                padding: const EdgeInsets.all(AppSpacing.lg),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildLabel('Nama Lengkap (Sesuai Paspor)'),
-                    _buildTextField(hint: 'Contoh: Ahmad Dahlan', icon: Icons.person_outline),
-                    const SizedBox(height: AppConstants.spaceMd),
+                    const AppTextField(
+                      label: 'Nama Lengkap (Sesuai Paspor)',
+                      hintText: 'Contoh: Ahmad Dahlan',
+                      prefixIcon: Icon(
+                        Icons.person_outline,
+                        color: AppColors.tanMedium,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
 
-                    _buildLabel('Nomor Porsi Haji / NIK'),
-                    _buildTextField(hint: '13 digit nomor porsi', icon: Icons.credit_card, isNumber: true),
-                    const SizedBox(height: AppConstants.spaceMd),
+                    const AppTextField(
+                      label: 'Nomor Porsi Haji / NIK',
+                      hintText: '13 digit nomor porsi',
+                      keyboardType: TextInputType.number,
+                      prefixIcon: Icon(
+                        Icons.credit_card,
+                        color: AppColors.tanMedium,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
 
-                    _buildLabel('Nomor WhatsApp Aktif'),
-                    _buildPhoneField(),
-                    const SizedBox(height: AppConstants.spaceMd),
+                    const AppTextField(
+                      label: 'Nomor WhatsApp Aktif',
+                      hintText: '812 3456 7890',
+                      isPhone: true,
+                      phonePrefix: '+62',
+                    ),
+                    const SizedBox(height: AppSpacing.md),
 
-                    _buildLabel('Buat PIN / Kata Sandi'),
-                    _buildPasswordField(),
-                    const SizedBox(height: AppConstants.spaceMd),
+                    AppTextField(
+                      label: 'Buat PIN / Kata Sandi',
+                      hintText: 'Min. 6 digit angka/huruf',
+                      obscureText: _obscurePassword,
+                      prefixIcon: const Icon(
+                        Icons.lock_outline,
+                        color: AppColors.tanMedium,
+                        size: 20,
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: AppColors.textBody,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
 
                     PillButton(
                       label: 'Daftar Sekarang',
                       icon: Icons.person_add,
                       onPressed: () {
-                        // Demo logic
                         Navigator.of(context).pop();
                       },
                     ),
@@ -88,136 +119,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppConstants.spaceXs),
-      child: Text(text, style: AppTypography.labelPill.copyWith(color: AppColors.espressoDark)),
-    );
-  }
-
-  Widget _buildTextField({required String hint, required IconData icon, bool isNumber = false}) {
-    return Container(
-      height: 54,
-      decoration: BoxDecoration(
-        color: AppColors.surfaceWhite,
-        borderRadius: BorderRadius.circular(AppConstants.radiusPill),
-        border: Border.all(color: AppColors.goldLight, width: 2),
-      ),
-      child: Row(
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: AppConstants.spaceSm),
-            child: Icon(icon, color: AppColors.tanMedium, size: 20),
-          ),
-          Expanded(
-            child: TextFormField(
-              keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                hintText: hint,
-                hintStyle: AppTypography.bodyMd.copyWith(color: AppColors.outline),
-                contentPadding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceSm),
-                fillColor: Colors.transparent,
-                filled: true,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPhoneField() {
-    return Container(
-      height: 54,
-      decoration: BoxDecoration(
-        color: AppColors.surfaceWhite,
-        borderRadius: BorderRadius.circular(AppConstants.radiusPill),
-        border: Border.all(color: AppColors.goldLight, width: 2),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceSm),
-            decoration: BoxDecoration(
-              color: AppColors.canvasCreamSubtle.withValues(alpha: 0.7),
-              border: Border.all(color: AppColors.goldLight, width: 1),
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(AppConstants.radiusPill)),
-            ),
-            child: Row(
-              children: [
-                Text('🇮🇩 +62', style: AppTypography.titleSm.copyWith(fontWeight: FontWeight.bold)),
-                const Icon(Icons.arrow_drop_down, size: 16),
-              ],
-            ),
-          ),
-          Expanded(
-            child: TextFormField(
-              keyboardType: TextInputType.phone,
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                hintText: '812 3456 7890',
-                hintStyle: AppTypography.bodyMd.copyWith(color: AppColors.outline),
-                contentPadding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceSm),
-                fillColor: Colors.transparent,
-                filled: true,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPasswordField() {
-    return Container(
-      height: 54,
-      decoration: BoxDecoration(
-        color: AppColors.surfaceWhite,
-        borderRadius: BorderRadius.circular(AppConstants.radiusPill),
-        border: Border.all(color: AppColors.goldLight, width: 2),
-      ),
-      child: Row(
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(left: AppConstants.spaceSm),
-            child: Icon(Icons.lock, color: AppColors.tanMedium, size: 20),
-          ),
-          Expanded(
-            child: TextFormField(
-              obscureText: _obscurePassword,
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                hintText: 'Min. 6 digit angka/huruf',
-                hintStyle: AppTypography.bodyMd.copyWith(color: AppColors.outline),
-                contentPadding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceSm),
-                fillColor: Colors.transparent,
-                filled: true,
-              ),
-            ),
-          ),
-          IconButton(
-            icon: Icon(
-              _obscurePassword ? Icons.visibility : Icons.visibility_off,
-              color: AppColors.textBody,
-            ),
-            onPressed: () {
-              setState(() {
-                _obscurePassword = !_obscurePassword;
-              });
-            },
-          ),
-        ],
       ),
     );
   }

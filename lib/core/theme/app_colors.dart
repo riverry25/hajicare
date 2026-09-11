@@ -25,6 +25,7 @@ class AppColors {
   static const Color surfaceWhite = Color(0xFFFFFFFF);
   static const Color canvasCream = Color(0xFFF0E8DC);
   static const Color canvasCreamSubtle = Color(0xFFEDE4D3);
+  static const Color surfaceBright = Color(0xFFFFFBFF);
   static const Color surfaceContainerLow = Color(0xFFFFF1E6);
   static const Color surfaceContainer = Color(0xFFFEEBD8);
   static const Color surfaceContainerHigh = Color(0xFFF9E5D3);
@@ -42,6 +43,12 @@ class AppColors {
   static const Color sosEmergency = Color(0xFFE63946);
   static const Color distanceWarning = Color(0xFFF4A259);
   static const Color statusPositive = Color(0xFF4CAF50);
+  
+  // Standard Status Tokens
+  static const Color statusWarning = Color(0xFFF4A259);
+  static const Color statusDanger = Color(0xFFE63946);
+  static const Color statusSafe = Color(0xFF4CAF50);
+  
   static const Color error = Color(0xFFBA1A1A);
   static const Color errorContainer = Color(0xFFFFDAD6);
   

@@ -1,28 +1,33 @@
+import '../theme/app_radius.dart';
+import '../theme/app_sizes.dart';
+import '../theme/app_spacing.dart';
+
 class AppConstants {
   AppConstants._();
 
   // Spacing (from tokens)
-  static const double space2xs = 4.0;
-  static const double spaceXs = 8.0;
-  static const double spaceSm = 12.0;
-  static const double spaceMd = 16.0;
-  static const double spaceLg = 20.0;
-  static const double spaceXl = 24.0;
-  static const double space2xl = 32.0;
-  static const double space3xl = 40.0;
+  static const double space2xs = AppSpacing.sm2;
+  static const double spaceXs = AppSpacing.sm;
+  static const double spaceSm = AppSpacing.md;
+  static const double spaceMd = AppSpacing.lg;
+  static const double spaceLg = AppSpacing.xl;
+  static const double spaceXl = AppSpacing.xl2;
+  static const double space2xl = AppSpacing.xl3;
+  static const double space3xl = AppSpacing.xl4;
   
-  static const double screenEdgeGutter = 16.0;
-  static const double cardPadding = 20.0;
+  static const double screenEdgeGutter = AppSpacing.screenEdgeGutter;
+  static const double cardPadding = AppSpacing.cardPadding;
 
   // Touch Targets
-  static const double touchTargetMin = 48.0;
-  static const double buttonHeightPrimary = 52.0;
-  static const double buttonHeightSecondary = 48.0;
+  static const double touchTargetMin = AppSizes.touchTargetMin;
+  static const double buttonHeightPrimary = AppSizes.buttonHeightPrimary;
+  static const double buttonHeightSecondary = AppSizes.buttonHeightSecondary;
 
   // Border Radius
-  static const double radiusSm = 12.0;
-  static const double radiusMd = 16.0;
-  static const double radiusCard = 16.0; // Standard card radius
-  static const double radiusSheet = 24.0;
-  static const double radiusPill = 9999.0;
+  static const double radiusSm = AppRadius.sm;
+  static const double radiusMd = AppRadius.md;
+  static const double radiusCard = AppRadius.lg; // Standard card radius
+  static const double radiusSheet = AppRadius.xl;
+  static const double radiusPill = AppRadius.pill;
 }
+

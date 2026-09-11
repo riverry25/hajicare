@@ -32,6 +32,11 @@ class AppRoutes {
   static const String profile = '/profile';
   static const String notification = '/notification';
 
+  static const String map = '/map';
+  static const String sosModal = '/sos-modal';
+  static const String prayer = '/prayer';
+  static const String money = '/money';
+
   static Map<String, WidgetBuilder> get routes => {
         splash: (context) => const SplashScreen(),
         onboarding: (context) => const OnboardingScreen(),
@@ -40,10 +45,14 @@ class AppRoutes {
         dashboardJamaah: (context) => const DashboardJamaahScreen(),
         dashboardPendamping: (context) => const DashboardPendampingScreen(),
         interactiveMap: (context) => const InteractiveMapScreen(),
+        map: (context) => const InteractiveMapScreen(),
         modalSos: (context) => const ModalSosScreen(),
+        sosModal: (context) => const ModalSosScreen(),
         distanceAlert: (context) => const DistanceAlertScreen(),
         prayerTimes: (context) => const PrayerTimesScreen(),
+        prayer: (context) => const PrayerTimesScreen(),
         moneyRecognition: (context) => const MoneyRecognitionScreen(),
+        money: (context) => const MoneyRecognitionScreen(),
         communication: (context) => const CommunicationScreen(),
         profile: (context) => const ProfileScreen(),
         notification: (context) => const NotificationScreen(),

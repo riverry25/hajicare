@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../core/constants/app_constants.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -10,7 +12,8 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
@@ -20,11 +23,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       duration: const Duration(seconds: 4),
       vsync: this,
     )..repeat(reverse: true);
-    
-    // Simulate loading
+
+    // Simulate loading and navigate
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
-        // Navigate to onboarding next
         Navigator.of(context).pushReplacementNamed('/onboarding');
       }
     });
@@ -42,7 +44,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       backgroundColor: AppColors.espressoDark,
       body: Stack(
         children: [
-          // Background Gradient & Pattern
+          // Background Gradient
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -56,8 +58,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               ),
             ),
           ),
-          
-          // Ornaments
+
+          // Top ambient glow
           Positioned(
             top: -96,
             left: 0,
@@ -73,7 +75,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               ),
             ),
           ),
-          
+
           SafeArea(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -81,8 +83,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 // Top Status
                 Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.spaceLg,
-                    vertical: AppConstants.spaceXl,
+                    horizontal: AppSpacing.screenEdgeGutter,
+                    vertical: AppSpacing.lg,
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -97,10 +99,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                               shape: BoxShape.circle,
                             ),
                           ),
-                          const SizedBox(width: AppConstants.spaceXs),
+                          const SizedBox(width: AppSpacing.sm2),
                           Text(
                             'KONEKSI AMAN',
-                            style: AppTypography.captionBold.copyWith(
+                            style: AppTypography.captionSmall.copyWith(
                               color: AppColors.canvasCreamSubtle,
                             ),
                           ),
@@ -108,21 +110,29 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: AppConstants.spaceSm,
-                          vertical: AppConstants.space2xs,
+                          horizontal: AppSpacing.md,
+                          vertical: 4,
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.espressoDark.withValues(alpha: 0.6),
-                          borderRadius: BorderRadius.circular(AppConstants.radiusPill),
-                          border: Border.all(color: AppColors.goldLight.withValues(alpha: 0.2)),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          border: Border.all(
+                            color: AppColors.goldLight.withValues(alpha: 0.2),
+                          ),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.mosque, size: 14, color: AppColors.goldLight),
-                            const SizedBox(width: AppConstants.spaceXs),
+                            const Icon(
+                              Icons.mosque,
+                              size: 14,
+                              color: AppColors.goldLight,
+                            ),
+                            const SizedBox(width: AppSpacing.sm2),
                             Text(
                               'Makkah Al-Mukarramah',
-                              style: AppTypography.caption.copyWith(color: AppColors.canvasCream),
+                              style: AppTypography.caption.copyWith(
+                                color: AppColors.canvasCream,
+                              ),
                             ),
                           ],
                         ),
@@ -142,15 +152,17 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         height: 144,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.goldLight.withValues(alpha: 0.3)),
+                          border: Border.all(
+                            color: AppColors.goldLight.withValues(alpha: 0.3),
+                          ),
                         ),
                         padding: const EdgeInsets.all(10),
                         child: Container(
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: AppColors.accentGoldStar.withValues(alpha: 0.4),
-                              style: BorderStyle.solid, // Should be dashed but solid for simplicity
+                              color:
+                                  AppColors.accentGoldStar.withValues(alpha: 0.4),
                             ),
                           ),
                           child: Center(
@@ -176,10 +188,14 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                                       AppColors.secondary,
                                     ],
                                   ),
-                                  border: Border.all(color: AppColors.goldLight.withValues(alpha: 0.4)),
+                                  border: Border.all(
+                                    color:
+                                        AppColors.goldLight.withValues(alpha: 0.4),
+                                  ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.2),
+                                      color:
+                                          AppColors.primary.withValues(alpha: 0.2),
                                       blurRadius: 10,
                                       spreadRadius: 2,
                                     ),
@@ -197,40 +213,44 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                           ),
                         ),
                       ),
-                      const SizedBox(height: AppConstants.spaceXl),
-                      
-                      // Arabic Text
-                      const Text(
+                      const SizedBox(height: AppSpacing.xl),
+
+                      // Arabic Calligraphy Text
+                      Text(
                         'رِعَايَةُ الحَجِيجِ وَالمُعْتَمِرِينَ',
-                        style: TextStyle(
-                          fontFamily: 'Amiri', // Assumes added, fallback to sans if not
+                        style: GoogleFonts.amiri(
                           fontSize: 24,
+                          fontWeight: FontWeight.bold,
                           color: AppColors.goldLight,
                         ),
                       ),
-                      
+
                       // App Name
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
                             'Haji',
-                            style: AppTypography.displayHero.copyWith(
+                            style: AppTypography.displayLarge.copyWith(
                               color: AppColors.surfaceWhite,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                           Text(
                             'Care',
-                            style: AppTypography.displayHero.copyWith(
+                            style: AppTypography.displayLarge.copyWith(
                               color: AppColors.goldLight,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                         ],
                       ),
-                      
+
                       // Divider
                       Padding(
-                        padding: const EdgeInsets.symmetric(vertical: AppConstants.spaceSm),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.sm,
+                        ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -239,36 +259,48 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                               height: 1,
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
-                                  colors: [Colors.transparent, AppColors.goldLight.withValues(alpha: 0.6), AppColors.goldLight],
+                                  colors: [
+                                    Colors.transparent,
+                                    AppColors.goldLight.withValues(alpha: 0.6),
+                                    AppColors.goldLight,
+                                  ],
                                 ),
                               ),
                             ),
                             const Padding(
                               padding: EdgeInsets.symmetric(horizontal: 12),
-                              child: Icon(Icons.star, size: 12, color: AppColors.accentGoldStar),
+                              child: Icon(
+                                Icons.star,
+                                size: 12,
+                                color: AppColors.accentGoldStar,
+                              ),
                             ),
                             Container(
                               width: 60,
                               height: 1,
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
-                                  colors: [AppColors.goldLight, AppColors.goldLight.withValues(alpha: 0.6), Colors.transparent],
+                                  colors: [
+                                    AppColors.goldLight,
+                                    AppColors.goldLight.withValues(alpha: 0.6),
+                                    Colors.transparent,
+                                  ],
                                 ),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      
+
                       // Tagline
                       Text(
                         'Sahabat Setia & Amanah di Tanah Suci',
-                        style: AppTypography.headlineMd.copyWith(
+                        style: AppTypography.titleMedium.copyWith(
                           color: AppColors.canvasCream,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(height: AppConstants.space2xs),
+                      const SizedBox(height: 2),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 40),
                         child: Text(
@@ -286,9 +318,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 // Bottom Loader
                 Padding(
                   padding: const EdgeInsets.only(
-                    bottom: AppConstants.space2xl,
-                    left: AppConstants.spaceXl,
-                    right: AppConstants.spaceXl,
+                    bottom: AppSpacing.xl3,
+                    left: AppSpacing.xl,
+                    right: AppSpacing.xl,
                   ),
                   child: Column(
                     children: [
@@ -301,31 +333,39 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                               children: [
                                 Text(
                                   'Menyiapkan Layanan',
-                                  style: AppTypography.captionBold.copyWith(
-                                    color: AppColors.goldLight.withValues(alpha: 0.8),
+                                  style: AppTypography.captionSmall.copyWith(
+                                    color:
+                                        AppColors.goldLight.withValues(alpha: 0.8),
                                   ),
                                 ),
                                 Text(
                                   'Harmoni',
-                                  style: AppTypography.bodySm.copyWith(
+                                  style: AppTypography.bodySmall.copyWith(
                                     color: AppColors.goldLight,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: AppConstants.space2xs),
+                            const SizedBox(height: 4),
                             Container(
                               height: 6,
                               decoration: BoxDecoration(
                                 color: Colors.black.withValues(alpha: 0.4),
-                                borderRadius: BorderRadius.circular(AppConstants.radiusPill),
-                                border: Border.all(color: AppColors.goldLight.withValues(alpha: 0.25)),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.pill),
+                                border: Border.all(
+                                  color: AppColors.goldLight
+                                      .withValues(alpha: 0.25),
+                                ),
                               ),
                               child: ClipRRect(
-                                borderRadius: BorderRadius.circular(AppConstants.radiusPill),
-                                child: LinearProgressIndicator(
-                                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.goldLight),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.pill),
+                                child: const LinearProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    AppColors.goldLight,
+                                  ),
                                   backgroundColor: Colors.transparent,
                                 ),
                               ),
@@ -333,16 +373,21 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                           ],
                         ),
                       ),
-                      const SizedBox(height: AppConstants.spaceMd),
+                      const SizedBox(height: AppSpacing.md),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.verified_user, color: AppColors.goldLight, size: 16),
-                          const SizedBox(width: AppConstants.spaceXs),
+                          const Icon(
+                            Icons.verified_user,
+                            color: AppColors.goldLight,
+                            size: 16,
+                          ),
+                          const SizedBox(width: AppSpacing.sm2),
                           Text(
                             'Didukung oleh Inisiatif Pelayanan Jamaah',
                             style: AppTypography.caption.copyWith(
-                              color: AppColors.canvasCreamSubtle.withValues(alpha: 0.8),
+                              color: AppColors.canvasCreamSubtle
+                                  .withValues(alpha: 0.8),
                             ),
                           ),
                         ],

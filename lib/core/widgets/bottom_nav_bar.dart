@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_typography.dart';
-import '../constants/app_constants.dart';
 import '../routes/app_routes.dart';
 import '../state/hajicare_state.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_radius.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_typography.dart';
 
 class HajiCareBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -59,11 +60,16 @@ class HajiCareBottomNavBar extends StatelessWidget {
             offset: const Offset(0, -4),
           ),
         ],
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppConstants.radiusMd)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.lg),
+        ),
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceXs, vertical: AppConstants.spaceXs),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm2,
+            vertical: AppSpacing.sm2,
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -78,20 +84,25 @@ class HajiCareBottomNavBar extends StatelessWidget {
     );
   }
 
-  Widget _buildNavItem(BuildContext context, int index, IconData icon, String label) {
+  Widget _buildNavItem(
+    BuildContext context,
+    int index,
+    IconData icon,
+    String label,
+  ) {
     final isSelected = currentIndex == index;
-    
+
     return InkWell(
       onTap: () => _handleNavigation(context, index),
-      borderRadius: BorderRadius.circular(AppConstants.radiusPill),
+      borderRadius: BorderRadius.circular(AppRadius.pill),
       child: Container(
         padding: const EdgeInsets.symmetric(
-          horizontal: AppConstants.spaceMd,
-          vertical: AppConstants.spaceXs,
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm2,
         ),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.canvasCream : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppConstants.radiusPill),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -104,7 +115,7 @@ class HajiCareBottomNavBar extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               label,
-              style: AppTypography.captionBold.copyWith(
+              style: AppTypography.captionSmall.copyWith(
                 color: isSelected ? AppColors.espressoDark : AppColors.textBody,
               ),
             ),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_sizes.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../core/constants/app_constants.dart';
-import '../../../core/widgets/pill_button.dart';
+import '../../../core/widgets/app_status_badge.dart';
 
 class DistanceAlertScreen extends StatelessWidget {
   const DistanceAlertScreen({super.key});
@@ -12,157 +14,158 @@ class DistanceAlertScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.distanceWarning,
       body: SafeArea(
-        child: Column(
-          children: [
-            const Spacer(flex: 1),
-            Center(
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: AppConstants.spaceLg),
-                padding: const EdgeInsets.all(AppConstants.spaceLg),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceWhite,
-                  borderRadius: BorderRadius.circular(AppConstants.radiusSheet),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.espressoDark.withValues(alpha: 0.2),
-                      blurRadius: 40,
-                      spreadRadius: 10,
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.screenEdgeGutter,
+              vertical: AppSpacing.lg,
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceWhite,
+                borderRadius: BorderRadius.circular(AppRadius.xl),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.espressoDark.withValues(alpha: 0.2),
+                    blurRadius: 40,
+                    spreadRadius: 10,
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Warning Icon with double ring
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Container(
+                        width: 88,
+                        height: 88,
+                        decoration: BoxDecoration(
+                          color: AppColors.distanceWarning.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      Container(
+                        width: 68,
+                        height: 68,
+                        decoration: BoxDecoration(
+                          color: AppColors.distanceWarning.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: AppColors.distanceWarning,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.distanceWarning.withValues(alpha: 0.4),
+                              blurRadius: 12,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(Icons.radar, color: Colors.white, size: 28),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  // Label pill
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: 4,
                     ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Warning Icon with double ring
-                    Stack(
-                      alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.espressoDark,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    child: Text(
+                      'PERINGATAN JARAK LANSIA',
+                      style: AppTypography.captionSmall.copyWith(
+                        color: AppColors.surfaceWhite,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+
+                  Text(
+                    'Anda Terlalu Jauh',
+                    style: AppTypography.displayMedium.copyWith(
+                      color: AppColors.espressoDark,
+                      fontWeight: FontWeight.w800,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: AppSpacing.sm2),
+
+                  Text(
+                    'Jarak Anda dari Pendamping (Siti Aminah) telah melebihi batas aman 200 meter. Harap segera kembali ke rombongan.',
+                    style: AppTypography.bodySmall.copyWith(color: AppColors.textBody),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Distance metric
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: AppColors.canvasCream.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(
+                        color: AppColors.distanceWarning.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Column(
                       children: [
-                        Container(
-                          width: 96,
-                          height: 96,
-                          decoration: BoxDecoration(
-                            color: AppColors.distanceWarning.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        Container(
-                          width: 72,
-                          height: 72,
-                          decoration: BoxDecoration(
-                            color: AppColors.distanceWarning.withValues(alpha: 0.2),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            color: AppColors.distanceWarning,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.distanceWarning.withValues(alpha: 0.4),
-                                blurRadius: 12,
-                                spreadRadius: 2,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Text(
+                              '245',
+                              style: AppTypography.heroNumberLarge.copyWith(
+                                color: AppColors.distanceWarning,
                               ),
-                            ],
-                          ),
-                          child: const Icon(Icons.radar, color: Colors.white, size: 32),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'meter',
+                              style: AppTypography.titleMedium.copyWith(
+                                color: AppColors.textBody,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        const AppStatusBadge(
+                          label: '45m melebihi batas aman',
+                          statusType: AppStatusType.danger,
                         ),
                       ],
                     ),
-                    const SizedBox(height: AppConstants.spaceMd),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
 
-                    // Label pill
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceSm, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.espressoDark,
-                        borderRadius: BorderRadius.circular(AppConstants.radiusPill),
-                      ),
-                      child: Text(
-                        'PERINGATAN JARAK LANSIA',
-                        style: AppTypography.captionBold.copyWith(
-                          color: AppColors.surfaceWhite,
-                          letterSpacing: 1.2,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: AppConstants.spaceSm),
-
-                    Text(
-                      'Anda Terlalu Jauh',
-                      style: AppTypography.displayHero.copyWith(color: AppColors.espressoDark),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: AppConstants.spaceSm),
-
-                    Text(
-                      'Jarak Anda dari Pendamping (Siti Aminah) telah melebihi batas aman 200 meter. Harap segera kembali ke rombongan.',
-                      style: AppTypography.bodyMd.copyWith(color: AppColors.textBody),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: AppConstants.spaceLg),
-
-                    // Distance metric
-                    Container(
-                      padding: const EdgeInsets.all(AppConstants.spaceMd),
-                      decoration: BoxDecoration(
-                        color: AppColors.canvasCream.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-                        border: Border.all(color: AppColors.distanceWarning.withValues(alpha: 0.3)),
-                      ),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.baseline,
-                            textBaseline: TextBaseline.alphabetic,
-                            children: [
-                              Text(
-                                '245',
-                                style: AppTypography.displayHero.copyWith(
-                                  color: AppColors.distanceWarning,
-                                  fontSize: 48,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text('meter', style: AppTypography.titleSm.copyWith(color: AppColors.textBody)),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: AppColors.sosEmergency.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(AppConstants.radiusPill),
-                                ),
-                                child: Text(
-                                  '45m melebihi batas aman',
-                                  style: AppTypography.captionBold.copyWith(color: AppColors.sosEmergency, fontSize: 11),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: AppConstants.spaceLg),
-
-                    // Buttons
-                    ElevatedButton(
+                  // Action Buttons
+                  SizedBox(
+                    width: double.infinity,
+                    height: AppSizes.buttonHeightPrimary,
+                    child: ElevatedButton(
                       onPressed: () => Navigator.of(context).pop(),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.espressoDark,
                         foregroundColor: AppColors.surfaceWhite,
-                        minimumSize: const Size.fromHeight(52),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppConstants.radiusPill),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
                         elevation: 4,
                       ),
@@ -170,37 +173,49 @@ class DistanceAlertScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Icon(Icons.directions, size: 20),
-                          const SizedBox(width: AppConstants.spaceXs),
-                          Text('Lihat Arah Kembali', style: AppTypography.labelPill.copyWith(color: AppColors.surfaceWhite)),
+                          const SizedBox(width: AppSpacing.sm2),
+                          Text(
+                            'Lihat Arah Kembali',
+                            style: AppTypography.labelLarge.copyWith(
+                              color: AppColors.surfaceWhite,
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: AppConstants.spaceSm),
-                    OutlinedButton(
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  SizedBox(
+                    width: double.infinity,
+                    height: AppSizes.buttonHeightSecondary,
+                    child: OutlinedButton(
                       onPressed: () {},
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.espressoDark,
                         side: const BorderSide(color: AppColors.goldLight, width: 2),
-                        minimumSize: const Size.fromHeight(48),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppConstants.radiusPill),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Icon(Icons.call, size: 20, color: AppColors.tanMedium),
-                          const SizedBox(width: AppConstants.spaceXs),
-                          Text('Telepon Pendamping', style: AppTypography.labelPill.copyWith(color: AppColors.espressoDark)),
+                          const SizedBox(width: AppSpacing.sm2),
+                          Text(
+                            'Telepon Pendamping',
+                            style: AppTypography.labelLarge.copyWith(
+                              color: AppColors.espressoDark,
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-            const Spacer(flex: 1),
-          ],
+          ),
         ),
       ),
     );
