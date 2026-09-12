@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_colors.dart';
 
 enum UserRole { jamaah, pendamping }
@@ -48,6 +49,7 @@ class JamaahData {
   DistanceTier tier;
   bool separatedMode;
   bool sosActive;
+  GeoPoint? currentLocation;
   DateTime? _dangerStart;
 
   JamaahData({
@@ -55,9 +57,47 @@ class JamaahData {
     required this.name,
     required this.shortLabel,
     required this.distance,
-  })  : tier = _calcTier(distance),
-        separatedMode = false,
-        sosActive = false;
+    this.separatedMode = false,
+    this.sosActive = false,
+    this.currentLocation,
+  }) : tier = _calcTier(distance);
+
+  factory JamaahData.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>?;
+    if (data == null) {
+      return JamaahData(
+        id: doc.id,
+        name: 'Unknown',
+        shortLabel: 'Unknown',
+        distance: 0.0,
+      );
+    }
+    
+    // Fallbacks
+    final name = data['name'] as String? ?? 'Jamaah';
+    final shortLabel = name.split(' ').first;
+    final distance = (data['distance'] as num?)?.toDouble() ?? 0.0;
+    
+    return JamaahData(
+      id: doc.id,
+      name: name,
+      shortLabel: shortLabel,
+      distance: distance,
+      separatedMode: data['separatedMode'] as bool? ?? false,
+      sosActive: data['sosActive'] as bool? ?? false,
+      currentLocation: data['currentLocation'] as GeoPoint?,
+    );
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      'name': name,
+      'distance': distance,
+      'separatedMode': separatedMode,
+      'sosActive': sosActive,
+      if (currentLocation != null) 'currentLocation': currentLocation,
+    };
+  }
 
   static DistanceTier _calcTier(double d) {
     if (d < 100) return DistanceTier.aman;

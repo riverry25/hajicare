@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/routes/app_routes.dart';
-import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -23,6 +22,65 @@ class _LoginScreenState extends State<LoginScreen> {
   String _selectedRole = 'jamaah';
   bool _obscurePassword = true;
   bool _rememberMe = true;
+  bool _isLoading = false;
+
+  final _emailCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
+
+  Future<void> _login() async {
+    debugPrint('[Login] Starting login process...');
+    if (_emailCtrl.text.isEmpty || _passwordCtrl.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Harap isi email dan password')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      debugPrint('[Login] Calling signInWithEmailAndPassword...');
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailCtrl.text.trim(),
+        password: _passwordCtrl.text,
+      );
+      debugPrint('[Login] Auth success!');
+
+      if (mounted) {
+        debugPrint('[Login] Navigating to Dashboard (role: $_selectedRole)...');
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          _selectedRole == 'jamaah'
+              ? AppRoutes.dashboardJamaah
+              : AppRoutes.dashboardPendamping,
+          (_) => false,
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      debugPrint('[Login] FirebaseAuthException: ${e.code} - ${e.message}');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error Auth: ${e.message ?? e.code}')),
+        );
+      }
+    } catch (e) {
+      debugPrint('[Login] General Exception: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Terjadi kesalahan: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+      debugPrint('[Login] Process finished.');
+    }
+  }
+
+  @override
+  void dispose() {
+    _emailCtrl.dispose();
+    _passwordCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -222,11 +280,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const AppTextField(
-                      label: 'Nomor WhatsApp atau Email',
-                      hintText: '812 3456 7890',
-                      isPhone: true,
-                      phonePrefix: '+62',
+                    AppTextField(
+                      controller: _emailCtrl,
+                      label: 'Email Aktif',
+                      hintText: 'email@contoh.com',
+                      keyboardType: TextInputType.emailAddress,
+                      prefixIcon: const Icon(
+                        Icons.email_outlined,
+                        color: AppColors.tanMedium,
+                        size: 20,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Row(
@@ -239,7 +302,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(width: 5),
                         Expanded(
                           child: Text(
-                            'nomor WhatsApp aktif untuk menerima kode verifikasi',
+                            'Gunakan email yang terdaftar',
                             style: AppTypography.captionSmall.copyWith(
                               color: AppColors.textBody,
                             ),
@@ -270,6 +333,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     AppTextField(
+                      controller: _passwordCtrl,
                       hintText: 'Masukkan PIN / Kata Sandi',
                       obscureText: _obscurePassword,
                       prefixIcon: const Icon(
@@ -314,23 +378,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
 
                     const SizedBox(height: AppSpacing.sm),
-                    PillButton(
-                      label: context.tr('btnLogin').isEmpty ? 'Masuk ke Aplikasi' : context.tr('btnLogin'),
-                      icon: Icons.login,
-                      onPressed: () {
-                        final hajicare = context.read<HajiCareController>();
-                        hajicare.setRole(_selectedRole == 'jamaah'
-                            ? UserRole.jamaah
-                            : UserRole.pendamping);
-                        Navigator.pushNamedAndRemoveUntil(
-                          context,
-                          _selectedRole == 'jamaah'
-                              ? AppRoutes.dashboardJamaah
-                              : AppRoutes.dashboardPendamping,
-                          (_) => false,
-                        );
-                      },
-                    ),
+                    _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : PillButton(
+                            label: context.tr('btnLogin').isEmpty ? 'Masuk ke Aplikasi' : context.tr('btnLogin'),
+                            icon: Icons.login,
+                            onPressed: _login,
+                          ),
 
                     Padding(
                       padding: const EdgeInsets.symmetric(

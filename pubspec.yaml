@@ -22,6 +22,10 @@ dependencies:
   geolocator: ^14.0.2
   hijri: ^3.0.1
   geocoding: ^5.0.0
+  firebase_core: ^4.14.0
+  firebase_auth: ^6.6.1
+  cloud_firestore: ^6.9.0
+  firebase_messaging: ^16.6.0
 
 dev_dependencies:
   flutter_test:

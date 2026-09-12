@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "130436723221",
+    "project_id": "hajicare-e6497",
+    "storage_bucket": "hajicare-e6497.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:130436723221:android:47a76c6ceb0e5d123d141c",
+        "android_client_info": {
+          "package_name": "com.example.hajicare"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyArYIm5aj1Gmgk2GNm6HYzIR8meC3UViGo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
