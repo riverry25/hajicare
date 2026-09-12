@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -23,9 +23,9 @@ class _OnboardingSlideLanguageState extends State<OnboardingSlideLanguage> {
   int _selectedLanguageIndex = 0;
 
   @override
-  void initState() {
-    super.initState();
-    final current = Get.find<AppSettingsController>().currentLocale.languageCode;
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final current = context.read<AppSettingsController>().currentLocale.languageCode;
     final idx = _languages.indexWhere((l) => l.$1 == current);
     if (idx != -1) {
       _selectedLanguageIndex = idx;
@@ -142,8 +142,7 @@ class _OnboardingSlideLanguageState extends State<OnboardingSlideLanguage> {
                   onTap: () {
                     setState(() => _selectedLanguageIndex = index);
                     // Immediately apply and persist the chosen language globally
-                    Get.find<AppSettingsController>()
-                        .setLocale(Locale(lang.$1));
+                    context.read<AppSettingsController>().setLocale(Locale(lang.$1));
                   },
                 );
               },

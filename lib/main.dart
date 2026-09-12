@@ -1,16 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+
 import 'core/theme/app_theme.dart';
-import 'core/routes/app_pages.dart';
-import 'core/bindings/app_binding.dart';
+import 'core/routes/app_routes.dart';
 import 'core/state/app_settings_controller.dart';
-import 'core/locales/app_translations.dart';
+import 'core/state/hajicare_controller.dart';
+import 'core/locales/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final settings = Get.put(AppSettingsController(), permanent: true);
+  
+  final settings = AppSettingsController();
   await settings.loadSettings();
-  runApp(const HajiCareApp());
+  
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: settings),
+        ChangeNotifierProvider(create: (_) => HajiCareController()),
+      ],
+      child: const HajiCareApp(),
+    ),
+  );
 }
 
 class HajiCareApp extends StatelessWidget {
@@ -18,9 +30,9 @@ class HajiCareApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final settings = Get.find<AppSettingsController>();
+    final settings = context.watch<AppSettingsController>();
 
-    return GetMaterialApp(
+    return MaterialApp(
       title: 'HajiCare',
       debugShowCheckedModeBanner: false,
 
@@ -30,26 +42,27 @@ class HajiCareApp extends StatelessWidget {
       themeMode: settings.currentThemeMode,
 
       // Localization
-      translations: AppTranslations(),
       locale: settings.currentLocale,
-      fallbackLocale: AppTranslations.fallbackLocale,
+      supportedLocales: AppTranslations.supportedLocales,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
 
-      // Bindings & Routing
-      initialBinding: AppBinding(),
-      initialRoute: AppPages.initial,
-      getPages: AppPages.pages,
+      // Routing
+      initialRoute: AppRoutes.splash,
+      routes: AppRoutes.routes,
 
-      // Global text scale clamping — dynamically reactive via Obx only inside builder
+      // Global text scale clamping
       builder: (context, child) {
-        return Obx(() {
-          final factor = settings.textScaleFactor;
-          return MediaQuery(
-            data: MediaQuery.of(context).copyWith(
-              textScaler: TextScaler.linear(factor),
-            ),
-            child: child ?? const SizedBox.shrink(),
-          );
-        });
+        final factor = settings.textScaleFactor;
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.linear(factor),
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
       },
     );
   }

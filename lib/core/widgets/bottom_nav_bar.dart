@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 import '../routes/app_routes.dart';
 import '../state/hajicare_controller.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
+import '../locales/app_localizations.dart';
 
 class HajiCareBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -26,7 +27,7 @@ class HajiCareBottomNavBar extends StatelessWidget {
     }
 
     // Fallback if rendered outside of an IndexedStack shell
-    final hajicare = Get.find<HajiCareController>();
+    final hajicare = context.read<HajiCareController>();
     String route;
     switch (index) {
       case 0:
@@ -47,7 +48,7 @@ class HajiCareBottomNavBar extends StatelessWidget {
         return;
     }
 
-    Get.offNamed(route);
+    Navigator.pushReplacementNamed(context, route);
   }
 
   @override
@@ -75,10 +76,10 @@ class HajiCareBottomNavBar extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(context, 0, Icons.home_rounded, 'beranda'.tr),
-              _buildNavItem(context, 1, Icons.near_me_rounded, 'petaArah'.tr),
-              _buildNavItem(context, 2, Icons.schedule_rounded, 'jadwal'.tr),
-              _buildNavItem(context, 3, Icons.person_rounded, 'profil'.tr),
+              _buildNavItem(context, 0, Icons.home_rounded, context.tr('beranda')),
+              _buildNavItem(context, 1, Icons.near_me_rounded, context.tr('petaArah')),
+              _buildNavItem(context, 2, Icons.schedule_rounded, context.tr('jadwal')),
+              _buildNavItem(context, 3, Icons.person_rounded, context.tr('profil')),
             ],
           ),
         ),

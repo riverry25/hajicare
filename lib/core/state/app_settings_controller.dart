@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Text scale options for user-adjustable font size.
@@ -14,27 +13,24 @@ enum AppTextScale {
   final String label;
 }
 
-/// Centralized GetX controller for persistent user preferences:
+/// Centralized Provider controller for persistent user preferences:
 /// - Locale (language)
 /// - ThemeMode (light / dark / system)
 /// - Text scale factor (0.9 / 1.0 / 1.15 / 1.3)
-///
-/// Registered once via `Get.put(AppSettingsController(), permanent: true)` in `main()`.
-class AppSettingsController extends GetxController {
+class AppSettingsController extends ChangeNotifier {
   static const _kLocaleKey = 'hajicare_locale';
   static const _kThemeKey = 'hajicare_theme';
   static const _kTextScaleKey = 'hajicare_text_scale';
 
-  // ── Observables ─────────────────────────────────────────────────────────────
-  final Rx<Locale> locale = const Locale('id').obs;
-  final Rx<ThemeMode> themeMode = ThemeMode.system.obs;
-  final Rx<AppTextScale> textScale = AppTextScale.normal.obs;
+  Locale _locale = const Locale('id');
+  ThemeMode _themeMode = ThemeMode.system;
+  AppTextScale _textScale = AppTextScale.normal;
 
   // ── Getters ─────────────────────────────────────────────────────────────────
-  Locale get currentLocale => locale.value;
-  ThemeMode get currentThemeMode => themeMode.value;
-  AppTextScale get currentTextScale => textScale.value;
-  double get textScaleFactor => textScale.value.factor;
+  Locale get currentLocale => _locale;
+  ThemeMode get currentThemeMode => _themeMode;
+  AppTextScale get currentTextScale => _textScale;
+  double get textScaleFactor => _textScale.factor;
 
   // ── Load from SharedPreferences ─────────────────────────────────────────────
   Future<void> loadSettings() async {
@@ -42,59 +38,52 @@ class AppSettingsController extends GetxController {
 
     // Language
     final savedLocale = prefs.getString(_kLocaleKey) ?? 'id';
-    locale.value = Locale(savedLocale);
+    _locale = Locale(savedLocale);
 
     // Theme mode
     final savedTheme = prefs.getString(_kThemeKey) ?? 'system';
-    themeMode.value = _themeFromString(savedTheme);
+    _themeMode = _themeFromString(savedTheme);
 
     // Text scale
     final savedScale = prefs.getDouble(_kTextScaleKey) ?? 1.0;
-    textScale.value = _textScaleFromFactor(savedScale);
+    _textScale = _textScaleFromFactor(savedScale);
 
-    // Apply to GetX if UI is attached
-    if (Get.context != null) {
-      Get.updateLocale(locale.value);
-      Get.changeThemeMode(themeMode.value);
-    }
+    notifyListeners();
   }
 
   // ── Setters ─────────────────────────────────────────────────────────────────
   Future<void> setLocale(Locale newLocale) async {
-    if (locale.value == newLocale) return;
-    locale.value = newLocale;
-    if (Get.context != null) {
-      Get.updateLocale(newLocale);
-    }
+    if (_locale == newLocale) return;
+    _locale = newLocale;
+    notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kLocaleKey, newLocale.languageCode);
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
-    if (themeMode.value == mode) return;
-    themeMode.value = mode;
-    if (Get.context != null) {
-      Get.changeThemeMode(mode);
-    }
+    if (_themeMode == mode) return;
+    _themeMode = mode;
+    notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kThemeKey, _stringFromTheme(mode));
   }
 
   Future<void> setTextScale(AppTextScale scale) async {
-    if (textScale.value == scale) return;
-    textScale.value = scale;
+    if (_textScale == scale) return;
+    _textScale = scale;
+    notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble(_kTextScaleKey, scale.factor);
   }
 
   // ── Convenience helpers ──────────────────────────────────────────────────────
-  bool get isIdLocale => locale.value.languageCode == 'id';
-  bool get isJvLocale => locale.value.languageCode == 'jv';
-  bool get isSuLocale => locale.value.languageCode == 'su';
-  bool get isEnLocale => locale.value.languageCode == 'en';
+  bool get isIdLocale => _locale.languageCode == 'id';
+  bool get isJvLocale => _locale.languageCode == 'jv';
+  bool get isSuLocale => _locale.languageCode == 'su';
+  bool get isEnLocale => _locale.languageCode == 'en';
 
   String get localeName {
-    switch (locale.value.languageCode) {
+    switch (_locale.languageCode) {
       case 'jv':
         return 'Basa Jawi';
       case 'su':
@@ -107,7 +96,7 @@ class AppSettingsController extends GetxController {
   }
 
   String get themeModeName {
-    switch (themeMode.value) {
+    switch (_themeMode) {
       case ThemeMode.light:
         return 'Mode Terang';
       case ThemeMode.dark:

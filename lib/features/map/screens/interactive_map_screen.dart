@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/models/filter_chip_item.dart';
 import '../../../core/state/hajicare_controller.dart';
@@ -61,49 +61,47 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
 
   @override
   Widget build(BuildContext context) {
-    final state = Get.find<HajiCareController>();
+    final state = context.watch<HajiCareController>();
 
-    return Obx(() {
-      return Scaffold(
-        backgroundColor: AppColors.canvasCream,
-        body: Stack(
-          children: [
-            // Map Canvas
-            _buildMapCanvas(state),
+    return Scaffold(
+      backgroundColor: AppColors.canvasCream,
+      body: Stack(
+        children: [
+          // Map Canvas
+          _buildMapCanvas(state),
 
-            // Top Header
-            MapTopHeader(
-              filters: _filters,
-              selectedFilter: _selectedFilter,
-              onFilterSelected: (index) => setState(() => _selectedFilter = index),
-              onSosPressed: () => Get.toNamed(AppRoutes.modalSos),
-            ),
+          // Top Header
+          MapTopHeader(
+            filters: _filters,
+            selectedFilter: _selectedFilter,
+            onFilterSelected: (index) => setState(() => _selectedFilter = index),
+            onSosPressed: () => Navigator.pushNamed(context, AppRoutes.modalSos),
+          ),
 
-            // Right-side floating controls
-            MapFloatingControls(
-              onCompassTap: () {},
-              onLocationTap: () {},
-              onLayersTap: () {},
-              onBandTap: () {},
-            ),
+          // Right-side floating controls
+          MapFloatingControls(
+            onCompassTap: () {},
+            onLocationTap: () {},
+            onLayersTap: () {},
+            onBandTap: () {},
+          ),
 
-            // Bottom Sheet
-            MapBottomSheet(
-              state: state,
-              onNavigate: () {},
-              onShareLocation: () {},
-              onCall: () {},
-            ),
-          ],
-        ),
-        bottomNavigationBar: widget.showBottomNav
-            ? HajiCareBottomNavBar(
-                currentIndex: _currentIndex,
-                onTap: (index) => setState(() => _currentIndex = index),
-              )
-            : null,
-      );
-    });
+          // Bottom Sheet
+          MapBottomSheet(
+            state: state,
+            onNavigate: () {},
+            onShareLocation: () {},
+            onCall: () {},
+          ),
+        ],
+      ),
+      bottomNavigationBar: widget.showBottomNav
+          ? HajiCareBottomNavBar(
+              currentIndex: _currentIndex,
+              onTap: (index) => setState(() => _currentIndex = index),
+            )
+          : null,
+    );
   }
 
   Widget _buildMapCanvas(HajiCareController state) {

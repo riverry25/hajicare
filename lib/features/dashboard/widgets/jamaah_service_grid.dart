@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -114,7 +113,7 @@ class JamaahServiceGrid extends StatelessWidget {
   }) {
     return AppCard(
       padding: const EdgeInsets.all(AppSpacing.md),
-      onTap: route != null ? () => Get.toNamed(route) : null,
+      onTap: route != null ? () => Navigator.pushNamed(context, route) : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:provider/provider.dart';
+import '../../../core/locales/app_localizations.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -16,15 +17,19 @@ class PrayerTimesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(PrayerTimesController());
+    return ChangeNotifierProvider(
+      create: (_) => PrayerTimesController(),
+      child: Builder(
+        builder: (context) {
+          final controller = context.watch<PrayerTimesController>();
 
-    return Scaffold(
+          return Scaffold(
       backgroundColor: AppColors.canvasCream,
       appBar: AppBar(
         backgroundColor: AppColors.surfaceWhite,
         elevation: 1,
         title: Text(
-          'jadwal'.tr.isEmpty ? 'Jadwal Sholat & Kiblat' : 'jadwal'.tr,
+          context.tr('jadwal').isEmpty ? 'Jadwal Sholat & Kiblat' : context.tr('jadwal'),
           style: AppTypography.titleLarge.copyWith(
             color: AppColors.espressoDark,
             fontWeight: FontWeight.bold,
@@ -40,8 +45,7 @@ class PrayerTimesScreen extends StatelessWidget {
         child: Column(
           children: [
             // ── Dynamic Location & Hijri Date Bar ───────────────────────────
-            Obx(() {
-              return Container(
+            Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.md,
                   vertical: AppSpacing.sm,
@@ -72,7 +76,7 @@ class PrayerTimesScreen extends StatelessWidget {
                           const SizedBox(width: 6),
                           Flexible(
                             child: Text(
-                              controller.locationName.value,
+                              controller.locationName,
                               style: AppTypography.labelLarge.copyWith(
                                 color: AppColors.espressoDark,
                                 fontWeight: FontWeight.w700,
@@ -92,7 +96,7 @@ class PrayerTimesScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
                       child: Text(
-                        controller.hijriDateText.value,
+                        controller.hijriDateText,
                         style: AppTypography.caption.copyWith(
                           color: AppColors.espressoDark,
                           fontWeight: FontWeight.w600,
@@ -101,13 +105,11 @@ class PrayerTimesScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-              );
-            }),
+              ),
             const SizedBox(height: AppSpacing.lg),
 
             // ── Realtime Next Prayer Hero ──────────────────────────────────
-            Obx(() {
-              return Container(
+            Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(AppSpacing.xl),
                 decoration: BoxDecoration(
@@ -155,14 +157,14 @@ class PrayerTimesScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
-                      controller.nextPrayerName.value,
+                      controller.nextPrayerName,
                       style: AppTypography.heroNumberLarge.copyWith(
                         color: AppColors.surfaceWhite,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                     Text(
-                      controller.nextPrayerArabic.value,
+                      controller.nextPrayerArabic,
                       style: AppTypography.titleMedium.copyWith(
                         color: AppColors.goldLight,
                         fontWeight: FontWeight.w600,
@@ -170,7 +172,7 @@ class PrayerTimesScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      controller.nextPrayerTime.value,
+                      controller.nextPrayerTime,
                       style: AppTypography.headlineMd.copyWith(
                         color: AppColors.goldLight,
                         fontWeight: FontWeight.bold,
@@ -199,7 +201,7 @@ class PrayerTimesScreen extends StatelessWidget {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'Waktu tersisa: ${controller.countdownText.value}',
+                            'Waktu tersisa: ${controller.countdownText}',
                             style: AppTypography.bodySmall.copyWith(
                               color: AppColors.surfaceWhite,
                               fontWeight: FontWeight.w600,
@@ -210,16 +212,16 @@ class PrayerTimesScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-              );
-            }),
+              ),
             const SizedBox(height: AppSpacing.lg),
 
             // ── Dynamic Qibla Compass ──────────────────────────────────────
-            Obx(() {
-              final isAligned = controller.isQiblaAligned.value;
-              final qiblaDeg = controller.qiblaBearing.value.toStringAsFixed(0);
-              final headingDeg = controller.deviceHeading.value.toStringAsFixed(0);
-              final angleRadians = (controller.qiblaOffset.value * math.pi / 180.0);
+            Builder(
+              builder: (context) {
+                final isAligned = controller.isQiblaAligned;
+                final qiblaDeg = controller.qiblaBearing.toStringAsFixed(0);
+                final headingDeg = controller.deviceHeading.toStringAsFixed(0);
+                final angleRadians = (controller.qiblaOffset * math.pi / 180.0);
 
               return AppCard(
                 padding: const EdgeInsets.all(AppSpacing.lg),
@@ -513,18 +515,16 @@ class PrayerTimesScreen extends StatelessWidget {
                     ),
                   ),
                   const Divider(height: 1, color: AppColors.canvasCreamSubtle),
-                  Obx(() {
-                    return Column(
-                      children: controller.prayers.map((p) {
-                        return _buildPrayerRow(
+                  Column(
+                    children: controller.prayers.map((p) {
+                      return _buildPrayerRow(
                           name: p.name,
                           arabicName: p.arabicName,
                           time: p.formattedTime,
                           isNext: p.isNext,
                         );
-                      }).toList(),
-                    );
-                  }),
+                    }).toList(),
+                  ),
                 ],
               ),
             ),
@@ -537,6 +537,9 @@ class PrayerTimesScreen extends StatelessWidget {
               currentIndex: 2,
             )
           : null,
+    );
+        },
+      ),
     );
   }
 

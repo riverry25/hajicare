@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -162,7 +161,7 @@ class DistanceAlertScreen extends StatelessWidget {
                     width: double.infinity,
                     height: AppSizes.buttonHeightPrimary,
                     child: ElevatedButton(
-                      onPressed: () => Get.offNamed(AppRoutes.interactiveMap),
+                      onPressed: () => Navigator.pushReplacementNamed(context, AppRoutes.interactiveMap),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.espressoDark,
                         foregroundColor: AppColors.surfaceWhite,
@@ -191,7 +190,7 @@ class DistanceAlertScreen extends StatelessWidget {
                     width: double.infinity,
                     height: AppSizes.buttonHeightSecondary,
                     child: OutlinedButton(
-                      onPressed: () => Get.toNamed(AppRoutes.communication),
+                      onPressed: () => Navigator.pushNamed(context, AppRoutes.communication),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.espressoDark,
                         side: const BorderSide(color: AppColors.goldLight, width: 2),

@@ -1,17 +1,16 @@
 import 'dart:async';
 import 'dart:math';
-import 'package:get/get.dart';
+import 'package:flutter/foundation.dart';
 import '../models/jamaah_data.dart';
 export '../models/jamaah_data.dart';
 
-class HajiCareController extends GetxController {
-  final Rx<UserRole> _role = UserRole.jamaah.obs;
-  UserRole get role => _role.value;
-  Rx<UserRole> get rxRole => _role;
+class HajiCareController extends ChangeNotifier {
+  UserRole _role = UserRole.jamaah;
+  UserRole get role => _role;
 
   static const int selfJamaahIndex = 0;
 
-  final RxList<JamaahData> jamaahList = <JamaahData>[
+  final List<JamaahData> jamaahList = <JamaahData>[
     JamaahData(
       id: 'j1',
       name: 'H. Ahmad Dahlan (Ayah)',
@@ -24,21 +23,20 @@ class HajiCareController extends GetxController {
       shortLabel: 'Ibu',
       distance: 55,
     ),
-  ].obs;
+  ];
 
   final String pendampingName = 'Siti Aminah (Putri)';
 
   Timer? _simTimer;
   final Random _rng = Random();
 
-  @override
-  void onInit() {
-    super.onInit();
+  HajiCareController() {
     _startSimulation();
   }
 
   void setRole(UserRole role) {
-    _role.value = role;
+    _role = role;
+    notifyListeners();
   }
 
   JamaahData get self => jamaahList[selfJamaahIndex];
@@ -65,7 +63,7 @@ class HajiCareController extends GetxController {
 
   void triggerSos() {
     jamaahList[selfJamaahIndex].sosActive = true;
-    jamaahList.refresh();
+    notifyListeners();
   }
 
   void dismissSos(String id) {
@@ -74,7 +72,7 @@ class HajiCareController extends GetxController {
       orElse: () => jamaahList.first,
     );
     j.sosActive = false;
-    jamaahList.refresh();
+    notifyListeners();
   }
 
   void _startSimulation() {
@@ -86,13 +84,13 @@ class HajiCareController extends GetxController {
         j.distance = (j.distance + delta).clamp(0, 400);
         j.refresh();
       }
-      jamaahList.refresh();
+      notifyListeners();
     });
   }
 
   @override
-  void onClose() {
+  void dispose() {
     _simTimer?.cancel();
-    super.onClose();
+    super.dispose();
   }
 }

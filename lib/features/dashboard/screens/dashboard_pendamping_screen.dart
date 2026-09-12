@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/state/hajicare_controller.dart';
@@ -31,34 +31,31 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state = Get.find<HajiCareController>();
+    final state = context.watch<HajiCareController>();
+    final selectedJamaah = state.jamaahList.length > _selectedJamaahIndex
+        ? state.jamaahList[_selectedJamaahIndex]
+        : state.jamaahList.first;
 
-    return Obx(() {
-      final selectedJamaah = state.jamaahList.length > _selectedJamaahIndex
-          ? state.jamaahList[_selectedJamaahIndex]
-          : state.jamaahList.first;
-
-      return Scaffold(
-        backgroundColor: AppColors.canvasCream,
-        body: IndexedStack(
-          index: _currentIndex,
-          children: [
-            _buildPendampingHome(state, selectedJamaah),
-            const InteractiveMapScreen(showBottomNav: false),
-            const PrayerTimesScreen(showBottomNav: false),
-            const ProfileScreen(showBottomNav: false),
-          ],
-        ),
-        bottomNavigationBar: HajiCareBottomNavBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-        ),
-      );
-    });
+    return Scaffold(
+      backgroundColor: AppColors.canvasCream,
+      body: IndexedStack(
+        index: _currentIndex,
+        children: [
+          _buildPendampingHome(state, selectedJamaah),
+          const InteractiveMapScreen(showBottomNav: false),
+          const PrayerTimesScreen(showBottomNav: false),
+          const ProfileScreen(showBottomNav: false),
+        ],
+      ),
+      bottomNavigationBar: HajiCareBottomNavBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+      ),
+    );
   }
 
   Widget _buildPendampingHome(HajiCareController state, JamaahData selectedJamaah) {
@@ -117,7 +114,7 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
                   Icons.notifications_outlined,
                   color: AppColors.espressoDark,
                 ),
-                onPressed: () => Get.toNamed(AppRoutes.notification),
+                onPressed: () => Navigator.pushNamed(context, AppRoutes.notification),
               ),
               if (state.anySosActive)
                 Positioned(
@@ -451,7 +448,7 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
                         _currentIndex = item['tabIndex'] as int;
                       });
                     } else if (item['route'] != null) {
-                      Get.toNamed(item['route'] as String);
+                      Navigator.pushNamed(context, item['route'] as String);
                     }
                   },
                   child: Column(

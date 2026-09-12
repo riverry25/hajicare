@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
@@ -7,6 +6,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_sizes.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/locales/app_localizations.dart';
 import '../widgets/onboarding_slide_accessibility.dart';
 import '../widgets/onboarding_slide_language.dart';
 import '../widgets/onboarding_slide_safety.dart';
@@ -35,7 +35,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      Get.offAllNamed(AppRoutes.login);
+      Navigator.pushReplacementNamed(context, AppRoutes.login);
     }
   }
 
@@ -82,7 +82,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             ),
                           ),
                           Text(
-                            'appTagline'.tr,
+                            context.tr('appTagline'),
                             style: AppTypography.caption.copyWith(
                               color: AppColors.tanMedium,
                             ),
@@ -93,7 +93,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                   // Skip button
                   TextButton(
-                    onPressed: () => Get.offAllNamed(AppRoutes.login),
+                    onPressed: () => Navigator.pushReplacementNamed(context, AppRoutes.login),
                     style: TextButton.styleFrom(
                       backgroundColor: AppColors.surfaceWhite,
                       minimumSize: const Size(48, 36),
@@ -185,10 +185,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         children: [
                           Text(
                             _currentPage == 0
-                                ? 'btnNextFeature'.tr
+                                ? context.tr('btnNextFeature')
                                 : _currentPage == 1
-                                ? 'btnNextAccess'.tr
-                                : 'btnStartNow'.tr,
+                                ? context.tr('btnNextAccess')
+                                : context.tr('btnStartNow'),
                             style: AppTypography.labelLarge.copyWith(
                               color: AppColors.surfaceWhite,
                             ),

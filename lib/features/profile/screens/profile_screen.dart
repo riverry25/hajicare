@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
@@ -17,9 +17,9 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final settings = Get.find<AppSettingsController>();
+    final settings = context.watch<AppSettingsController>();
 
-    return Obx(() {
+    {
       final isDark = AppColors.isDark(context);
       final scaffoldBg = isDark ? AppColors.darkScaffold : AppColors.canvasCream;
       final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
@@ -150,7 +150,7 @@ class ProfileScreen extends StatelessWidget {
               )
             : null,
       );
-    });
+    }
   }
 
   // ── Language Picker Bottom Sheet ──────────────────────────────────────────
@@ -171,7 +171,7 @@ class ProfileScreen extends StatelessWidget {
           isSelected: isSelected,
           onTap: () {
             settings.setLocale(opt.$1);
-            Get.back();
+            Navigator.pop(context);
           },
         );
       }).toList(),
@@ -196,7 +196,7 @@ class ProfileScreen extends StatelessWidget {
           isSelected: isSelected,
           onTap: () {
             settings.setThemeMode(opt.$1);
-            Get.back();
+            Navigator.pop(context);
           },
         );
       }).toList(),
@@ -216,7 +216,7 @@ class ProfileScreen extends StatelessWidget {
           isSelected: isSelected,
           onTap: () {
             settings.setTextScale(scale);
-            Get.back();
+            Navigator.pop(context);
           },
         );
       }).toList(),
@@ -502,16 +502,37 @@ class _LogoutButton extends StatelessWidget {
       label: label,
       child: ElevatedButton(
         onPressed: () {
-          Get.defaultDialog(
-            title: label,
-            middleText: 'apakahYakinKeluar'.tr.isEmpty ? 'Yakin ingin keluar dari akun?' : 'apakahYakinKeluar'.tr,
-            textConfirm: 'yes'.tr,
-            textCancel: 'cancel'.tr,
-            confirmTextColor: Colors.white,
-            buttonColor: AppColors.error,
-            onConfirm: () {
-              Get.offAllNamed(AppRoutes.login);
-            },
+          showDialog(
+            context: context,
+            builder: (dialogContext) => AlertDialog(
+              title: Text(label),
+              content: Text(
+                dialogContext.tr('apakahYakinKeluar').isEmpty
+                    ? 'Yakin ingin keluar dari akun?'
+                    : dialogContext.tr('apakahYakinKeluar'),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: Text(
+                    dialogContext.tr('cancel').isEmpty ? 'Batal' : dialogContext.tr('cancel'),
+                  ),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+                  onPressed: () {
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      AppRoutes.login,
+                      (route) => false,
+                    );
+                  },
+                  child: Text(
+                    dialogContext.tr('yes').isEmpty ? 'Ya' : dialogContext.tr('yes'),
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
           );
         },
         style: ElevatedButton.styleFrom(

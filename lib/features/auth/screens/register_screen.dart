@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
@@ -26,7 +25,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.espressoDark),
-          onPressed: () => Get.back(),
+          onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Daftar Akun Baru',
@@ -111,7 +110,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       label: 'Daftar Sekarang',
                       icon: Icons.person_add,
                       onPressed: () {
-                        Get.back();
+                        Navigator.pop(context);
                       },
                     ),
                   ],

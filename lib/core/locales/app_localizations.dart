@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 import 'app_translations.dart';
+import '../state/app_settings_controller.dart';
 
 export 'app_translations.dart';
 
@@ -12,8 +13,12 @@ class AppLocalizations {
   static const List<Locale> supportedLocales = AppTranslations.supportedLocales;
 
   static AppLocalizations of(BuildContext context) {
-    return AppLocalizations(Get.locale ?? const Locale('id'));
+    try {
+      return AppLocalizations(context.read<AppSettingsController>().currentLocale);
+    } catch (_) {
+      return AppLocalizations(const Locale('id'));
+    }
   }
 
-  String translate(String key) => key.tr;
+  String translate(String key) => AppTranslations.translate(key, locale.languageCode);
 }

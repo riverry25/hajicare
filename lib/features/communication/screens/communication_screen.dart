@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:provider/provider.dart';
+import '../../../core/locales/app_localizations.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -12,19 +13,23 @@ class CommunicationScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(CommunicationController());
+    return ChangeNotifierProvider(
+      create: (_) => CommunicationController(),
+      child: Builder(
+        builder: (context) {
+          final controller = context.watch<CommunicationController>();
 
-    return Scaffold(
+          return Scaffold(
       backgroundColor: AppColors.canvasCream,
       appBar: AppBar(
         backgroundColor: AppColors.surfaceWhite,
         elevation: 1,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.espressoDark),
-          onPressed: () => Get.back(),
+          onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'komunikasi'.tr.isEmpty ? 'Komunikasi Cepat' : 'komunikasi'.tr,
+          context.tr('komunikasi').isEmpty ? 'Komunikasi Cepat' : context.tr('komunikasi'),
           style: AppTypography.titleLarge.copyWith(
             color: AppColors.espressoDark,
             fontWeight: FontWeight.bold,
@@ -66,6 +71,9 @@ class CommunicationScreen extends StatelessWidget {
         ],
       ),
     );
+        },
+      ),
+    );
   }
 
   Widget _buildCategoryHeader(String title) {
@@ -82,10 +90,9 @@ class CommunicationScreen extends StatelessWidget {
   }
 
   Widget _buildPhraseCard(CommunicationController controller, PhraseItem phrase) {
-    return Obx(() {
-      final isCurrentlyPlaying = controller.activePhrase.value == phrase.arabic;
+    final isCurrentlyPlaying = controller.activePhrase == phrase.arabic;
 
-      return Container(
+    return Container(
         margin: const EdgeInsets.only(bottom: AppSpacing.sm),
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
@@ -170,6 +177,5 @@ class CommunicationScreen extends StatelessWidget {
           ],
         ),
       );
-    });
   }
 }

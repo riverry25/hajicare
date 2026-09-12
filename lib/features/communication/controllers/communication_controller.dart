@@ -1,5 +1,5 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-import 'package:get/get.dart';
 
 class PhraseItem {
   final String indonesian;
@@ -17,10 +17,10 @@ class PhraseItem {
   });
 }
 
-class CommunicationController extends GetxController {
+class CommunicationController extends ChangeNotifier {
   late FlutterTts _tts;
-  final RxBool isSpeaking = false.obs;
-  final RxString activePhrase = ''.obs;
+  bool isSpeaking = false;
+  String activePhrase = '';
 
   final List<PhraseItem> phrases = const [
     PhraseItem(
@@ -74,9 +74,7 @@ class CommunicationController extends GetxController {
     ),
   ];
 
-  @override
-  void onInit() {
-    super.onInit();
+  CommunicationController() {
     _initTts();
   }
 
@@ -84,32 +82,37 @@ class CommunicationController extends GetxController {
     _tts = FlutterTts();
     _tts.setLanguage('ar-SA');
     _tts.setStartHandler(() {
-      isSpeaking.value = true;
+      isSpeaking = true;
+      notifyListeners();
     });
     _tts.setCompletionHandler(() {
-      isSpeaking.value = false;
-      activePhrase.value = '';
+      isSpeaking = false;
+      activePhrase = '';
+      notifyListeners();
     });
     _tts.setErrorHandler((_) {
-      isSpeaking.value = false;
-      activePhrase.value = '';
+      isSpeaking = false;
+      activePhrase = '';
+      notifyListeners();
     });
   }
 
   Future<void> speak(String text) async {
-    activePhrase.value = text;
+    activePhrase = text;
+    notifyListeners();
     await _tts.speak(text);
   }
 
   Future<void> stop() async {
     await _tts.stop();
-    isSpeaking.value = false;
-    activePhrase.value = '';
+    isSpeaking = false;
+    activePhrase = '';
+    notifyListeners();
   }
 
   @override
-  void onClose() {
+  void dispose() {
     _tts.stop();
-    super.onClose();
+    super.dispose();
   }
 }

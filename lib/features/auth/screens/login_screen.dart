@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
@@ -9,6 +9,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/pill_button.dart';
+import '../../../core/locales/app_localizations.dart';
 import '../widgets/auth_role_card.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -314,17 +315,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: AppSpacing.sm),
                     PillButton(
-                      label: 'btnLogin'.tr.isEmpty ? 'Masuk ke Aplikasi' : 'btnLogin'.tr,
+                      label: context.tr('btnLogin').isEmpty ? 'Masuk ke Aplikasi' : context.tr('btnLogin'),
                       icon: Icons.login,
                       onPressed: () {
-                        final hajicare = Get.find<HajiCareController>();
+                        final hajicare = context.read<HajiCareController>();
                         hajicare.setRole(_selectedRole == 'jamaah'
                             ? UserRole.jamaah
                             : UserRole.pendamping);
-                        Get.offAllNamed(
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
                           _selectedRole == 'jamaah'
                               ? AppRoutes.dashboardJamaah
                               : AppRoutes.dashboardPendamping,
+                          (_) => false,
                         );
                       },
                     ),
@@ -408,7 +411,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     GestureDetector(
                       onTap: () {
-                        Get.toNamed(AppRoutes.register);
+                        Navigator.pushNamed(context, AppRoutes.register);
                       },
                       child: RichText(
                         text: TextSpan(

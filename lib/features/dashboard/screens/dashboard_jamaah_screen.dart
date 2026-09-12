@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/state/hajicare_controller.dart';
@@ -29,32 +29,29 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state = Get.find<HajiCareController>();
+    final state = context.watch<HajiCareController>();
+    final jamaah = state.self;
 
-    return Obx(() {
-      final jamaah = state.self;
-
-      return Scaffold(
-        backgroundColor: AppColors.canvasCream,
-        body: IndexedStack(
-          index: _currentIndex,
-          children: [
-            _buildJamaahHome(state, jamaah),
-            const InteractiveMapScreen(showBottomNav: false),
-            const PrayerTimesScreen(showBottomNav: false),
-            const ProfileScreen(showBottomNav: false),
-          ],
-        ),
-        bottomNavigationBar: HajiCareBottomNavBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-        ),
-      );
-    });
+    return Scaffold(
+      backgroundColor: AppColors.canvasCream,
+      body: IndexedStack(
+        index: _currentIndex,
+        children: [
+          _buildJamaahHome(state, jamaah),
+          const InteractiveMapScreen(showBottomNav: false),
+          const PrayerTimesScreen(showBottomNav: false),
+          const ProfileScreen(showBottomNav: false),
+        ],
+      ),
+      bottomNavigationBar: HajiCareBottomNavBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+      ),
+    );
   }
 
   Widget _buildJamaahHome(HajiCareController state, JamaahData jamaah) {
@@ -99,7 +96,7 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
             children: [
               IconButton(
                 icon: const Icon(Icons.notifications_outlined, color: AppColors.espressoDark),
-                onPressed: () => Get.toNamed(AppRoutes.notification),
+                onPressed: () => Navigator.pushNamed(context, AppRoutes.notification),
               ),
               if (jamaah.separatedMode)
                 Positioned(
@@ -125,7 +122,7 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
               child: IconButton(
                 icon: const Icon(Icons.sos, color: AppColors.sosEmergency, size: 20),
                 padding: EdgeInsets.zero,
-                onPressed: () => Get.toNamed(AppRoutes.modalSos),
+                onPressed: () => Navigator.pushNamed(context, AppRoutes.modalSos),
               ),
             ),
           ),

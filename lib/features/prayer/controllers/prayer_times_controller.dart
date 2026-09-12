@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:adhan/adhan.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:get/get.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:vibration/vibration.dart';
 
@@ -24,40 +24,38 @@ class PrayerScheduleItem {
   });
 }
 
-class PrayerTimesController extends GetxController {
+class PrayerTimesController extends ChangeNotifier {
   // Location & Coordinates (Default to Masjidil Haram, Makkah)
   static const double defaultLat = 21.4225;
   static const double defaultLng = 39.8262;
 
-  final RxDouble currentLat = defaultLat.obs;
-  final RxDouble currentLng = defaultLng.obs;
-  final RxString locationName = 'Makkah Al-Mukarramah'.obs;
-  final RxString hijriDateText = ''.obs;
+  double currentLat = defaultLat;
+  double currentLng = defaultLng;
+  String locationName = 'Makkah Al-Mukarramah';
+  String hijriDateText = '';
 
   // Next Prayer & Countdown
-  final RxString nextPrayerName = 'Ashar'.obs;
-  final RxString nextPrayerArabic = 'العصر'.obs;
-  final RxString nextPrayerTime = '--:--'.obs;
-  final RxString countdownText = '-- Menit -- Detik'.obs;
+  String nextPrayerName = 'Ashar';
+  String nextPrayerArabic = 'العصر';
+  String nextPrayerTime = '--:--';
+  String countdownText = '-- Menit -- Detik';
 
   // Compass & Qibla
-  final RxDouble qiblaBearing = 294.0.obs; // Calculated Qibla angle from coordinates
-  RxDouble get compassHeading => qiblaBearing; // Convenience alias
-  final RxDouble deviceHeading = 0.0.obs; // 0 to 360 degrees from North
-  final RxDouble qiblaOffset = 0.0.obs; // Angle relative to device heading
-  final RxBool isQiblaAligned = false.obs;
-  final RxBool hasCompassSensor = true.obs;
+  double qiblaBearing = 294.0; // Calculated Qibla angle from coordinates
+  double get compassHeading => qiblaBearing; // Convenience alias
+  double deviceHeading = 0.0; // 0 to 360 degrees from North
+  double qiblaOffset = 0.0; // Angle relative to device heading
+  bool isQiblaAligned = false;
+  bool hasCompassSensor = true;
 
   // Prayer list
-  final RxList<PrayerScheduleItem> prayers = <PrayerScheduleItem>[].obs;
+  List<PrayerScheduleItem> prayers = [];
 
   Timer? _countdownTimer;
   StreamSubscription<CompassEvent>? _compassSubscription;
   bool _hasVibrated = false;
 
-  @override
-  void onInit() {
-    super.onInit();
+  PrayerTimesController() {
     _initHijriDate();
     calculatePrayers();
     _initLocationAndPrayers();
@@ -86,7 +84,8 @@ class PrayerTimesController extends GetxController {
     final monthName = (hijri.hMonth >= 1 && hijri.hMonth <= 12)
         ? monthNames[hijri.hMonth]
         : hijri.longMonthName;
-    hijriDateText.value = '${hijri.hDay} $monthName ${hijri.hYear} H';
+    hijriDateText = '${hijri.hDay} $monthName ${hijri.hYear} H';
+    notifyListeners();
   }
 
   Future<void> _initLocationAndPrayers() async {
@@ -103,8 +102,8 @@ class PrayerTimesController extends GetxController {
             locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
           ).timeout(const Duration(seconds: 4));
 
-          currentLat.value = position.latitude;
-          currentLng.value = position.longitude;
+          currentLat = position.latitude;
+          currentLng = position.longitude;
 
           // Check if user is near Makkah/Madinah
           final distToMakkah = Geolocator.distanceBetween(
@@ -115,9 +114,9 @@ class PrayerTimesController extends GetxController {
           );
 
           if (distToMakkah < 50000) {
-            locationName.value = 'Makkah Al-Mukarramah';
+            locationName = 'Makkah Al-Mukarramah';
           } else {
-            locationName.value = 'GPS (${position.latitude.toStringAsFixed(2)}°, ${position.longitude.toStringAsFixed(2)}°)';
+            locationName = 'GPS (${position.latitude.toStringAsFixed(2)}°, ${position.longitude.toStringAsFixed(2)}°)';
           }
         }
       }
@@ -129,7 +128,7 @@ class PrayerTimesController extends GetxController {
   }
 
   void calculatePrayers() {
-    final coordinates = Coordinates(currentLat.value, currentLng.value);
+    final coordinates = Coordinates(currentLat, currentLng);
     final params = CalculationMethod.umm_al_qura.getParameters();
     params.madhab = Madhab.shafi;
 
@@ -137,7 +136,7 @@ class PrayerTimesController extends GetxController {
     final prayerTimes = PrayerTimes(coordinates, dateComponents, params);
 
     // Calculate exact Qibla direction for this coordinate
-    qiblaBearing.value = Qibla(coordinates).direction;
+    qiblaBearing = Qibla(coordinates).direction;
 
     final now = DateTime.now();
 
@@ -178,12 +177,12 @@ class PrayerTimesController extends GetxController {
       targetNextTime = tomorrowPrayerTimes.fajr;
     }
 
-    nextPrayerName.value = targetNextName;
-    nextPrayerArabic.value = targetNextArabic;
-    nextPrayerTime.value = '${_formatTime(targetNextTime)} AST';
+    nextPrayerName = targetNextName;
+    nextPrayerArabic = targetNextArabic;
+    nextPrayerTime = '${_formatTime(targetNextTime)} AST';
 
     // Build the observable list
-    prayers.value = rawList.map((p) {
+    prayers = rawList.map((p) {
       final isNext = p.$1 == targetNextName;
       return PrayerScheduleItem(
         name: p.$1,
@@ -193,6 +192,8 @@ class PrayerTimesController extends GetxController {
         isNext: isNext,
       );
     }).toList();
+    
+    notifyListeners();
   }
 
   static String _formatTime(DateTime dt) {
@@ -210,7 +211,7 @@ class PrayerTimesController extends GetxController {
 
   void _updateCountdown() {
     final now = DateTime.now();
-    final coordinates = Coordinates(currentLat.value, currentLng.value);
+    final coordinates = Coordinates(currentLat, currentLng);
     final params = CalculationMethod.umm_al_qura.getParameters();
     final prayerTimes = PrayerTimes(coordinates, DateComponents.from(now), params);
 
@@ -252,10 +253,11 @@ class PrayerTimesController extends GetxController {
     final seconds = diff.inSeconds % 60;
 
     if (hours > 0) {
-      countdownText.value = '$hours Jam $minutes Menit $seconds Detik';
+      countdownText = '$hours Jam $minutes Menit $seconds Detik';
     } else {
-      countdownText.value = '$minutes Menit $seconds Detik';
+      countdownText = '$minutes Menit $seconds Detik';
     }
+    notifyListeners();
   }
 
   void _initCompass() {
@@ -264,17 +266,17 @@ class PrayerTimesController extends GetxController {
         if (event.heading == null) return;
 
         final heading = event.heading!;
-        deviceHeading.value = heading;
+        deviceHeading = heading;
 
         // Calculate Qibla angle relative to phone heading:
         // (qiblaBearing - heading)
-        double diff = (qiblaBearing.value - heading) % 360;
+        double diff = (qiblaBearing - heading) % 360;
         if (diff < 0) diff += 360;
-        qiblaOffset.value = diff;
+        qiblaOffset = diff;
 
         // Check alignment within ±5 degrees (0 or 360)
         final isAligned = diff <= 5.0 || diff >= 355.0;
-        if (isAligned && !isQiblaAligned.value && !_hasVibrated) {
+        if (isAligned && !isQiblaAligned && !_hasVibrated) {
           _hasVibrated = true;
           try {
             Vibration.vibrate(duration: 40);
@@ -283,19 +285,22 @@ class PrayerTimesController extends GetxController {
           _hasVibrated = false;
         }
 
-        isQiblaAligned.value = isAligned;
+        isQiblaAligned = isAligned;
+        notifyListeners();
       }, onError: (_) {
-        hasCompassSensor.value = false;
+        hasCompassSensor = false;
+        notifyListeners();
       });
     } catch (_) {
-      hasCompassSensor.value = false;
+      hasCompassSensor = false;
+      notifyListeners();
     }
   }
 
   @override
-  void onClose() {
+  void dispose() {
     _countdownTimer?.cancel();
     _compassSubscription?.cancel();
-    super.onClose();
+    super.dispose();
   }
 }
