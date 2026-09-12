@@ -6,25 +6,28 @@ import 'jv.dart';
 import 'su.dart';
 import 'en.dart';
 
-class AppTranslations {
+class AppTranslations extends Translations {
   static const List<Locale> supportedLocales = [
     Locale('id'),
+    Locale('en'),
     Locale('jv'),
     Locale('su'),
-    Locale('en'),
   ];
 
   static const fallbackLocale = Locale('id');
 
-  static const Map<String, Map<String, String>> keys = {
+  static const Map<String, Map<String, String>> translationKeys = {
     'id': idTranslations,
     'jv': jvTranslations,
     'su': suTranslations,
     'en': enTranslations,
   };
+
+  @override
+  Map<String, Map<String, String>> get keys => translationKeys;
   
   static String translate(String key, String langCode) {
-    return keys[langCode]?[key] ?? keys[fallbackLocale.languageCode]?[key] ?? key;
+    return translationKeys[langCode]?[key] ?? translationKeys[fallbackLocale.languageCode]?[key] ?? key;
   }
 }
 

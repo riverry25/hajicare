@@ -221,7 +221,11 @@ class OnboardingSlideLanguage extends StatelessWidget {
               color: AppColors.surfaceWhite,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.translate, size: 26),
+            child: const Icon(
+              Icons.translate,
+              size: 26,
+              color: AppColors.espressoDark,
+            ),
           ),
 
           const SizedBox(width: 16),

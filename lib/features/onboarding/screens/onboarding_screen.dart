@@ -150,20 +150,23 @@ class OnboardingScreen extends StatelessWidget {
             // ============================================================
             // BOTTOM ACTION AREA
             // ============================================================
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.sm,
-                AppSpacing.lg,
-                AppSpacing.lg,
-              ),
-              child: Obx(
-                () => Column(
+            // ============================================================
+            // BOTTOM ACTION AREA
+            // ============================================================
+            Obx(
+              () => Container(
+                width: double.infinity,
+                color: AppColors.canvasCream, // sama persis dengan Scaffold
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.sm,
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                ),
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // ----------------------------------------------------
                     // PAGE INDICATOR
-                    // ----------------------------------------------------
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(_totalPages, (index) {
@@ -187,105 +190,93 @@ class OnboardingScreen extends StatelessWidget {
 
                     const SizedBox(height: AppSpacing.md),
 
-                    // ----------------------------------------------------
-                    // CTA CARD
-                    // ----------------------------------------------------
-                    Container(
+                    // CTA
+                    SizedBox(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(AppSpacing.sm2),
-
-                      child: Column(
-                        children: [
-                          // Main button
-                          SizedBox(
-                            width: double.infinity,
-                            height: AppSizes.buttonHeightPrimary,
-                            child: ElevatedButton(
-                              onPressed: () => ctrl.nextPage(_totalPages),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.espressoDark,
-                                foregroundColor: AppColors.surfaceWhite,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSpacing.lg,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppConstants.radiusPill,
-                                  ),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Flexible(
-                                    child: Text(
-                                      ctrl.currentPage.value == 0
-                                          ? context.tr('btnNextFeature')
-                                          : ctrl.currentPage.value == 1
-                                          ? context.tr('btnNextAccess')
-                                          : context.tr('btnStartNow'),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      textAlign: TextAlign.center,
-                                      style: AppTypography.labelLarge.copyWith(
-                                        color: AppColors.surfaceWhite,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: AppSpacing.sm),
-                                  Container(
-                                    width: 30,
-                                    height: 30,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.surfaceWhite.withValues(
-                                        alpha: 0.12,
-                                      ),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.arrow_forward_rounded,
-                                      size: 17,
-                                      color: AppColors.surfaceWhite,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                      height: AppSizes.buttonHeightPrimary,
+                      child: ElevatedButton(
+                        onPressed: () => ctrl.nextPage(_totalPages),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.espressoDark,
+                          foregroundColor: AppColors.surfaceWhite,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.lg,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              AppConstants.radiusPill,
                             ),
                           ),
-
-                          const SizedBox(height: AppSpacing.sm),
-
-                          // Progress information
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.sm,
-                              vertical: 2,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                ctrl.currentPage.value == 0
+                                    ? context.tr('btnNextFeature')
+                                    : ctrl.currentPage.value == 1
+                                    ? context.tr('btnNextAccess')
+                                    : context.tr('btnStartNow'),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                                style: AppTypography.labelLarge.copyWith(
+                                  color: AppColors.surfaceWhite,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.verified_user_outlined,
-                                  size: 15,
-                                  color: AppColors.accentGoldStar,
+                            const SizedBox(width: AppSpacing.sm),
+                            Container(
+                              width: 30,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceWhite.withValues(
+                                  alpha: 0.12,
                                 ),
-                                const SizedBox(width: 6),
-                                Flexible(
-                                  child: Text(
-                                    'Langkah ${ctrl.currentPage.value + 1} dari $_totalPages '
-                                    '• Menuju Perjalanan Aman Anda',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    textAlign: TextAlign.center,
-                                    style: AppTypography.caption.copyWith(
-                                      color: AppColors.textBody,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.arrow_forward_rounded,
+                                size: 17,
+                                color: AppColors.surfaceWhite,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: AppSpacing.sm),
+
+                    // PROGRESS INFORMATION
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                        vertical: 2,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.verified_user_outlined,
+                            size: 15,
+                            color: AppColors.accentGoldStar,
+                          ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              'Langkah ${ctrl.currentPage.value + 1} dari $_totalPages '
+                              '• Menuju Perjalanan Aman Anda',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: AppTypography.caption.copyWith(
+                                color: AppColors.textBody,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                         ],

@@ -55,12 +55,26 @@ class HajiCareApp extends StatelessWidget {
 
         // Localization
         locale: settings.currentLocale,
+        fallbackLocale: AppTranslations.fallbackLocale,
+        translations: AppTranslations(),
         supportedLocales: AppTranslations.supportedLocales,
         localizationsDelegates: const [
+          AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
+          FallbackMaterialLocalizationsDelegate(),
+          FallbackCupertinoLocalizationsDelegate(),
+          FallbackWidgetsLocalizationsDelegate(),
         ],
+        localeResolutionCallback: (locale, supportedLocales) {
+          for (final supportedLocale in supportedLocales) {
+            if (supportedLocale.languageCode == locale?.languageCode) {
+              return supportedLocale;
+            }
+          }
+          return AppTranslations.fallbackLocale;
+        },
 
         // GetX route management with bindings attached per-route
         initialRoute: AppRoutes.splash,
