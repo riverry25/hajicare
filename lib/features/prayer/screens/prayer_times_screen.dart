@@ -220,7 +220,6 @@ class PrayerTimesScreen extends StatelessWidget {
               builder: (context) {
                 final isAligned = controller.isQiblaAligned;
                 final qiblaDeg = controller.qiblaBearing.toStringAsFixed(0);
-                final headingDeg = controller.deviceHeading.toStringAsFixed(0);
                 final angleRadians = (controller.qiblaOffset * math.pi / 180.0);
 
               return AppCard(
@@ -271,8 +270,23 @@ class PrayerTimesScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.lg),
 
-                    // Rotating Compass Dial
-                    Center(
+                    if (!controller.hasCompassSensor)
+                      Container(
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        margin: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                        decoration: BoxDecoration(
+                          color: AppColors.canvasCreamSubtle,
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                        ),
+                        child: Text(
+                          'Kompas hanya berfungsi di perangkat mobile dengan sensor.',
+                          style: AppTypography.bodyMedium.copyWith(color: AppColors.textBody),
+                          textAlign: TextAlign.center,
+                        ),
+                      )
+                    else ...[
+                      // Rotating Compass Dial
+                      Center(
                       child: Container(
                         width: 190,
                         height: 190,
@@ -453,7 +467,7 @@ class PrayerTimesScreen extends StatelessWidget {
                           Text(
                             isAligned
                                 ? 'Ponsel Anda Tepat Mengarah ke Kiblat ✓'
-                                : 'Kompas: $headingDeg° (Putar ke arah Ka\'bah)',
+                                : 'Selisih: ${controller.qiblaOffset.toStringAsFixed(0)}° (Putar ke arah Ka\'bah)',
                             style: AppTypography.captionSmall.copyWith(
                               color: isAligned
                                   ? AppColors.statusPositive
@@ -464,7 +478,8 @@ class PrayerTimesScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                  ],
+                    ], // End of else ...[
+                  ], // End of Column children
                 ),
               );
             }),
@@ -504,7 +519,7 @@ class PrayerTimesScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(AppRadius.sm),
                           ),
                           child: Text(
-                            'Umm Al-Qura',
+                            controller.calculationMethodName,
                             style: AppTypography.captionSmall.copyWith(
                               color: AppColors.tanMedium,
                               fontWeight: FontWeight.w600,

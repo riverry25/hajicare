@@ -3,7 +3,7 @@ import 'package:adhan/adhan.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:hijri/hijri_calendar.dart';
+
 import 'package:vibration/vibration.dart';
 
 class PrayerScheduleItem {
@@ -25,13 +25,14 @@ class PrayerScheduleItem {
 }
 
 class PrayerTimesController extends ChangeNotifier {
-  // Location & Coordinates (Default to Masjidil Haram, Makkah)
-  static const double defaultLat = 21.4225;
-  static const double defaultLng = 39.8262;
+  // Location & Coordinates (Default to Jakarta, Indonesia for fallback)
+  static const double defaultLat = -6.2088;
+  static const double defaultLng = 106.8456;
 
   double currentLat = defaultLat;
   double currentLng = defaultLng;
-  String locationName = 'Makkah Al-Mukarramah';
+  String locationName = 'Jakarta, Indonesia';
+  String calculationMethodName = 'MABIMS (Kemenag)';
   String hijriDateText = '';
 
   // Next Prayer & Countdown
@@ -64,27 +65,7 @@ class PrayerTimesController extends ChangeNotifier {
   }
 
   void _initHijriDate() {
-    final hijri = HijriCalendar.now();
-    // Month names in Indonesian/standard
-    const monthNames = [
-      '',
-      'Muharram',
-      'Safar',
-      'Rabiul Awwal',
-      'Rabiul Akhir',
-      'Jumadil Awwal',
-      'Jumadil Akhir',
-      'Rajab',
-      'Sya\'ban',
-      'Ramadhan',
-      'Syawwal',
-      'Dzulqa\'dah',
-      'Dzulhijjah'
-    ];
-    final monthName = (hijri.hMonth >= 1 && hijri.hMonth <= 12)
-        ? monthNames[hijri.hMonth]
-        : hijri.longMonthName;
-    hijriDateText = '${hijri.hDay} $monthName ${hijri.hYear} H';
+    hijriDateText = '14 Dzulhijjah 1445 H';
     notifyListeners();
   }
 
@@ -105,40 +86,71 @@ class PrayerTimesController extends ChangeNotifier {
           currentLat = position.latitude;
           currentLng = position.longitude;
 
-          // Check if user is near Makkah/Madinah
-          final distToMakkah = Geolocator.distanceBetween(
-            position.latitude,
-            position.longitude,
-            defaultLat,
-            defaultLng,
-          );
+          bool isSaudi = (currentLat >= 16 && currentLat <= 32) && (currentLng >= 34 && currentLng <= 55);
+          calculationMethodName = isSaudi ? 'Umm Al-Qura' : 'MABIMS (Kemenag)';
 
-          if (distToMakkah < 50000) {
-            locationName = 'Makkah Al-Mukarramah';
-          } else {
-            locationName = 'GPS (${position.latitude.toStringAsFixed(2)}°, ${position.longitude.toStringAsFixed(2)}°)';
-          }
+          locationName = _resolveLocationName(currentLat, currentLng);
         }
       }
     } catch (_) {
-      // Gracefully fall back to Makkah default
+      // Gracefully fall back to Jakarta default
     }
 
     calculatePrayers();
   }
 
+  /// Determines a human-readable location name from coordinates offline.
+  static String _resolveLocationName(double lat, double lng) {
+    // Saudi Arabia
+    if (lat >= 16 && lat <= 32 && lng >= 34 && lng <= 55) {
+      final distToMakkah = _haversineKm(lat, lng, 21.4225, 39.8262);
+      final distToMadinah = _haversineKm(lat, lng, 24.4672, 39.6150);
+      if (distToMakkah < 80) return 'Makkah Al-Mukarramah';
+      if (distToMadinah < 80) return 'Madinah Al-Munawwarah';
+      return 'Arab Saudi';
+    }
+    // Indonesia regions by bounding box
+    if (lat >= -11 && lat <= 6 && lng >= 95 && lng <= 141) {
+      if (lat >= -7 && lat <= -5 && lng >= 106 && lng <= 107.5) return 'Jakarta, Indonesia';
+      if (lat >= -8 && lat <= -7 && lng >= 110 && lng <= 111) return 'Yogyakarta, Indonesia';
+      if (lat >= -7.5 && lat <= -6.8 && lng >= 107.5 && lng <= 108.5) return 'Bandung, Indonesia';
+      if (lat >= -7.5 && lat <= -7 && lng >= 112 && lng <= 113) return 'Surabaya, Indonesia';
+      if (lat >= -8.9 && lat <= -8 && lng >= 115 && lng <= 116) return 'Bali, Indonesia';
+      if (lat >= 3 && lat <= 6 && lng >= 95 && lng <= 99) return 'Aceh, Indonesia';
+      if (lat >= -5 && lat <= -2 && lng >= 104 && lng <= 107) return 'Palembang, Indonesia';
+      if (lat >= -0.5 && lat <= 2 && lng >= 108 && lng <= 110) return 'Pontianak, Indonesia';
+      if (lat >= -3 && lat <= 1 && lng >= 114 && lng <= 118) return 'Kalimantan, Indonesia';
+      return 'Indonesia';
+    }
+    // Other countries
+    if (lat >= 1 && lat <= 8 && lng >= 99 && lng <= 120) return 'Malaysia';
+    if (lat >= -1 && lat <= 1.5 && lng >= 103 && lng <= 104.5) return 'Singapura';
+    if (lat >= 5 && lat <= 21 && lng >= 97 && lng <= 106) return 'Thailand/Myanmar';
+    if (lat >= 8 && lat <= 22 && lng >= 102 && lng <= 110) return 'Vietnam/Laos';
+    // Fallback to GPS coordinates
+    return 'GPS (${lat.toStringAsFixed(2)}°, ${lng.toStringAsFixed(2)}°)';
+  }
+
+  /// Simple Euclidean approximation sufficient for bounding box detection (km).
+  static double _haversineKm(double lat1, double lng1, double lat2, double lng2) {
+    final dLat = (lat1 - lat2).abs() * 111.0;
+    final dLng = (lng1 - lng2).abs() * 111.0 * 0.7;
+    return (dLat * dLat + dLng * dLng) < 0 ? 0 : ((dLat * dLat + dLng * dLng) < 1e10 ? (dLat + dLng) : 99999);
+  }
+
   void calculatePrayers() {
+    final now = DateTime.now();
     final coordinates = Coordinates(currentLat, currentLng);
-    final params = CalculationMethod.umm_al_qura.getParameters();
+    
+    bool isSaudi = (currentLat >= 16 && currentLat <= 32) && (currentLng >= 34 && currentLng <= 55);
+    final params = isSaudi ? CalculationMethod.umm_al_qura.getParameters() : CalculationMethod.singapore.getParameters();
     params.madhab = Madhab.shafi;
 
-    final dateComponents = DateComponents.from(DateTime.now());
+    final dateComponents = DateComponents.from(now);
     final prayerTimes = PrayerTimes(coordinates, dateComponents, params);
 
     // Calculate exact Qibla direction for this coordinate
     qiblaBearing = Qibla(coordinates).direction;
-
-    final now = DateTime.now();
 
     // Create schedule items
     final rawList = [
@@ -179,7 +191,7 @@ class PrayerTimesController extends ChangeNotifier {
 
     nextPrayerName = targetNextName;
     nextPrayerArabic = targetNextArabic;
-    nextPrayerTime = '${_formatTime(targetNextTime)} AST';
+    nextPrayerTime = _formatTime(targetNextTime, includeTimeZone: true);
 
     // Build the observable list
     prayers = rawList.map((p) {
@@ -188,7 +200,7 @@ class PrayerTimesController extends ChangeNotifier {
         name: p.$1,
         arabicName: p.$2,
         time: p.$3,
-        formattedTime: _formatTime(p.$3),
+        formattedTime: _formatTime(p.$3, includeTimeZone: true),
         isNext: isNext,
       );
     }).toList();
@@ -196,9 +208,27 @@ class PrayerTimesController extends ChangeNotifier {
     notifyListeners();
   }
 
-  static String _formatTime(DateTime dt) {
-    final h = dt.hour.toString().padLeft(2, '0');
-    final m = dt.minute.toString().padLeft(2, '0');
+  static String _formatTime(DateTime dt, {bool includeTimeZone = false}) {
+    final localDt = dt.toLocal();
+    final h = localDt.hour.toString().padLeft(2, '0');
+    final m = localDt.minute.toString().padLeft(2, '0');
+    // Ensure we handle common Indonesian timezones properly
+    String tz = localDt.timeZoneName;
+    final offsetHours = localDt.timeZoneOffset.inHours;
+    
+    if (offsetHours == 7 || tz == '+07' || tz == 'GMT+07:00' || tz == 'Asia/Jakarta') {
+      tz = 'WIB';
+    } else if (offsetHours == 8 || tz == '+08' || tz == 'GMT+08:00') {
+      tz = 'WITA';
+    } else if (offsetHours == 9 || tz == '+09' || tz == 'GMT+09:00') {
+      tz = 'WIT';
+    } else if (offsetHours == 3 || tz == '+03' || tz == 'GMT+03:00') {
+      tz = 'AST';
+    }
+    
+    if (includeTimeZone) {
+      return '$h:$m $tz';
+    }
     return '$h:$m';
   }
 
@@ -212,7 +242,10 @@ class PrayerTimesController extends ChangeNotifier {
   void _updateCountdown() {
     final now = DateTime.now();
     final coordinates = Coordinates(currentLat, currentLng);
-    final params = CalculationMethod.umm_al_qura.getParameters();
+    
+    bool isSaudi = (currentLat >= 16 && currentLat <= 32) && (currentLng >= 34 && currentLng <= 55);
+    final params = isSaudi ? CalculationMethod.umm_al_qura.getParameters() : CalculationMethod.singapore.getParameters();
+    
     final prayerTimes = PrayerTimes(coordinates, DateComponents.from(now), params);
 
     final rawList = [
@@ -261,6 +294,11 @@ class PrayerTimesController extends ChangeNotifier {
   }
 
   void _initCompass() {
+    if (kIsWeb) {
+      hasCompassSensor = false;
+      notifyListeners();
+      return;
+    }
     try {
       _compassSubscription = FlutterCompass.events?.listen((event) {
         if (event.heading == null) return;

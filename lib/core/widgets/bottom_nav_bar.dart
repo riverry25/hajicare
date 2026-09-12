@@ -76,10 +76,10 @@ class HajiCareBottomNavBar extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(context, 0, Icons.home_rounded, context.tr('beranda')),
-              _buildNavItem(context, 1, Icons.near_me_rounded, context.tr('petaArah')),
-              _buildNavItem(context, 2, Icons.schedule_rounded, context.tr('jadwal')),
-              _buildNavItem(context, 3, Icons.person_rounded, context.tr('profil')),
+              _buildNavItem(context, 0, Icons.home_rounded, context.tr('navHome')),
+              _buildNavItem(context, 1, Icons.near_me_rounded, context.tr('navMap')),
+              _buildNavItem(context, 2, Icons.schedule_rounded, context.tr('navPrayer')),
+              _buildNavItem(context, 3, Icons.person_rounded, context.tr('navProfile')),
             ],
           ),
         ),
