@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/pill_button.dart';
 import '../../../core/locales/app_localizations.dart';
 import '../controllers/login_controller.dart';
-import '../widgets/auth_role_card.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -18,208 +17,386 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<LoginController>();
+
     return Scaffold(
       backgroundColor: AppColors.canvasCream,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.screenEdgeGutter,
-            vertical: AppSpacing.xl,
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.screenEdgeGutter,
+            AppSpacing.lg,
+            AppSpacing.screenEdgeGutter,
+            AppSpacing.xl,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header Logo & Branding
-              Column(
+              // ============================================================
+              // TOP BRAND
+              // ============================================================
+              Row(
                 children: [
                   Container(
-                    width: 64,
-                    height: 64,
+                    width: 46,
+                    height: 46,
                     decoration: BoxDecoration(
-                      color: AppColors.primaryContainer,
+                      color: AppColors.espressoDark,
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.goldLight, width: 4),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.espressoDark.withValues(alpha: 0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
+                          color: AppColors.espressoDark.withValues(alpha: 0.12),
+                          blurRadius: 12,
+                          offset: const Offset(0, 5),
                         ),
                       ],
                     ),
-                    child: Stack(
-                      children: [
-                        const Center(
-                          child: Icon(
-                            Icons.mosque,
-                            color: AppColors.goldLight,
-                            size: 32,
-                          ),
-                        ),
-                        Positioned(
-                          bottom: -2,
-                          right: -2,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: AppColors.accentGoldStar,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.verified_user,
-                              color: Colors.white,
-                              size: 12,
-                            ),
-                          ),
-                        ),
-                      ],
+                    child: const Icon(
+                      Icons.mosque_rounded,
+                      color: AppColors.canvasCream,
+                      size: 23,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    'HajiCare',
-                    style: AppTypography.displayLarge.copyWith(
-                      color: AppColors.espressoDark,
-                    ),
-                  ),
-                  Text(
-                    'Pendamping Keselamatan & Aksesibilitas',
-                    style: AppTypography.captionSmall.copyWith(
-                      color: AppColors.tanMedium,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.xl),
 
-              // Hero Greeting
-              AppCard(
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.secondaryContainer.withValues(
-                          alpha: 0.5,
-                        ),
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.spa,
-                            color: AppColors.secondary,
-                            size: 14,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Panduan Suci & Aman',
-                            style: AppTypography.captionSmall.copyWith(
-                              color: AppColors.secondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    Text(
-                      'Ahlan wa Sahlan',
-                      style: AppTypography.displayMedium.copyWith(
-                        color: AppColors.espressoDark,
-                      ),
-                    ),
-                    Text(
-                      'Masuk ke Akun Anda',
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Silakan masuk untuk terhubung dengan keluarga dan pendamping ibadah di Tanah Suci.',
-                      textAlign: TextAlign.center,
-                      style: AppTypography.caption.copyWith(
-                        color: AppColors.textBody,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
+                  const SizedBox(width: AppSpacing.sm),
 
-              // Role Selector Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Pilih Peran Anda',
-                    style: AppTypography.labelLarge.copyWith(
-                      color: AppColors.espressoDark,
-                    ),
-                  ),
-                  Row(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(
-                        Icons.touch_app,
-                        size: 12,
-                        color: AppColors.tanMedium,
-                      ),
-                      const SizedBox(width: 4),
                       Text(
-                        'Ketuk salah satu',
-                        style: AppTypography.caption.copyWith(
+                        'HajiCare',
+                        style: AppTypography.titleLarge.copyWith(
+                          color: AppColors.espressoDark,
+                          fontWeight: FontWeight.w800,
+                          height: 1,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        context.tr('appTagline'),
+                        style: AppTypography.captionSmall.copyWith(
                           color: AppColors.tanMedium,
                         ),
                       ),
                     ],
                   ),
+
+                  const Spacer(),
+
+                  // Secure indicator
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceWhite,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      border: Border.all(
+                        color: AppColors.goldLight.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.shield_outlined,
+                          size: 14,
+                          color: AppColors.statusPositive,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          'Aman',
+                          style: AppTypography.captionSmall.copyWith(
+                            color: AppColors.textBody,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.sm),
+
+              const SizedBox(height: 30),
+
+              // ============================================================
+              // WELCOME / JOURNEY INTRO
+              // ============================================================
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.espressoDark,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.espressoDark.withValues(alpha: 0.16),
+                      blurRadius: 24,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Stack(
+                  children: [
+                    // Decorative circle
+                    Positioned(
+                      right: -35,
+                      top: -45,
+                      child: Container(
+                        width: 130,
+                        height: 130,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.goldLight.withValues(alpha: 0.08),
+                        ),
+                      ),
+                    ),
+
+                    // Small decorative circle
+                    Positioned(
+                      right: 35,
+                      bottom: -55,
+                      child: Container(
+                        width: 90,
+                        height: 90,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.goldLight.withValues(alpha: 0.05),
+                        ),
+                      ),
+                    ),
+
+                    Container(
+                      padding: EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+
+                        children: [
+                          // Badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceWhite.withValues(
+                                alpha: 0.10,
+                              ),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                              border: Border.all(
+                                color: AppColors.goldLight.withValues(
+                                  alpha: 0.20,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.auto_awesome_rounded,
+                                  size: 14,
+                                  color: AppColors.accentGoldStar,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Teman Perjalanan Anda',
+                                  style: AppTypography.captionSmall.copyWith(
+                                    color: AppColors.canvasCream,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 18),
+
+                          // Main heading
+                          RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'Selamat datang,\n',
+                                  style: AppTypography.displayMedium.copyWith(
+                                    color: AppColors.canvasCream,
+                                    fontWeight: FontWeight.w500,
+                                    height: 1.05,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: 'Ahlan wa Sahlan.',
+                                  style: AppTypography.displayMedium.copyWith(
+                                    color: AppColors.accentGoldStar,
+                                    fontWeight: FontWeight.w800,
+                                    height: 1.05,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          // Description
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 340),
+                            child: Text(
+                              'Satu tempat untuk membantu perjalanan ibadah Anda tetap aman, terhubung, dan tenang.',
+                              style: AppTypography.bodyMedium.copyWith(
+                                color: AppColors.canvasCream.withValues(
+                                  alpha: 0.78,
+                                ),
+                                height: 1.5,
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          // Mini feature row
+                          Row(
+                            children: [
+                              _WelcomeFeature(
+                                icon: Icons.shield_outlined,
+                                label: 'Aman',
+                              ),
+                              const SizedBox(width: 8),
+                              _WelcomeFeature(
+                                icon: Icons.people_outline_rounded,
+                                label: 'Terhubung',
+                              ),
+                              const SizedBox(width: 8),
+                              _WelcomeFeature(
+                                icon: Icons.accessibility_new_rounded,
+                                label: 'Inklusif',
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              // ============================================================
+              // ROLE SECTION
+              // ============================================================
+              const SizedBox(height: 10),
+
               Obx(
                 () => Row(
                   children: [
                     Expanded(
-                      child: AuthRoleCard(
-                        roleId: 'jamaah',
+                      child: _ModernRoleButton(
                         title: 'Jamaah',
-                        description:
-                            'Saya Jamaah Haji/Umrah yang membutuhkan navigasi dan pendampingan',
-                        icon: Icons.person,
-                        isSelected: controller.selectedRole.value == 'jamaah',
+                        subtitle: 'Haji / Umrah',
+                        icon: Icons.person_outline_rounded,
+                        selected: controller.selectedRole.value == 'jamaah',
                         onTap: () => controller.setRole('jamaah'),
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.md),
+
+                    const SizedBox(width: 10),
+
                     Expanded(
-                      child: AuthRoleCard(
-                        roleId: 'pendamping',
+                      child: _ModernRoleButton(
                         title: 'Pendamping',
-                        description:
-                            'Keluarga atau muthawif yang memantau keselamatan jamaah',
-                        icon: Icons.health_and_safety,
-                        isSelected:
-                            controller.selectedRole.value == 'pendamping',
+                        subtitle: 'Keluarga / Muthawif',
+                        icon: Icons.health_and_safety_outlined,
+                        selected: controller.selectedRole.value == 'pendamping',
                         onTap: () => controller.setRole('pendamping'),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.lg),
 
-              // Form
-              AppCard(
+              const SizedBox(height: 26),
+
+              // ============================================================
+              // LOGIN FORM
+              // ============================================================
+              Container(
+                padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceWhite,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  border: Border.all(
+                    color: AppColors.goldLight.withValues(alpha: 0.18),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.espressoDark.withValues(alpha: 0.055),
+                      blurRadius: 24,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Form heading
+                    Row(
+                      children: [
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: AppColors.canvasCream,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.login_rounded,
+                            color: AppColors.espressoDark,
+                            size: 19,
+                          ),
+                        ),
+
+                        const SizedBox(width: 10),
+
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Masuk ke akun',
+                              style: AppTypography.titleMedium.copyWith(
+                                color: AppColors.espressoDark,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Gunakan akun yang sudah terdaftar',
+                              style: AppTypography.captionSmall.copyWith(
+                                color: AppColors.tanMedium,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 22),
+
+                    // ------------------------------------------------------
+                    // EMAIL
+                    // ------------------------------------------------------
+                    Text(
+                      'Email',
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.textHeading,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+
+                    const SizedBox(height: 7),
+
                     AppTextField(
                       controller: controller.emailController,
-                      label: 'Email Aktif',
                       hintText: 'email@contoh.com',
                       keyboardType: TextInputType.emailAddress,
                       prefixIcon: const Icon(
@@ -228,140 +405,171 @@ class LoginScreen extends StatelessWidget {
                         size: 20,
                       ),
                     ),
-                    const SizedBox(height: 6),
+
+                    const SizedBox(height: 20),
+
+                    // ------------------------------------------------------
+                    // PASSWORD
+                    // ------------------------------------------------------
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Icon(
-                          Icons.check_circle,
-                          color: AppColors.statusPositive,
-                          size: 12,
+                        Text(
+                          'Kata Sandi / PIN',
+                          style: AppTypography.bodyMedium.copyWith(
+                            color: AppColors.textHeading,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                        const SizedBox(width: 5),
-                        Expanded(
+
+                        GestureDetector(
+                          onTap: () {
+                            // Mekanisme existing tetap bisa
+                            // ditambahkan di sini jika controller
+                            // memiliki fungsi forgot password.
+                          },
                           child: Text(
-                            'Gunakan email yang terdaftar',
+                            'Lupa kata sandi?',
                             style: AppTypography.captionSmall.copyWith(
-                              color: AppColors.textBody,
+                              color: AppColors.secondary,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: AppSpacing.xl),
 
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Kata Sandi / PIN Keamanan',
-                          style: AppTypography.labelLarge.copyWith(
-                            color: AppColors.espressoDark,
-                          ),
-                        ),
-                        Text(
-                          'Lupa Kata Sandi?',
-                          style: AppTypography.captionSmall.copyWith(
-                            color: AppColors.secondary,
-                            decoration: TextDecoration.underline,
-                            decorationColor: AppColors.goldLight,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(height: 7),
+
                     Obx(
                       () => AppTextField(
                         controller: controller.passwordController,
-                        hintText: 'Masukkan PIN / Kata Sandi',
+                        hintText: 'Masukkan PIN / kata sandi',
                         obscureText: controller.obscurePassword.value,
                         prefixIcon: const Icon(
-                          Icons.lock,
+                          Icons.lock_outline_rounded,
                           color: AppColors.tanMedium,
                           size: 20,
                         ),
                         suffixIcon: IconButton(
+                          splashRadius: 20,
                           icon: Icon(
                             controller.obscurePassword.value
-                                ? Icons.visibility
-                                : Icons.visibility_off,
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
                             color: AppColors.textBody,
+                            size: 20,
                           ),
                           onPressed: controller.togglePasswordVisibility,
                         ),
                       ),
                     ),
 
+                    // ------------------------------------------------------
+                    // REMEMBER ME
+                    // ------------------------------------------------------
                     Obx(
-                      () => Row(
-                        children: [
-                          Checkbox(
-                            value: controller.rememberMe.value,
-                            onChanged: (value) =>
-                                controller.setRememberMe(value ?? true),
-                            activeColor: AppColors.statusPositive,
-                            side: const BorderSide(color: AppColors.goldLight),
-                          ),
-                          Text(
-                            'Ingat Saya di Perangkat Ini',
-                            style: AppTypography.caption.copyWith(
-                              color: AppColors.textHeading,
+                      () => Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 42,
+                              height: 42,
+                              child: Checkbox(
+                                value: controller.rememberMe.value,
+                                onChanged: (value) =>
+                                    controller.setRememberMe(value ?? true),
+                                activeColor: AppColors.espressoDark,
+                                side: const BorderSide(
+                                  color: AppColors.goldLight,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: AppSpacing.sm),
-                    Obx(
-                      () => PillButton(
-                        label: controller.isLoading.value
-                            ? 'Memproses...'
-                            : (context.tr('btnLogin').isEmpty
-                                ? 'Masuk ke Aplikasi'
-                                : context.tr('btnLogin')),
-                        icon: Icons.login,
-                        onPressed: controller.isLoading.value
-                            ? null
-                            : () => controller.login(),
-                      ),
-                    ),
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacing.md,
-                      ),
-                      child: Row(
-                        children: [
-                          const Expanded(
-                            child: Divider(color: AppColors.outlineVariant),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.md,
-                            ),
-                            child: Text(
-                              'atau gunakan kemudahan',
+                            const SizedBox(width: 2),
+                            Text(
+                              'Ingat saya di perangkat ini',
                               style: AppTypography.caption.copyWith(
                                 color: AppColors.textBody,
                               ),
                             ),
-                          ),
-                          const Expanded(
-                            child: Divider(color: AppColors.outlineVariant),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
 
+                    const SizedBox(height: 8),
+
+                    // ------------------------------------------------------
+                    // LOGIN BUTTON
+                    // ------------------------------------------------------
+                    Obx(
+                      () => SizedBox(
+                        width: double.infinity,
+                        child: PillButton(
+                          label: controller.isLoading.value
+                              ? 'Memproses...'
+                              : (context.tr('btnLogin').isEmpty
+                                    ? 'Masuk ke Aplikasi'
+                                    : context.tr('btnLogin')),
+                          icon: Icons.arrow_forward_rounded,
+                          onPressed: controller.isLoading.value
+                              ? null
+                              : () => controller.login(),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    // ------------------------------------------------------
+                    // DIVIDER
+                    // ------------------------------------------------------
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Divider(
+                            color: AppColors.outlineVariant,
+                            height: 1,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            'atau',
+                            style: AppTypography.captionSmall.copyWith(
+                              color: AppColors.tanMedium,
+                            ),
+                          ),
+                        ),
+                        const Expanded(
+                          child: Divider(
+                            color: AppColors.outlineVariant,
+                            height: 1,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // ------------------------------------------------------
+                    // WHATSAPP
+                    // ------------------------------------------------------
                     SizedBox(
                       width: double.infinity,
-                      height: 52,
+                      height: 50,
                       child: OutlinedButton(
                         onPressed: () {},
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(
-                            color: AppColors.goldLight,
-                            width: 2,
+                          backgroundColor: AppColors.canvasCream.withValues(
+                            alpha: 0.35,
+                          ),
+                          side: BorderSide(
+                            color: AppColors.goldLight.withValues(alpha: 0.65),
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -371,23 +579,24 @@ class LoginScreen extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Container(
-                              width: 28,
-                              height: 28,
+                              width: 27,
+                              height: 27,
                               decoration: const BoxDecoration(
                                 color: Color(0xFF25D366),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
-                                Icons.chat,
+                                Icons.chat_rounded,
                                 color: Colors.white,
-                                size: 16,
+                                size: 15,
                               ),
                             ),
-                            const SizedBox(width: AppSpacing.md),
+                            const SizedBox(width: 9),
                             Text(
                               'Masuk Cepat via WhatsApp',
-                              style: AppTypography.labelLarge.copyWith(
+                              style: AppTypography.bodyMedium.copyWith(
                                 color: AppColors.espressoDark,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
@@ -397,93 +606,301 @@ class LoginScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.xl),
 
-              // Footer
+              const SizedBox(height: 24),
+
+              // ============================================================
+              // REGISTER
+              // ============================================================
               Center(
-                child: Column(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        Get.toNamed(AppRoutes.register);
-                      },
-                      child: RichText(
-                        text: TextSpan(
-                          text: 'Belum memiliki akun? ',
+                child: GestureDetector(
+                  onTap: () {
+                    Get.toNamed(AppRoutes.register);
+                  },
+                  child: RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      text: 'Belum memiliki akun? ',
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.textBody,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: 'Daftar sekarang',
                           style: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.textBody,
+                            color: AppColors.espressoDark,
+                            fontWeight: FontWeight.w700,
+                            decoration: TextDecoration.underline,
+                            decorationColor: AppColors.goldLight,
+                            decorationThickness: 2,
                           ),
-                          children: [
-                            TextSpan(
-                              text: 'Daftar Akun Baru',
-                              style: AppTypography.bodyMedium.copyWith(
-                                color: AppColors.espressoDark,
-                                decoration: TextDecoration.underline,
-                                decorationColor: AppColors.goldLight,
-                                decorationThickness: 2,
-                              ),
-                            ),
-                          ],
                         ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // ============================================================
+              // HELP / TRUST FOOTER
+              // ============================================================
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 11,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceWhite.withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(
+                    color: AppColors.goldLight.withValues(alpha: 0.15),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.canvasCream,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.support_agent_rounded,
+                        color: AppColors.sosEmergency,
+                        size: 17,
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.md),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.lg,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.canvasCreamSubtle,
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+
+                    const SizedBox(width: 9),
+
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(
-                            Icons.contact_support,
-                            color: AppColors.sosEmergency,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 6),
                           Text(
-                            'Butuh Bantuan Petugas Maktab?',
+                            'Butuh bantuan?',
                             style: AppTypography.captionSmall.copyWith(
                               color: AppColors.espressoDark,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Petugas Maktab siap membantu Anda.',
+                            style: AppTypography.captionSmall.copyWith(
+                              color: AppColors.tanMedium,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.md),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Center(
-                          child: const Icon(
-                            Icons.verified,
-                            color: AppColors.statusPositive,
-                            size: 16,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            'Privasi Data Jamaah Terlindungi & Aman',
-                            style: AppTypography.caption.copyWith(
-                              color: AppColors.tanMedium,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ],
+
+                    const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 13,
+                      color: AppColors.tanMedium,
                     ),
                   ],
                 ),
               ),
+
+              const SizedBox(height: 14),
+
+              // Security note
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.verified_user_outlined,
+                    color: AppColors.statusPositive,
+                    size: 15,
+                  ),
+                  const SizedBox(width: 5),
+                  Flexible(
+                    child: Text(
+                      'Data jamaah Anda terlindungi dan aman',
+                      textAlign: TextAlign.center,
+                      style: AppTypography.captionSmall.copyWith(
+                        color: AppColors.tanMedium,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ==========================================================================
+// MODERN ROLE BUTTON
+// ==========================================================================
+
+class _ModernRoleButton extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _ModernRoleButton({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.all(13),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.espressoDark : AppColors.surfaceWhite,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(
+              color: selected
+                  ? AppColors.espressoDark
+                  : AppColors.goldLight.withValues(alpha: 0.28),
+              width: selected ? 1.5 : 1,
+            ),
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: AppColors.espressoDark.withValues(alpha: 0.14),
+                      blurRadius: 14,
+                      offset: const Offset(0, 6),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: selected
+                      ? AppColors.surfaceWhite.withValues(alpha: 0.12)
+                      : AppColors.canvasCream,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: selected
+                      ? AppColors.canvasCream
+                      : AppColors.espressoDark,
+                ),
+              ),
+
+              const SizedBox(width: 9),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: selected
+                            ? AppColors.surfaceWhite
+                            : AppColors.espressoDark,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.captionSmall.copyWith(
+                        color: selected
+                            ? AppColors.canvasCream.withValues(alpha: 0.72)
+                            : AppColors.tanMedium,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(width: 4),
+
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: selected
+                      ? AppColors.accentGoldStar
+                      : Colors.transparent,
+                  border: Border.all(
+                    color: selected
+                        ? AppColors.accentGoldStar
+                        : AppColors.goldLight,
+                    width: 1.5,
+                  ),
+                ),
+                child: selected
+                    ? const Icon(
+                        Icons.check_rounded,
+                        size: 13,
+                        color: Colors.white,
+                      )
+                    : null,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WelcomeFeature extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _WelcomeFeature({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceWhite.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: AppColors.accentGoldStar),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: AppTypography.captionSmall.copyWith(
+              color: AppColors.canvasCream.withValues(alpha: 0.82),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
