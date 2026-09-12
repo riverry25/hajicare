@@ -67,9 +67,15 @@ class RegisterController extends GetxController {
             : AppRoutes.dashboardPendamping,
       );
     } on FirebaseAuthException catch (e) {
+      debugPrint('=== ERROR AUTH ===: ${e.code} - ${e.message}');
       errorMessage.value = e.message ?? e.code;
       _showErrorSnackbar('Error Auth: ${errorMessage.value}');
-    } catch (e) {
+    } on FirebaseException catch (e) {
+      debugPrint('=== ERROR FIRESTORE ===: ${e.code} - ${e.message}');
+      errorMessage.value = 'Gagal menyimpan data: ${e.message}';
+      _showErrorSnackbar('Error Firestore: ${e.message}');
+    } catch (e, stackTrace) {
+      debugPrint('=== ERROR UMUM ===: $e\n$stackTrace');
       errorMessage.value = 'Terjadi kesalahan: $e';
       _showErrorSnackbar(errorMessage.value!);
     } finally {
