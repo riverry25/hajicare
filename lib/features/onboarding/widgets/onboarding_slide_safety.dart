@@ -8,10 +8,7 @@ import 'onboarding_hero_banner.dart';
 class OnboardingSlideSafety extends StatelessWidget {
   final int activeIndex;
 
-  const OnboardingSlideSafety({
-    super.key,
-    this.activeIndex = 1,
-  });
+  const OnboardingSlideSafety({super.key, this.activeIndex = 1});
 
   @override
   Widget build(BuildContext context) {
@@ -48,114 +45,114 @@ class OnboardingSlideSafety extends StatelessWidget {
               title: 'Jaga Jarak Aman & Terpantau',
               icon: Icons.shield,
             ),
+
+            const SizedBox(height: AppSpacing.xl),
+
+            // Stepper Card
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: AppColors.canvasCream.withValues(alpha: .4),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+              ),
+              child: _buildStepper(
+                activeIndex: activeIndex,
+                label: '2 DARI 3 TAHAP AWAL',
+              ),
+            ),
+
+            const SizedBox(height: AppSpacing.xl),
+
+            _buildSectionHeader(),
+
             const SizedBox(height: AppSpacing.lg),
 
-            // Stepper
-            _buildStepper(activeIndex: activeIndex, label: '2 DARI 3 TAHAP AWAL'),
-            const Divider(color: AppColors.surfaceContainer, height: 1),
-            const SizedBox(height: AppSpacing.lg),
+            _buildFeatureCard(
+              icon: Icons.near_me,
+              title: 'Pendamping Aman',
+              description:
+                  'Pantau rombongan secara real-time dan terima peringatan otomatis saat terpisah melebihi batas aman.',
+              badgeText: 'Radar Aktif',
+              badgeColor: AppColors.espressoDark,
+              badgeBgColor: AppColors.canvasCream,
+            ),
 
-            // Section intro header
-            Row(
+            const SizedBox(height: AppSpacing.md),
+
+            _buildFeatureCard(
+              icon: Icons.map,
+              title: 'Peta Terpadu & SOS',
+              description:
+                  'Temukan pos kesehatan, hotel, dan hubungi bantuan darurat hanya dengan satu sentuhan.',
+              badgeText: 'SOS 24 Jam',
+              badgeColor: AppColors.sosEmergency,
+              badgeBgColor: AppColors.sosEmergency.withValues(alpha: .08),
+              isSosBadge: true,
+            ),
+
+            const SizedBox(height: AppSpacing.md),
+
+            _buildFeatureCard(
+              icon: Icons.accessibility_new,
+              title: 'Ramah Jamaah Lansia',
+              description:
+                  'Ukuran tombol besar, kontras tinggi, dan mudah digunakan di bawah terik matahari.',
+              badgeText: 'Ramah Lansia',
+              badgeColor: AppColors.espressoDark,
+              badgeBgColor: AppColors.canvasCream,
+            ),
+
+            const SizedBox(height: AppSpacing.xl),
+
+            _buildSafetyFooter(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader() {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.canvasCream.withValues(alpha: .35),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: const BoxDecoration(
+              color: AppColors.surfaceWhite,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.shield, color: AppColors.espressoDark),
+          ),
+
+          const SizedBox(width: AppSpacing.md),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppColors.canvasCream,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.espressoDark.withValues(alpha: 0.06),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(Icons.shield,
-                      color: AppColors.espressoDark, size: 22),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Text(
-                    'Fitur Keselamatan Jamaah',
-                    style: AppTypography.titleMedium.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textHeading,
-                    ),
-                  ),
-                ),
                 Text(
-                  'Bisa diatur kapan saja',
-                  style: AppTypography.caption.copyWith(color: AppColors.tanMedium),
+                  'Fitur Keselamatan Jamaah',
+                  style: AppTypography.titleLarge.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+
+                const SizedBox(height: 4),
+
+                Text(
+                  'Teknologi pendampingan cerdas agar jamaah tetap aman dan terhubung selama ibadah.',
+                  style: AppTypography.bodySmall,
                 ),
               ],
             ),
-            Padding(
-              padding: const EdgeInsets.only(left: 56.0, top: 4),
-              child: Text(
-                'Teknologi pendampingan cerdas agar jamaah lansia dan keluarga tetap aman serta terhubung selama di Tanah Suci.',
-                style: AppTypography.bodySmall.copyWith(color: AppColors.textBody),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-
-            // Feature cards
-            _buildFeatureCard(
-              icon: Icons.near_me,
-              title: 'Pendamping Aman (GPS & Radar)',
-              description:
-                  'Pantau rombongan secara real-time dan terima peringatan getar otomatis saat terpisah melebihi batas aman.',
-              badgeText: 'Radar Aktif',
-              badgeColor: AppColors.espressoDark,
-              badgeBgColor: AppColors.canvasCream.withValues(alpha: 0.6),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            _buildFeatureCard(
-              icon: Icons.map,
-              title: 'Peta Terpadu & Tombol SOS',
-              description:
-                  'Akses mudah menuju pos kesehatan, hotel, dan panggil bantuan petugas maktab seketika hanya dengan satu sentuhan.',
-              badgeText: 'SOS 24 Jam',
-              badgeColor: AppColors.sosEmergency,
-              badgeBgColor: AppColors.sosEmergency.withValues(alpha: 0.1),
-              isSosBadge: true,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            _buildFeatureCard(
-              icon: Icons.accessibility_new,
-              title: 'Dirancang Khusus Jamaah Lansia',
-              description:
-                  'Tampilan ramah satu jempol, tombol berjarak aman, dan kontras tajam nyaman di bawah terik matahari Mekkah.',
-              badgeText: 'Ramah Lansia',
-              badgeColor: AppColors.espressoDark,
-              badgeBgColor: AppColors.canvasCream.withValues(alpha: 0.6),
-            ),
-
-            const SizedBox(height: AppSpacing.lg),
-            // Accessibility hint footer
-            Container(
-              padding: const EdgeInsets.only(top: AppSpacing.sm),
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: AppColors.canvasCream)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.check_circle,
-                      color: AppColors.statusPositive, size: 18),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Text(
-                      'Notifikasi getar & suara otomatis aktif',
-                      style: AppTypography.caption
-                          .copyWith(color: AppColors.textBody),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -187,7 +184,9 @@ class OnboardingSlideSafety extends StatelessWidget {
           ),
           Text(
             label,
-            style: AppTypography.captionSmall.copyWith(color: AppColors.tanMedium),
+            style: AppTypography.captionSmall.copyWith(
+              color: AppColors.tanMedium,
+            ),
           ),
         ],
       ),
@@ -204,19 +203,16 @@ class OnboardingSlideSafety extends StatelessWidget {
     bool isSosBadge = false,
   }) {
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.surfaceWhite,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: AppColors.goldLight.withValues(alpha: 0.4),
-          width: 1.5,
-        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.goldLight.withValues(alpha: .25)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.espressoDark.withValues(alpha: 0.04),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: .04),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -224,76 +220,83 @@ class OnboardingSlideSafety extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 44,
-            height: 44,
-            margin: const EdgeInsets.only(top: 2),
-            decoration: const BoxDecoration(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
               color: AppColors.canvasCream,
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(icon, color: AppColors.espressoDark, size: 22),
+            child: Icon(icon, size: 28, color: AppColors.espressoDark),
           ),
-          const SizedBox(width: AppSpacing.sm),
+
+          const SizedBox(width: 16),
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: AppTypography.titleMedium.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.espressoDark,
-                        ),
-                      ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: badgeBgColor,
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                  child: Text(
+                    badgeText,
+                    style: AppTypography.captionSmall.copyWith(
+                      color: badgeColor,
+                      fontWeight: FontWeight.w700,
                     ),
-                    const SizedBox(width: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: badgeBgColor,
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                        border: Border.all(
-                          color: isSosBadge
-                              ? AppColors.sosEmergency.withValues(alpha: 0.2)
-                              : AppColors.goldLight.withValues(alpha: 0.4),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (isSosBadge) ...[
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: const BoxDecoration(
-                                color: AppColors.sosEmergency,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                          ],
-                          Text(
-                            badgeText.toUpperCase(),
-                            style: AppTypography.captionSmall.copyWith(
-                              color: badgeColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textBody,
                   ),
                 ),
+
+                const SizedBox(height: 10),
+
+                Text(
+                  title,
+                  style: AppTypography.titleMedium.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+
+                const SizedBox(height: 6),
+
+                Text(description, style: AppTypography.bodySmall),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSafetyFooter() {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.statusPositive.withValues(alpha: .08),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: AppColors.statusPositive.withValues(alpha: .15),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.verified_user,
+            color: AppColors.statusPositive,
+            size: 22,
+          ),
+
+          const SizedBox(width: 12),
+
+          Expanded(
+            child: Text(
+              'Notifikasi getar dan suara otomatis aktif untuk membantu jamaah tetap aman selama perjalanan.',
+              style: AppTypography.bodySmall,
             ),
           ),
         ],

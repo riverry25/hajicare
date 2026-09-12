@@ -1,34 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../core/state/app_settings_controller.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/state/app_settings_controller.dart';
 import 'onboarding_hero_banner.dart';
 
 class OnboardingSlideLanguage extends StatelessWidget {
   final int activeIndex;
 
-  const OnboardingSlideLanguage({
-    super.key,
-    this.activeIndex = 0,
-  });
+  const OnboardingSlideLanguage({super.key, this.activeIndex = 0});
 
   // locale code, display title, subtitle, type badge
   static const List<(String, String, String, String)> _languages = [
-    ('id', 'Bahasa Indonesia', 'Baku & Lengkap',    'Bahasa Utama'),
-    ('jv', 'Basa Jawi',        'Unggah-ungguh',     'Daerah'),
-    ('su', 'Basa Sunda',       'Lemes & Santun',    'Daerah'),
-    ('en', 'English',          'Global Standard',   'Global'),
+    ('id', 'Bahasa Indonesia', 'Baku & Lengkap', 'Bahasa Utama'),
+    ('jv', 'Basa Jawi', 'Unggah-ungguh', 'Daerah'),
+    ('su', 'Basa Sunda', 'Lemes & Santun', 'Daerah'),
+    ('en', 'English', 'Global Standard', 'Global'),
   ];
 
   @override
   Widget build(BuildContext context) {
     final settings = Get.find<AppSettingsController>();
+
     return Container(
       margin: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
+        horizontal: AppSpacing.md,
         vertical: AppSpacing.sm,
       ),
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -59,99 +57,101 @@ class OnboardingSlideLanguage extends StatelessWidget {
               title: 'Pilih Bahasa Kenyamanan',
               icon: Icons.mosque,
             ),
+
             const SizedBox(height: AppSpacing.lg),
 
             // Stepper indicator
-            _buildStepper(activeIndex: activeIndex, label: '1 DARI 3 TAHAP AWAL'),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.canvasCream.withValues(alpha: .35),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: _buildStepper(
+                activeIndex: activeIndex,
+                label: '1 DARI 3 TAHAP AWAL',
+              ),
+            ),
+
+            const SizedBox(height: AppSpacing.sm),
+
             const Divider(color: AppColors.surfaceContainer, height: 1),
+
             const SizedBox(height: AppSpacing.lg),
 
             // Section intro header
-            Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: const BoxDecoration(
-                    color: AppColors.canvasCream,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.translate,
-                      color: AppColors.espressoDark, size: 20),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Text(
-                    'Bahasa Pengantar Aplikasi',
-                    style: AppTypography.titleMedium.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textHeading,
-                    ),
-                  ),
-                ),
-                Text(
-                  'Bisa diubah kapan saja',
-                  style: AppTypography.caption.copyWith(color: AppColors.tanMedium),
-                ),
-              ],
-            ),
+            _buildLanguageHeader(),
+
+            const SizedBox(height: AppSpacing.lg),
+
             Padding(
-              padding: const EdgeInsets.only(left: 56.0, top: 4),
+              padding: const EdgeInsets.only(left: 5),
               child: Text(
                 'Pilih bahasa yang paling mudah dipahami untuk kenyamanan ibadah dan komunikasi darurat Anda.',
-                style: AppTypography.bodySmall.copyWith(color: AppColors.textBody),
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.textBody,
+                ),
               ),
             ),
+
             const SizedBox(height: AppSpacing.lg),
 
             // 2x2 Language Grid
-            Obx(
-              () {
-                final currentCode = settings.currentLocale.languageCode;
-                return GridView.builder(
-                  itemCount: _languages.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: AppSpacing.sm,
-                    mainAxisSpacing: AppSpacing.sm,
-                    childAspectRatio: 1.55,
-                  ),
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, index) {
-                    final lang = _languages[index];
-                    final isSelected = currentCode == lang.$1;
-                    return _buildLanguageCard(
-                      title: lang.$2,
-                      subtitle: lang.$3,
-                      type: lang.$4,
-                      isSelected: isSelected,
-                      onTap: () {
-                        settings.setLocale(Locale(lang.$1));
-                      },
-                    );
-                  },
-                );
-              },
-            ),
+            Obx(() {
+              final currentCode = settings.currentLocale.languageCode;
 
-            const SizedBox(height: AppSpacing.lg),
+              return GridView.builder(
+                itemCount: _languages.length,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: AppSpacing.sm,
+                  mainAxisSpacing: AppSpacing.sm,
+                  childAspectRatio: 1.35,
+                ),
+                itemBuilder: (context, index) {
+                  final lang = _languages[index];
+                  final isSelected = currentCode == lang.$1;
+
+                  return _buildLanguageCard(
+                    title: lang.$2,
+                    subtitle: lang.$3,
+                    type: lang.$4,
+                    isSelected: isSelected,
+                    onTap: () {
+                      settings.setLocale(Locale(lang.$1));
+                    },
+                  );
+                },
+              );
+            }),
+
+            const SizedBox(height: AppSpacing.xl),
+
             // Accessibility hint footer
             Container(
-              padding: const EdgeInsets.only(top: AppSpacing.sm),
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: AppColors.canvasCream)),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.statusPositive.withValues(alpha: .08),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: AppColors.statusPositive.withValues(alpha: .15),
+                ),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.check_circle,
-                      color: AppColors.statusPositive, size: 18),
-                  const SizedBox(width: AppSpacing.sm),
+                  const Icon(
+                    Icons.volume_up_rounded,
+                    color: AppColors.statusPositive,
+                  ),
+
+                  const SizedBox(width: 12),
+
                   Expanded(
                     child: Text(
-                      'Ukuran teks & audio akan otomatis disesuaikan',
-                      style: AppTypography.caption
-                          .copyWith(color: AppColors.textBody),
+                      'Ukuran teks dan panduan audio akan otomatis disesuaikan dengan bahasa yang dipilih.',
+                      style: AppTypography.bodySmall,
                     ),
                   ),
                 ],
@@ -168,10 +168,12 @@ class OnboardingSlideLanguage extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: AppSpacing.sm2),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Row(
             children: List.generate(3, (index) {
               final isActive = activeIndex == index;
+
               return Padding(
                 padding: EdgeInsets.only(right: index < 2 ? 8 : 0),
                 child: AnimatedContainer(
@@ -188,9 +190,61 @@ class OnboardingSlideLanguage extends StatelessWidget {
               );
             }),
           ),
-          Text(
-            label,
-            style: AppTypography.captionSmall.copyWith(color: AppColors.tanMedium),
+          const SizedBox(width: AppSpacing.sm),
+          Flexible(
+            child: Text(
+              label,
+              textAlign: TextAlign.end,
+              style: AppTypography.captionSmall.copyWith(
+                color: AppColors.tanMedium,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLanguageHeader() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.canvasCream.withValues(alpha: .35),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: const BoxDecoration(
+              color: AppColors.surfaceWhite,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.translate, size: 26),
+          ),
+
+          const SizedBox(width: 16),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Bahasa Pengantar',
+                  style: AppTypography.titleLarge.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+
+                const SizedBox(height: 4),
+
+                Text(
+                  'Pilih bahasa yang paling mudah dipahami selama ibadah.',
+                  style: AppTypography.bodySmall,
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -206,93 +260,77 @@ class OnboardingSlideLanguage extends StatelessWidget {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
+      borderRadius: BorderRadius.circular(22),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.espressoDark : AppColors.surfaceWhite,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
+          color: AppColors.surfaceWhite,
+          borderRadius: BorderRadius.circular(22),
           border: Border.all(
             color: isSelected
                 ? AppColors.espressoDark
-                : AppColors.goldLight.withValues(alpha: 0.5),
-            width: 2,
+                : AppColors.goldLight.withValues(alpha: .25),
+            width: isSelected ? 2 : 1,
           ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: AppColors.espressoDark.withValues(alpha: 0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  )
-                ]
-              : null,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: .04),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
         ),
+
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.primaryContainer
-                        : AppColors.canvasCream,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    color: AppColors.canvasCream,
+                    borderRadius: BorderRadius.circular(50),
                   ),
-                  child: Text(
-                    type.toUpperCase(),
-                    style: AppTypography.captionSmall.copyWith(
-                      color: isSelected
-                          ? AppColors.accentGoldStar
-                          : AppColors.tanMedium,
-                    ),
-                  ),
+                  child: Text(type, style: AppTypography.captionSmall),
                 ),
-                if (isSelected)
-                  const Icon(Icons.check_circle,
-                      color: AppColors.accentGoldStar, size: 20)
-                else
-                  Container(
-                    width: 18,
-                    height: 18,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.goldLight, width: 2),
-                    ),
-                  ),
-              ],
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: AppTypography.titleMedium.copyWith(
-                    color: isSelected
-                        ? AppColors.surfaceWhite
-                        : AppColors.textHeading,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: AppTypography.caption.copyWith(
-                    color: isSelected
-                        ? AppColors.canvasCream.withValues(alpha: 0.8)
-                        : AppColors.textBody,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+
+                const Spacer(),
+
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: isSelected
+                      ? const Icon(
+                          Icons.check_circle_rounded,
+                          key: ValueKey(true),
+                          color: AppColors.statusPositive,
+                        )
+                      : const Icon(
+                          Icons.radio_button_unchecked,
+                          key: ValueKey(false),
+                          color: AppColors.tanMedium,
+                        ),
                 ),
               ],
             ),
+
+            const Spacer(),
+
+            Text(
+              title,
+              style: AppTypography.titleMedium.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+              maxLines: 2,
+            ),
+
+            const SizedBox(height: 6),
+
+            Text(subtitle, style: AppTypography.bodySmall),
           ],
         ),
       ),
