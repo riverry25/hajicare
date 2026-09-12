@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../../../core/routes/app_routes.dart';
-import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -10,22 +9,15 @@ import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/pill_button.dart';
 import '../../../core/locales/app_localizations.dart';
+import '../controllers/login_controller.dart';
 import '../widgets/auth_role_card.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
-}
-
-class _LoginScreenState extends State<LoginScreen> {
-  String _selectedRole = 'jamaah';
-  bool _obscurePassword = true;
-  bool _rememberMe = true;
-
-  @override
   Widget build(BuildContext context) {
+    final controller = Get.find<LoginController>();
     return Scaffold(
       backgroundColor: AppColors.canvasCream,
       body: SafeArea(
@@ -188,32 +180,35 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
               ),
               const SizedBox(height: AppSpacing.sm),
-              Row(
-                children: [
-                  Expanded(
-                    child: AuthRoleCard(
-                      roleId: 'jamaah',
-                      title: 'Jamaah',
-                      description:
-                          'Saya Jamaah Haji/Umrah yang membutuhkan navigasi dan pendampingan',
-                      icon: Icons.person,
-                      isSelected: _selectedRole == 'jamaah',
-                      onTap: () => setState(() => _selectedRole = 'jamaah'),
+              Obx(
+                () => Row(
+                  children: [
+                    Expanded(
+                      child: AuthRoleCard(
+                        roleId: 'jamaah',
+                        title: 'Jamaah',
+                        description:
+                            'Saya Jamaah Haji/Umrah yang membutuhkan navigasi dan pendampingan',
+                        icon: Icons.person,
+                        isSelected: controller.selectedRole.value == 'jamaah',
+                        onTap: () => controller.setRole('jamaah'),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: AuthRoleCard(
-                      roleId: 'pendamping',
-                      title: 'Pendamping',
-                      description:
-                          'Keluarga atau muthawif yang memantau keselamatan jamaah',
-                      icon: Icons.health_and_safety,
-                      isSelected: _selectedRole == 'pendamping',
-                      onTap: () => setState(() => _selectedRole = 'pendamping'),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: AuthRoleCard(
+                        roleId: 'pendamping',
+                        title: 'Pendamping',
+                        description:
+                            'Keluarga atau muthawif yang memantau keselamatan jamaah',
+                        icon: Icons.health_and_safety,
+                        isSelected:
+                            controller.selectedRole.value == 'pendamping',
+                        onTap: () => controller.setRole('pendamping'),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: AppSpacing.lg),
 
@@ -222,7 +217,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const AppTextField(
+                    AppTextField(
+                      controller: controller.phoneOrEmailController,
                       label: 'Nomor WhatsApp atau Email',
                       hintText: '812 3456 7890',
                       isPhone: true,
@@ -269,67 +265,61 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                     const SizedBox(height: AppSpacing.sm),
-                    AppTextField(
-                      hintText: 'Masukkan PIN / Kata Sandi',
-                      obscureText: _obscurePassword,
-                      prefixIcon: const Icon(
-                        Icons.lock,
-                        color: AppColors.tanMedium,
-                        size: 20,
-                      ),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                          color: AppColors.textBody,
+                    Obx(
+                      () => AppTextField(
+                        controller: controller.passwordController,
+                        hintText: 'Masukkan PIN / Kata Sandi',
+                        obscureText: controller.obscurePassword.value,
+                        prefixIcon: const Icon(
+                          Icons.lock,
+                          color: AppColors.tanMedium,
+                          size: 20,
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            controller.obscurePassword.value
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                            color: AppColors.textBody,
+                          ),
+                          onPressed: controller.togglePasswordVisibility,
+                        ),
                       ),
                     ),
 
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: _rememberMe,
-                          onChanged: (value) {
-                            setState(() {
-                              _rememberMe = value ?? true;
-                            });
-                          },
-                          activeColor: AppColors.statusPositive,
-                          side: const BorderSide(color: AppColors.goldLight),
-                        ),
-                        Text(
-                          'Ingat Saya di Perangkat Ini',
-                          style: AppTypography.caption.copyWith(
-                            color: AppColors.textHeading,
+                    Obx(
+                      () => Row(
+                        children: [
+                          Checkbox(
+                            value: controller.rememberMe.value,
+                            onChanged: (value) =>
+                                controller.setRememberMe(value ?? true),
+                            activeColor: AppColors.statusPositive,
+                            side: const BorderSide(color: AppColors.goldLight),
                           ),
-                        ),
-                      ],
+                          Text(
+                            'Ingat Saya di Perangkat Ini',
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.textHeading,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
 
                     const SizedBox(height: AppSpacing.sm),
-                    PillButton(
-                      label: context.tr('btnLogin').isEmpty ? 'Masuk ke Aplikasi' : context.tr('btnLogin'),
-                      icon: Icons.login,
-                      onPressed: () {
-                        final hajicare = context.read<HajiCareController>();
-                        hajicare.setRole(_selectedRole == 'jamaah'
-                            ? UserRole.jamaah
-                            : UserRole.pendamping);
-                        Navigator.pushNamedAndRemoveUntil(
-                          context,
-                          _selectedRole == 'jamaah'
-                              ? AppRoutes.dashboardJamaah
-                              : AppRoutes.dashboardPendamping,
-                          (_) => false,
-                        );
-                      },
+                    Obx(
+                      () => PillButton(
+                        label: controller.isLoading.value
+                            ? 'Memproses...'
+                            : (context.tr('btnLogin').isEmpty
+                                ? 'Masuk ke Aplikasi'
+                                : context.tr('btnLogin')),
+                        icon: Icons.login,
+                        onPressed: controller.isLoading.value
+                            ? null
+                            : () => controller.login(),
+                      ),
                     ),
 
                     Padding(
@@ -411,7 +401,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     GestureDetector(
                       onTap: () {
-                        Navigator.pushNamed(context, AppRoutes.register);
+                        Get.toNamed(AppRoutes.register);
                       },
                       child: RichText(
                         text: TextSpan(

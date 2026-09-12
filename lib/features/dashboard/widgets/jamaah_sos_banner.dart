@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../../../core/state/hajicare_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -28,7 +29,7 @@ class JamaahSosBanner extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Get.back(result: false),
             child: Text(
               'Batal',
               style: AppTypography.labelLarge.copyWith(color: AppColors.textBody),
@@ -39,7 +40,7 @@ class JamaahSosBanner extends StatelessWidget {
               backgroundColor: AppColors.sosEmergency,
               foregroundColor: AppColors.surfaceWhite,
             ),
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Get.back(result: true),
             child: Text(
               'Kirim SOS',
               style: AppTypography.labelLarge.copyWith(color: AppColors.surfaceWhite),
@@ -54,17 +55,13 @@ class JamaahSosBanner extends StatelessWidget {
         Vibration.vibrate(pattern: [0, 200, 100, 200]);
       }
       state.triggerSos();
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'SOS terkirim ke ${state.pendampingName}',
-              style: AppTypography.bodyMedium.copyWith(color: AppColors.surfaceWhite),
-            ),
-            backgroundColor: AppColors.sosEmergency,
-          ),
-        );
-      }
+      Get.snackbar(
+        'Sinyal Darurat',
+        'SOS terkirim ke ${state.pendampingName}',
+        backgroundColor: AppColors.sosEmergency,
+        colorText: AppColors.surfaceWhite,
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 

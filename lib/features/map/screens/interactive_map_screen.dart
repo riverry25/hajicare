@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/models/filter_chip_item.dart';
 import '../../../core/state/hajicare_controller.dart';
@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
+import '../controllers/map_controller.dart';
 import '../widgets/map_bottom_sheet.dart';
 import '../widgets/map_floating_controls.dart';
 import '../widgets/map_top_header.dart';
@@ -22,8 +23,6 @@ class InteractiveMapScreen extends StatefulWidget {
 
 class _InteractiveMapScreenState extends State<InteractiveMapScreen>
     with TickerProviderStateMixin {
-  int _currentIndex = 1;
-  int _selectedFilter = 0;
   late AnimationController _pulseController;
   late AnimationController _compassController;
 
@@ -61,7 +60,10 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<HajiCareController>();
+    final state = Get.find<HajiCareController>();
+    final mapCtrl = Get.isRegistered<MapController>()
+        ? Get.find<MapController>()
+        : Get.put(MapController());
 
     return Scaffold(
       backgroundColor: AppColors.canvasCream,
@@ -71,11 +73,13 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
           _buildMapCanvas(state),
 
           // Top Header
-          MapTopHeader(
-            filters: _filters,
-            selectedFilter: _selectedFilter,
-            onFilterSelected: (index) => setState(() => _selectedFilter = index),
-            onSosPressed: () => Navigator.pushNamed(context, AppRoutes.modalSos),
+          Obx(
+            () => MapTopHeader(
+              filters: _filters,
+              selectedFilter: mapCtrl.selectedFilter.value,
+              onFilterSelected: mapCtrl.selectFilter,
+              onSosPressed: () => Get.toNamed(AppRoutes.modalSos),
+            ),
           ),
 
           // Right-side floating controls
@@ -96,9 +100,11 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
         ],
       ),
       bottomNavigationBar: widget.showBottomNav
-          ? HajiCareBottomNavBar(
-              currentIndex: _currentIndex,
-              onTap: (index) => setState(() => _currentIndex = index),
+          ? Obx(
+              () => HajiCareBottomNavBar(
+                currentIndex: mapCtrl.currentIndex.value,
+                onTap: mapCtrl.changeTab,
+              ),
             )
           : null,
     );

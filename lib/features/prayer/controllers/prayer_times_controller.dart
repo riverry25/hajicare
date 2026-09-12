@@ -1,283 +1,469 @@
 import 'dart:async';
-import 'package:adhan/adhan.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
-
+import 'package:get/get.dart';
+import 'package:hijri/hijri_calendar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vibration/vibration.dart';
 
-class PrayerScheduleItem {
-  final String name;
-  final String arabicName;
-  final DateTime time;
-  final String formattedTime;
-  final bool isNext;
-  final bool isCurrent;
+import '../../../core/services/geocoding_service.dart';
+import '../../../core/services/location_service.dart';
+import '../../../core/services/prayer_calculation_service.dart';
+import '../../../core/services/timezone_service.dart';
+import '../models/prayer_location_data.dart';
+import '../models/prayer_schedule_item.dart';
 
-  const PrayerScheduleItem({
-    required this.name,
-    required this.arabicName,
-    required this.time,
-    required this.formattedTime,
-    this.isNext = false,
-    this.isCurrent = false,
-  });
-}
+class PrayerTimesController extends GetxController {
+  // Services
+  final LocationService _locationService;
+  final GeocodingService _geocodingService;
+  final TimezoneService _timezoneService;
+  final PrayerCalculationService _prayerCalculationService;
 
-class PrayerTimesController extends ChangeNotifier {
-  // Location & Coordinates (Default to Jakarta, Indonesia for fallback)
-  static const double defaultLat = -6.2088;
-  static const double defaultLng = 106.8456;
+  PrayerTimesController({
+    LocationService? locationService,
+    GeocodingService? geocodingService,
+    TimezoneService? timezoneService,
+    PrayerCalculationService? prayerCalculationService,
+  }) : _locationService =
+           locationService ??
+           (Get.isRegistered<LocationService>()
+               ? Get.find<LocationService>()
+               : LocationService()),
+       _geocodingService =
+           geocodingService ??
+           (Get.isRegistered<GeocodingService>()
+               ? Get.find<GeocodingService>()
+               : GeocodingService()),
+       _timezoneService =
+           timezoneService ??
+           (Get.isRegistered<TimezoneService>()
+               ? Get.find<TimezoneService>()
+               : TimezoneService()),
+       _prayerCalculationService =
+           prayerCalculationService ??
+           (Get.isRegistered<PrayerCalculationService>()
+               ? Get.find<PrayerCalculationService>()
+               : PrayerCalculationService());
 
-  double currentLat = defaultLat;
-  double currentLng = defaultLng;
-  String locationName = 'Jakarta, Indonesia';
-  String calculationMethodName = 'MABIMS (Kemenag)';
-  String hijriDateText = '';
+  // SharedPreferences Keys
+  static const String _prefLatKey = 'prayer_cache_lat';
+  static const String _prefLngKey = 'prayer_cache_lng';
+  static const String _prefCityKey = 'prayer_cache_city';
+  static const String _prefCountryKey = 'prayer_cache_country';
+  static const String _prefCountryCodeKey = 'prayer_cache_country_code';
+  static const String _prefTimezoneKey = 'prayer_cache_timezone';
+  static const String _prefTimeKey = 'prayer_cache_timestamp';
 
-  // Next Prayer & Countdown
-  String nextPrayerName = 'Ashar';
-  String nextPrayerArabic = 'العصر';
-  String nextPrayerTime = '--:--';
-  String countdownText = '-- Menit -- Detik';
+  // Internal emergency calculation coordinates only (NEVER exposed to user as a location name)
+  static const double emergencyCalcLat = -6.2088;
+  static const double emergencyCalcLng = 106.8456;
+
+  // Public aliases used in tests and diagnostics
+  static const double fallbackLatitude = emergencyCalcLat;
+  static const double fallbackLongitude = emergencyCalcLng;
+  static const String fallbackCityName = 'Jakarta';
+  static const String fallbackCountryCode = 'ID';
+
+  // Minimum distance moved before triggering a new reverse-geocoding (meters)
+  static const double distanceThresholdMeters = 500.0;
+
+  /// True when GPS/LastKnown location is unavailable and we fell back to
+  /// emergency internal coordinates. Used by UI to show/hide the Fallback badge.
+  bool get isUsingFallbackLocation =>
+      locationSource.value == LocationSource.unavailable;
+
+  // ── Reactive State ──────────────────────────────────────────────────────────
+  final locationSource = LocationSource.unavailable.obs;
+
+  final currentLat = 0.0.obs;
+  final currentLng = 0.0.obs;
+
+  final locationName = 'Mencari lokasi...'.obs;
+  final countryCode = ''.obs;
+  final timezoneName = ''.obs;
+  final timezoneAbbr = ''.obs;
+
+  final calculationMethodName = ''.obs;
+  final hijriDateText = ''.obs;
+
+  // Prayers
+  final prayers = <PrayerScheduleItem>[].obs;
+  final nextPrayerName = ''.obs;
+  final nextPrayerArabic = ''.obs;
+  final nextPrayerTime = '--:--'.obs;
+  final countdownText = '-- Menit -- Detik'.obs;
 
   // Compass & Qibla
-  double qiblaBearing = 294.0; // Calculated Qibla angle from coordinates
-  double get compassHeading => qiblaBearing; // Convenience alias
-  double deviceHeading = 0.0; // 0 to 360 degrees from North
-  double qiblaOffset = 0.0; // Angle relative to device heading
-  bool isQiblaAligned = false;
-  bool hasCompassSensor = true;
+  final qiblaBearing = 0.0.obs;
+  final deviceHeading = 0.0.obs;
+  final qiblaOffset = 0.0.obs;
+  final isQiblaAligned = false.obs;
+  final hasCompassSensor = true.obs;
 
-  // Prayer list
-  List<PrayerScheduleItem> prayers = [];
+  // Status flags
+  final isLoadingLocation = false.obs;
+  final locationErrorMessage = ''.obs;
+
+  // Internal state
+  DateTime? _targetNextPrayerTime;
+  DateTime? _lastScheduleCalculationDate;
+  double? _lastGeocodedLat;
+  double? _lastGeocodedLng;
 
   Timer? _countdownTimer;
   StreamSubscription<CompassEvent>? _compassSubscription;
+  StreamSubscription<Position>? _positionSubscription;
   bool _hasVibrated = false;
 
-  PrayerTimesController() {
+  @override
+  void onInit() {
+    super.onInit();
+    initialize();
+  }
+
+  Future<void> initialize() async {
     _initHijriDate();
-    calculatePrayers();
-    _initLocationAndPrayers();
     _initCompass();
+
+    // Priority order:
+    // 1. Fresh GPS
+    // 2. Last known device position
+    // 3. Persistent cache (< 7 days)
+    // 4. Unavailable ("Lokasi tidak tersedia")
+    await loadInitialLocationAndSchedule();
+
     _startCountdownTimer();
+    _listenToLocationUpdates();
   }
 
   void _initHijriDate() {
-    hijriDateText = '14 Dzulhijjah 1445 H';
-    notifyListeners();
-  }
-
-  Future<void> _initLocationAndPrayers() async {
     try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (serviceEnabled) {
-        LocationPermission permission = await Geolocator.checkPermission();
-        if (permission == LocationPermission.denied) {
-          permission = await Geolocator.requestPermission();
-        }
-        if (permission == LocationPermission.whileInUse ||
-            permission == LocationPermission.always) {
-          final position = await Geolocator.getCurrentPosition(
-            locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
-          ).timeout(const Duration(seconds: 4));
+      final hijri = HijriCalendar.now();
+      hijriDateText.value =
+          '${hijri.hDay} ${hijri.longMonthName} ${hijri.hYear} H';
+    } catch (e) {
+      debugPrint('[PrayerTimesController] Hijri date error: $e');
+      hijriDateText.value = '14 Dzulhijjah 1445 H';
+    }
+  }
 
-          currentLat = position.latitude;
-          currentLng = position.longitude;
+  /// Load location following strict priority:
+  /// 1. Fresh GPS
+  /// 2. Last known OS position
+  /// 3. Valid persistent application cache (< 7 days)
+  /// 4. Unavailable ("Lokasi tidak tersedia")
+  Future<void> loadInitialLocationAndSchedule() async {
+    isLoadingLocation.value = true;
+    locationErrorMessage.value = '';
 
-          bool isSaudi = (currentLat >= 16 && currentLat <= 32) && (currentLng >= 34 && currentLng <= 55);
-          calculationMethodName = isSaudi ? 'Umm Al-Qura' : 'MABIMS (Kemenag)';
+    final locationResult = await _locationService.getCurrentPosition();
 
-          locationName = _resolveLocationName(currentLat, currentLng);
-        }
+    // Priority 1 & 2: GPS or LastKnown position from device
+    if (locationResult.isSuccess && locationResult.position != null) {
+      final pos = locationResult.position!;
+      await _applyLocation(
+        lat: pos.latitude,
+        lng: pos.longitude,
+        source: locationResult.source,
+      );
+      isLoadingLocation.value = false;
+      return;
+    }
+
+    // Priority 3: Persistent application cache
+    final cached = await _loadCachedLocation();
+    if (cached != null && cached.isValid) {
+      locationSource.value = LocationSource.cache;
+      currentLat.value = cached.latitude;
+      currentLng.value = cached.longitude;
+      locationName.value = cached.displayName;
+      countryCode.value = cached.countryCode;
+      timezoneName.value = cached.timezoneName;
+      timezoneAbbr.value = cached.timezoneAbbr;
+
+      _calculateScheduleAndQibla();
+      isLoadingLocation.value = false;
+      return;
+    }
+
+    // Priority 4: Completely Unavailable
+    _applyUnavailableLocation(locationResult.errorMessage);
+    isLoadingLocation.value = false;
+  }
+
+  /// Manual refresh triggered by user action
+  Future<void> refreshLocation() async {
+    isLoadingLocation.value = true;
+    locationErrorMessage.value = '';
+
+    final result = await _locationService.getCurrentPosition(
+      timeout: const Duration(seconds: 12),
+    );
+
+    if (result.isSuccess && result.position != null) {
+      await _applyLocation(
+        lat: result.position!.latitude,
+        lng: result.position!.longitude,
+        source: result.source,
+      );
+    } else {
+      if (result.state == LocationPermissionState.serviceDisabled) {
+        Get.snackbar(
+          'Layanan GPS Nonaktif',
+          'Aktifkan GPS perangkat untuk mendeteksi lokasi aktual Anda.',
+          snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(seconds: 4),
+          mainButton: TextButton(
+            onPressed: () => _locationService.openLocationSettings(),
+            child: const Text(
+              'Aktifkan',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        );
+      } else if (result.state == LocationPermissionState.deniedForever) {
+        Get.snackbar(
+          'Izin Lokasi Ditolak Permanen',
+          'Buka pengaturan aplikasi untuk memberikan izin lokasi.',
+          snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(seconds: 4),
+          mainButton: TextButton(
+            onPressed: () => _locationService.openAppSettings(),
+            child: const Text(
+              'Pengaturan',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        );
+      } else if (result.errorMessage != null &&
+          result.errorMessage!.isNotEmpty) {
+        Get.snackbar(
+          'Lokasi',
+          result.errorMessage!,
+          snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(seconds: 3),
+        );
       }
-    } catch (_) {
-      // Gracefully fall back to Jakarta default
     }
-
-    calculatePrayers();
+    isLoadingLocation.value = false;
   }
 
-  /// Determines a human-readable location name from coordinates offline.
-  static String _resolveLocationName(double lat, double lng) {
-    // Saudi Arabia
-    if (lat >= 16 && lat <= 32 && lng >= 34 && lng <= 55) {
-      final distToMakkah = _haversineKm(lat, lng, 21.4225, 39.8262);
-      final distToMadinah = _haversineKm(lat, lng, 24.4672, 39.6150);
-      if (distToMakkah < 80) return 'Makkah Al-Mukarramah';
-      if (distToMadinah < 80) return 'Madinah Al-Munawwarah';
-      return 'Arab Saudi';
-    }
-    // Indonesia regions by bounding box
-    if (lat >= -11 && lat <= 6 && lng >= 95 && lng <= 141) {
-      if (lat >= -7 && lat <= -5 && lng >= 106 && lng <= 107.5) return 'Jakarta, Indonesia';
-      if (lat >= -8 && lat <= -7 && lng >= 110 && lng <= 111) return 'Yogyakarta, Indonesia';
-      if (lat >= -7.5 && lat <= -6.8 && lng >= 107.5 && lng <= 108.5) return 'Bandung, Indonesia';
-      if (lat >= -7.5 && lat <= -7 && lng >= 112 && lng <= 113) return 'Surabaya, Indonesia';
-      if (lat >= -8.9 && lat <= -8 && lng >= 115 && lng <= 116) return 'Bali, Indonesia';
-      if (lat >= 3 && lat <= 6 && lng >= 95 && lng <= 99) return 'Aceh, Indonesia';
-      if (lat >= -5 && lat <= -2 && lng >= 104 && lng <= 107) return 'Palembang, Indonesia';
-      if (lat >= -0.5 && lat <= 2 && lng >= 108 && lng <= 110) return 'Pontianak, Indonesia';
-      if (lat >= -3 && lat <= 1 && lng >= 114 && lng <= 118) return 'Kalimantan, Indonesia';
-      return 'Indonesia';
-    }
-    // Other countries
-    if (lat >= 1 && lat <= 8 && lng >= 99 && lng <= 120) return 'Malaysia';
-    if (lat >= -1 && lat <= 1.5 && lng >= 103 && lng <= 104.5) return 'Singapura';
-    if (lat >= 5 && lat <= 21 && lng >= 97 && lng <= 106) return 'Thailand/Myanmar';
-    if (lat >= 8 && lat <= 22 && lng >= 102 && lng <= 110) return 'Vietnam/Laos';
-    // Fallback to GPS coordinates
-    return 'GPS (${lat.toStringAsFixed(2)}°, ${lng.toStringAsFixed(2)}°)';
+  Future<void> openAppSettings() async {
+    await _locationService.openAppSettings();
   }
 
-  /// Simple Euclidean approximation sufficient for bounding box detection (km).
-  static double _haversineKm(double lat1, double lng1, double lat2, double lng2) {
-    final dLat = (lat1 - lat2).abs() * 111.0;
-    final dLng = (lng1 - lng2).abs() * 111.0 * 0.7;
-    return (dLat * dLat + dLng * dLng) < 0 ? 0 : ((dLat * dLat + dLng * dLng) < 1e10 ? (dLat + dLng) : 99999);
+  Future<void> openLocationSettings() async {
+    await _locationService.openLocationSettings();
   }
 
-  void calculatePrayers() {
+  /// Applies a resolved latitude and longitude, with distance threshold guarding
+  Future<void> _applyLocation({
+    required double lat,
+    required double lng,
+    required LocationSource source,
+  }) async {
+    currentLat.value = lat;
+    currentLng.value = lng;
+    locationSource.value = source;
+
+    // Check if we already geocoded nearby
+    final shouldReverseGeocode =
+        _lastGeocodedLat == null ||
+        _lastGeocodedLng == null ||
+        _locationService.calculateDistanceMeters(
+              _lastGeocodedLat!,
+              _lastGeocodedLng!,
+              lat,
+              lng,
+            ) >=
+            distanceThresholdMeters;
+
+    if (shouldReverseGeocode) {
+      final geoResult = await _geocodingService.reverseGeocode(lat, lng);
+      locationName.value = geoResult.displayName;
+      countryCode.value = geoResult.countryCode;
+
+      final tzInfo = _timezoneService.getTimezoneInfo(lat, lng);
+      timezoneName.value = tzInfo.timezoneId;
+      timezoneAbbr.value = tzInfo.abbreviation;
+
+      _lastGeocodedLat = lat;
+      _lastGeocodedLng = lng;
+
+      // Cache valid location to persistent storage
+      await _saveCachedLocation(
+        PrayerLocationData(
+          latitude: lat,
+          longitude: lng,
+          cityName: geoResult.cityName,
+          countryName: geoResult.countryName,
+          countryCode: geoResult.countryCode,
+          timezoneName: tzInfo.timezoneId,
+          timezoneAbbr: tzInfo.abbreviation,
+          timestamp: DateTime.now(),
+          source: source,
+        ),
+      );
+    }
+
+    _calculateScheduleAndQibla();
+  }
+
+  /// Sets state when location is completely unavailable.
+  /// NEVER displays "Jakarta, Indonesia".
+  void _applyUnavailableLocation(String? errorMessage) {
+    locationSource.value = LocationSource.unavailable;
+    locationName.value = 'Lokasi tidak tersedia';
+    if (errorMessage != null && errorMessage.isNotEmpty) {
+      locationErrorMessage.value = errorMessage;
+    }
+
+    // Calculate emergency schedule using emergency coordinates internally only
+    currentLat.value = emergencyCalcLat;
+    currentLng.value = emergencyCalcLng;
+    countryCode.value = 'ID';
+    timezoneName.value = 'Asia/Jakarta';
+    timezoneAbbr.value = 'WIB';
+
+    _calculateScheduleAndQibla();
+  }
+
+  /// Saves valid location to SharedPreferences
+  Future<void> _saveCachedLocation(PrayerLocationData data) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble(_prefLatKey, data.latitude);
+      await prefs.setDouble(_prefLngKey, data.longitude);
+      await prefs.setString(_prefCityKey, data.cityName);
+      await prefs.setString(_prefCountryKey, data.countryName);
+      await prefs.setString(_prefCountryCodeKey, data.countryCode);
+      await prefs.setString(_prefTimezoneKey, data.timezoneName);
+      await prefs.setString(_prefTimeKey, data.timestamp.toIso8601String());
+    } catch (e) {
+      debugPrint('[PrayerTimesController] Cache save error: $e');
+    }
+  }
+
+  /// Loads cached location from SharedPreferences and checks validity (< 7 days)
+  Future<PrayerLocationData?> _loadCachedLocation() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (!prefs.containsKey(_prefLatKey) || !prefs.containsKey(_prefLngKey)) {
+        return null;
+      }
+
+      final lat = prefs.getDouble(_prefLatKey)!;
+      final lng = prefs.getDouble(_prefLngKey)!;
+      final city = prefs.getString(_prefCityKey) ?? '';
+      final country = prefs.getString(_prefCountryKey) ?? '';
+      final cCode = prefs.getString(_prefCountryCodeKey) ?? '';
+      final tz = prefs.getString(_prefTimezoneKey) ?? '';
+      final timeStr = prefs.getString(_prefTimeKey) ?? '';
+
+      final timestamp =
+          DateTime.tryParse(timeStr) ?? DateTime.fromMillisecondsSinceEpoch(0);
+
+      final tzInfo = _timezoneService.getTimezoneInfo(lat, lng);
+
+      final data = PrayerLocationData(
+        latitude: lat,
+        longitude: lng,
+        cityName: city,
+        countryName: country,
+        countryCode: cCode,
+        timezoneName: tz.isNotEmpty ? tz : tzInfo.timezoneId,
+        timezoneAbbr: tzInfo.abbreviation,
+        timestamp: timestamp,
+        source: LocationSource.cache,
+      );
+
+      // Validate cache age (must be < 7 days and coords != 0)
+      if (data.isValid) {
+        return data;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('[PrayerTimesController] Cache load error: $e');
+      return null;
+    }
+  }
+
+  /// Recalculates prayer schedule and Qibla angle from current coordinates
+  void _calculateScheduleAndQibla() {
+    if (currentLat.value == 0.0 && currentLng.value == 0.0) return;
+
     final now = DateTime.now();
-    final coordinates = Coordinates(currentLat, currentLng);
-    
-    bool isSaudi = (currentLat >= 16 && currentLat <= 32) && (currentLng >= 34 && currentLng <= 55);
-    final params = isSaudi ? CalculationMethod.umm_al_qura.getParameters() : CalculationMethod.singapore.getParameters();
-    params.madhab = Madhab.shafi;
+    _lastScheduleCalculationDate = now;
 
-    final dateComponents = DateComponents.from(now);
-    final prayerTimes = PrayerTimes(coordinates, dateComponents, params);
+    final result = _prayerCalculationService.calculatePrayerSchedule(
+      latitude: currentLat.value,
+      longitude: currentLng.value,
+      countryCode: countryCode.value,
+      timezoneId: timezoneName.value,
+      date: now,
+    );
 
-    // Calculate exact Qibla direction for this coordinate
-    qiblaBearing = Qibla(coordinates).direction;
+    prayers.assignAll(result.prayers);
+    nextPrayerName.value = result.nextPrayerName;
+    nextPrayerArabic.value = result.nextPrayerArabic;
+    _targetNextPrayerTime = result.nextPrayerTime;
+    calculationMethodName.value = result.calculationMethodName;
+    qiblaBearing.value = result.qiblaBearing;
 
-    // Create schedule items
-    final rawList = [
-      ('Subuh', 'الفجر', prayerTimes.fajr),
-      ('Terbit', 'الشروق', prayerTimes.sunrise),
-      ('Dzuhur', 'الظهر', prayerTimes.dhuhr),
-      ('Ashar', 'العصر', prayerTimes.asr),
-      ('Maghrib', 'المغرب', prayerTimes.maghrib),
-      ('Isya', 'العشاء', prayerTimes.isha),
-    ];
+    nextPrayerTime.value = _timezoneService.formatTime(
+      result.nextPrayerTime,
+      timezoneId: timezoneName.value,
+      includeTimeZone: true,
+    );
 
-    // Determine next prayer
-    DateTime? targetNextTime;
-    String targetNextName = 'Subuh';
-    String targetNextArabic = 'الفجر';
-
-    for (final p in rawList) {
-      if (p.$3.isAfter(now)) {
-        targetNextName = p.$1;
-        targetNextArabic = p.$2;
-        targetNextTime = p.$3;
-        break;
-      }
-    }
-
-    // If all prayers passed today, next is tomorrow's Fajr
-    if (targetNextTime == null) {
-      final tomorrow = now.add(const Duration(days: 1));
-      final tomorrowPrayerTimes = PrayerTimes(
-        coordinates,
-        DateComponents.from(tomorrow),
-        params,
-      );
-      targetNextName = 'Subuh';
-      targetNextArabic = 'الفجر';
-      targetNextTime = tomorrowPrayerTimes.fajr;
-    }
-
-    nextPrayerName = targetNextName;
-    nextPrayerArabic = targetNextArabic;
-    nextPrayerTime = _formatTime(targetNextTime, includeTimeZone: true);
-
-    // Build the observable list
-    prayers = rawList.map((p) {
-      final isNext = p.$1 == targetNextName;
-      return PrayerScheduleItem(
-        name: p.$1,
-        arabicName: p.$2,
-        time: p.$3,
-        formattedTime: _formatTime(p.$3, includeTimeZone: true),
-        isNext: isNext,
-      );
-    }).toList();
-    
-    notifyListeners();
+    _updateCountdownDifference();
+    _updateQiblaOffset(deviceHeading.value);
   }
 
-  static String _formatTime(DateTime dt, {bool includeTimeZone = false}) {
-    final localDt = dt.toLocal();
-    final h = localDt.hour.toString().padLeft(2, '0');
-    final m = localDt.minute.toString().padLeft(2, '0');
-    // Ensure we handle common Indonesian timezones properly
-    String tz = localDt.timeZoneName;
-    final offsetHours = localDt.timeZoneOffset.inHours;
-    
-    if (offsetHours == 7 || tz == '+07' || tz == 'GMT+07:00' || tz == 'Asia/Jakarta') {
-      tz = 'WIB';
-    } else if (offsetHours == 8 || tz == '+08' || tz == 'GMT+08:00') {
-      tz = 'WITA';
-    } else if (offsetHours == 9 || tz == '+09' || tz == 'GMT+09:00') {
-      tz = 'WIT';
-    } else if (offsetHours == 3 || tz == '+03' || tz == 'GMT+03:00') {
-      tz = 'AST';
-    }
-    
-    if (includeTimeZone) {
-      return '$h:$m $tz';
-    }
-    return '$h:$m';
-  }
-
+  /// Starts the 1-second periodic countdown timer.
+  /// IMPORTANT: This does NOT recalculate PrayerTimes every second.
+  /// It only computes DateTime difference to `_targetNextPrayerTime`.
   void _startCountdownTimer() {
-    _updateCountdown();
+    _countdownTimer?.cancel();
+    _updateCountdownDifference();
+
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _updateCountdown();
+      _updateCountdownDifference();
     });
   }
 
-  void _updateCountdown() {
+  void _updateCountdownDifference() {
+    if (_targetNextPrayerTime == null) {
+      countdownText.value = '--:--:--';
+      return;
+    }
+
     final now = DateTime.now();
-    final coordinates = Coordinates(currentLat, currentLng);
-    
-    bool isSaudi = (currentLat >= 16 && currentLat <= 32) && (currentLng >= 34 && currentLng <= 55);
-    final params = isSaudi ? CalculationMethod.umm_al_qura.getParameters() : CalculationMethod.singapore.getParameters();
-    
-    final prayerTimes = PrayerTimes(coordinates, DateComponents.from(now), params);
 
-    final rawList = [
-      ('Subuh', 'الفجر', prayerTimes.fajr),
-      ('Terbit', 'الشروق', prayerTimes.sunrise),
-      ('Dzuhur', 'الظهر', prayerTimes.dhuhr),
-      ('Ashar', 'العصر', prayerTimes.asr),
-      ('Maghrib', 'المغرب', prayerTimes.maghrib),
-      ('Isya', 'العشاء', prayerTimes.isha),
-    ];
-
-    DateTime? targetTime;
-    for (final p in rawList) {
-      if (p.$3.isAfter(now)) {
-        targetTime = p.$3;
-        break;
-      }
+    // Check for day rollover
+    if (_lastScheduleCalculationDate != null &&
+        (_lastScheduleCalculationDate!.day != now.day ||
+            _lastScheduleCalculationDate!.month != now.month ||
+            _lastScheduleCalculationDate!.year != now.year)) {
+      _initHijriDate();
+      _calculateScheduleAndQibla();
+      return;
     }
 
-    if (targetTime == null) {
-      final tomorrow = now.add(const Duration(days: 1));
-      final tomorrowPrayers = PrayerTimes(
-        coordinates,
-        DateComponents.from(tomorrow),
-        params,
-      );
-      targetTime = tomorrowPrayers.fajr;
-    }
+    final diff = _targetNextPrayerTime!.difference(now);
 
-    final diff = targetTime.difference(now);
+    // If next prayer time has arrived or passed, recalculate full schedule
     if (diff.isNegative || diff.inSeconds <= 0) {
-      calculatePrayers();
+      _calculateScheduleAndQibla();
       return;
     }
 
@@ -286,59 +472,92 @@ class PrayerTimesController extends ChangeNotifier {
     final seconds = diff.inSeconds % 60;
 
     if (hours > 0) {
-      countdownText = '$hours Jam $minutes Menit $seconds Detik';
+      countdownText.value = '$hours Jam $minutes Menit $seconds Detik';
     } else {
-      countdownText = '$minutes Menit $seconds Detik';
+      countdownText.value = '$minutes Menit $seconds Detik';
     }
-    notifyListeners();
   }
 
+  /// Listens to position updates stream with distance filter (e.g. 500 meters)
+  void _listenToLocationUpdates() {
+    if (kIsWeb) return;
+
+    try {
+      _positionSubscription = _locationService
+          .getPositionStream(distanceFilter: distanceThresholdMeters.toInt())
+          .listen(
+            (pos) {
+              _applyLocation(
+                lat: pos.latitude,
+                lng: pos.longitude,
+                source: LocationSource.gps,
+              );
+            },
+            onError: (e) {
+              debugPrint('[PrayerTimesController] Position stream error: $e');
+            },
+          );
+    } catch (e) {
+      debugPrint(
+        '[PrayerTimesController] Failed to listen to position stream: $e',
+      );
+    }
+  }
+
+  /// Initializes device compass stream
   void _initCompass() {
     if (kIsWeb) {
-      hasCompassSensor = false;
-      notifyListeners();
+      hasCompassSensor.value = false;
       return;
     }
+
     try {
-      _compassSubscription = FlutterCompass.events?.listen((event) {
-        if (event.heading == null) return;
+      _compassSubscription = FlutterCompass.events?.listen(
+        (event) {
+          if (event.heading == null) return;
 
-        final heading = event.heading!;
-        deviceHeading = heading;
-
-        // Calculate Qibla angle relative to phone heading:
-        // (qiblaBearing - heading)
-        double diff = (qiblaBearing - heading) % 360;
-        if (diff < 0) diff += 360;
-        qiblaOffset = diff;
-
-        // Check alignment within ±5 degrees (0 or 360)
-        final isAligned = diff <= 5.0 || diff >= 355.0;
-        if (isAligned && !isQiblaAligned && !_hasVibrated) {
-          _hasVibrated = true;
-          try {
-            Vibration.vibrate(duration: 40);
-          } catch (_) {}
-        } else if (!isAligned) {
-          _hasVibrated = false;
-        }
-
-        isQiblaAligned = isAligned;
-        notifyListeners();
-      }, onError: (_) {
-        hasCompassSensor = false;
-        notifyListeners();
-      });
-    } catch (_) {
-      hasCompassSensor = false;
-      notifyListeners();
+          final heading = event.heading!;
+          deviceHeading.value = heading;
+          _updateQiblaOffset(heading);
+        },
+        onError: (e) {
+          debugPrint('[PrayerTimesController] Compass stream error: $e');
+          hasCompassSensor.value = false;
+        },
+      );
+    } catch (e) {
+      debugPrint('[PrayerTimesController] Failed to listen to compass: $e');
+      hasCompassSensor.value = false;
     }
+  }
+
+  void _updateQiblaOffset(double heading) {
+    double diff = (qiblaBearing.value - heading) % 360;
+    if (diff < 0) diff += 360;
+    qiblaOffset.value = diff;
+
+    // Check alignment within ±5 degrees (355° - 360° or 0° - 5°)
+    final isAligned = diff <= 5.0 || diff >= 355.0;
+
+    if (isAligned && !isQiblaAligned.value && !_hasVibrated) {
+      _hasVibrated = true;
+      try {
+        Vibration.vibrate(duration: 40);
+      } catch (e) {
+        debugPrint('[PrayerTimesController] Vibration error: $e');
+      }
+    } else if (!isAligned) {
+      _hasVibrated = false;
+    }
+
+    isQiblaAligned.value = isAligned;
   }
 
   @override
-  void dispose() {
+  void onClose() {
     _countdownTimer?.cancel();
     _compassSubscription?.cancel();
-    super.dispose();
+    _positionSubscription?.cancel();
+    super.onClose();
   }
 }

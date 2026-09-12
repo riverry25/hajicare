@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/pill_button.dart';
+import '../controllers/register_controller.dart';
 
-class RegisterScreen extends StatefulWidget {
+class RegisterScreen extends StatelessWidget {
   const RegisterScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
-}
-
-class _RegisterScreenState extends State<RegisterScreen> {
-  bool _obscurePassword = true;
-
-  @override
   Widget build(BuildContext context) {
+    final controller = Get.find<RegisterController>();
+
     return Scaffold(
       backgroundColor: AppColors.canvasCream,
       appBar: AppBar(
@@ -25,7 +22,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.espressoDark),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Get.back(),
         ),
         title: Text(
           'Daftar Akun Baru',
@@ -50,10 +47,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const AppTextField(
+                    AppTextField(
+                      controller: controller.fullNameController,
                       label: 'Nama Lengkap (Sesuai Paspor)',
                       hintText: 'Contoh: Ahmad Dahlan',
-                      prefixIcon: Icon(
+                      prefixIcon: const Icon(
                         Icons.person_outline,
                         color: AppColors.tanMedium,
                         size: 20,
@@ -61,11 +59,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     const SizedBox(height: AppSpacing.md),
 
-                    const AppTextField(
+                    AppTextField(
+                      controller: controller.nikOrPorsiController,
                       label: 'Nomor Porsi Haji / NIK',
                       hintText: '13 digit nomor porsi',
                       keyboardType: TextInputType.number,
-                      prefixIcon: Icon(
+                      prefixIcon: const Icon(
                         Icons.credit_card,
                         color: AppColors.tanMedium,
                         size: 20,
@@ -73,7 +72,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     const SizedBox(height: AppSpacing.md),
 
-                    const AppTextField(
+                    AppTextField(
+                      controller: controller.phoneController,
                       label: 'Nomor WhatsApp Aktif',
                       hintText: '812 3456 7890',
                       isPhone: true,
@@ -81,37 +81,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     const SizedBox(height: AppSpacing.md),
 
-                    AppTextField(
-                      label: 'Buat PIN / Kata Sandi',
-                      hintText: 'Min. 6 digit angka/huruf',
-                      obscureText: _obscurePassword,
-                      prefixIcon: const Icon(
-                        Icons.lock_outline,
-                        color: AppColors.tanMedium,
-                        size: 20,
-                      ),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                          color: AppColors.textBody,
+                    Obx(
+                      () => AppTextField(
+                        controller: controller.passwordController,
+                        label: 'Buat PIN / Kata Sandi',
+                        hintText: 'Min. 6 digit angka/huruf',
+                        obscureText: controller.obscurePassword.value,
+                        prefixIcon: const Icon(
+                          Icons.lock_outline,
+                          color: AppColors.tanMedium,
+                          size: 20,
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            controller.obscurePassword.value
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                            color: AppColors.textBody,
+                          ),
+                          onPressed: controller.togglePasswordVisibility,
+                        ),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xl),
 
-                    PillButton(
-                      label: 'Daftar Sekarang',
-                      icon: Icons.person_add,
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
+                    Obx(
+                      () => PillButton(
+                        label: controller.isLoading.value
+                            ? 'Mendaftarkan...'
+                            : 'Daftar Sekarang',
+                        icon: Icons.person_add,
+                        onPressed: controller.isLoading.value
+                            ? null
+                            : () => controller.register(),
+                      ),
                     ),
                   ],
                 ),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/state/hajicare_controller.dart';
@@ -12,53 +12,51 @@ import '../../../core/widgets/bottom_nav_bar.dart';
 import '../../map/screens/interactive_map_screen.dart';
 import '../../prayer/screens/prayer_times_screen.dart';
 import '../../profile/screens/profile_screen.dart';
+import '../controllers/dashboard_controller.dart';
 import '../widgets/pendamping_greeting_header.dart';
 import '../widgets/pendamping_jamaah_selector.dart';
 import '../widgets/pendamping_radar_card.dart';
 import '../widgets/pendamping_sos_banner.dart';
 
-class DashboardPendampingScreen extends StatefulWidget {
+class DashboardPendampingScreen extends StatelessWidget {
   const DashboardPendampingScreen({super.key});
 
   @override
-  State<DashboardPendampingScreen> createState() =>
-      _DashboardPendampingScreenState();
-}
-
-class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
-  int _currentIndex = 0;
-  int _selectedJamaahIndex = 0;
-
-  @override
   Widget build(BuildContext context) {
-    final state = context.watch<HajiCareController>();
-    final selectedJamaah = state.jamaahList.length > _selectedJamaahIndex
-        ? state.jamaahList[_selectedJamaahIndex]
-        : state.jamaahList.first;
+    final dashboardCtrl = Get.find<DashboardController>();
+    final state = Get.find<HajiCareController>();
 
-    return Scaffold(
-      backgroundColor: AppColors.canvasCream,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: [
-          _buildPendampingHome(state, selectedJamaah),
-          const InteractiveMapScreen(showBottomNav: false),
-          const PrayerTimesScreen(showBottomNav: false),
-          const ProfileScreen(showBottomNav: false),
-        ],
-      ),
-      bottomNavigationBar: HajiCareBottomNavBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-      ),
-    );
+    return Obx(() {
+      final selectedJamaah =
+          state.jamaahList.length > dashboardCtrl.selectedJamaahIndex.value
+          ? state.jamaahList[dashboardCtrl.selectedJamaahIndex.value]
+          : state.jamaahList.first;
+
+      return Scaffold(
+        backgroundColor: AppColors.canvasCream,
+        body: IndexedStack(
+          index: dashboardCtrl.currentIndex.value,
+          children: [
+            _buildPendampingHome(context, state, selectedJamaah, dashboardCtrl),
+            const InteractiveMapScreen(showBottomNav: false),
+            const PrayerTimesScreen(showBottomNav: false),
+            const ProfileScreen(showBottomNav: false),
+          ],
+        ),
+        bottomNavigationBar: HajiCareBottomNavBar(
+          currentIndex: dashboardCtrl.currentIndex.value,
+          onTap: dashboardCtrl.changeTab,
+        ),
+      );
+    });
   }
 
-  Widget _buildPendampingHome(HajiCareController state, JamaahData selectedJamaah) {
+  Widget _buildPendampingHome(
+    BuildContext context,
+    HajiCareController state,
+    JamaahData selectedJamaah,
+    DashboardController dashboardCtrl,
+  ) {
     return Scaffold(
       backgroundColor: AppColors.canvasCream,
       appBar: AppBar(
@@ -114,7 +112,8 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
                   Icons.notifications_outlined,
                   color: AppColors.espressoDark,
                 ),
-                onPressed: () => Navigator.pushNamed(context, AppRoutes.notification),
+                onPressed: () =>
+                    Get.toNamed(AppRoutes.notification),
               ),
               if (state.anySosActive)
                 Positioned(
@@ -126,7 +125,10 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
                     decoration: BoxDecoration(
                       color: AppColors.sosEmergency,
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.canvasCream, width: 2),
+                      border: Border.all(
+                        color: AppColors.canvasCream,
+                        width: 2,
+                      ),
                     ),
                   ),
                 ),
@@ -158,24 +160,22 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
           if (state.anyJamaahSeparated) _buildSeparatedBanner(state),
           PendampingJamaahSelector(
             state: state,
-            selectedIndex: _selectedJamaahIndex,
+            selectedIndex: dashboardCtrl.selectedJamaahIndex.value,
             onSelected: (idx) {
-              setState(() {
-                _selectedJamaahIndex = idx;
-              });
+              dashboardCtrl.selectJamaah(idx);
             },
           ),
           const SizedBox(height: AppSpacing.lg),
           PendampingRadarCard(
             jamaah: selectedJamaah,
-            onTrackMap: () => setState(() => _currentIndex = 1),
+            onTrackMap: () => dashboardCtrl.changeTab(1),
           ),
           const SizedBox(height: AppSpacing.lg),
           PendampingSosBanner(state: state),
           const SizedBox(height: AppSpacing.lg),
-          _buildMapCard(context),
+          _buildMapCard(context, dashboardCtrl),
           const SizedBox(height: AppSpacing.lg),
-          _buildFeatureGrid(context),
+          _buildFeatureGrid(context, dashboardCtrl),
           const SizedBox(height: AppConstants.space3xl),
         ],
       ),
@@ -189,7 +189,9 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
       decoration: BoxDecoration(
         color: AppColors.errorContainer,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.sosEmergency.withValues(alpha: 0.5)),
+        border: Border.all(
+          color: AppColors.sosEmergency.withValues(alpha: 0.5),
+        ),
       ),
       child: Row(
         children: [
@@ -208,7 +210,7 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
     );
   }
 
-  Widget _buildMapCard(BuildContext context) {
+  Widget _buildMapCard(BuildContext context, DashboardController dashboardCtrl) {
     return AppCard(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
@@ -218,7 +220,11 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.explore, color: AppColors.tanMedium, size: 20),
+                  const Icon(
+                    Icons.explore,
+                    color: AppColors.tanMedium,
+                    size: 20,
+                  ),
                   const SizedBox(width: AppSpacing.sm2),
                   Text(
                     'Posisi Lapangan Real-Time',
@@ -248,9 +254,7 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
                 children: [
                   // Grid Pattern Simulation
                   Positioned.fill(
-                    child: CustomPaint(
-                      painter: _MiniMapPainter(),
-                    ),
+                    child: CustomPaint(painter: _MiniMapPainter()),
                   ),
                   // Jamaah marker pin
                   Positioned(
@@ -320,7 +324,7 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
                     left: 8,
                     right: 8,
                     child: InkWell(
-                      onTap: () => setState(() => _currentIndex = 1),
+                      onTap: () => dashboardCtrl.changeTab(1),
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 6),
                         decoration: BoxDecoration(
@@ -380,7 +384,7 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
     );
   }
 
-  Widget _buildFeatureGrid(BuildContext context) {
+  Widget _buildFeatureGrid(BuildContext context, DashboardController dashboardCtrl) {
     final features = [
       {
         'title': 'Peta Terpadu Sektor',
@@ -444,11 +448,9 @@ class _DashboardPendampingScreenState extends State<DashboardPendampingScreen> {
                   padding: const EdgeInsets.all(AppSpacing.md),
                   onTap: () {
                     if (item['tabIndex'] != null) {
-                      setState(() {
-                        _currentIndex = item['tabIndex'] as int;
-                      });
+                      dashboardCtrl.changeTab(item['tabIndex'] as int);
                     } else if (item['route'] != null) {
-                      Navigator.pushNamed(context, item['route'] as String);
+                      Get.toNamed(item['route'] as String);
                     }
                   },
                   child: Column(

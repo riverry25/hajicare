@@ -1,5 +1,6 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -89,7 +90,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.close, color: Colors.white),
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () => Get.back(),
                       ),
                       Text(
                         'Pindai Uang Riyal',

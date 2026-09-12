@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:get/get.dart';
 
 import 'core/theme/app_theme.dart';
 import 'core/routes/app_routes.dart';
@@ -10,19 +10,13 @@ import 'core/locales/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  final settings = AppSettingsController();
+
+  // Register global permanent controllers before runApp.
+  final settings = Get.put(AppSettingsController(), permanent: true);
   await settings.loadSettings();
-  
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider.value(value: settings),
-        ChangeNotifierProvider(create: (_) => HajiCareController()),
-      ],
-      child: const HajiCareApp(),
-    ),
-  );
+  Get.put(HajiCareController(), permanent: true);
+
+  runApp(const HajiCareApp());
 }
 
 class HajiCareApp extends StatelessWidget {
@@ -30,40 +24,42 @@ class HajiCareApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final settings = context.watch<AppSettingsController>();
+    final settings = Get.find<AppSettingsController>();
 
-    return MaterialApp(
-      title: 'HajiCare',
-      debugShowCheckedModeBanner: false,
+    return Obx(
+      () => GetMaterialApp(
+        title: 'HajiCare',
+        debugShowCheckedModeBanner: false,
 
-      // Theming
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: settings.currentThemeMode,
+        // Theming
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: settings.currentThemeMode,
 
-      // Localization
-      locale: settings.currentLocale,
-      supportedLocales: AppTranslations.supportedLocales,
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+        // Localization
+        locale: settings.currentLocale,
+        supportedLocales: AppTranslations.supportedLocales,
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
 
-      // Routing
-      initialRoute: AppRoutes.splash,
-      routes: AppRoutes.routes,
+        // GetX route management with bindings attached per-route
+        initialRoute: AppRoutes.splash,
+        getPages: AppRoutes.pages,
 
-      // Global text scale clamping
-      builder: (context, child) {
-        final factor = settings.textScaleFactor;
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(
-            textScaler: TextScaler.linear(factor),
-          ),
-          child: child ?? const SizedBox.shrink(),
-        );
-      },
+        // Global text scale clamping for accessibility
+        builder: (context, child) {
+          final factor = settings.textScaleFactor;
+          return MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              textScaler: TextScaler.linear(factor),
+            ),
+            child: child ?? const SizedBox.shrink(),
+          );
+        },
+      ),
     );
   }
 }

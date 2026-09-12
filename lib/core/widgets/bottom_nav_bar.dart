@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../routes/app_routes.dart';
 import '../state/hajicare_controller.dart';
 import '../theme/app_colors.dart';
@@ -27,7 +27,7 @@ class HajiCareBottomNavBar extends StatelessWidget {
     }
 
     // Fallback if rendered outside of an IndexedStack shell
-    final hajicare = context.read<HajiCareController>();
+    final hajicare = Get.find<HajiCareController>();
     String route;
     switch (index) {
       case 0:
@@ -48,7 +48,7 @@ class HajiCareBottomNavBar extends StatelessWidget {
         return;
     }
 
-    Navigator.pushReplacementNamed(context, route);
+    Get.offNamed(route);
   }
 
   @override

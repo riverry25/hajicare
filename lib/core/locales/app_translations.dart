@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../state/app_settings_controller.dart';
 import 'id.dart';
 import 'jv.dart';
@@ -32,7 +32,9 @@ class AppTranslations {
 extension TrContextExtension on BuildContext {
   String tr(String key) {
     try {
-      final lang = read<AppSettingsController>().currentLocale.languageCode;
+      final lang = Get.isRegistered<AppSettingsController>()
+          ? Get.find<AppSettingsController>().currentLocale.languageCode
+          : 'id';
       return AppTranslations.translate(key, lang);
     } catch (_) {
       return AppTranslations.translate(key, 'id');

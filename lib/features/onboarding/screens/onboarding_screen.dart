@@ -1,46 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_sizes.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/locales/app_localizations.dart';
+import '../controllers/onboarding_controller.dart';
 import '../widgets/onboarding_slide_accessibility.dart';
 import '../widgets/onboarding_slide_language.dart';
 import '../widgets/onboarding_slide_safety.dart';
 
-class OnboardingScreen extends StatefulWidget {
+class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
 
-  @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
-}
-
-class _OnboardingScreenState extends State<OnboardingScreen> {
-  final PageController _pageController = PageController();
-  int _currentPage = 0;
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  void _nextPage() {
-    if (_currentPage < 2) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    } else {
-      Navigator.pushReplacementNamed(context, AppRoutes.login);
-    }
-  }
+  static const int _totalPages = 3;
 
   @override
   Widget build(BuildContext context) {
+    final ctrl = Get.find<OnboardingController>();
+
     return Scaffold(
       backgroundColor: AppColors.canvasCream,
       body: SafeArea(
@@ -93,7 +73,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                   // Skip button
                   TextButton(
-                    onPressed: () => Navigator.pushReplacementNamed(context, AppRoutes.login),
+                    onPressed: () => Get.offNamed('/login'),
                     style: TextButton.styleFrom(
                       backgroundColor: AppColors.surfaceWhite,
                       minimumSize: const Size(48, 36),
@@ -121,18 +101,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
             // Carousel Slides
             Expanded(
-              child: PageView(
-                controller: _pageController,
-                onPageChanged: (index) {
-                  setState(() {
-                    _currentPage = index;
-                  });
-                },
-                children: [
-                  OnboardingSlideLanguage(activeIndex: _currentPage),
-                  OnboardingSlideSafety(activeIndex: _currentPage),
-                  OnboardingSlideAccessibility(activeIndex: _currentPage),
-                ],
+              child: Obx(
+                () => PageView(
+                  controller: ctrl.pageController,
+                  onPageChanged: ctrl.changePage,
+                  children: [
+                    OnboardingSlideLanguage(
+                      activeIndex: ctrl.currentPage.value,
+                    ),
+                    OnboardingSlideSafety(activeIndex: ctrl.currentPage.value),
+                    OnboardingSlideAccessibility(
+                      activeIndex: ctrl.currentPage.value,
+                    ),
+                  ],
+                ),
               ),
             ),
 
@@ -162,62 +144,64 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                 ],
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    height: AppSizes.buttonHeightPrimary,
-                    child: ElevatedButton(
-                      onPressed: _nextPage,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.espressoDark,
-                        foregroundColor: AppColors.surfaceWhite,
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppConstants.radiusPill,
-                          ),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            _currentPage == 0
-                                ? context.tr('btnNextFeature')
-                                : _currentPage == 1
-                                ? context.tr('btnNextAccess')
-                                : context.tr('btnStartNow'),
-                            style: AppTypography.labelLarge.copyWith(
-                              color: AppColors.surfaceWhite,
+              child: Obx(
+                () => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      height: AppSizes.buttonHeightPrimary,
+                      child: ElevatedButton(
+                        onPressed: () => ctrl.nextPage(_totalPages),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.espressoDark,
+                          foregroundColor: AppColors.surfaceWhite,
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              AppConstants.radiusPill,
                             ),
                           ),
-                          const SizedBox(width: AppSpacing.sm),
-                          const Icon(Icons.arrow_forward, size: 18),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.verified_user,
-                        size: 14,
-                        color: AppColors.accentGoldStar,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Langkah ${_currentPage + 1} dari 3 Menuju Perjalanan Aman Anda',
-                        style: AppTypography.caption.copyWith(
-                          color: AppColors.textBody,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              ctrl.currentPage.value == 0
+                                  ? context.tr('btnNextFeature')
+                                  : ctrl.currentPage.value == 1
+                                  ? context.tr('btnNextAccess')
+                                  : context.tr('btnStartNow'),
+                              style: AppTypography.labelLarge.copyWith(
+                                color: AppColors.surfaceWhite,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            const Icon(Icons.arrow_forward, size: 18),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.verified_user,
+                          size: 14,
+                          color: AppColors.accentGoldStar,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Langkah ${ctrl.currentPage.value + 1} dari 3 Menuju Perjalanan Aman Anda',
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.textBody,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

@@ -1,16 +1,16 @@
 import 'dart:async';
 import 'dart:math';
-import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
 import '../models/jamaah_data.dart';
 export '../models/jamaah_data.dart';
 
-class HajiCareController extends ChangeNotifier {
-  UserRole _role = UserRole.jamaah;
-  UserRole get role => _role;
+class HajiCareController extends GetxController {
+  final _role = UserRole.jamaah.obs;
+  UserRole get role => _role.value;
 
   static const int selfJamaahIndex = 0;
 
-  final List<JamaahData> jamaahList = <JamaahData>[
+  final jamaahList = <JamaahData>[
     JamaahData(
       id: 'j1',
       name: 'H. Ahmad Dahlan (Ayah)',
@@ -23,20 +23,21 @@ class HajiCareController extends ChangeNotifier {
       shortLabel: 'Ibu',
       distance: 55,
     ),
-  ];
+  ].obs;
 
   final String pendampingName = 'Siti Aminah (Putri)';
 
   Timer? _simTimer;
   final Random _rng = Random();
 
-  HajiCareController() {
+  @override
+  void onInit() {
+    super.onInit();
     _startSimulation();
   }
 
-  void setRole(UserRole role) {
-    _role = role;
-    notifyListeners();
+  void setRole(UserRole newRole) {
+    _role.value = newRole;
   }
 
   JamaahData get self => jamaahList[selfJamaahIndex];
@@ -63,7 +64,7 @@ class HajiCareController extends ChangeNotifier {
 
   void triggerSos() {
     jamaahList[selfJamaahIndex].sosActive = true;
-    notifyListeners();
+    jamaahList.refresh();
   }
 
   void dismissSos(String id) {
@@ -72,7 +73,7 @@ class HajiCareController extends ChangeNotifier {
       orElse: () => jamaahList.first,
     );
     j.sosActive = false;
-    notifyListeners();
+    jamaahList.refresh();
   }
 
   void _startSimulation() {
@@ -84,13 +85,13 @@ class HajiCareController extends ChangeNotifier {
         j.distance = (j.distance + delta).clamp(0, 400);
         j.refresh();
       }
-      notifyListeners();
+      jamaahList.refresh();
     });
   }
 
   @override
-  void dispose() {
+  void onClose() {
     _simTimer?.cancel();
-    super.dispose();
+    super.onClose();
   }
 }

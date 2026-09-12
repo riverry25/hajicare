@@ -22,6 +22,9 @@ dependencies:
   geolocator: ^14.0.2
   hijri: ^3.0.1
   geocoding: ^5.0.0
+  get: ^4.7.3
+  timezone: ^0.11.1
+  lat_lng_to_timezone: ^0.2.0
 
 dev_dependencies:
   flutter_test:
