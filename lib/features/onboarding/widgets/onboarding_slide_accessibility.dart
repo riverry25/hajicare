@@ -49,48 +49,22 @@ class OnboardingSlideAccessibility extends StatelessWidget {
             const SizedBox(height: AppSpacing.lg),
 
             // Stepper
-            _buildStepper(
-              activeIndex: activeIndex,
-              label: '3 DARI 3 TAHAP AWAL',
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.canvasCream.withValues(alpha: .35),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: _buildStepper(
+                activeIndex: activeIndex,
+                label: '3 DARI 3 TAHAP AWAL',
+              ),
             ),
             const SizedBox(height: AppSpacing.lg),
 
             // Section intro header
-            Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppColors.canvasCream,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.surfaceContainerHigh),
-                  ),
-                  child: const Icon(
-                    Icons.person,
-                    color: AppColors.primaryContainer,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Text(
-                    'Fitur Kemudahan Ibadah',
-                    style: AppTypography.titleLarge.copyWith(
-                      color: AppColors.textHeading,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                Text(
-                  'Bisa disesuaikan',
-                  style: AppTypography.caption.copyWith(
-                    color: AppColors.tanMedium,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm2),
+            _buildAccessibilityHeader(),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               'Bantuan cerdas deteksi uang riyal dan komunikasi suara & isyarat untuk kelancaran ibadah jamaah lansia dan berkebutuhan khusus.',
               style: AppTypography.bodySmall.copyWith(
@@ -120,34 +94,32 @@ class OnboardingSlideAccessibility extends StatelessWidget {
             const SizedBox(height: AppSpacing.lg),
 
             // Checklist indicator
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: AppColors.statusPositive.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.statusPositive.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.check,
-                    size: 14,
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.statusPositive.withValues(alpha: .08),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: AppColors.statusPositive.withValues(alpha: .15),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.record_voice_over_rounded,
                     color: AppColors.statusPositive,
                   ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Text(
-                  'Text-to-Speech siap digunakan',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textHeading,
-                    fontWeight: FontWeight.w600,
+
+                  const SizedBox(width: 12),
+
+                  Expanded(
+                    child: Text(
+                      'Text-to-Speech dan bantuan suara siap digunakan untuk membantu jamaah selama perjalanan ibadah.',
+                      style: AppTypography.bodySmall,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
@@ -191,6 +163,56 @@ class OnboardingSlideAccessibility extends StatelessWidget {
     );
   }
 
+  Widget _buildAccessibilityHeader() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.canvasCream.withValues(alpha: .35),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: const BoxDecoration(
+              color: AppColors.surfaceWhite,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.accessibility_new,
+              size: 28,
+              color: AppColors.primaryContainer,
+            ),
+          ),
+
+          const SizedBox(width: 16),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Fitur Kemudahan',
+                  style: AppTypography.titleLarge.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+
+                const SizedBox(height: 4),
+
+                Text(
+                  'Membantu jamaah lansia dan disabilitas beribadah lebih nyaman.',
+                  style: AppTypography.bodySmall,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSlide3FeatureCard({
     required IconData icon,
     required String title,
@@ -198,23 +220,16 @@ class OnboardingSlideAccessibility extends StatelessWidget {
     String? badgeText,
   }) {
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.surfaceWhite,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: AppColors.espressoDark.withValues(alpha: 0.1),
-        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.goldLight.withValues(alpha: .25)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.espressoDark.withValues(alpha: 0.08),
+            color: Colors.black.withValues(alpha: .04),
             blurRadius: 18,
-            offset: const Offset(0, 4),
-          ),
-          BoxShadow(
-            color: AppColors.espressoDark.withValues(alpha: 0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -222,63 +237,46 @@ class OnboardingSlideAccessibility extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 48,
-            height: 48,
-            margin: const EdgeInsets.only(top: 2),
+            width: 56,
+            height: 56,
             decoration: BoxDecoration(
               color: AppColors.canvasCream,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.surfaceContainerHigh),
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(icon, color: AppColors.primaryContainer, size: 24),
+            child: Icon(icon, size: 28, color: AppColors.primaryContainer),
           ),
-          const SizedBox(width: AppSpacing.md),
+
+          const SizedBox(width: 16),
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: AppTypography.titleMedium.copyWith(
-                          color: AppColors.textHeading,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+                if (badgeText != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
                     ),
-                    if (badgeText != null) ...[
-                      const SizedBox(width: AppSpacing.sm),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.canvasCream,
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                          border: Border.all(
-                            color: AppColors.surfaceContainerHigh,
-                          ),
-                        ),
-                        child: Text(
-                          badgeText,
-                          style: AppTypography.captionSmall.copyWith(
-                            color: AppColors.tanMedium,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.canvasCream,
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    child: Text(badgeText, style: AppTypography.captionSmall),
+                  ),
+
+                if (badgeText != null) const SizedBox(height: 10),
+
                 Text(
-                  description,
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textBody,
+                  title,
+                  style: AppTypography.titleMedium.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
+
+                const SizedBox(height: 6),
+
+                Text(description, style: AppTypography.bodySmall),
               ],
             ),
           ),
