@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import 'app_translations.dart';
 import '../state/app_settings_controller.dart';
 
@@ -14,7 +14,10 @@ class AppLocalizations {
 
   static AppLocalizations of(BuildContext context) {
     try {
-      return AppLocalizations(context.read<AppSettingsController>().currentLocale);
+      final loc = Get.isRegistered<AppSettingsController>()
+          ? Get.find<AppSettingsController>().currentLocale
+          : const Locale('id');
+      return AppLocalizations(loc);
     } catch (_) {
       return AppLocalizations(const Locale('id'));
     }

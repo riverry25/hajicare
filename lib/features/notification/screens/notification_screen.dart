@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/constants/app_constants.dart';
@@ -17,7 +18,7 @@ class NotificationScreen extends StatelessWidget {
           elevation: 1,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: AppColors.espressoDark),
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Get.back(),
           ),
           title: Text('Notifikasi & Bantuan',
               style: AppTypography.headlineMd.copyWith(color: AppColors.espressoDark)),

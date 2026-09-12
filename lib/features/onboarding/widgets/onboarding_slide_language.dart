@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -7,30 +7,13 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/state/app_settings_controller.dart';
 import 'onboarding_hero_banner.dart';
 
-class OnboardingSlideLanguage extends StatefulWidget {
+class OnboardingSlideLanguage extends StatelessWidget {
   final int activeIndex;
 
   const OnboardingSlideLanguage({
     super.key,
     this.activeIndex = 0,
   });
-
-  @override
-  State<OnboardingSlideLanguage> createState() => _OnboardingSlideLanguageState();
-}
-
-class _OnboardingSlideLanguageState extends State<OnboardingSlideLanguage> {
-  int _selectedLanguageIndex = 0;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final current = context.read<AppSettingsController>().currentLocale.languageCode;
-    final idx = _languages.indexWhere((l) => l.$1 == current);
-    if (idx != -1) {
-      _selectedLanguageIndex = idx;
-    }
-  }
 
   // locale code, display title, subtitle, type badge
   static const List<(String, String, String, String)> _languages = [
@@ -42,6 +25,7 @@ class _OnboardingSlideLanguageState extends State<OnboardingSlideLanguage> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = Get.find<AppSettingsController>();
     return Container(
       margin: const EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
@@ -78,7 +62,7 @@ class _OnboardingSlideLanguageState extends State<OnboardingSlideLanguage> {
             const SizedBox(height: AppSpacing.lg),
 
             // Stepper indicator
-            _buildStepper(activeIndex: widget.activeIndex, label: '1 DARI 3 TAHAP AWAL'),
+            _buildStepper(activeIndex: activeIndex, label: '1 DARI 3 TAHAP AWAL'),
             const Divider(color: AppColors.surfaceContainer, height: 1),
             const SizedBox(height: AppSpacing.lg),
 
@@ -121,28 +105,31 @@ class _OnboardingSlideLanguageState extends State<OnboardingSlideLanguage> {
             const SizedBox(height: AppSpacing.lg),
 
             // 2x2 Language Grid
-            GridView.builder(
-              itemCount: _languages.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: AppSpacing.sm,
-                mainAxisSpacing: AppSpacing.sm,
-                childAspectRatio: 1.55,
-              ),
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemBuilder: (context, index) {
-                final lang = _languages[index];
-                final isSelected = _selectedLanguageIndex == index;
-                return _buildLanguageCard(
-                  title: lang.$2,
-                  subtitle: lang.$3,
-                  type: lang.$4,
-                  isSelected: isSelected,
-                  onTap: () {
-                    setState(() => _selectedLanguageIndex = index);
-                    // Immediately apply and persist the chosen language globally
-                    context.read<AppSettingsController>().setLocale(Locale(lang.$1));
+            Obx(
+              () {
+                final currentCode = settings.currentLocale.languageCode;
+                return GridView.builder(
+                  itemCount: _languages.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: AppSpacing.sm,
+                    mainAxisSpacing: AppSpacing.sm,
+                    childAspectRatio: 1.55,
+                  ),
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemBuilder: (context, index) {
+                    final lang = _languages[index];
+                    final isSelected = currentCode == lang.$1;
+                    return _buildLanguageCard(
+                      title: lang.$2,
+                      subtitle: lang.$3,
+                      type: lang.$4,
+                      isSelected: isSelected,
+                      onTap: () {
+                        settings.setLocale(Locale(lang.$1));
+                      },
+                    );
                   },
                 );
               },

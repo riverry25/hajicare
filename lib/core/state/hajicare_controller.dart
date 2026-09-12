@@ -3,17 +3,17 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:get/get.dart';
 import '../models/jamaah_data.dart';
 export '../models/jamaah_data.dart';
 
-class HajiCareController extends ChangeNotifier {
-  UserRole _role = UserRole.jamaah;
-  UserRole get role => _role;
+class HajiCareController extends GetxController {
+  final _role = UserRole.jamaah.obs;
+  UserRole get role => _role.value;
 
-  List<JamaahData> _jamaahList = [];
-  List<JamaahData> get jamaahList => _jamaahList;
-
-  String pendampingName = 'Pendamping Anda';
+  final jamaahList = <JamaahData>[].obs;
+  
+  final pendampingName = 'Pendamping Anda'.obs;
   JamaahData? _self;
 
   StreamSubscription? _authSub;
@@ -22,18 +22,24 @@ class HajiCareController extends ChangeNotifier {
   Timer? _simTimer;
   final Random _rng = Random();
 
-  HajiCareController() {
+  @override
+  void onInit() {
+    super.onInit();
     _initAuthListener();
   }
 
   void _initAuthListener() {
-    _authSub = FirebaseAuth.instance.authStateChanges().listen((user) {
-      if (user != null) {
-        _loadUserData(user.uid);
-      } else {
-        _clearData();
-      }
-    });
+    try {
+      _authSub = FirebaseAuth.instance.authStateChanges().listen((user) {
+        if (user != null) {
+          _loadUserData(user.uid);
+        } else {
+          _clearData();
+        }
+      });
+    } catch (e) {
+      debugPrint('[HajiCareController] Firebase not initialized or error: $e');
+    }
   }
 
   void _clearData() {
@@ -43,9 +49,8 @@ class HajiCareController extends ChangeNotifier {
       sub.cancel();
     }
     _jamaahSubs.clear();
-    _jamaahList.clear();
+    jamaahList.clear();
     _self = null;
-    notifyListeners();
   }
 
   Future<void> _loadUserData(String uid) async {
@@ -54,19 +59,18 @@ class HajiCareController extends ChangeNotifier {
     
     final data = doc.data()!;
     final roleStr = data['role'] as String? ?? 'jamaah';
-    _role = roleStr == 'pendamping' ? UserRole.pendamping : UserRole.jamaah;
+    _role.value = roleStr == 'pendamping' ? UserRole.pendamping : UserRole.jamaah;
     
-    if (_role == UserRole.pendamping) {
-      pendampingName = data['name'] as String? ?? 'Pendamping';
+    if (_role.value == UserRole.pendamping) {
+      pendampingName.value = data['name'] as String? ?? 'Pendamping';
       _listenToPairings(uid);
     } else {
       // If Jamaah, just listen to self doc
       _self = JamaahData.fromFirestore(doc);
-      _jamaahList = [_self!];
+      jamaahList.value = [_self!];
       _listenToSelf(uid);
       _startSimulation(uid); // For simulation updates to Firestore
     }
-    notifyListeners();
   }
 
   void _listenToPairings(String pendampingId) {
@@ -87,7 +91,7 @@ class HajiCareController extends ChangeNotifier {
     for (final id in toRemove) {
       _jamaahSubs[id]?.cancel();
       _jamaahSubs.remove(id);
-      _jamaahList.removeWhere((j) => j.id == id);
+      jamaahList.removeWhere((j) => j.id == id);
     }
 
     // Add new
@@ -100,18 +104,17 @@ class HajiCareController extends ChangeNotifier {
             .listen((doc) {
           if (doc.exists) {
             final jData = JamaahData.fromFirestore(doc);
-            final index = _jamaahList.indexWhere((j) => j.id == id);
+            final index = jamaahList.indexWhere((j) => j.id == id);
             if (index >= 0) {
-              _jamaahList[index] = jData;
+              jamaahList[index] = jData;
             } else {
-              _jamaahList.add(jData);
+              jamaahList.add(jData);
             }
-            notifyListeners();
+            jamaahList.refresh();
           }
         });
       }
     }
-    notifyListeners();
   }
 
   void _listenToSelf(String uid) {
@@ -123,15 +126,14 @@ class HajiCareController extends ChangeNotifier {
         .listen((doc) {
       if (doc.exists) {
         _self = JamaahData.fromFirestore(doc);
-        _jamaahList = [_self!];
-        notifyListeners();
+        jamaahList.value = [_self!];
       }
     });
   }
 
   JamaahData get self {
     if (_self != null) return _self!;
-    if (_jamaahList.isNotEmpty) return _jamaahList.first;
+    if (jamaahList.isNotEmpty) return jamaahList.first;
     // Fallback
     return JamaahData(id: 'dummy', name: 'Loading', shortLabel: 'Load', distance: 0);
   }
@@ -190,6 +192,7 @@ class HajiCareController extends ChangeNotifier {
       final newDistance = (_self!.distance + delta).clamp(0.0, 400.0);
       _self!.distance = newDistance;
       _self!.refresh();
+      jamaahList.refresh();
       
       await FirebaseFirestore.instance.collection('users').doc(uid).update({
         'distance': newDistance,
@@ -198,13 +201,14 @@ class HajiCareController extends ChangeNotifier {
     });
   }
 
-  // Deprecated manual setRole since it's driven by Auth now.
-  void setRole(UserRole role) {}
+  void setRole(UserRole newRole) {
+    _role.value = newRole;
+  }
 
   @override
-  void dispose() {
+  void onClose() {
     _authSub?.cancel();
     _clearData();
-    super.dispose();
+    super.onClose();
   }
 }

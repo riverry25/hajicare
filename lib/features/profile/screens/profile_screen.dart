@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:get/get.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
@@ -18,7 +18,7 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final settings = context.watch<AppSettingsController>();
+    final settings = Get.find<AppSettingsController>();
 
     {
       final isDark = AppColors.isDark(context);
@@ -172,7 +172,7 @@ class ProfileScreen extends StatelessWidget {
           isSelected: isSelected,
           onTap: () {
             settings.setLocale(opt.$1);
-            Navigator.pop(context);
+            Get.back();
           },
         );
       }).toList(),
@@ -197,7 +197,7 @@ class ProfileScreen extends StatelessWidget {
           isSelected: isSelected,
           onTap: () {
             settings.setThemeMode(opt.$1);
-            Navigator.pop(context);
+            Get.back();
           },
         );
       }).toList(),
@@ -217,7 +217,7 @@ class ProfileScreen extends StatelessWidget {
           isSelected: isSelected,
           onTap: () {
             settings.setTextScale(scale);
-            Navigator.pop(context);
+            Get.back();
           },
         );
       }).toList(),
@@ -514,7 +514,7 @@ class _LogoutButton extends StatelessWidget {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(dialogContext),
+                  onPressed: () => Get.back(),
                   child: Text(
                     dialogContext.tr('cancel').isEmpty ? 'Batal' : dialogContext.tr('cancel'),
                   ),
@@ -524,12 +524,7 @@ class _LogoutButton extends StatelessWidget {
                   onPressed: () async {
                     debugPrint('[Profile] Logging out...');
                     await FirebaseAuth.instance.signOut();
-                    if (context.mounted) {
-                      Navigator.of(context).pushNamedAndRemoveUntil(
-                        AppRoutes.login,
-                        (route) => false,
-                      );
-                    }
+                    Get.offAllNamed(AppRoutes.login);
                   },
                   child: Text(
                     dialogContext.tr('yes').isEmpty ? 'Ya' : dialogContext.tr('yes'),

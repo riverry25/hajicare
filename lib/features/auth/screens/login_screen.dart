@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:get/get.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -9,81 +9,15 @@ import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/pill_button.dart';
 import '../../../core/locales/app_localizations.dart';
+import '../controllers/login_controller.dart';
 import '../widgets/auth_role_card.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
-}
-
-class _LoginScreenState extends State<LoginScreen> {
-  String _selectedRole = 'jamaah';
-  bool _obscurePassword = true;
-  bool _rememberMe = true;
-  bool _isLoading = false;
-
-  final _emailCtrl = TextEditingController();
-  final _passwordCtrl = TextEditingController();
-
-  Future<void> _login() async {
-    debugPrint('[Login] Starting login process...');
-    if (_emailCtrl.text.isEmpty || _passwordCtrl.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Harap isi email dan password')),
-      );
-      return;
-    }
-
-    setState(() => _isLoading = true);
-    try {
-      debugPrint('[Login] Calling signInWithEmailAndPassword...');
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _emailCtrl.text.trim(),
-        password: _passwordCtrl.text,
-      );
-      debugPrint('[Login] Auth success!');
-
-      if (mounted) {
-        debugPrint('[Login] Navigating to Dashboard (role: $_selectedRole)...');
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          _selectedRole == 'jamaah'
-              ? AppRoutes.dashboardJamaah
-              : AppRoutes.dashboardPendamping,
-          (_) => false,
-        );
-      }
-    } on FirebaseAuthException catch (e) {
-      debugPrint('[Login] FirebaseAuthException: ${e.code} - ${e.message}');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error Auth: ${e.message ?? e.code}')),
-        );
-      }
-    } catch (e) {
-      debugPrint('[Login] General Exception: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Terjadi kesalahan: $e')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-      debugPrint('[Login] Process finished.');
-    }
-  }
-
-  @override
-  void dispose() {
-    _emailCtrl.dispose();
-    _passwordCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final controller = Get.find<LoginController>();
     return Scaffold(
       backgroundColor: AppColors.canvasCream,
       body: SafeArea(
@@ -246,32 +180,35 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
               ),
               const SizedBox(height: AppSpacing.sm),
-              Row(
-                children: [
-                  Expanded(
-                    child: AuthRoleCard(
-                      roleId: 'jamaah',
-                      title: 'Jamaah',
-                      description:
-                          'Saya Jamaah Haji/Umrah yang membutuhkan navigasi dan pendampingan',
-                      icon: Icons.person,
-                      isSelected: _selectedRole == 'jamaah',
-                      onTap: () => setState(() => _selectedRole = 'jamaah'),
+              Obx(
+                () => Row(
+                  children: [
+                    Expanded(
+                      child: AuthRoleCard(
+                        roleId: 'jamaah',
+                        title: 'Jamaah',
+                        description:
+                            'Saya Jamaah Haji/Umrah yang membutuhkan navigasi dan pendampingan',
+                        icon: Icons.person,
+                        isSelected: controller.selectedRole.value == 'jamaah',
+                        onTap: () => controller.setRole('jamaah'),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: AuthRoleCard(
-                      roleId: 'pendamping',
-                      title: 'Pendamping',
-                      description:
-                          'Keluarga atau muthawif yang memantau keselamatan jamaah',
-                      icon: Icons.health_and_safety,
-                      isSelected: _selectedRole == 'pendamping',
-                      onTap: () => setState(() => _selectedRole = 'pendamping'),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: AuthRoleCard(
+                        roleId: 'pendamping',
+                        title: 'Pendamping',
+                        description:
+                            'Keluarga atau muthawif yang memantau keselamatan jamaah',
+                        icon: Icons.health_and_safety,
+                        isSelected:
+                            controller.selectedRole.value == 'pendamping',
+                        onTap: () => controller.setRole('pendamping'),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: AppSpacing.lg),
 
@@ -281,7 +218,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     AppTextField(
-                      controller: _emailCtrl,
+                      controller: controller.emailController,
                       label: 'Email Aktif',
                       hintText: 'email@contoh.com',
                       keyboardType: TextInputType.emailAddress,
@@ -332,59 +269,62 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                     const SizedBox(height: AppSpacing.sm),
-                    AppTextField(
-                      controller: _passwordCtrl,
-                      hintText: 'Masukkan PIN / Kata Sandi',
-                      obscureText: _obscurePassword,
-                      prefixIcon: const Icon(
-                        Icons.lock,
-                        color: AppColors.tanMedium,
-                        size: 20,
-                      ),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                          color: AppColors.textBody,
+                    Obx(
+                      () => AppTextField(
+                        controller: controller.passwordController,
+                        hintText: 'Masukkan PIN / Kata Sandi',
+                        obscureText: controller.obscurePassword.value,
+                        prefixIcon: const Icon(
+                          Icons.lock,
+                          color: AppColors.tanMedium,
+                          size: 20,
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            controller.obscurePassword.value
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                            color: AppColors.textBody,
+                          ),
+                          onPressed: controller.togglePasswordVisibility,
+                        ),
                       ),
                     ),
 
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: _rememberMe,
-                          onChanged: (value) {
-                            setState(() {
-                              _rememberMe = value ?? true;
-                            });
-                          },
-                          activeColor: AppColors.statusPositive,
-                          side: const BorderSide(color: AppColors.goldLight),
-                        ),
-                        Text(
-                          'Ingat Saya di Perangkat Ini',
-                          style: AppTypography.caption.copyWith(
-                            color: AppColors.textHeading,
+                    Obx(
+                      () => Row(
+                        children: [
+                          Checkbox(
+                            value: controller.rememberMe.value,
+                            onChanged: (value) =>
+                                controller.setRememberMe(value ?? true),
+                            activeColor: AppColors.statusPositive,
+                            side: const BorderSide(color: AppColors.goldLight),
                           ),
-                        ),
-                      ],
+                          Text(
+                            'Ingat Saya di Perangkat Ini',
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.textHeading,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
 
                     const SizedBox(height: AppSpacing.sm),
-                    _isLoading
-                        ? const Center(child: CircularProgressIndicator())
-                        : PillButton(
-                            label: context.tr('btnLogin').isEmpty ? 'Masuk ke Aplikasi' : context.tr('btnLogin'),
-                            icon: Icons.login,
-                            onPressed: _login,
-                          ),
+                    Obx(
+                      () => PillButton(
+                        label: controller.isLoading.value
+                            ? 'Memproses...'
+                            : (context.tr('btnLogin').isEmpty
+                                ? 'Masuk ke Aplikasi'
+                                : context.tr('btnLogin')),
+                        icon: Icons.login,
+                        onPressed: controller.isLoading.value
+                            ? null
+                            : () => controller.login(),
+                      ),
+                    ),
 
                     Padding(
                       padding: const EdgeInsets.symmetric(
@@ -465,7 +405,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     GestureDetector(
                       onTap: () {
-                        Navigator.pushNamed(context, AppRoutes.register);
+                        Get.toNamed(AppRoutes.register);
                       },
                       child: RichText(
                         text: TextSpan(

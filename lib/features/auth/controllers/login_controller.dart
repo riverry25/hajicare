@@ -1,0 +1,79 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../../core/routes/app_routes.dart';
+
+class LoginController extends GetxController {
+  final selectedRole = 'jamaah'.obs;
+  final obscurePassword = true.obs;
+  final rememberMe = true.obs;
+  final isLoading = false.obs;
+  final errorMessage = RxnString();
+
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  void setRole(String role) {
+    selectedRole.value = role;
+  }
+
+  void togglePasswordVisibility() {
+    obscurePassword.value = !obscurePassword.value;
+  }
+
+  void setRememberMe(bool value) {
+    rememberMe.value = value;
+  }
+
+  Future<void> login() async {
+    isLoading.value = true;
+    errorMessage.value = null;
+
+    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
+      errorMessage.value = 'Harap isi email dan password';
+      _showErrorSnackbar(errorMessage.value!);
+      isLoading.value = false;
+      return;
+    }
+
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text,
+      );
+      
+      Get.offAllNamed(
+        selectedRole.value == 'jamaah'
+            ? AppRoutes.dashboardJamaah
+            : AppRoutes.dashboardPendamping,
+      );
+    } on FirebaseAuthException catch (e) {
+      errorMessage.value = e.message ?? e.code;
+      _showErrorSnackbar('Error Auth: ${errorMessage.value}');
+    } catch (e) {
+      errorMessage.value = 'Terjadi kesalahan: $e';
+      _showErrorSnackbar(errorMessage.value!);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  void _showErrorSnackbar(String msg) {
+    if (Get.context != null) {
+      Get.snackbar(
+        'Gagal Masuk',
+        msg,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade800,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  @override
+  void onClose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.onClose();
+  }
+}

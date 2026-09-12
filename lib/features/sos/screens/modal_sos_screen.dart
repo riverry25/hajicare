@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../../core/locales/app_localizations.dart';
+import 'package:get/get.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -41,7 +40,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
         if (i == 0) {
           _sosSent = true;
           try {
-            context.read<HajiCareController>().triggerSos();
+            Get.find<HajiCareController>().triggerSos();
           } catch (_) {}
         }
       });
@@ -76,7 +75,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                       color: AppColors.surfaceWhite,
                       size: 26,
                     ),
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () => Get.back(),
                   ),
                   Row(
                     children: [
@@ -389,7 +388,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                               ),
                             ),
                             OutlinedButton(
-                              onPressed: () => Navigator.pop(context),
+                              onPressed: () => Get.back(),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppColors.espressoDark,
                                 side: const BorderSide(color: AppColors.outline),
@@ -521,17 +520,15 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                                 setState(() => _sosSent = true);
                               }
                               try {
-                                context.read<HajiCareController>().triggerSos();
+                                Get.find<HajiCareController>().triggerSos();
                               } catch (_) {}
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    context.tr('success').isEmpty ? 'Berhasil' : context.tr('success'),
-                                    style: const TextStyle(color: Colors.white),
-                                  ),
-                                  backgroundColor: AppColors.statusPositive,
-                                ),
+                              Get.back();
+                              Get.snackbar(
+                                'SOS Dikirim',
+                                'Tim bantuan sedang dalam perjalanan.',
+                                backgroundColor: AppColors.statusPositive,
+                                colorText: AppColors.surfaceWhite,
+                                duration: const Duration(seconds: 3),
                               );
                             },
                             style: ElevatedButton.styleFrom(

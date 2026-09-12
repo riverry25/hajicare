@@ -117,7 +117,7 @@ class JamaahProfileHeader extends StatelessWidget {
                       ),
                       children: [
                         TextSpan(
-                          text: state.pendampingName,
+                          text: state.pendampingName.value,
                           style: AppTypography.captionSmall.copyWith(
                             color: AppColors.textHeading,
                           ),

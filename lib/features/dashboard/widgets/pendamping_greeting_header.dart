@@ -55,7 +55,7 @@ class PendampingGreetingHeader extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
-          'Assalamu’alaikum, ${state.pendampingName.split(' ')[0]}',
+          'Assalamu’alaikum, ${state.pendampingName.value.split(' ')[0]}',
           style: AppTypography.displayMedium.copyWith(
             color: AppColors.espressoDark,
             fontWeight: FontWeight.w800,

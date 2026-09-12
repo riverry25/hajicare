@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/state/hajicare_controller.dart';
@@ -11,50 +11,48 @@ import '../../../core/widgets/bottom_nav_bar.dart';
 import '../../map/screens/interactive_map_screen.dart';
 import '../../prayer/screens/prayer_times_screen.dart';
 import '../../profile/screens/profile_screen.dart';
+import '../controllers/dashboard_controller.dart';
 import '../widgets/jamaah_distance_card.dart';
 import '../widgets/jamaah_prayer_card.dart';
 import '../widgets/jamaah_profile_header.dart';
 import '../widgets/jamaah_service_grid.dart';
 import '../widgets/jamaah_sos_banner.dart';
 
-class DashboardJamaahScreen extends StatefulWidget {
+class DashboardJamaahScreen extends StatelessWidget {
   const DashboardJamaahScreen({super.key});
 
   @override
-  State<DashboardJamaahScreen> createState() => _DashboardJamaahScreenState();
-}
-
-class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
-  int _currentIndex = 0;
-
-  @override
   Widget build(BuildContext context) {
-    final state = context.watch<HajiCareController>();
-    final jamaah = state.self;
+    final dashboardCtrl = Get.find<DashboardController>();
+    final state = Get.find<HajiCareController>();
 
-    return Scaffold(
-      backgroundColor: AppColors.canvasCream,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: [
-          _buildJamaahHome(state, jamaah),
-          const InteractiveMapScreen(showBottomNav: false),
-          const PrayerTimesScreen(showBottomNav: false),
-          const ProfileScreen(showBottomNav: false),
-        ],
-      ),
-      bottomNavigationBar: HajiCareBottomNavBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-      ),
-    );
+    return Obx(() {
+      final jamaah = state.self;
+
+      return Scaffold(
+        backgroundColor: AppColors.canvasCream,
+        body: IndexedStack(
+          index: dashboardCtrl.currentIndex.value,
+          children: [
+            _buildJamaahHome(state, jamaah, dashboardCtrl),
+            const InteractiveMapScreen(showBottomNav: false),
+            const PrayerTimesScreen(showBottomNav: false),
+            const ProfileScreen(showBottomNav: false),
+          ],
+        ),
+        bottomNavigationBar: HajiCareBottomNavBar(
+          currentIndex: dashboardCtrl.currentIndex.value,
+          onTap: dashboardCtrl.changeTab,
+        ),
+      );
+    });
   }
 
-  Widget _buildJamaahHome(HajiCareController state, JamaahData jamaah) {
+  Widget _buildJamaahHome(
+    HajiCareController state,
+    JamaahData jamaah,
+    DashboardController dashboardCtrl,
+  ) {
     return Scaffold(
       backgroundColor: AppColors.canvasCream,
       appBar: AppBar(
@@ -96,7 +94,7 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
             children: [
               IconButton(
                 icon: const Icon(Icons.notifications_outlined, color: AppColors.espressoDark),
-                onPressed: () => Navigator.pushNamed(context, AppRoutes.notification),
+                onPressed: () => Get.toNamed(AppRoutes.notification),
               ),
               if (jamaah.separatedMode)
                 Positioned(
@@ -122,7 +120,7 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
               child: IconButton(
                 icon: const Icon(Icons.sos, color: AppColors.sosEmergency, size: 20),
                 padding: EdgeInsets.zero,
-                onPressed: () => Navigator.pushNamed(context, AppRoutes.modalSos),
+                onPressed: () => Get.toNamed(AppRoutes.modalSos),
               ),
             ),
           ),
@@ -134,12 +132,12 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
           vertical: AppSpacing.sm,
         ),
         children: [
-          if (jamaah.separatedMode) _buildSeparatedBanner(context),
+          if (jamaah.separatedMode) _buildSeparatedBanner(),
           JamaahProfileHeader(state: state),
           const SizedBox(height: AppSpacing.lg),
           JamaahDistanceCard(
             jamaah: jamaah,
-            onViewMap: () => setState(() => _currentIndex = 1),
+            onViewMap: () => dashboardCtrl.changeTab(1),
           ),
           const SizedBox(height: AppSpacing.lg),
           JamaahSosBanner(state: state),
@@ -155,7 +153,7 @@ class _DashboardJamaahScreenState extends State<DashboardJamaahScreen> {
     );
   }
 
-  Widget _buildSeparatedBanner(BuildContext context) {
+  Widget _buildSeparatedBanner() {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.lg),
       padding: const EdgeInsets.all(AppSpacing.md),
