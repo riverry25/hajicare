@@ -29,21 +29,27 @@ class AppCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final effectivePadding = padding ?? const EdgeInsets.all(AppSpacing.lg);
     final effectiveRadius = borderRadius ?? AppRadius.lg;
+    final isDark = AppColors.isDark(context);
 
     final content = Container(
       margin: margin,
       padding: effectivePadding,
       decoration: BoxDecoration(
-        color: backgroundColor ?? AppColors.surfaceWhite,
+        color: backgroundColor ?? AppColors.surfaceColor(context),
         borderRadius: BorderRadius.circular(effectiveRadius),
         border: Border.all(
-          color: borderColor ?? AppColors.canvasCreamSubtle,
+          color: borderColor ??
+              (isDark
+                  ? AppColors.darkOutlineVariant
+                  : AppColors.canvasCreamSubtle),
           width: 1.0,
         ),
         boxShadow: boxShadow ??
             [
               BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.04),
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.25)
+                    : AppColors.primary.withValues(alpha: 0.04),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),

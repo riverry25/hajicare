@@ -19,18 +19,20 @@ class PrayerTimesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<PrayerTimesController>();
+    final isDark = AppColors.isDark(context);
 
     return Scaffold(
-      backgroundColor: AppColors.canvasCream,
+      backgroundColor: AppColors.scaffoldColor(context),
       appBar: AppBar(
-        backgroundColor: AppColors.surfaceWhite,
-        elevation: 1,
+        backgroundColor: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0.5,
         title: Text(
           context.tr('jadwal').isEmpty
               ? 'Jadwal Sholat & Kiblat'
               : context.tr('jadwal'),
           style: AppTypography.titleLarge.copyWith(
-            color: AppColors.espressoDark,
+            color: AppColors.textHeadingColor(context),
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -40,17 +42,21 @@ class PrayerTimesScreen extends StatelessWidget {
             tooltip: 'Perbarui Lokasi GPS',
             icon: Obx(
               () => controller.isLoadingLocation.value
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.espressoDark,
+                        color: isDark
+                            ? AppColors.darkPrimary
+                            : AppColors.espressoDark,
                       ),
                     )
-                  : const Icon(
+                  : Icon(
                       Icons.my_location,
-                      color: AppColors.espressoDark,
+                      color: isDark
+                          ? AppColors.darkPrimary
+                          : AppColors.espressoDark,
                       size: 20,
                     ),
             ),
@@ -73,16 +79,20 @@ class PrayerTimesScreen extends StatelessWidget {
                   vertical: AppSpacing.sm,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceWhite,
+                  color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                   border: Border.all(
                     color: controller.isUsingFallbackLocation
-                        ? AppColors.error.withValues(alpha: 0.3)
-                        : AppColors.canvasCreamSubtle,
+                        ? AppColors.error.withValues(alpha: isDark ? 0.5 : 0.3)
+                        : (isDark
+                            ? AppColors.darkOutlineVariant
+                            : AppColors.canvasCreamSubtle),
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.espressoDark.withValues(alpha: 0.04),
+                      color: isDark
+                          ? Colors.black.withValues(alpha: 0.2)
+                          : AppColors.espressoDark.withValues(alpha: 0.04),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -108,7 +118,7 @@ class PrayerTimesScreen extends StatelessWidget {
                             child: Text(
                               controller.locationName.value,
                               style: AppTypography.labelLarge.copyWith(
-                                color: AppColors.espressoDark,
+                                color: AppColors.textHeadingColor(context),
                                 fontWeight: FontWeight.w700,
                               ),
                               maxLines: 1,
@@ -123,7 +133,7 @@ class PrayerTimesScreen extends StatelessWidget {
                                 vertical: 1,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.error.withValues(alpha: 0.1),
+                                color: AppColors.error.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(
                                   AppRadius.sm,
                                 ),
@@ -148,13 +158,17 @@ class PrayerTimesScreen extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.canvasCreamSubtle,
+                        color: isDark
+                            ? AppColors.darkSurfaceContainerHigh
+                            : AppColors.canvasCreamSubtle,
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
                       child: Text(
                         controller.hijriDateText.value,
                         style: AppTypography.caption.copyWith(
-                          color: AppColors.espressoDark,
+                          color: isDark
+                              ? AppColors.goldLight
+                              : AppColors.espressoDark,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -171,19 +185,32 @@ class PrayerTimesScreen extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(AppSpacing.xl),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
+                  gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.espressoDark,
-                      AppColors.primaryContainer,
-                      AppColors.primary,
-                    ],
+                    colors: isDark
+                        ? const [
+                            Color(0xFF281E17),
+                            Color(0xFF38291F),
+                            Color(0xFF20160F),
+                          ]
+                        : const [
+                            AppColors.espressoDark,
+                            AppColors.primaryContainer,
+                            AppColors.primary,
+                          ],
                   ),
                   borderRadius: BorderRadius.circular(AppRadius.lg),
+                  border: Border.all(
+                    color: AppColors.goldLight.withValues(
+                      alpha: isDark ? 0.25 : 0.15,
+                    ),
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.espressoDark.withValues(alpha: 0.25),
+                      color: isDark
+                          ? Colors.black.withValues(alpha: 0.4)
+                          : AppColors.espressoDark.withValues(alpha: 0.25),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
@@ -243,7 +270,9 @@ class PrayerTimesScreen extends StatelessWidget {
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceWhite.withValues(alpha: 0.15),
+                        color: isDark
+                            ? AppColors.goldLight.withValues(alpha: 0.12)
+                            : AppColors.surfaceWhite.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                         border: Border.all(
                           color: AppColors.goldLight.withValues(alpha: 0.3),
@@ -298,14 +327,14 @@ class PrayerTimesScreen extends StatelessWidget {
                               Icons.explore,
                               color: isAligned
                                   ? AppColors.statusPositive
-                                  : AppColors.espressoDark,
+                                  : AppColors.textHeadingColor(context),
                               size: 22,
                             ),
                             const SizedBox(width: 6),
                             Text(
                               'Arah Kiblat',
                               style: AppTypography.titleMedium.copyWith(
-                                color: AppColors.espressoDark,
+                                color: AppColors.textHeadingColor(context),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -321,7 +350,9 @@ class PrayerTimesScreen extends StatelessWidget {
                                 ? AppColors.statusPositive.withValues(
                                     alpha: 0.15,
                                   )
-                                : AppColors.canvasCreamSubtle,
+                                : (isDark
+                                    ? AppColors.darkSurfaceContainerHigh
+                                    : AppColors.canvasCreamSubtle),
                             borderRadius: BorderRadius.circular(AppRadius.sm),
                           ),
                           child: Text(
@@ -329,7 +360,7 @@ class PrayerTimesScreen extends StatelessWidget {
                             style: AppTypography.captionSmall.copyWith(
                               color: isAligned
                                   ? AppColors.statusPositive
-                                  : AppColors.espressoDark,
+                                  : AppColors.textHeadingColor(context),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -345,13 +376,15 @@ class PrayerTimesScreen extends StatelessWidget {
                           vertical: AppSpacing.md,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.canvasCreamSubtle,
+                          color: isDark
+                              ? AppColors.darkSurfaceContainerHigh
+                              : AppColors.canvasCreamSubtle,
                           borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                         child: Text(
                           'Kompas hanya berfungsi di perangkat mobile dengan sensor.',
                           style: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.textBody,
+                            color: AppColors.textBodyColor(context),
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -367,19 +400,25 @@ class PrayerTimesScreen extends StatelessWidget {
                             border: Border.all(
                               color: isAligned
                                   ? AppColors.statusPositive
-                                  : AppColors.goldLight,
+                                  : (isDark
+                                      ? AppColors.darkOutline
+                                      : AppColors.goldLight),
                               width: isAligned ? 5 : 3,
                             ),
-                            color: AppColors.canvasCream,
+                            color: isDark
+                                ? AppColors.darkSurfaceContainer
+                                : AppColors.canvasCream,
                             boxShadow: [
                               BoxShadow(
                                 color: isAligned
                                     ? AppColors.statusPositive.withValues(
-                                        alpha: 0.3,
+                                        alpha: 0.35,
                                       )
-                                    : AppColors.espressoDark.withValues(
-                                        alpha: 0.08,
-                                      ),
+                                    : (isDark
+                                        ? Colors.black.withValues(alpha: 0.3)
+                                        : AppColors.espressoDark.withValues(
+                                            alpha: 0.08,
+                                          )),
                                 blurRadius: isAligned ? 20 : 10,
                                 spreadRadius: isAligned ? 4 : 1,
                               ),
@@ -400,35 +439,35 @@ class PrayerTimesScreen extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              const Positioned(
+                              Positioned(
                                 bottom: 8,
                                 child: Text(
                                   'S',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: AppColors.textBody,
+                                    color: AppColors.textBodyColor(context),
                                     fontSize: 13,
                                   ),
                                 ),
                               ),
-                              const Positioned(
+                              Positioned(
                                 left: 10,
                                 child: Text(
                                   'B',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: AppColors.textBody,
+                                    color: AppColors.textBodyColor(context),
                                     fontSize: 13,
                                   ),
                                 ),
                               ),
-                              const Positioned(
+                              Positioned(
                                 right: 10,
                                 child: Text(
                                   'T',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: AppColors.textBody,
+                                    color: AppColors.textBodyColor(context),
                                     fontSize: 13,
                                   ),
                                 ),
@@ -442,7 +481,7 @@ class PrayerTimesScreen extends StatelessWidget {
                                   shape: BoxShape.circle,
                                   border: Border.all(
                                     color: AppColors.tanMedium.withValues(
-                                      alpha: 0.2,
+                                      alpha: isDark ? 0.3 : 0.2,
                                     ),
                                   ),
                                 ),
@@ -492,7 +531,7 @@ class PrayerTimesScreen extends StatelessWidget {
                                           height: 30,
                                           decoration: BoxDecoration(
                                             color: AppColors.tanMedium
-                                                .withValues(alpha: 0.4),
+                                                .withValues(alpha: isDark ? 0.5 : 0.4),
                                             borderRadius: BorderRadius.circular(
                                               2,
                                             ),
@@ -506,10 +545,14 @@ class PrayerTimesScreen extends StatelessWidget {
                                         decoration: BoxDecoration(
                                           color: isAligned
                                               ? AppColors.statusPositive
-                                              : AppColors.espressoDark,
+                                              : (isDark
+                                                  ? AppColors.goldLight
+                                                  : AppColors.espressoDark),
                                           shape: BoxShape.circle,
                                           border: Border.all(
-                                            color: Colors.white,
+                                            color: isDark
+                                                ? AppColors.darkSurface
+                                                : Colors.white,
                                             width: 2,
                                           ),
                                         ),
@@ -532,15 +575,19 @@ class PrayerTimesScreen extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: isAligned
-                              ? AppColors.statusPositive.withValues(alpha: 0.12)
-                              : AppColors.canvasCreamSubtle,
+                              ? AppColors.statusPositive.withValues(alpha: 0.15)
+                              : (isDark
+                                  ? AppColors.darkSurfaceContainerHigh
+                                  : AppColors.canvasCreamSubtle),
                           borderRadius: BorderRadius.circular(AppRadius.pill),
                           border: Border.all(
                             color: isAligned
                                 ? AppColors.statusPositive.withValues(
                                     alpha: 0.4,
                                   )
-                                : Colors.transparent,
+                                : (isDark
+                                    ? AppColors.darkOutlineVariant
+                                    : Colors.transparent),
                           ),
                         ),
                         child: Row(
@@ -562,7 +609,7 @@ class PrayerTimesScreen extends StatelessWidget {
                                 style: AppTypography.captionSmall.copyWith(
                                   color: isAligned
                                       ? AppColors.statusPositive
-                                      : AppColors.textHeading,
+                                      : AppColors.textHeadingColor(context),
                                   fontWeight: FontWeight.bold,
                                 ),
                                 overflow: TextOverflow.ellipsis,
@@ -591,16 +638,16 @@ class PrayerTimesScreen extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.calendar_month,
-                                color: AppColors.espressoDark,
+                                color: AppColors.textHeadingColor(context),
                                 size: 20,
                               ),
                               const SizedBox(width: 8),
                               Text(
                                 'Jadwal Sholat Hari Ini',
                                 style: AppTypography.titleMedium.copyWith(
-                                  color: AppColors.espressoDark,
+                                  color: AppColors.textHeadingColor(context),
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -612,13 +659,17 @@ class PrayerTimesScreen extends StatelessWidget {
                               vertical: 3,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.canvasCream,
+                              color: isDark
+                                  ? AppColors.darkSurfaceContainerHigh
+                                  : AppColors.canvasCream,
                               borderRadius: BorderRadius.circular(AppRadius.sm),
                             ),
                             child: Text(
                               controller.calculationMethodName.value,
                               style: AppTypography.captionSmall.copyWith(
-                                color: AppColors.tanMedium,
+                                color: isDark
+                                    ? AppColors.goldLight
+                                    : AppColors.tanMedium,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -626,13 +677,16 @@ class PrayerTimesScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const Divider(
+                    Divider(
                       height: 1,
-                      color: AppColors.canvasCreamSubtle,
+                      color: isDark
+                          ? AppColors.darkOutlineVariant
+                          : AppColors.canvasCreamSubtle,
                     ),
                     Column(
                       children: controller.prayers.map((p) {
                         return _buildPrayerRow(
+                          context: context,
                           name: p.name,
                           arabicName: p.arabicName,
                           time: p.formattedTime,
@@ -655,11 +709,14 @@ class PrayerTimesScreen extends StatelessWidget {
   }
 
   Widget _buildPrayerRow({
+    required BuildContext context,
     required String name,
     required String arabicName,
     required String time,
     required bool isNext,
   }) {
+    final isDark = AppColors.isDark(context);
+
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
@@ -667,11 +724,15 @@ class PrayerTimesScreen extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: isNext
-            ? AppColors.secondaryContainer.withValues(alpha: 0.5)
+            ? (isDark
+                ? AppColors.darkPrimaryContainer.withValues(alpha: 0.45)
+                : AppColors.secondaryContainer.withValues(alpha: 0.5))
             : Colors.transparent,
         border: Border(
           bottom: BorderSide(
-            color: AppColors.canvasCreamSubtle.withValues(alpha: 0.5),
+            color: isDark
+                ? AppColors.darkOutlineVariant.withValues(alpha: 0.4)
+                : AppColors.canvasCreamSubtle.withValues(alpha: 0.5),
           ),
         ),
       ),
@@ -685,14 +746,24 @@ class PrayerTimesScreen extends StatelessWidget {
                 height: 32,
                 decoration: BoxDecoration(
                   color: isNext
-                      ? AppColors.accentGoldStar.withValues(alpha: 0.2)
-                      : AppColors.canvasCreamSubtle,
+                      ? AppColors.accentGoldStar.withValues(
+                          alpha: isDark ? 0.25 : 0.2,
+                        )
+                      : (isDark
+                          ? AppColors.darkSurfaceContainerHigh
+                          : AppColors.canvasCreamSubtle),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   isNext ? Icons.volume_up : Icons.access_time,
                   size: 16,
-                  color: isNext ? AppColors.espressoDark : AppColors.tanMedium,
+                  color: isNext
+                      ? (isDark
+                          ? AppColors.goldLight
+                          : AppColors.espressoDark)
+                      : (isDark
+                          ? AppColors.darkTextBody
+                          : AppColors.tanMedium),
                 ),
               ),
               const SizedBox(width: 12),
@@ -703,15 +774,19 @@ class PrayerTimesScreen extends StatelessWidget {
                     name,
                     style: AppTypography.bodyLarge.copyWith(
                       color: isNext
-                          ? AppColors.espressoDark
-                          : AppColors.textHeading,
+                          ? (isDark
+                              ? AppColors.goldLight
+                              : AppColors.espressoDark)
+                          : AppColors.textHeadingColor(context),
                       fontWeight: isNext ? FontWeight.bold : FontWeight.w500,
                     ),
                   ),
                   Text(
                     arabicName,
                     style: AppTypography.captionSmall.copyWith(
-                      color: AppColors.tanMedium,
+                      color: isDark
+                          ? AppColors.darkTextBody
+                          : AppColors.tanMedium,
                     ),
                   ),
                 ],
@@ -727,13 +802,17 @@ class PrayerTimesScreen extends StatelessWidget {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.espressoDark,
+                    color: isDark
+                        ? AppColors.accentGoldStar
+                        : AppColors.espressoDark,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Text(
                     'Berikutnya',
                     style: AppTypography.captionSmall.copyWith(
-                      color: AppColors.goldLight,
+                      color: isDark
+                          ? AppColors.darkScaffold
+                          : AppColors.goldLight,
                       fontWeight: FontWeight.bold,
                       fontSize: 10,
                     ),
@@ -745,8 +824,10 @@ class PrayerTimesScreen extends StatelessWidget {
                 time,
                 style: AppTypography.titleMedium.copyWith(
                   color: isNext
-                      ? AppColors.espressoDark
-                      : AppColors.textHeading,
+                      ? (isDark
+                          ? AppColors.goldLight
+                          : AppColors.espressoDark)
+                      : AppColors.textHeadingColor(context),
                   fontWeight: isNext ? FontWeight.bold : FontWeight.w600,
                 ),
               ),

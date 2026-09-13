@@ -22,18 +22,6 @@ class OnboardingSlideSafety extends StatelessWidget {
         color: AppColors.surfaceWhite,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.goldLight.withValues(alpha: 0.3)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.espressoDark.withValues(alpha: 0.08),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-          BoxShadow(
-            color: AppColors.espressoDark.withValues(alpha: 0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -127,7 +115,10 @@ class OnboardingSlideSafety extends StatelessWidget {
               color: AppColors.surfaceWhite,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.shield, color: AppColors.espressoDark),
+            child: const Icon(
+              Icons.shield_moon_outlined,
+              color: AppColors.espressoDark,
+            ),
           ),
 
           const SizedBox(width: AppSpacing.md),
@@ -140,6 +131,7 @@ class OnboardingSlideSafety extends StatelessWidget {
                   'Fitur Keselamatan Jamaah',
                   style: AppTypography.titleLarge.copyWith(
                     fontWeight: FontWeight.w700,
+                    color: AppColors.espressoDark.withValues(alpha: 0.8),
                   ),
                 ),
 
@@ -147,7 +139,9 @@ class OnboardingSlideSafety extends StatelessWidget {
 
                 Text(
                   'Teknologi pendampingan cerdas agar jamaah tetap aman dan terhubung selama ibadah.',
-                  style: AppTypography.bodySmall,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.espressoDark.withValues(alpha: 0.5),
+                  ),
                 ),
               ],
             ),
@@ -259,12 +253,18 @@ class OnboardingSlideSafety extends StatelessWidget {
                   title,
                   style: AppTypography.titleMedium.copyWith(
                     fontWeight: FontWeight.w700,
+                    color: AppColors.espressoDark.withValues(alpha: 0.7),
                   ),
                 ),
 
                 const SizedBox(height: 6),
 
-                Text(description, style: AppTypography.bodySmall),
+                Text(
+                  description,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.espressoDark.withValues(alpha: 0.5),
+                  ),
+                ),
               ],
             ),
           ),
@@ -296,7 +296,9 @@ class OnboardingSlideSafety extends StatelessWidget {
           Expanded(
             child: Text(
               'Notifikasi getar dan suara otomatis aktif untuk membantu jamaah tetap aman selama perjalanan.',
-              style: AppTypography.bodySmall,
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.espressoDark.withValues(alpha: 0.5),
+              ),
             ),
           ),
         ],

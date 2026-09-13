@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-
 import '../../../core/routes/app_routes.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -17,17 +17,17 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+  late final AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
+
     _controller = AnimationController(
-      duration: const Duration(seconds: 4),
+      duration: const Duration(milliseconds: 2400),
       vsync: this,
     )..repeat(reverse: true);
 
-    // Simulate loading and navigate
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
         Get.offNamed(AppRoutes.onboarding);
@@ -43,365 +43,481 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+
     return Scaffold(
       backgroundColor: AppColors.espressoDark,
       body: Stack(
         children: [
-          // Background Gradient
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  AppColors.espressoDark,
-                  AppColors.primaryContainer,
-                  AppColors.primary,
+          // ============================================================
+          // BACKGROUND
+          // ============================================================
+          const Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppColors.espressoDark,
+                    AppColors.primaryContainer,
+                    AppColors.primary,
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // ============================================================
+          // AMBIENT GLOW
+          // ============================================================
+          Positioned(
+            top: -size.width * 0.35,
+            left: -size.width * 0.15,
+            right: -size.width * 0.15,
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                final scale = 0.92 + (_controller.value * 0.08);
+
+                return Transform.scale(scale: scale, child: child);
+              },
+              child: Container(
+                height: size.width * 0.9,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.goldLight.withValues(alpha: 0.07),
+                ),
+              ),
+            ),
+          ),
+
+          // ============================================================
+          // SECOND SUBTLE GLOW
+          // ============================================================
+          Positioned(
+            bottom: -size.width * 0.45,
+            left: -size.width * 0.25,
+            right: -size.width * 0.25,
+            child: Container(
+              height: size.width * 0.9,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.espressoDark.withValues(alpha: 0.22),
+              ),
+            ),
+          ),
+
+          // ============================================================
+          // MAIN CONTENT
+          // ============================================================
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+              child: Column(
+                children: [
+                  // ======================================================
+                  // TOP BRAND MARK
+                  // ======================================================
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.lg),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: const BoxDecoration(
+                            color: AppColors.goldLight,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'HARMONI',
+                          style: AppTypography.captionSmall.copyWith(
+                            color: AppColors.canvasCreamSubtle,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 3,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: const BoxDecoration(
+                            color: AppColors.goldLight,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // ======================================================
+                  // CENTER
+                  // ======================================================
+                  Expanded(
+                    child: Center(
+                      child: SingleChildScrollView(
+                        physics: const NeverScrollableScrollPhysics(),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // ==================================================
+                            // LOGO
+                            // ==================================================
+                            AnimatedBuilder(
+                              animation: _controller,
+                              builder: (context, child) {
+                                final scale = 1.0 + (_controller.value * 0.025);
+
+                                return Transform.scale(
+                                  scale: scale,
+                                  child: child,
+                                );
+                              },
+                              child: _buildLogo(),
+                            ),
+
+                            const SizedBox(height: 30),
+
+                            // ==================================================
+                            // ARABIC TEXT
+                            // ==================================================
+                            Text(
+                              'رِعَايَةُ الحَجِيجِ وَالمُعْتَمِرِينَ',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.amiri(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.goldLight,
+                                height: 1.3,
+                              ),
+                            ),
+
+                            const SizedBox(height: 14),
+
+                            // ==================================================
+                            // APP NAME
+                            // ==================================================
+                            RichText(
+                              textAlign: TextAlign.center,
+                              text: TextSpan(
+                                children: [
+                                  TextSpan(
+                                    text: 'Haji',
+                                    style: AppTypography.displayLarge.copyWith(
+                                      color: AppColors.surfaceWhite,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: -1.5,
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: 'Care',
+                                    style: AppTypography.displayLarge.copyWith(
+                                      color: AppColors.goldLight,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: -1.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 14),
+
+                            // ==================================================
+                            // DECORATIVE DIVIDER
+                            // ==================================================
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _buildDivider(),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 12),
+                                  child: Icon(
+                                    Icons.star_rounded,
+                                    size: 11,
+                                    color: AppColors.accentGoldStar,
+                                  ),
+                                ),
+                                _buildDivider(reverse: true),
+                              ],
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            // ==================================================
+                            // TAGLINE
+                            // ==================================================
+                            Text(
+                              'Sahabat Setia & Amanah',
+                              textAlign: TextAlign.center,
+                              style: AppTypography.titleMedium.copyWith(
+                                color: AppColors.canvasCream,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+
+                            const SizedBox(height: 6),
+
+                            // ==================================================
+                            // DESCRIPTION
+                            // ==================================================
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 330),
+                              child: Text(
+                                'Pendamping perjalanan ibadah yang ramah, '
+                                'aman, dan mudah diakses.',
+                                textAlign: TextAlign.center,
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: AppColors.canvasCreamSubtle,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // ========================================================
+                  // BOTTOM LOADING
+                  // ========================================================
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.xl2),
+                    child: Column(
+                      children: [
+                        // Loading indicator
+                        SizedBox(
+                          width: 180,
+                          child: Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Menyiapkan pengalaman',
+                                    style: AppTypography.captionSmall.copyWith(
+                                      color: AppColors.canvasCreamSubtle,
+                                    ),
+                                  ),
+                                  AnimatedBuilder(
+                                    animation: _controller,
+                                    builder: (context, child) {
+                                      return Text(
+                                        '${((_controller.value * 100).round())}%',
+                                        style: AppTypography.captionSmall
+                                            .copyWith(
+                                              color: AppColors.goldLight,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+
+                              const SizedBox(height: 8),
+
+                              // Progress track
+                              Container(
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: AppColors.espressoDark.withValues(
+                                    alpha: 0.45,
+                                  ),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.pill,
+                                  ),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.pill,
+                                  ),
+                                  child: AnimatedBuilder(
+                                    animation: _controller,
+                                    builder: (context, child) {
+                                      return FractionallySizedBox(
+                                        alignment: Alignment.centerLeft,
+                                        widthFactor:
+                                            0.25 + (_controller.value * 0.75),
+                                        child: Container(
+                                          decoration: const BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                AppColors.goldLight,
+                                                AppColors.accentGoldStar,
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 18),
+
+                        // ====================================================
+                        // FOOTER
+                        // ====================================================
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.verified_rounded,
+                              size: 14,
+                              color: AppColors.goldLight.withValues(
+                                alpha: 0.85,
+                              ),
+                            ),
+                            const SizedBox(width: 7),
+                            Text(
+                              'Melayani dengan amanah',
+                              style: AppTypography.captionSmall.copyWith(
+                                color: AppColors.canvasCreamSubtle,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
 
-          // Top ambient glow
-          Positioned(
-            top: -96,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Container(
-                width: 384,
-                height: 384,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.goldLight.withValues(alpha: 0.1),
-                ),
+  // ==============================================================
+  // LOGO BUILDER
+  // ==============================================================
+
+  Widget _buildLogo() {
+    return SizedBox(
+      width: 148,
+      height: 148,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Outer ring
+          Container(
+            width: 148,
+            height: 148,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.goldLight.withValues(alpha: 0.18),
+                width: 1,
               ),
             ),
           ),
 
-          SafeArea(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Middle ring
+          Container(
+            width: 126,
+            height: 126,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.goldLight.withValues(alpha: 0.28),
+                width: 1,
+              ),
+            ),
+          ),
+
+          // Main emblem
+          Container(
+            width: 104,
+            height: 104,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [AppColors.primaryContainer, AppColors.espressoDark],
+              ),
+              border: Border.all(
+                color: AppColors.goldLight.withValues(alpha: 0.65),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.goldLight.withValues(alpha: 0.10),
+                  blurRadius: 24,
+                  spreadRadius: 4,
+                ),
+              ],
+            ),
+            child: Stack(
+              alignment: Alignment.center,
               children: [
-                // Top Status
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.screenEdgeGutter,
-                    vertical: AppSpacing.lg,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: AppColors.statusPositive,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.sm2),
-                          Text(
-                            'KONEKSI AMAN',
-                            style: AppTypography.captionSmall.copyWith(
-                              color: AppColors.canvasCreamSubtle,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.md,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.espressoDark.withValues(alpha: 0.6),
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                          border: Border.all(
-                            color: AppColors.goldLight.withValues(alpha: 0.2),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.mosque,
-                              size: 14,
-                              color: AppColors.goldLight,
-                            ),
-                            const SizedBox(width: AppSpacing.sm2),
-                            Text(
-                              'Makkah Al-Mukarramah',
-                              style: AppTypography.caption.copyWith(
-                                color: AppColors.canvasCream,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                // Subtle inner circle
+                Container(
+                  width: 78,
+                  height: 78,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.goldLight.withValues(alpha: 0.12),
+                    ),
                   ),
                 ),
 
-                // Center Identity
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Monogram Emblem
-                      Container(
-                        width: 144,
-                        height: 144,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppColors.goldLight.withValues(alpha: 0.3),
-                          ),
-                        ),
-                        padding: const EdgeInsets.all(10),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color:
-                                  AppColors.accentGoldStar.withValues(alpha: 0.4),
-                            ),
-                          ),
-                          child: Center(
-                            child: AnimatedBuilder(
-                              animation: _controller,
-                              builder: (context, child) {
-                                return Transform.scale(
-                                  scale: 1.0 + (_controller.value * 0.04),
-                                  child: child,
-                                );
-                              },
-                              child: Container(
-                                width: 96,
-                                height: 96,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  gradient: const LinearGradient(
-                                    begin: Alignment.bottomLeft,
-                                    end: Alignment.topRight,
-                                    colors: [
-                                      AppColors.espressoDark,
-                                      AppColors.primaryContainer,
-                                      AppColors.secondary,
-                                    ],
-                                  ),
-                                  border: Border.all(
-                                    color:
-                                        AppColors.goldLight.withValues(alpha: 0.4),
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color:
-                                          AppColors.primary.withValues(alpha: 0.2),
-                                      blurRadius: 10,
-                                      spreadRadius: 2,
-                                    ),
-                                  ],
-                                ),
-                                child: const Center(
-                                  child: Icon(
-                                    Icons.shield,
-                                    size: 40,
-                                    color: AppColors.goldLight,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.xl),
-
-                      // Arabic Calligraphy Text
-                      Text(
-                        'رِعَايَةُ الحَجِيجِ وَالمُعْتَمِرِينَ',
-                        style: GoogleFonts.amiri(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.goldLight,
-                        ),
-                      ),
-
-                      // App Name
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Haji',
-                            style: AppTypography.displayLarge.copyWith(
-                              color: AppColors.surfaceWhite,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          Text(
-                            'Care',
-                            style: AppTypography.displayLarge.copyWith(
-                              color: AppColors.goldLight,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      // Divider
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: AppSpacing.sm,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 60,
-                              height: 1,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.transparent,
-                                    AppColors.goldLight.withValues(alpha: 0.6),
-                                    AppColors.goldLight,
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 12),
-                              child: Icon(
-                                Icons.star,
-                                size: 12,
-                                color: AppColors.accentGoldStar,
-                              ),
-                            ),
-                            Container(
-                              width: 60,
-                              height: 1,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    AppColors.goldLight,
-                                    AppColors.goldLight.withValues(alpha: 0.6),
-                                    Colors.transparent,
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // Tagline
-                      Text(
-                        'Sahabat Setia & Amanah di Tanah Suci',
-                        style: AppTypography.titleMedium.copyWith(
-                          color: AppColors.canvasCream,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 40),
-                        child: Text(
-                          'Pendampingan ramah lansia, keselamatan, dan aksesibilitas ibadah',
-                          textAlign: TextAlign.center,
-                          style: AppTypography.caption.copyWith(
-                            color: AppColors.onPrimaryContainer,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                // Icon
+                const Icon(
+                  Icons.shield_rounded,
+                  size: 42,
+                  color: AppColors.goldLight,
                 ),
 
-                // Bottom Loader
-                Padding(
-                  padding: const EdgeInsets.only(
-                    bottom: AppSpacing.xl3,
-                    left: AppSpacing.xl,
-                    right: AppSpacing.xl,
-                  ),
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        width: 220,
-                        child: Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Menyiapkan Layanan',
-                                  style: AppTypography.captionSmall.copyWith(
-                                    color:
-                                        AppColors.goldLight.withValues(alpha: 0.8),
-                                  ),
-                                ),
-                                Text(
-                                  'Harmoni',
-                                  style: AppTypography.bodySmall.copyWith(
-                                    color: AppColors.goldLight,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Container(
-                              height: 6,
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.4),
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.pill),
-                                border: Border.all(
-                                  color: AppColors.goldLight
-                                      .withValues(alpha: 0.25),
-                                ),
-                              ),
-                              child: ClipRRect(
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.pill),
-                                child: const LinearProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    AppColors.goldLight,
-                                  ),
-                                  backgroundColor: Colors.transparent,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.verified_user,
-                            color: AppColors.goldLight,
-                            size: 16,
-                          ),
-                          const SizedBox(width: AppSpacing.sm2),
-                          Text(
-                            'Didukung oleh Inisiatif Pelayanan Jamaah',
-                            style: AppTypography.caption.copyWith(
-                              color: AppColors.canvasCreamSubtle
-                                  .withValues(alpha: 0.8),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                // Small star
+                Positioned(
+                  top: 17,
+                  right: 22,
+                  child: Icon(
+                    Icons.star_rounded,
+                    size: 9,
+                    color: AppColors.accentGoldStar.withValues(alpha: 0.9),
                   ),
                 ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ==============================================================
+  // DIVIDER BUILDER
+  // ==============================================================
+
+  Widget _buildDivider({bool reverse = false}) {
+    return Container(
+      width: 52,
+      height: 1,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: reverse ? Alignment.centerRight : Alignment.centerLeft,
+          end: reverse ? Alignment.centerLeft : Alignment.centerRight,
+          colors: [
+            Colors.transparent,
+            AppColors.goldLight.withValues(alpha: 0.25),
+            AppColors.goldLight.withValues(alpha: 0.8),
+          ],
+        ),
       ),
     );
   }
