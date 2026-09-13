@@ -66,7 +66,8 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
         : Get.put(MapController());
 
     return Scaffold(
-      backgroundColor: AppColors.canvasCream,
+      backgroundColor: AppColors.scaffoldColor(context),
+      extendBody: true,
       body: Stack(
         children: [
           // Map Canvas
@@ -96,6 +97,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
             onNavigate: () {},
             onShareLocation: () {},
             onCall: () {},
+            bottomOffset: 84.0,
           ),
         ],
       ),

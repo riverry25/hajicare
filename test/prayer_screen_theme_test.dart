@@ -78,6 +78,17 @@ void main() {
       await tester.pump();
       expect(find.byType(HajiCareBottomNavBar), findsOneWidget);
       expect(find.byType(PrayerTimesScreen), findsOneWidget);
+
+      final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
+      expect(scaffold.extendBody, isTrue);
+
+      final material = tester.widget<Material>(
+        find.descendant(
+          of: find.byType(HajiCareBottomNavBar),
+          matching: find.byType(Material),
+        ).first,
+      );
+      expect(material.color, equals(Colors.transparent));
     });
   });
 }

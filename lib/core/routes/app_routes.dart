@@ -19,6 +19,8 @@ import '../../features/money/screens/money_recognition_screen.dart';
 import '../../features/communication/screens/communication_screen.dart';
 import '../../features/communication/bindings/communication_binding.dart';
 import '../../features/profile/screens/profile_screen.dart';
+import '../../features/profile/screens/help_center_screen.dart';
+import '../../features/profile/screens/about_screen.dart';
 import '../../features/notification/screens/notification_screen.dart';
 import '../../features/onboarding/bindings/onboarding_binding.dart';
 
@@ -42,6 +44,8 @@ class AppRoutes {
   static const String communication = '/communication';
   static const String profile = '/profile';
   static const String notification = '/notification';
+  static const String helpCenter = '/help';
+  static const String about = '/about';
 
   static List<GetPage> get pages => [
         GetPage(name: splash, page: () => const SplashScreen()),
@@ -110,5 +114,7 @@ class AppRoutes {
         ),
         GetPage(name: profile, page: () => const ProfileScreen()),
         GetPage(name: notification, page: () => const NotificationScreen()),
+        GetPage(name: helpCenter, page: () => const HelpCenterScreen()),
+        GetPage(name: about, page: () => const AboutScreen()),
       ];
 }

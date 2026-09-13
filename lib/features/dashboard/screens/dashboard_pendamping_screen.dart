@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
@@ -33,7 +32,8 @@ class DashboardPendampingScreen extends StatelessWidget {
           : state.jamaahList.first;
 
       return Scaffold(
-        backgroundColor: AppColors.canvasCream,
+        backgroundColor: AppColors.scaffoldColor(context),
+        extendBody: true,
         body: IndexedStack(
           index: dashboardCtrl.currentIndex.value,
           children: [
@@ -57,14 +57,18 @@ class DashboardPendampingScreen extends StatelessWidget {
     JamaahData selectedJamaah,
     DashboardController dashboardCtrl,
   ) {
+    final isDark = AppColors.isDark(context);
+    final scaffoldBg = AppColors.scaffoldColor(context);
+    final headingColor = AppColors.textHeadingColor(context);
+
     return Scaffold(
-      backgroundColor: AppColors.canvasCream,
+      backgroundColor: scaffoldBg,
       appBar: AppBar(
-        backgroundColor: AppColors.canvasCream,
+        backgroundColor: scaffoldBg,
         elevation: 0,
         titleSpacing: 0,
         leading: IconButton(
-          icon: const Icon(Icons.menu, color: AppColors.espressoDark),
+          icon: Icon(Icons.menu, color: headingColor),
           onPressed: () {},
         ),
         title: Row(
@@ -72,8 +76,8 @@ class DashboardPendampingScreen extends StatelessWidget {
             Container(
               width: 28,
               height: 28,
-              decoration: const BoxDecoration(
-                color: AppColors.espressoDark,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkPrimary : AppColors.espressoDark,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -89,7 +93,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                 Text(
                   'HajiCare',
                   style: AppTypography.titleLarge.copyWith(
-                    color: AppColors.espressoDark,
+                    color: headingColor,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -108,9 +112,9 @@ class DashboardPendampingScreen extends StatelessWidget {
             alignment: Alignment.center,
             children: [
               IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.notifications_outlined,
-                  color: AppColors.espressoDark,
+                  color: headingColor,
                 ),
                 onPressed: () =>
                     Get.toNamed(AppRoutes.notification),
@@ -126,7 +130,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                       color: AppColors.sosEmergency,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: AppColors.canvasCream,
+                        color: isDark ? AppColors.darkScaffold : AppColors.canvasCream,
                         width: 2,
                       ),
                     ),
@@ -140,7 +144,7 @@ class DashboardPendampingScreen extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: AppColors.surfaceWhite,
+                color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
                 shape: BoxShape.circle,
                 border: Border.all(color: AppColors.goldLight, width: 2),
               ),
@@ -150,9 +154,11 @@ class DashboardPendampingScreen extends StatelessWidget {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.screenEdgeGutter,
-          vertical: AppSpacing.sm,
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.screenEdgeGutter,
+          AppSpacing.sm,
+          AppSpacing.screenEdgeGutter,
+          100,
         ),
         children: [
           PendampingGreetingHeader(state: state),
@@ -176,7 +182,7 @@ class DashboardPendampingScreen extends StatelessWidget {
           _buildMapCard(context, dashboardCtrl),
           const SizedBox(height: AppSpacing.lg),
           _buildFeatureGrid(context, dashboardCtrl),
-          const SizedBox(height: AppConstants.space3xl),
+          const SizedBox(height: AppSpacing.md),
         ],
       ),
     );

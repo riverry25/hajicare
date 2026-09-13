@@ -1,5 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:get/get.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
@@ -37,6 +41,7 @@ class ProfileScreen extends StatelessWidget {
 
         return Scaffold(
           backgroundColor: scaffoldBg,
+          extendBody: true,
           appBar: AppBar(
             backgroundColor: scaffoldBg,
             elevation: 0,
@@ -47,7 +52,12 @@ class ProfileScreen extends StatelessWidget {
             centerTitle: true,
           ),
           body: ListView(
-            padding: const EdgeInsets.all(AppSpacing.lg),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              100,
+            ),
             children: [
               // ── Profile Header ─────────────────────────────────────────────
               _ProfileHeader(
@@ -135,24 +145,24 @@ class ProfileScreen extends StatelessWidget {
                     cardBg: cardBg,
                     headingColor: headingColor,
                     bodyColor: bodyColor,
-                    onTap: () {},
+                    onTap: () => Get.toNamed(AppRoutes.helpCenter),
                   ),
                   _DividerThin(),
                   _SettingsTile(
                     icon: Icons.info_outline,
                     label: context.tr('aboutApp'),
-                    trailingLabel: '1.0.0',
+                    trailingLabel: AppConstants.appVersion,
                     cardBg: cardBg,
                     headingColor: headingColor,
                     bodyColor: bodyColor,
-                    onTap: () {},
+                    onTap: () => Get.toNamed(AppRoutes.about),
                   ),
                 ],
               ),
 
               const SizedBox(height: AppSpacing.gapSection),
               _LogoutButton(label: context.tr('logout')),
-              const SizedBox(height: AppSpacing.huge),
+              const SizedBox(height: AppSpacing.md),
             ],
           ),
           bottomNavigationBar: showBottomNav
@@ -311,6 +321,11 @@ class _ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Local Rx state for photo URL and upload loading — stored as controller-less Rx
+    // to avoid needing a dedicated controller for a simple upload flow.
+    final photoUrl = RxnString(FirebaseAuth.instance.currentUser?.photoURL);
+    final isUploading = false.obs;
+
     return Container(
       padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
@@ -331,46 +346,88 @@ class _ProfileHeader extends StatelessWidget {
       ),
       child: Column(
         children: [
+          // ── Avatar + edit button ──────────────────────────────────────
           Stack(
             alignment: Alignment.bottomRight,
             children: [
-              Container(
-                width: 84,
-                height: 84,
-                decoration: BoxDecoration(
-                  color: AppColors.isDark(context)
-                      ? AppColors.darkSurfaceContainer
-                      : AppColors.surfaceContainerHigh,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.goldLight, width: 2),
-                ),
-                child: Icon(
-                  Icons.account_circle,
-                  color: AppColors.isDark(context)
-                      ? AppColors.darkPrimary
-                      : AppColors.primaryContainer,
-                  size: 64,
-                ),
-              ),
+              Obx(() {
+                final url = photoUrl.value;
+                final uploading = isUploading.value;
+
+                return Container(
+                  width: 84,
+                  height: 84,
+                  decoration: BoxDecoration(
+                    color: AppColors.isDark(context)
+                        ? AppColors.darkSurfaceContainer
+                        : AppColors.surfaceContainerHigh,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.goldLight, width: 2),
+                  ),
+                  child: ClipOval(
+                    child: uploading
+                        ? Center(
+                            child: SizedBox(
+                              width: 28,
+                              height: 28,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: AppColors.isDark(context)
+                                    ? AppColors.darkPrimary
+                                    : AppColors.espressoDark,
+                              ),
+                            ),
+                          )
+                        : url != null && url.isNotEmpty
+                            ? Image.network(
+                                url,
+                                fit: BoxFit.cover,
+                                width: 84,
+                                height: 84,
+                                errorBuilder: (_, _, _) => _fallbackIcon(context),
+                                loadingBuilder: (ctx, child, progress) {
+                                  if (progress == null) return child;
+                                  return Center(
+                                    child: SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: AppColors.isDark(ctx)
+                                            ? AppColors.darkPrimary
+                                            : AppColors.espressoDark,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              )
+                            : _fallbackIcon(context),
+                  ),
+                );
+              }),
               Semantics(
-                label: 'Ubah foto profil',
+                label: context.tr('editPhoto'),
                 button: true,
                 child: GestureDetector(
-                  onTap: () {},
+                  onTap: () => _showPhotoOptions(context, photoUrl, isUploading),
                   child: Container(
-                    padding: const EdgeInsets.all(5),
+                    padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
                       color: AppColors.isDark(context)
                           ? AppColors.darkPrimary
                           : AppColors.espressoDark,
                       shape: BoxShape.circle,
+                      border: Border.all(
+                        color: cardBg,
+                        width: 2,
+                      ),
                     ),
                     child: Icon(
-                      Icons.edit,
+                      Icons.edit_rounded,
                       color: AppColors.isDark(context)
                           ? AppColors.darkOnPrimary
                           : AppColors.surfaceWhite,
-                      size: 16,
+                      size: 14,
                     ),
                   ),
                 ),
@@ -378,10 +435,14 @@ class _ProfileHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
+
+          // ── Name ─────────────────────────────────────────────────────
           Text(
             _getDisplayName(),
             style: AppTypography.headlineMd.copyWith(color: headingColor),
             textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: AppSpacing.gapTitleSubtitle),
           Text(
@@ -389,6 +450,8 @@ class _ProfileHeader extends StatelessWidget {
             style: AppTypography.bodyMd.copyWith(color: bodyColor),
           ),
           const SizedBox(height: AppSpacing.md),
+
+          // ── Wristband pill ───────────────────────────────────────────
           Container(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.md,
@@ -414,7 +477,231 @@ class _ProfileHeader extends StatelessWidget {
     );
   }
 
-  // ── Firebase dynamic name helpers ──────────────────────────────────
+  Widget _fallbackIcon(BuildContext context) {
+    return Icon(
+      Icons.account_circle,
+      color: AppColors.isDark(context)
+          ? AppColors.darkPrimary
+          : AppColors.primaryContainer,
+      size: 64,
+    );
+  }
+
+  // ── Photo options bottom sheet ────────────────────────────────────────────
+  void _showPhotoOptions(
+    BuildContext context,
+    RxnString photoUrl,
+    RxBool isUploading,
+  ) {
+    final isDark = AppColors.isDark(context);
+    final headingColor = isDark ? AppColors.darkTextHeading : AppColors.textHeading;
+    final cardBgColor = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
+    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
+
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      backgroundColor: cardBgColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xl,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Drag handle
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.outlineVariant,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              Text(
+                context.tr('editPhoto'),
+                style: AppTypography.titleLarge.copyWith(color: headingColor),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              _PhotoOption(
+                icon: Icons.photo_library_outlined,
+                label: context.tr('chooseFromGallery'),
+                bodyColor: bodyColor,
+                headingColor: headingColor,
+                isDark: isDark,
+                onTap: () {
+                  Get.back();
+                  _pickAndUpload(ImageSource.gallery, photoUrl, isUploading, context);
+                },
+              ),
+              _PhotoOption(
+                icon: Icons.camera_alt_outlined,
+                label: context.tr('takePhoto'),
+                bodyColor: bodyColor,
+                headingColor: headingColor,
+                isDark: isDark,
+                onTap: () {
+                  Get.back();
+                  _pickAndUpload(ImageSource.camera, photoUrl, isUploading, context);
+                },
+              ),
+              if (photoUrl.value != null && photoUrl.value!.isNotEmpty)
+                _PhotoOption(
+                  icon: Icons.delete_outline_rounded,
+                  label: context.tr('removePhoto'),
+                  bodyColor: bodyColor,
+                  headingColor: AppColors.statusDanger,
+                  isDark: isDark,
+                  onTap: () {
+                    Get.back();
+                    _removePhoto(photoUrl, context);
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Pick and upload photo ─────────────────────────────────────────────────
+  Future<void> _pickAndUpload(
+    ImageSource source,
+    RxnString photoUrl,
+    RxBool isUploading,
+    BuildContext context,
+  ) async {
+    final successTitle = context.tr('success');
+    final successMsg = context.tr('photoUpdated');
+    final errTitle = context.tr('error');
+    final errMsg = context.tr('photoUploadError');
+
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: source,
+        imageQuality: 70,
+        maxWidth: 512,
+        maxHeight: 512,
+      );
+
+      // User cancelled — do nothing
+      if (picked == null) return;
+
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      isUploading.value = true;
+
+      final file = File(picked.path);
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('profile_photos')
+          .child('${user.uid}.jpg');
+
+      final uploadTask = await storageRef.putFile(
+        file,
+        SettableMetadata(contentType: 'image/jpeg'),
+      );
+
+      final downloadUrl = await uploadTask.ref.getDownloadURL();
+
+      // Update FirebaseAuth profile
+      await user.updatePhotoURL(downloadUrl);
+      await user.reload();
+
+      // Update Firestore if user doc exists
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({'photoURL': downloadUrl});
+      } catch (_) {
+        // Firestore doc may not exist — not a critical error
+      }
+
+      photoUrl.value = downloadUrl;
+
+      Get.snackbar(
+        successTitle,
+        successMsg,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.statusSafe.withValues(alpha: 0.9),
+        colorText: AppColors.surfaceWhite,
+        margin: const EdgeInsets.all(AppSpacing.lg),
+        borderRadius: AppRadius.lg,
+        duration: const Duration(seconds: 3),
+      );
+    } catch (e) {
+      debugPrint('[ProfileHeader] Photo upload error: $e');
+      Get.snackbar(
+        errTitle,
+        errMsg,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.error.withValues(alpha: 0.9),
+        colorText: AppColors.surfaceWhite,
+        margin: const EdgeInsets.all(AppSpacing.lg),
+        borderRadius: AppRadius.lg,
+        duration: const Duration(seconds: 4),
+      );
+    } finally {
+      isUploading.value = false;
+    }
+  }
+
+  // ── Remove photo ──────────────────────────────────────────────────────────
+  Future<void> _removePhoto(RxnString photoUrl, BuildContext context) async {
+    final successTitle = context.tr('success');
+    final successMsg = context.tr('photoRemoved');
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      await user.updatePhotoURL(null);
+      await user.reload();
+
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({'photoURL': FieldValue.delete()});
+      } catch (_) {}
+
+      // Delete from Storage if it exists
+      try {
+        await FirebaseStorage.instance
+            .ref()
+            .child('profile_photos')
+            .child('${user.uid}.jpg')
+            .delete();
+      } catch (_) {}
+
+      photoUrl.value = null;
+
+      Get.snackbar(
+        successTitle,
+        successMsg,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.statusSafe.withValues(alpha: 0.9),
+        colorText: AppColors.surfaceWhite,
+        margin: const EdgeInsets.all(AppSpacing.lg),
+        borderRadius: AppRadius.lg,
+      );
+    } catch (e) {
+      debugPrint('[ProfileHeader] Remove photo error: $e');
+    }
+  }
+
+  // ── Firebase dynamic name helpers ─────────────────────────────────────────
   static String _getDisplayName() {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return 'Pengguna';
@@ -430,6 +717,57 @@ class _ProfileHeader extends StatelessWidget {
     return 'Jamaah';
   }
 }
+
+// ── Photo option tile used inside bottom sheet ──────────────────────────────
+class _PhotoOption extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color headingColor;
+  final Color bodyColor;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _PhotoOption({
+    required this.icon,
+    required this.label,
+    required this.headingColor,
+    required this.bodyColor,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: label,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: AppSizes.touchTargetMin + 4),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.md,
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: headingColor, size: AppSizes.iconMd),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Text(
+                  label,
+                  style: AppTypography.bodyLarge.copyWith(color: headingColor),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 
 class _SettingsGroup extends StatelessWidget {
   final String title;

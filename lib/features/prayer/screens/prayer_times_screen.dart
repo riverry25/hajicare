@@ -23,6 +23,7 @@ class PrayerTimesScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldColor(context),
+      extendBody: true,
       appBar: AppBar(
         backgroundColor: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
         surfaceTintColor: Colors.transparent,
@@ -65,9 +66,11 @@ class PrayerTimesScreen extends StatelessWidget {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.screenEdgeGutter,
-          vertical: AppSpacing.md,
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.screenEdgeGutter,
+          AppSpacing.md,
+          AppSpacing.screenEdgeGutter,
+          100,
         ),
         child: Column(
           children: [

@@ -61,10 +61,6 @@ class OnboardingSlideLanguage extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: AppSpacing.sm),
-
-            const Divider(color: AppColors.surfaceContainer, height: 1),
-
             const SizedBox(height: AppSpacing.lg),
 
             // Section intro header

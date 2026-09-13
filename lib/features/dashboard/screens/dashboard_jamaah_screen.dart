@@ -30,11 +30,12 @@ class DashboardJamaahScreen extends StatelessWidget {
       final jamaah = state.self;
 
       return Scaffold(
-        backgroundColor: AppColors.canvasCream,
+        backgroundColor: AppColors.scaffoldColor(context),
+        extendBody: true,
         body: IndexedStack(
           index: dashboardCtrl.currentIndex.value,
           children: [
-            _buildJamaahHome(state, jamaah, dashboardCtrl),
+            _buildJamaahHome(context, state, jamaah, dashboardCtrl),
             const InteractiveMapScreen(showBottomNav: false),
             const PrayerTimesScreen(showBottomNav: false),
             const ProfileScreen(showBottomNav: false),
@@ -49,18 +50,23 @@ class DashboardJamaahScreen extends StatelessWidget {
   }
 
   Widget _buildJamaahHome(
+    BuildContext context,
     HajiCareController state,
     JamaahData jamaah,
     DashboardController dashboardCtrl,
   ) {
+    final isDark = AppColors.isDark(context);
+    final scaffoldBg = AppColors.scaffoldColor(context);
+    final headingColor = AppColors.textHeadingColor(context);
+
     return Scaffold(
-      backgroundColor: AppColors.canvasCream,
+      backgroundColor: scaffoldBg,
       appBar: AppBar(
-        backgroundColor: AppColors.canvasCream,
+        backgroundColor: scaffoldBg,
         elevation: 0,
         titleSpacing: 0,
         leading: IconButton(
-          icon: const Icon(Icons.menu, color: AppColors.espressoDark),
+          icon: Icon(Icons.menu, color: headingColor),
           onPressed: () {},
         ),
         title: Row(
@@ -82,7 +88,7 @@ class DashboardJamaahScreen extends StatelessWidget {
             Text(
               'HajiCare',
               style: AppTypography.titleLarge.copyWith(
-                color: AppColors.espressoDark,
+                color: headingColor,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -93,7 +99,7 @@ class DashboardJamaahScreen extends StatelessWidget {
             alignment: Alignment.center,
             children: [
               IconButton(
-                icon: const Icon(Icons.notifications_outlined, color: AppColors.espressoDark),
+                icon: Icon(Icons.notifications_outlined, color: headingColor),
                 onPressed: () => Get.toNamed(AppRoutes.notification),
               ),
               if (jamaah.separatedMode)
@@ -106,7 +112,10 @@ class DashboardJamaahScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: AppColors.sosEmergency,
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.canvasCream, width: 2),
+                      border: Border.all(
+                        color: isDark ? AppColors.darkScaffold : AppColors.canvasCream,
+                        width: 2,
+                      ),
                     ),
                   ),
                 ),
@@ -127,9 +136,11 @@ class DashboardJamaahScreen extends StatelessWidget {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.screenEdgeGutter,
-          vertical: AppSpacing.sm,
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.screenEdgeGutter,
+          AppSpacing.sm,
+          AppSpacing.screenEdgeGutter,
+          100,
         ),
         children: [
           if (jamaah.separatedMode) _buildSeparatedBanner(),

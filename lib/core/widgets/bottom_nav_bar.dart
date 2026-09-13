@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
+import '../locales/app_localizations.dart';
 import '../routes/app_routes.dart';
 import '../state/hajicare_controller.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
-import '../locales/app_localizations.dart';
 
 class HajiCareBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -26,24 +27,30 @@ class HajiCareBottomNavBar extends StatelessWidget {
       return;
     }
 
-    // Fallback if rendered outside of an IndexedStack shell
+    // Fallback when used outside an IndexedStack shell.
     final hajicare = Get.find<HajiCareController>();
-    String route;
+
+    final String route;
+
     switch (index) {
       case 0:
         route = hajicare.role == UserRole.jamaah
             ? AppRoutes.dashboardJamaah
             : AppRoutes.dashboardPendamping;
         break;
+
       case 1:
         route = AppRoutes.interactiveMap;
         break;
+
       case 2:
         route = AppRoutes.prayerTimes;
         break;
+
       case 3:
         route = AppRoutes.profile;
         break;
+
       default:
         return;
     }
@@ -53,76 +60,177 @@ class HajiCareBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surfaceWhite,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.espressoDark.withValues(alpha: 0.08),
-            blurRadius: 24,
-            offset: const Offset(0, -4),
-          ),
-        ],
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(AppRadius.lg),
-        ),
-      ),
+    final isDark = AppColors.isDark(context);
+
+    return Material(
+      color: Colors.transparent,
       child: SafeArea(
+        top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm2,
-            vertical: AppSpacing.sm2,
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.xs,
+            AppSpacing.md,
+            AppSpacing.sm,
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(context, 0, Icons.home_rounded, context.tr('navHome')),
-              _buildNavItem(context, 1, Icons.near_me_rounded, context.tr('navMap')),
-              _buildNavItem(context, 2, Icons.schedule_rounded, context.tr('navPrayer')),
-              _buildNavItem(context, 3, Icons.person_rounded, context.tr('navProfile')),
-            ],
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              // Surface navbar card.
+              // Everything outside this card is 100% transparent,
+              // so the underlying page background flows uninterrupted.
+              color: isDark
+                  ? AppColors.darkSurface
+                  : AppColors.surfaceWhite,
+              borderRadius: BorderRadius.circular(AppRadius.xl),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : AppColors.espressoDark.withValues(alpha: 0.06),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.08),
+                  blurRadius: 20,
+                  spreadRadius: 0,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.xs,
+                vertical: AppSpacing.xs,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildNavItem(
+                      context: context,
+                      index: 0,
+                      icon: Icons.home_rounded,
+                      label: context.tr('navHome'),
+                    ),
+                  ),
+                  Expanded(
+                    child: _buildNavItem(
+                      context: context,
+                      index: 1,
+                      icon: Icons.near_me_rounded,
+                      label: context.tr('navMap'),
+                    ),
+                  ),
+                  Expanded(
+                    child: _buildNavItem(
+                      context: context,
+                      index: 2,
+                      icon: Icons.schedule_rounded,
+                      label: context.tr('navPrayer'),
+                    ),
+                  ),
+                  Expanded(
+                    child: _buildNavItem(
+                      context: context,
+                      index: 3,
+                      icon: Icons.person_rounded,
+                      label: context.tr('navProfile'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildNavItem(
-    BuildContext context,
-    int index,
-    IconData icon,
-    String label,
-  ) {
+  Widget _buildNavItem({
+    required BuildContext context,
+    required int index,
+    required IconData icon,
+    required String label,
+  }) {
     final isSelected = currentIndex == index;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return InkWell(
-      onTap: () => _handleNavigation(context, index),
-      borderRadius: BorderRadius.circular(AppRadius.pill),
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm2,
-        ),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.canvasCream : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 24,
-              color: isSelected ? AppColors.espressoDark : AppColors.textBody,
+    final selectedColor = isDark
+        ? Theme.of(context).colorScheme.primary
+        : AppColors.espressoDark;
+
+    final unselectedColor = isDark
+        ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.62)
+        : AppColors.textBody.withValues(alpha: 0.72);
+
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: label,
+      child: Tooltip(
+        message: label,
+        child: InkWell(
+          onTap: () => _handleNavigation(context, index),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            constraints: const BoxConstraints(minHeight: 52),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.xs,
+              vertical: AppSpacing.xs,
             ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: AppTypography.captionSmall.copyWith(
-                color: isSelected ? AppColors.espressoDark : AppColors.textBody,
-              ),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? (isDark
+                        ? selectedColor.withValues(alpha: 0.14)
+                        : AppColors.canvasCream)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
             ),
-          ],
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOutCubic,
+                  width: isSelected ? 42 : 32,
+                  height: 30,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? selectedColor.withValues(alpha: isDark ? 0.14 : 0.10)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: Icon(
+                    icon,
+                    size: isSelected ? 23 : 22,
+                    color: isSelected ? selectedColor : unselectedColor,
+                  ),
+                ),
+                const SizedBox(height: 2),
+
+                // Flexible prevents long translated labels from
+                // causing overflow when text scaling is increased.
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: AppTypography.captionSmall.copyWith(
+                      color: isSelected ? selectedColor : unselectedColor,
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      height: 1.15,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

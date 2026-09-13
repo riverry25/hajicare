@@ -13,12 +13,15 @@ class MapBottomSheet extends StatelessWidget {
   final VoidCallback? onShareLocation;
   final VoidCallback? onCall;
 
+  final double bottomOffset;
+
   const MapBottomSheet({
     super.key,
     required this.state,
     this.onNavigate,
     this.onShareLocation,
     this.onCall,
+    this.bottomOffset = 0.0,
   });
 
   @override
@@ -28,7 +31,7 @@ class MapBottomSheet extends StatelessWidget {
     return Positioned(
       left: 0,
       right: 0,
-      bottom: 0,
+      bottom: bottomOffset,
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surfaceWhite,

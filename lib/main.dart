@@ -43,18 +43,28 @@ class HajiCareApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final settings = Get.find<AppSettingsController>();
 
-    return Obx(
-      () => GetMaterialApp(
+    // ── Reactive text scale wrapper ─────────────────────────────────────────
+    // Reading rxTextScale.value directly inside Obx ensures any change to the
+    // text scale Rx immediately rebuilds this widget, which re-injects the
+    // updated MediaQuery *above* the entire GetMaterialApp tree.  This is the
+    // correct way to drive global text scaling: the MediaQuery ancestor must
+    // live outside GetMaterialApp so the whole navigator/route tree inherits it.
+    return Obx(() {
+      final textScaleFactor = settings.rxTextScale.value.factor;
+      final themeMode = settings.rxThemeMode.value;
+      final locale = settings.rxLocale.value;
+
+      return GetMaterialApp(
         title: 'HajiCare',
         debugShowCheckedModeBanner: false,
 
         // Theming
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
-        themeMode: settings.currentThemeMode,
+        themeMode: themeMode,
 
         // Localization
-        locale: settings.currentLocale,
+        locale: locale,
         fallbackLocale: AppTranslations.fallbackLocale,
         translations: AppTranslations(),
         supportedLocales: AppTranslations.supportedLocales,
@@ -80,17 +90,17 @@ class HajiCareApp extends StatelessWidget {
         initialRoute: AppRoutes.splash,
         getPages: AppRoutes.pages,
 
-        // Global text scale clamping for accessibility
+        // Apply dynamic text scaling to the entire widget tree
         builder: (context, child) {
-          final factor = settings.textScaleFactor;
+          final mediaQuery = MediaQuery.of(context);
           return MediaQuery(
-            data: MediaQuery.of(context).copyWith(
-              textScaler: TextScaler.linear(factor),
+            data: mediaQuery.copyWith(
+              textScaler: TextScaler.linear(textScaleFactor),
             ),
             child: child ?? const SizedBox.shrink(),
           );
         },
-      ),
-    );
+      );
+    });
   }
 }

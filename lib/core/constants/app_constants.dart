@@ -14,7 +14,7 @@ class AppConstants {
   static const double spaceXl = AppSpacing.xl2;
   static const double space2xl = AppSpacing.xl3;
   static const double space3xl = AppSpacing.xl4;
-  
+
   static const double screenEdgeGutter = AppSpacing.screenEdgeGutter;
   static const double cardPadding = AppSpacing.cardPadding;
 
@@ -29,5 +29,14 @@ class AppConstants {
   static const double radiusCard = AppRadius.lg; // Standard card radius
   static const double radiusSheet = AppRadius.xl;
   static const double radiusPill = AppRadius.pill;
-}
 
+  // ── App Version ────────────────────────────────────────────────────────────
+  // Update this when pubspec.yaml version changes.
+  static const String appVersion = '1.0.0';
+
+  // ── Support Contact Placeholders ───────────────────────────────────────────
+
+  static const String supportEmail = 'support@hajicare.id';
+  static const String supportWhatsApp = '+62000000000';
+  static const String supportWhatsAppUrl = 'https://wa.me/62000000000';
+}
