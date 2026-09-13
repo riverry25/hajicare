@@ -167,15 +167,16 @@ const Map<String, String> enTranslations = {
   'apakahYakinKeluar': 'Are you sure you want to sign out?',
   'version': 'Version 1.0.0',
 
-  // Profile Photo
-  'editPhoto': 'Edit Profile Photo',
-  'chooseFromGallery': 'Choose from Gallery',
-  'takePhoto': 'Take Photo',
-  'removePhoto': 'Remove Photo',
-  'uploadingPhoto': 'Uploading photo...',
-  'photoUpdated': 'Profile photo updated successfully',
-  'photoUploadError': 'Failed to upload photo. Please try again.',
-  'photoRemoved': 'Profile photo removed',
+  // Profile — Edit Name
+  'editName': 'Edit Name',
+  'editNameTitle': 'Edit Display Name',
+  'name': 'Name',
+  'nameRequired': 'Name is required',
+  'nameTooLong': 'Name cannot exceed 50 characters',
+  'nameUpdated': 'Name updated successfully',
+  'updateNameError': 'Failed to update name. Please try again.',
+  'jamaah': 'Pilgrim',
+  'preferenceSettings': 'Preferences',
 
   // Help Center
   'helpCenterTitle': 'Help Centre',

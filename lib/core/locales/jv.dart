@@ -167,15 +167,16 @@ const Map<String, String> jvTranslations = {
   'apakahYakinKeluar': 'Punapa yakin badhe medal saking akun?',
   'version': 'Versi 1.0.0',
 
-  // Profile Photo
-  'editPhoto': 'Ewah Gambar Profil',
-  'chooseFromGallery': 'Pilih saking Galeri',
-  'takePhoto': 'Jepret Gambar',
-  'removePhoto': 'Busek Gambar',
-  'uploadingPhoto': 'Ngunggah gambar...',
-  'photoUpdated': 'Gambar profil kasil diperbarui',
-  'photoUploadError': 'Gagal ngunggah gambar. Cobi malih.',
-  'photoRemoved': 'Gambar profil kabusek',
+  // Profil — Ewah Nami
+  'editName': 'Ewah Nami',
+  'editNameTitle': 'Ewah Nami Pangangge',
+  'name': 'Nami',
+  'nameRequired': 'Nami boten kenging kosong',
+  'nameTooLong': 'Nami maksimal 50 karakter',
+  'nameUpdated': 'Nami kasil diperbarui',
+  'updateNameError': 'Gagal nganyaraken nami. Cobi malih.',
+  'jamaah': 'Jamaah',
+  'preferenceSettings': 'Pilihan',
 
   // Help Center
   'helpCenterTitle': 'Pusat Pitulungan',

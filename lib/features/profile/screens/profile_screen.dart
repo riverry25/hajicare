@@ -1,10 +1,6 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:get/get.dart';
+import '../controllers/profile_controller.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
@@ -14,6 +10,7 @@ import '../../../core/theme/app_sizes.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
 import '../../../core/state/app_settings_controller.dart';
+import '../../../core/state/app_startup_controller.dart';
 import '../../../core/locales/app_localizations.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -23,11 +20,12 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settings = Get.find<AppSettingsController>();
+    final profileCtrl = Get.put(ProfileController());
 
     return Obx(() {
-      // Accessing currentTextScale inside Obx ensures the widget rebuilds
-      // immediately when text scale changes — no language toggle needed.
-      final _ = settings.currentTextScale;
+      // Observe settings to trigger rebuild on change
+      settings.currentTextScale;
+      settings.currentLocale;
       {
         final isDark = AppColors.isDark(context);
         final scaffoldBg = isDark
@@ -59,22 +57,21 @@ class ProfileScreen extends StatelessWidget {
               100,
             ),
             children: [
-              // ── Profile Header ─────────────────────────────────────────────
               _ProfileHeader(
+                controller: profileCtrl,
                 cardBg: cardBg,
                 headingColor: headingColor,
                 bodyColor: bodyColor,
+                isDark: isDark,
               ),
               const SizedBox(height: AppSpacing.gapSection),
-
-              // ── Data & Sinkronisasi ────────────────────────────────────────
               _SettingsGroup(
                 title: context.tr('accountData'),
                 titleColor: bodyColor,
                 cardBg: cardBg,
                 children: [
                   _SettingsTile(
-                    icon: Icons.medical_information,
+                    icon: Icons.medical_information_outlined,
                     label: context.tr('medicalData'),
                     cardBg: cardBg,
                     headingColor: headingColor,
@@ -83,7 +80,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   _DividerThin(),
                   _SettingsTile(
-                    icon: Icons.link,
+                    icon: Icons.link_rounded,
                     label: context.tr('manageCompanion'),
                     cardBg: cardBg,
                     headingColor: headingColor,
@@ -93,15 +90,13 @@ class ProfileScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AppSpacing.gapCards),
-
-              // ── Aksesibilitas ──────────────────────────────────────────────
               _SettingsGroup(
                 title: context.tr('accessibilitySettings'),
                 titleColor: bodyColor,
                 cardBg: cardBg,
                 children: [
                   _SettingsTile(
-                    icon: Icons.text_increase,
+                    icon: Icons.text_increase_rounded,
                     label: context.tr('textSize'),
                     trailingLabel: settings.currentTextScale.label,
                     cardBg: cardBg,
@@ -112,15 +107,13 @@ class ProfileScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AppSpacing.gapCards),
-
-              // ── Lainnya & Preferensi ───────────────────────────────────────
               _SettingsGroup(
-                title: context.tr('otherSettings'),
+                title: context.tr('preferenceSettings'),
                 titleColor: bodyColor,
                 cardBg: cardBg,
                 children: [
                   _SettingsTile(
-                    icon: Icons.language,
+                    icon: Icons.language_rounded,
                     label: context.tr('language'),
                     trailingLabel: settings.localeName,
                     cardBg: cardBg,
@@ -130,7 +123,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   _DividerThin(),
                   _SettingsTile(
-                    icon: Icons.contrast,
+                    icon: Icons.contrast_rounded,
                     label: context.tr('theme'),
                     trailingLabel: settings.themeModeName,
                     cardBg: cardBg,
@@ -138,9 +131,16 @@ class ProfileScreen extends StatelessWidget {
                     bodyColor: bodyColor,
                     onTap: () => _showThemePicker(context, settings),
                   ),
-                  _DividerThin(),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.gapCards),
+              _SettingsGroup(
+                title: context.tr('otherSettings'),
+                titleColor: bodyColor,
+                cardBg: cardBg,
+                children: [
                   _SettingsTile(
-                    icon: Icons.help_outline,
+                    icon: Icons.help_outline_rounded,
                     label: context.tr('helpCenter'),
                     cardBg: cardBg,
                     headingColor: headingColor,
@@ -149,7 +149,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   _DividerThin(),
                   _SettingsTile(
-                    icon: Icons.info_outline,
+                    icon: Icons.info_outline_rounded,
                     label: context.tr('aboutApp'),
                     trailingLabel: AppConstants.appVersion,
                     cardBg: cardBg,
@@ -159,7 +159,6 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ],
               ),
-
               const SizedBox(height: AppSpacing.gapSection),
               _LogoutButton(label: context.tr('logout')),
               const SizedBox(height: AppSpacing.md),
@@ -170,10 +169,9 @@ class ProfileScreen extends StatelessWidget {
               : null,
         );
       }
-    }); // end Obx
+    });
   }
 
-  // ── Language Picker Bottom Sheet ──────────────────────────────────────────
   void _showLanguagePicker(
     BuildContext context,
     AppSettingsController settings,
@@ -202,12 +200,15 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ── Theme Picker Bottom Sheet ─────────────────────────────────────────────
   void _showThemePicker(BuildContext context, AppSettingsController settings) {
     final options = [
-      (ThemeMode.system, context.tr('themeSystem'), Icons.brightness_auto),
-      (ThemeMode.light, context.tr('themeLight'), Icons.light_mode),
-      (ThemeMode.dark, context.tr('themeDark'), Icons.dark_mode),
+      (
+        ThemeMode.system,
+        context.tr('themeSystem'),
+        Icons.brightness_auto_rounded,
+      ),
+      (ThemeMode.light, context.tr('themeLight'), Icons.light_mode_rounded),
+      (ThemeMode.dark, context.tr('themeDark'), Icons.dark_mode_rounded),
     ];
     _showPickerSheet(
       context: context,
@@ -227,7 +228,6 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ── Text Size Picker Bottom Sheet ─────────────────────────────────────────
   void _showTextSizePicker(
     BuildContext context,
     AppSettingsController settings,
@@ -250,7 +250,6 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ── Generic Picker Bottom Sheet ───────────────────────────────────────────
   void _showPickerSheet({
     required BuildContext context,
     required String title,
@@ -274,7 +273,6 @@ class ProfileScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Handle grip
               Center(
                 child: Container(
                   width: 40,
@@ -304,35 +302,35 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// Sub-widgets
-// ────────────────────────────────────────────────────────────────────────────
+// ── Profile Header ────────────────────────────────────────────────────────────
 
 class _ProfileHeader extends StatelessWidget {
+  final ProfileController controller;
   final Color cardBg;
   final Color headingColor;
   final Color bodyColor;
+  final bool isDark;
 
   const _ProfileHeader({
+    required this.controller,
     required this.cardBg,
     required this.headingColor,
     required this.bodyColor,
+    required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Local Rx state for photo URL and upload loading — stored as controller-less Rx
-    // to avoid needing a dedicated controller for a simple upload flow.
-    final photoUrl = RxnString(FirebaseAuth.instance.currentUser?.photoURL);
-    final isUploading = false.obs;
-
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.xl),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xl,
+        vertical: AppSpacing.xxl,
+      ),
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(AppConstants.radiusCard),
         border: Border.all(
-          color: AppColors.isDark(context)
+          color: isDark
               ? AppColors.darkOutlineVariant
               : AppColors.canvasCreamSubtle,
         ),
@@ -345,422 +343,354 @@ class _ProfileHeader extends StatelessWidget {
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // ── Avatar + edit button ──────────────────────────────────────
-          Stack(
-            alignment: Alignment.bottomRight,
-            children: [
-              Obx(() {
-                final url = photoUrl.value;
-                final uploading = isUploading.value;
-
-                return Container(
-                  width: 84,
-                  height: 84,
-                  decoration: BoxDecoration(
-                    color: AppColors.isDark(context)
-                        ? AppColors.darkSurfaceContainer
-                        : AppColors.surfaceContainerHigh,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.goldLight, width: 2),
-                  ),
-                  child: ClipOval(
-                    child: uploading
-                        ? Center(
-                            child: SizedBox(
-                              width: 28,
-                              height: 28,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.5,
-                                color: AppColors.isDark(context)
-                                    ? AppColors.darkPrimary
-                                    : AppColors.espressoDark,
-                              ),
-                            ),
-                          )
-                        : url != null && url.isNotEmpty
-                            ? Image.network(
-                                url,
-                                fit: BoxFit.cover,
-                                width: 84,
-                                height: 84,
-                                errorBuilder: (_, _, _) => _fallbackIcon(context),
-                                loadingBuilder: (ctx, child, progress) {
-                                  if (progress == null) return child;
-                                  return Center(
-                                    child: SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: AppColors.isDark(ctx)
-                                            ? AppColors.darkPrimary
-                                            : AppColors.espressoDark,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              )
-                            : _fallbackIcon(context),
-                  ),
-                );
-              }),
-              Semantics(
-                label: context.tr('editPhoto'),
-                button: true,
-                child: GestureDetector(
-                  onTap: () => _showPhotoOptions(context, photoUrl, isUploading),
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: AppColors.isDark(context)
-                          ? AppColors.darkPrimary
-                          : AppColors.espressoDark,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: cardBg,
-                        width: 2,
-                      ),
-                    ),
-                    child: Icon(
-                      Icons.edit_rounded,
-                      color: AppColors.isDark(context)
-                          ? AppColors.darkOnPrimary
-                          : AppColors.surfaceWhite,
-                      size: 14,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+          Obx(
+            () =>
+                _InitialsAvatar(initials: controller.initials, isDark: isDark),
           ),
           const SizedBox(height: AppSpacing.md),
-
-          // ── Name ─────────────────────────────────────────────────────
-          Text(
-            _getDisplayName(),
-            style: AppTypography.headlineMd.copyWith(color: headingColor),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+          Obx(
+            () => Text(
+              controller.displayName.value,
+              style: AppTypography.headlineMd.copyWith(color: headingColor),
+              textAlign: TextAlign.center,
+              softWrap: true,
+            ),
           ),
           const SizedBox(height: AppSpacing.gapTitleSubtitle),
-          Text(
-            _getDisplayRole(),
-            style: AppTypography.bodyMd.copyWith(color: bodyColor),
-          ),
-          const SizedBox(height: AppSpacing.md),
-
-          // ── Wristband pill ───────────────────────────────────────────
+          if (controller.safeEmail.isNotEmpty)
+            Text(
+              controller.safeEmail,
+              style: AppTypography.bodySmall.copyWith(color: bodyColor),
+              textAlign: TextAlign.center,
+              softWrap: true,
+            ),
+          const SizedBox(height: AppSpacing.sm),
           Container(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.md,
-              vertical: AppSpacing.sm,
+              vertical: AppSpacing.xs,
             ),
             decoration: BoxDecoration(
-              color: AppColors.isDark(context)
-                  ? AppColors.darkSurfaceContainer.withValues(alpha: 0.8)
-                  : AppColors.secondaryContainer.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(AppConstants.radiusPill),
+              color: isDark
+                  ? AppColors.darkPrimaryContainer.withValues(alpha: 0.5)
+                  : AppColors.secondaryContainer.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
             ),
             child: Text(
-              context.tr('connectedWristband'),
+              context.tr('jamaah'),
               style: AppTypography.captionBold.copyWith(
-                color: AppColors.isDark(context)
-                    ? AppColors.darkTextHeading
-                    : AppColors.espressoDark,
+                color: isDark ? AppColors.darkPrimary : AppColors.espressoDark,
+                letterSpacing: 0.3,
               ),
             ),
           ),
+          const SizedBox(height: AppSpacing.md),
+          _EditNameButton(controller: controller, isDark: isDark),
         ],
       ),
     );
   }
+}
 
-  Widget _fallbackIcon(BuildContext context) {
-    return Icon(
-      Icons.account_circle,
-      color: AppColors.isDark(context)
-          ? AppColors.darkPrimary
-          : AppColors.primaryContainer,
-      size: 64,
+// ── Initials Avatar ───────────────────────────────────────────────────────────
+
+class _InitialsAvatar extends StatelessWidget {
+  final String initials;
+  final bool isDark;
+
+  const _InitialsAvatar({required this.initials, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 80,
+      height: 80,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: isDark
+              ? [
+                  AppColors.darkPrimaryContainer,
+                  AppColors.darkSurfaceContainerHigh,
+                ]
+              : [AppColors.espressoDark, AppColors.primaryContainer],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(
+          color: isDark ? AppColors.darkPrimary : AppColors.goldLight,
+          width: 2.5,
+        ),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        initials,
+        style: AppTypography.displayMedium.copyWith(
+          color: isDark ? AppColors.darkTextHeading : AppColors.surfaceWhite,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1,
+        ),
+      ),
+    );
+  }
+}
+
+// ── Edit Name Button ──────────────────────────────────────────────────────────
+
+class _EditNameButton extends StatelessWidget {
+  final ProfileController controller;
+  final bool isDark;
+
+  const _EditNameButton({required this.controller, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final accentColor = isDark ? AppColors.darkPrimary : AppColors.espressoDark;
+    return Semantics(
+      button: true,
+      label: context.tr('editName'),
+      child: InkWell(
+        onTap: () => _showEditNameSheet(context),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.edit_rounded, size: 14, color: accentColor),
+              const SizedBox(width: AppSpacing.xs),
+              Text(
+                context.tr('editName'),
+                style: AppTypography.bodySmall.copyWith(
+                  color: accentColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
-  // ── Photo options bottom sheet ────────────────────────────────────────────
-  void _showPhotoOptions(
-    BuildContext context,
-    RxnString photoUrl,
-    RxBool isUploading,
-  ) {
-    final isDark = AppColors.isDark(context);
-    final headingColor = isDark ? AppColors.darkTextHeading : AppColors.textHeading;
-    final cardBgColor = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
+  void _showEditNameSheet(BuildContext context) {
+    final isDarkSheet = AppColors.isDark(context);
+    final sheetBg = isDarkSheet
+        ? AppColors.darkSurface
+        : AppColors.surfaceWhite;
+    final headingClr = isDarkSheet
+        ? AppColors.darkTextHeading
+        : AppColors.espressoDark;
+    final bodyClr = isDarkSheet ? AppColors.darkTextBody : AppColors.textBody;
+    final borderClr = isDarkSheet
+        ? AppColors.darkOutlineVariant
+        : AppColors.outlineVariant;
+    final nameCtrl = TextEditingController(text: controller.displayName.value);
+    final inputError = RxnString();
 
     showModalBottomSheet(
       context: context,
       useRootNavigator: true,
-      backgroundColor: cardBgColor,
+      isScrollControlled: true,
+      backgroundColor: sheetBg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
-      builder: (_) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xl,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Drag handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.outlineVariant,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
+      builder: (sheetCtx) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(sheetCtx).viewInsets.bottom,
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.xl,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: borderClr,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              Text(
-                context.tr('editPhoto'),
-                style: AppTypography.titleLarge.copyWith(color: headingColor),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              _PhotoOption(
-                icon: Icons.photo_library_outlined,
-                label: context.tr('chooseFromGallery'),
-                bodyColor: bodyColor,
-                headingColor: headingColor,
-                isDark: isDark,
-                onTap: () {
-                  Get.back();
-                  _pickAndUpload(ImageSource.gallery, photoUrl, isUploading, context);
-                },
-              ),
-              _PhotoOption(
-                icon: Icons.camera_alt_outlined,
-                label: context.tr('takePhoto'),
-                bodyColor: bodyColor,
-                headingColor: headingColor,
-                isDark: isDark,
-                onTap: () {
-                  Get.back();
-                  _pickAndUpload(ImageSource.camera, photoUrl, isUploading, context);
-                },
-              ),
-              if (photoUrl.value != null && photoUrl.value!.isNotEmpty)
-                _PhotoOption(
-                  icon: Icons.delete_outline_rounded,
-                  label: context.tr('removePhoto'),
-                  bodyColor: bodyColor,
-                  headingColor: AppColors.statusDanger,
-                  isDark: isDark,
-                  onTap: () {
-                    Get.back();
-                    _removePhoto(photoUrl, context);
-                  },
+                const SizedBox(height: AppSpacing.lg),
+                Text(
+                  sheetCtx.tr('editNameTitle'),
+                  style: AppTypography.titleLarge.copyWith(color: headingClr),
                 ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ── Pick and upload photo ─────────────────────────────────────────────────
-  Future<void> _pickAndUpload(
-    ImageSource source,
-    RxnString photoUrl,
-    RxBool isUploading,
-    BuildContext context,
-  ) async {
-    final successTitle = context.tr('success');
-    final successMsg = context.tr('photoUpdated');
-    final errTitle = context.tr('error');
-    final errMsg = context.tr('photoUploadError');
-
-    try {
-      final picker = ImagePicker();
-      final picked = await picker.pickImage(
-        source: source,
-        imageQuality: 70,
-        maxWidth: 512,
-        maxHeight: 512,
-      );
-
-      // User cancelled — do nothing
-      if (picked == null) return;
-
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
-
-      isUploading.value = true;
-
-      final file = File(picked.path);
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('profile_photos')
-          .child('${user.uid}.jpg');
-
-      final uploadTask = await storageRef.putFile(
-        file,
-        SettableMetadata(contentType: 'image/jpeg'),
-      );
-
-      final downloadUrl = await uploadTask.ref.getDownloadURL();
-
-      // Update FirebaseAuth profile
-      await user.updatePhotoURL(downloadUrl);
-      await user.reload();
-
-      // Update Firestore if user doc exists
-      try {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .update({'photoURL': downloadUrl});
-      } catch (_) {
-        // Firestore doc may not exist — not a critical error
-      }
-
-      photoUrl.value = downloadUrl;
-
-      Get.snackbar(
-        successTitle,
-        successMsg,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.statusSafe.withValues(alpha: 0.9),
-        colorText: AppColors.surfaceWhite,
-        margin: const EdgeInsets.all(AppSpacing.lg),
-        borderRadius: AppRadius.lg,
-        duration: const Duration(seconds: 3),
-      );
-    } catch (e) {
-      debugPrint('[ProfileHeader] Photo upload error: $e');
-      Get.snackbar(
-        errTitle,
-        errMsg,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.error.withValues(alpha: 0.9),
-        colorText: AppColors.surfaceWhite,
-        margin: const EdgeInsets.all(AppSpacing.lg),
-        borderRadius: AppRadius.lg,
-        duration: const Duration(seconds: 4),
-      );
-    } finally {
-      isUploading.value = false;
-    }
-  }
-
-  // ── Remove photo ──────────────────────────────────────────────────────────
-  Future<void> _removePhoto(RxnString photoUrl, BuildContext context) async {
-    final successTitle = context.tr('success');
-    final successMsg = context.tr('photoRemoved');
-
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
-
-      await user.updatePhotoURL(null);
-      await user.reload();
-
-      try {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .update({'photoURL': FieldValue.delete()});
-      } catch (_) {}
-
-      // Delete from Storage if it exists
-      try {
-        await FirebaseStorage.instance
-            .ref()
-            .child('profile_photos')
-            .child('${user.uid}.jpg')
-            .delete();
-      } catch (_) {}
-
-      photoUrl.value = null;
-
-      Get.snackbar(
-        successTitle,
-        successMsg,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.statusSafe.withValues(alpha: 0.9),
-        colorText: AppColors.surfaceWhite,
-        margin: const EdgeInsets.all(AppSpacing.lg),
-        borderRadius: AppRadius.lg,
-      );
-    } catch (e) {
-      debugPrint('[ProfileHeader] Remove photo error: $e');
-    }
-  }
-
-  // ── Firebase dynamic name helpers ─────────────────────────────────────────
-  static String _getDisplayName() {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return 'Pengguna';
-    final name = user.displayName;
-    if (name != null && name.isNotEmpty) return name;
-    final email = user.email;
-    if (email != null && email.isNotEmpty) return email.split('@').first;
-    return 'Pengguna';
-  }
-
-  static String _getDisplayRole() {
-    // Placeholder — extend when role is stored in Firestore/Claims.
-    return 'Jamaah';
-  }
-}
-
-// ── Photo option tile used inside bottom sheet ──────────────────────────────
-class _PhotoOption extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color headingColor;
-  final Color bodyColor;
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _PhotoOption({
-    required this.icon,
-    required this.label,
-    required this.headingColor,
-    required this.bodyColor,
-    required this.isDark,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: label,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: Container(
-          constraints: const BoxConstraints(minHeight: AppSizes.touchTargetMin + 4),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.md,
-          ),
-          child: Row(
-            children: [
-              Icon(icon, color: headingColor, size: AppSizes.iconMd),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Text(
-                  label,
-                  style: AppTypography.bodyLarge.copyWith(color: headingColor),
+                const SizedBox(height: AppSpacing.lg),
+                Text(
+                  sheetCtx.tr('name'),
+                  style: AppTypography.bodySmall.copyWith(
+                    color: bodyClr,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: AppSpacing.xs),
+                Obx(
+                  () => TextField(
+                    controller: nameCtrl,
+                    autofocus: true,
+                    keyboardType: TextInputType.name,
+                    textCapitalization: TextCapitalization.words,
+                    maxLength: 50,
+                    style: AppTypography.bodyLarge.copyWith(color: headingClr),
+                    decoration: InputDecoration(
+                      counterText: '',
+                      hintText: sheetCtx.tr('name'),
+                      hintStyle: AppTypography.bodyLarge.copyWith(
+                        color: bodyClr.withValues(alpha: 0.5),
+                      ),
+                      errorText: inputError.value,
+                      filled: true,
+                      fillColor: isDarkSheet
+                          ? AppColors.darkSurfaceContainer
+                          : AppColors.canvasCream,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg,
+                        vertical: AppSpacing.md,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        borderSide: BorderSide(color: borderClr),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        borderSide: BorderSide(color: borderClr),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        borderSide: BorderSide(
+                          color: isDarkSheet
+                              ? AppColors.darkPrimary
+                              : AppColors.espressoDark,
+                          width: 1.5,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        borderSide: const BorderSide(color: AppColors.error),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        borderSide: const BorderSide(
+                          color: AppColors.error,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                Obx(() {
+                  final saving = controller.isSavingName.value;
+                  return ElevatedButton(
+                    onPressed: saving
+                        ? null
+                        : () async {
+                            final input = nameCtrl.text.trim();
+                            if (input.isEmpty) {
+                              inputError.value = sheetCtx.tr('nameRequired');
+                              return;
+                            }
+                            if (input.length > 50) {
+                              inputError.value = sheetCtx.tr('nameTooLong');
+                              return;
+                            }
+                            inputError.value = null;
+
+                            final successTitle = sheetCtx.tr('success');
+                            final successMsg = sheetCtx.tr('nameUpdated');
+                            final errorTitle = sheetCtx.tr('error');
+                            final errorMsg = sheetCtx.tr('updateNameError');
+
+                            try {
+                              await controller.updateDisplayName(input);
+                              Get.back();
+                              Get.snackbar(
+                                successTitle,
+                                successMsg,
+                                snackPosition: SnackPosition.BOTTOM,
+                                backgroundColor: AppColors.statusSafe
+                                    .withValues(alpha: 0.9),
+                                colorText: AppColors.surfaceWhite,
+                                margin: const EdgeInsets.all(AppSpacing.lg),
+                                borderRadius: AppRadius.lg,
+                                duration: const Duration(seconds: 3),
+                              );
+                            } catch (_) {
+                              Get.snackbar(
+                                errorTitle,
+                                errorMsg,
+                                snackPosition: SnackPosition.BOTTOM,
+                                backgroundColor: AppColors.error.withValues(
+                                  alpha: 0.9,
+                                ),
+                                colorText: AppColors.surfaceWhite,
+                                margin: const EdgeInsets.all(AppSpacing.lg),
+                                borderRadius: AppRadius.lg,
+                                duration: const Duration(seconds: 4),
+                              );
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isDarkSheet
+                          ? AppColors.darkPrimary
+                          : AppColors.espressoDark,
+                      foregroundColor: isDarkSheet
+                          ? AppColors.darkOnPrimary
+                          : AppColors.surfaceWhite,
+                      disabledBackgroundColor: isDarkSheet
+                          ? AppColors.darkSurfaceContainer
+                          : AppColors.outlineVariant,
+                      minimumSize: const Size(
+                        double.infinity,
+                        AppSizes.buttonHeightPrimary,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.radiusPill,
+                        ),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: saving
+                        ? SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: isDarkSheet
+                                  ? AppColors.darkOnPrimary
+                                  : AppColors.surfaceWhite,
+                            ),
+                          )
+                        : Text(
+                            sheetCtx.tr('save'),
+                            style: AppTypography.titleMedium.copyWith(
+                              color: isDarkSheet
+                                  ? AppColors.darkOnPrimary
+                                  : AppColors.surfaceWhite,
+                            ),
+                          ),
+                  );
+                }),
+              ],
+            ),
           ),
         ),
       ),
@@ -768,6 +698,7 @@ class _PhotoOption extends StatelessWidget {
   }
 }
 
+// ── Settings Group ────────────────────────────────────────────────────────────
 
 class _SettingsGroup extends StatelessWidget {
   final String title;
@@ -794,8 +725,11 @@ class _SettingsGroup extends StatelessWidget {
             top: AppSpacing.sm,
           ),
           child: Text(
-            title,
-            style: AppTypography.labelPill.copyWith(color: titleColor),
+            title.toUpperCase(),
+            style: AppTypography.labelPill.copyWith(
+              color: titleColor,
+              letterSpacing: 0.6,
+            ),
           ),
         ),
         Container(
@@ -814,6 +748,8 @@ class _SettingsGroup extends StatelessWidget {
     );
   }
 }
+
+// ── Settings Tile ─────────────────────────────────────────────────────────────
 
 class _SettingsTile extends StatelessWidget {
   final IconData icon;
@@ -875,7 +811,7 @@ class _SettingsTile extends StatelessWidget {
                 const SizedBox(width: AppSpacing.xs),
               ],
               Icon(
-                Icons.chevron_right,
+                Icons.chevron_right_rounded,
                 color: AppColors.isDark(context)
                     ? AppColors.darkOutline
                     : AppColors.tanMedium,
@@ -887,6 +823,8 @@ class _SettingsTile extends StatelessWidget {
     );
   }
 }
+
+// ── Thin Divider ──────────────────────────────────────────────────────────────
 
 class _DividerThin extends StatelessWidget {
   @override
@@ -900,6 +838,8 @@ class _DividerThin extends StatelessWidget {
     );
   }
 }
+
+// ── Logout Button ─────────────────────────────────────────────────────────────
 
 class _LogoutButton extends StatelessWidget {
   final String label;
@@ -935,9 +875,7 @@ class _LogoutButton extends StatelessWidget {
                     backgroundColor: AppColors.error,
                   ),
                   onPressed: () async {
-                    debugPrint('[Profile] Logging out...');
-                    await FirebaseAuth.instance.signOut();
-                    Get.offAllNamed(AppRoutes.login);
+                    await Get.find<AppStartupController>().signOut();
                   },
                   child: Text(
                     dialogContext.tr('yes').isEmpty
@@ -967,6 +905,8 @@ class _LogoutButton extends StatelessWidget {
     );
   }
 }
+
+// ── Picker Option ─────────────────────────────────────────────────────────────
 
 class _PickerOption extends StatelessWidget {
   final IconData? icon;
@@ -1042,7 +982,7 @@ class _PickerOption extends StatelessWidget {
                 const SizedBox(width: AppSpacing.sm),
               ],
               if (isSelected)
-                Icon(Icons.check_circle, color: activeColor, size: 20)
+                Icon(Icons.check_circle_rounded, color: activeColor, size: 20)
               else
                 Container(
                   width: 20,

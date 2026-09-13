@@ -167,15 +167,16 @@ const Map<String, String> idTranslations = {
   'apakahYakinKeluar': 'Yakin ingin keluar dari akun?',
   'version': 'Versi 1.0.0',
 
-  // Profile Photo
-  'editPhoto': 'Ubah Foto Profil',
-  'chooseFromGallery': 'Pilih dari Galeri',
-  'takePhoto': 'Ambil Foto',
-  'removePhoto': 'Hapus Foto',
-  'uploadingPhoto': 'Mengunggah foto...',
-  'photoUpdated': 'Foto profil berhasil diperbarui',
-  'photoUploadError': 'Gagal mengunggah foto. Silakan coba lagi.',
-  'photoRemoved': 'Foto profil dihapus',
+  // Profil — Ubah Nama
+  'editName': 'Ubah Nama',
+  'editNameTitle': 'Ubah Nama Pengguna',
+  'name': 'Nama',
+  'nameRequired': 'Nama tidak boleh kosong',
+  'nameTooLong': 'Nama maksimal 50 karakter',
+  'nameUpdated': 'Nama berhasil diperbarui',
+  'updateNameError': 'Gagal memperbarui nama. Silakan coba lagi.',
+  'jamaah': 'Jamaah',
+  'preferenceSettings': 'Preferensi',
 
   // Help Center
   'helpCenterTitle': 'Pusat Bantuan',

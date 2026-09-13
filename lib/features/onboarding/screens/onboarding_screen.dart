@@ -96,7 +96,7 @@ class OnboardingScreen extends StatelessWidget {
 
                   // Skip button
                   TextButton(
-                    onPressed: () => Get.offNamed('/login'),
+                    onPressed: () => ctrl.completeOnboarding(),
                     style: TextButton.styleFrom(
                       foregroundColor: AppColors.textBody,
                       backgroundColor: AppColors.surfaceWhite,

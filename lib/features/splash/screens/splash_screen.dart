@@ -6,7 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../core/routes/app_routes.dart';
+import '../../../core/state/app_startup_controller.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -28,11 +28,24 @@ class _SplashScreenState extends State<SplashScreen>
       vsync: this,
     )..repeat(reverse: true);
 
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        Get.offNamed(AppRoutes.onboarding);
-      }
-    });
+    _bootstrap();
+  }
+
+  Future<void> _bootstrap() async {
+    final startup = Get.find<AppStartupController>();
+
+    // Concurrently determine route & let minimum splash progress complete
+    // to ensure beautiful branding presentation without flicker or premature redirects.
+    final results = await Future.wait([
+      startup.determineInitialRoute(),
+      Future.delayed(const Duration(milliseconds: 2400)),
+    ]);
+
+    final destination = results.first as String;
+
+    if (mounted) {
+      Get.offAllNamed(destination);
+    }
   }
 
   @override
