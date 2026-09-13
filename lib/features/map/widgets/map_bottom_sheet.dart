@@ -173,7 +173,9 @@ class MapBottomSheet extends StatelessWidget {
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.espressoDark.withValues(alpha: 0.05),
+                                color: AppColors.espressoDark.withValues(
+                                  alpha: 0.05,
+                                ),
                                 blurRadius: 4,
                               ),
                             ],
@@ -262,8 +264,9 @@ class MapBottomSheet extends StatelessWidget {
                               backgroundColor: AppColors.espressoDark,
                               foregroundColor: AppColors.onPrimary,
                               shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.pill),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.pill,
+                                ),
                               ),
                             ),
                           ),

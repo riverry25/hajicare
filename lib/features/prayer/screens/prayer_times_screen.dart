@@ -699,7 +699,7 @@ class PrayerTimesScreen extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'Jadwal Sholat Hari Ini',
+                                'Jadwal Sholat',
                                 style: AppTypography.titleMedium.copyWith(
                                   color: AppColors.textHeadingColor(context),
                                   fontWeight: FontWeight.bold,
