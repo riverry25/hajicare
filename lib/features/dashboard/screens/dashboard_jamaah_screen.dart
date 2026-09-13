@@ -66,11 +66,6 @@ class DashboardJamaahScreen extends StatelessWidget {
         title: 'HajiCare',
         subtitle: 'Sahabat Ibadah Anda',
         icon: Icons.mosque_rounded,
-        leading: IconButton(
-          icon: Icon(Icons.menu_rounded, color: headingColor),
-          tooltip: 'Menu',
-          onPressed: () {},
-        ),
         actions: [
           Stack(
             alignment: Alignment.center,
