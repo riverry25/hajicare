@@ -8,6 +8,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
+import '../../../core/widgets/hajicare_header.dart';
 import '../../map/screens/interactive_map_screen.dart';
 import '../../prayer/screens/prayer_times_screen.dart';
 import '../../profile/screens/profile_screen.dart';
@@ -61,38 +62,14 @@ class DashboardJamaahScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: scaffoldBg,
-      appBar: AppBar(
-        backgroundColor: scaffoldBg,
-        elevation: 0,
-        titleSpacing: 0,
+      appBar: HajiCareHeader(
+        title: 'HajiCare',
+        subtitle: 'Sahabat Ibadah Anda',
+        icon: Icons.mosque_rounded,
         leading: IconButton(
-          icon: Icon(Icons.menu, color: headingColor),
+          icon: Icon(Icons.menu_rounded, color: headingColor),
+          tooltip: 'Menu',
           onPressed: () {},
-        ),
-        title: Row(
-          children: [
-            Container(
-              width: 28,
-              height: 28,
-              decoration: const BoxDecoration(
-                color: AppColors.primaryContainer,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.mosque,
-                color: AppColors.accentGoldStar,
-                size: 16,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm2),
-            Text(
-              'HajiCare',
-              style: AppTypography.titleLarge.copyWith(
-                color: headingColor,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ],
         ),
         actions: [
           Stack(
@@ -100,6 +77,7 @@ class DashboardJamaahScreen extends StatelessWidget {
             children: [
               IconButton(
                 icon: Icon(Icons.notifications_outlined, color: headingColor),
+                tooltip: 'Notifikasi',
                 onPressed: () => Get.toNamed(AppRoutes.notification),
               ),
               if (jamaah.separatedMode)
@@ -113,7 +91,9 @@ class DashboardJamaahScreen extends StatelessWidget {
                       color: AppColors.sosEmergency,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: isDark ? AppColors.darkScaffold : AppColors.canvasCream,
+                        color: isDark
+                            ? AppColors.darkScaffold
+                            : AppColors.canvasCream,
                         width: 2,
                       ),
                     ),
@@ -122,14 +102,21 @@ class DashboardJamaahScreen extends StatelessWidget {
             ],
           ),
           Padding(
-            padding: const EdgeInsets.only(right: AppSpacing.lg),
-            child: CircleAvatar(
-              backgroundColor: AppColors.errorContainer,
-              radius: 18,
-              child: IconButton(
-                icon: const Icon(Icons.sos, color: AppColors.sosEmergency, size: 20),
-                padding: EdgeInsets.zero,
-                onPressed: () => Get.toNamed(AppRoutes.modalSos),
+            padding: const EdgeInsets.only(right: AppSpacing.screenEdgeGutter),
+            child: Center(
+              child: CircleAvatar(
+                backgroundColor: AppColors.errorContainer,
+                radius: 18,
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.sos_rounded,
+                    color: AppColors.sosEmergency,
+                    size: 20,
+                  ),
+                  padding: EdgeInsets.zero,
+                  tooltip: 'SOS Darurat',
+                  onPressed: () => Get.toNamed(AppRoutes.modalSos),
+                ),
               ),
             ),
           ),
@@ -171,7 +158,9 @@ class DashboardJamaahScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.errorContainer,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.sosEmergency.withValues(alpha: 0.5)),
+        border: Border.all(
+          color: AppColors.sosEmergency.withValues(alpha: 0.5),
+        ),
       ),
       child: Row(
         children: [
@@ -208,7 +197,10 @@ class DashboardJamaahScreen extends StatelessWidget {
               color: AppColors.tanMedium.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.lightbulb_outline, color: AppColors.espressoDark),
+            child: const Icon(
+              Icons.lightbulb_outline,
+              color: AppColors.espressoDark,
+            ),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
