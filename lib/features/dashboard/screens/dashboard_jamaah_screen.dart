@@ -180,7 +180,11 @@ class DashboardJamaahScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTipsBanner(BuildContext context, bool isDark, Color headingColor) {
+  Widget _buildTipsBanner(
+    BuildContext context,
+    bool isDark,
+    Color headingColor,
+  ) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
@@ -219,7 +223,9 @@ class DashboardJamaahScreen extends StatelessWidget {
                 Text(
                   context.tr('officerAdviceTitle'),
                   style: AppTypography.captionSmall.copyWith(
-                    color: isDark ? AppColors.darkPrimary : AppColors.espressoDark,
+                    color: isDark
+                        ? AppColors.darkPrimary
+                        : AppColors.espressoDark,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 0.5,
                   ),
@@ -227,9 +233,7 @@ class DashboardJamaahScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   context.tr('officerAdviceBody'),
-                  style: AppTypography.bodySmall.copyWith(
-                    color: headingColor,
-                  ),
+                  style: AppTypography.bodySmall.copyWith(color: headingColor),
                 ),
               ],
             ),
