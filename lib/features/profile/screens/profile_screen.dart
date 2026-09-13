@@ -20,142 +20,154 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final settings = Get.find<AppSettingsController>();
 
-    {
-      final isDark = AppColors.isDark(context);
-      final scaffoldBg = isDark ? AppColors.darkScaffold : AppColors.canvasCream;
-      final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-      final headingColor = isDark ? AppColors.darkTextHeading : AppColors.espressoDark;
-      final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
+    return Obx(() {
+      // Accessing currentTextScale inside Obx ensures the widget rebuilds
+      // immediately when text scale changes — no language toggle needed.
+      final _ = settings.currentTextScale;
+      {
+        final isDark = AppColors.isDark(context);
+        final scaffoldBg = isDark
+            ? AppColors.darkScaffold
+            : AppColors.canvasCream;
+        final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
+        final headingColor = isDark
+            ? AppColors.darkTextHeading
+            : AppColors.espressoDark;
+        final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
 
-      return Scaffold(
-        backgroundColor: scaffoldBg,
-        appBar: AppBar(
+        return Scaffold(
           backgroundColor: scaffoldBg,
-          elevation: 0,
-          title: Text(context.tr('profileTitle'),
-              style: AppTypography.headlineMd.copyWith(color: headingColor)),
-          centerTitle: true,
-        ),
-        body: ListView(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          children: [
-            // ── Profile Header ─────────────────────────────────────────────
-            _ProfileHeader(
-            cardBg: cardBg,
-            headingColor: headingColor,
-            bodyColor: bodyColor,
+          appBar: AppBar(
+            backgroundColor: scaffoldBg,
+            elevation: 0,
+            title: Text(
+              context.tr('profileTitle'),
+              style: AppTypography.headlineMd.copyWith(color: headingColor),
+            ),
+            centerTitle: true,
           ),
-          const SizedBox(height: AppSpacing.gapSection),
-
-          // ── Data & Sinkronisasi ────────────────────────────────────────
-          _SettingsGroup(
-            title: context.tr('accountData'),
-            titleColor: bodyColor,
-            cardBg: cardBg,
+          body: ListView(
+            padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
-              _SettingsTile(
-                icon: Icons.medical_information,
-                label: context.tr('medicalData'),
+              // ── Profile Header ─────────────────────────────────────────────
+              _ProfileHeader(
                 cardBg: cardBg,
                 headingColor: headingColor,
                 bodyColor: bodyColor,
-                onTap: () {},
               ),
-              _DividerThin(),
-              _SettingsTile(
-                icon: Icons.link,
-                label: context.tr('manageCompanion'),
+              const SizedBox(height: AppSpacing.gapSection),
+
+              // ── Data & Sinkronisasi ────────────────────────────────────────
+              _SettingsGroup(
+                title: context.tr('accountData'),
+                titleColor: bodyColor,
                 cardBg: cardBg,
-                headingColor: headingColor,
-                bodyColor: bodyColor,
-                onTap: () {},
+                children: [
+                  _SettingsTile(
+                    icon: Icons.medical_information,
+                    label: context.tr('medicalData'),
+                    cardBg: cardBg,
+                    headingColor: headingColor,
+                    bodyColor: bodyColor,
+                    onTap: () {},
+                  ),
+                  _DividerThin(),
+                  _SettingsTile(
+                    icon: Icons.link,
+                    label: context.tr('manageCompanion'),
+                    cardBg: cardBg,
+                    headingColor: headingColor,
+                    bodyColor: bodyColor,
+                    onTap: () {},
+                  ),
+                ],
               ),
+              const SizedBox(height: AppSpacing.gapCards),
+
+              // ── Aksesibilitas ──────────────────────────────────────────────
+              _SettingsGroup(
+                title: context.tr('accessibilitySettings'),
+                titleColor: bodyColor,
+                cardBg: cardBg,
+                children: [
+                  _SettingsTile(
+                    icon: Icons.text_increase,
+                    label: context.tr('textSize'),
+                    trailingLabel: settings.currentTextScale.label,
+                    cardBg: cardBg,
+                    headingColor: headingColor,
+                    bodyColor: bodyColor,
+                    onTap: () => _showTextSizePicker(context, settings),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.gapCards),
+
+              // ── Lainnya & Preferensi ───────────────────────────────────────
+              _SettingsGroup(
+                title: context.tr('otherSettings'),
+                titleColor: bodyColor,
+                cardBg: cardBg,
+                children: [
+                  _SettingsTile(
+                    icon: Icons.language,
+                    label: context.tr('language'),
+                    trailingLabel: settings.localeName,
+                    cardBg: cardBg,
+                    headingColor: headingColor,
+                    bodyColor: bodyColor,
+                    onTap: () => _showLanguagePicker(context, settings),
+                  ),
+                  _DividerThin(),
+                  _SettingsTile(
+                    icon: Icons.contrast,
+                    label: context.tr('theme'),
+                    trailingLabel: settings.themeModeName,
+                    cardBg: cardBg,
+                    headingColor: headingColor,
+                    bodyColor: bodyColor,
+                    onTap: () => _showThemePicker(context, settings),
+                  ),
+                  _DividerThin(),
+                  _SettingsTile(
+                    icon: Icons.help_outline,
+                    label: context.tr('helpCenter'),
+                    cardBg: cardBg,
+                    headingColor: headingColor,
+                    bodyColor: bodyColor,
+                    onTap: () {},
+                  ),
+                  _DividerThin(),
+                  _SettingsTile(
+                    icon: Icons.info_outline,
+                    label: context.tr('aboutApp'),
+                    trailingLabel: '1.0.0',
+                    cardBg: cardBg,
+                    headingColor: headingColor,
+                    bodyColor: bodyColor,
+                    onTap: () {},
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: AppSpacing.gapSection),
+              _LogoutButton(label: context.tr('logout')),
+              const SizedBox(height: AppSpacing.huge),
             ],
           ),
-          const SizedBox(height: AppSpacing.gapCards),
-
-          // ── Aksesibilitas ──────────────────────────────────────────────
-          _SettingsGroup(
-            title: context.tr('accessibilitySettings'),
-            titleColor: bodyColor,
-            cardBg: cardBg,
-            children: [
-              _SettingsTile(
-                icon: Icons.text_increase,
-                label: context.tr('textSize'),
-                trailingLabel: settings.currentTextScale.label,
-                cardBg: cardBg,
-                headingColor: headingColor,
-                bodyColor: bodyColor,
-                onTap: () => _showTextSizePicker(context, settings),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.gapCards),
-
-          // ── Lainnya & Preferensi ───────────────────────────────────────
-          _SettingsGroup(
-            title: context.tr('otherSettings'),
-            titleColor: bodyColor,
-            cardBg: cardBg,
-            children: [
-              _SettingsTile(
-                icon: Icons.language,
-                label: context.tr('language'),
-                trailingLabel: settings.localeName,
-                cardBg: cardBg,
-                headingColor: headingColor,
-                bodyColor: bodyColor,
-                onTap: () => _showLanguagePicker(context, settings),
-              ),
-              _DividerThin(),
-              _SettingsTile(
-                icon: Icons.contrast,
-                label: context.tr('theme'),
-                trailingLabel: settings.themeModeName,
-                cardBg: cardBg,
-                headingColor: headingColor,
-                bodyColor: bodyColor,
-                onTap: () => _showThemePicker(context, settings),
-              ),
-              _DividerThin(),
-              _SettingsTile(
-                icon: Icons.help_outline,
-                label: context.tr('helpCenter'),
-                cardBg: cardBg,
-                headingColor: headingColor,
-                bodyColor: bodyColor,
-                onTap: () {},
-              ),
-              _DividerThin(),
-              _SettingsTile(
-                icon: Icons.info_outline,
-                label: context.tr('aboutApp'),
-                trailingLabel: '1.0.0',
-                cardBg: cardBg,
-                headingColor: headingColor,
-                bodyColor: bodyColor,
-                onTap: () {},
-              ),
-            ],
-          ),
-
-          const SizedBox(height: AppSpacing.gapSection),
-          _LogoutButton(label: context.tr('logout')),
-          const SizedBox(height: AppSpacing.huge),
-        ],
-      ),
-        bottomNavigationBar: showBottomNav
-            ? const HajiCareBottomNavBar(
-                currentIndex: 3,
-              )
-            : null,
-      );
-    }
+          bottomNavigationBar: showBottomNav
+              ? const HajiCareBottomNavBar(currentIndex: 3)
+              : null,
+        );
+      }
+    }); // end Obx
   }
 
   // ── Language Picker Bottom Sheet ──────────────────────────────────────────
-  void _showLanguagePicker(BuildContext context, AppSettingsController settings) {
+  void _showLanguagePicker(
+    BuildContext context,
+    AppSettingsController settings,
+  ) {
     final options = [
       (const Locale('id'), 'Bahasa Indonesia', '🇮🇩'),
       (const Locale('jv'), 'Basa Jawi', '🏝️'),
@@ -166,7 +178,8 @@ class ProfileScreen extends StatelessWidget {
       context: context,
       title: context.tr('selectLanguageTitle'),
       children: options.map((opt) {
-        final isSelected = settings.currentLocale.languageCode == opt.$1.languageCode;
+        final isSelected =
+            settings.currentLocale.languageCode == opt.$1.languageCode;
         return _PickerOption(
           label: '${opt.$3}  ${opt.$2}',
           isSelected: isSelected,
@@ -183,8 +196,8 @@ class ProfileScreen extends StatelessWidget {
   void _showThemePicker(BuildContext context, AppSettingsController settings) {
     final options = [
       (ThemeMode.system, context.tr('themeSystem'), Icons.brightness_auto),
-      (ThemeMode.light,  context.tr('themeLight'),  Icons.light_mode),
-      (ThemeMode.dark,   context.tr('themeDark'),   Icons.dark_mode),
+      (ThemeMode.light, context.tr('themeLight'), Icons.light_mode),
+      (ThemeMode.dark, context.tr('themeDark'), Icons.dark_mode),
     ];
     _showPickerSheet(
       context: context,
@@ -205,7 +218,10 @@ class ProfileScreen extends StatelessWidget {
   }
 
   // ── Text Size Picker Bottom Sheet ─────────────────────────────────────────
-  void _showTextSizePicker(BuildContext context, AppSettingsController settings) {
+  void _showTextSizePicker(
+    BuildContext context,
+    AppSettingsController settings,
+  ) {
     _showPickerSheet(
       context: context,
       title: context.tr('selectTextSizeTitle'),
@@ -239,7 +255,10 @@ class ProfileScreen extends StatelessWidget {
       builder: (_) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xl,
+            AppSpacing.lg,
+            AppSpacing.lg,
+            AppSpacing.lg,
+            AppSpacing.xl,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -257,7 +276,14 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
-              Text(title, style: AppTypography.titleLarge.copyWith(color: AppColors.textHeading)),
+              Text(
+                title,
+                style: AppTypography.titleLarge.copyWith(
+                  color: AppColors.isDark(Get.context!)
+                      ? AppColors.darkTextHeading
+                      : AppColors.textHeading,
+                ),
+              ),
               const SizedBox(height: AppSpacing.md),
               ...children,
             ],
@@ -318,11 +344,13 @@ class _ProfileHeader extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(color: AppColors.goldLight, width: 2),
                 ),
-                child: Icon(Icons.account_circle,
-                    color: AppColors.isDark(context)
-                        ? AppColors.darkPrimary
-                        : AppColors.primaryContainer,
-                    size: 64),
+                child: Icon(
+                  Icons.account_circle,
+                  color: AppColors.isDark(context)
+                      ? AppColors.darkPrimary
+                      : AppColors.primaryContainer,
+                  size: 64,
+                ),
               ),
               Semantics(
                 label: 'Ubah foto profil',
@@ -337,39 +365,69 @@ class _ProfileHeader extends StatelessWidget {
                           : AppColors.espressoDark,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.edit,
-                        color: AppColors.isDark(context)
-                            ? AppColors.darkOnPrimary
-                            : AppColors.surfaceWhite,
-                        size: 16),
+                    child: Icon(
+                      Icons.edit,
+                      color: AppColors.isDark(context)
+                          ? AppColors.darkOnPrimary
+                          : AppColors.surfaceWhite,
+                      size: 16,
+                    ),
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          Text('H. Ahmad Dahlan',
-              style: AppTypography.headlineMd.copyWith(color: headingColor)),
+          Text(
+            _getDisplayName(),
+            style: AppTypography.headlineMd.copyWith(color: headingColor),
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: AppSpacing.gapTitleSubtitle),
-          Text('Jamaah • Kloter 14 JKS',
-              style: AppTypography.bodyMd.copyWith(color: bodyColor)),
+          Text(
+            _getDisplayRole(),
+            style: AppTypography.bodyMd.copyWith(color: bodyColor),
+          ),
           const SizedBox(height: AppSpacing.md),
           Container(
             padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
             decoration: BoxDecoration(
-              color: AppColors.secondaryContainer.withValues(alpha: 0.5),
+              color: AppColors.isDark(context)
+                  ? AppColors.darkSurfaceContainer.withValues(alpha: 0.8)
+                  : AppColors.secondaryContainer.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(AppConstants.radiusPill),
             ),
             child: Text(
               context.tr('connectedWristband'),
-              style: AppTypography.captionBold
-                  .copyWith(color: AppColors.isDark(context) ? AppColors.darkTextHeading : AppColors.espressoDark),
+              style: AppTypography.captionBold.copyWith(
+                color: AppColors.isDark(context)
+                    ? AppColors.darkTextHeading
+                    : AppColors.espressoDark,
+              ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  // ── Firebase dynamic name helpers ──────────────────────────────────
+  static String _getDisplayName() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return 'Pengguna';
+    final name = user.displayName;
+    if (name != null && name.isNotEmpty) return name;
+    final email = user.email;
+    if (email != null && email.isNotEmpty) return email.split('@').first;
+    return 'Pengguna';
+  }
+
+  static String _getDisplayRole() {
+    // Placeholder — extend when role is stored in Firestore/Claims.
+    return 'Jamaah';
   }
 }
 
@@ -393,9 +451,14 @@ class _SettingsGroup extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(
-              left: AppSpacing.sm, bottom: AppSpacing.xs, top: AppSpacing.sm),
-          child: Text(title,
-              style: AppTypography.labelPill.copyWith(color: titleColor)),
+            left: AppSpacing.sm,
+            bottom: AppSpacing.xs,
+            top: AppSpacing.sm,
+          ),
+          child: Text(
+            title,
+            style: AppTypography.labelPill.copyWith(color: titleColor),
+          ),
         ),
         Container(
           decoration: BoxDecoration(
@@ -443,7 +506,9 @@ class _SettingsTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppConstants.radiusCard),
         child: Padding(
           padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md, vertical: AppSpacing.md),
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.md,
+          ),
           child: Row(
             children: [
               Container(
@@ -459,18 +524,24 @@ class _SettingsTile extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
-                child: Text(label,
-                    style: AppTypography.bodyMd.copyWith(color: headingColor)),
+                child: Text(
+                  label,
+                  style: AppTypography.bodyMd.copyWith(color: headingColor),
+                ),
               ),
               if (trailingLabel != null) ...[
-                Text(trailingLabel!,
-                    style: AppTypography.caption.copyWith(color: bodyColor)),
+                Text(
+                  trailingLabel!,
+                  style: AppTypography.caption.copyWith(color: bodyColor),
+                ),
                 const SizedBox(width: AppSpacing.xs),
               ],
-              Icon(Icons.chevron_right,
-                  color: AppColors.isDark(context)
-                      ? AppColors.darkOutline
-                      : AppColors.tanMedium),
+              Icon(
+                Icons.chevron_right,
+                color: AppColors.isDark(context)
+                    ? AppColors.darkOutline
+                    : AppColors.tanMedium,
+              ),
             ],
           ),
         ),
@@ -516,18 +587,24 @@ class _LogoutButton extends StatelessWidget {
                 TextButton(
                   onPressed: () => Get.back(),
                   child: Text(
-                    dialogContext.tr('cancel').isEmpty ? 'Batal' : dialogContext.tr('cancel'),
+                    dialogContext.tr('cancel').isEmpty
+                        ? 'Batal'
+                        : dialogContext.tr('cancel'),
                   ),
                 ),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                  ),
                   onPressed: () async {
                     debugPrint('[Profile] Logging out...');
                     await FirebaseAuth.instance.signOut();
                     Get.offAllNamed(AppRoutes.login);
                   },
                   child: Text(
-                    dialogContext.tr('yes').isEmpty ? 'Ya' : dialogContext.tr('yes'),
+                    dialogContext.tr('yes').isEmpty
+                        ? 'Ya'
+                        : dialogContext.tr('yes'),
                     style: const TextStyle(color: Colors.white),
                   ),
                 ),
@@ -539,9 +616,13 @@ class _LogoutButton extends StatelessWidget {
           backgroundColor: AppColors.errorContainer,
           foregroundColor: AppColors.error,
           elevation: 0,
-          minimumSize: const Size(double.infinity, AppSizes.buttonHeightPrimary),
+          minimumSize: const Size(
+            double.infinity,
+            AppSizes.buttonHeightPrimary,
+          ),
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppConstants.radiusPill)),
+            borderRadius: BorderRadius.circular(AppConstants.radiusPill),
+          ),
         ),
         child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
       ),
@@ -566,6 +647,15 @@ class _PickerOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppColors.isDark(context);
+    final activeColor = isDark ? AppColors.darkPrimary : AppColors.espressoDark;
+    final textColor = isDark
+        ? AppColors.darkTextHeading
+        : AppColors.textHeading;
+    final selectedBg = isDark
+        ? AppColors.darkPrimaryContainer.withValues(alpha: 0.40)
+        : AppColors.espressoDark.withValues(alpha: 0.07);
+
     return Semantics(
       button: true,
       selected: isSelected,
@@ -574,50 +664,57 @@ class _PickerOption extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Container(
-          constraints: const BoxConstraints(minHeight: AppSizes.touchTargetMin + 4),
+          constraints: const BoxConstraints(
+            minHeight: AppSizes.touchTargetMin + 4,
+          ),
           padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md, vertical: AppSpacing.md),
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.md,
+          ),
           decoration: BoxDecoration(
-            color: isSelected
-                ? AppColors.espressoDark.withValues(alpha: 0.08)
-                : Colors.transparent,
+            color: isSelected ? selectedBg : Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
           child: Row(
             children: [
               if (icon != null) ...[
-                Icon(icon,
-                    size: AppSizes.iconMd,
-                    color: isSelected
-                        ? AppColors.espressoDark
-                        : AppColors.textBody),
+                Icon(
+                  icon,
+                  size: AppSizes.iconMd,
+                  color: isSelected ? activeColor : textColor,
+                ),
                 const SizedBox(width: AppSpacing.md),
               ],
               Expanded(
                 child: Text(
                   label,
                   style: AppTypography.bodyLarge.copyWith(
-                    color: isSelected
-                        ? AppColors.espressoDark
-                        : AppColors.textHeading,
+                    color: isSelected ? activeColor : textColor,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
                   ),
                 ),
               ),
               if (trailingHint != null) ...[
-                Text(trailingHint!,
-                    style: AppTypography.caption.copyWith(color: AppColors.textBody)),
+                Text(
+                  trailingHint!,
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textBodyColor(context),
+                  ),
+                ),
                 const SizedBox(width: AppSpacing.sm),
               ],
               if (isSelected)
-                const Icon(Icons.check_circle, color: AppColors.espressoDark, size: 20)
+                Icon(Icons.check_circle, color: activeColor, size: 20)
               else
                 Container(
                   width: 20,
                   height: 20,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.outlineVariant, width: 2),
+                    border: Border.all(
+                      color: AppColors.outlineColor(context),
+                      width: 2,
+                    ),
                   ),
                 ),
             ],

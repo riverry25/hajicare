@@ -280,12 +280,18 @@ class LoginScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 10),
+              const SizedBox(height: AppSpacing.xl),
 
               // ============================================================
               // ROLE SECTION
               // ============================================================
-              const SizedBox(height: 10),
+              _SectionHeader(
+                icon: Icons.people_outline_rounded,
+                title: 'Saya masuk sebagai',
+                subtitle: 'Pilih peran yang paling sesuai dengan Anda',
+              ),
+
+              const SizedBox(height: AppSpacing.xl),
 
               Obx(
                 () => Row(
@@ -902,6 +908,68 @@ class _WelcomeFeature extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  const _SectionHeader({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: AppColors.surfaceWhite,
+            borderRadius: BorderRadius.circular(11),
+            border: Border.all(
+              color: AppColors.goldLight.withValues(alpha: 0.20),
+            ),
+          ),
+          child: Icon(icon, color: AppColors.espressoDark, size: 18),
+        ),
+
+        const SizedBox(width: 10),
+
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.titleMedium.copyWith(
+                  color: AppColors.espressoDark,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.captionSmall.copyWith(
+                  color: AppColors.tanMedium,
+                  height: 1.3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

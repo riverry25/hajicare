@@ -22,18 +22,6 @@ class OnboardingSlideAccessibility extends StatelessWidget {
         color: AppColors.surfaceWhite,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.goldLight.withValues(alpha: 0.3)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.espressoDark.withValues(alpha: 0.08),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-          BoxShadow(
-            color: AppColors.espressoDark.withValues(alpha: 0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -115,7 +103,9 @@ class OnboardingSlideAccessibility extends StatelessWidget {
                   Expanded(
                     child: Text(
                       'Text-to-Speech dan bantuan suara siap digunakan untuk membantu jamaah selama perjalanan ibadah.',
-                      style: AppTypography.bodySmall,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.espressoDark.withValues(alpha: 0.5),
+                      ),
                     ),
                   ),
                 ],
@@ -196,6 +186,7 @@ class OnboardingSlideAccessibility extends StatelessWidget {
                   'Fitur Kemudahan',
                   style: AppTypography.titleLarge.copyWith(
                     fontWeight: FontWeight.w700,
+                    color: AppColors.espressoDark.withValues(alpha: 0.8),
                   ),
                 ),
 
@@ -203,7 +194,9 @@ class OnboardingSlideAccessibility extends StatelessWidget {
 
                 Text(
                   'Membantu jamaah lansia dan disabilitas beribadah lebih nyaman.',
-                  style: AppTypography.bodySmall,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.espressoDark.withValues(alpha: 0.5),
+                  ),
                 ),
               ],
             ),
@@ -271,12 +264,18 @@ class OnboardingSlideAccessibility extends StatelessWidget {
                   title,
                   style: AppTypography.titleMedium.copyWith(
                     fontWeight: FontWeight.w700,
+                    color: AppColors.espressoDark.withValues(alpha: 0.8),
                   ),
                 ),
 
                 const SizedBox(height: 6),
 
-                Text(description, style: AppTypography.bodySmall),
+                Text(
+                  description,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.espressoDark.withValues(alpha: 0.5),
+                  ),
+                ),
               ],
             ),
           ),

@@ -109,6 +109,20 @@ class AppTheme {
           ),
         ),
       ),
+      // ── Transparent wrappers so HajiCareBottomNavBar is the sole surface ──
+      // Material 3 Scaffold injects ColorScheme.surface behind bottomNavigationBar;
+      // setting these to transparent removes that cream/dark layer.
+      navigationBarTheme: const NavigationBarThemeData(
+        backgroundColor: Colors.transparent,
+        indicatorColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
     );
   }
 
@@ -214,6 +228,18 @@ class AppTheme {
             top: Radius.circular(AppRadius.xl),
           ),
         ),
+      ),
+      // ── Transparent wrappers so HajiCareBottomNavBar is the sole surface ──
+      navigationBarTheme: const NavigationBarThemeData(
+        backgroundColor: Colors.transparent,
+        indicatorColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
     );
   }

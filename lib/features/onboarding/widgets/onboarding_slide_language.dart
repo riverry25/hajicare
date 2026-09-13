@@ -14,7 +14,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
 
   // locale code, display title, subtitle, type badge
   static const List<(String, String, String, String)> _languages = [
-    ('id', 'Bahasa Indonesia', 'Baku & Lengkap', 'Bahasa Utama'),
+    ('id', 'Indonesia', 'Baku & Lengkap', 'Bahasa Utama'),
     ('jv', 'Basa Jawi', 'Unggah-ungguh', 'Daerah'),
     ('su', 'Basa Sunda', 'Lemes & Santun', 'Daerah'),
     ('en', 'English', 'Global Standard', 'Global'),
@@ -34,18 +34,6 @@ class OnboardingSlideLanguage extends StatelessWidget {
         color: AppColors.surfaceWhite,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.goldLight.withValues(alpha: 0.3)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.espressoDark.withValues(alpha: 0.08),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-          BoxShadow(
-            color: AppColors.espressoDark.withValues(alpha: 0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -151,7 +139,9 @@ class OnboardingSlideLanguage extends StatelessWidget {
                   Expanded(
                     child: Text(
                       'Ukuran teks dan panduan audio akan otomatis disesuaikan dengan bahasa yang dipilih.',
-                      style: AppTypography.bodySmall,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.espressoDark.withValues(alpha: 0.5),
+                      ),
                     ),
                   ),
                 ],
@@ -238,6 +228,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
                   'Bahasa Pengantar',
                   style: AppTypography.titleLarge.copyWith(
                     fontWeight: FontWeight.w700,
+                    color: AppColors.espressoDark,
                   ),
                 ),
 
@@ -245,7 +236,9 @@ class OnboardingSlideLanguage extends StatelessWidget {
 
                 Text(
                   'Pilih bahasa yang paling mudah dipahami selama ibadah.',
-                  style: AppTypography.bodySmall,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.espressoDark.withValues(alpha: 0.5),
+                  ),
                 ),
               ],
             ),
@@ -300,7 +293,13 @@ class OnboardingSlideLanguage extends StatelessWidget {
                     color: AppColors.canvasCream,
                     borderRadius: BorderRadius.circular(50),
                   ),
-                  child: Text(type, style: AppTypography.captionSmall),
+                  child: Text(
+                    type,
+                    style: AppTypography.captionSmall.copyWith(
+                      color: AppColors.espressoDark.withValues(alpha: 0.5),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ),
 
                 const Spacer(),
@@ -328,13 +327,23 @@ class OnboardingSlideLanguage extends StatelessWidget {
               title,
               style: AppTypography.titleMedium.copyWith(
                 fontWeight: FontWeight.w700,
+                color: AppColors.espressoDark,
               ),
               maxLines: 2,
             ),
 
             const SizedBox(height: 6),
 
-            Text(subtitle, style: AppTypography.bodySmall),
+            Expanded(
+              child: Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.espressoDark.withValues(alpha: 0.5),
+                ),
+              ),
+            ),
           ],
         ),
       ),
