@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/locales/app_translations.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
@@ -64,7 +65,7 @@ class DashboardJamaahScreen extends StatelessWidget {
       backgroundColor: scaffoldBg,
       appBar: HajiCareHeader(
         title: 'HajiCare',
-        subtitle: 'Sahabat Ibadah Anda',
+        subtitle: context.tr('dashboardSubtitle'),
         icon: Icons.mosque_rounded,
         actions: [
           Stack(
@@ -72,7 +73,7 @@ class DashboardJamaahScreen extends StatelessWidget {
             children: [
               IconButton(
                 icon: Icon(Icons.notifications_outlined, color: headingColor),
-                tooltip: 'Notifikasi',
+                tooltip: context.tr('notificationTooltip'),
                 onPressed: () => Get.toNamed(AppRoutes.notification),
               ),
               if (jamaah.separatedMode)
@@ -100,7 +101,9 @@ class DashboardJamaahScreen extends StatelessWidget {
             padding: const EdgeInsets.only(right: AppSpacing.screenEdgeGutter),
             child: Center(
               child: CircleAvatar(
-                backgroundColor: AppColors.errorContainer,
+                backgroundColor: isDark
+                    ? AppColors.darkPrimaryContainer
+                    : AppColors.errorContainer,
                 radius: 18,
                 child: IconButton(
                   icon: const Icon(
@@ -109,7 +112,7 @@ class DashboardJamaahScreen extends StatelessWidget {
                     size: 20,
                   ),
                   padding: EdgeInsets.zero,
-                  tooltip: 'SOS Darurat',
+                  tooltip: context.tr('sosTooltip'),
                   onPressed: () => Get.toNamed(AppRoutes.modalSos),
                 ),
               ),
@@ -125,7 +128,7 @@ class DashboardJamaahScreen extends StatelessWidget {
           100,
         ),
         children: [
-          if (jamaah.separatedMode) _buildSeparatedBanner(),
+          if (jamaah.separatedMode) _buildSeparatedBanner(context, isDark),
           JamaahProfileHeader(state: state),
           const SizedBox(height: AppSpacing.lg),
           JamaahDistanceCard(
@@ -139,33 +142,36 @@ class DashboardJamaahScreen extends StatelessWidget {
           const SizedBox(height: AppSpacing.lg),
           const JamaahServiceGrid(),
           const SizedBox(height: AppSpacing.lg),
-          _buildTipsBanner(),
+          _buildTipsBanner(context, isDark, headingColor),
           const SizedBox(height: AppConstants.space3xl),
         ],
       ),
     );
   }
 
-  Widget _buildSeparatedBanner() {
+  Widget _buildSeparatedBanner(BuildContext context, bool isDark) {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.lg),
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.errorContainer,
+        color: isDark
+            ? AppColors.darkSurfaceContainer
+            : AppColors.errorContainer,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
-          color: AppColors.sosEmergency.withValues(alpha: 0.5),
+          color: AppColors.sosEmergency.withValues(alpha: 0.6),
         ),
       ),
       child: Row(
         children: [
-          const Icon(Icons.warning, color: AppColors.sosEmergency),
+          const Icon(Icons.warning_rounded, color: AppColors.sosEmergency),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
-              'Kemungkinan terpisah dari pendamping! Tetap tenang di tempat Anda.',
+              context.tr('separatedWarning'),
               style: AppTypography.captionSmall.copyWith(
                 color: AppColors.sosEmergency,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),
@@ -174,13 +180,19 @@ class DashboardJamaahScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTipsBanner() {
+  Widget _buildTipsBanner(BuildContext context, bool isDark, Color headingColor) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainer,
+        color: isDark
+            ? AppColors.darkSurfaceContainer
+            : AppColors.surfaceContainer,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.secondaryContainer),
+        border: Border.all(
+          color: isDark
+              ? AppColors.darkOutlineVariant
+              : AppColors.secondaryContainer,
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,12 +201,14 @@ class DashboardJamaahScreen extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.tanMedium.withValues(alpha: 0.2),
+              color: isDark
+                  ? AppColors.darkPrimaryContainer
+                  : AppColors.tanMedium.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.lightbulb_outline,
-              color: AppColors.espressoDark,
+            child: Icon(
+              Icons.lightbulb_outline_rounded,
+              color: isDark ? AppColors.goldLight : AppColors.espressoDark,
             ),
           ),
           const SizedBox(width: AppSpacing.md),
@@ -203,16 +217,18 @@ class DashboardJamaahScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'HIMBAUAN PETUGAS SEKTOR',
+                  context.tr('officerAdviceTitle'),
                   style: AppTypography.captionSmall.copyWith(
-                    color: AppColors.espressoDark,
+                    color: isDark ? AppColors.darkPrimary : AppColors.espressoDark,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Text(
-                  'Tetap bersama rombongan saat menuju jamarat. Pastikan botol air minum terisi penuh dan kenakan selalu gelang identitas Anda.',
+                  context.tr('officerAdviceBody'),
                   style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textHeading,
+                    color: headingColor,
                   ),
                 ),
               ],

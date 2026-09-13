@@ -16,7 +16,12 @@ class ProfileController extends GetxController {
   }
 
   void _loadDisplayName() {
-    final user = FirebaseAuth.instance.currentUser;
+    User? user;
+    try {
+      user = FirebaseAuth.instance.currentUser;
+    } catch (_) {
+      user = null;
+    }
     if (user == null) return;
     final name = user.displayName;
     if (name != null && name.isNotEmpty) {
@@ -35,8 +40,10 @@ class ProfileController extends GetxController {
 
   /// Returns the safe email string (never null/empty displayed)
   String get safeEmail {
-    final email = FirebaseAuth.instance.currentUser?.email;
-    if (email != null && email.isNotEmpty) return email;
+    try {
+      final email = FirebaseAuth.instance.currentUser?.email;
+      if (email != null && email.isNotEmpty) return email;
+    } catch (_) {}
     return '';
   }
 

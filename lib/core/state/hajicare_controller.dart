@@ -42,9 +42,12 @@ class HajiCareController extends GetxController {
     }
   }
 
+  StreamSubscription? _jamaahPairingSub;
+
   void _clearData() {
     _simTimer?.cancel();
     _pairingsSub?.cancel();
+    _jamaahPairingSub?.cancel();
     for (var sub in _jamaahSubs.values) {
       sub.cancel();
     }
@@ -62,15 +65,44 @@ class HajiCareController extends GetxController {
     _role.value = roleStr == 'pendamping' ? UserRole.pendamping : UserRole.jamaah;
     
     if (_role.value == UserRole.pendamping) {
-      pendampingName.value = data['name'] as String? ?? 'Pendamping';
+      final currentUser = FirebaseAuth.instance.currentUser;
+      final rawName = data['name'] as String? ?? data['displayName'] as String?;
+      pendampingName.value = (rawName != null && rawName.trim().isNotEmpty)
+          ? rawName.trim()
+          : (currentUser?.displayName?.trim().isNotEmpty == true
+              ? currentUser!.displayName!.trim()
+              : 'Pendamping');
       _listenToPairings(uid);
     } else {
-      // If Jamaah, just listen to self doc
+      // If Jamaah, listen to self doc and pairing
       _self = JamaahData.fromFirestore(doc);
       jamaahList.value = [_self!];
       _listenToSelf(uid);
+      _listenToJamaahPairing(uid);
       _startSimulation(uid); // For simulation updates to Firestore
     }
+  }
+
+  void _listenToJamaahPairing(String jamaahId) {
+    _jamaahPairingSub?.cancel();
+    _jamaahPairingSub = FirebaseFirestore.instance
+        .collection('pairings')
+        .where('jamaahId', isEqualTo: jamaahId)
+        .limit(1)
+        .snapshots()
+        .listen((snap) async {
+      if (snap.docs.isNotEmpty) {
+        final pId = snap.docs.first['pendampingId'] as String?;
+        if (pId != null && pId.isNotEmpty) {
+          final pDoc = await FirebaseFirestore.instance.collection('users').doc(pId).get();
+          if (pDoc.exists) {
+            final pData = pDoc.data();
+            final name = (pData?['name'] as String?) ?? (pData?['displayName'] as String?) ?? 'Pendamping';
+            pendampingName.value = name;
+          }
+        }
+      }
+    });
   }
 
   void _listenToPairings(String pendampingId) {
@@ -134,8 +166,24 @@ class HajiCareController extends GetxController {
   JamaahData get self {
     if (_self != null) return _self!;
     if (jamaahList.isNotEmpty) return jamaahList.first;
-    // Fallback
-    return JamaahData(id: 'dummy', name: 'Loading', shortLabel: 'Load', distance: 0);
+    // Safe dynamic fallback from authenticated Firebase user
+    User? currentUser;
+    try {
+      currentUser = FirebaseAuth.instance.currentUser;
+    } catch (_) {
+      currentUser = null;
+    }
+    final fallbackName = currentUser?.displayName?.trim().isNotEmpty == true
+        ? currentUser!.displayName!.trim()
+        : (currentUser?.email?.trim().isNotEmpty == true
+            ? currentUser!.email!.split('@').first
+            : 'Jamaah');
+    return JamaahData(
+      id: currentUser?.uid ?? 'self',
+      name: fallbackName,
+      shortLabel: fallbackName.split(' ').first,
+      distance: 20,
+    );
   }
 
   bool get anySosActive => jamaahList.any((j) => j.sosActive);

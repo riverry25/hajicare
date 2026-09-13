@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/locales/app_translations.dart';
 import '../../../../core/models/jamaah_data.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -28,8 +29,23 @@ class JamaahDistanceCard extends StatelessWidget {
     }
   }
 
+  String _localizedTierLabel(BuildContext context, DistanceTier tier) {
+    switch (tier) {
+      case DistanceTier.aman:
+        return context.tr('statusSafe');
+      case DistanceTier.waspada:
+        return context.tr('statusWarning');
+      case DistanceTier.terlalujJauh:
+        return context.tr('statusDanger');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isDark = AppColors.isDark(context);
+    final headingColor = AppColors.textHeadingColor(context);
+    final bodyColor = AppColors.textBodyColor(context);
+
     return AppCard(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
@@ -41,11 +57,16 @@ class JamaahDistanceCard extends StatelessWidget {
               Container(
                 width: 40,
                 height: 40,
-                decoration: const BoxDecoration(
-                  color: AppColors.surfaceContainer,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.darkPrimaryContainer
+                      : AppColors.surfaceContainer,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.radar, color: AppColors.espressoDark),
+                child: Icon(
+                  Icons.radar,
+                  color: isDark ? AppColors.goldLight : AppColors.espressoDark,
+                ),
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
@@ -53,17 +74,17 @@ class JamaahDistanceCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Status Jarak ke Pendamping',
+                      context.tr('distanceToCompanion'),
                       style: AppTypography.caption.copyWith(
-                        color: AppColors.textBody,
+                        color: bodyColor,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 4,
                       children: [
                         Text(
                           '${jamaah.distance.toInt()}',
@@ -72,11 +93,10 @@ class JamaahDistanceCard extends StatelessWidget {
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                        const SizedBox(width: 4),
                         Text(
-                          'meter',
+                          context.tr('meterUnit'),
                           style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.textBody,
+                            color: bodyColor,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -86,7 +106,7 @@ class JamaahDistanceCard extends StatelessWidget {
                 ),
               ),
               AppStatusBadge(
-                label: jamaah.tier.label,
+                label: _localizedTierLabel(context, jamaah.tier),
                 statusType: _mapStatusType(jamaah.tier),
                 icon: jamaah.tier.icon,
               ),
@@ -97,7 +117,9 @@ class JamaahDistanceCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.pill),
             child: LinearProgressIndicator(
               value: (jamaah.distance / 200).clamp(0.0, 1.0),
-              backgroundColor: AppColors.surfaceVariant,
+              backgroundColor: isDark
+                  ? AppColors.darkSurfaceContainerHighest
+                  : AppColors.surfaceVariant,
               color: jamaah.tier.color,
               minHeight: 10,
             ),
@@ -122,9 +144,9 @@ class JamaahDistanceCard extends StatelessWidget {
                         const SizedBox(width: AppSpacing.sm),
                         Flexible(
                           child: Text(
-                            'Lihat Posisi Pendamping di Peta',
+                            context.tr('viewCompanionOnMap'),
                             style: AppTypography.labelLarge.copyWith(
-                              color: AppColors.espressoDark,
+                              color: headingColor,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -133,10 +155,10 @@ class JamaahDistanceCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const Icon(
+                  Icon(
                     Icons.arrow_forward_ios,
                     size: 14,
-                    color: AppColors.espressoDark,
+                    color: headingColor,
                   ),
                 ],
               ),
