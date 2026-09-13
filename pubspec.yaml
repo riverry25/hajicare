@@ -31,6 +31,8 @@ dependencies:
   firebase_storage: ^13.5.0
   image_picker: ^1.1.2
   get: ^4.7.3
+  tflite_flutter: ^0.12.1
+  image: ^4.9.2
 
 dev_dependencies:
   flutter_test:
@@ -39,5 +41,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
-  
+  assets:
+    - assets/models/best_float16.tflite
+    - assets/models/labels.txt
