@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../../core/state/app_startup_controller.dart';
 
 class RegisterController extends GetxController {
   final obscurePassword = true.obs;
@@ -60,6 +61,10 @@ class RegisterController extends GetxController {
       }
 
       await FirebaseFirestore.instance.collection('users').doc(uid).set(userPayload);
+
+      // Persist onboarding status & Remember Me setting
+      final startup = Get.find<AppStartupController>();
+      await startup.handleSuccessfulLogin(rememberMe: true);
 
       Get.offAllNamed(
         selectedRole.value == 'jamaah'

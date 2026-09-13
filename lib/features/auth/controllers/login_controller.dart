@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../../core/state/app_startup_controller.dart';
 
 class LoginController extends GetxController {
   final selectedRole = 'jamaah'.obs;
@@ -12,6 +13,19 @@ class LoginController extends GetxController {
 
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+
+  @override
+  void onInit() {
+    super.onInit();
+    _loadRememberMe();
+  }
+
+  Future<void> _loadRememberMe() async {
+    try {
+      final startup = Get.find<AppStartupController>();
+      rememberMe.value = await startup.isRememberMe();
+    } catch (_) {}
+  }
 
   void setRole(String role) {
     selectedRole.value = role;
@@ -41,6 +55,10 @@ class LoginController extends GetxController {
         email: emailController.text.trim(),
         password: passwordController.text,
       );
+
+      // Persist onboarding status & Remember Me setting
+      final startup = Get.find<AppStartupController>();
+      await startup.handleSuccessfulLogin(rememberMe: rememberMe.value);
       
       Get.offAllNamed(
         selectedRole.value == 'jamaah'

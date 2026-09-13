@@ -167,15 +167,16 @@ const Map<String, String> suTranslations = {
   'apakahYakinKeluar': 'Yakin badé kaluar tina akun?',
   'version': 'Versi 1.0.0',
 
-  // Profile Photo
-  'editPhoto': 'Robah Poto Profil',
-  'chooseFromGallery': 'Pilih tina Galeri',
-  'takePhoto': 'Potret Gambar',
-  'removePhoto': 'Hapus Poto',
-  'uploadingPhoto': 'Ngunggah poto...',
-  'photoUpdated': 'Poto profil hasil diperbarui',
-  'photoUploadError': 'Gagal ngunggah poto. Coba deui.',
-  'photoRemoved': 'Poto profil dihapus',
+  // Profil — Robah Ngaran
+  'editName': 'Robah Ngaran',
+  'editNameTitle': 'Robah Nami Pamaké',
+  'name': 'Ngaran',
+  'nameRequired': 'Ngaran teu meunang kosong',
+  'nameTooLong': 'Ngaran maksimal 50 karakter',
+  'nameUpdated': 'Ngaran hasil diropéa',
+  'updateNameError': 'Gagal ngapdet ngaran. Coba deui.',
+  'jamaah': 'Jamaah',
+  'preferenceSettings': 'Pilihan',
 
   // Help Center
   'helpCenterTitle': 'Pusat Bantuan',

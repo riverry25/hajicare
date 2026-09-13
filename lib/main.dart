@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routes/app_routes.dart';
 import 'core/state/app_settings_controller.dart';
+import 'core/state/app_startup_controller.dart';
 import 'core/state/hajicare_controller.dart';
 import 'core/locales/app_localizations.dart';
 
@@ -31,6 +32,7 @@ void main() async {
   // Register global permanent controllers before runApp.
   final settings = Get.put(AppSettingsController(), permanent: true);
   await settings.loadSettings();
+  Get.put(AppStartupController(), permanent: true);
   Get.put(HajiCareController(), permanent: true);
 
   runApp(const HajiCareApp());
