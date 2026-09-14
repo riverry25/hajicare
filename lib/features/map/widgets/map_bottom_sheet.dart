@@ -9,6 +9,7 @@ import '../../../../core/widgets/app_status_badge.dart';
 
 class MapBottomSheet extends StatelessWidget {
   final HajiCareState state;
+  final JamaahData? activeJamaah;
   final VoidCallback? onNavigate;
   final VoidCallback? onShareLocation;
   final VoidCallback? onCall;
@@ -18,6 +19,7 @@ class MapBottomSheet extends StatelessWidget {
   const MapBottomSheet({
     super.key,
     required this.state,
+    this.activeJamaah,
     this.onNavigate,
     this.onShareLocation,
     this.onCall,
@@ -26,7 +28,7 @@ class MapBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final jamaah = state.self;
+    final jamaah = activeJamaah ?? state.self;
 
     return Positioned(
       left: 0,

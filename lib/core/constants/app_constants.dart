@@ -39,4 +39,10 @@ class AppConstants {
   static const String supportEmail = 'support@hajicare.id';
   static const String supportWhatsApp = '+62000000000';
   static const String supportWhatsAppUrl = 'https://wa.me/62000000000';
+
+  // ── CARTO Configuration ───────────────────────────────────────────────────
+  static const String cartoApiKey = 'cb1_3juo_1_5f067ded7575ce8152ef26fc';
+  static const String cartoVoyagerUrl =
+      'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png?api_key=$cartoApiKey';
 }
+

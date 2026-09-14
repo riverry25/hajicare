@@ -12,6 +12,7 @@ import '../../../core/theme/app_typography.dart';
 import '../models/money_detection.dart';
 import '../services/money_tts_service.dart';
 import '../services/riyal_currency_helper.dart';
+import '../services/smart_multi_pass_detector.dart';
 
 /// State modes for photo-based money recognition.
 enum RecognitionMode {
@@ -34,14 +35,26 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
   // Single-image YOLO inference instance
   late final YOLO _yolo;
 
+  // Smart Multi-Pass Engine
+  late final SmartMultiPassDetector _multiPassDetector;
+
   // Indonesian TTS Service
   final MoneyTtsService _ttsService = MoneyTtsService();
 
   // Model Asset Configuration
   static const String _modelAssetPath = 'assets/models/best_float16.tflite';
 
+  // ---------------------------------------------------------------------------
+  // TUNABLE PIPELINE CONFIGURATION
+  // ---------------------------------------------------------------------------
+  static const double _finalConfidenceThreshold = 0.65;
+  static const double _candidateConfidenceThreshold = 0.50;
+  static const double _crossPassIoUThreshold = 0.50;
+  static const int _maxAdditionalPasses = 2;
+
   // UX State Machine
   RecognitionMode _mode = RecognitionMode.camera;
+  String _processingStatus = 'Memeriksa foto...';
 
   // Camera & Model State
   bool _isModelLoaded = false;
@@ -55,9 +68,6 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
   Size? _capturedImageSize;
   List<MoneyDetection> _capturedDetections = [];
   double _totalAmount = 0.0;
-
-  // Confidence threshold for valid detections (critical requirement >= 0.65)
-  final double _confidenceThreshold = 0.65;
 
   @override
   void initState() {
@@ -73,6 +83,17 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
         task: YOLOTask.detect,
       );
       final loaded = await _yolo.loadModel();
+
+      _multiPassDetector = SmartMultiPassDetector(
+        yolo: _yolo,
+        config: const MultiPassConfig(
+          finalConfidenceThreshold: _finalConfidenceThreshold,
+          candidateConfidenceThreshold: _candidateConfidenceThreshold,
+          crossPassIoUThreshold: _crossPassIoUThreshold,
+          maxAdditionalPasses: _maxAdditionalPasses,
+        ),
+      );
+
       if (mounted) {
         setState(() {
           _isModelLoaded = loaded;
@@ -97,7 +118,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
   }
 
   // ---------------------------------------------------------------------------
-  // PHOTO CAPTURE & SINGLE-IMAGE INFERENCE WORKFLOW
+  // PHOTO CAPTURE & SMART MULTI-PASS INFERENCE WORKFLOW
   // ---------------------------------------------------------------------------
 
   Future<void> _captureAndAnalyze() async {
@@ -117,6 +138,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
 
     setState(() {
       _mode = RecognitionMode.processing;
+      _processingStatus = 'Memeriksa foto...';
     });
 
     try {
@@ -150,42 +172,17 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
         decodedImage.height.toDouble(),
       );
 
-      // 4. Run single-image inference using official YOLO API
-      final Map<String, dynamic> inferenceResult = await _yolo.predict(
+      // 4. Run Smart Multi-Pass Pipeline (Pass 1 Baseline -> Pass 2 Enhanced -> Pass 3 Tiled -> IoU Merge)
+      final MultiPassDetectionResult result =
+          await _multiPassDetector.processImage(
         photoBytes,
-        confidenceThreshold: _confidenceThreshold,
-      );
-
-      // 5. Extract all detections without discarding duplicates
-      final rawDetections = (inferenceResult['detections'] as List?)
-              ?.map((d) => YOLOResult.fromMap(d as Map))
-              .toList() ??
-          [];
-
-      final List<MoneyDetection> validList = [];
-      for (final res in rawDetections) {
-        // Strict confidence filtering
-        if (res.confidence < _confidenceThreshold) continue;
-
-        final info = RiyalCurrencyHelper.getInfo(res.className);
-        if (info == null) continue;
-
-        validList.add(MoneyDetection(
-          className: res.className,
-          displayName: info.displayName,
-          spokenName: info.spokenName,
-          amount: info.amount,
-          confidence: res.confidence,
-          box: res.boundingBox,
-          normalizedBox: res.normalizedBox,
-          isCoin: info.isCoin,
-        ));
-      }
-
-      // 6. Calculate total nominal of all detected physical objects
-      final double total = validList.fold(
-        0.0,
-        (sum, item) => sum + item.amount,
+        onStatusUpdate: (status) {
+          if (mounted) {
+            setState(() {
+              _processingStatus = status;
+            });
+          }
+        },
       );
 
       if (!mounted) return;
@@ -193,13 +190,13 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
       setState(() {
         _capturedImageBytes = photoBytes;
         _capturedImageSize = imageSize;
-        _capturedDetections = validList;
-        _totalAmount = total;
+        _capturedDetections = result.finalDetections;
+        _totalAmount = result.totalAmount;
         _mode = RecognitionMode.result;
       });
 
-      // 7. Speak announcement once in Indonesian
-      await _ttsService.speakResults(validList, total);
+      // 5. Speak announcement once in Indonesian
+      await _ttsService.speakResults(result.finalDetections, result.totalAmount);
     } catch (e) {
       debugPrint('Capture and analyze failed: $e');
       if (!mounted) return;
@@ -306,7 +303,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
           else
             _buildCameraView(),
 
-          // 2. Processing Loading Overlay
+          // 2. Processing Loading Overlay with dynamic pass status
           if (_mode == RecognitionMode.processing)
             _buildProcessingOverlay(),
 
@@ -335,7 +332,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
             task: YOLOTask.detect,
             controller: _yoloController,
             lensFacing: _currentLens,
-            confidenceThreshold: _confidenceThreshold,
+            confidenceThreshold: _candidateConfidenceThreshold,
             onModelLoad: (path, task) {
               _yoloController.setShowOverlays(false);
               if (mounted) {
@@ -718,7 +715,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
               ),
               const SizedBox(height: AppSpacing.lg),
               Text(
-                'Memeriksa Uang...',
+                'Menganalisis Uang...',
                 style: AppTypography.titleLarge.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -726,7 +723,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'Sedang menganalisis nominal uang pada foto',
+                _processingStatus,
                 textAlign: TextAlign.center,
                 style: AppTypography.bodyMedium.copyWith(
                   color: Colors.white70,
