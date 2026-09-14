@@ -6,6 +6,7 @@ import '../../../../core/theme/app_spacing.dart';
 class MapFloatingControls extends StatelessWidget {
   final VoidCallback? onCompassTap;
   final VoidCallback? onLocationTap;
+  final VoidCallback? onFitAllTap;
   final VoidCallback? onLayersTap;
   final VoidCallback? onBandTap;
   final double compassRotation;
@@ -16,6 +17,7 @@ class MapFloatingControls extends StatelessWidget {
     super.key,
     this.onCompassTap,
     this.onLocationTap,
+    this.onFitAllTap,
     this.onLayersTap,
     this.onBandTap,
     this.compassRotation = 0.0,
@@ -70,6 +72,15 @@ class MapFloatingControls extends StatelessWidget {
                     size: 22,
                     color: isLiveTracking ? AppColors.surfaceWhite : AppColors.primary,
                   ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+
+          // Focus All Members
+          _buildControlButton(
+            icon: Icons.groups,
+            color: AppColors.primary,
+            tooltip: 'Fokus ke Semua Anggota',
+            onTap: onFitAllTap,
           ),
           const SizedBox(height: AppSpacing.sm),
 

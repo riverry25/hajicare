@@ -22,6 +22,7 @@ class HajiCareController extends GetxController {
   final activeRoomId = RxnString();
   final activeRoom = Rxn<RoomModel>();
   final activeRoomMembers = <RoomMemberModel>[].obs;
+  String? get currentUid => FirebaseAuth.instance.currentUser?.uid;
 
   final pendampingName = 'Pendamping Anda'.obs;
   JamaahData? _self;

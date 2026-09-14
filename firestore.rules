@@ -94,8 +94,15 @@ service cloud.firestore {
           )
         );
 
-        // Member update / delete: Admin only (or leaving room if supported)
-        allow update: if isAdmin();
+        // Member update: Admin or the member updating only currentLocation and locationUpdatedAt
+        allow update: if isAuthenticated() && (
+          isAdmin() ||
+          (
+            isUser(memberUid) &&
+            isMemberOfRoom(roomId) &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['currentLocation', 'locationUpdatedAt'])
+          )
+        );
         allow delete: if isAdmin() || isUser(memberUid);
       }
     }

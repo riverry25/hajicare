@@ -14,6 +14,9 @@ class MapTopHeader extends StatelessWidget {
   final ValueChanged<String>? onSearchChanged;
   final bool isLiveTracking;
   final double gpsAccuracy;
+  final String? roomName;
+  final String? memberSummary;
+  final String? nearestInfo;
 
   const MapTopHeader({
     super.key,
@@ -24,6 +27,9 @@ class MapTopHeader extends StatelessWidget {
     this.onSearchChanged,
     this.isLiveTracking = false,
     this.gpsAccuracy = 0.0,
+    this.roomName,
+    this.memberSummary,
+    this.nearestInfo,
   });
 
   @override
@@ -84,7 +90,7 @@ class MapTopHeader extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        ' • GPS 3m',
+                        ' • GPS ${gpsAccuracy > 0 ? '${gpsAccuracy.round()}m' : 'OK'}',
                         style: AppTypography.caption.copyWith(
                           color: AppColors.textBody,
                         ),
@@ -130,6 +136,76 @@ class MapTopHeader extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+
+            // Room status header (if room is active)
+            if (roomName != null && roomName!.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.xs),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceWhite,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(
+                    color: AppColors.goldLight.withValues(alpha: 0.6),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.meeting_room, size: 15, color: AppColors.primary),
+                        const SizedBox(width: 5),
+                        Text(
+                          'Room: $roomName',
+                          style: AppTypography.captionBold.copyWith(
+                            color: AppColors.espressoDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (memberSummary != null && memberSummary!.isNotEmpty)
+                      Text(
+                        memberSummary!,
+                        style: AppTypography.captionSmall.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+
+            // Legend & Nearest info row
+            Padding(
+              padding: const EdgeInsets.only(top: 4, bottom: 2),
+              child: Row(
+                children: [
+                  _buildLegendDot(AppColors.espressoDark, 'Anda'),
+                  const SizedBox(width: 10),
+                  _buildLegendDot(AppColors.accentGoldStar, 'Pendamping'),
+                  const SizedBox(width: 10),
+                  _buildLegendDot(AppColors.statusSafe, 'Jamaah'),
+                  if (nearestInfo != null && nearestInfo!.isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        nearestInfo!,
+                        style: AppTypography.captionSmall.copyWith(
+                          color: AppColors.textBody,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.end,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
             const SizedBox(height: AppSpacing.sm),
 
@@ -260,6 +336,30 @@ class MapTopHeader extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildLegendDot(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: AppTypography.captionSmall.copyWith(
+            color: AppColors.espressoDark,
+            fontSize: 10,
+          ),
+        ),
+      ],
     );
   }
 }

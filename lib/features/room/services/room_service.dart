@@ -194,6 +194,30 @@ class RoomService {
         .map((snap) => snap.docs.map((doc) => RoomMemberModel.fromFirestore(doc)).toList());
   }
 
+  /// Realtime stream alias for room members.
+  Stream<List<RoomMemberModel>> watchRoomMembers(String roomId) {
+    return getRoomMembersStream(roomId);
+  }
+
+  /// Updates current user's realtime location snapshot in their room member document.
+  Future<void> updateMemberLocation({
+    required String roomId,
+    required String uid,
+    required double latitude,
+    required double longitude,
+  }) async {
+    final memberDoc = _firestore
+        .collection('rooms')
+        .doc(roomId)
+        .collection('members')
+        .doc(uid);
+
+    await memberDoc.set({
+      'currentLocation': GeoPoint(latitude, longitude),
+      'locationUpdatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
   /// Fetches members list once.
   Future<List<RoomMemberModel>> getRoomMembers(String roomId) async {
     final snap = await _firestore

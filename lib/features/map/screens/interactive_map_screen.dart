@@ -1,27 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart' as fmap;
 import 'package:get/get.dart';
-
+import 'package:latlong2/latlong.dart';
 import '../../../core/models/filter_chip_item.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
-import '../../../core/services/app_alert_service.dart';
 import '../controllers/map_controller.dart';
 import '../widgets/location_detail_sheet.dart';
 import '../widgets/map_bottom_sheet.dart';
 import '../widgets/map_floating_controls.dart';
 import '../widgets/map_top_header.dart';
 
-/// Dynamic, production-ready interactive map screen for HajiCare.
-/// Powered by flutter_map with CartoDB/OpenStreetMap tiles, real geolocation,
-/// dynamic Jamaah & POI markers, route polyline, and safe radius visualization.
+/// Fullscreen Interactive Map screen powered by CartoDB/OSM and reactive GetX.
+/// Displays real-time GPS tracking of Jamaah and Pendamping within the same Room.
 class InteractiveMapScreen extends StatefulWidget {
   final bool showBottomNav;
-  const InteractiveMapScreen({super.key, this.showBottomNav = true});
+
+  const InteractiveMapScreen({
+    super.key,
+    this.showBottomNav = true,
+  });
 
   @override
   State<InteractiveMapScreen> createState() => _InteractiveMapScreenState();
@@ -32,15 +35,11 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
   late AnimationController _pulseController;
 
   final List<FilterChipItem> _filters = const [
-    FilterChipItem(
-      label: 'Jamaah (Ayah)',
-      icon: Icons.person_pin_circle,
-      isDefault: true,
-    ),
-    FilterChipItem(label: 'Semua'),
+    FilterChipItem(label: 'Semua', icon: Icons.grid_view, isDefault: true),
+    FilterChipItem(label: 'Jamaah', icon: Icons.person),
+    FilterChipItem(label: 'Pendamping', icon: Icons.shield),
+    FilterChipItem(label: 'Posko Medis', icon: Icons.medical_services),
     FilterChipItem(label: 'Toilet & Wudhu', icon: Icons.wc),
-    FilterChipItem(label: 'Posko Medis PPIH', icon: Icons.medical_services),
-    FilterChipItem(label: 'Tenda Maktab 48', icon: Icons.holiday_village),
   ];
 
   @override
@@ -73,7 +72,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
           // 1. Core Interactive Map Layer
           _buildInteractiveMap(state, mapCtrl),
 
-          // 2. Top Header with live GPS tracking status and filter chips
+          // 2. Top Header with live GPS tracking status, room status, legend, and filter chips
           Obx(
             () => MapTopHeader(
               filters: _filters,
@@ -82,17 +81,23 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
               onSosPressed: () => Get.toNamed(AppRoutes.modalSos),
               isLiveTracking: mapCtrl.isLiveTracking.value,
               gpsAccuracy: mapCtrl.gpsAccuracy.value,
+              roomName: mapCtrl.activeRoomName.value,
+              memberSummary: mapCtrl.roomMembers.isNotEmpty
+                  ? '${mapCtrl.jamaahMembers.length} Jamaah · ${mapCtrl.pendampingMembers.length} Pendamping'
+                  : null,
+              nearestInfo: mapCtrl.nearestMemberInfo,
             ),
           ),
 
-          // 3. Floating Quick Action Controls (Compass, MyLocation, Layers, Band)
+          // 3. Floating Quick Action Controls (Compass, MyLocation, Focus All, Layers, Band)
           Obx(
             () => MapFloatingControls(
               compassRotation: mapCtrl.compassRotation.value,
               isLocationLoading: mapCtrl.isLocationLoading.value,
               isLiveTracking: mapCtrl.isLiveTracking.value,
               onCompassTap: mapCtrl.resetCompass,
-              onLocationTap: mapCtrl.moveToCurrentLocation,
+              onLocationTap: mapCtrl.focusToMe,
+              onFitAllTap: mapCtrl.focusToAllMembers,
               onLayersTap: mapCtrl.toggleMapTileLayer,
               onBandTap: () => _showSmartBandDialog(context, state),
             ),
@@ -103,7 +108,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
             final selectedPoi = mapCtrl.selectedPoi.value;
             if (selectedPoi != null) {
               final userPos = mapCtrl.currentUserLocation.value ??
-                  mapCtrl.currentUserLocation.value ?? MapController.defaultMinaBase;
+                  MapController.defaultMinaBase;
               final dist = mapCtrl.calculateDistanceMeters(
                 userPos,
                 selectedPoi.coordinate,
@@ -124,10 +129,19 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
 
             return MapBottomSheet(
               state: state,
+              selectedMember: mapCtrl.selectedMember.value,
+              roomMembers: mapCtrl.filteredMembers,
+              getMemberDistanceText: mapCtrl.getMemberDistanceText,
+              onMemberTap: (m) => mapCtrl.selectMember(m),
+              onCloseMemberDetail: () => mapCtrl.clearSelection(),
               activeJamaah: mapCtrl.selectedJamaah.value,
               onNavigate: () {
-                final j = mapCtrl.selectedJamaah.value ?? state.self;
-                mapCtrl.selectJamaah(j);
+                if (mapCtrl.selectedMember.value != null) {
+                  mapCtrl.selectMember(mapCtrl.selectedMember.value!);
+                } else {
+                  final j = mapCtrl.selectedJamaah.value ?? state.self;
+                  mapCtrl.selectJamaah(j);
+                }
               },
               onShareLocation: () {
                 AppAlert.success(
@@ -140,7 +154,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                 AppAlert.info(
                   context,
                   title: 'Memanggil Kontak',
-                  message: 'Menghubungi nomor darurat jamaah...',
+                  message: 'Menghubungi nomor darurat anggota room...',
                 );
               },
               bottomOffset: widget.showBottomNav ? 84.0 : 0.0,
@@ -169,11 +183,11 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
   ) {
     return Obx(() {
       final center = mapCtrl.currentUserLocation.value ??
-          mapCtrl.currentUserLocation.value ?? MapController.defaultMinaBase;
+          MapController.defaultMinaBase;
       final tileUrl = mapCtrl.activeTileUrl.value;
       final routePoints = mapCtrl.activeRoute.toList();
       final userLocation = mapCtrl.currentUserLocation.value ??
-          mapCtrl.currentUserLocation.value ?? MapController.defaultMinaBase;
+          MapController.defaultMinaBase;
 
       return fmap.FlutterMap(
         mapController: mapCtrl.flutterMapController,
@@ -200,7 +214,8 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
           fmap.CircleLayer(
             circles: [
               fmap.CircleMarker(
-                point: mapCtrl.currentUserLocation.value ?? MapController.defaultMinaBase,
+                point: mapCtrl.currentUserLocation.value ??
+                    MapController.defaultMinaBase,
                 radius: mapCtrl.safeRadiusMeters.value,
                 useRadiusInMeter: true,
                 color: AppColors.statusSafe.withValues(alpha: 0.08),
@@ -214,13 +229,11 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
           if (routePoints.isNotEmpty)
             fmap.PolylineLayer(
               polylines: [
-                // Outer shadow line
                 fmap.Polyline(
                   points: routePoints,
                   strokeWidth: 6.0,
                   color: AppColors.espressoDark.withValues(alpha: 0.7),
                 ),
-                // Inner accent line
                 fmap.Polyline(
                   points: routePoints,
                   strokeWidth: 3.5,
@@ -232,7 +245,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
           // 4. Interactive Marker Layer
           fmap.MarkerLayer(
             markers: [
-              // Companion Marker ("Anda")
+              // Current User Marker ("Anda") - Exactly ONE
               fmap.Marker(
                 point: userLocation,
                 width: 130,
@@ -240,8 +253,11 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                 child: _buildCompanionMarker(),
               ),
 
-              // Jamaah Markers (Live from state)
-              ..._buildJamaahMarkers(state, mapCtrl),
+              // Room Member Markers (Filtered by role, strictly excluding current user)
+              if (mapCtrl.roomMembers.isNotEmpty)
+                ..._buildRoomMemberMarkers(mapCtrl)
+              else
+                ..._buildJamaahMarkers(state, mapCtrl),
 
               // Filtered POI Markers
               ..._buildPoiMarkers(mapCtrl),
@@ -343,12 +359,137 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
     );
   }
 
+  List<fmap.Marker> _buildRoomMemberMarkers(MapController mapCtrl) {
+    if (mapCtrl.selectedFilter.value > 2) {
+      return [];
+    }
+
+    final currentUid = mapCtrl.currentUserId;
+    final members = mapCtrl.filteredMembers;
+    final markers = <fmap.Marker>[];
+
+    for (final member in members) {
+      // 1. Never render current user twice! (Anti-duplication)
+      if (currentUid != null && member.uid == currentUid) {
+        continue;
+      }
+
+      // 2. Only render marker if member has actual GPS location
+      if (!member.hasLocation) {
+        continue;
+      }
+
+      final coord = LatLng(member.latitude!, member.longitude!);
+      final isSelected = mapCtrl.selectedMember.value?.uid == member.uid;
+      final isPendamping = member.isPendamping;
+      final markerColor = isPendamping
+          ? AppColors.accentGoldStar
+          : AppColors.statusSafe;
+      final distText = mapCtrl.getMemberDistanceText(member);
+
+      markers.add(
+        fmap.Marker(
+          point: coord,
+          width: 140,
+          height: 75,
+          child: GestureDetector(
+            onTap: () => mapCtrl.selectMember(member),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Callout Banner
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2.5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceWhite,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(
+                      color: isSelected ? AppColors.espressoDark : markerColor,
+                      width: isSelected ? 2.5 : 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.18),
+                        blurRadius: 5,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isPendamping ? Icons.shield : Icons.person,
+                        size: 12,
+                        color: markerColor,
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          member.name.split(' ').take(2).join(' '),
+                          style: AppTypography.captionBold.copyWith(
+                            color: AppColors.espressoDark,
+                            fontSize: 10,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        distText,
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          color: markerColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 2),
+
+                // Avatar Icon Pin
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceWhite,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected ? AppColors.espressoDark : markerColor,
+                      width: 2.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.2),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    isPendamping ? Icons.shield : Icons.person,
+                    color: markerColor,
+                    size: 18,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    return markers;
+  }
+
   List<fmap.Marker> _buildJamaahMarkers(
     HajiCareController state,
     MapController mapCtrl,
   ) {
-    // Only display if filter is Jamaah (0) or Semua (1)
-    if (mapCtrl.selectedFilter.value != 0 && mapCtrl.selectedFilter.value != 1) {
+    if (mapCtrl.selectedFilter.value > 2) {
       return [];
     }
 
@@ -367,7 +508,6 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Callout Banner
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
@@ -414,52 +554,28 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                 ),
               ),
               const SizedBox(height: 3),
-
-              // Avatar Circle
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceWhite,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: jamaah.tier.color,
-                        width: 2.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.25),
-                          blurRadius: 6,
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.person,
-                      color: AppColors.tanMedium,
-                      size: 20,
-                    ),
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceWhite,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: jamaah.tier.color,
+                    width: 2.5,
                   ),
-                  if (jamaah.sosActive)
-                    Positioned(
-                      top: -3,
-                      right: -3,
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: const BoxDecoration(
-                          color: AppColors.sosEmergency,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.warning,
-                          color: Colors.white,
-                          size: 10,
-                        ),
-                      ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.25),
+                      blurRadius: 6,
                     ),
-                ],
+                  ],
+                ),
+                child: const Icon(
+                  Icons.person,
+                  color: AppColors.tanMedium,
+                  size: 20,
+                ),
               ),
             ],
           ),
