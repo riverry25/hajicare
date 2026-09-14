@@ -51,20 +51,23 @@ class LoginController extends GetxController {
     }
 
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text,
       );
+
+      final uid = userCredential.user?.uid;
 
       // Persist onboarding status & Remember Me setting
       final startup = Get.find<AppStartupController>();
       await startup.handleSuccessfulLogin(rememberMe: rememberMe.value);
       
-      Get.offAllNamed(
-        selectedRole.value == 'jamaah'
-            ? AppRoutes.dashboardJamaah
-            : AppRoutes.dashboardPendamping,
-      );
+      if (uid != null) {
+        final destination = await startup.resolveUserRoleDestination(uid);
+        Get.offAllNamed(destination);
+      } else {
+        Get.offAllNamed(AppRoutes.login);
+      }
     } on FirebaseAuthException catch (e) {
       errorMessage.value = e.message ?? e.code;
       _showErrorSnackbar('Error Auth: ${errorMessage.value}');

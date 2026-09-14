@@ -19,6 +19,7 @@ import '../widgets/pendamping_greeting_header.dart';
 import '../widgets/pendamping_jamaah_selector.dart';
 import '../widgets/pendamping_radar_card.dart';
 import '../widgets/pendamping_sos_banner.dart';
+import '../../room/widgets/active_room_card.dart';
 
 class DashboardPendampingScreen extends StatelessWidget {
   const DashboardPendampingScreen({super.key});
@@ -135,6 +136,8 @@ class DashboardPendampingScreen extends StatelessWidget {
         ),
         children: [
           PendampingGreetingHeader(state: state),
+          const SizedBox(height: AppSpacing.md),
+          const ActiveRoomCard(isPendamping: true),
           const SizedBox(height: AppSpacing.lg),
           if (state.anyJamaahSeparated) _buildSeparatedBanner(context, state, isDark),
           PendampingJamaahSelector(

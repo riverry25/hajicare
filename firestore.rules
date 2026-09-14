@@ -1,0 +1,115 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isUser(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    function getUserData(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && getUserData(request.auth.uid).role == 'admin';
+    }
+
+    function isPendamping() {
+      return isAuthenticated() && getUserData(request.auth.uid).role == 'pendamping';
+    }
+
+    function isMemberOfRoom(roomId) {
+      return isAuthenticated() && (
+        isAdmin() ||
+        exists(/databases/$(database)/documents/rooms/$(roomId)/members/$(request.auth.uid))
+      );
+    }
+
+    // ── USERS COLLECTION ─────────────────────────────────────────────────────
+    match /users/{uid} {
+      // Authenticated users can read profiles for monitoring/member list
+      allow read: if isAuthenticated();
+
+      // Users can create their own profile on registration
+      allow create: if isUser(uid);
+
+      // Users can update their profile fields (distance, SOS, name, etc.)
+      // Prevent ordinary users from altering their own role.
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        (
+          isUser(uid) &&
+          request.resource.data.role == resource.data.role
+        ) ||
+        // Allow pendamping to assign activeRoomId to a jamaah when adding them to the room
+        (
+          isPendamping() &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['activeRoomId'])
+        )
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // ── ROOMS COLLECTION ─────────────────────────────────────────────────────
+    match /rooms/{roomId} {
+      // Any authenticated user can read room metadata for validation / join
+      allow read: if isAuthenticated();
+
+      // Only admin can create, update, or delete rooms
+      allow create: if isAdmin() &&
+                    request.resource.data.name is string &&
+                    request.resource.data.code is string &&
+                    request.resource.data.isActive is bool;
+
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+
+      // ── ROOM MEMBERS SUBCOLLECTION ──────────────────────────────────────────
+      match /members/{memberUid} {
+        // Members of the room and admins can read member listings
+        allow read: if isMemberOfRoom(roomId);
+
+        // Membership creation:
+        // 1. Admin
+        // 2. Self-join: authenticated user adding themselves to an active room
+        // 3. Pendamping of this room adding an unassigned jamaah
+        allow create: if isAuthenticated() && (
+          isAdmin() ||
+          (
+            isUser(memberUid) &&
+            get(/databases/$(database)/documents/rooms/$(roomId)).data.isActive == true &&
+            request.resource.data.role in ['pendamping', 'jamaah']
+          ) ||
+          (
+            isPendamping() &&
+            isMemberOfRoom(roomId) &&
+            request.resource.data.role == 'jamaah'
+          )
+        );
+
+        // Member update / delete: Admin only (or leaving room if supported)
+        allow update: if isAdmin();
+        allow delete: if isAdmin() || isUser(memberUid);
+      }
+    }
+
+    // ── SOS EVENTS ───────────────────────────────────────────────────────────
+    match /sos_events/{eventId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+
+    // ── LEGACY PAIRINGS (Graceful transition) ─────────────────────────────────
+    match /pairings/{pairingId} {
+      allow read, write: if isAuthenticated();
+    }
+  }
+}

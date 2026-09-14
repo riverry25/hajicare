@@ -84,4 +84,12 @@ class AppTypography {
   static TextStyle get bodySm => bodySmall;
   static TextStyle get labelPill => labelLarge;
   static TextStyle get captionBold => captionSmall;
+
+  // Room feature aliases
+  static TextStyle get headlineMedium => titleLarge;    // 16px w700
+  static TextStyle get headlineLarge => displayMedium;  // 20px w700
+  static TextStyle get titleSmall => titleMedium;       // 14px w600
+  static TextStyle get labelMedium => bodySmall;        // 12px w500
+  static TextStyle get displaySmall => displayMedium;   // 20px w700
+  static TextStyle get button => titleMedium;           // 14px w600
 }

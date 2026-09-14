@@ -1,0 +1,4 @@
+﻿# NEVER commit this file — contains Firebase private key
+service-account.json
+
+node_modules/

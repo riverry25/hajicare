@@ -5,7 +5,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 import '../models/jamaah_data.dart';
+import '../../features/room/models/room_model.dart';
+import '../../features/room/models/room_member_model.dart';
+
 export '../models/jamaah_data.dart';
+export '../../features/room/models/room_model.dart';
+export '../../features/room/models/room_member_model.dart';
 
 class HajiCareController extends GetxController {
   final _role = UserRole.jamaah.obs;
@@ -13,11 +18,20 @@ class HajiCareController extends GetxController {
 
   final jamaahList = <JamaahData>[].obs;
   
+  // Room Reactive State
+  final activeRoomId = RxnString();
+  final activeRoom = Rxn<RoomModel>();
+  final activeRoomMembers = <RoomMemberModel>[].obs;
+
   final pendampingName = 'Pendamping Anda'.obs;
   JamaahData? _self;
 
   StreamSubscription? _authSub;
+  StreamSubscription? _userDocSub;
+  StreamSubscription? _roomDocSub;
+  StreamSubscription? _roomMembersSub;
   StreamSubscription? _pairingsSub;
+  StreamSubscription? _jamaahPairingSub;
   final Map<String, StreamSubscription> _jamaahSubs = {};
   Timer? _simTimer;
   final Random _rng = Random();
@@ -42,10 +56,11 @@ class HajiCareController extends GetxController {
     }
   }
 
-  StreamSubscription? _jamaahPairingSub;
-
   void _clearData() {
     _simTimer?.cancel();
+    _userDocSub?.cancel();
+    _roomDocSub?.cancel();
+    _roomMembersSub?.cancel();
     _pairingsSub?.cancel();
     _jamaahPairingSub?.cancel();
     for (var sub in _jamaahSubs.values) {
@@ -53,67 +68,114 @@ class HajiCareController extends GetxController {
     }
     _jamaahSubs.clear();
     jamaahList.clear();
+    activeRoomMembers.clear();
+    activeRoomId.value = null;
+    activeRoom.value = null;
     _self = null;
   }
 
   Future<void> _loadUserData(String uid) async {
-    final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-    if (!doc.exists) return;
-    
-    final data = doc.data()!;
-    final roleStr = data['role'] as String? ?? 'jamaah';
-    _role.value = roleStr == 'pendamping' ? UserRole.pendamping : UserRole.jamaah;
-    
-    if (_role.value == UserRole.pendamping) {
-      final currentUser = FirebaseAuth.instance.currentUser;
-      final rawName = data['name'] as String? ?? data['displayName'] as String?;
-      pendampingName.value = (rawName != null && rawName.trim().isNotEmpty)
-          ? rawName.trim()
-          : (currentUser?.displayName?.trim().isNotEmpty == true
-              ? currentUser!.displayName!.trim()
-              : 'Pendamping');
-      _listenToPairings(uid);
-    } else {
-      // If Jamaah, listen to self doc and pairing
-      _self = JamaahData.fromFirestore(doc);
-      jamaahList.value = [_self!];
-      _listenToSelf(uid);
-      _listenToJamaahPairing(uid);
-      _startSimulation(uid); // For simulation updates to Firestore
+    _userDocSub?.cancel();
+    try {
+      _userDocSub = FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .snapshots()
+          .listen((doc) {
+        if (!doc.exists) return;
+        final data = doc.data()!;
+        final roleStr = (data['role'] as String?)?.toLowerCase() ?? 'jamaah';
+
+        if (roleStr == 'admin') {
+          _role.value = UserRole.admin;
+        } else if (roleStr == 'pendamping') {
+          _role.value = UserRole.pendamping;
+        } else {
+          _role.value = UserRole.jamaah;
+        }
+
+        final currentRoomId = data['activeRoomId'] as String?;
+        if (currentRoomId != activeRoomId.value) {
+          activeRoomId.value = currentRoomId;
+          if (currentRoomId != null && currentRoomId.isNotEmpty) {
+            _listenToActiveRoom(currentRoomId, uid);
+          } else {
+            _clearRoomListeners();
+          }
+        }
+
+        if (_role.value == UserRole.pendamping) {
+          final currentUser = FirebaseAuth.instance.currentUser;
+          final rawName = data['name'] as String? ?? data['displayName'] as String?;
+          pendampingName.value = (rawName != null && rawName.trim().isNotEmpty)
+              ? rawName.trim()
+              : (currentUser?.displayName?.trim().isNotEmpty == true
+                  ? currentUser!.displayName!.trim()
+                  : 'Pendamping');
+        } else if (_role.value == UserRole.jamaah) {
+          _self = JamaahData.fromFirestore(doc);
+          if (jamaahList.isEmpty || !jamaahList.any((j) => j.id == uid)) {
+            jamaahList.value = [_self!];
+          }
+          _listenToSelf(uid);
+          _startSimulation(uid);
+        }
+      });
+    } catch (e) {
+      debugPrint('[HajiCareController] Error loading user doc: $e');
     }
   }
 
-  void _listenToJamaahPairing(String jamaahId) {
-    _jamaahPairingSub?.cancel();
-    _jamaahPairingSub = FirebaseFirestore.instance
-        .collection('pairings')
-        .where('jamaahId', isEqualTo: jamaahId)
-        .limit(1)
-        .snapshots()
-        .listen((snap) async {
-      if (snap.docs.isNotEmpty) {
-        final pId = snap.docs.first['pendampingId'] as String?;
-        if (pId != null && pId.isNotEmpty) {
-          final pDoc = await FirebaseFirestore.instance.collection('users').doc(pId).get();
-          if (pDoc.exists) {
-            final pData = pDoc.data();
-            final name = (pData?['name'] as String?) ?? (pData?['displayName'] as String?) ?? 'Pendamping';
-            pendampingName.value = name;
-          }
-        }
+  void _clearRoomListeners() {
+    _roomDocSub?.cancel();
+    _roomMembersSub?.cancel();
+    activeRoom.value = null;
+    activeRoomMembers.clear();
+    if (_role.value == UserRole.pendamping) {
+      for (var sub in _jamaahSubs.values) {
+        sub.cancel();
       }
-    });
+      _jamaahSubs.clear();
+      jamaahList.clear();
+    }
   }
 
-  void _listenToPairings(String pendampingId) {
-    _pairingsSub?.cancel();
-    _pairingsSub = FirebaseFirestore.instance
-        .collection('pairings')
-        .where('pendampingId', isEqualTo: pendampingId)
+  void _listenToActiveRoom(String roomId, String currentUid) {
+    _roomDocSub?.cancel();
+    _roomDocSub = FirebaseFirestore.instance
+        .collection('rooms')
+        .doc(roomId)
+        .snapshots()
+        .listen((doc) {
+      if (doc.exists) {
+        activeRoom.value = RoomModel.fromFirestore(doc);
+      }
+    });
+
+    _roomMembersSub?.cancel();
+    _roomMembersSub = FirebaseFirestore.instance
+        .collection('rooms')
+        .doc(roomId)
+        .collection('members')
         .snapshots()
         .listen((snap) {
-      final jamaahIds = snap.docs.map((d) => d['jamaahId'] as String).toList();
-      _syncJamaahListeners(jamaahIds);
+      final members = snap.docs.map((d) => RoomMemberModel.fromFirestore(d)).toList();
+      activeRoomMembers.value = members;
+
+      if (_role.value == UserRole.pendamping) {
+        // Find only jamaah member UIDs for monitoring
+        final jamaahUids = members
+            .where((m) => m.isJamaah)
+            .map((m) => m.uid)
+            .toList();
+        _syncJamaahListeners(jamaahUids);
+      } else if (_role.value == UserRole.jamaah) {
+        // Resolve pendamping name from room members
+        final pendampingMember = members.firstWhereOrNull((m) => m.isPendamping);
+        if (pendampingMember != null) {
+          pendampingName.value = pendampingMember.name;
+        }
+      }
     });
   }
 
@@ -158,7 +220,15 @@ class HajiCareController extends GetxController {
         .listen((doc) {
       if (doc.exists) {
         _self = JamaahData.fromFirestore(doc);
-        jamaahList.value = [_self!];
+        if (_role.value == UserRole.jamaah) {
+          final index = jamaahList.indexWhere((j) => j.id == uid);
+          if (index >= 0) {
+            jamaahList[index] = _self!;
+          } else {
+            jamaahList.add(_self!);
+          }
+          jamaahList.refresh();
+        }
       }
     });
   }
@@ -213,6 +283,7 @@ class HajiCareController extends GetxController {
     // Create SOS event
     await FirebaseFirestore.instance.collection('sos_events').add({
       'userId': user.uid,
+      'roomId': activeRoomId.value,
       'timestamp': FieldValue.serverTimestamp(),
       'status': 'active',
     });
