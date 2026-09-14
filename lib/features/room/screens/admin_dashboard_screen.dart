@@ -6,18 +6,70 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/bottom_nav_bar.dart';
+import '../../../core/widgets/hajicare_header.dart';
+import '../../dashboard/controllers/dashboard_controller.dart';
+import '../../map/screens/interactive_map_screen.dart';
+import '../../prayer/screens/prayer_times_screen.dart';
+import '../../profile/screens/profile_screen.dart';
 import '../controllers/admin_room_controller.dart';
 import '../models/activity_model.dart';
 import '../models/room_model.dart';
 
+/// Shell screen for Admin HajiCare.
+/// Follows the exact same navigation architecture as [DashboardJamaahScreen]
+/// and [DashboardPendampingScreen], using [IndexedStack] and [HajiCareBottomNavBar].
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(AdminRoomController());
+    final dashboardCtrl = Get.isRegistered<DashboardController>()
+        ? Get.find<DashboardController>()
+        : Get.put(DashboardController());
+    final controller = Get.isRegistered<AdminRoomController>()
+        ? Get.find<AdminRoomController>()
+        : Get.put(AdminRoomController());
+
+    return Obx(() {
+      return Scaffold(
+        backgroundColor: AppColors.scaffoldColor(context),
+        extendBody: true,
+        body: IndexedStack(
+          index: dashboardCtrl.currentIndex.value,
+          children: [
+            _AdminDashboardHome(
+              controller: controller,
+              dashboardCtrl: dashboardCtrl,
+            ),
+            const InteractiveMapScreen(showBottomNav: false),
+            const PrayerTimesScreen(showBottomNav: false),
+            const ProfileScreen(showBottomNav: false),
+          ],
+        ),
+        bottomNavigationBar: HajiCareBottomNavBar(
+          currentIndex: dashboardCtrl.currentIndex.value,
+          onTap: dashboardCtrl.changeTab,
+        ),
+      );
+    });
+  }
+}
+
+/// Operational Command Center Home View for Admin (Tab 0).
+class _AdminDashboardHome extends StatelessWidget {
+  final AdminRoomController controller;
+  final DashboardController dashboardCtrl;
+
+  const _AdminDashboardHome({
+    required this.controller,
+    required this.dashboardCtrl,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
-    final scaffoldBg = isDark ? AppColors.darkScaffold : AppColors.canvasCream;
+    final scaffoldBg = AppColors.scaffoldColor(context);
     final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
     final headingColor = isDark ? AppColors.darkTextHeading : AppColors.espressoDark;
     final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
@@ -25,31 +77,43 @@ class AdminDashboardScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: scaffoldBg,
-      appBar: AppBar(
-        backgroundColor: scaffoldBg,
-        elevation: 0,
-        centerTitle: false,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Admin Dashboard',
-              style: AppTypography.headlineMedium.copyWith(
-                color: headingColor,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              'Assalamu\'alaikum, Admin',
-              style: AppTypography.captionSmall.copyWith(
-                color: bodyColor,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
+      appBar: HajiCareHeader(
+        title: 'HajiCare',
+        subtitle: 'Command Center',
+        icon: Icons.shield_rounded,
         actions: [
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                icon: Icon(Icons.notifications_outlined, color: headingColor),
+                tooltip: 'Notifikasi',
+                onPressed: () => Get.toNamed(AppRoutes.notification),
+              ),
+              Obx(() {
+                if (controller.activeSosCount.value > 0) {
+                  return Positioned(
+                    top: 10,
+                    right: 10,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: AppColors.sosEmergency,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDark ? AppColors.darkScaffold : AppColors.canvasCream,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              }),
+            ],
+          ),
           IconButton(
             constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
             icon: const Icon(Icons.logout_rounded),
@@ -57,7 +121,7 @@ class AdminDashboardScreen extends StatelessWidget {
             tooltip: 'Keluar Admin',
             onPressed: () => controller.promptSignOut(context),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.xs),
         ],
       ),
       body: Obx(() {
@@ -84,34 +148,36 @@ class AdminDashboardScreen extends StatelessWidget {
             await Future.delayed(const Duration(milliseconds: 600));
           },
           child: ListView(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.screenEdgeGutter,
-              vertical: AppSpacing.sm,
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.screenEdgeGutter,
+              AppSpacing.sm,
+              AppSpacing.screenEdgeGutter,
+              100, // Inset for floating HajiCareBottomNavBar
             ),
             children: [
-              // 1. Welcome Card
-              _buildWelcomeCard(isDark, primaryColor, headingColor, bodyColor),
+              // 1. Welcome Card (Styled after Login Welcome Banner)
+              _buildWelcomeCard(context, isDark),
               const SizedBox(height: AppSpacing.md),
 
-              // 2. Status Pantauan Card (Operational Status Banner)
-              _buildStatusPantauanCard(context, controller, isDark, headingColor, bodyColor),
+              // 2. Command Center / System Status Banner
+              _buildStatusPantauanCard(context, isDark, headingColor, bodyColor),
               const SizedBox(height: AppSpacing.md),
 
-              // 3. KPI Grid (4 Metrics: Room Aktif, Total Jamaah, Pendamping, Alert Aktif)
-              _buildKpiGrid(controller, cardBg, headingColor, bodyColor),
+              // 3. Overview KPI (Adaptive, text-scale safe)
+              _buildKpiOverview(context, cardBg, headingColor, bodyColor),
               const SizedBox(height: AppSpacing.lg),
 
               // 4. Quick Actions (Aksi Cepat)
-              _buildQuickActions(context, controller, isDark, cardBg, headingColor, primaryColor),
+              _buildQuickActions(context, isDark, cardBg, headingColor, primaryColor),
               const SizedBox(height: AppSpacing.lg),
 
-              // 5. Room Pantau (Recent Active Rooms)
-              _buildRoomPantauSection(context, controller, isDark, cardBg, headingColor, bodyColor, primaryColor),
+              // 5. Room Pantau
+              _buildRoomPantauSection(context, isDark, cardBg, headingColor, bodyColor, primaryColor),
               const SizedBox(height: AppSpacing.lg),
 
-              // 6. Aktivitas Terbaru (Activity Feed)
-              _buildRecentActivitiesSection(controller, cardBg, headingColor, bodyColor, primaryColor),
-              const SizedBox(height: 32),
+              // 6. Aktivitas Terbaru
+              _buildRecentActivitiesSection(context, cardBg, headingColor, bodyColor, primaryColor),
+              const SizedBox(height: AppSpacing.md),
             ],
           ),
         );
@@ -119,61 +185,145 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  // ── 1. Welcome Card ────────────────────────────────────────────────────────
-  Widget _buildWelcomeCard(
-    bool isDark,
-    Color primaryColor,
-    Color headingColor,
-    Color bodyColor,
-  ) {
-    return AppCard(
-      backgroundColor: isDark
-          ? AppColors.darkPrimaryContainer.withValues(alpha: 0.35)
-          : AppColors.primaryGold.withValues(alpha: 0.12),
-      borderColor: primaryColor.withValues(alpha: 0.35),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm + 4),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
+  // ── 1. Welcome Banner Card ──────────────────────────────────────────────────
+  Widget _buildWelcomeCard(BuildContext context, bool isDark) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.espressoDark,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.1)
+              : AppColors.goldLight.withValues(alpha: 0.25),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (isDark ? Colors.black : AppColors.espressoDark).withValues(alpha: 0.16),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Stack(
+        clipBehavior: Clip.antiAlias,
+        children: [
+          // Ambient decorative circles
+          Positioned(
+            right: -25,
+            top: -35,
+            child: Container(
+              width: 120,
+              height: 120,
               decoration: BoxDecoration(
-                color: primaryColor.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
+                color: AppColors.primaryGold.withValues(alpha: isDark ? 0.08 : 0.12),
               ),
-              child: Icon(Icons.shield_rounded, color: primaryColor, size: 26),
             ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Command Center Operasional',
-                    style: AppTypography.titleSmall.copyWith(
-                      color: headingColor,
-                      fontWeight: FontWeight.bold,
+          ),
+          Positioned(
+            right: 40,
+            bottom: -45,
+            child: Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.goldLight.withValues(alpha: isDark ? 0.05 : 0.08),
+              ),
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Portal Administrator Pill
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(
+                      color: AppColors.goldLight.withValues(alpha: 0.25),
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Pantau seluruh operasional HajiCare.',
-                    style: AppTypography.captionSmall.copyWith(color: bodyColor),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.shield_rounded,
+                        size: 13,
+                        color: AppColors.accentGoldStar,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'COMMAND CENTER OPERASIONAL',
+                        style: AppTypography.captionSmall.copyWith(
+                          color: AppColors.goldLight,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.6,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: AppSpacing.sm + 4),
+
+                // Main Dashboard Title
+                Text(
+                  'Admin Dashboard',
+                  style: AppTypography.titleLarge.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+
+                // Subtitle
+                Text(
+                  'Assalamu\'alaikum, Admin. Pantau seluruh aktivitas dan keselamatan jamaah secara realtime.',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: Colors.white.withValues(alpha: 0.82),
+                    height: 1.35,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+
+                // Live Sync Status
+                Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF4CAF50),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Live Sync Terhubung',
+                      style: AppTypography.captionSmall.copyWith(
+                        color: const Color(0xFF81C784),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  // ── 2. Status Pantauan Card ────────────────────────────────────────────────
+  // ── 2. Command Center / Status Pantauan Card ───────────────────────────────
   Widget _buildStatusPantauanCard(
     BuildContext context,
-    AdminRoomController controller,
     bool isDark,
     Color headingColor,
     Color bodyColor,
@@ -182,6 +332,7 @@ class AdminDashboardScreen extends StatelessWidget {
     final hasSos = sosCount > 0;
     final jamaahCount = controller.totalJamaah.value;
     final pendampingCount = controller.totalPendamping.value;
+    final activeRooms = controller.activeRoomsCount;
 
     final bgColor = hasSos
         ? (isDark ? const Color(0xFF3B1518) : const Color(0xFFFDE8E8))
@@ -196,16 +347,16 @@ class AdminDashboardScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Status Header Row
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Status badge — flexible so long text never forces overflow
-                Flexible(
+                Expanded(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: (hasSos ? AppColors.sosEmergency : AppColors.statusSafe)
-                          .withValues(alpha: 0.18),
+                          .withValues(alpha: 0.16),
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                     child: Row(
@@ -214,10 +365,10 @@ class AdminDashboardScreen extends StatelessWidget {
                         Icon(
                           hasSos ? Icons.warning_rounded : Icons.check_circle_rounded,
                           color: hasSos ? AppColors.sosEmergency : AppColors.statusSafe,
-                          size: 15,
+                          size: 16,
                         ),
-                        const SizedBox(width: 5),
-                        Flexible(
+                        const SizedBox(width: 6),
+                        Expanded(
                           child: Text(
                             hasSos
                                 ? '$sosCount SOS MEMERLUKAN TINDAKAN'
@@ -237,51 +388,77 @@ class AdminDashboardScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Action button — only shown when SOS active
-                if (hasSos) ...
-                  [
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () => Get.toNamed(AppRoutes.interactiveMap),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: AppColors.sosEmergency,
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text(
-                              'Lihat',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            const Icon(
-                              Icons.arrow_forward_rounded,
+                if (hasSos) ...[
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: () => dashboardCtrl.changeTab(1), // Switch to Map Tab
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    child: Container(
+                      constraints: const BoxConstraints(minWidth: 44, minHeight: 36),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.sosEmergency,
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Peta',
+                            style: TextStyle(
                               color: Colors.white,
-                              size: 13,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
                             ),
-                          ],
-                        ),
+                          ),
+                          SizedBox(width: 4),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            color: Colors.white,
+                            size: 14,
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
+
+            // Description text
             Text(
               hasSos
-                  ? 'Terdeteksi sinyal darurat aktif dari jamaah. Harap segera koordinasikan dengan pendamping.'
-                  : '$jamaahCount jamaah terhubung dan $pendampingCount pendamping aktif memantau lapangan dengan aman.',
+                  ? 'Terdeteksi sinyal darurat aktif dari jamaah. Harap segera lakukan tindakan atau arahkan pendamping.'
+                  : 'Seluruh sistem aman. Jamaah dan pendamping terhubung dalam pengawasan Command Center.',
               style: AppTypography.bodySmall.copyWith(
                 color: headingColor,
                 height: 1.35,
               ),
+            ),
+            const SizedBox(height: AppSpacing.sm + 2),
+
+            // Summary metrics wrap
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                _buildMiniBadge(
+                  icon: Icons.groups_rounded,
+                  label: '$jamaahCount Jamaah',
+                  color: const Color(0xFF2E7D32),
+                ),
+                _buildMiniBadge(
+                  icon: Icons.health_and_safety_rounded,
+                  label: '$pendampingCount Pendamping',
+                  color: const Color(0xFF1976D2),
+                ),
+                _buildMiniBadge(
+                  icon: Icons.meeting_room_rounded,
+                  label: '$activeRooms Room Aktif',
+                  color: AppColors.accentGoldStar,
+                ),
+              ],
             ),
           ],
         ),
@@ -289,66 +466,122 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  // ── 3. KPI Grid ────────────────────────────────────────────────────────────
-  Widget _buildKpiGrid(
-    AdminRoomController controller,
+  Widget _buildMiniBadge({
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: AppTypography.captionSmall.copyWith(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── 3. Overview KPI Grid (Adaptive & Text-Scale Resilient) ──────────────────
+  Widget _buildKpiOverview(
+    BuildContext context,
     Color cardBg,
     Color headingColor,
     Color bodyColor,
   ) {
     final activeRooms = controller.activeRoomsCount;
+    final totalRooms = controller.rooms.length;
     final totalJamaah = controller.totalJamaah.value;
     final totalPendamping = controller.totalPendamping.value;
     final activeSos = controller.activeSosCount.value;
 
-    return GridView.count(
-      crossAxisCount: 2,
-      crossAxisSpacing: AppSpacing.sm + 4,
-      mainAxisSpacing: AppSpacing.sm + 4,
-      childAspectRatio: 1.6,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _KpiMetricCard(
-          title: 'Room Aktif',
-          value: '$activeRooms',
-          subtitle: 'dari ${controller.rooms.length} room',
-          icon: Icons.meeting_room_rounded,
-          color: AppColors.accentGoldStar,
-          cardBg: cardBg,
-          headingColor: headingColor,
-          bodyColor: bodyColor,
+        Text(
+          'Overview Operasional',
+          style: AppTypography.titleMedium.copyWith(
+            color: headingColor,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        _KpiMetricCard(
-          title: 'Total Jamaah',
-          value: '$totalJamaah',
-          subtitle: 'terdaftar di sistem',
-          icon: Icons.groups_rounded,
-          color: const Color(0xFF2E7D32),
-          cardBg: cardBg,
-          headingColor: headingColor,
-          bodyColor: bodyColor,
+        const SizedBox(height: AppSpacing.sm),
+
+        // Row 1: Room Aktif & Total Jamaah
+        Row(
+          children: [
+            Expanded(
+              child: _KpiMetricCard(
+                title: 'Room Aktif',
+                value: '$activeRooms',
+                subtitle: 'dari $totalRooms room',
+                icon: Icons.meeting_room_rounded,
+                color: AppColors.accentGoldStar,
+                cardBg: cardBg,
+                headingColor: headingColor,
+                bodyColor: bodyColor,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: _KpiMetricCard(
+                title: 'Total Jamaah',
+                value: '$totalJamaah',
+                subtitle: 'terdaftar di sistem',
+                icon: Icons.groups_rounded,
+                color: const Color(0xFF2E7D32),
+                cardBg: cardBg,
+                headingColor: headingColor,
+                bodyColor: bodyColor,
+              ),
+            ),
+          ],
         ),
-        _KpiMetricCard(
-          title: 'Pendamping',
-          value: '$totalPendamping',
-          subtitle: 'petugas aktif',
-          icon: Icons.health_and_safety_rounded,
-          color: const Color(0xFF1976D2),
-          cardBg: cardBg,
-          headingColor: headingColor,
-          bodyColor: bodyColor,
-        ),
-        _KpiMetricCard(
-          title: 'Alert Aktif',
-          value: '$activeSos',
-          subtitle: activeSos > 0 ? 'Perlu tindakan!' : 'Kondisi aman',
-          icon: activeSos > 0 ? Icons.warning_rounded : Icons.verified_user_rounded,
-          color: activeSos > 0 ? AppColors.sosEmergency : AppColors.statusSafe,
-          isHighlighted: activeSos > 0,
-          cardBg: cardBg,
-          headingColor: headingColor,
-          bodyColor: bodyColor,
+        const SizedBox(height: AppSpacing.sm),
+
+        // Row 2: Pendamping & Alert Aktif
+        Row(
+          children: [
+            Expanded(
+              child: _KpiMetricCard(
+                title: 'Pendamping',
+                value: '$totalPendamping',
+                subtitle: 'petugas aktif',
+                icon: Icons.health_and_safety_rounded,
+                color: const Color(0xFF1976D2),
+                cardBg: cardBg,
+                headingColor: headingColor,
+                bodyColor: bodyColor,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: _KpiMetricCard(
+                title: 'Alert Aktif',
+                value: '$activeSos',
+                subtitle: activeSos > 0 ? 'Perlu tindakan!' : 'Kondisi aman',
+                icon: activeSos > 0 ? Icons.warning_rounded : Icons.verified_user_rounded,
+                color: activeSos > 0 ? AppColors.sosEmergency : AppColors.statusSafe,
+                isHighlighted: activeSos > 0,
+                cardBg: cardBg,
+                headingColor: headingColor,
+                bodyColor: bodyColor,
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -357,7 +590,6 @@ class AdminDashboardScreen extends StatelessWidget {
   // ── 4. Quick Actions ───────────────────────────────────────────────────────
   Widget _buildQuickActions(
     BuildContext context,
-    AdminRoomController controller,
     bool isDark,
     Color cardBg,
     Color headingColor,
@@ -374,6 +606,8 @@ class AdminDashboardScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.sm),
+
+        // Row 1: Buat Room (Primary) & Kelola Jamaah
         Row(
           children: [
             Expanded(
@@ -381,6 +615,7 @@ class AdminDashboardScreen extends StatelessWidget {
                 label: 'Buat Room',
                 icon: Icons.add_business_rounded,
                 color: primaryColor,
+                isPrimary: true,
                 cardBg: cardBg,
                 headingColor: headingColor,
                 onTap: () => _showCreateRoomSheet(context, controller),
@@ -400,6 +635,8 @@ class AdminDashboardScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.sm),
+
+        // Row 2: Pantau Map & Lihat Alert
         Row(
           children: [
             Expanded(
@@ -409,7 +646,7 @@ class AdminDashboardScreen extends StatelessWidget {
                 color: const Color(0xFF1976D2),
                 cardBg: cardBg,
                 headingColor: headingColor,
-                onTap: () => Get.toNamed(AppRoutes.interactiveMap),
+                onTap: () => dashboardCtrl.changeTab(1), // Switch to tab 1 (Map)
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
@@ -417,12 +654,14 @@ class AdminDashboardScreen extends StatelessWidget {
               child: _QuickActionButton(
                 label: 'Lihat Alert',
                 icon: Icons.notification_important_rounded,
-                color: controller.activeSosCount.value > 0 ? AppColors.sosEmergency : AppColors.statusSafe,
+                color: controller.activeSosCount.value > 0
+                    ? AppColors.sosEmergency
+                    : AppColors.statusSafe,
                 cardBg: cardBg,
                 headingColor: headingColor,
                 onTap: () {
                   if (controller.activeSosCount.value > 0) {
-                    Get.toNamed(AppRoutes.interactiveMap);
+                    dashboardCtrl.changeTab(1); // Switch to Map
                   } else {
                     Get.toNamed(AppRoutes.notification);
                   }
@@ -438,7 +677,6 @@ class AdminDashboardScreen extends StatelessWidget {
   // ── 5. Room Pantau Section ─────────────────────────────────────────────────
   Widget _buildRoomPantauSection(
     BuildContext context,
-    AdminRoomController controller,
     bool isDark,
     Color cardBg,
     Color headingColor,
@@ -481,7 +719,7 @@ class AdminDashboardScreen extends StatelessWidget {
               child: Center(
                 child: Column(
                   children: [
-                    Icon(Icons.meeting_room_outlined, size: 48, color: bodyColor.withValues(alpha: 0.5)),
+                    Icon(Icons.meeting_room_outlined, size: 44, color: bodyColor.withValues(alpha: 0.45)),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
                       'Belum ada Room Pantau aktif',
@@ -545,7 +783,7 @@ class AdminDashboardScreen extends StatelessWidget {
 
   // ── 6. Aktivitas Terbaru ───────────────────────────────────────────────────
   Widget _buildRecentActivitiesSection(
-    AdminRoomController controller,
+    BuildContext context,
     Color cardBg,
     Color headingColor,
     Color bodyColor,
@@ -567,7 +805,7 @@ class AdminDashboardScreen extends StatelessWidget {
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: primaryColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -583,12 +821,13 @@ class AdminDashboardScreen extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 5),
                   Text(
                     'Realtime',
                     style: AppTypography.captionSmall.copyWith(
                       color: primaryColor,
                       fontWeight: FontWeight.bold,
+                      fontSize: 11,
                     ),
                   ),
                 ],
@@ -749,6 +988,7 @@ class AdminDashboardScreen extends StatelessWidget {
 
 // ── Supporting Widgets ────────────────────────────────────────────────────────
 
+/// KPI Metric Card with dynamic sizing that prevents overflow on large font scaling.
 class _KpiMetricCard extends StatelessWidget {
   final String title;
   final String value;
@@ -778,19 +1018,23 @@ class _KpiMetricCard extends StatelessWidget {
       backgroundColor: isHighlighted ? color.withValues(alpha: 0.12) : cardBg,
       borderColor: isHighlighted ? color.withValues(alpha: 0.5) : null,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm + 2),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm + 4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  title,
-                  style: AppTypography.captionSmall.copyWith(
-                    color: bodyColor,
-                    fontWeight: FontWeight.w600,
+                Expanded(
+                  child: Text(
+                    title,
+                    style: AppTypography.captionSmall.copyWith(
+                      color: bodyColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 Container(
@@ -803,6 +1047,7 @@ class _KpiMetricCard extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 6),
             Text(
               value,
               style: AppTypography.headlineLarge.copyWith(
@@ -811,6 +1056,7 @@ class _KpiMetricCard extends StatelessWidget {
                 height: 1.1,
               ),
             ),
+            const SizedBox(height: 4),
             Text(
               subtitle,
               style: AppTypography.captionSmall.copyWith(
@@ -833,6 +1079,7 @@ class _QuickActionButton extends StatelessWidget {
   final Color color;
   final Color cardBg;
   final Color headingColor;
+  final bool isPrimary;
   final VoidCallback onTap;
 
   const _QuickActionButton({
@@ -841,25 +1088,31 @@ class _QuickActionButton extends StatelessWidget {
     required this.color,
     required this.cardBg,
     required this.headingColor,
+    this.isPrimary = false,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveBg = isPrimary ? color.withValues(alpha: 0.12) : cardBg;
+    final effectiveBorder = isPrimary ? color.withValues(alpha: 0.4) : null;
+
     return AppCard(
-      backgroundColor: cardBg,
+      backgroundColor: effectiveBg,
+      borderColor: effectiveBorder,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.md),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 52),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm + 4),
           child: Row(
             children: [
               Container(
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
+                  color: color.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Icon(icon, color: color, size: 20),
@@ -870,7 +1123,7 @@ class _QuickActionButton extends StatelessWidget {
                   label,
                   style: AppTypography.titleSmall.copyWith(
                     color: headingColor,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: isPrimary ? FontWeight.w800 : FontWeight.bold,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -923,7 +1176,7 @@ class _RoomPantauCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top: Name + Badge
+              // Top: Name + Status Badge
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -940,7 +1193,7 @@ class _RoomPantauCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: (room.isActive ? AppColors.statusSafe : AppColors.textSecondary)
                           .withValues(alpha: 0.15),
@@ -958,50 +1211,57 @@ class _RoomPantauCard extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.sm),
 
-              // Metrics Row: Jamaah, Pendamping, SOS
-              Row(
+              // Metrics Row: Wrapped to prevent horizontal overflow on large fonts
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
                 children: [
                   _BadgeCount(
                     icon: Icons.groups_rounded,
                     label: '$jamaahCount Jamaah',
                     color: const Color(0xFF2E7D32),
                   ),
-                  const SizedBox(width: 10),
                   _BadgeCount(
                     icon: Icons.health_and_safety_rounded,
                     label: '$pendampingCount Pendamping',
                     color: const Color(0xFF1976D2),
                   ),
-                  if (hasSos) ...[
-                    const SizedBox(width: 10),
+                  if (hasSos)
                     _BadgeCount(
                       icon: Icons.warning_rounded,
                       label: '$sosCount SOS',
                       color: AppColors.sosEmergency,
                     ),
-                  ],
                 ],
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: AppSpacing.sm + 2),
 
               // Bottom row: Code + CTA
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Text('Kode: ', style: AppTypography.captionSmall.copyWith(color: bodyColor)),
-                      Text(
-                        room.code,
-                        style: AppTypography.labelMedium.copyWith(
-                          color: primaryColor,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.5,
+                  Flexible(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Kode: ', style: AppTypography.captionSmall.copyWith(color: bodyColor)),
+                        Flexible(
+                          child: Text(
+                            room.code,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.labelMedium.copyWith(
+                              color: primaryColor,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         'Lihat Pantauan',

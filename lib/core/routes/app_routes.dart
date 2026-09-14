@@ -87,6 +87,7 @@ class AppRoutes {
         GetPage(
           name: adminDashboard,
           page: () => const AdminDashboardScreen(),
+          binding: DashboardBinding(),
           middlewares: [
             RoleAndRoomGuard(allowedRoles: ['admin']),
           ],

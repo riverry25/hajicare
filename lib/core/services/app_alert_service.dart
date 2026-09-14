@@ -14,25 +14,10 @@ class AppAlert {
   static BuildContext? _resolveContext(BuildContext? context) =>
       context ?? Get.context;
 
-  // ── Internal helpers ─────────────────────────────────────────────────────
-
-  /// Builds a styled circular icon header — replaces Lottie animation.
-  static Widget _buildHeader(IconData icon, Color color) {
-    return Container(
-      width: 62,
-      height: 62,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: color.withValues(alpha: 0.14),
-        border: Border.all(color: color.withValues(alpha: 0.45), width: 2),
-      ),
-      child: Icon(icon, color: color, size: 30),
-    );
-  }
 
   static void _showDialog({
     required BuildContext ctx,
-    required IconData headerIcon,
+    required DialogType dialogType,
     required Color accentColor,
     required String title,
     required String desc,
@@ -46,19 +31,16 @@ class AppAlert {
     final isDark = AppColors.isDark(ctx);
     AwesomeDialog(
       context: ctx,
-      dialogType: DialogType.noHeader,
+      dialogType: dialogType,
       animType: AnimType.scale,
+      headerAnimationLoop: false,
       dialogBackgroundColor:
           isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
       borderSide: BorderSide(
-        color: accentColor.withValues(alpha: 0.4),
+        color: accentColor.withValues(alpha: 0.35),
         width: 1.5,
       ),
       buttonsBorderRadius: BorderRadius.circular(AppRadius.md),
-      customHeader: Padding(
-        padding: const EdgeInsets.only(top: 18),
-        child: _buildHeader(headerIcon, accentColor),
-      ),
       title: title,
       desc: desc,
       titleTextStyle: AppTypography.titleLarge.copyWith(
@@ -97,7 +79,7 @@ class AppAlert {
     if (ctx == null) return;
     _showDialog(
       ctx: ctx,
-      headerIcon: Icons.check_circle_rounded,
+      dialogType: DialogType.success,
       accentColor: AppColors.statusSafe,
       title: title,
       desc: message,
@@ -118,7 +100,7 @@ class AppAlert {
     if (ctx == null) return;
     _showDialog(
       ctx: ctx,
-      headerIcon: Icons.error_rounded,
+      dialogType: DialogType.error,
       accentColor: AppColors.error,
       title: title,
       desc: message,
@@ -139,7 +121,7 @@ class AppAlert {
     if (ctx == null) return;
     _showDialog(
       ctx: ctx,
-      headerIcon: Icons.warning_rounded,
+      dialogType: DialogType.warning,
       accentColor: AppColors.statusWarning,
       title: title,
       desc: message,
@@ -160,7 +142,7 @@ class AppAlert {
     if (ctx == null) return;
     _showDialog(
       ctx: ctx,
-      headerIcon: Icons.info_rounded,
+      dialogType: DialogType.info,
       accentColor: AppColors.primaryGold,
       title: title,
       desc: message,
@@ -184,12 +166,12 @@ class AppAlert {
     if (ctx == null) return;
     final isDark = AppColors.isDark(ctx);
     final accentColor = isDestructive ? AppColors.error : AppColors.primaryGold;
-    final headerIcon =
-        isDestructive ? Icons.delete_forever_rounded : Icons.help_rounded;
+    final dialogType =
+        isDestructive ? DialogType.warning : DialogType.question;
 
     _showDialog(
       ctx: ctx,
-      headerIcon: headerIcon,
+      dialogType: dialogType,
       accentColor: accentColor,
       title: title,
       desc: message,
