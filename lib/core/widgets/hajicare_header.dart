@@ -1,0 +1,164 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_typography.dart';
+
+/// Reusable, accessible, and premium header component for HajiCare screens.
+///
+/// Implements [PreferredSizeWidget] so it can be used directly as [Scaffold.appBar].
+/// Designed to follow the HajiCare design system with:
+/// - Consistent branded icon presentation (circular emblem with gold/espresso tint)
+/// - Clear typography hierarchy (Title + optional Subtitle)
+/// - Flexible leading (hamburger menu, back button, or none)
+/// - Flexible actions with comfortable tap targets (minimum 48dp)
+/// - Automatic theme adaptability for Light and Dark modes
+class HajiCareHeader extends StatelessWidget implements PreferredSizeWidget {
+  /// Primary title text of the page.
+  final String title;
+
+  /// Optional subtitle explaining the section purpose.
+  final String? subtitle;
+
+  /// Icon displayed in the circular emblem next to the title.
+  final IconData? icon;
+
+  /// Optional custom leading widget. If specified, overrides [showBackButton].
+  final Widget? leading;
+
+  /// Whether to show a standardized back button.
+  final bool showBackButton;
+
+  /// Callback when the back button is pressed. Defaults to [Get.back].
+  final VoidCallback? onBack;
+
+  /// Trailing action widgets (e.g., notification, SOS, GPS refresh).
+  final List<Widget>? actions;
+
+  /// Optional bottom widget (e.g., TabBar).
+  final PreferredSizeWidget? bottom;
+
+  /// Custom height if needed. Defaults to 72dp when subtitle is present, or 64dp otherwise.
+  final double? height;
+
+  /// Background color override. Defaults to [AppColors.scaffoldColor].
+  final Color? backgroundColor;
+
+  /// Optional custom widget to replace the default title column.
+  final Widget? titleWidget;
+
+  const HajiCareHeader({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.icon,
+    this.leading,
+    this.showBackButton = false,
+    this.onBack,
+    this.actions,
+    this.bottom,
+    this.height,
+    this.backgroundColor,
+    this.titleWidget,
+  });
+
+  @override
+  Size get preferredSize {
+    final effectiveHeight =
+        height ?? (subtitle != null && subtitle!.isNotEmpty ? 72.0 : 64.0);
+    return Size.fromHeight(
+      effectiveHeight + (bottom?.preferredSize.height ?? 0.0),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = AppColors.isDark(context);
+    final headingColor = AppColors.textHeadingColor(context);
+    final bodyColor = AppColors.textBodyColor(context);
+    final scaffoldBg = backgroundColor ?? AppColors.scaffoldColor(context);
+
+    // Determine leading widget
+    Widget? effectiveLeading;
+    if (leading != null) {
+      effectiveLeading = leading;
+    } else if (showBackButton) {
+      effectiveLeading = IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+        color: headingColor,
+        tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+        onPressed: onBack ?? () => Get.back(),
+      );
+    }
+
+    final hasLeading = effectiveLeading != null;
+
+    return AppBar(
+      backgroundColor: scaffoldBg,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      automaticallyImplyLeading: false,
+      leading: effectiveLeading,
+      titleSpacing: hasLeading ? 0 : AppSpacing.screenEdgeGutter,
+      title:
+          titleWidget ??
+          Row(
+            children: [
+              if (icon != null) ...[
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.darkPrimaryContainer
+                        : AppColors.primaryContainer,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    icon,
+                    color: isDark
+                        ? AppColors.goldLight
+                        : AppColors.accentGoldStar,
+                    size: 19,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+              ],
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.titleLarge.copyWith(
+                        color: headingColor,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    if (subtitle != null && subtitle!.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.caption.copyWith(
+                          color: bodyColor.withValues(alpha: 0.75),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+      actions: actions,
+      bottom: bottom,
+    );
+  }
+}

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../core/locales/app_translations.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../../core/state/app_settings_controller.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -8,6 +10,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
+import '../../../core/widgets/hajicare_header.dart';
 import '../../map/screens/interactive_map_screen.dart';
 import '../../prayer/screens/prayer_times_screen.dart';
 import '../../profile/screens/profile_screen.dart';
@@ -27,9 +30,13 @@ class DashboardPendampingScreen extends StatelessWidget {
 
     return Obx(() {
       final selectedJamaah =
-          state.jamaahList.length > dashboardCtrl.selectedJamaahIndex.value
-          ? state.jamaahList[dashboardCtrl.selectedJamaahIndex.value]
-          : state.jamaahList.first;
+          (state.jamaahList.isNotEmpty &&
+                  state.jamaahList.length >
+                      dashboardCtrl.selectedJamaahIndex.value)
+              ? state.jamaahList[dashboardCtrl.selectedJamaahIndex.value]
+              : (state.jamaahList.isNotEmpty
+                  ? state.jamaahList.first
+                  : state.self);
 
       return Scaffold(
         backgroundColor: AppColors.scaffoldColor(context),
@@ -63,50 +70,10 @@ class DashboardPendampingScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: scaffoldBg,
-      appBar: AppBar(
-        backgroundColor: scaffoldBg,
-        elevation: 0,
-        titleSpacing: 0,
-        leading: IconButton(
-          icon: Icon(Icons.menu, color: headingColor),
-          onPressed: () {},
-        ),
-        title: Row(
-          children: [
-            Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkPrimary : AppColors.espressoDark,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.mosque,
-                color: AppColors.surfaceWhite,
-                size: 16,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm2),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'HajiCare',
-                  style: AppTypography.titleLarge.copyWith(
-                    color: headingColor,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                Text(
-                  'PENDAMPING',
-                  style: AppTypography.captionSmall.copyWith(
-                    color: AppColors.tanMedium,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+      appBar: HajiCareHeader(
+        title: 'HajiCare',
+        subtitle: context.tr('modePendampingSubtitle'),
+        icon: Icons.mosque_rounded,
         actions: [
           Stack(
             alignment: Alignment.center,
@@ -116,8 +83,8 @@ class DashboardPendampingScreen extends StatelessWidget {
                   Icons.notifications_outlined,
                   color: headingColor,
                 ),
-                onPressed: () =>
-                    Get.toNamed(AppRoutes.notification),
+                tooltip: context.tr('notificationTooltip'),
+                onPressed: () => Get.toNamed(AppRoutes.notification),
               ),
               if (state.anySosActive)
                 Positioned(
@@ -139,16 +106,22 @@ class DashboardPendampingScreen extends StatelessWidget {
             ],
           ),
           Padding(
-            padding: const EdgeInsets.only(right: AppSpacing.lg),
+            padding: const EdgeInsets.only(right: AppSpacing.screenEdgeGutter),
             child: Container(
               width: 36,
               height: 36,
               decoration: BoxDecoration(
                 color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.goldLight, width: 2),
+                border: Border.all(
+                  color: isDark ? AppColors.darkOutlineVariant : AppColors.goldLight,
+                  width: 2,
+                ),
               ),
-              child: const Icon(Icons.person, color: AppColors.tanMedium),
+              child: Icon(
+                Icons.person,
+                color: isDark ? AppColors.goldLight : AppColors.tanMedium,
+              ),
             ),
           ),
         ],
@@ -163,7 +136,7 @@ class DashboardPendampingScreen extends StatelessWidget {
         children: [
           PendampingGreetingHeader(state: state),
           const SizedBox(height: AppSpacing.lg),
-          if (state.anyJamaahSeparated) _buildSeparatedBanner(state),
+          if (state.anyJamaahSeparated) _buildSeparatedBanner(context, state, isDark),
           PendampingJamaahSelector(
             state: state,
             selectedIndex: dashboardCtrl.selectedJamaahIndex.value,
@@ -179,35 +152,36 @@ class DashboardPendampingScreen extends StatelessWidget {
           const SizedBox(height: AppSpacing.lg),
           PendampingSosBanner(state: state),
           const SizedBox(height: AppSpacing.lg),
-          _buildMapCard(context, dashboardCtrl),
+          _buildMapCard(context, dashboardCtrl, selectedJamaah, isDark),
           const SizedBox(height: AppSpacing.lg),
-          _buildFeatureGrid(context, dashboardCtrl),
+          _buildFeatureGrid(context, dashboardCtrl, isDark),
           const SizedBox(height: AppSpacing.md),
         ],
       ),
     );
   }
 
-  Widget _buildSeparatedBanner(HajiCareController state) {
+  Widget _buildSeparatedBanner(BuildContext context, HajiCareController state, bool isDark) {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.lg),
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.errorContainer,
+        color: isDark ? AppColors.darkSurfaceContainer : AppColors.errorContainer,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
-          color: AppColors.sosEmergency.withValues(alpha: 0.5),
+          color: AppColors.sosEmergency.withValues(alpha: 0.6),
         ),
       ),
       child: Row(
         children: [
-          const Icon(Icons.warning, color: AppColors.sosEmergency),
+          const Icon(Icons.warning_rounded, color: AppColors.sosEmergency),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
-              'Peringatan: ${state.separatedJamaahName} berada di luar radius aman (Terlalu jauh).',
+              '${context.tr('warningDistanceLabel')}: ${state.separatedJamaahName} ${context.tr('separatedAlertDetail')}',
               style: AppTypography.captionSmall.copyWith(
                 color: AppColors.sosEmergency,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),
@@ -216,7 +190,15 @@ class DashboardPendampingScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMapCard(BuildContext context, DashboardController dashboardCtrl) {
+  Widget _buildMapCard(
+    BuildContext context,
+    DashboardController dashboardCtrl,
+    JamaahData selectedJamaah,
+    bool isDark,
+  ) {
+    final headingColor = AppColors.textHeadingColor(context);
+    final bodyColor = AppColors.textBodyColor(context);
+
     return AppCard(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
@@ -227,23 +209,25 @@ class DashboardPendampingScreen extends StatelessWidget {
               Row(
                 children: [
                   const Icon(
-                    Icons.explore,
+                    Icons.explore_rounded,
                     color: AppColors.tanMedium,
                     size: 20,
                   ),
                   const SizedBox(width: AppSpacing.sm2),
                   Text(
-                    'Posisi Lapangan Real-Time',
+                    context.tr('realtimePosition'),
                     style: AppTypography.labelLarge.copyWith(
-                      color: AppColors.espressoDark,
+                      color: headingColor,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
               Text(
-                'GPS Akurat ±3m',
+                context.tr('gpsAccuracy'),
                 style: AppTypography.captionSmall.copyWith(
                   color: AppColors.statusSafe,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ],
@@ -255,16 +239,16 @@ class DashboardPendampingScreen extends StatelessWidget {
             child: Container(
               height: 160,
               width: double.infinity,
-              color: AppColors.canvasCreamSubtle,
+              color: isDark ? AppColors.darkSurface : AppColors.canvasCreamSubtle,
               child: Stack(
                 children: [
                   // Grid Pattern Simulation
                   Positioned.fill(
-                    child: CustomPaint(painter: _MiniMapPainter()),
+                    child: CustomPaint(painter: _MiniMapPainter(isDark: isDark)),
                   ),
                   // Jamaah marker pin
                   Positioned(
-                    top: 50,
+                    top: 40,
                     left: 90,
                     child: Column(
                       children: [
@@ -274,20 +258,21 @@ class DashboardPendampingScreen extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.espressoDark,
+                            color: isDark ? AppColors.darkPrimaryContainer : AppColors.espressoDark,
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            'Ayah (80m)',
+                            '${selectedJamaah.shortLabel} (${selectedJamaah.distance.toInt()}${context.tr('meterUnit')})',
                             style: AppTypography.captionSmall.copyWith(
-                              color: AppColors.surfaceWhite,
+                              color: isDark ? AppColors.darkPrimary : AppColors.surfaceWhite,
                               fontSize: 10,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                        const Icon(
+                        Icon(
                           Icons.location_on,
-                          color: AppColors.statusSafe,
+                          color: selectedJamaah.tier.color,
                           size: 28,
                         ),
                       ],
@@ -295,7 +280,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                   ),
                   // Pendamping (Self) marker pin
                   Positioned(
-                    bottom: 30,
+                    bottom: 45,
                     right: 80,
                     child: Column(
                       children: [
@@ -310,14 +295,15 @@ class DashboardPendampingScreen extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.espressoDark,
+                            color: isDark ? AppColors.darkPrimaryContainer : AppColors.espressoDark,
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            'Anda',
+                            context.tr('youLabel'),
                             style: AppTypography.captionSmall.copyWith(
-                              color: AppColors.surfaceWhite,
+                              color: isDark ? AppColors.darkPrimary : AppColors.surfaceWhite,
                               fontSize: 10,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
@@ -334,22 +320,32 @@ class DashboardPendampingScreen extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 6),
                         decoration: BoxDecoration(
-                          color: AppColors.surfaceWhite.withValues(alpha: 0.9),
+                          color: isDark
+                              ? AppColors.darkSurfaceContainer.withValues(alpha: 0.95)
+                              : AppColors.surfaceWhite.withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(AppRadius.sm),
+                          border: Border.all(
+                            color: isDark ? AppColors.darkOutlineVariant : Colors.transparent,
+                          ),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.open_in_full,
                               size: 16,
-                              color: AppColors.espressoDark,
+                              color: isDark ? AppColors.darkPrimary : AppColors.espressoDark,
                             ),
                             const SizedBox(width: 6),
-                            Text(
-                              'Buka Navigasi Penuh & Jalur Evakuasi',
-                              style: AppTypography.captionSmall.copyWith(
-                                color: AppColors.espressoDark,
+                            Flexible(
+                              child: Text(
+                                context.tr('openFullNavigation'),
+                                style: AppTypography.captionSmall.copyWith(
+                                  color: headingColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
@@ -365,22 +361,30 @@ class DashboardPendampingScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  const Icon(Icons.route, color: AppColors.tanMedium, size: 14),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Rute: Jalur Khusus Lansia King Fahd',
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.textBody,
+              Expanded(
+                child: Row(
+                  children: [
+                    const Icon(Icons.route_rounded, color: AppColors.tanMedium, size: 14),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        context.tr('elderlyRoute'),
+                        style: AppTypography.caption.copyWith(
+                          color: bodyColor,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: AppSpacing.sm),
               Text(
-                'Tenda Maktab 48',
+                context.tr('tentMaktab'),
                 style: AppTypography.captionSmall.copyWith(
-                  color: AppColors.espressoDark,
+                  color: headingColor,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -390,33 +394,39 @@ class DashboardPendampingScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureGrid(BuildContext context, DashboardController dashboardCtrl) {
+  Widget _buildFeatureGrid(BuildContext context, DashboardController dashboardCtrl, bool isDark) {
+    final headingColor = AppColors.textHeadingColor(context);
+    final bodyColor = AppColors.textBodyColor(context);
+    final textScale = Get.isRegistered<AppSettingsController>()
+        ? Get.find<AppSettingsController>().textScaleFactor
+        : 1.0;
+
     final features = [
       {
-        'title': 'Peta Terpadu Sektor',
-        'subtitle': 'Posko medis & jalur evakuasi',
-        'icon': Icons.map,
+        'title': context.tr('serviceIntegratedMap'),
+        'subtitle': context.tr('serviceIntegratedMapSub'),
+        'icon': Icons.map_rounded,
         'tabIndex': 1,
         'route': null,
       },
       {
-        'title': 'Jamaah & Gelang',
-        'subtitle': 'Status baterai & sensor nadi',
-        'icon': Icons.devices_other,
+        'title': context.tr('servicePilgrimBand'),
+        'subtitle': context.tr('servicePilgrimBandSub'),
+        'icon': Icons.devices_other_rounded,
         'tabIndex': null,
         'route': null,
       },
       {
-        'title': 'Jadwal & Agenda',
-        'subtitle': 'Waktu Jamarat & titik kumpul',
-        'icon': Icons.event_note,
+        'title': context.tr('serviceScheduleAgenda'),
+        'subtitle': context.tr('serviceScheduleAgendaSub'),
+        'icon': Icons.event_note_rounded,
         'tabIndex': 2,
         'route': null,
       },
       {
-        'title': 'Kontak Petugas Maktab',
-        'subtitle': 'Akses instan layanan darurat',
-        'icon': Icons.contact_phone,
+        'title': context.tr('serviceMaktabContact'),
+        'subtitle': context.tr('serviceMaktabContactSub'),
+        'icon': Icons.contact_phone_rounded,
         'tabIndex': null,
         'route': AppRoutes.communication,
       },
@@ -426,9 +436,9 @@ class DashboardPendampingScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Menu Layanan Pendamping',
+          context.tr('pendampingServices'),
           style: AppTypography.titleMedium.copyWith(
-            color: AppColors.espressoDark,
+            color: headingColor,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -436,7 +446,10 @@ class DashboardPendampingScreen extends StatelessWidget {
         LayoutBuilder(
           builder: (context, constraints) {
             final cardWidth = (constraints.maxWidth - AppSpacing.sm) / 2;
-            final ratio = cardWidth < 170 ? 1.05 : 1.15;
+            double ratio = cardWidth < 170 ? 1.05 : 1.15;
+            if (textScale > 1.1) {
+              ratio = ratio * 0.88;
+            }
 
             return GridView.builder(
               shrinkWrap: true,
@@ -466,22 +479,26 @@ class DashboardPendampingScreen extends StatelessWidget {
                       Container(
                         width: 44,
                         height: 44,
-                        decoration: const BoxDecoration(
-                          color: AppColors.canvasCream,
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? AppColors.darkPrimaryContainer
+                              : AppColors.canvasCream,
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           item['icon'] as IconData,
-                          color: AppColors.espressoDark,
+                          color: isDark ? AppColors.goldLight : AppColors.espressoDark,
+                          size: 22,
                         ),
                       ),
+                      const SizedBox(height: AppSpacing.xs),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             item['title'] as String,
                             style: AppTypography.labelLarge.copyWith(
-                              color: AppColors.espressoDark,
+                              color: headingColor,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -490,7 +507,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                           Text(
                             item['subtitle'] as String,
                             style: AppTypography.captionSmall.copyWith(
-                              color: AppColors.textBody,
+                              color: bodyColor,
                               fontWeight: FontWeight.normal,
                             ),
                             maxLines: 2,
@@ -511,10 +528,16 @@ class DashboardPendampingScreen extends StatelessWidget {
 }
 
 class _MiniMapPainter extends CustomPainter {
+  final bool isDark;
+
+  const _MiniMapPainter({this.isDark = false});
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.tanMedium.withValues(alpha: 0.15)
+      ..color = isDark
+          ? AppColors.darkOutlineVariant.withValues(alpha: 0.3)
+          : AppColors.tanMedium.withValues(alpha: 0.15)
       ..strokeWidth = 1;
 
     for (double x = 0; x < size.width; x += 20) {

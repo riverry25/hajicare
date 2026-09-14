@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/locales/app_translations.dart';
 import '../../../../core/state/hajicare_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -58,14 +59,14 @@ class PendampingSosBanner extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'DARURAT SOS AKTIF!',
+                      context.tr('sosEmergencyActive'),
                       style: AppTypography.titleMedium.copyWith(
                         color: AppColors.surfaceWhite,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
-                      '${sosJamaah.name} membutuhkan bantuan segera.',
+                      '${sosJamaah.name} ${context.tr('sosNeedsImmediateHelp')}',
                       style: AppTypography.bodySmall.copyWith(
                         color: AppColors.surfaceWhite.withValues(alpha: 0.9),
                       ),
@@ -89,9 +90,10 @@ class PendampingSosBanner extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    'Hubungi Petugas',
+                    context.tr('contactOfficer'),
                     style: AppTypography.labelLarge.copyWith(
                       color: AppColors.sosEmergency,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
@@ -108,9 +110,10 @@ class PendampingSosBanner extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    'Akhiri SOS',
+                    context.tr('endSos'),
                     style: AppTypography.labelLarge.copyWith(
                       color: AppColors.surfaceWhite,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
@@ -123,8 +126,14 @@ class PendampingSosBanner extends StatelessWidget {
   }
 
   Widget _buildStandbySos(BuildContext context) {
+    final isDark = AppColors.isDark(context);
+    final headingColor = AppColors.textHeadingColor(context);
+    final bodyColor = AppColors.textBodyColor(context);
+
     return AppCard(
-      borderColor: AppColors.distanceWarning.withValues(alpha: 0.4),
+      borderColor: isDark
+          ? AppColors.darkOutlineVariant
+          : AppColors.distanceWarning.withValues(alpha: 0.4),
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -137,7 +146,7 @@ class PendampingSosBanner extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: const Icon(
-              Icons.health_and_safety,
+              Icons.health_and_safety_rounded,
               color: AppColors.distanceWarning,
             ),
           ),
@@ -151,27 +160,34 @@ class PendampingSosBanner extends StatelessWidget {
                   children: [
                     Flexible(
                       child: Text(
-                        'Status Darurat & SOS: Siaga',
+                        context.tr('sosStatusStandby'),
                         style: AppTypography.labelLarge.copyWith(
-                          color: AppColors.espressoDark,
+                          color: headingColor,
+                          fontWeight: FontWeight.bold,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.secondaryContainer,
+                        color: isDark
+                            ? AppColors.darkPrimaryContainer
+                            : AppColors.secondaryContainer,
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
                       child: Text(
-                        'STANDBY',
+                        context.tr('sosStandbyBadge'),
                         style: AppTypography.captionSmall.copyWith(
-                          color: AppColors.onSecondaryContainer,
+                          color: isDark
+                              ? AppColors.goldLight
+                              : AppColors.onSecondaryContainer,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
@@ -179,9 +195,9 @@ class PendampingSosBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Alarm getar & nada kencang otomatis berbunyi jika tombol gelang ditekan atau jarak jamaah melebihi 200m.',
+                  context.tr('sosStandbyDesc'),
                   style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textBody,
+                    color: bodyColor,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -190,19 +206,19 @@ class PendampingSosBanner extends StatelessWidget {
                   runSpacing: AppSpacing.sm2,
                   children: [
                     _buildSmallBtn(
-                      icon: Icons.volume_up,
-                      label: 'Uji Sinyal Alarm',
-                      bg: AppColors.canvasCream,
-                      fg: AppColors.espressoDark,
+                      icon: Icons.volume_up_rounded,
+                      label: context.tr('testAlarmSignal'),
+                      bg: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream,
+                      fg: isDark ? AppColors.goldLight : AppColors.espressoDark,
                       outline: false,
                     ),
                     _buildSmallBtn(
-                      icon: Icons.call,
-                      label: 'Pusat Tanggap',
+                      icon: Icons.call_rounded,
+                      label: context.tr('responseCenter'),
                       bg: Colors.transparent,
                       fg: AppColors.sosEmergency,
                       outline: true,
-                      borderColor: AppColors.sosEmergency.withValues(alpha: 0.3),
+                      borderColor: AppColors.sosEmergency.withValues(alpha: 0.4),
                     ),
                   ],
                 ),
@@ -239,10 +255,14 @@ class PendampingSosBanner extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             label,
-            style: AppTypography.captionSmall.copyWith(color: fg),
+            style: AppTypography.captionSmall.copyWith(
+              color: fg,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
     );
   }
 }
+

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../core/locales/app_translations.dart';
+import '../../../../core/state/app_settings_controller.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -10,41 +12,47 @@ class JamaahServiceGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppColors.isDark(context);
+    final headingColor = AppColors.textHeadingColor(context);
+    final textScale = Get.isRegistered<AppSettingsController>()
+        ? Get.find<AppSettingsController>().textScaleFactor
+        : 1.0;
+
     final List<Map<String, dynamic>> services = [
       {
-        'title': 'Peta & Arah',
-        'subtitle': 'Toilet, Wudhu, Tenda Mina & Sektor',
-        'icon': Icons.near_me,
+        'title': context.tr('serviceMapTitle'),
+        'subtitle': context.tr('serviceMapSubtitle'),
+        'icon': Icons.near_me_rounded,
         'route': '/map',
       },
       {
-        'title': 'Pindai Uang Riyal',
-        'subtitle': 'Deteksi Nominal Kertas & Suara',
-        'icon': Icons.photo_camera,
+        'title': context.tr('serviceMoneyTitle'),
+        'subtitle': context.tr('serviceMoneySubtitle'),
+        'icon': Icons.photo_camera_rounded,
         'route': '/money',
       },
       {
-        'title': 'Komunikasi Cepat',
-        'subtitle': 'Frasa Arab: Tolong, Sakit, Air',
-        'icon': Icons.record_voice_over,
+        'title': context.tr('serviceCommTitle'),
+        'subtitle': context.tr('serviceCommSubtitle'),
+        'icon': Icons.record_voice_over_rounded,
         'route': '/communication',
       },
       {
-        'title': 'Gelang Pintar',
-        'subtitle': 'GPS & Detak Jantung Terhubung',
-        'icon': Icons.watch,
+        'title': context.tr('serviceBandTitle'),
+        'subtitle': context.tr('serviceBandSubtitle'),
+        'icon': Icons.watch_rounded,
         'route': null,
       },
       {
-        'title': 'Doa & Manasik',
-        'subtitle': 'Doa Tawaf, Sai Huruf Besar + Audio',
-        'icon': Icons.menu_book,
+        'title': context.tr('servicePrayerTitle'),
+        'subtitle': context.tr('servicePrayerSubtitle'),
+        'icon': Icons.menu_book_rounded,
         'route': null,
       },
       {
-        'title': 'Panggilan Petugas',
-        'subtitle': 'Telepon Pos Maktab & Kloter',
-        'icon': Icons.phone_in_talk,
+        'title': context.tr('serviceCallTitle'),
+        'subtitle': context.tr('serviceCallSubtitle'),
+        'icon': Icons.phone_in_talk_rounded,
         'route': null,
       },
     ];
@@ -55,17 +63,22 @@ class JamaahServiceGrid extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'Layanan Jamaah Mandiri',
-              style: AppTypography.titleLarge.copyWith(
-                color: AppColors.espressoDark,
-                fontWeight: FontWeight.bold,
+            Expanded(
+              child: Text(
+                context.tr('independentServices'),
+                style: AppTypography.titleLarge.copyWith(
+                  color: headingColor,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
+            const SizedBox(width: AppSpacing.sm),
             Text(
-              'Sentuh Mudah',
+              context.tr('easyTouch'),
               style: AppTypography.caption.copyWith(
-                color: AppColors.tanMedium,
+                color: isDark ? AppColors.accentGoldStar : AppColors.tanMedium,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -74,9 +87,12 @@ class JamaahServiceGrid extends StatelessWidget {
         const SizedBox(height: AppSpacing.sm),
         LayoutBuilder(
           builder: (context, constraints) {
-            // Adaptive aspect ratio based on width to prevent overflow
             final double cardWidth = (constraints.maxWidth - AppSpacing.sm) / 2;
-            final double ratio = cardWidth < 170 ? 0.95 : 1.05;
+            // Dynamically adjust ratio if text scale is enlarged
+            double ratio = cardWidth < 170 ? 0.95 : 1.05;
+            if (textScale > 1.1) {
+              ratio = ratio * 0.88;
+            }
 
             return GridView.builder(
               shrinkWrap: true,
@@ -96,6 +112,7 @@ class JamaahServiceGrid extends StatelessWidget {
                   subtitle: item['subtitle'] as String,
                   icon: item['icon'] as IconData,
                   route: item['route'] as String?,
+                  isDark: isDark,
                 );
               },
             );
@@ -111,7 +128,11 @@ class JamaahServiceGrid extends StatelessWidget {
     required String subtitle,
     required IconData icon,
     required String? route,
+    required bool isDark,
   }) {
+    final headingColor = AppColors.textHeadingColor(context);
+    final bodyColor = AppColors.textBodyColor(context);
+
     return AppCard(
       padding: const EdgeInsets.all(AppSpacing.md),
       onTap: route != null ? () => Get.toNamed(route) : null,
@@ -122,19 +143,26 @@ class JamaahServiceGrid extends StatelessWidget {
           Container(
             width: 44,
             height: 44,
-            decoration: const BoxDecoration(
-              color: AppColors.canvasCream,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppColors.darkPrimaryContainer
+                  : AppColors.canvasCream,
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: AppColors.espressoDark, size: 22),
+            child: Icon(
+              icon,
+              color: isDark ? AppColors.goldLight : AppColors.espressoDark,
+              size: 22,
+            ),
           ),
+          const SizedBox(height: AppSpacing.xs),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title,
                 style: AppTypography.labelLarge.copyWith(
-                  color: AppColors.textHeading,
+                  color: headingColor,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -143,7 +171,7 @@ class JamaahServiceGrid extends StatelessWidget {
               Text(
                 subtitle,
                 style: AppTypography.captionSmall.copyWith(
-                  color: AppColors.textBody,
+                  color: bodyColor,
                   fontWeight: FontWeight.normal,
                 ),
                 maxLines: 2,
@@ -156,3 +184,4 @@ class JamaahServiceGrid extends StatelessWidget {
     );
   }
 }
+
