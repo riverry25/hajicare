@@ -37,6 +37,17 @@ class MoneyTtsService {
     }
   }
 
+  /// Speaks the results of a single photo inference once.
+  Future<void> speakResults(List<MoneyDetection> detections, double totalAmount) async {
+    if (!isVoiceEnabled || !_isInitialized) return;
+    if (detections.isEmpty) {
+      await speak('Belum ada uang terdeteksi. Pastikan uang terlihat jelas dan coba foto lagi.');
+      return;
+    }
+    final speechSentence = _buildSpeechSentence(detections, totalAmount);
+    await speak(speechSentence);
+  }
+
   /// Evaluates the current frame's detections and speaks if the detection state is stable
   /// and either represents a change in detected items or has passed cooldown.
   Future<void> processDetections(List<MoneyDetection> detections) async {
