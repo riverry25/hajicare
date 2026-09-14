@@ -9,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
+import '../../../core/services/app_alert_service.dart';
 import '../controllers/map_controller.dart';
 import '../widgets/location_detail_sheet.dart';
 import '../widgets/map_bottom_sheet.dart';
@@ -79,6 +80,8 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
               selectedFilter: mapCtrl.selectedFilter.value,
               onFilterSelected: mapCtrl.selectFilter,
               onSosPressed: () => Get.toNamed(AppRoutes.modalSos),
+              isLiveTracking: mapCtrl.isLiveTracking.value,
+              gpsAccuracy: mapCtrl.gpsAccuracy.value,
             ),
           ),
 
@@ -87,6 +90,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
             () => MapFloatingControls(
               compassRotation: mapCtrl.compassRotation.value,
               isLocationLoading: mapCtrl.isLocationLoading.value,
+              isLiveTracking: mapCtrl.isLiveTracking.value,
               onCompassTap: mapCtrl.resetCompass,
               onLocationTap: mapCtrl.moveToCurrentLocation,
               onLayersTap: mapCtrl.toggleMapTileLayer,
@@ -99,7 +103,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
             final selectedPoi = mapCtrl.selectedPoi.value;
             if (selectedPoi != null) {
               final userPos = mapCtrl.currentUserLocation.value ??
-                  MapController.defaultMinaBase;
+                  mapCtrl.currentUserLocation.value ?? MapController.defaultMinaBase;
               final dist = mapCtrl.calculateDistanceMeters(
                 userPos,
                 selectedPoi.coordinate,
@@ -126,17 +130,17 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                 mapCtrl.selectJamaah(j);
               },
               onShareLocation: () {
-                Get.snackbar(
-                  'Bagikan Lokasi',
-                  'Tautan koordinat langsung disalin ke papan klip.',
-                  snackPosition: SnackPosition.BOTTOM,
+                AppAlert.success(
+                  context,
+                  title: 'Bagikan Lokasi',
+                  message: 'Tautan koordinat langsung disalin ke papan klip.',
                 );
               },
               onCall: () {
-                Get.snackbar(
-                  'Memanggil Kontak',
-                  'Menghubungi nomor darurat jamaah...',
-                  snackPosition: SnackPosition.BOTTOM,
+                AppAlert.info(
+                  context,
+                  title: 'Memanggil Kontak',
+                  message: 'Menghubungi nomor darurat jamaah...',
                 );
               },
               bottomOffset: widget.showBottomNav ? 84.0 : 0.0,
@@ -165,11 +169,11 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
   ) {
     return Obx(() {
       final center = mapCtrl.currentUserLocation.value ??
-          MapController.defaultMinaBase;
+          mapCtrl.currentUserLocation.value ?? MapController.defaultMinaBase;
       final tileUrl = mapCtrl.activeTileUrl.value;
       final routePoints = mapCtrl.activeRoute.toList();
       final userLocation = mapCtrl.currentUserLocation.value ??
-          MapController.defaultMinaBase;
+          mapCtrl.currentUserLocation.value ?? MapController.defaultMinaBase;
 
       return fmap.FlutterMap(
         mapController: mapCtrl.flutterMapController,
@@ -196,7 +200,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
           fmap.CircleLayer(
             circles: [
               fmap.CircleMarker(
-                point: MapController.defaultMinaBase,
+                point: mapCtrl.currentUserLocation.value ?? MapController.defaultMinaBase,
                 radius: mapCtrl.safeRadiusMeters.value,
                 useRadiusInMeter: true,
                 color: AppColors.statusSafe.withValues(alpha: 0.08),
@@ -528,43 +532,17 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
   }
 
   void _showSmartBandDialog(BuildContext context, HajiCareController state) {
-    Get.defaultDialog(
+    AppAlert.confirm(
+      context,
       title: 'Panggil Gelang Pintar',
-      titleStyle: AppTypography.titleLarge.copyWith(
-        fontWeight: FontWeight.bold,
-        color: AppColors.espressoDark,
-      ),
-      content: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
-          children: [
-            const Icon(
-              Icons.ring_volume,
-              color: AppColors.accentGoldStar,
-              size: 48,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Kirimkan sinyal getar dan alarm suara ke gelang pintar ${state.self.name} untuk memandu arah kembali.',
-              textAlign: TextAlign.center,
-              style: AppTypography.bodyMedium,
-            ),
-          ],
-        ),
-      ),
-      textConfirm: 'Kirim Sinyal',
-      confirmTextColor: Colors.white,
-      buttonColor: AppColors.primary,
-      textCancel: 'Batal',
-      cancelTextColor: AppColors.textBody,
+      message: 'Kirimkan sinyal getar dan alarm suara ke gelang pintar ${state.self.name} untuk memandu arah kembali.',
+      confirmText: 'Kirim Sinyal',
+      cancelText: 'Batal',
       onConfirm: () {
-        Get.back();
-        Get.snackbar(
-          'Sinyal Terkirim',
-          'Gelang pintar bergetar dan membunyikan nada panduan.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: AppColors.statusSafe,
-          colorText: Colors.white,
+        AppAlert.success(
+          context,
+          title: 'Sinyal Terkirim',
+          message: 'Gelang pintar bergetar dan membunyikan nada panduan.',
         );
       },
     );
