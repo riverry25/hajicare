@@ -71,7 +71,9 @@ class _AdminDashboardHome extends StatelessWidget {
     final isDark = AppColors.isDark(context);
     final scaffoldBg = AppColors.scaffoldColor(context);
     final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = isDark ? AppColors.darkTextHeading : AppColors.espressoDark;
+    final headingColor = isDark
+        ? AppColors.darkTextHeading
+        : AppColors.espressoDark;
     final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
     final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
 
@@ -103,7 +105,9 @@ class _AdminDashboardHome extends StatelessWidget {
                         color: AppColors.sosEmergency,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: isDark ? AppColors.darkScaffold : AppColors.canvasCream,
+                          color: isDark
+                              ? AppColors.darkScaffold
+                              : AppColors.canvasCream,
                           width: 2,
                         ),
                       ),
@@ -160,7 +164,12 @@ class _AdminDashboardHome extends StatelessWidget {
               const SizedBox(height: AppSpacing.md),
 
               // 2. Command Center / System Status Banner
-              _buildStatusPantauanCard(context, isDark, headingColor, bodyColor),
+              _buildStatusPantauanCard(
+                context,
+                isDark,
+                headingColor,
+                bodyColor,
+              ),
               const SizedBox(height: AppSpacing.md),
 
               // 3. Overview KPI (Adaptive, text-scale safe)
@@ -168,15 +177,34 @@ class _AdminDashboardHome extends StatelessWidget {
               const SizedBox(height: AppSpacing.lg),
 
               // 4. Quick Actions (Aksi Cepat)
-              _buildQuickActions(context, isDark, cardBg, headingColor, primaryColor),
+              _buildQuickActions(
+                context,
+                isDark,
+                cardBg,
+                headingColor,
+                primaryColor,
+              ),
               const SizedBox(height: AppSpacing.lg),
 
               // 5. Room Pantau
-              _buildRoomPantauSection(context, isDark, cardBg, headingColor, bodyColor, primaryColor),
+              _buildRoomPantauSection(
+                context,
+                isDark,
+                cardBg,
+                headingColor,
+                bodyColor,
+                primaryColor,
+              ),
               const SizedBox(height: AppSpacing.lg),
 
               // 6. Aktivitas Terbaru
-              _buildRecentActivitiesSection(context, cardBg, headingColor, bodyColor, primaryColor),
+              _buildRecentActivitiesSection(
+                context,
+                cardBg,
+                headingColor,
+                bodyColor,
+                primaryColor,
+              ),
               const SizedBox(height: AppSpacing.md),
             ],
           ),
@@ -198,7 +226,9 @@ class _AdminDashboardHome extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: (isDark ? Colors.black : AppColors.espressoDark).withValues(alpha: 0.16),
+            color: (isDark ? Colors.black : AppColors.espressoDark).withValues(
+              alpha: 0.16,
+            ),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -216,7 +246,9 @@ class _AdminDashboardHome extends StatelessWidget {
               height: 120,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.primaryGold.withValues(alpha: isDark ? 0.08 : 0.12),
+                color: AppColors.primaryGold.withValues(
+                  alpha: isDark ? 0.08 : 0.12,
+                ),
               ),
             ),
           ),
@@ -228,7 +260,9 @@ class _AdminDashboardHome extends StatelessWidget {
               height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.goldLight.withValues(alpha: isDark ? 0.05 : 0.08),
+                color: AppColors.goldLight.withValues(
+                  alpha: isDark ? 0.05 : 0.08,
+                ),
               ),
             ),
           ),
@@ -240,7 +274,10 @@ class _AdminDashboardHome extends StatelessWidget {
               children: [
                 // Portal Administrator Pill
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -330,6 +367,7 @@ class _AdminDashboardHome extends StatelessWidget {
   ) {
     final sosCount = controller.activeSosCount.value;
     final hasSos = sosCount > 0;
+
     final jamaahCount = controller.totalJamaah.value;
     final pendampingCount = controller.totalPendamping.value;
     final activeRooms = controller.activeRoomsCount;
@@ -337,6 +375,7 @@ class _AdminDashboardHome extends StatelessWidget {
     final bgColor = hasSos
         ? (isDark ? const Color(0xFF3B1518) : const Color(0xFFFDE8E8))
         : (isDark ? const Color(0xFF132B1A) : const Color(0xFFE8F5E9));
+
     final borderColor = hasSos ? AppColors.sosEmergency : AppColors.statusSafe;
 
     return AppCard(
@@ -347,24 +386,34 @@ class _AdminDashboardHome extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Status Header Row
+            // Status Header
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
-                      color: (hasSos ? AppColors.sosEmergency : AppColors.statusSafe)
-                          .withValues(alpha: 0.16),
+                      color:
+                          (hasSos
+                                  ? AppColors.sosEmergency
+                                  : AppColors.statusSafe)
+                              .withValues(alpha: 0.16),
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          hasSos ? Icons.warning_rounded : Icons.check_circle_rounded,
-                          color: hasSos ? AppColors.sosEmergency : AppColors.statusSafe,
+                          hasSos
+                              ? Icons.warning_rounded
+                              : Icons.check_circle_rounded,
+                          color: hasSos
+                              ? AppColors.sosEmergency
+                              : AppColors.statusSafe,
                           size: 16,
                         ),
                         const SizedBox(width: 6),
@@ -388,14 +437,21 @@ class _AdminDashboardHome extends StatelessWidget {
                     ),
                   ),
                 ),
+
                 if (hasSos) ...[
                   const SizedBox(width: 8),
                   InkWell(
-                    onTap: () => dashboardCtrl.changeTab(1), // Switch to Map Tab
+                    onTap: () => dashboardCtrl.changeTab(1),
                     borderRadius: BorderRadius.circular(AppRadius.md),
                     child: Container(
-                      constraints: const BoxConstraints(minWidth: 44, minHeight: 36),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      constraints: const BoxConstraints(
+                        minWidth: 44,
+                        minHeight: 36,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.sosEmergency,
                         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -424,9 +480,10 @@ class _AdminDashboardHome extends StatelessWidget {
                 ],
               ],
             ),
+
             const SizedBox(height: AppSpacing.sm),
 
-            // Description text
+            // Description
             Text(
               hasSos
                   ? 'Terdeteksi sinyal darurat aktif dari jamaah. Harap segera lakukan tindakan atau arahkan pendamping.'
@@ -436,9 +493,10 @@ class _AdminDashboardHome extends StatelessWidget {
                 height: 1.35,
               ),
             ),
+
             const SizedBox(height: AppSpacing.sm + 2),
 
-            // Summary metrics wrap
+            // Summary metrics
             Wrap(
               spacing: 8,
               runSpacing: 6,
@@ -495,7 +553,7 @@ class _AdminDashboardHome extends StatelessWidget {
     );
   }
 
-  // ── 3. Overview KPI Grid (Adaptive & Text-Scale Resilient) ──────────────────
+  // ── 3. Overview KPI Grid ────────────────────────────────────────────────────
   Widget _buildKpiOverview(
     BuildContext context,
     Color cardBg,
@@ -518,9 +576,10 @@ class _AdminDashboardHome extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
+
         const SizedBox(height: AppSpacing.sm),
 
-        // Row 1: Room Aktif & Total Jamaah
+        // Row 1
         Row(
           children: [
             Expanded(
@@ -550,9 +609,10 @@ class _AdminDashboardHome extends StatelessWidget {
             ),
           ],
         ),
+
         const SizedBox(height: AppSpacing.sm),
 
-        // Row 2: Pendamping & Alert Aktif
+        // Row 2
         Row(
           children: [
             Expanded(
@@ -573,8 +633,12 @@ class _AdminDashboardHome extends StatelessWidget {
                 title: 'Alert Aktif',
                 value: '$activeSos',
                 subtitle: activeSos > 0 ? 'Perlu tindakan!' : 'Kondisi aman',
-                icon: activeSos > 0 ? Icons.warning_rounded : Icons.verified_user_rounded,
-                color: activeSos > 0 ? AppColors.sosEmergency : AppColors.statusSafe,
+                icon: activeSos > 0
+                    ? Icons.warning_rounded
+                    : Icons.verified_user_rounded,
+                color: activeSos > 0
+                    ? AppColors.sosEmergency
+                    : AppColors.statusSafe,
                 isHighlighted: activeSos > 0,
                 cardBg: cardBg,
                 headingColor: headingColor,
@@ -605,9 +669,10 @@ class _AdminDashboardHome extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
+
         const SizedBox(height: AppSpacing.sm),
 
-        // Row 1: Buat Room (Primary) & Kelola Jamaah
+        // Row 1
         Row(
           children: [
             Expanded(
@@ -634,9 +699,10 @@ class _AdminDashboardHome extends StatelessWidget {
             ),
           ],
         ),
+
         const SizedBox(height: AppSpacing.sm),
 
-        // Row 2: Pantau Map & Lihat Alert
+        // Row 2
         Row(
           children: [
             Expanded(
@@ -646,7 +712,7 @@ class _AdminDashboardHome extends StatelessWidget {
                 color: const Color(0xFF1976D2),
                 cardBg: cardBg,
                 headingColor: headingColor,
-                onTap: () => dashboardCtrl.changeTab(1), // Switch to tab 1 (Map)
+                onTap: () => dashboardCtrl.changeTab(1),
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
@@ -661,7 +727,7 @@ class _AdminDashboardHome extends StatelessWidget {
                 headingColor: headingColor,
                 onTap: () {
                   if (controller.activeSosCount.value > 0) {
-                    dashboardCtrl.changeTab(1); // Switch to Map
+                    dashboardCtrl.changeTab(1);
                   } else {
                     Get.toNamed(AppRoutes.notification);
                   }
@@ -704,13 +770,18 @@ class _AdminDashboardHome extends StatelessWidget {
                 foregroundColor: primaryColor,
                 padding: const EdgeInsets.symmetric(horizontal: 8),
               ),
-              icon: const Text('Lihat Semua', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              icon: const Text(
+                'Lihat Semua',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
               label: const Icon(Icons.arrow_forward_ios_rounded, size: 12),
               onPressed: () => Get.toNamed(AppRoutes.adminRooms),
             ),
           ],
         ),
+
         const SizedBox(height: AppSpacing.xs),
+
         if (recentRooms.isEmpty)
           AppCard(
             backgroundColor: cardBg,
@@ -719,19 +790,33 @@ class _AdminDashboardHome extends StatelessWidget {
               child: Center(
                 child: Column(
                   children: [
-                    Icon(Icons.meeting_room_outlined, size: 44, color: bodyColor.withValues(alpha: 0.45)),
+                    Icon(
+                      Icons.meeting_room_outlined,
+                      size: 44,
+                      color: bodyColor.withValues(alpha: 0.45),
+                    ),
+
                     const SizedBox(height: AppSpacing.sm),
+
                     Text(
                       'Belum ada Room Pantau aktif',
-                      style: AppTypography.titleSmall.copyWith(color: headingColor),
+                      style: AppTypography.titleSmall.copyWith(
+                        color: headingColor,
+                      ),
                     ),
+
                     const SizedBox(height: AppSpacing.xs),
+
                     Text(
                       'Buat room baru untuk mulai memantau jamaah dan pendamping.',
                       textAlign: TextAlign.center,
-                      style: AppTypography.captionSmall.copyWith(color: bodyColor),
+                      style: AppTypography.captionSmall.copyWith(
+                        color: bodyColor,
+                      ),
                     ),
+
                     const SizedBox(height: AppSpacing.md),
+
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryColor,
@@ -742,8 +827,12 @@ class _AdminDashboardHome extends StatelessWidget {
                         ),
                       ),
                       icon: const Icon(Icons.add_rounded, size: 18),
-                      label: const Text('Buat Room', style: TextStyle(fontWeight: FontWeight.bold)),
-                      onPressed: () => _showCreateRoomSheet(context, controller),
+                      label: const Text(
+                        'Buat Room',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      onPressed: () =>
+                          _showCreateRoomSheet(context, controller),
                     ),
                   ],
                 ),
@@ -754,7 +843,9 @@ class _AdminDashboardHome extends StatelessWidget {
           Column(
             children: recentRooms.map((room) {
               final jCount = controller.getRoomJamaahCount(room.id);
+
               final pCount = controller.getRoomPendampingCount(room.id);
+
               final sCount = controller.getRoomSosCount(room.id);
 
               return Container(
@@ -770,7 +861,9 @@ class _AdminDashboardHome extends StatelessWidget {
                   primaryColor: primaryColor,
                   onTap: () {
                     controller.selectedRoom.value = room;
+
                     controller.subscribeToRoomMembers(room.id);
+
                     Get.toNamed(AppRoutes.roomDetail, arguments: room);
                   },
                 ),
@@ -844,16 +937,24 @@ class _AdminDashboardHome extends StatelessWidget {
               child: Center(
                 child: Column(
                   children: [
-                    Icon(Icons.history_rounded, size: 36, color: bodyColor.withValues(alpha: 0.4)),
+                    Icon(
+                      Icons.history_rounded,
+                      size: 36,
+                      color: bodyColor.withValues(alpha: 0.4),
+                    ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
                       'Semua aman',
-                      style: AppTypography.titleSmall.copyWith(color: headingColor),
+                      style: AppTypography.titleSmall.copyWith(
+                        color: headingColor,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       'Belum ada aktivitas operasional tercatat hari ini.',
-                      style: AppTypography.captionSmall.copyWith(color: bodyColor),
+                      style: AppTypography.captionSmall.copyWith(
+                        color: bodyColor,
+                      ),
                     ),
                   ],
                 ),
@@ -888,7 +989,10 @@ class _AdminDashboardHome extends StatelessWidget {
   }
 
   // ── Create Room Modal Bottom Sheet ─────────────────────────────────────────
-  void _showCreateRoomSheet(BuildContext context, AdminRoomController controller) {
+  void _showCreateRoomSheet(
+    BuildContext context,
+    AdminRoomController controller,
+  ) {
     final textCtrl = TextEditingController();
     final isDark = AppColors.isDark(context);
 
@@ -897,7 +1001,9 @@ class _AdminDashboardHome extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.sheet),
+        ),
       ),
       builder: (ctx) {
         return Padding(
@@ -926,7 +1032,9 @@ class _AdminDashboardHome extends StatelessWidget {
                 'Buat Room Pantau Baru',
                 style: AppTypography.titleLarge.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: isDark ? AppColors.darkTextHeading : AppColors.espressoDark,
+                  color: isDark
+                      ? AppColors.darkTextHeading
+                      : AppColors.espressoDark,
                 ),
               ),
               const SizedBox(height: 4),
@@ -964,16 +1072,24 @@ class _AdminDashboardHome extends StatelessWidget {
                       ),
                       elevation: 0,
                     ),
-                    onPressed: submitting ? null : () => controller.createRoom(context, textCtrl.text),
+                    onPressed: submitting
+                        ? null
+                        : () => controller.createRoom(context, textCtrl.text),
                     child: submitting
                         ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
                           )
                         : const Text(
                             'Buat Room Pantau',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
                           ),
                   ),
                 );
@@ -988,7 +1104,7 @@ class _AdminDashboardHome extends StatelessWidget {
 
 // ── Supporting Widgets ────────────────────────────────────────────────────────
 
-/// KPI Metric Card with dynamic sizing that prevents overflow on large font scaling.
+// ── KPI Metric Card ─────────────────────────────────────────────────────────
 class _KpiMetricCard extends StatelessWidget {
   final String title;
   final String value;
@@ -1018,7 +1134,10 @@ class _KpiMetricCard extends StatelessWidget {
       backgroundColor: isHighlighted ? color.withValues(alpha: 0.12) : cardBg,
       borderColor: isHighlighted ? color.withValues(alpha: 0.5) : null,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm + 4),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm + 4,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -1029,12 +1148,12 @@ class _KpiMetricCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: AppTypography.captionSmall.copyWith(
                       color: bodyColor,
                       fontWeight: FontWeight.w600,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 Container(
@@ -1047,7 +1166,9 @@ class _KpiMetricCard extends StatelessWidget {
                 ),
               ],
             ),
+
             const SizedBox(height: 6),
+
             Text(
               value,
               style: AppTypography.headlineLarge.copyWith(
@@ -1056,15 +1177,17 @@ class _KpiMetricCard extends StatelessWidget {
                 height: 1.1,
               ),
             ),
+
             const SizedBox(height: 4),
+
             Text(
               subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: AppTypography.captionSmall.copyWith(
                 color: isHighlighted ? color : bodyColor.withValues(alpha: 0.8),
                 fontSize: 10,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -1095,6 +1218,7 @@ class _QuickActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final effectiveBg = isPrimary ? color.withValues(alpha: 0.12) : cardBg;
+
     final effectiveBorder = isPrimary ? color.withValues(alpha: 0.4) : null;
 
     return AppCard(
@@ -1105,7 +1229,10 @@ class _QuickActionButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.card),
         child: Container(
           constraints: const BoxConstraints(minHeight: 52),
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm + 4),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm + 4,
+          ),
           child: Row(
             children: [
               Container(
@@ -1117,19 +1244,26 @@ class _QuickActionButton extends StatelessWidget {
                 ),
                 child: Icon(icon, color: color, size: 20),
               ),
+
               const SizedBox(width: AppSpacing.sm),
+
               Expanded(
                 child: Text(
                   label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AppTypography.titleSmall.copyWith(
                     color: headingColor,
                     fontWeight: isPrimary ? FontWeight.w800 : FontWeight.bold,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Icon(Icons.arrow_forward_ios_rounded, size: 12, color: headingColor.withValues(alpha: 0.4)),
+
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 12,
+                color: headingColor.withValues(alpha: 0.4),
+              ),
             ],
           ),
         ),
@@ -1167,7 +1301,9 @@ class _RoomPantauCard extends StatelessWidget {
 
     return AppCard(
       backgroundColor: cardBg,
-      borderColor: hasSos ? AppColors.sosEmergency.withValues(alpha: 0.5) : null,
+      borderColor: hasSos
+          ? AppColors.sosEmergency.withValues(alpha: 0.5)
+          : null,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.card),
@@ -1176,42 +1312,53 @@ class _RoomPantauCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top: Name + Status Badge
+              // Top: Room Name + Status
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: Text(
                       room.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: AppTypography.titleSmall.copyWith(
                         color: headingColor,
                         fontWeight: FontWeight.bold,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
+
                   const SizedBox(width: 8),
+
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
-                      color: (room.isActive ? AppColors.statusSafe : AppColors.textSecondary)
-                          .withValues(alpha: 0.15),
+                      color:
+                          (room.isActive
+                                  ? AppColors.statusSafe
+                                  : AppColors.textSecondary)
+                              .withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                     child: Text(
                       room.isActive ? 'Aktif' : 'Nonaktif',
                       style: AppTypography.captionSmall.copyWith(
-                        color: room.isActive ? AppColors.statusSafe : AppColors.textSecondary,
+                        color: room.isActive
+                            ? AppColors.statusSafe
+                            : AppColors.textSecondary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                 ],
               ),
+
               const SizedBox(height: AppSpacing.sm),
 
-              // Metrics Row: Wrapped to prevent horizontal overflow on large fonts
+              // Metrics
               Wrap(
                 spacing: 8,
                 runSpacing: 6,
@@ -1221,11 +1368,13 @@ class _RoomPantauCard extends StatelessWidget {
                     label: '$jamaahCount Jamaah',
                     color: const Color(0xFF2E7D32),
                   ),
+
                   _BadgeCount(
                     icon: Icons.health_and_safety_rounded,
                     label: '$pendampingCount Pendamping',
                     color: const Color(0xFF1976D2),
                   ),
+
                   if (hasSos)
                     _BadgeCount(
                       icon: Icons.warning_rounded,
@@ -1234,9 +1383,10 @@ class _RoomPantauCard extends StatelessWidget {
                     ),
                 ],
               ),
+
               const SizedBox(height: AppSpacing.sm + 2),
 
-              // Bottom row: Code + CTA
+              // Bottom Row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -1244,7 +1394,13 @@ class _RoomPantauCard extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('Kode: ', style: AppTypography.captionSmall.copyWith(color: bodyColor)),
+                        Text(
+                          'Kode: ',
+                          style: AppTypography.captionSmall.copyWith(
+                            color: bodyColor,
+                          ),
+                        ),
+
                         Flexible(
                           child: Text(
                             room.code,
@@ -1259,7 +1415,9 @@ class _RoomPantauCard extends StatelessWidget {
                       ],
                     ),
                   ),
+
                   const SizedBox(width: 8),
+
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -1271,7 +1429,11 @@ class _RoomPantauCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 4),
-                      Icon(Icons.arrow_forward_ios_rounded, size: 12, color: primaryColor),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 12,
+                        color: primaryColor,
+                      ),
                     ],
                   ),
                 ],
@@ -1336,7 +1498,10 @@ class _ActivityFeedTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm + 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm + 2,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
