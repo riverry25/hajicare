@@ -352,4 +352,17 @@ const Map<String, String> idTranslations = {
   'testAlarmSignal': 'Uji Sinyal Alarm',
   'responseCenter': 'Pusat Tanggap',
   'separatedAlertDetail': 'berada di luar radius aman (Terlalu jauh).',
+
+  // Prayer & Qibla Dynamic
+  'prayerSubtitle': 'Waktu sholat & arah kiblat',
+  'prayerLoading': 'Memuat',
+  'prayerLocation': 'Lokasi',
+  'prayerNextLabel': 'WAKTU SHOLAT BERIKUTNYA',
+  'prayerTimeRemaining': 'Waktu tersisa',
+  'qiblaAligned': 'Ponsel Anda Tepat Mengarah ke Kiblat ✓',
+  'qiblaRotate': 'Selisih',
+  'qiblaRotateToKabah': '(Putar ke arah Ka\'bah)',
+  'prayerScheduleSectionTitle': 'Jadwal Sholat',
+  'prayerNextBadge': 'Berikutnya',
+  'kompasNoSensor': 'Kompas hanya berfungsi di perangkat mobile dengan sensor.',
 };

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import '../../../../core/locales/app_translations.dart';
+import '../../../../core/services/app_alert_service.dart';
 import '../../../../core/state/hajicare_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -16,70 +16,32 @@ class JamaahSosBanner extends StatelessWidget {
     required this.state,
   });
 
-  Future<void> _handleSosTrigger(BuildContext context) async {
-    final isDark = AppColors.isDark(context);
-    final headingColor = AppColors.textHeadingColor(context);
-
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
-        title: Text(
-          context.tr('sosConfirmTitle'),
-          style: AppTypography.titleLarge.copyWith(
-            fontWeight: FontWeight.bold,
-            color: headingColor,
-          ),
-        ),
-        content: Text(
-          context.tr('sosConfirmMessage'),
-          style: AppTypography.bodyMedium.copyWith(
-            color: AppColors.textBodyColor(context),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: Text(
-              context.tr('cancel'),
-              style: AppTypography.labelLarge.copyWith(
-                color: isDark ? AppColors.darkTextBody : AppColors.textBody,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.sosEmergency,
-              foregroundColor: AppColors.surfaceWhite,
-            ),
-            onPressed: () => Get.back(result: true),
-            child: Text(
-              context.tr('sosSendButton'),
-              style: AppTypography.labelLarge.copyWith(
-                color: AppColors.surfaceWhite,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
+  void _handleSosTrigger(BuildContext context) {
+    AppAlert.confirm(
+      context,
+      title: context.tr('sosConfirmTitle'),
+      message: context.tr('sosConfirmMessage'),
+      confirmText: context.tr('sosSendButton'),
+      cancelText: context.tr('cancel'),
+      isDestructive: true,
+      onConfirm: () async {
+        if (await Vibration.hasVibrator()) {
+          Vibration.vibrate(pattern: [0, 200, 100, 200]);
+        }
+        await state.triggerSos();
+        if (context.mounted) {
+          final sentTo = context.tr('sosSentTo');
+          final companion = state.pendampingName.value.isNotEmpty
+              ? state.pendampingName.value
+              : 'Pendamping & Petugas';
+          AppAlert.success(
+            context,
+            title: 'Sinyal Darurat Terkirim',
+            message: '$sentTo $companion. Mohon tetap tenang di lokasi Anda.',
+          );
+        }
+      },
     );
-
-    if (confirm == true) {
-      final notifTitle = context.mounted ? context.tr('notificationTooltip') : 'SOS';
-      final sentTo = context.mounted ? context.tr('sosSentTo') : 'Sent to';
-      if (await Vibration.hasVibrator()) {
-        Vibration.vibrate(pattern: [0, 200, 100, 200]);
-      }
-      state.triggerSos();
-      Get.snackbar(
-        notifTitle,
-        '$sentTo ${state.pendampingName.value}',
-        backgroundColor: AppColors.sosEmergency,
-        colorText: AppColors.surfaceWhite,
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    }
   }
 
   @override

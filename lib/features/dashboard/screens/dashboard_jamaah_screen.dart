@@ -137,6 +137,7 @@ class DashboardJamaahScreen extends StatelessWidget {
           JamaahDistanceCard(
             jamaah: jamaah,
             onViewMap: () => dashboardCtrl.changeTab(1),
+            onRefreshGps: () => state.refreshLocation(),
           ),
           const SizedBox(height: AppSpacing.lg),
           JamaahSosBanner(state: state),

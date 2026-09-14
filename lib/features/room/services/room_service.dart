@@ -373,6 +373,144 @@ class RoomService {
     );
   }
 
+  /// Allows a Pendamping of an active room to add a Jamaah by their registered email.
+  Future<void> addJamaahByEmail({
+    required String roomId,
+    required String email,
+    required String currentPendampingUid,
+  }) async {
+    final normalizedEmail = email.trim().toLowerCase();
+    if (normalizedEmail.isEmpty || !normalizedEmail.contains('@')) {
+      throw const RoomException('Format email tidak valid. Masukkan email yang benar.');
+    }
+
+    // 1. Verify active room exists and is active
+    final roomDoc = await _firestore.collection('rooms').doc(roomId).get();
+    if (!roomDoc.exists) {
+      throw const RoomException('Room tidak ditemukan atau telah dihapus.');
+    }
+    final roomData = roomDoc.data()!;
+    final roomName = (roomData['name'] as String?)?.trim() ?? 'Room';
+    final isActive = (roomData['isActive'] as bool?) ?? true;
+    if (!isActive) {
+      throw const RoomException('Room ini sedang nonaktif dan tidak dapat menerima anggota baru.');
+    }
+
+    // 2. Query user by email
+    final querySnap = await _firestore
+        .collection('users')
+        .where('email', isEqualTo: normalizedEmail)
+        .limit(1)
+        .get();
+
+    if (querySnap.docs.isEmpty) {
+      throw RoomException('Email "$normalizedEmail" tidak ditemukan terdaftar di sistem HajiCare.');
+    }
+
+    final targetDoc = querySnap.docs.first;
+    final targetUid = targetDoc.id;
+    final data = targetDoc.data();
+
+    // 3. Validation: Pendamping adding self
+    if (targetUid == currentPendampingUid) {
+      throw const RoomException('Anda tidak dapat menambahkan diri sendiri sebagai Jamaah.');
+    }
+
+    // 4. Validation: User role must be jamaah
+    final role = (data['role'] as String?)?.toLowerCase() ?? 'jamaah';
+    if (role != 'jamaah') {
+      throw RoomException('Akun ini terdaftar sebagai ${role.toUpperCase()}, bukan sebagai Jamaah.');
+    }
+
+    // 5. Validation: User already in this room
+    final existingMemberDoc = await _firestore
+        .collection('rooms')
+        .doc(roomId)
+        .collection('members')
+        .doc(targetUid)
+        .get();
+
+    if (existingMemberDoc.exists) {
+      throw const RoomException('Jamaah ini sudah berada di dalam room ini.');
+    }
+
+    // 6. Validation: User already in another room
+    final existingRoomId = data['activeRoomId'] as String?;
+    if (existingRoomId != null && existingRoomId.isNotEmpty && existingRoomId != roomId) {
+      throw const RoomException('Jamaah ini sudah terdaftar di room lain.');
+    }
+
+    final rawName = data['name'] as String? ?? data['displayName'] as String? ?? normalizedEmail.split('@').first;
+    final jamaahName = rawName.trim().isNotEmpty ? rawName.trim() : 'Jamaah';
+
+    // 7. Atomic batch write: add to members & update activeRoomId
+    final batch = _firestore.batch();
+    final memberRef = _firestore
+        .collection('rooms')
+        .doc(roomId)
+        .collection('members')
+        .doc(targetUid);
+    final userRef = _firestore.collection('users').doc(targetUid);
+
+    batch.set(memberRef, {
+      'uid': targetUid,
+      'name': jamaahName,
+      'role': 'jamaah',
+      'joinedAt': FieldValue.serverTimestamp(),
+    });
+
+    batch.update(userRef, {'activeRoomId': roomId});
+
+    await batch.commit();
+    debugPrint('[RoomService] Jamaah $targetUid ($normalizedEmail) added to room $roomId');
+
+    // 8. Log activity
+    await logActivity(
+      type: ActivityType.memberJoined,
+      title: 'Jamaah Ditambahkan',
+      description: '$jamaahName ($normalizedEmail) ditambahkan ke room "$roomName" oleh pendamping.',
+      roomId: roomId,
+      roomName: roomName,
+      userId: targetUid,
+      userName: jamaahName,
+      role: 'jamaah',
+    );
+  }
+
+  /// Resolves an active SOS event in Firestore
+  Future<void> resolveSos({
+    required String userId,
+    String? roomId,
+  }) async {
+    final batch = _firestore.batch();
+    batch.update(_firestore.collection('users').doc(userId), {'sosActive': false});
+
+    if (roomId != null && roomId.isNotEmpty) {
+      final memberRef = _firestore
+          .collection('rooms')
+          .doc(roomId)
+          .collection('members')
+          .doc(userId);
+      batch.set(memberRef, {'sosActive': false}, SetOptions(merge: true));
+    }
+
+    // Also update active sos_events for this user
+    final activeSosQuery = await _firestore
+        .collection('sos_events')
+        .where('userId', isEqualTo: userId)
+        .where('status', isEqualTo: 'active')
+        .get();
+
+    for (final doc in activeSosQuery.docs) {
+      batch.update(doc.reference, {
+        'status': 'resolved',
+        'resolvedAt': FieldValue.serverTimestamp(),
+      });
+    }
+
+    await batch.commit();
+  }
+
   /// Fetches Jamaah accounts that currently do not have an activeRoomId.
   Future<List<JamaahData>> getAvailableJamaahList() async {
     final query = await _firestore

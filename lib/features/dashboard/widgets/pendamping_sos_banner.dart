@@ -10,10 +10,12 @@ import 'package:vibration/vibration.dart';
 
 class PendampingSosBanner extends StatelessWidget {
   final HajiCareState state;
+  final Future<void> Function(String jamaahId)? onDismissSos;
 
   const PendampingSosBanner({
     super.key,
     required this.state,
+    this.onDismissSos,
   });
 
   @override
@@ -101,7 +103,9 @@ class PendampingSosBanner extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () => state.dismissSos(sosJamaah.id),
+                  onPressed: onDismissSos != null
+                      ? () => onDismissSos!(sosJamaah.id)
+                      : () => state.dismissSos(sosJamaah.id),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.surfaceWhite,
                     side: const BorderSide(color: AppColors.surfaceWhite),

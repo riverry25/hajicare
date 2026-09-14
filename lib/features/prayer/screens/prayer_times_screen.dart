@@ -26,10 +26,8 @@ class PrayerTimesScreen extends StatelessWidget {
       backgroundColor: AppColors.scaffoldColor(context),
       extendBody: true,
       appBar: HajiCareHeader(
-        title: context.tr('jadwal').isEmpty
-            ? 'Jadwal Sholat'
-            : context.tr('jadwal'),
-        subtitle: 'Waktu sholat & arah kiblat',
+        title: context.tr('prayerTitle'),
+        subtitle: context.tr('prayerSubtitle'),
         icon: Icons.mosque_rounded,
         actions: [
           Padding(
@@ -93,8 +91,8 @@ class PrayerTimesScreen extends StatelessWidget {
                           const SizedBox(width: 6),
                           Text(
                             controller.isLoadingLocation.value
-                                ? 'Memuat'
-                                : 'Lokasi',
+                                ? context.tr('prayerLoading')
+                                : context.tr('prayerLocation'),
                             style: AppTypography.bodyMedium.copyWith(
                               color: isDark
                                   ? AppColors.goldLight
@@ -283,7 +281,7 @@ class PrayerTimesScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'WAKTU SHOLAT BERIKUTNYA',
+                          context.tr('prayerNextLabel'),
                           style: AppTypography.captionSmall.copyWith(
                             color: AppColors.goldLight,
                             letterSpacing: 1.5,
@@ -341,7 +339,7 @@ class PrayerTimesScreen extends StatelessWidget {
                           const SizedBox(width: 6),
                           Flexible(
                             child: Text(
-                              'Waktu tersisa: ${controller.countdownText.value}',
+                              '${context.tr('prayerTimeRemaining')}: ${controller.countdownText.value}',
                               style: AppTypography.bodySmall.copyWith(
                                 color: AppColors.surfaceWhite,
                                 fontWeight: FontWeight.w600,
@@ -384,7 +382,7 @@ class PrayerTimesScreen extends StatelessWidget {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'Arah Kiblat',
+                              context.tr('qiblaDirection'),
                               style: AppTypography.titleMedium.copyWith(
                                 color: AppColors.textHeadingColor(context),
                                 fontWeight: FontWeight.bold,
@@ -434,7 +432,7 @@ class PrayerTimesScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                         child: Text(
-                          'Kompas hanya berfungsi di perangkat mobile dengan sensor.',
+                          context.tr('kompasNoSensor'),
                           style: AppTypography.bodyMedium.copyWith(
                             color: AppColors.textBodyColor(context),
                           ),
@@ -658,8 +656,8 @@ class PrayerTimesScreen extends StatelessWidget {
                             Flexible(
                               child: Text(
                                 isAligned
-                                    ? 'Ponsel Anda Tepat Mengarah ke Kiblat ✓'
-                                    : 'Selisih: ${controller.qiblaOffset.value.toStringAsFixed(0)}° (Putar ke arah Ka\'bah)',
+                                    ? context.tr('qiblaAligned')
+                                    : '${context.tr('qiblaRotate')}: ${controller.qiblaOffset.value.toStringAsFixed(0)}° ${context.tr('qiblaRotateToKabah')}',
                                 style: AppTypography.captionSmall.copyWith(
                                   color: isAligned
                                       ? AppColors.statusPositive
@@ -699,7 +697,7 @@ class PrayerTimesScreen extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'Jadwal Sholat',
+                                context.tr('prayerScheduleSectionTitle'),
                                 style: AppTypography.titleMedium.copyWith(
                                   color: AppColors.textHeadingColor(context),
                                   fontWeight: FontWeight.bold,
@@ -858,7 +856,7 @@ class PrayerTimesScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Text(
-                    'Berikutnya',
+                    context.tr('prayerNextBadge'),
                     style: AppTypography.captionSmall.copyWith(
                       color: isDark
                           ? AppColors.darkScaffold

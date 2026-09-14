@@ -352,4 +352,17 @@ const Map<String, String> suTranslations = {
   'testAlarmSignal': 'Uji Tanda Alarm',
   'responseCenter': 'Puseur Tanggap',
   'separatedAlertDetail': 'aya di luar radius aman (Tebih teuing).',
+
+  // Prayer & Qibla Dynamic
+  'prayerSubtitle': 'Waktos sholat & arah kiblat',
+  'prayerLoading': 'Ngamuat',
+  'prayerLocation': 'Lokasi',
+  'prayerNextLabel': 'WAKTOS SHOLAT SALAJENGNA',
+  'prayerTimeRemaining': 'Sésa waktos',
+  'qiblaAligned': 'Hapé Anjeun Pas Nyanghareup ka Kiblat ✓',
+  'qiblaRotate': 'Géséh',
+  'qiblaRotateToKabah': '(Puter ka arah Ka\'bah)',
+  'prayerScheduleSectionTitle': 'Jadwal Sholat',
+  'prayerNextBadge': 'Salajengna',
+  'kompasNoSensor': 'Kompas ngan ukur jalan dina parangkat mobile nu gaduh sénsor.',
 };

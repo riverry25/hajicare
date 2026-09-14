@@ -81,6 +81,10 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   void _initRoomListener() {
     if (Get.isRegistered<HajiCareController>()) {
       final state = Get.find<HajiCareController>();
+      safeRadiusMeters.value = state.safeRadiusMeters.value;
+      ever<double>(state.safeRadiusMeters, (r) {
+        safeRadiusMeters.value = r;
+      });
       _roomWorker = ever<String?>(state.activeRoomId, (roomId) {
         _onActiveRoomChanged(roomId);
       });
