@@ -10,6 +10,7 @@ class MapFloatingControls extends StatelessWidget {
   final VoidCallback? onBandTap;
   final double compassRotation;
   final bool isLocationLoading;
+  final bool isLiveTracking;
 
   const MapFloatingControls({
     super.key,
@@ -19,6 +20,7 @@ class MapFloatingControls extends StatelessWidget {
     this.onBandTap,
     this.compassRotation = 0.0,
     this.isLocationLoading = false,
+    this.isLiveTracking = false,
   });
 
   @override
@@ -50,22 +52,23 @@ class MapFloatingControls extends StatelessWidget {
           // Current User Location
           _buildControlButton(
             icon: Icons.my_location,
-            color: AppColors.primary,
+            color: isLiveTracking ? AppColors.surfaceWhite : AppColors.primary,
+            bgColor: isLiveTracking ? AppColors.primary : AppColors.surfaceWhite,
             tooltip: 'Lokasi Saya',
             onTap: onLocationTap,
             child: isLocationLoading
-                ? const SizedBox(
+                ? SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: AppColors.primary,
+                      color: isLiveTracking ? AppColors.surfaceWhite : AppColors.primary,
                     ),
                   )
-                : const Icon(
-                    Icons.my_location,
+                : Icon(
+                    isLiveTracking ? Icons.my_location : Icons.location_searching,
                     size: 22,
-                    color: AppColors.primary,
+                    color: isLiveTracking ? AppColors.surfaceWhite : AppColors.primary,
                   ),
           ),
           const SizedBox(height: AppSpacing.sm),

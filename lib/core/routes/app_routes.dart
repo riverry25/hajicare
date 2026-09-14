@@ -23,6 +23,11 @@ import '../../features/profile/screens/help_center_screen.dart';
 import '../../features/profile/screens/about_screen.dart';
 import '../../features/notification/screens/notification_screen.dart';
 import '../../features/onboarding/bindings/onboarding_binding.dart';
+import '../../features/room/screens/join_room_screen.dart';
+import '../../features/room/screens/admin_dashboard_screen.dart';
+import '../../features/room/screens/admin_room_management_screen.dart';
+import '../../features/room/screens/room_detail_screen.dart';
+import 'role_and_room_guard.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -32,6 +37,10 @@ class AppRoutes {
   static const String home = '/home';
   static const String dashboardJamaah = '/dashboard_jamaah';
   static const String dashboardPendamping = '/dashboard_pendamping';
+  static const String joinRoom = '/join_room';
+  static const String adminDashboard = '/admin_dashboard';
+  static const String adminRooms = '/admin_rooms';
+  static const String roomDetail = '/room_detail';
   static const String interactiveMap = '/interactive_map';
   static const String map = '/map';
   static const String modalSos = '/modal_sos';
@@ -64,20 +73,71 @@ class AppRoutes {
           page: () => const RegisterScreen(),
           binding: RegisterBinding(),
         ),
+        // Room Management & Join Pages
+        GetPage(
+          name: joinRoom,
+          page: () => const JoinRoomScreen(),
+          middlewares: [
+            RoleAndRoomGuard(
+              allowedRoles: ['pendamping', 'jamaah'],
+              redirectIfHasRoom: true,
+            ),
+          ],
+        ),
+        GetPage(
+          name: adminDashboard,
+          page: () => const AdminDashboardScreen(),
+          middlewares: [
+            RoleAndRoomGuard(allowedRoles: ['admin']),
+          ],
+        ),
+        GetPage(
+          name: adminRooms,
+          page: () => const AdminRoomManagementScreen(),
+          middlewares: [
+            RoleAndRoomGuard(allowedRoles: ['admin']),
+          ],
+        ),
+        GetPage(
+          name: roomDetail,
+          page: () => const RoomDetailScreen(),
+          middlewares: [
+            RoleAndRoomGuard(allowedRoles: ['admin']),
+          ],
+        ),
+        // Role Dashboards with Active Room Protection
         GetPage(
           name: home,
           page: () => const DashboardJamaahScreen(),
           binding: DashboardBinding(),
+          middlewares: [
+            RoleAndRoomGuard(
+              allowedRoles: ['jamaah'],
+              requiresActiveRoom: true,
+            ),
+          ],
         ),
         GetPage(
           name: dashboardJamaah,
           page: () => const DashboardJamaahScreen(),
           binding: DashboardBinding(),
+          middlewares: [
+            RoleAndRoomGuard(
+              allowedRoles: ['jamaah'],
+              requiresActiveRoom: true,
+            ),
+          ],
         ),
         GetPage(
           name: dashboardPendamping,
           page: () => const DashboardPendampingScreen(),
           binding: DashboardBinding(),
+          middlewares: [
+            RoleAndRoomGuard(
+              allowedRoles: ['pendamping'],
+              requiresActiveRoom: true,
+            ),
+          ],
         ),
         GetPage(
           name: interactiveMap,

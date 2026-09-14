@@ -1,0 +1,12 @@
+﻿{
+  "name": "hajicare-seed",
+  "version": "1.0.0",
+  "description": "Dev seed scripts for HajiCare Firebase project",
+  "scripts": {
+    "seed:admin": "node seed_admin.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.3.0"
+  },
+  "private": true
+}

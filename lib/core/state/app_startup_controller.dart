@@ -151,7 +151,7 @@ class AppStartupController extends GetxController {
 
       // 4. User is authenticated -> determine appropriate role dashboard
       startupState.value = StartupState.authenticated;
-      return await _resolveUserRoleDestination(currentUser.uid);
+      return await resolveUserRoleDestination(currentUser.uid);
     } catch (e) {
       debugPrint('[AppStartupController] Error during bootstrap: $e');
       startupState.value = StartupState.unauthenticated;
@@ -159,27 +159,38 @@ class AppStartupController extends GetxController {
     }
   }
 
-  /// Resolves the user's role from Firestore with a safe timeout.
-  Future<String> _resolveUserRoleDestination(String uid) async {
+  /// Resolves the user's role and activeRoom destination from Firestore.
+  Future<String> resolveUserRoleDestination(String uid) async {
     try {
       final doc = await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
           .get()
-          .timeout(const Duration(seconds: 2));
+          .timeout(const Duration(seconds: 4));
 
       if (doc.exists) {
         final data = doc.data();
-        final role = data?['role'] as String? ?? 'jamaah';
-        if (role == 'pendamping') {
-          return AppRoutes.dashboardPendamping;
+        final role = (data?['role'] as String?)?.toLowerCase() ?? 'jamaah';
+        final activeRoomId = data?['activeRoomId'] as String?;
+
+        if (role == 'admin') {
+          return AppRoutes.adminDashboard;
         }
+
+        final hasRoom = activeRoomId != null && activeRoomId.trim().isNotEmpty;
+
+        if (role == 'pendamping') {
+          return hasRoom ? AppRoutes.dashboardPendamping : AppRoutes.joinRoom;
+        }
+
+        // Default role: jamaah
+        return hasRoom ? AppRoutes.dashboardJamaah : AppRoutes.joinRoom;
       }
     } catch (e) {
       debugPrint('[AppStartupController] Firestore role check skipped/timed out: $e');
     }
 
-    // Default authenticated home
-    return AppRoutes.dashboardJamaah;
+    // Default fallback
+    return AppRoutes.login;
   }
 }

@@ -12,6 +12,8 @@ class MapTopHeader extends StatelessWidget {
   final ValueChanged<int> onFilterSelected;
   final VoidCallback onSosPressed;
   final ValueChanged<String>? onSearchChanged;
+  final bool isLiveTracking;
+  final double gpsAccuracy;
 
   const MapTopHeader({
     super.key,
@@ -20,6 +22,8 @@ class MapTopHeader extends StatelessWidget {
     required this.onFilterSelected,
     required this.onSosPressed,
     this.onSearchChanged,
+    this.isLiveTracking = false,
+    this.gpsAccuracy = 0.0,
   });
 
   @override
@@ -213,11 +217,15 @@ class MapTopHeader extends StatelessWidget {
                         border: isSelected
                             ? null
                             : Border.all(
-                                color: AppColors.goldLight.withValues(alpha: 0.7),
+                                color: AppColors.goldLight.withValues(
+                                  alpha: 0.7,
+                                ),
                               ),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.espressoDark.withValues(alpha: 0.04),
+                            color: AppColors.espressoDark.withValues(
+                              alpha: 0.04,
+                            ),
                             blurRadius: 2,
                           ),
                         ],

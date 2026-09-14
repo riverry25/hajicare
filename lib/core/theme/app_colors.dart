@@ -18,6 +18,7 @@ class AppColors {
   static const Color tertiaryContainer = Color(0xFF4B350D);
   static const Color goldLight = Color(0xFFD4B896);
   static const Color accentGoldStar = Color(0xFFD4A857);
+  static const Color primaryGold = accentGoldStar; // alias
 
   // Backgrounds
   static const Color background = Color(0xFFFFF8F4);
@@ -36,6 +37,8 @@ class AppColors {
   // Texts / Outlines
   static const Color textHeading = Color(0xFF2B1F16);
   static const Color textBody = Color(0xFF6B5D4F);
+  static const Color textSecondary = textBody; // alias
+  static const Color borderGold = outlineVariant; // alias
   static const Color outline = Color(0xFF81746F);
   static const Color outlineVariant = Color(0xFFD3C3BC);
   
@@ -79,6 +82,7 @@ class AppColors {
   static const Color darkTextHeading = Color(0xFFF6EFEA);
   static const Color darkTextBody = Color(0xFFCBBBB0);
   static const Color darkOutline = Color(0xFF6B5B50);
+  static const Color darkBorder = darkOutline; // alias
   static const Color darkOutlineVariant = Color(0xFF4A3C33);
 
   // Semantic brightness helpers

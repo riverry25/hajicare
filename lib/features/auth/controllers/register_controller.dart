@@ -50,6 +50,7 @@ class RegisterController extends GetxController {
         'porsi': porsiController.text.trim(),
         'email': emailController.text.trim(),
         'role': selectedRole.value,
+        'activeRoomId': null,
         'createdAt': FieldValue.serverTimestamp(),
       };
 
@@ -66,11 +67,8 @@ class RegisterController extends GetxController {
       final startup = Get.find<AppStartupController>();
       await startup.handleSuccessfulLogin(rememberMe: true);
 
-      Get.offAllNamed(
-        selectedRole.value == 'jamaah'
-            ? AppRoutes.dashboardJamaah
-            : AppRoutes.dashboardPendamping,
-      );
+      // Both newly registered Pendamping and Jamaah must join a room first
+      Get.offAllNamed(AppRoutes.joinRoom);
     } on FirebaseAuthException catch (e) {
       debugPrint('=== ERROR AUTH ===: ${e.code} - ${e.message}');
       errorMessage.value = e.message ?? e.code;

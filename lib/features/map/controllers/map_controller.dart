@@ -1,3 +1,4 @@
+﻿import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart' as fmap;
@@ -5,54 +6,146 @@ import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
-import '../../../core/theme/app_colors.dart';
 import '../models/map_poi.dart';
 
 /// Controller managing reactive interactive map state, camera,
-/// real geolocation, dynamic POIs, and Jamaah markers.
+/// real geolocation with live streaming, dynamic POIs, and Jamaah markers.
 class MapController extends GetxController with GetTickerProviderStateMixin {
-  // Map Engine Controller from flutter_map
   final fmap.MapController flutterMapController = fmap.MapController();
 
-  // Map Readiness & State
   final isMapReady = false.obs;
-  final selectedFilter = 0.obs; // 0: Jamaah, 1: Semua, 2: Toilet, 3: Medis, 4: Maktab
-  final currentIndex = 1.obs; // Bottom nav index
+  final selectedFilter = 0.obs;
+  final currentIndex = 1.obs;
   final compassRotation = 0.0.obs;
 
-  // Selected Entities
   final selectedPoi = Rxn<MapPoi>();
   final selectedJamaah = Rxn<JamaahData>();
   final activeRoute = <LatLng>[].obs;
 
-  // User & Companion Location
-  // Default base: Mina Tent City Sector 48
   static const LatLng defaultMinaBase = LatLng(21.4135, 39.8930);
   final currentUserLocation = Rxn<LatLng>();
   final isLocationLoading = false.obs;
   final locationError = RxnString();
 
-  // POIs and Safe Radius (200m)
+  final isLiveTracking = false.obs;
+  final gpsAccuracy = 0.0.obs;
+  StreamSubscription<Position>? _positionStreamSub;
+
   final pois = <MapPoi>[].obs;
   final safeRadiusMeters = 200.0.obs;
-
-  // Tile Provider URL (CartoDB Voyager with official CARTO API Key)
   final activeTileUrl = AppConstants.cartoVoyagerUrl.obs;
+
+  bool _initialMoveDone = false;
 
   @override
   void onInit() {
     super.onInit();
-    _initData();
+    pois.value = List.from(MapPoi.defaultMinaPois);
+    _autoStartGps();
   }
 
-  void _initData() {
-    pois.value = List.from(MapPoi.defaultMinaPois);
+  // GPS AUTO-START & STREAMING
 
-    // Initial default user position in Mina
-    currentUserLocation.value = defaultMinaBase;
+  Future<void> _autoStartGps() async {
+    isLocationLoading.value = true;
+    locationError.value = null;
 
-    // Auto-select first Jamaah if available in HajiCareController
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        locationError.value = 'GPS dinonaktifkan';
+        isLocationLoading.value = false;
+        AppAlert.warning(
+          Get.context,
+          title: 'GPS Nonaktif',
+          message: 'Aktifkan GPS perangkat untuk melihat posisi Anda di peta.',
+          okText: 'Aktifkan GPS',
+          onOk: () => Geolocator.openLocationSettings(),
+        );
+        return;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          locationError.value = 'Izin ditolak';
+          isLocationLoading.value = false;
+          AppAlert.warning(
+            Get.context,
+            title: 'Izin Lokasi Diperlukan',
+            message: 'Izin akses lokasi diperlukan agar peta dapat menampilkan posisi Anda.',
+          );
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        locationError.value = 'Izin ditolak permanen';
+        isLocationLoading.value = false;
+        AppAlert.warning(
+          Get.context,
+          title: 'Izin Ditolak Permanen',
+          message: 'Harap izinkan akses lokasi melalui Pengaturan Aplikasi.',
+          okText: 'Pengaturan',
+          onOk: () => Geolocator.openAppSettings(),
+        );
+        return;
+      }
+
+      final firstPosition = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+      _applyPosition(firstPosition);
+      isLocationLoading.value = false;
+      _startPositionStream();
+    } catch (e) {
+      debugPrint('[MapController] GPS init error: $e');
+      locationError.value = e.toString();
+      isLocationLoading.value = false;
+      currentUserLocation.value = defaultMinaBase;
+      _initJamaahAndRoute();
+    }
+  }
+
+  void _startPositionStream() {
+    _positionStreamSub?.cancel();
+    _positionStreamSub = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 5,
+      ),
+    ).listen(
+      _applyPosition,
+      onError: (e) {
+        debugPrint('[MapController] Stream error: $e');
+        isLiveTracking.value = false;
+      },
+    );
+    isLiveTracking.value = true;
+  }
+
+  void _applyPosition(Position position) {
+    final newCoord = LatLng(position.latitude, position.longitude);
+    currentUserLocation.value = newCoord;
+    gpsAccuracy.value = position.accuracy;
+    _updateRouteToSelected();
+
+    if (!_initialMoveDone) {
+      _initialMoveDone = true;
+      _initJamaahAndRoute();
+      Future.delayed(const Duration(milliseconds: 300), () {
+        animatedMove(newCoord, 16.5);
+      });
+    }
+  }
+
+  void _initJamaahAndRoute() {
     if (Get.isRegistered<HajiCareController>()) {
       final state = Get.find<HajiCareController>();
       if (state.jamaahList.isNotEmpty) {
@@ -64,30 +157,22 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     }
   }
 
-  // ---------------------------------------------------------------------------
   // FILTERING & SELECTION
-  // ---------------------------------------------------------------------------
 
-  void selectFilter(int index) {
-    selectedFilter.value = index;
-  }
+  void selectFilter(int index) => selectedFilter.value = index;
+  void changeTab(int index) => currentIndex.value = index;
 
-  void changeTab(int index) {
-    currentIndex.value = index;
-  }
-
-  /// Returns list of POIs matching the currently selected filter chip.
   List<MapPoi> get filteredPois {
     switch (selectedFilter.value) {
-      case 0: // Jamaah (Ayah) - hide other POIs or show minimal
+      case 0:
         return [];
-      case 1: // Semua
+      case 1:
         return pois;
-      case 2: // Toilet & Wudhu
+      case 2:
         return pois.where((p) => p.category == PoiCategory.toilet).toList();
-      case 3: // Posko Medis PPIH
+      case 3:
         return pois.where((p) => p.category == PoiCategory.medis).toList();
-      case 4: // Tenda Maktab 48
+      case 4:
         return pois.where((p) => p.category == PoiCategory.maktab).toList();
       default:
         return pois;
@@ -115,11 +200,8 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     activeRoute.clear();
   }
 
-  // ---------------------------------------------------------------------------
-  // ROUTE & DISTANCE CALCULATIONS
-  // ---------------------------------------------------------------------------
+  // ROUTE & DISTANCE
 
-  /// Computes simulated street walking waypoints from user to destination.
   void _updateRouteTo(LatLng destination) {
     final start = currentUserLocation.value ?? defaultMinaBase;
     activeRoute.value = generateWalkingWaypoints(start, destination);
@@ -127,14 +209,12 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
   void _updateRouteToSelected() {
     if (selectedJamaah.value != null) {
-      final dest = getJamaahCoordinate(selectedJamaah.value!);
-      _updateRouteTo(dest);
+      _updateRouteTo(getJamaahCoordinate(selectedJamaah.value!));
     } else if (selectedPoi.value != null) {
       _updateRouteTo(selectedPoi.value!.coordinate);
     }
   }
 
-  /// Converts a [JamaahData] into a [LatLng] coordinate.
   LatLng getJamaahCoordinate(JamaahData jamaah) {
     if (jamaah.currentLocation != null) {
       return LatLng(
@@ -142,11 +222,10 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
         jamaah.currentLocation!.longitude,
       );
     }
-    // Realistic Mina sector offset based on distance
     final base = currentUserLocation.value ?? defaultMinaBase;
     final distKm = (jamaah.distance > 0 ? jamaah.distance : 120.0) / 1000.0;
     const earthRadiusKm = 6371.0;
-    const bearingRad = 45.0 * math.pi / 180.0; // North-East
+    const bearingRad = 45.0 * math.pi / 180.0;
 
     final lat1 = base.latitude * math.pi / 180.0;
     final lon1 = base.longitude * math.pi / 180.0;
@@ -164,135 +243,37 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     return LatLng(lat2 * 180.0 / math.pi, lon2 * 180.0 / math.pi);
   }
 
-  /// Calculates straight-line distance in meters between two coordinates.
   double calculateDistanceMeters(LatLng from, LatLng to) {
     return Geolocator.distanceBetween(
-      from.latitude,
-      from.longitude,
-      to.latitude,
-      to.longitude,
+      from.latitude, from.longitude,
+      to.latitude, to.longitude,
     );
   }
 
-  /// Generates a realistic walking route with turns between start and end.
   List<LatLng> generateWalkingWaypoints(LatLng start, LatLng end) {
-    // Generate an L-shaped / stepped pedestrian path
-    final midLat = (start.latitude + end.latitude) / 2;
     final midLng = (start.longitude + end.longitude) / 2;
-
-    final p1 = LatLng(start.latitude, midLng);
-    final p2 = LatLng(midLat, midLng);
-    final p3 = LatLng(end.latitude, midLng);
-
-    return [start, p1, p2, p3, end];
+    final midLat = (start.latitude + end.latitude) / 2;
+    return [
+      start,
+      LatLng(start.latitude, midLng),
+      LatLng(midLat, midLng),
+      LatLng(end.latitude, midLng),
+      end,
+    ];
   }
 
-  // ---------------------------------------------------------------------------
-  // REAL GEOLOCATION FLOW
-  // ---------------------------------------------------------------------------
+  // MANUAL REFRESH
 
-  /// Fetches real user device position using Geolocator with robust permission checks.
   Future<void> moveToCurrentLocation() async {
-    isLocationLoading.value = true;
-    locationError.value = null;
-
-    try {
-      // 1. Check if location services are enabled on device
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        Get.snackbar(
-          'GPS Nonaktif',
-          'Layanan lokasi dinonaktifkan. Silakan aktifkan GPS perangkat Anda.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: AppColors.primaryContainer,
-          colorText: Colors.white,
-          mainButton: TextButton(
-            onPressed: () => Geolocator.openLocationSettings(),
-            child: const Text('Aktifkan', style: TextStyle(color: AppColors.goldLight)),
-          ),
-        );
-        isLocationLoading.value = false;
-        return;
-      }
-
-      // 2. Check and request location permission
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          Get.snackbar(
-            'Izin Lokasi Diperlukan',
-            'Izin akses lokasi diperlukan untuk melihat posisi Anda pada peta.',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: AppColors.primaryContainer,
-            colorText: Colors.white,
-          );
-          isLocationLoading.value = false;
-          return;
-        }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        Get.snackbar(
-          'Izin Lokasi Ditolak Permanen',
-          'Harap izinkan akses lokasi melalui Pengaturan Aplikasi.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: AppColors.primaryContainer,
-          colorText: Colors.white,
-          mainButton: TextButton(
-            onPressed: () => Geolocator.openAppSettings(),
-            child: const Text('Pengaturan', style: TextStyle(color: AppColors.goldLight)),
-          ),
-        );
-        isLocationLoading.value = false;
-        return;
-      }
-
-      // 3. Acquire actual position
-      final Position position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 10),
-        ),
-      );
-
-      final newCoord = LatLng(position.latitude, position.longitude);
-      currentUserLocation.value = newCoord;
-
-      // 4. Update route and camera
-      _updateRouteToSelected();
-      animatedMove(newCoord, 17.5);
-
-      Get.snackbar(
-        'Lokasi Terkini Ditemukan',
-        'Akurasi: ±${position.accuracy.toStringAsFixed(1)} meter',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.statusSafe.withValues(alpha: 0.9),
-        colorText: Colors.white,
-        duration: const Duration(seconds: 2),
-      );
-    } catch (e) {
-      debugPrint('[MapController] Get position error: $e');
-      locationError.value = e.toString();
-      // Graceful fallback to Mina Base if device has no GPS fix
-      animatedMove(defaultMinaBase, 17.0);
-      Get.snackbar(
-        'Peta Berpusat di Mina',
-        'Menggunakan lokasi basis Tenda Maktab 48 Mina.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.primaryContainer,
-        colorText: Colors.white,
-      );
-    } finally {
-      isLocationLoading.value = false;
+    if (isLiveTracking.value && currentUserLocation.value != null) {
+      animatedMove(currentUserLocation.value!, 17.0);
+      return;
     }
+    await _autoStartGps();
   }
 
-  // ---------------------------------------------------------------------------
-  // CAMERA & COMPASS CONTROLS
-  // ---------------------------------------------------------------------------
+  // CAMERA & COMPASS
 
-  /// Returns true if flutterMapController is attached to a rendered FlutterMap.
   bool get isMapAttached {
     try {
       flutterMapController.camera;
@@ -302,11 +283,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     }
   }
 
-  /// Smoothly animates camera to [destLocation] with [destZoom].
   void animatedMove(LatLng destLocation, double destZoom) {
     if (!isMapAttached) return;
 
-    // Create an animation tween from current center to destLocation
     final latTween = Tween<double>(
       begin: flutterMapController.camera.center.latitude,
       end: destLocation.latitude,
@@ -320,17 +299,16 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       end: destZoom,
     );
 
-    final animationController = AnimationController(
+    final animCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 700),
     );
-
-    final Animation<double> animation = CurvedAnimation(
-      parent: animationController,
+    final animation = CurvedAnimation(
+      parent: animCtrl,
       curve: Curves.easeInOutCubic,
     );
 
-    animationController.addListener(() {
+    animCtrl.addListener(() {
       if (isMapAttached) {
         flutterMapController.move(
           LatLng(latTween.evaluate(animation), lngTween.evaluate(animation)),
@@ -342,60 +320,41 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     animation.addStatusListener((status) {
       if (status == AnimationStatus.completed ||
           status == AnimationStatus.dismissed) {
-        animationController.dispose();
+        animCtrl.dispose();
       }
     });
 
-    animationController.forward();
+    animCtrl.forward();
   }
 
-  /// Resets map rotation bearing smoothly back to North (0°).
   void resetCompass() {
-    if (isMapAttached) {
-      flutterMapController.rotate(0.0);
-    }
+    if (isMapAttached) flutterMapController.rotate(0.0);
     compassRotation.value = 0.0;
   }
 
-  /// Zoom in by 1.0 level.
   void zoomIn() {
     if (!isMapAttached) return;
-    final currentZoom = flutterMapController.camera.zoom;
-    animatedMove(flutterMapController.camera.center, currentZoom + 1.0);
+    animatedMove(flutterMapController.camera.center, flutterMapController.camera.zoom + 1.0);
   }
 
-  /// Zoom out by 1.0 level.
   void zoomOut() {
     if (!isMapAttached) return;
-    final currentZoom = flutterMapController.camera.zoom;
-    animatedMove(flutterMapController.camera.center, currentZoom - 1.0);
+    animatedMove(flutterMapController.camera.center, flutterMapController.camera.zoom - 1.0);
   }
 
-  /// Toggles map visual tile style between CartoDB Voyager and OpenStreetMap.
   void toggleMapTileLayer() {
     if (activeTileUrl.value.contains('cartocdn')) {
       activeTileUrl.value = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-      if (Get.context != null) {
-        Get.snackbar(
-          'Mode Peta: OpenStreetMap',
-          'Menampilkan peta standar OpenStreetMap.',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-      }
+      AppAlert.info(Get.context, title: 'Mode Peta: OpenStreetMap', message: 'Menampilkan peta standar OpenStreetMap.');
     } else {
       activeTileUrl.value = AppConstants.cartoVoyagerUrl;
-      if (Get.context != null) {
-        Get.snackbar(
-          'Mode Peta: Voyager',
-          'Menampilkan peta bertema hangat & bersih.',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-      }
+      AppAlert.info(Get.context, title: 'Mode Peta: Voyager', message: 'Menampilkan peta bertema hangat & bersih.');
     }
   }
 
   @override
   void onClose() {
+    _positionStreamSub?.cancel();
     flutterMapController.dispose();
     super.onClose();
   }

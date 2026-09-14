@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/app_colors.dart';
 
-enum UserRole { jamaah, pendamping }
+enum UserRole { admin, pendamping, jamaah }
 
 enum DistanceTier { aman, waspada, terlalujJauh }
 
@@ -49,6 +49,7 @@ class JamaahData {
   final String? porsi;
   final String? kloter;
   final String? maktab;
+  final String? activeRoomId;
   double distance;
   DistanceTier tier;
   bool separatedMode;
@@ -64,6 +65,7 @@ class JamaahData {
     this.porsi,
     this.kloter,
     this.maktab,
+    this.activeRoomId,
     this.separatedMode = false,
     this.sosActive = false,
     this.currentLocation,
@@ -110,6 +112,7 @@ class JamaahData {
     final porsi = data['porsi'] as String?;
     final kloter = data['kloter'] as String?;
     final maktab = data['maktab'] as String?;
+    final activeRoomId = data['activeRoomId'] as String?;
 
     return JamaahData(
       id: doc.id,
@@ -119,6 +122,7 @@ class JamaahData {
       porsi: porsi,
       kloter: kloter,
       maktab: maktab,
+      activeRoomId: activeRoomId,
       separatedMode: data['separatedMode'] as bool? ?? false,
       sosActive: data['sosActive'] as bool? ?? false,
       currentLocation: data['currentLocation'] as GeoPoint?,
@@ -131,6 +135,7 @@ class JamaahData {
       'distance': distance,
       'separatedMode': separatedMode,
       'sosActive': sosActive,
+      if (activeRoomId != null) 'activeRoomId': activeRoomId,
       if (currentLocation != null) 'currentLocation': currentLocation,
     };
   }

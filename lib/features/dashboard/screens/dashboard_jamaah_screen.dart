@@ -19,6 +19,7 @@ import '../widgets/jamaah_prayer_card.dart';
 import '../widgets/jamaah_profile_header.dart';
 import '../widgets/jamaah_service_grid.dart';
 import '../widgets/jamaah_sos_banner.dart';
+import '../../room/widgets/active_room_card.dart';
 
 class DashboardJamaahScreen extends StatelessWidget {
   const DashboardJamaahScreen({super.key});
@@ -130,6 +131,8 @@ class DashboardJamaahScreen extends StatelessWidget {
         children: [
           if (jamaah.separatedMode) _buildSeparatedBanner(context, isDark),
           JamaahProfileHeader(state: state),
+          const SizedBox(height: AppSpacing.md),
+          const ActiveRoomCard(isPendamping: false),
           const SizedBox(height: AppSpacing.lg),
           JamaahDistanceCard(
             jamaah: jamaah,
