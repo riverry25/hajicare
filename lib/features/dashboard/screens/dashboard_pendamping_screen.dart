@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart' as fmap;
 import 'package:get/get.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../core/locales/app_translations.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/app_settings_controller.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
@@ -19,6 +22,7 @@ import '../widgets/pendamping_greeting_header.dart';
 import '../widgets/pendamping_jamaah_selector.dart';
 import '../widgets/pendamping_radar_card.dart';
 import '../widgets/pendamping_sos_banner.dart';
+import '../../room/widgets/active_room_card.dart';
 
 class DashboardPendampingScreen extends StatelessWidget {
   const DashboardPendampingScreen({super.key});
@@ -135,6 +139,8 @@ class DashboardPendampingScreen extends StatelessWidget {
         ),
         children: [
           PendampingGreetingHeader(state: state),
+          const SizedBox(height: AppSpacing.md),
+          const ActiveRoomCard(isPendamping: true),
           const SizedBox(height: AppSpacing.lg),
           if (state.anyJamaahSeparated) _buildSeparatedBanner(context, state, isDark),
           PendampingJamaahSelector(
@@ -150,9 +156,30 @@ class DashboardPendampingScreen extends StatelessWidget {
             onTrackMap: () => dashboardCtrl.changeTab(1),
           ),
           const SizedBox(height: AppSpacing.lg),
-          PendampingSosBanner(state: state),
+          PendampingSosBanner(
+            state: state,
+            onDismissSos: (jamaahId) async {
+              AppAlert.confirm(
+                context,
+                title: 'Akhiri Darurat SOS',
+                message: 'Apakah situasi darurat jamaah sudah teratasi? Sinyal SOS akan dinonaktifkan.',
+                confirmText: 'Ya, Akhiri SOS',
+                cancelText: 'Batal',
+                onConfirm: () async {
+                  await state.dismissSos(jamaahId);
+                  if (context.mounted) {
+                    AppAlert.success(
+                      context,
+                      title: 'SOS Diakhiri',
+                      message: 'Sinyal darurat berhasil dinonaktifkan.',
+                    );
+                  }
+                },
+              );
+            },
+          ),
           const SizedBox(height: AppSpacing.lg),
-          _buildMapCard(context, dashboardCtrl, selectedJamaah, isDark),
+          _buildMapCard(context, state, dashboardCtrl, selectedJamaah, isDark),
           const SizedBox(height: AppSpacing.lg),
           _buildFeatureGrid(context, dashboardCtrl, isDark),
           const SizedBox(height: AppSpacing.md),
@@ -192,12 +219,31 @@ class DashboardPendampingScreen extends StatelessWidget {
 
   Widget _buildMapCard(
     BuildContext context,
+    HajiCareController state,
     DashboardController dashboardCtrl,
     JamaahData selectedJamaah,
     bool isDark,
   ) {
     final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
+
+    // Resolve map center from pendamping's current GPS, or fall back to Mina
+    final myPos = state.myCurrentPosition.value;
+    final pendGeo = state.pendampingLocation.value;
+    final jamaahGeo = selectedJamaah.currentLocation;
+
+    LatLng mapCenter = myPos != null
+        ? LatLng(myPos.latitude, myPos.longitude)
+        : (pendGeo != null
+            ? LatLng(pendGeo.latitude, pendGeo.longitude)
+            : const LatLng(21.3891, 39.8579)); // Mina fallback
+
+    final LatLng? targetJamaahLatLng = jamaahGeo != null
+        ? LatLng(jamaahGeo.latitude, jamaahGeo.longitude)
+        : null;
+
+    final LatLng? selfLatLng = myPos != null ? LatLng(myPos.latitude, myPos.longitude) : null;
+
+    final hasPositions = selfLatLng != null && targetJamaahLatLng != null;
 
     return AppCard(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -223,174 +269,150 @@ class DashboardPendampingScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              Text(
-                context.tr('gpsAccuracy'),
-                style: AppTypography.captionSmall.copyWith(
-                  color: AppColors.statusSafe,
-                  fontWeight: FontWeight.bold,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: (state.isMyGpsActive.value
+                          ? AppColors.statusSafe
+                          : AppColors.error)
+                      .withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+                child: Text(
+                  state.isMyGpsActive.value ? 'GPS Aktif' : 'GPS Mati',
+                  style: AppTypography.captionSmall.copyWith(
+                    color: state.isMyGpsActive.value
+                        ? AppColors.statusSafe
+                        : AppColors.error,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          // Interactive Map Preview Canvas
+          // FlutterMap Mini-Preview
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.md),
-            child: Container(
-              height: 160,
-              width: double.infinity,
-              color: isDark ? AppColors.darkSurface : AppColors.canvasCreamSubtle,
-              child: Stack(
-                children: [
-                  // Grid Pattern Simulation
-                  Positioned.fill(
-                    child: CustomPaint(painter: _MiniMapPainter(isDark: isDark)),
-                  ),
-                  // Jamaah marker pin
-                  Positioned(
-                    top: 40,
-                    left: 90,
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isDark ? AppColors.darkPrimaryContainer : AppColors.espressoDark,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            '${selectedJamaah.shortLabel} (${selectedJamaah.distance.toInt()}${context.tr('meterUnit')})',
-                            style: AppTypography.captionSmall.copyWith(
-                              color: isDark ? AppColors.darkPrimary : AppColors.surfaceWhite,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        Icon(
-                          Icons.location_on,
-                          color: selectedJamaah.tier.color,
-                          size: 28,
-                        ),
-                      ],
+            child: SizedBox(
+              height: 180,
+              child: AbsorbPointer(
+                child: fmap.FlutterMap(
+                  options: fmap.MapOptions(
+                    initialCenter: mapCenter,
+                    initialZoom: hasPositions ? 16.0 : 14.0,
+                    interactionOptions: const fmap.InteractionOptions(
+                      flags: fmap.InteractiveFlag.none,
                     ),
                   ),
-                  // Pendamping (Self) marker pin
-                  Positioned(
-                    bottom: 45,
-                    right: 80,
-                    child: Column(
-                      children: [
-                        const Icon(
-                          Icons.my_location,
-                          color: AppColors.accentGoldStar,
-                          size: 24,
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isDark ? AppColors.darkPrimaryContainer : AppColors.espressoDark,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            context.tr('youLabel'),
-                            style: AppTypography.captionSmall.copyWith(
-                              color: isDark ? AppColors.darkPrimary : AppColors.surfaceWhite,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
+                  children: [
+                    fmap.TileLayer(
+                      urlTemplate:
+                          'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                      subdomains: const ['a', 'b', 'c', 'd'],
+                      userAgentPackageName: 'com.example.hajicare',
                     ),
-                  ),
-                  // Expand Button Overlay
-                  Positioned(
-                    bottom: 8,
-                    left: 8,
-                    right: 8,
-                    child: InkWell(
-                      onTap: () => dashboardCtrl.changeTab(1),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? AppColors.darkSurfaceContainer.withValues(alpha: 0.95)
-                              : AppColors.surfaceWhite.withValues(alpha: 0.9),
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          border: Border.all(
-                            color: isDark ? AppColors.darkOutlineVariant : Colors.transparent,
+                    if (selfLatLng != null && targetJamaahLatLng != null)
+                      fmap.PolylineLayer(
+                        polylines: [
+                          fmap.Polyline(
+                            points: [selfLatLng, targetJamaahLatLng],
+                            strokeWidth: 4,
+                            color: AppColors.accentGoldStar.withValues(alpha: 0.9),
                           ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.open_in_full,
-                              size: 16,
-                              color: isDark ? AppColors.darkPrimary : AppColors.espressoDark,
-                            ),
-                            const SizedBox(width: 6),
-                            Flexible(
-                              child: Text(
-                                context.tr('openFullNavigation'),
-                                style: AppTypography.captionSmall.copyWith(
-                                  color: headingColor,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
+                        ],
                       ),
+                    fmap.MarkerLayer(
+                      markers: [
+                        if (selfLatLng != null)
+                          fmap.Marker(
+                            point: selfLatLng,
+                            width: 44,
+                            height: 44,
+                            child: _buildMapPin(
+                              label: context.tr('youLabel'),
+                              icon: Icons.my_location,
+                              color: AppColors.accentGoldStar,
+                            ),
+                          ),
+                        if (targetJamaahLatLng != null)
+                          fmap.Marker(
+                            point: targetJamaahLatLng,
+                            width: 60,
+                            height: 60,
+                            child: _buildMapPin(
+                              label: selectedJamaah.shortLabel,
+                              icon: Icons.person_pin_circle_rounded,
+                              color: selectedJamaah.tier.color,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          InkWell(
+            onTap: () => dashboardCtrl.changeTab(1),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.open_in_full,
+                    size: 15,
+                    color: isDark ? AppColors.darkPrimary : AppColors.espressoDark,
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      context.tr('openFullNavigation'),
+                      style: AppTypography.captionSmall.copyWith(
+                        color: headingColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    const Icon(Icons.route_rounded, color: AppColors.tanMedium, size: 14),
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        context.tr('elderlyRoute'),
-                        style: AppTypography.caption.copyWith(
-                          color: bodyColor,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Text(
-                context.tr('tentMaktab'),
-                style: AppTypography.captionSmall.copyWith(
-                  color: headingColor,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMapPin({
+    required String label,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+          decoration: BoxDecoration(
+            color: AppColors.espressoDark,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.surfaceWhite,
+              fontSize: 8,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        Icon(icon, color: color, size: 24),
+      ],
     );
   }
 
@@ -527,38 +549,4 @@ class DashboardPendampingScreen extends StatelessWidget {
   }
 }
 
-class _MiniMapPainter extends CustomPainter {
-  final bool isDark;
 
-  const _MiniMapPainter({this.isDark = false});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = isDark
-          ? AppColors.darkOutlineVariant.withValues(alpha: 0.3)
-          : AppColors.tanMedium.withValues(alpha: 0.15)
-      ..strokeWidth = 1;
-
-    for (double x = 0; x < size.width; x += 20) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-    for (double y = 0; y < size.height; y += 20) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-
-    // Draw route line
-    final routePaint = Paint()
-      ..color = AppColors.accentGoldStar.withValues(alpha: 0.6)
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
-
-    final path = Path()
-      ..moveTo(90, 70)
-      ..quadraticBezierTo(140, 100, size.width - 80, size.height - 30);
-    canvas.drawPath(path, routePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}

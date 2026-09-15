@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../../core/routes/app_routes.dart';
+
 import '../../../core/state/app_startup_controller.dart';
 
 class LoginController extends GetxController {
@@ -23,8 +23,14 @@ class LoginController extends GetxController {
   Future<void> _loadRememberMe() async {
     try {
       final startup = Get.find<AppStartupController>();
-      rememberMe.value = await startup.isRememberMe();
-    } catch (_) {}
+      final value = await startup.isRememberMe();
+
+      if (!isClosed) {
+        rememberMe.value = value;
+      }
+    } catch (_) {
+      // Gunakan default true jika gagal membaca preference.
+    }
   }
 
   void setRole(String role) {
@@ -32,51 +38,106 @@ class LoginController extends GetxController {
   }
 
   void togglePasswordVisibility() {
+    if (isClosed) return;
+
     obscurePassword.value = !obscurePassword.value;
   }
 
   void setRememberMe(bool value) {
+    if (isClosed) return;
+
     rememberMe.value = value;
   }
 
   Future<void> login() async {
-    isLoading.value = true;
-    errorMessage.value = null;
+    if (isLoading.value || isClosed) return;
 
-    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
+    // ============================================================
+    // PENTING:
+    // Ambil text SEKALI sebelum await.
+    // Setelah ini jangan membaca TextEditingController lagi.
+    // ============================================================
+
+    final email = emailController.text.trim();
+    final password = passwordController.text;
+    final shouldRemember = rememberMe.value;
+
+    if (email.isEmpty || password.isEmpty) {
       errorMessage.value = 'Harap isi email dan password';
       _showErrorSnackbar(errorMessage.value!);
-      isLoading.value = false;
       return;
     }
 
-    try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text,
-      );
+    isLoading.value = true;
+    errorMessage.value = null;
 
-      // Persist onboarding status & Remember Me setting
+    try {
+      // ============================================================
+      // 1. Firebase Authentication
+      // ============================================================
+
+      final userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
+
+      if (isClosed) return;
+
+      final uid = userCredential.user?.uid;
+
+      if (uid == null) {
+        if (!isClosed) {
+          errorMessage.value = 'Data pengguna tidak ditemukan.';
+          _showErrorSnackbar(errorMessage.value!);
+        }
+        return;
+      }
+
+      // ============================================================
+      // 2. Simpan onboarding + remember me
+      // ============================================================
+
       final startup = Get.find<AppStartupController>();
-      await startup.handleSuccessfulLogin(rememberMe: rememberMe.value);
-      
-      Get.offAllNamed(
-        selectedRole.value == 'jamaah'
-            ? AppRoutes.dashboardJamaah
-            : AppRoutes.dashboardPendamping,
-      );
+
+      await startup.handleSuccessfulLogin(rememberMe: shouldRemember);
+
+      // Jangan melakukan update UI LoginController setelah async
+      // jika controller sudah dihancurkan.
+      if (isClosed) return;
+
+      // ============================================================
+      // 3. Tentukan dashboard berdasarkan role
+      // ============================================================
+
+      final destination = await startup.resolveUserRoleDestination(uid);
+
+      // ============================================================
+      // 4. Navigasi adalah operasi terakhir.
+      // Setelah ini LoginController boleh dihancurkan.
+      // ============================================================
+
+      if (isClosed) return;
+
+      Get.offAllNamed(destination);
     } on FirebaseAuthException catch (e) {
+      if (isClosed) return;
+
       errorMessage.value = e.message ?? e.code;
+
       _showErrorSnackbar('Error Auth: ${errorMessage.value}');
     } catch (e) {
+      if (isClosed) return;
+
       errorMessage.value = 'Terjadi kesalahan: $e';
+
       _showErrorSnackbar(errorMessage.value!);
     } finally {
-      isLoading.value = false;
+      if (!isClosed) {
+        isLoading.value = false;
+      }
     }
   }
 
   void _showErrorSnackbar(String msg) {
+    if (isClosed) return;
     if (Get.context != null) {
       Get.snackbar(
         'Gagal Masuk',
@@ -92,6 +153,7 @@ class LoginController extends GetxController {
   void onClose() {
     emailController.dispose();
     passwordController.dispose();
+
     super.onClose();
   }
 }

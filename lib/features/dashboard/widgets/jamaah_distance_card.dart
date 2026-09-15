@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../../../core/locales/app_translations.dart';
 import '../../../../core/models/jamaah_data.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -11,11 +12,13 @@ import '../../../../core/widgets/app_status_badge.dart';
 class JamaahDistanceCard extends StatelessWidget {
   final JamaahData jamaah;
   final VoidCallback? onViewMap;
+  final VoidCallback? onRefreshGps;
 
   const JamaahDistanceCard({
     super.key,
     required this.jamaah,
     this.onViewMap,
+    this.onRefreshGps,
   });
 
   AppStatusType _mapStatusType(DistanceTier tier) {
@@ -40,12 +43,159 @@ class JamaahDistanceCard extends StatelessWidget {
     }
   }
 
+  String _formatTimestamp(DateTime? dt) {
+    if (dt == null) return 'Menunggu sinyal...';
+    final diff = DateTime.now().difference(dt);
+    if (diff.inSeconds < 30) return 'Baru saja';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} mnt lalu';
+    return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
     final headingColor = AppColors.textHeadingColor(context);
     final bodyColor = AppColors.textBodyColor(context);
 
+    // 1. STATE: GPS is completely inactive on this device
+    if (!jamaah.isGpsActive) {
+      return AppCard(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        borderColor: AppColors.error.withValues(alpha: isDark ? 0.6 : 0.4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.location_off_rounded,
+                    color: AppColors.error,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'GPS Anda Tidak Aktif',
+                        style: AppTypography.titleMedium.copyWith(
+                          color: headingColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Pendamping tidak dapat melacak jarak & posisi Anda saat GPS mati.',
+                        style: AppTypography.captionSmall.copyWith(
+                          color: bodyColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  await Geolocator.openLocationSettings();
+                  onRefreshGps?.call();
+                },
+                icon: const Icon(Icons.settings_rounded, size: 18),
+                label: const Text('Aktifkan GPS Sekarang'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.error,
+                  foregroundColor: AppColors.surfaceWhite,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // 2. STATE: GPS active, but waiting for companion's location signal
+    final hasDistance = jamaah.distance > 0.0 || jamaah.locationUpdatedAt != null;
+    if (!hasDistance) {
+      return AppCard(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.darkPrimaryContainer
+                        : AppColors.canvasCream,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.radar_rounded,
+                    color: isDark ? AppColors.goldLight : AppColors.espressoDark,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Menunggu Lokasi Pendamping',
+                        style: AppTypography.titleMedium.copyWith(
+                          color: headingColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'GPS Anda aktif. Menunggu sinyal koordinat dari pendamping.',
+                        style: AppTypography.captionSmall.copyWith(
+                          color: bodyColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const AppStatusBadge(
+                  label: 'Menunggu',
+                  statusType: AppStatusType.warning,
+                  icon: Icons.hourglass_top_rounded,
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            LinearProgressIndicator(
+              backgroundColor: isDark
+                  ? AppColors.darkSurfaceContainerHighest
+                  : AppColors.surfaceVariant,
+              color: AppColors.accentGoldStar,
+              minHeight: 6,
+            ),
+          ],
+        ),
+      );
+    }
+
+    // 3. STATE: Normal real distance available
     return AppCard(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
@@ -55,8 +205,8 @@ class JamaahDistanceCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
                   color: isDark
                       ? AppColors.darkPrimaryContainer
@@ -66,6 +216,7 @@ class JamaahDistanceCard extends StatelessWidget {
                 child: Icon(
                   Icons.radar,
                   color: isDark ? AppColors.goldLight : AppColors.espressoDark,
+                  size: 24,
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -124,7 +275,43 @@ class JamaahDistanceCard extends StatelessWidget {
               minHeight: 10,
             ),
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Terakhir sinkron: ${_formatTimestamp(jamaah.locationUpdatedAt)}',
+                style: AppTypography.captionSmall.copyWith(
+                  color: bodyColor,
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: const BoxDecoration(
+                      color: AppColors.statusSafe,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'GPS Akurat',
+                    style: AppTypography.captionSmall.copyWith(
+                      color: AppColors.statusSafe,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm2),
+          Divider(
+            color: isDark ? AppColors.darkOutlineVariant : AppColors.canvasCreamSubtle,
+          ),
           InkWell(
             onTap: onViewMap,
             borderRadius: BorderRadius.circular(AppRadius.md),
@@ -169,3 +356,4 @@ class JamaahDistanceCard extends StatelessWidget {
     );
   }
 }
+

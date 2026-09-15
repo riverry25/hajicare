@@ -352,4 +352,17 @@ const Map<String, String> jvTranslations = {
   'testAlarmSignal': 'Uji Sinyal Weker',
   'responseCenter': 'Pusat Tanggap',
   'separatedAlertDetail': 'ana ing sajabane radius aman (Kadohan).',
+
+  // Prayer & Qibla Dynamic
+  'prayerSubtitle': 'Wektu sholat & arah kiblat',
+  'prayerLoading': 'Ngamot',
+  'prayerLocation': 'Papan',
+  'prayerNextLabel': 'WEKTU SHOLAT SABANJURE',
+  'prayerTimeRemaining': 'Wektu kari',
+  'qiblaAligned': 'Ponsel Sampeyan Pas Madhep Kiblat ✓',
+  'qiblaRotate': 'Kacekan',
+  'qiblaRotateToKabah': '(Puter madhep Ka\'bah)',
+  'prayerScheduleSectionTitle': 'Jadwal Sholat',
+  'prayerNextBadge': 'Sabanjure',
+  'kompasNoSensor': 'Kompas mung mlaku ing piranti seluler kanthi sensor.',
 };

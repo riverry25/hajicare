@@ -1,6 +1,7 @@
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:ultralytics_yolo/ultralytics_yolo.dart';
 
@@ -11,6 +12,14 @@ import '../../../core/theme/app_typography.dart';
 import '../models/money_detection.dart';
 import '../services/money_tts_service.dart';
 import '../services/riyal_currency_helper.dart';
+import '../services/smart_multi_pass_detector.dart';
+
+/// State modes for photo-based money recognition.
+enum RecognitionMode {
+  camera,
+  processing,
+  result,
+}
 
 class MoneyRecognitionScreen extends StatefulWidget {
   const MoneyRecognitionScreen({super.key});
@@ -19,224 +28,267 @@ class MoneyRecognitionScreen extends StatefulWidget {
   State<MoneyRecognitionScreen> createState() => _MoneyRecognitionScreenState();
 }
 
-class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen>
-    with SingleTickerProviderStateMixin {
-  // Official Ultralytics Controller
+class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
+  // Official Ultralytics Controller for Camera Preview
   final YOLOViewController _yoloController = YOLOViewController();
 
-  // Indonesian Multi-Money TTS Service
+  // Single-image YOLO inference instance
+  late final YOLO _yolo;
+
+  // Smart Multi-Pass Engine
+  late final SmartMultiPassDetector _multiPassDetector;
+
+  // Indonesian TTS Service
   final MoneyTtsService _ttsService = MoneyTtsService();
 
   // Model Asset Configuration
   static const String _modelAssetPath = 'assets/models/best_float16.tflite';
 
-  // State
+  // ---------------------------------------------------------------------------
+  // TUNABLE PIPELINE CONFIGURATION
+  // ---------------------------------------------------------------------------
+  static const double _finalConfidenceThreshold = 0.65;
+  static const double _candidateConfidenceThreshold = 0.50;
+  static const double _crossPassIoUThreshold = 0.50;
+  static const int _maxAdditionalPasses = 2;
+
+  // UX State Machine
+  RecognitionMode _mode = RecognitionMode.camera;
+  String _processingStatus = 'Memeriksa foto...';
+
+  // Camera & Model State
   bool _isModelLoaded = false;
   String? _modelError;
-  bool _isScanningActive = true;
   bool _isTorchOn = false;
   LensFacing _currentLens = LensFacing.back;
-
-  // Realtime Detections & Total
-  List<MoneyDetection> _activeDetections = [];
-  double _totalAmount = 0.0;
-  // Mutable via confidence slider in UI
-  // ignore: prefer_final_fields
-  double _confidenceThreshold = 0.65;
-  int _lastResultProcessedTime = 0;
-
-  // Tap-to-focus visual feedback
   Offset? _focusPoint;
 
-  // Animation controller for scanner indicator
-  late AnimationController _pulseController;
-  late Animation<double> _pulseAnimation;
+  // Captured Photo & Inference Results
+  Uint8List? _capturedImageBytes;
+  Size? _capturedImageSize;
+  List<MoneyDetection> _capturedDetections = [];
+  double _totalAmount = 0.0;
 
   @override
   void initState() {
     super.initState();
     _initServices();
-
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
-
-    _pulseAnimation = Tween<double>(begin: 0.85, end: 1.15).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
   }
 
   Future<void> _initServices() async {
     await _ttsService.init();
+    try {
+      _yolo = YOLO(
+        modelPath: _modelAssetPath,
+        task: YOLOTask.detect,
+      );
+      final loaded = await _yolo.loadModel();
+
+      _multiPassDetector = SmartMultiPassDetector(
+        yolo: _yolo,
+        config: const MultiPassConfig(
+          finalConfidenceThreshold: _finalConfidenceThreshold,
+          candidateConfidenceThreshold: _candidateConfidenceThreshold,
+          crossPassIoUThreshold: _crossPassIoUThreshold,
+          maxAdditionalPasses: _maxAdditionalPasses,
+        ),
+      );
+
+      if (mounted) {
+        setState(() {
+          _isModelLoaded = loaded;
+        });
+      }
+    } catch (e) {
+      debugPrint('Failed to load YOLO model: $e');
+      if (mounted) {
+        setState(() {
+          _modelError = 'Gagal memuat model deteksi: $e';
+        });
+      }
+    }
   }
 
   @override
   void dispose() {
-    _pulseController.dispose();
     _ttsService.dispose();
     _yoloController.dispose();
+    _yolo.dispose();
     super.dispose();
   }
 
-  /// Official YOLO detection callback.
-  /// Handles MULTI-MONEY detection per frame without discarding duplicates.
-  void _onYoloResult(List<YOLOResult> results) {
-    if (!mounted || !_isScanningActive) return;
+  // ---------------------------------------------------------------------------
+  // PHOTO CAPTURE & SMART MULTI-PASS INFERENCE WORKFLOW
+  // ---------------------------------------------------------------------------
 
-    // Rate-limit state update to ~15-20 FPS for UI performance
-    final now = DateTime.now().millisecondsSinceEpoch;
-    if (now - _lastResultProcessedTime < 60) return;
-    _lastResultProcessedTime = now;
+  Future<void> _captureAndAnalyze() async {
+    if (_mode != RecognitionMode.camera) return;
 
-    // CRITICAL: Process ALL valid detections individually.
-    // Do NOT take results.first.
-    final List<MoneyDetection> validDetections = [];
-
-    for (final result in results) {
-      if (result.confidence < _confidenceThreshold) continue;
-
-      final info = RiyalCurrencyHelper.getInfo(result.className);
-      if (info == null) {
-        // Unknown class, fallback safely
-        validDetections.add(
-          MoneyDetection(
-            className: result.className,
-            displayName: result.className,
-            spokenName: result.className,
-            amount: 0.0,
-            confidence: result.confidence,
-            box: result.boundingBox,
-            normalizedBox: result.normalizedBox,
-            isCoin: false,
-          ),
-        );
-        continue;
-      }
-
-      validDetections.add(
-        MoneyDetection(
-          className: result.className,
-          displayName: info.displayName,
-          spokenName: info.spokenName,
-          amount: info.amount,
-          confidence: result.confidence,
-          box: result.boundingBox,
-          normalizedBox: result.normalizedBox,
-          isCoin: info.isCoin,
-        ),
+    if (!_isModelLoaded) {
+      Get.snackbar(
+        'Menyiapkan Kamera',
+        'Model deteksi sedang disiapkan, silakan coba sesaat lagi.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.black87,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(AppSpacing.md),
       );
+      return;
     }
-
-    // Calculate total from ALL detected money (including duplicate denominations)
-    final double calculatedTotal = validDetections.fold(
-      0.0,
-      (sum, item) => sum + item.amount,
-    );
 
     setState(() {
-      _activeDetections = validDetections;
-      _totalAmount = calculatedTotal;
+      _mode = RecognitionMode.processing;
+      _processingStatus = 'Memeriksa foto...';
     });
 
-    // Pass all valid detections to multi-money TTS service
-    if (validDetections.isNotEmpty) {
-      _ttsService.processDetections(validDetections);
-    }
-  }
+    try {
+      // 1. Capture still photo from live preview
+      Uint8List? photoBytes;
+      try {
+        photoBytes = await _yoloController.capturePhoto(withOverlays: false);
+      } catch (e) {
+        debugPrint('capturePhoto error: $e');
+      }
 
-  void _onModelLoaded(String path, YOLOTask? task) {
-    debugPrint('Ultralytics YOLO model loaded successfully: $path ($task)');
-    if (mounted) {
+      if (photoBytes == null || photoBytes.isEmpty) {
+        try {
+          photoBytes = await _yoloController.captureFrame();
+        } catch (e) {
+          debugPrint('captureFrame error: $e');
+        }
+      }
+
+      if (photoBytes == null || photoBytes.isEmpty) {
+        throw Exception('Gagal mengambil gambar dari kamera.');
+      }
+
+      // 2. Pause live camera preview while examining result
+      await _yoloController.pause();
+
+      // 3. Decode image dimensions to ensure pixel-perfect bounding box alignment
+      final ui.Image decodedImage = await decodeImageFromList(photoBytes);
+      final Size imageSize = Size(
+        decodedImage.width.toDouble(),
+        decodedImage.height.toDouble(),
+      );
+
+      // 4. Run Smart Multi-Pass Pipeline (Pass 1 Baseline -> Pass 2 Enhanced -> Pass 3 Tiled -> IoU Merge)
+      final MultiPassDetectionResult result =
+          await _multiPassDetector.processImage(
+        photoBytes,
+        onStatusUpdate: (status) {
+          if (mounted) {
+            setState(() {
+              _processingStatus = status;
+            });
+          }
+        },
+      );
+
+      if (!mounted) return;
+
       setState(() {
-        _isModelLoaded = true;
-        _modelError = null;
+        _capturedImageBytes = photoBytes;
+        _capturedImageSize = imageSize;
+        _capturedDetections = result.finalDetections;
+        _totalAmount = result.totalAmount;
+        _mode = RecognitionMode.result;
+      });
+
+      // 5. Speak announcement once in Indonesian
+      await _ttsService.speakResults(result.finalDetections, result.totalAmount);
+    } catch (e) {
+      debugPrint('Capture and analyze failed: $e');
+      if (!mounted) return;
+
+      Get.snackbar(
+        'Gagal Memproses Foto',
+        'Terjadi kesalahan saat memproses foto. Silakan coba kembali.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade900,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(AppSpacing.md),
+        borderRadius: AppRadius.md,
+      );
+
+      await _yoloController.resume();
+      setState(() {
+        _mode = RecognitionMode.camera;
       });
     }
   }
 
-  void _onModelError(Object error, String path, YOLOTask? task) {
-    debugPrint('Ultralytics YOLO model error: $error on path $path');
-    if (mounted) {
-      setState(() {
-        _modelError = 'Model deteksi gagal dimuat: $error';
-        _isModelLoaded = false;
-      });
-    }
+  /// Returns to camera preview mode to capture a new photo.
+  Future<void> _retakePhoto() async {
+    await _ttsService.stop();
+    await _yoloController.resume();
+    if (!mounted) return;
+    setState(() {
+      _mode = RecognitionMode.camera;
+      _capturedImageBytes = null;
+      _capturedImageSize = null;
+      _capturedDetections = [];
+      _totalAmount = 0.0;
+    });
   }
+
+  // ---------------------------------------------------------------------------
+  // CAMERA CONTROLS
+  // ---------------------------------------------------------------------------
 
   Future<void> _toggleTorch() async {
     try {
-      HapticFeedback.lightImpact();
       await _yoloController.toggleTorch();
-      if (mounted) {
-        setState(() {
-          _isTorchOn = _yoloController.isTorchEnabled;
-        });
-      }
+      setState(() {
+        _isTorchOn = !_isTorchOn;
+      });
     } catch (e) {
-      debugPrint('Error toggling torch: $e');
+      debugPrint('Torch error: $e');
     }
   }
 
   Future<void> _switchCamera() async {
     try {
-      HapticFeedback.selectionClick();
       await _yoloController.switchCamera();
-      if (mounted) {
-        setState(() {
-          _currentLens = _currentLens == LensFacing.back
-              ? LensFacing.front
-              : LensFacing.back;
-          _isTorchOn = false;
-        });
-      }
+      setState(() {
+        _currentLens = _currentLens == LensFacing.back
+            ? LensFacing.front
+            : LensFacing.back;
+        _isTorchOn = false;
+      });
     } catch (e) {
-      debugPrint('Error switching camera: $e');
+      debugPrint('Switch camera error: $e');
     }
   }
 
-  Future<void> _toggleScanning() async {
-    HapticFeedback.mediumImpact();
-    setState(() {
-      _isScanningActive = !_isScanningActive;
-      if (!_isScanningActive) {
-        _activeDetections.clear();
-        _totalAmount = 0.0;
-        _ttsService.stop();
-      }
-    });
+  void _onTapToFocus(TapDownDetails details) {
+    if (_mode != RecognitionMode.camera) return;
 
-    if (_isScanningActive) {
-      await _yoloController.resume();
-    } else {
-      await _yoloController.pause();
-    }
-  }
-
-  void _handleTapToFocus(TapDownDetails details, BoxConstraints constraints) {
     final RenderBox? box = context.findRenderObject() as RenderBox?;
     if (box == null) return;
 
-    final local = details.localPosition;
-    final normX = (local.dx / constraints.maxWidth).clamp(0.0, 1.0);
-    final normY = (local.dy / constraints.maxHeight).clamp(0.0, 1.0);
+    final localPosition = details.localPosition;
+    final normalizedX = (localPosition.dx / box.size.width).clamp(0.0, 1.0);
+    final normalizedY = (localPosition.dy / box.size.height).clamp(0.0, 1.0);
 
-    HapticFeedback.selectionClick();
-    _yoloController.tapToFocus(normX, normY);
+    _yoloController.tapToFocus(normalizedX, normalizedY);
 
     setState(() {
-      _focusPoint = local;
+      _focusPoint = localPosition;
     });
 
-    Future.delayed(const Duration(milliseconds: 900), () {
-      if (mounted && _focusPoint == local) {
+    Future.delayed(const Duration(milliseconds: 1200), () {
+      if (mounted && _focusPoint == localPosition) {
         setState(() {
           _focusPoint = null;
         });
       }
     });
   }
+
+  // ---------------------------------------------------------------------------
+  // BUILD ROUTING
+  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -245,21 +297,56 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // 1. Camera preview with YOLOView
-          LayoutBuilder(
-            builder: (context, constraints) {
-              return GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTapDown: (details) => _handleTapToFocus(details, constraints),
-                child: _buildCameraLayer(),
-              );
+          // 1. Primary View Layer based on RecognitionMode
+          if (_mode == RecognitionMode.result && _capturedImageBytes != null)
+            _buildResultView()
+          else
+            _buildCameraView(),
+
+          // 2. Processing Loading Overlay with dynamic pass status
+          if (_mode == RecognitionMode.processing)
+            _buildProcessingOverlay(),
+
+          // 3. Error Overlay if model failed to load
+          if (_modelError != null && _mode == RecognitionMode.camera)
+            _buildErrorOverlay(),
+        ],
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 1. CAMERA MODE WIDGETS
+  // ---------------------------------------------------------------------------
+
+  Widget _buildCameraView() {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTapDown: _onTapToFocus,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Native YOLOView camera preview (no realtime onResult callback)
+          YOLOView(
+            modelPath: _modelAssetPath,
+            task: YOLOTask.detect,
+            controller: _yoloController,
+            lensFacing: _currentLens,
+            confidenceThreshold: _candidateConfidenceThreshold,
+            onModelLoad: (path, task) {
+              _yoloController.setShowOverlays(false);
+              if (mounted) {
+                setState(() => _isModelLoaded = true);
+              }
+            },
+            onModelError: (error, path, task) {
+              if (mounted) {
+                setState(() => _modelError = error.toString());
+              }
             },
           ),
 
-          // 2. Visual Viewfinder Frame Guide
-          _buildViewfinderGuide(),
-
-          // 3. Tap to Focus Indicator
+          // Tap to focus reticle indicator
           if (_focusPoint != null)
             Positioned(
               left: _focusPoint!.dx - 32,
@@ -267,151 +354,116 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen>
               child: _buildFocusIndicator(),
             ),
 
-          // 4. Top Navigation & Status Bar
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: _buildTopBar(context),
-          ),
+          // Viewfinder guide overlay
+          _buildViewfinderGuide(),
 
-          // 5. Bottom Accessible Multi-Money Result Panel
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: _buildBottomPanel(),
-          ),
+          // Top action bar
+          _buildCameraTopBar(),
 
-          // 6. Loading or Error Overlay
-          if (!_isModelLoaded && _modelError == null) _buildLoadingOverlay(),
-          if (_modelError != null) _buildErrorOverlay(),
+          // Bottom shutter & instruction bar
+          _buildCameraBottomBar(),
         ],
       ),
     );
   }
 
-  Widget _buildCameraLayer() {
-    return YOLOView(
-      modelPath: _modelAssetPath,
-      task: YOLOTask.detect,
-      controller: _yoloController,
-      lensFacing: _currentLens,
-      cameraResolution: '720p',
-      confidenceThreshold: _confidenceThreshold,
-      iouThreshold: 0.5,
-      useGpu: true,
-      streamingConfig: YOLOStreamingConfig.throttled(
-        maxFPS: 20,
-        includeDetections: true,
-        includeClassifications: false,
-        includeFps: false,
-        includeProcessingTimeMs: false,
-      ),
-      onResult: _onYoloResult,
-      onModelLoad: _onModelLoaded,
-      onModelError: _onModelError,
-    );
-  }
-
-  Widget _buildTopBar(BuildContext context) {
+  Widget _buildCameraTopBar() {
     final topPadding = MediaQuery.of(context).padding.top;
 
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-        AppSpacing.screenEdgeGutter,
-        topPadding + AppSpacing.sm,
-        AppSpacing.screenEdgeGutter,
-        AppSpacing.md,
-      ),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.black.withValues(alpha: 0.85),
-            Colors.black.withValues(alpha: 0.40),
-            Colors.transparent,
-          ],
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: Container(
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.screenEdgeGutter,
+          topPadding + AppSpacing.sm,
+          AppSpacing.screenEdgeGutter,
+          AppSpacing.md,
         ),
-      ),
-      child: Row(
-        children: [
-          // Accessible Back Button
-          Semantics(
-            label: 'Kembali',
-            button: true,
-            child: Material(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.black.withValues(alpha: 0.85),
+              Colors.black.withValues(alpha: 0.35),
+              Colors.transparent,
+            ],
+          ),
+        ),
+        child: Row(
+          children: [
+            // Back Button
+            Material(
               color: Colors.black.withValues(alpha: 0.5),
               shape: const CircleBorder(),
               clipBehavior: Clip.antiAlias,
               child: IconButton(
-                iconSize: 24,
                 icon: const Icon(Icons.arrow_back, color: Colors.white),
                 tooltip: 'Kembali',
+                onPressed: () => Get.back(),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+
+            // Screen Title
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Pindai Uang Riyal',
+                    style: AppTypography.titleLarge.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    'Arahkan kamera & ambil foto',
+                    style: AppTypography.caption.copyWith(
+                      color: Colors.white70,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Sound Toggle
+            Material(
+              color: Colors.black.withValues(alpha: 0.5),
+              shape: const CircleBorder(),
+              clipBehavior: Clip.antiAlias,
+              child: IconButton(
+                icon: Icon(
+                  _ttsService.isVoiceEnabled
+                      ? Icons.volume_up
+                      : Icons.volume_off,
+                  color: _ttsService.isVoiceEnabled
+                      ? AppColors.goldLight
+                      : Colors.white54,
+                ),
+                tooltip: _ttsService.isVoiceEnabled
+                    ? 'Matikan Suara'
+                    : 'Aktifkan Suara',
                 onPressed: () {
-                  _ttsService.stop();
-                  Get.back();
+                  setState(() {
+                    _ttsService.isVoiceEnabled = !_ttsService.isVoiceEnabled;
+                  });
                 },
               ),
             ),
-          ),
-          const SizedBox(width: AppSpacing.md),
+            const SizedBox(width: AppSpacing.xs),
 
-          // Title & Live Status
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Pindai Uang Riyal',
-                  style: AppTypography.titleLarge.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Row(
-                  children: [
-                    ScaleTransition(
-                      scale: _pulseAnimation,
-                      child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _isScanningActive
-                              ? AppColors.statusSafe
-                              : Colors.grey,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      _isScanningActive ? 'Kamera Aktif' : 'Deteksi Dijeda',
-                      style: AppTypography.caption.copyWith(
-                        color: Colors.white70,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // Flashlight / Torch Button
-          Semantics(
-            label: _isTorchOn ? 'Matikan Senter' : 'Nyalakan Senter',
-            button: true,
-            child: Material(
+            // Torch Toggle
+            Material(
               color: _isTorchOn
-                  ? AppColors.accentGoldStar.withValues(alpha: 0.85)
+                  ? AppColors.accentGoldStar.withValues(alpha: 0.9)
                   : Colors.black.withValues(alpha: 0.5),
               shape: const CircleBorder(),
               clipBehavior: Clip.antiAlias,
               child: IconButton(
-                iconSize: 22,
                 icon: Icon(
                   _isTorchOn ? Icons.flash_on : Icons.flash_off,
                   color: _isTorchOn ? AppColors.primary : Colors.white,
@@ -420,26 +472,21 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen>
                 onPressed: _toggleTorch,
               ),
             ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: AppSpacing.xs),
 
-          // Switch Camera Button
-          Semantics(
-            label: 'Ganti Kamera',
-            button: true,
-            child: Material(
+            // Switch Camera
+            Material(
               color: Colors.black.withValues(alpha: 0.5),
               shape: const CircleBorder(),
               clipBehavior: Clip.antiAlias,
               child: IconButton(
-                iconSize: 22,
                 icon: const Icon(Icons.flip_camera_ios, color: Colors.white),
                 tooltip: 'Ganti Kamera',
                 onPressed: _switchCamera,
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -448,15 +495,13 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen>
     return IgnorePointer(
       child: Center(
         child: Container(
-          margin: const EdgeInsets.only(bottom: 120),
-          width: 310,
-          height: 220,
+          margin: const EdgeInsets.only(bottom: 80),
+          width: 320,
+          height: 240,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(
-              color: _activeDetections.isNotEmpty
-                  ? AppColors.goldLight.withValues(alpha: 0.8)
-                  : Colors.white.withValues(alpha: 0.35),
+              color: Colors.white.withValues(alpha: 0.45),
               width: 1.5,
             ),
           ),
@@ -466,25 +511,25 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen>
               _cornerMarker(Alignment.topRight),
               _cornerMarker(Alignment.bottomLeft),
               _cornerMarker(Alignment.bottomRight),
-              if (_activeDetections.isEmpty)
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
-                      vertical: AppSpacing.xs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.45),
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
-                    child: Text(
-                      'Arahkan uang ke sini',
-                      style: AppTypography.caption.copyWith(
-                        color: Colors.white70,
-                      ),
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.xs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.55),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  child: Text(
+                    'Arahkan uang ke area ini',
+                    style: AppTypography.caption.copyWith(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
+              ),
             ],
           ),
         ),
@@ -493,11 +538,9 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen>
   }
 
   Widget _cornerMarker(Alignment alignment) {
-    const double size = 20.0;
+    const double size = 22.0;
     const double thickness = 3.5;
-    final color = _activeDetections.isNotEmpty
-        ? AppColors.goldLight
-        : Colors.white.withValues(alpha: 0.9);
+    const color = AppColors.goldLight;
 
     final isTop = alignment.y < 0;
     final isLeft = alignment.x < 0;
@@ -511,16 +554,16 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen>
         decoration: BoxDecoration(
           border: Border(
             top: isTop
-                ? BorderSide(color: color, width: thickness)
+                ? const BorderSide(color: color, width: thickness)
                 : BorderSide.none,
             bottom: !isTop
-                ? BorderSide(color: color, width: thickness)
+                ? const BorderSide(color: color, width: thickness)
                 : BorderSide.none,
             left: isLeft
-                ? BorderSide(color: color, width: thickness)
+                ? const BorderSide(color: color, width: thickness)
                 : BorderSide.none,
             right: !isLeft
-                ? BorderSide(color: color, width: thickness)
+                ? const BorderSide(color: color, width: thickness)
                 : BorderSide.none,
           ),
         ),
@@ -542,314 +585,149 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen>
     );
   }
 
-  Widget _buildBottomPanel() {
-    final bool hasDetections = _activeDetections.isNotEmpty;
-    final int count = _activeDetections.length;
-    final formattedTotal = RiyalCurrencyHelper.formatAmount(_totalAmount);
+  Widget _buildCameraBottomBar() {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.95),
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(AppRadius.xl),
-          topRight: Radius.circular(AppRadius.xl),
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
+      child: Container(
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.screenEdgeGutter,
+          AppSpacing.lg,
+          AppSpacing.screenEdgeGutter,
+          bottomPadding + AppSpacing.md,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+            colors: [
+              Colors.black.withValues(alpha: 0.90),
+              Colors.black.withValues(alpha: 0.50),
+              Colors.transparent,
+            ],
           ),
-        ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Instruction
+            Text(
+              'Posisikan uang di dalam bingkai, lalu tekan tombol di bawah',
+              textAlign: TextAlign.center,
+              style: AppTypography.caption.copyWith(
+                color: Colors.white.withValues(alpha: 0.85),
+                letterSpacing: 0.1,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+
+            // Shutter Button
+            Semantics(
+              label: 'Ambil Foto Uang',
+              button: true,
+              child: GestureDetector(
+                onTap: _captureAndAnalyze,
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.goldLight,
+                      width: 4,
+                    ),
+                    color: Colors.transparent,
+                  ),
+                  child: Center(
+                    child: Container(
+                      width: 64,
+                      height: 64,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.camera_alt,
+                          color: AppColors.primary,
+                          size: 32,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+
+            Text(
+              'Ambil Foto',
+              style: AppTypography.titleMedium.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
       ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.screenEdgeGutter,
-            AppSpacing.md,
-            AppSpacing.screenEdgeGutter,
-            AppSpacing.sm,
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 2. PROCESSING OVERLAY
+  // ---------------------------------------------------------------------------
+
+  Widget _buildProcessingOverlay() {
+    return Container(
+      color: Colors.black.withValues(alpha: 0.80),
+      child: Center(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          decoration: BoxDecoration(
+            color: AppColors.primaryContainer.withValues(alpha: 0.95),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(
+              color: AppColors.goldLight.withValues(alpha: 0.4),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.5),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Drag Handle / Indicator bar
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
+              const SizedBox(
+                width: 52,
+                height: 52,
+                child: CircularProgressIndicator(
+                  color: AppColors.accentGoldStar,
+                  strokeWidth: 3.5,
                 ),
               ),
-
-              // Status & Count Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        hasDetections
-                            ? Icons.monetization_on
-                            : Icons.search_rounded,
-                        color: hasDetections
-                            ? AppColors.goldLight
-                            : Colors.white70,
-                        size: 20,
-                      ),
-                      const SizedBox(width: AppSpacing.xs),
-                      Text(
-                        hasDetections
-                            ? '$count Uang Terdeteksi'
-                            : 'Letakkan uang di dalam area kamera',
-                        style: AppTypography.titleMedium.copyWith(
-                          color: hasDetections
-                              ? Colors.white
-                              : Colors.white.withValues(alpha: 0.8),
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (hasDetections)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.sm,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryContainer,
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                        border: Border.all(
-                          color: AppColors.goldLight.withValues(alpha: 0.4),
-                        ),
-                      ),
-                      child: Text(
-                        '$count item',
-                        style: AppTypography.captionSmall.copyWith(
-                          color: AppColors.goldLight,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.sm),
-
-              // Multi-money Scrollable Breakdown List
-              if (hasDetections)
-                Container(
-                  constraints: const BoxConstraints(maxHeight: 125),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.25),
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(color: Colors.white12),
-                  ),
-                  child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm,
-                      vertical: AppSpacing.xs,
-                    ),
-                    shrinkWrap: true,
-                    itemCount: _activeDetections.length,
-                    separatorBuilder: (context, index) => const Divider(
-                      color: Colors.white10,
-                      height: 1,
-                    ),
-                    itemBuilder: (context, index) {
-                      final item = _activeDetections[index];
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 6,
-                          horizontal: 4,
-                        ),
-                        child: Row(
-                          children: [
-                            Text(
-                              item.isCoin ? '🪙' : '💵',
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                            const SizedBox(width: AppSpacing.sm),
-                            Expanded(
-                              child: Text(
-                                item.displayName,
-                                style: AppTypography.bodyLarge.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white10,
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.sm,
-                                ),
-                              ),
-                              child: Text(
-                                '${item.confidencePercentage}%',
-                                style: AppTypography.captionSmall.copyWith(
-                                  color: item.confidence >= 0.8
-                                      ? AppColors.statusSafe
-                                      : AppColors.goldLight,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-
-              const SizedBox(height: AppSpacing.sm),
-
-              // Hero Total Section
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.cardPadding,
-                  vertical: AppSpacing.sm,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryContainer,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(
-                    color: AppColors.goldLight.withValues(alpha: 0.5),
-                    width: 1.2,
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'TOTAL NOMINAL',
-                          style: AppTypography.captionSmall.copyWith(
-                            color: AppColors.goldLight,
-                            letterSpacing: 1.0,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          hasDetections ? formattedTotal : '0 Riyal',
-                          style: AppTypography.displayLarge.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (hasDetections)
-                      IconButton(
-                        icon: const Icon(
-                          Icons.volume_up_rounded,
-                          color: AppColors.goldLight,
-                          size: 28,
-                        ),
-                        tooltip: 'Bacakan Total',
-                        onPressed: () {
-                          HapticFeedback.lightImpact();
-                          _ttsService.speak(
-                            'Total ${RiyalCurrencyHelper.totalToSpokenIndonesian(_totalAmount)}',
-                          );
-                        },
-                      ),
-                  ],
+              const SizedBox(height: AppSpacing.lg),
+              Text(
+                'Menganalisis Uang...',
+                style: AppTypography.titleLarge.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-
-              const SizedBox(height: AppSpacing.sm),
-
-              // Bottom Actions: Voice Toggle & Pause/Resume
-              Row(
-                children: [
-                  // Voice Toggle
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: BorderSide(
-                          color: _ttsService.isVoiceEnabled
-                              ? AppColors.goldLight
-                              : Colors.white24,
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                        ),
-                      ),
-                      onPressed: () {
-                        HapticFeedback.selectionClick();
-                        setState(() {
-                          _ttsService.isVoiceEnabled =
-                              !_ttsService.isVoiceEnabled;
-                          if (!_ttsService.isVoiceEnabled) {
-                            _ttsService.stop();
-                          }
-                        });
-                      },
-                      icon: Icon(
-                        _ttsService.isVoiceEnabled
-                            ? Icons.volume_up
-                            : Icons.volume_off,
-                        color: _ttsService.isVoiceEnabled
-                            ? AppColors.goldLight
-                            : Colors.white54,
-                        size: 20,
-                      ),
-                      label: Text(
-                        _ttsService.isVoiceEnabled ? 'Suara ON' : 'Suara OFF',
-                        style: AppTypography.labelLarge.copyWith(
-                          color: _ttsService.isVoiceEnabled
-                              ? Colors.white
-                              : Colors.white60,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-
-                  // Pause / Resume Detection Button
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _isScanningActive
-                            ? AppColors.statusWarning
-                            : AppColors.statusSafe,
-                        foregroundColor: Colors.black87,
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                        ),
-                      ),
-                      onPressed: _toggleScanning,
-                      icon: Icon(
-                        _isScanningActive
-                            ? Icons.pause_circle_outline
-                            : Icons.play_circle_outline,
-                        size: 20,
-                      ),
-                      label: Text(
-                        _isScanningActive ? 'Jeda Pindai' : 'Mulai Pindai',
-                        style: AppTypography.labelLarge.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                _processingStatus,
+                textAlign: TextAlign.center,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: Colors.white70,
+                ),
               ),
             ],
           ),
@@ -858,32 +736,394 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen>
     );
   }
 
-  Widget _buildLoadingOverlay() {
-    return Container(
-      color: Colors.black.withValues(alpha: 0.75),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(
-              color: AppColors.goldLight,
-              strokeWidth: 3,
+  // ---------------------------------------------------------------------------
+  // 3. RESULT VIEW
+  // ---------------------------------------------------------------------------
+
+  Widget _buildResultView() {
+    final topPadding = MediaQuery.of(context).padding.top;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final bool hasDetections = _capturedDetections.isNotEmpty;
+
+    // Aspect ratio of the captured image
+    final double aspectRatio = (_capturedImageSize != null &&
+            _capturedImageSize!.height > 0)
+        ? (_capturedImageSize!.width / _capturedImageSize!.height)
+        : (3 / 4);
+
+    return SafeArea(
+      top: false,
+      bottom: false,
+      child: Column(
+        children: [
+          // Top Navigation Bar
+          Container(
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.screenEdgeGutter,
+              topPadding + AppSpacing.sm,
+              AppSpacing.screenEdgeGutter,
+              AppSpacing.sm,
             ),
-            const SizedBox(height: AppSpacing.lg),
-            Text(
-              'Memuat model deteksi...',
-              style: AppTypography.titleMedium.copyWith(color: Colors.white),
+            color: AppColors.primary,
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  tooltip: 'Foto Ulang',
+                  onPressed: _retakePhoto,
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: Text(
+                    'Hasil Pindai Uang',
+                    style: AppTypography.titleLarge.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                // Speaker Button to repeat TTS
+                IconButton(
+                  icon: const Icon(Icons.volume_up, color: AppColors.goldLight),
+                  tooltip: 'Bacakan Ulang',
+                  onPressed: () {
+                    _ttsService.speakResults(
+                      _capturedDetections,
+                      _totalAmount,
+                    );
+                  },
+                ),
+              ],
             ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              'Menyiapkan kamera kecerdasan buatan',
-              style: AppTypography.caption.copyWith(color: Colors.white70),
+          ),
+
+          // Scrollable Content
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.screenEdgeGutter,
+                AppSpacing.md,
+                AppSpacing.screenEdgeGutter,
+                bottomPadding + AppSpacing.xl,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Captured Photo with Bounding Boxes
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(
+                        color: AppColors.goldLight.withValues(alpha: 0.3),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.4),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: AspectRatio(
+                      aspectRatio: aspectRatio,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Image.memory(
+                            _capturedImageBytes!,
+                            fit: BoxFit.fill,
+                          ),
+                          CustomPaint(
+                            painter: MoneyBoundingBoxPainter(
+                              detections: _capturedDetections,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Detection Status Header
+                  if (hasDetections)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.sm,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.statusSafe.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        border: Border.all(
+                          color: AppColors.statusSafe.withValues(alpha: 0.4),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.check_circle,
+                            color: AppColors.statusSafe,
+                            size: 22,
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Text(
+                            '${_capturedDetections.length} Uang Terdeteksi',
+                            style: AppTypography.titleMedium.copyWith(
+                              color: AppColors.statusSafe,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      decoration: BoxDecoration(
+                        color: AppColors.statusWarning.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        border: Border.all(
+                          color: AppColors.statusWarning.withValues(alpha: 0.4),
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.info_outline,
+                            color: AppColors.statusWarning,
+                            size: 24,
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Belum Ada Uang Terdeteksi',
+                                  style: AppTypography.titleMedium.copyWith(
+                                    color: AppColors.statusWarning,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Pastikan uang terlihat jelas dan coba foto lagi.',
+                                  style: AppTypography.bodySmall.copyWith(
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  const SizedBox(height: AppSpacing.md),
+
+                  // List of ALL Individual Detections
+                  if (hasDetections) ...[
+                    Text(
+                      'Rincian Uang',
+                      style: AppTypography.titleMedium.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    ...List.generate(_capturedDetections.length, (index) {
+                      final item = _capturedDetections[index];
+                      final color = MoneyBoundingBoxPainter.getDenominationColor(
+                        item.amount,
+                        item.isCoin,
+                      );
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: AppSpacing.xs),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.sm,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryContainer.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          border: Border.all(
+                            color: color.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 12,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                color: color,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.displayName,
+                                    style: AppTypography.titleMedium.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${item.isCoin ? "Uang Logam" : "Uang Kertas"} • Akurasi ${item.confidencePercentage}%',
+                                    style: AppTypography.caption.copyWith(
+                                      color: Colors.white60,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              item.isCoin
+                                  ? '${item.amount.toStringAsFixed(2)} SAR'
+                                  : '${item.amount.toInt()} SAR',
+                              style: AppTypography.titleMedium.copyWith(
+                                color: AppColors.goldLight,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+
+                  // TOTAL NOMINAL CARD
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppColors.primaryContainer,
+                          AppColors.espressoDark,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(
+                        color: AppColors.accentGoldStar,
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.35),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'TOTAL NOMINAL',
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.goldLight,
+                            letterSpacing: 1.5,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          RiyalCurrencyHelper.formatAmount(_totalAmount),
+                          style: AppTypography.displayLarge.copyWith(
+                            color: Colors.white,
+                            fontSize: 32,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          'Terbilang: ${RiyalCurrencyHelper.totalToSpokenIndonesian(_totalAmount)}',
+                          textAlign: TextAlign.center,
+                          style: AppTypography.bodySmall.copyWith(
+                            color: Colors.white70,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // ACTION BUTTONS
+                  Row(
+                    children: [
+                      // Replay Voice Button
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: AppColors.goldLight),
+                            foregroundColor: AppColors.goldLight,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: AppSpacing.md,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                            ),
+                          ),
+                          onPressed: () {
+                            _ttsService.speakResults(
+                              _capturedDetections,
+                              _totalAmount,
+                            );
+                          },
+                          icon: const Icon(Icons.volume_up_rounded),
+                          label: const Text('Bacakan Hasil'),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+
+                      // Retake Photo Button
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.accentGoldStar,
+                            foregroundColor: AppColors.primary,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: AppSpacing.md,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                            ),
+                          ),
+                          onPressed: _retakePhoto,
+                          icon: const Icon(Icons.camera_alt_outlined),
+                          label: const Text(
+                            'Foto Ulang',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
+
+  // ---------------------------------------------------------------------------
+  // 4. ERROR OVERLAY
+  // ---------------------------------------------------------------------------
 
   Widget _buildErrorOverlay() {
     return Container(
@@ -900,7 +1140,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen>
             ),
             const SizedBox(height: AppSpacing.md),
             Text(
-              'Gagal Memuat Deteksi',
+              'Gagal Memuat Model',
               style: AppTypography.titleLarge.copyWith(color: Colors.white),
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -920,6 +1160,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen>
                   _modelError = null;
                   _isModelLoaded = false;
                 });
+                _initServices();
               },
               icon: const Icon(Icons.refresh),
               label: const Text('Coba Lagi'),
@@ -936,5 +1177,111 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen>
         ),
       ),
     );
+  }
+}
+
+// =============================================================================
+// BOUNDING BOX PAINTER FOR RESULT PHOTO
+// =============================================================================
+
+class MoneyBoundingBoxPainter extends CustomPainter {
+  final List<MoneyDetection> detections;
+
+  const MoneyBoundingBoxPainter({required this.detections});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0 || detections.isEmpty) return;
+
+    for (final detection in detections) {
+      final norm = detection.normalizedBox;
+      final left = (norm.left * size.width).clamp(0.0, size.width);
+      final top = (norm.top * size.height).clamp(0.0, size.height);
+      final right = (norm.right * size.width).clamp(0.0, size.width);
+      final bottom = (norm.bottom * size.height).clamp(0.0, size.height);
+
+      if (right <= left || bottom <= top) continue;
+
+      final rect = Rect.fromLTRB(left, top, right, bottom);
+      final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(6));
+      final color = getDenominationColor(detection.amount, detection.isCoin);
+
+      // 1. Semi-transparent fill inside box
+      final fillPaint = Paint()
+        ..color = color.withValues(alpha: 0.15)
+        ..style = PaintingStyle.fill;
+      canvas.drawRRect(rrect, fillPaint);
+
+      // 2. High-contrast border
+      final strokePaint = Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5;
+      canvas.drawRRect(rrect, strokePaint);
+
+      // 3. Denomination Badge
+      final badgeText =
+          '${detection.displayName.toUpperCase()} (${detection.confidencePercentage}%)';
+      final textSpan = TextSpan(
+        text: badgeText,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.2,
+        ),
+      );
+      final textPainter = TextPainter(
+        text: textSpan,
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+      const paddingH = 6.0;
+      const paddingV = 3.0;
+      final badgeWidth = textPainter.width + (paddingH * 2);
+      final badgeHeight = textPainter.height + (paddingV * 2);
+
+      // Place badge at top-left of box (shift down if box touches top border)
+      double badgeLeft = left;
+      double badgeTop = top - badgeHeight;
+      if (badgeTop < 0) {
+        badgeTop = top;
+      }
+      if (badgeLeft + badgeWidth > size.width) {
+        badgeLeft = size.width - badgeWidth;
+      }
+
+      final badgeRRect = RRect.fromRectAndRadius(
+        Rect.fromLTWH(badgeLeft, badgeTop, badgeWidth, badgeHeight),
+        const Radius.circular(4),
+      );
+
+      final badgeBgPaint = Paint()
+        ..color = color.withValues(alpha: 0.90)
+        ..style = PaintingStyle.fill;
+      canvas.drawRRect(badgeRRect, badgeBgPaint);
+
+      textPainter.paint(
+        canvas,
+        Offset(badgeLeft + paddingH, badgeTop + paddingV),
+      );
+    }
+  }
+
+  static Color getDenominationColor(double amount, bool isCoin) {
+    if (isCoin) return const Color(0xFFF59E0B); // Amber / coin
+    if (amount >= 500) return const Color(0xFF9333EA); // Purple (500 SAR)
+    if (amount >= 200) return const Color(0xFF8D6E63); // Brown (200 SAR)
+    if (amount >= 100) return const Color(0xFFE11D48); // Red / Crimson (100 SAR)
+    if (amount >= 50) return const Color(0xFF16A34A); // Green (50 SAR)
+    if (amount >= 20) return const Color(0xFFEA580C); // Deep orange (20 SAR)
+    if (amount >= 10) return const Color(0xFFD97706); // Amber (10 SAR)
+    if (amount >= 5) return const Color(0xFF0D9488); // Teal / Emerald (5 SAR)
+    return const Color(0xFF78716C); // Stone / Tan (1 & 2 SAR)
+  }
+
+  @override
+  bool shouldRepaint(covariant MoneyBoundingBoxPainter oldDelegate) {
+    return oldDelegate.detections != detections;
   }
 }

@@ -5,29 +5,49 @@ import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_sizes.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/widgets/app_status_badge.dart';
 
 class MapBottomSheet extends StatelessWidget {
   final HajiCareState state;
+  final JamaahData? activeJamaah;
+  final RoomMemberModel? selectedMember;
+  final List<RoomMemberModel>? roomMembers;
+  final String? Function(RoomMemberModel)? getMemberDistanceText;
+  final ValueChanged<RoomMemberModel>? onMemberTap;
+  final VoidCallback? onCloseMemberDetail;
   final VoidCallback? onNavigate;
   final VoidCallback? onShareLocation;
   final VoidCallback? onCall;
+
+  final bool isRouteLoading;
+  final double? routeDistanceMeters;
+  final int? routeDurationSeconds;
+  final String? routeError;
+  final VoidCallback? onRetryRoute;
 
   final double bottomOffset;
 
   const MapBottomSheet({
     super.key,
     required this.state,
+    this.activeJamaah,
+    this.selectedMember,
+    this.roomMembers,
+    this.getMemberDistanceText,
+    this.onMemberTap,
+    this.onCloseMemberDetail,
     this.onNavigate,
     this.onShareLocation,
     this.onCall,
+    this.isRouteLoading = false,
+    this.routeDistanceMeters,
+    this.routeDurationSeconds,
+    this.routeError,
+    this.onRetryRoute,
     this.bottomOffset = 0.0,
   });
 
   @override
   Widget build(BuildContext context) {
-    final jamaah = state.self;
-
     return Positioned(
       left: 0,
       right: 0,
@@ -54,288 +74,575 @@ class MapBottomSheet extends StatelessWidget {
           children: [
             // Drag Handle
             Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 48,
-              height: 5,
+              margin: const EdgeInsets.only(top: 10, bottom: 6),
+              width: 44,
+              height: 4,
               decoration: BoxDecoration(
                 color: AppColors.outlineVariant.withValues(alpha: 0.7),
                 borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Column(
-                children: [
-                  // Pilgrim Identity Row with Overflow Safety
-                  Row(
-                    children: [
-                      // Avatar
-                      Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: AppColors.canvasCream,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.goldLight),
-                            ),
-                            child: const Icon(
-                              Icons.elderly,
-                              color: AppColors.tanMedium,
-                              size: 30,
-                            ),
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              width: 14,
-                              height: 14,
-                              decoration: BoxDecoration(
-                                color: jamaah.tier.color,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: AppColors.surfaceWhite,
-                                  width: 2,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      // Name & Status with Flexible
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    jamaah.name,
-                                    style: AppTypography.titleMedium.copyWith(
-                                      color: AppColors.espressoDark,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                AppStatusBadge(
-                                  label: jamaah.shortLabel,
-                                  statusType: AppStatusType.neutral,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 2),
-                            Row(
-                              children: [
-                                Icon(
-                                  jamaah.tier.icon,
-                                  size: 14,
-                                  color: jamaah.tier.color,
-                                ),
-                                const SizedBox(width: 4),
-                                Flexible(
-                                  child: Text(
-                                    '${jamaah.tier.label} (${jamaah.distance.toInt()}m)',
-                                    style: AppTypography.bodySmall.copyWith(
-                                      color: AppColors.textBody,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                Text(
-                                  ' • Baru saja',
-                                  style: AppTypography.captionSmall.copyWith(
-                                    color: AppColors.outlineVariant,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Call button
-                      InkWell(
-                        onTap: onCall,
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: AppColors.canvasCream,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.espressoDark.withValues(
-                                  alpha: 0.05,
-                                ),
-                                blurRadius: 4,
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.call,
-                            color: AppColors.tanMedium,
-                            size: 22,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.md),
 
-                  // Status Metrics Bar
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm,
-                      vertical: AppSpacing.sm,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.canvasCream.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      border: Border.all(
-                        color: AppColors.goldLight.withValues(alpha: 0.4),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: _buildMetric(
-                            icon: Icons.watch,
-                            label: 'Baterai Gelang',
-                            value: '92% • Aktif',
-                            iconColor: AppColors.statusPositive,
-                          ),
-                        ),
-                        Container(
-                          width: 1,
-                          height: 32,
-                          color: AppColors.goldLight.withValues(alpha: 0.4),
-                        ),
-                        Expanded(
-                          child: _buildMetric(
-                            icon: Icons.favorite,
-                            label: 'Detak Jantung',
-                            value: '78 bpm • Normal',
-                            iconColor: AppColors.sosEmergency,
-                          ),
-                        ),
-                        Container(
-                          width: 1,
-                          height: 32,
-                          color: AppColors.goldLight.withValues(alpha: 0.4),
-                        ),
-                        Expanded(
-                          child: _buildMetric(
-                            icon: Icons.holiday_village,
-                            label: 'Maktab',
-                            value: 'Maktab 48 Mina',
-                            iconColor: AppColors.tanMedium,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-
-                  // Action Buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: SizedBox(
-                          height: AppSizes.buttonHeightSecondary,
-                          child: ElevatedButton.icon(
-                            onPressed: onNavigate,
-                            icon: const Icon(Icons.directions, size: 18),
-                            label: Text(
-                              'Navigasi ke Jamaah',
-                              style: AppTypography.labelLarge.copyWith(
-                                color: AppColors.surfaceWhite,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.espressoDark,
-                              foregroundColor: AppColors.onPrimary,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.pill,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      InkWell(
-                        onTap: onShareLocation,
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                        child: Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: AppColors.canvasCream,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.goldLight),
-                          ),
-                          child: const Icon(
-                            Icons.share_location,
-                            color: AppColors.espressoDark,
-                            size: 22,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+            if (selectedMember != null)
+              _buildSelectedMemberDetail(context, selectedMember!)
+            else if (roomMembers != null && roomMembers!.isNotEmpty)
+              _buildRoomMembersList(context, roomMembers!)
+            else
+              _buildLegacyJamaahCard(context),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildMetric({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color iconColor,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: iconColor),
-          const SizedBox(width: 4),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: AppTypography.captionSmall.copyWith(
-                    color: AppColors.textBody,
+  // ── 1. SELECTED MEMBER DETAIL CARD ─────────────────────────────────────────
+
+  Widget _buildSelectedMemberDetail(BuildContext context, RoomMemberModel member) {
+    final distText = getMemberDistanceText != null
+        ? getMemberDistanceText!(member) ?? 'Lokasi belum tersedia'
+        : (member.hasLocation ? 'Lokasi aktif' : 'Lokasi belum tersedia');
+    final locStatus = member.getLocationStatus();
+    final isPendamping = member.isPendamping;
+
+    final mq = MediaQuery.of(context);
+    final double maxDetailHeight = (mq.size.height * 0.45).clamp(240.0, 420.0);
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxDetailHeight),
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.xs,
+          AppSpacing.lg,
+          AppSpacing.md,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+            children: [
+              // Avatar with Role Icon
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: isPendamping
+                      ? AppColors.primaryContainer
+                      : AppColors.secondaryContainer,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isPendamping
+                        ? AppColors.accentGoldStar
+                        : AppColors.statusSafe,
+                    width: 2,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-                Text(
-                  value,
+                child: Icon(
+                  isPendamping ? Icons.shield : Icons.person,
+                  color: isPendamping
+                      ? AppColors.onPrimaryContainer
+                      : AppColors.onSecondaryContainer,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              // Name & Role
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            member.name,
+                            style: AppTypography.titleMedium.copyWith(
+                              color: AppColors.espressoDark,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isPendamping
+                                ? AppColors.accentGoldStar.withValues(alpha: 0.2)
+                                : AppColors.statusSafe.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                          ),
+                          child: Text(
+                            isPendamping ? 'Pendamping' : 'Jamaah',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: isPendamping
+                                  ? AppColors.primary
+                                  : AppColors.statusSafe,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.near_me,
+                          size: 13,
+                          color: member.hasLocation
+                              ? AppColors.primary
+                              : AppColors.outlineVariant,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$distText dari Anda',
+                          style: AppTypography.bodySmall.copyWith(
+                            color: AppColors.espressoDark,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          ' • $locStatus',
+                          style: AppTypography.captionSmall.copyWith(
+                            color: locStatus == 'Online'
+                                ? AppColors.statusSafe
+                                : AppColors.textBody,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              // Close detail button
+              IconButton(
+                icon: const Icon(Icons.close, size: 20),
+                color: AppColors.outlineVariant,
+                onPressed: onCloseMemberDetail,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          // Action button
+          SizedBox(
+            width: double.infinity,
+            height: AppSizes.buttonHeightSecondary,
+            child: _buildRouteButton(member),
+          ),
+          if (routeDistanceMeters != null && routeDurationSeconds != null)
+            _buildRouteInfoBar(distText),
+        ],
+      ),
+      ),
+    );
+  }
+
+  Widget _buildRouteButton(RoomMemberModel member) {
+    if (!member.hasLocation) {
+      return ElevatedButton.icon(
+        onPressed: null,
+        icon: const Icon(Icons.directions, size: 18),
+        label: Text(
+          'Lokasi Belum Tersedia',
+          style: AppTypography.labelLarge.copyWith(color: AppColors.surfaceWhite),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.outlineVariant,
+          foregroundColor: AppColors.surfaceWhite,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+          ),
+        ),
+      );
+    }
+
+    if (isRouteLoading) {
+      return ElevatedButton.icon(
+        onPressed: null,
+        icon: const SizedBox(
+          width: 16,
+          height: 16,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.outlineVariant),
+          ),
+        ),
+        label: Text(
+          'Mencari rute jalan kaki...',
+          style: AppTypography.labelLarge.copyWith(color: AppColors.outlineVariant),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.surfaceWhite,
+          disabledBackgroundColor: AppColors.surfaceWhite,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            side: const BorderSide(color: AppColors.outlineVariant),
+          ),
+        ),
+      );
+    }
+
+    if (routeError != null) {
+      return ElevatedButton.icon(
+        onPressed: onRetryRoute,
+        icon: const Icon(Icons.refresh, size: 18),
+        label: Text(
+          'Rute tidak ditemukan · Coba Lagi',
+          style: AppTypography.labelLarge.copyWith(color: AppColors.surfaceWhite),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.error,
+          foregroundColor: AppColors.surfaceWhite,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+          ),
+        ),
+      );
+    }
+
+    return ElevatedButton.icon(
+      onPressed: onNavigate,
+      icon: const Icon(Icons.directions, size: 18),
+      label: Text(
+        'Arahkan Rute ke ${member.name.split(' ').first}',
+        style: AppTypography.labelLarge.copyWith(color: AppColors.surfaceWhite),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.espressoDark,
+        foregroundColor: AppColors.onPrimary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRouteInfoBar(String directDist) {
+    return Container(
+      margin: const EdgeInsets.only(top: AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: AppColors.canvasCream,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.goldLight.withValues(alpha: 0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.near_me, size: 14, color: AppColors.primary),
+              const SizedBox(width: 6),
+              Text(
+                'Jarak langsung: $directDist',
+                style: AppTypography.captionSmall.copyWith(color: AppColors.textBody),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              const Icon(Icons.directions_walk, size: 14, color: AppColors.primary),
+              const SizedBox(width: 6),
+              Text(
+                'Walking distance: ${_formatDistance(routeDistanceMeters!)}',
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.espressoDark,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              const Icon(Icons.timer, size: 14, color: AppColors.primary),
+              const SizedBox(width: 6),
+              Text(
+                'ETA: ${_formatDuration(routeDurationSeconds!)}',
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.espressoDark,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDistance(double meters) {
+    if (meters < 1000) return '${meters.toInt()} m';
+    return '${(meters / 1000).toStringAsFixed(1)} km';
+  }
+
+  String _formatDuration(int seconds) {
+    if (seconds < 60) return '$seconds detik';
+    if (seconds < 3600) return '${seconds ~/ 60} menit';
+    return '${seconds ~/ 3600} j ${(seconds % 3600) ~/ 60} mnt';
+  }
+
+  // ── 2. ROOM MEMBERS LIST PANEL ─────────────────────────────────────────────
+
+  Widget _buildRoomMembersList(
+    BuildContext context,
+    List<RoomMemberModel> members,
+  ) {
+    // Sort: members with location first, sorted by distance; then members without location
+    final sorted = List<RoomMemberModel>.from(members);
+    sorted.sort((a, b) {
+      if (a.hasLocation && !b.hasLocation) return -1;
+      if (!a.hasLocation && b.hasLocation) return 1;
+      return a.name.compareTo(b.name);
+    });
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.xs,
+        AppSpacing.lg,
+        AppSpacing.md,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Anggota Room',
+                style: AppTypography.titleMedium.copyWith(
+                  color: AppColors.espressoDark,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.canvasCream,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  border: Border.all(
+                    color: AppColors.goldLight.withValues(alpha: 0.6),
+                  ),
+                ),
+                child: Text(
+                  '${members.length} orang',
                   style: AppTypography.captionSmall.copyWith(
                     color: AppColors.espressoDark,
                     fontWeight: FontWeight.bold,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ],
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _buildMemberListView(context, sorted),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMemberListView(
+    BuildContext context,
+    List<RoomMemberModel> sorted,
+  ) {
+    // Compute usable height for the list:
+    //   screenHeight
+    //   - statusBar / top safe-area  (MediaQuery.padding.top)
+    //   - bottomOffset (nav bar height, e.g. 84)
+    //   - bottomSafeArea (system gesture bar)
+    //   - overhead: drag handle (30) + section header row (~44) + section spacing (~24)
+    //              + list top/bottom padding inside Padding widget (~AppSpacing.md)
+    final mq = MediaQuery.of(context);
+    const double kOverhead = 30 + 44 + 24 + 16; // handle + header + spacing + padding
+    final double listMaxHeight = mq.size.height
+        - mq.padding.top
+        - bottomOffset
+        - mq.padding.bottom
+        - kOverhead;
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: listMaxHeight.clamp(160.0, double.infinity),
+      ),
+      child: ListView.separated(
+        padding: EdgeInsets.only(
+          // Extra spacer at the bottom so the last item clears the bottom nav
+          bottom: mq.padding.bottom + 8,
+        ),
+        itemCount: sorted.length,
+        separatorBuilder: (context, index) => const Divider(
+          height: 1,
+          color: AppColors.outlineVariant,
+        ),
+        itemBuilder: (context, index) {
+          final m = sorted[index];
+          final dist = getMemberDistanceText != null
+              ? getMemberDistanceText!(m) ?? 'Lokasi belum tersedia'
+              : (m.hasLocation ? 'Lokasi aktif' : 'Lokasi belum tersedia');
+          final isPendamping = m.isPendamping;
+          final locStatus = m.getLocationStatus();
+
+          return InkWell(
+            onTap: () => onMemberTap?.call(m),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isPendamping
+                          ? AppColors.accentGoldStar.withValues(alpha: 0.2)
+                          : AppColors.statusSafe.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    child: Text(
+                      isPendamping ? 'Pendamping' : 'Jamaah',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: isPendamping
+                            ? AppColors.primary
+                            : AppColors.statusSafe,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      m.name,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.espressoDark,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        dist,
+                        style: AppTypography.captionSmall.copyWith(
+                          color: m.hasLocation
+                              ? AppColors.primary
+                              : AppColors.outlineVariant,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        locStatus,
+                        style: TextStyle(
+                          fontSize: 9,
+                          color: locStatus == 'Online'
+                              ? AppColors.statusSafe
+                              : AppColors.textBody,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.chevron_right,
+                    size: 16,
+                    color: AppColors.tanMedium,
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // ── 3. LEGACY JAMAAH CARD FALLBACK ─────────────────────────────────────────
+
+  Widget _buildLegacyJamaahCard(BuildContext context) {
+    final jamaah = activeJamaah ?? state.self;
+
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.canvasCream,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.goldLight),
+                ),
+                child: const Icon(
+                  Icons.elderly,
+                  color: AppColors.tanMedium,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      jamaah.name,
+                      style: AppTypography.titleMedium.copyWith(
+                        color: AppColors.espressoDark,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${jamaah.shortLabel} • ${jamaah.distance.toInt()}m',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textBody,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          SizedBox(
+            width: double.infinity,
+            height: AppSizes.buttonHeightSecondary,
+            child: ElevatedButton.icon(
+              onPressed: onNavigate,
+              icon: const Icon(Icons.directions, size: 18),
+              label: Text(
+                'Navigasi',
+                style: AppTypography.labelLarge.copyWith(
+                  color: AppColors.surfaceWhite,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.espressoDark,
+                foregroundColor: AppColors.onPrimary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+              ),
             ),
           ),
         ],

@@ -1,14 +1,316 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/locales/app_translations.dart';
+import '../../../../core/routes/app_routes.dart';
+import '../../../../core/services/app_alert_service.dart';
 import '../../../../core/state/app_settings_controller.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../controllers/dashboard_controller.dart';
 
 class JamaahServiceGrid extends StatelessWidget {
   const JamaahServiceGrid({super.key});
+
+  void _showSmartbandDialog(BuildContext context) {
+    final isDark = AppColors.isDark(context);
+    final headingColor = AppColors.textHeadingColor(context);
+
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkOutlineVariant : AppColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppColors.statusSafe.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.watch_rounded, color: AppColors.statusSafe, size: 28),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Gelang Pintar Haji',
+                        style: AppTypography.titleMedium.copyWith(
+                          color: headingColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        'Status: Terhubung (BLE Sync Aktif)',
+                        style: AppTypography.captionSmall.copyWith(
+                          color: AppColors.statusSafe,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildMetricTile(
+                    context: context,
+                    icon: Icons.battery_charging_full_rounded,
+                    label: 'Baterai',
+                    value: '88%',
+                    color: AppColors.statusSafe,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: _buildMetricTile(
+                    context: context,
+                    icon: Icons.favorite_rounded,
+                    label: 'Detak Jantung',
+                    value: '76 bpm',
+                    color: AppColors.sosEmergency,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: _buildMetricTile(
+                    context: context,
+                    icon: Icons.directions_walk_rounded,
+                    label: 'Langkah',
+                    value: '4.210',
+                    color: AppColors.accentGoldStar,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Get.back();
+                  AppAlert.success(
+                    context,
+                    title: 'Sinkronisasi Berhasil',
+                    message: 'Data vital dan lokasi gelang pintar telah diperbarui.',
+                  );
+                },
+                icon: const Icon(Icons.sync_rounded),
+                label: const Text('Sinkronisasi Sekarang'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.espressoDark,
+                  foregroundColor: AppColors.surfaceWhite,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+
+  Widget _buildMetricTile({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    final isDark = AppColors.isDark(context);
+    final headingColor = AppColors.textHeadingColor(context);
+    final bodyColor = AppColors.textBodyColor(context);
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCreamSubtle,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 22),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: AppTypography.labelLarge.copyWith(
+              color: headingColor,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(
+            label,
+            style: AppTypography.captionSmall.copyWith(
+              color: bodyColor,
+              fontSize: 10,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDoaDialog(BuildContext context) {
+    final isDark = AppColors.isDark(context);
+    final headingColor = AppColors.textHeadingColor(context);
+    final bodyColor = AppColors.textBodyColor(context);
+
+    final doas = [
+      {
+        'title': 'Bacaan Talbiyah',
+        'arabic': 'لَبَّيْكَ اللَّهُمَّ لَبَّيْكَ، لَبَّيْكَ لاَ شَرِيكَ لَكَ لَبَّيْكَ',
+        'latin': 'Labbaikallaahumma labbaik, labbaika laa syariika laka labbaik...',
+        'arti': 'Aku penuhi panggilan-Mu ya Allah, aku penuhi panggilan-Mu...',
+      },
+      {
+        'title': 'Doa Tawaf (Antara Rukun Yamani & Hajar Aswad)',
+        'arabic': 'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ',
+        'latin': 'Rabbanaa aatinaa fid dunyaa hasanah wa fil aakhirati hasanah wa qinaa \'adzaaban naar',
+        'arti': 'Ya Tuhan kami, berilah kami kebaikan di dunia dan kebaikan di akhirat dan lindungilah kami dari azab neraka.',
+      },
+      {
+        'title': 'Doa Masuk Masjidil Haram',
+        'arabic': 'اللَّهُمَّ افْتَحْ لِي أَبْوَابَ رَحْمَتِكَ',
+        'latin': 'Allaahummaftah lii abwaaba rahmatik',
+        'arti': 'Ya Allah, bukalah pintu-pintu rahmat-Mu untukku.',
+      },
+    ];
+
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.75),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkOutlineVariant : AppColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                const Icon(Icons.menu_book_rounded, color: AppColors.tanMedium, size: 24),
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  'Doa & Panduan Manasik',
+                  style: AppTypography.titleMedium.copyWith(
+                    color: headingColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Expanded(
+              child: ListView.separated(
+                itemCount: doas.length,
+                separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
+                itemBuilder: (ctx, i) {
+                  final item = doas[i];
+                  return AppCard(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item['title']!,
+                          style: AppTypography.labelLarge.copyWith(
+                            color: headingColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            item['arabic']!,
+                            textAlign: TextAlign.right,
+                            style: AppTypography.titleMedium.copyWith(
+                              color: isDark ? AppColors.goldLight : AppColors.espressoDark,
+                              fontWeight: FontWeight.w600,
+                              height: 1.6,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          item['latin']!,
+                          style: AppTypography.bodySmall.copyWith(
+                            color: AppColors.accentGoldStar,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          item['arti']!,
+                          style: AppTypography.captionSmall.copyWith(
+                            color: bodyColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+
+  void _showOfficerCallDialog(BuildContext context) {
+    AppAlert.info(
+      context,
+      title: 'Panggilan Petugas Siaga',
+      message: 'Silakan hubungi kontak darurat berikut:\n\n'
+          '• Call Center Haji Kemenag: 195\n'
+          '• Posko Medis: +966 50 123 4567\n'
+          '• Ketua Kloter: +966 50 987 6543',
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,37 +325,43 @@ class JamaahServiceGrid extends StatelessWidget {
         'title': context.tr('serviceMapTitle'),
         'subtitle': context.tr('serviceMapSubtitle'),
         'icon': Icons.near_me_rounded,
-        'route': '/map',
+        'action': () {
+          if (Get.isRegistered<DashboardController>()) {
+            Get.find<DashboardController>().changeTab(1);
+          } else {
+            Get.toNamed(AppRoutes.interactiveMap);
+          }
+        },
       },
       {
         'title': context.tr('serviceMoneyTitle'),
         'subtitle': context.tr('serviceMoneySubtitle'),
         'icon': Icons.photo_camera_rounded,
-        'route': '/money',
+        'action': () => Get.toNamed(AppRoutes.moneyRecognition),
       },
       {
         'title': context.tr('serviceCommTitle'),
         'subtitle': context.tr('serviceCommSubtitle'),
         'icon': Icons.record_voice_over_rounded,
-        'route': '/communication',
+        'action': () => Get.toNamed(AppRoutes.communication),
       },
       {
         'title': context.tr('serviceBandTitle'),
         'subtitle': context.tr('serviceBandSubtitle'),
         'icon': Icons.watch_rounded,
-        'route': null,
+        'action': () => _showSmartbandDialog(context),
       },
       {
         'title': context.tr('servicePrayerTitle'),
         'subtitle': context.tr('servicePrayerSubtitle'),
         'icon': Icons.menu_book_rounded,
-        'route': null,
+        'action': () => _showDoaDialog(context),
       },
       {
         'title': context.tr('serviceCallTitle'),
         'subtitle': context.tr('serviceCallSubtitle'),
         'icon': Icons.phone_in_talk_rounded,
-        'route': null,
+        'action': () => _showOfficerCallDialog(context),
       },
     ];
 
@@ -88,7 +396,6 @@ class JamaahServiceGrid extends StatelessWidget {
         LayoutBuilder(
           builder: (context, constraints) {
             final double cardWidth = (constraints.maxWidth - AppSpacing.sm) / 2;
-            // Dynamically adjust ratio if text scale is enlarged
             double ratio = cardWidth < 170 ? 0.95 : 1.05;
             if (textScale > 1.1) {
               ratio = ratio * 0.88;
@@ -111,7 +418,7 @@ class JamaahServiceGrid extends StatelessWidget {
                   title: item['title'] as String,
                   subtitle: item['subtitle'] as String,
                   icon: item['icon'] as IconData,
-                  route: item['route'] as String?,
+                  onTap: item['action'] as VoidCallback?,
                   isDark: isDark,
                 );
               },
@@ -127,7 +434,7 @@ class JamaahServiceGrid extends StatelessWidget {
     required String title,
     required String subtitle,
     required IconData icon,
-    required String? route,
+    required VoidCallback? onTap,
     required bool isDark,
   }) {
     final headingColor = AppColors.textHeadingColor(context);
@@ -135,7 +442,7 @@ class JamaahServiceGrid extends StatelessWidget {
 
     return AppCard(
       padding: const EdgeInsets.all(AppSpacing.md),
-      onTap: route != null ? () => Get.toNamed(route) : null,
+      onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -184,4 +491,5 @@ class JamaahServiceGrid extends StatelessWidget {
     );
   }
 }
+
 

@@ -352,4 +352,17 @@ const Map<String, String> enTranslations = {
   'testAlarmSignal': 'Test Alarm Signal',
   'responseCenter': 'Response Center',
   'separatedAlertDetail': 'is outside safe radius (Too far).',
+
+  // Prayer & Qibla Dynamic
+  'prayerSubtitle': 'Prayer schedule & Qibla direction',
+  'prayerLoading': 'Loading',
+  'prayerLocation': 'Location',
+  'prayerNextLabel': 'NEXT PRAYER TIME',
+  'prayerTimeRemaining': 'Time remaining',
+  'qiblaAligned': 'Your phone faces the Qibla correctly ✓',
+  'qiblaRotate': 'Offset',
+  'qiblaRotateToKabah': '(Rotate toward the Ka\'bah)',
+  'prayerScheduleSectionTitle': 'Prayer Schedule',
+  'prayerNextBadge': 'Next',
+  'kompasNoSensor': 'Compass only works on mobile devices with sensors.',
 };

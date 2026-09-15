@@ -34,9 +34,11 @@ class HajiCareBottomNavBar extends StatelessWidget {
 
     switch (index) {
       case 0:
-        route = hajicare.role == UserRole.jamaah
-            ? AppRoutes.dashboardJamaah
-            : AppRoutes.dashboardPendamping;
+        route = hajicare.role == UserRole.admin
+            ? AppRoutes.adminDashboard
+            : hajicare.role == UserRole.jamaah
+                ? AppRoutes.dashboardJamaah
+                : AppRoutes.dashboardPendamping;
         break;
 
       case 1:

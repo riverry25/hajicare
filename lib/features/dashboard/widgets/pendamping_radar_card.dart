@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../../../core/locales/app_translations.dart';
-import '../../../../core/models/jamaah_data.dart';
+import '../../../../core/services/app_alert_service.dart';
+import '../../../../core/state/hajicare_controller.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_sizes.dart';
@@ -42,13 +44,100 @@ class PendampingRadarCard extends StatelessWidget {
     }
   }
 
+  String _formatTimestamp(DateTime? dt) {
+    if (dt == null) return 'Menunggu...';
+    final diff = DateTime.now().difference(dt);
+    if (diff.inSeconds < 30) return 'Baru saja';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} mnt lalu';
+    return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  }
+
+  void _showRadiusSheet(BuildContext context) {
+    final isDark = AppColors.isDark(context);
+    final headingColor = AppColors.textHeadingColor(context);
+    final state = Get.isRegistered<HajiCareController>() ? Get.find<HajiCareController>() : null;
+    final radii = [50, 100, 150, 200, 300];
+
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkOutlineVariant : AppColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              'Atur Radius Batas Aman Jamaah',
+              style: AppTypography.titleMedium.copyWith(
+                color: headingColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Peringatan getar & notifikasi akan aktif jika jamaah berada di luar radius ini.',
+              style: AppTypography.captionSmall.copyWith(
+                color: AppColors.textBodyColor(context),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Obx(() {
+              final currentRadius = state?.safeRadiusMeters.value.toInt() ?? 200;
+              return Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                children: radii.map((r) {
+                  final isSelected = r == currentRadius;
+                  return ChoiceChip(
+                    label: Text('$r Meter'),
+                    selected: isSelected,
+                    selectedColor: isDark ? AppColors.darkPrimaryContainer : AppColors.goldLight,
+                    onSelected: (_) {
+                      state?.setSafeRadius(r.toDouble());
+                      Get.back();
+                      AppAlert.success(
+                        context,
+                        title: 'Radius Diperbarui',
+                        message: 'Batas aman berhasil diatur menjadi $r meter.',
+                      );
+                    },
+                  );
+                }).toList(),
+              );
+            }),
+            const SizedBox(height: AppSpacing.lg),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final state = Get.isRegistered<HajiCareController>() ? Get.find<HajiCareController>() : null;
     final isDark = AppColors.isDark(context);
     final headingColor = AppColors.textHeadingColor(context);
     final bodyColor = AppColors.textBodyColor(context);
 
-    return AppCard(
+    return Obx(() {
+      final safeRadius = state?.safeRadiusMeters.value ?? 200.0;
+      final hasSignal = jamaah.currentLocation != null || jamaah.locationUpdatedAt != null || jamaah.distance > 0.0;
+
+      return AppCard(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,9 +203,9 @@ class PendampingRadarCard extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.sm),
               AppStatusBadge(
-                label: _localizedTierLabel(context, jamaah.tier),
-                statusType: _mapStatusType(jamaah.tier),
-                icon: jamaah.tier.icon,
+                label: hasSignal ? _localizedTierLabel(context, jamaah.tier) : 'Menunggu',
+                statusType: hasSignal ? _mapStatusType(jamaah.tier) : AppStatusType.warning,
+                icon: hasSignal ? jamaah.tier.icon : Icons.hourglass_top_rounded,
               ),
             ],
           ),
@@ -146,7 +235,7 @@ class PendampingRadarCard extends StatelessWidget {
                       spacing: 4,
                       children: [
                         Text(
-                          '${jamaah.distance.toInt()}',
+                          hasSignal ? '${jamaah.distance.toInt()}' : '--',
                           style: AppTypography.heroNumberLarge.copyWith(
                             color: jamaah.tier.color,
                           ),
@@ -169,7 +258,7 @@ class PendampingRadarCard extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '200 ${context.tr('meterUnit')}',
+                          '${safeRadius.toInt()} ${context.tr('meterUnit')}',
                           style: AppTypography.labelLarge.copyWith(
                             color: headingColor,
                             fontWeight: FontWeight.bold,
@@ -194,7 +283,7 @@ class PendampingRadarCard extends StatelessWidget {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                     child: LinearProgressIndicator(
-                      value: (jamaah.distance / 200).clamp(0.0, 1.0),
+                      value: (jamaah.distance / safeRadius).clamp(0.0, 1.0),
                       backgroundColor: Colors.transparent,
                       color: jamaah.tier.color,
                       minHeight: 12,
@@ -212,14 +301,14 @@ class PendampingRadarCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${((jamaah.distance / 200) * 100).toInt()}% ${context.tr('fromRadiusLimit')}',
+                      '${((jamaah.distance / safeRadius) * 100).toInt()}% ${context.tr('fromRadiusLimit')}',
                       style: AppTypography.captionSmall.copyWith(
                         color: headingColor,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
-                      context.tr('warningDistanceLabel'),
+                      '${safeRadius.toInt()}m (${context.tr('statusWarning')})',
                       style: AppTypography.captionSmall.copyWith(
                         color: bodyColor,
                       ),
@@ -239,9 +328,9 @@ class PendampingRadarCard extends StatelessWidget {
               Expanded(
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.watch_rounded,
-                      color: AppColors.tanMedium,
+                      color: jamaah.isGpsActive ? AppColors.statusSafe : AppColors.error,
                       size: 18,
                     ),
                     const SizedBox(width: AppSpacing.sm2),
@@ -256,9 +345,9 @@ class PendampingRadarCard extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            context.tr('batteryGpsActive'),
+                            jamaah.isGpsActive ? 'GPS Aktif' : 'GPS Mati',
                             style: AppTypography.captionSmall.copyWith(
-                              color: headingColor,
+                              color: jamaah.isGpsActive ? AppColors.statusSafe : AppColors.error,
                               fontWeight: FontWeight.w600,
                             ),
                             maxLines: 1,
@@ -290,7 +379,7 @@ class PendampingRadarCard extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            context.tr('secondsAgo'),
+                            _formatTimestamp(jamaah.locationUpdatedAt),
                             style: AppTypography.captionSmall.copyWith(
                               color: headingColor,
                               fontWeight: FontWeight.w600,
@@ -350,7 +439,7 @@ class PendampingRadarCard extends StatelessWidget {
             width: double.infinity,
             height: AppSizes.buttonHeightSecondary,
             child: OutlinedButton(
-              onPressed: () {},
+              onPressed: () => _showRadiusSheet(context),
               style: OutlinedButton.styleFrom(
                 foregroundColor: headingColor,
                 side: BorderSide(
@@ -367,7 +456,7 @@ class PendampingRadarCard extends StatelessWidget {
                   const SizedBox(width: AppSpacing.sm2),
                   Flexible(
                     child: Text(
-                      context.tr('setSafeRadius'),
+                      'Atur Batas Radius Aman (${safeRadius.toInt()}m)',
                       style: AppTypography.labelLarge.copyWith(
                         color: headingColor,
                       ),
@@ -382,6 +471,6 @@ class PendampingRadarCard extends StatelessWidget {
         ],
       ),
     );
+    });
   }
 }
-

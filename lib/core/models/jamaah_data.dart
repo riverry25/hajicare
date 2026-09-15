@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/app_colors.dart';
 
-enum UserRole { jamaah, pendamping }
+enum UserRole { admin, pendamping, jamaah }
 
 enum DistanceTier { aman, waspada, terlalujJauh }
 
@@ -49,11 +49,15 @@ class JamaahData {
   final String? porsi;
   final String? kloter;
   final String? maktab;
+  final String? activeRoomId;
   double distance;
   DistanceTier tier;
   bool separatedMode;
   bool sosActive;
   GeoPoint? currentLocation;
+  bool isGpsActive;
+  DateTime? locationUpdatedAt;
+  bool onlineStatus;
   DateTime? _dangerStart;
 
   JamaahData({
@@ -64,9 +68,13 @@ class JamaahData {
     this.porsi,
     this.kloter,
     this.maktab,
+    this.activeRoomId,
     this.separatedMode = false,
     this.sosActive = false,
     this.currentLocation,
+    this.isGpsActive = false,
+    this.locationUpdatedAt,
+    this.onlineStatus = true,
   }) : tier = _calcTier(distance);
 
   factory JamaahData.fromFirestore(DocumentSnapshot doc) {
@@ -81,8 +89,8 @@ class JamaahData {
       final fallbackName = currentUser?.displayName?.trim().isNotEmpty == true
           ? currentUser!.displayName!.trim()
           : (currentUser?.email?.trim().isNotEmpty == true
-              ? currentUser!.email!.split('@').first
-              : 'Jamaah');
+                ? currentUser!.email!.split('@').first
+                : 'Jamaah');
       return JamaahData(
         id: doc.id,
         name: fallbackName,
@@ -96,13 +104,14 @@ class JamaahData {
     final name = (rawName != null && rawName.trim().isNotEmpty)
         ? rawName.trim()
         : (currentUser?.displayName?.trim().isNotEmpty == true
-            ? currentUser!.displayName!.trim()
-            : (currentUser?.email?.trim().isNotEmpty == true
-                ? currentUser!.email!.split('@').first
-                : 'Jamaah'));
+              ? currentUser!.displayName!.trim()
+              : (currentUser?.email?.trim().isNotEmpty == true
+                    ? currentUser!.email!.split('@').first
+                    : 'Jamaah'));
 
     final rawShortLabel = data['shortLabel'] as String?;
-    final shortLabel = (rawShortLabel != null && rawShortLabel.trim().isNotEmpty)
+    final shortLabel =
+        (rawShortLabel != null && rawShortLabel.trim().isNotEmpty)
         ? rawShortLabel.trim()
         : name.split(' ').first;
 
@@ -110,6 +119,18 @@ class JamaahData {
     final porsi = data['porsi'] as String?;
     final kloter = data['kloter'] as String?;
     final maktab = data['maktab'] as String?;
+    final activeRoomId = data['activeRoomId'] as String?;
+    final loc = data['currentLocation'] as GeoPoint?;
+
+    DateTime? locationTime;
+    if (data['locationUpdatedAt'] is Timestamp) {
+      locationTime = (data['locationUpdatedAt'] as Timestamp).toDate();
+    } else if (data['updatedAt'] is Timestamp) {
+      locationTime = (data['updatedAt'] as Timestamp).toDate();
+    }
+
+    final isGps = (data['isGpsActive'] as bool?) ?? (loc != null);
+    final isOnline = (data['onlineStatus'] as bool?) ?? true;
 
     return JamaahData(
       id: doc.id,
@@ -119,9 +140,13 @@ class JamaahData {
       porsi: porsi,
       kloter: kloter,
       maktab: maktab,
+      activeRoomId: activeRoomId,
       separatedMode: data['separatedMode'] as bool? ?? false,
       sosActive: data['sosActive'] as bool? ?? false,
-      currentLocation: data['currentLocation'] as GeoPoint?,
+      currentLocation: loc,
+      isGpsActive: isGps,
+      locationUpdatedAt: locationTime,
+      onlineStatus: isOnline,
     );
   }
 
@@ -131,28 +156,32 @@ class JamaahData {
       'distance': distance,
       'separatedMode': separatedMode,
       'sosActive': sosActive,
+      if (activeRoomId != null) 'activeRoomId': activeRoomId,
       if (currentLocation != null) 'currentLocation': currentLocation,
+      'isGpsActive': isGpsActive,
+      if (locationUpdatedAt != null)
+        'locationUpdatedAt': Timestamp.fromDate(locationUpdatedAt!),
+      'onlineStatus': onlineStatus,
     };
   }
 
-  static DistanceTier _calcTier(double d) {
-    if (d < 100) return DistanceTier.aman;
-    if (d < 200) return DistanceTier.waspada;
+  static DistanceTier _calcTier(double d, [double safeRadius = 200.0]) {
+    if (d <= safeRadius * 0.5) return DistanceTier.aman;
+    if (d <= safeRadius) return DistanceTier.waspada;
     return DistanceTier.terlalujJauh;
   }
 
-  void refresh() {
-    final newTier = _calcTier(distance);
+  void refresh({double safeRadius = 200.0}) {
+    final newTier = _calcTier(distance, safeRadius);
     if (newTier != DistanceTier.terlalujJauh) {
       _dangerStart = null;
+      separatedMode = false;
     } else {
       _dangerStart ??= DateTime.now();
+      if (DateTime.now().difference(_dangerStart!).inSeconds >= 5) {
+        separatedMode = true;
+      }
     }
     tier = newTier;
-
-    if (_dangerStart != null &&
-        DateTime.now().difference(_dangerStart!).inSeconds >= 15) {
-      separatedMode = true;
-    }
   }
 }
