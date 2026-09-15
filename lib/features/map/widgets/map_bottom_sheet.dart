@@ -52,45 +52,50 @@ class MapBottomSheet extends StatelessWidget {
       left: AppSpacing.lg,
       right: AppSpacing.lg,
       bottom: bottomOffset,
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surfaceWhite,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border(
-            top: BorderSide(color: AppColors.goldLight.withValues(alpha: 0.3)),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.espressoDark.withValues(alpha: 0.15),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Drag Handle
-            Container(
-              margin: const EdgeInsets.only(top: 10, bottom: 6),
-              width: 44,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.outlineVariant.withValues(alpha: 0.7),
-                borderRadius: BorderRadius.circular(AppRadius.pill),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surfaceWhite,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border(
+              top: BorderSide(
+                color: AppColors.goldLight.withValues(alpha: 0.3),
               ),
             ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.espressoDark.withValues(alpha: 0.15),
+                blurRadius: 20,
+                offset: const Offset(0, -4),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Drag Handle
+              Container(
+                margin: const EdgeInsets.only(top: 10, bottom: 6),
+                width: 44,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.outlineVariant.withValues(alpha: 0.7),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+              ),
 
-            if (selectedMember != null)
-              _buildSelectedMemberDetail(context, selectedMember!)
-            else if (roomMembers != null && roomMembers!.isNotEmpty)
-              _buildRoomMembersList(context, roomMembers!)
-            else
-              _buildLegacyJamaahCard(context),
-          ],
-        ),
-      ),
-    );
+              if (selectedMember != null)
+                _buildSelectedMemberDetail(context, selectedMember!)
+              else if (roomMembers != null && roomMembers!.isNotEmpty)
+                _buildRoomMembersList(context, roomMembers!)
+              else
+                _buildLegacyJamaahCard(context),
+            ],
+          ), // Column
+        ), // Container
+      ), // ClipRRect
+    ); // Positioned
   }
 
   // ── 1. SELECTED MEMBER DETAIL CARD ─────────────────────────────────────────
@@ -106,7 +111,10 @@ class MapBottomSheet extends StatelessWidget {
     final isPendamping = member.isPendamping;
 
     final mq = MediaQuery.of(context);
-    final double maxDetailHeight = (mq.size.height * 0.45).clamp(240.0, 420.0);
+    final double maxDetailHeight = ((mq.size.height * 0.45) - 2).clamp(
+      240.0,
+      420.0,
+    );
 
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: maxDetailHeight),
@@ -167,37 +175,40 @@ class MapBottomSheet extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isPendamping
-                                  ? AppColors.accentGoldStar.withValues(
-                                      alpha: 0.2,
-                                    )
-                                  : AppColors.statusSafe.withValues(
-                                      alpha: 0.15,
-                                    ),
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
                               ),
-                            ),
-                            child: Text(
-                              isPendamping ? 'Pendamping' : 'Jamaah',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
+                              decoration: BoxDecoration(
                                 color: isPendamping
-                                    ? AppColors.primary
-                                    : AppColors.statusSafe,
+                                    ? AppColors.accentGoldStar.withValues(
+                                        alpha: 0.2,
+                                      )
+                                    : AppColors.statusSafe.withValues(
+                                        alpha: 0.15,
+                                      ),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.pill,
+                                ),
+                              ),
+                              child: Text(
+                                isPendamping ? 'Pendamping' : 'Jamaah',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: isPendamping
+                                      ? AppColors.primary
+                                      : AppColors.statusSafe,
+                                ),
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 3),
                       Row(
                         children: [
                           Icon(
@@ -208,19 +219,15 @@ class MapBottomSheet extends StatelessWidget {
                                 : AppColors.outlineVariant,
                           ),
                           const SizedBox(width: 4),
-                          Text(
-                            '$distText dari Anda',
-                            style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.espressoDark,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            ' • $locStatus',
-                            style: AppTypography.captionSmall.copyWith(
-                              color: locStatus == 'Online'
-                                  ? AppColors.statusSafe
-                                  : AppColors.textBody,
+                          Expanded(
+                            child: Text(
+                              '$distText dari Anda • $locStatus',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.bodySmall.copyWith(
+                                color: AppColors.espressoDark,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ],
