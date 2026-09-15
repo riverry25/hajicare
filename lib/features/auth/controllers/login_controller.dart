@@ -138,14 +138,15 @@ class LoginController extends GetxController {
 
   void _showErrorSnackbar(String msg) {
     if (isClosed) return;
-
-    Get.snackbar(
-      'Gagal Masuk',
-      msg,
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.red.shade800,
-      colorText: Colors.white,
-    );
+    if (Get.context != null) {
+      Get.snackbar(
+        'Gagal Masuk',
+        msg,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade800,
+        colorText: Colors.white,
+      );
+    }
   }
 
   @override

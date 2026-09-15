@@ -47,3 +47,5 @@ app.*.map.json
 # Firebase Service Account credentials — NEVER commit
 service-account.json
 tools/seed/node_modules/
+
+config.json

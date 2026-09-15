@@ -9,6 +9,7 @@ import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../room/services/room_service.dart';
 import '../models/map_poi.dart';
+import '../services/route_service.dart';
 
 /// Controller managing reactive interactive map state, camera,
 /// real geolocation with live streaming, dynamic POIs, and Room Member markers.
@@ -16,8 +17,11 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   final fmap.MapController flutterMapController = fmap.MapController();
   final RoomService? _injectedRoomService;
   RoomService? _lazyRoomService;
+  final RouteService _routeService;
 
-  MapController({RoomService? roomService}) : _injectedRoomService = roomService;
+  MapController({RoomService? roomService, RouteService? routeService}) 
+      : _injectedRoomService = roomService,
+        _routeService = routeService ?? RouteService();
 
   RoomService? get _roomService {
     if (_injectedRoomService != null) return _injectedRoomService;
@@ -39,6 +43,12 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   final selectedJamaah = Rxn<JamaahData>();
   final selectedMember = Rxn<RoomMemberModel>();
   final activeRoute = <LatLng>[].obs;
+  
+  final isRouteLoading = false.obs;
+  final routeError = RxnString();
+  final routeDistanceMeters = Rxn<double>();
+  final routeDurationSeconds = Rxn<int>();
+
 
   static const LatLng defaultMinaBase = LatLng(21.4135, 39.8930);
   final currentUserLocation = Rxn<LatLng>(defaultMinaBase);
@@ -322,7 +332,6 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     final newCoord = LatLng(position.latitude, position.longitude);
     currentUserLocation.value = newCoord;
     gpsAccuracy.value = position.accuracy;
-    _updateRouteToSelected();
 
     // Dual-gate throttling: minimum 8 seconds AND 10 meters distance
     final now = DateTime.now();
@@ -406,54 +415,216 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     }
   }
 
+  int _routeRequestId = 0;
+
   void selectPoi(MapPoi poi) {
+    debugPrint('[SELECT] poi = ${poi.name}');
+    if (selectedPoi.value?.id == poi.id) return;
     selectedPoi.value = poi;
     selectedJamaah.value = null;
     selectedMember.value = null;
-    _updateRouteTo(poi.coordinate);
     animatedMove(poi.coordinate, 17.5);
   }
 
-  void selectMember(RoomMemberModel member) {
+  Future<void> selectMember(RoomMemberModel member) async {
+    debugPrint('[SELECT] member = ${member.name}');
+    final hasUserLoc = currentUserLocation.value != null;
+    final hasDestLoc = member.hasLocation;
+    debugPrint('[SELECT] currentLocation available = $hasUserLoc');
+    debugPrint('[SELECT] destination available = $hasDestLoc');
+
     selectedMember.value = member;
     selectedPoi.value = null;
     selectedJamaah.value = null;
+
     if (member.hasLocation) {
       final target = LatLng(member.latitude!, member.longitude!);
-      _updateRouteTo(target);
       animatedMove(target, 17.0);
+    }
+
+    if (hasUserLoc && hasDestLoc) {
+      debugPrint('[ROUTE] automatic request started');
+      await requestRouteToMember(member);
+    } else {
+      clearRoute();
+      if (!hasUserLoc) {
+        routeError.value = 'Lokasi GPS Anda belum tersedia';
+      } else if (!hasDestLoc) {
+        routeError.value = 'Lokasi anggota belum tersedia';
+      }
     }
   }
 
-  void selectJamaah(JamaahData jamaah) {
+  Future<void> selectJamaah(JamaahData jamaah) async {
+    debugPrint('[SELECT] member = ${jamaah.name}');
+    final hasUserLoc = currentUserLocation.value != null;
+    final hasDestLoc = jamaah.currentLocation != null;
+    debugPrint('[SELECT] currentLocation available = $hasUserLoc');
+    debugPrint('[SELECT] destination available = $hasDestLoc');
+
     selectedJamaah.value = jamaah;
     selectedPoi.value = null;
     selectedMember.value = null;
     final targetCoord = getJamaahCoordinate(jamaah);
-    _updateRouteTo(targetCoord);
     animatedMove(targetCoord, 17.0);
+
+    if (hasUserLoc && hasDestLoc) {
+      debugPrint('[ROUTE] automatic request started');
+      await requestRouteToJamaah(jamaah);
+    } else {
+      clearRoute();
+      if (!hasUserLoc) {
+        routeError.value = 'Lokasi GPS Anda belum tersedia';
+      } else if (!hasDestLoc) {
+        routeError.value = 'Lokasi jamaah belum tersedia';
+      }
+    }
   }
+
+  bool get hasActiveRoute => activeRoute.isNotEmpty;
 
   void clearSelection() {
     selectedPoi.value = null;
     selectedJamaah.value = null;
     selectedMember.value = null;
+    // Note: does NOT clear active route. Route persists until
+    // clearRoute() is explicitly called or a new route is requested.
+  }
+
+  void clearRoute() {
     activeRoute.clear();
+    routeError.value = null;
+    routeDistanceMeters.value = null;
+    routeDurationSeconds.value = null;
+  }
+
+  /// Clears both selection and route (used by close button in bottom sheet).
+  void clearSelectionAndRoute() {
+    clearSelection();
+    clearRoute();
   }
 
   // ── ROUTE & DISTANCE ───────────────────────────────────────────────────────
 
-  void _updateRouteTo(LatLng destination) {
-    final start = currentUserLocation.value ?? defaultMinaBase;
-    activeRoute.value = generateWalkingWaypoints(start, destination);
+  Future<void> _updateRouteTo(LatLng destination) async {
+    final start = currentUserLocation.value;
+    if (start == null) {
+      clearRoute();
+      routeError.value = 'Lokasi GPS Anda belum tersedia';
+      return;
+    }
+
+    final requestId = ++_routeRequestId;
+
+    isRouteLoading.value = true;
+    routeError.value = null;
+    routeDistanceMeters.value = null;
+    routeDurationSeconds.value = null;
+
+    try {
+      final result = await _routeService.getWalkingRoute(
+        origin: start,
+        destination: destination,
+      );
+
+      // Race condition check: ignore obsolete responses
+      if (requestId != _routeRequestId) {
+        debugPrint('[ROUTE] obsolete response ignored (request $requestId != $_routeRequestId)');
+        return;
+      }
+      
+      debugPrint('[ROUTE] activeRoute = ${result.points.length}');
+
+      activeRoute.assignAll(result.points);
+      routeDistanceMeters.value = result.distanceMeters;
+      routeDurationSeconds.value = result.durationSeconds;
+      _fitCameraToRoute(start, destination, result.points);
+    } on RouteException catch (e) {
+      if (requestId != _routeRequestId) return;
+      debugPrint('[ROUTE] ERROR RouteException: ${e.message}');
+      activeRoute.clear();
+      routeError.value = e.message;
+    } catch (e) {
+      if (requestId != _routeRequestId) return;
+      debugPrint('[ROUTE] ERROR unknown: $e');
+      activeRoute.clear();
+      routeError.value = 'Terjadi kesalahan saat mencari rute';
+    } finally {
+      if (requestId == _routeRequestId) {
+        isRouteLoading.value = false;
+      }
+    }
   }
 
-  void _updateRouteToSelected() {
+  void _fitCameraToRoute(LatLng origin, LatLng dest, List<LatLng> routePoints) {
+    if (!isMapAttached) return;
+    
+    final allPoints = [origin, dest, ...routePoints];
+    if (allPoints.isEmpty) return;
+
+    try {
+      final bounds = fmap.LatLngBounds.fromPoints(allPoints);
+      flutterMapController.fitCamera(
+        fmap.CameraFit.bounds(
+          bounds: bounds,
+          padding: const EdgeInsets.fromLTRB(48, 140, 48, 300),
+        ),
+      );
+    } catch (e) {
+      debugPrint('[MapController] fitCamera route error: $e');
+    }
+  }
+
+  Future<void> requestRouteToMember(RoomMemberModel member) async {
+    if (selectedMember.value?.uid != member.uid) {
+      selectedMember.value = member;
+      selectedPoi.value = null;
+      selectedJamaah.value = null;
+    }
+    if (member.hasLocation && currentUserLocation.value != null) {
+      await _updateRouteTo(LatLng(member.latitude!, member.longitude!));
+    } else {
+      clearRoute();
+      if (currentUserLocation.value == null) {
+        routeError.value = 'Lokasi GPS Anda belum tersedia';
+      } else if (!member.hasLocation) {
+        routeError.value = 'Lokasi anggota belum tersedia';
+      }
+    }
+  }
+
+  Future<void> requestRouteToPoi(MapPoi poi) async {
+    if (selectedPoi.value?.id != poi.id) {
+      selectedPoi.value = poi;
+      selectedMember.value = null;
+      selectedJamaah.value = null;
+    }
+    if (currentUserLocation.value != null) {
+      await _updateRouteTo(poi.coordinate);
+    }
+  }
+
+  Future<void> requestRouteToJamaah(JamaahData jamaah) async {
+    if (selectedJamaah.value?.id != jamaah.id) {
+      selectedJamaah.value = jamaah;
+      selectedMember.value = null;
+      selectedPoi.value = null;
+    }
+    if (jamaah.currentLocation != null && currentUserLocation.value != null) {
+      await _updateRouteTo(getJamaahCoordinate(jamaah));
+    } else {
+      clearRoute();
+      if (currentUserLocation.value == null) {
+        routeError.value = 'Lokasi GPS Anda belum tersedia';
+      } else if (jamaah.currentLocation == null) {
+        routeError.value = 'Lokasi jamaah belum tersedia';
+      }
+    }
+  }
+
+  void retryRoute() {
     if (selectedMember.value != null && selectedMember.value!.hasLocation) {
-      _updateRouteTo(LatLng(
-        selectedMember.value!.latitude!,
-        selectedMember.value!.longitude!,
-      ));
+      _updateRouteTo(LatLng(selectedMember.value!.latitude!, selectedMember.value!.longitude!));
     } else if (selectedJamaah.value != null) {
       _updateRouteTo(getJamaahCoordinate(selectedJamaah.value!));
     } else if (selectedPoi.value != null) {

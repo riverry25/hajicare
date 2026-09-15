@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
@@ -5,16 +6,19 @@ import 'package:hajicare/core/constants/app_constants.dart';
 import 'package:hajicare/features/map/controllers/map_controller.dart';
 import 'package:hajicare/features/map/models/map_poi.dart';
 import 'package:hajicare/features/room/models/room_member_model.dart';
+import 'package:hajicare/features/map/services/route_service.dart';
 import 'package:latlong2/latlong.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late MapController controller;
+  late MockRouteService mockRouteService;
 
   setUp(() {
     Get.testMode = true;
-    controller = MapController();
+    mockRouteService = MockRouteService();
+    controller = MapController(routeService: mockRouteService);
     controller.onInit();
   });
 
@@ -68,18 +72,19 @@ void main() {
       expect(route.length, greaterThanOrEqualTo(3));
     });
 
-    test('Selecting a POI updates selection, clears member, and updates route', () {
+    test('Selecting a POI updates selection, clears member, and updates route async', () async {
       final poi = controller.pois.firstWhere((p) => p.category == PoiCategory.toilet);
 
-      controller.selectPoi(poi);
+      await controller.requestRouteToPoi(poi);
 
       expect(controller.selectedPoi.value, equals(poi));
       expect(controller.selectedMember.value, isNull);
       expect(controller.activeRoute.isNotEmpty, isTrue);
-      expect(controller.activeRoute.last, equals(poi.coordinate));
+      // It should match the mock output
+      expect(controller.activeRoute.last, equals(const LatLng(2.0, 2.0)));
     });
 
-    test('Selecting a Room Member updates selection, clears POI, and updates route', () {
+    test('Selecting a Room Member updates selection, clears POI, and updates route async', () async {
       const member = RoomMemberModel(
         uid: 'user_pendamping_1',
         name: 'Budi Santoso',
@@ -87,7 +92,7 @@ void main() {
         currentLocation: GeoPoint(21.4140, 39.8935),
       );
 
-      controller.selectMember(member);
+      await controller.requestRouteToMember(member);
 
       expect(controller.selectedMember.value, equals(member));
       expect(controller.selectedPoi.value, isNull);
@@ -247,4 +252,172 @@ void main() {
       expect(controller.nearestMemberInfo, contains('Pendamping terdekat: Near Pendamping'));
     });
   });
+
+  group('Automatic Routing & Race Condition Tests', () {
+    test('pilih member -> otomatis request route ketika kedua GPS tersedia', () async {
+      const member = RoomMemberModel(
+        uid: 'u_fadli',
+        name: 'Fadli',
+        role: 'jamaah',
+        currentLocation: GeoPoint(21.4140, 39.8935),
+      );
+
+      await controller.selectMember(member);
+
+      expect(controller.selectedMember.value, equals(member));
+      expect(controller.activeRoute.isNotEmpty, isTrue);
+      expect(mockRouteService.callCount, equals(1));
+    });
+
+    test('member tanpa GPS -> tidak request route dan error ditampilkan', () async {
+      final initialCalls = mockRouteService.callCount;
+      const memberNoGps = RoomMemberModel(
+        uid: 'u_no_gps',
+        name: 'Hasan',
+        role: 'jamaah',
+        currentLocation: null,
+      );
+
+      await controller.selectMember(memberNoGps);
+
+      expect(controller.selectedMember.value, equals(memberNoGps));
+      expect(controller.activeRoute.isEmpty, isTrue);
+      expect(mockRouteService.callCount, equals(initialCalls));
+      expect(controller.routeError.value, contains('Lokasi anggota belum tersedia'));
+    });
+
+    test('current user tanpa GPS -> tidak request route dan error ditampilkan', () async {
+      controller.currentUserLocation.value = null;
+      final initialCalls = mockRouteService.callCount;
+      const member = RoomMemberModel(
+        uid: 'u_fadli',
+        name: 'Fadli',
+        role: 'jamaah',
+        currentLocation: GeoPoint(21.4140, 39.8935),
+      );
+
+      await controller.selectMember(member);
+
+      expect(controller.activeRoute.isEmpty, isTrue);
+      expect(mockRouteService.callCount, equals(initialCalls));
+      expect(controller.routeError.value, contains('Lokasi GPS Anda belum tersedia'));
+    });
+
+    test('route success -> activeRoute terisi dengan distance dan duration', () async {
+      const member = RoomMemberModel(
+        uid: 'u_fadli',
+        name: 'Fadli',
+        role: 'jamaah',
+        currentLocation: GeoPoint(21.4140, 39.8935),
+      );
+
+      await controller.selectMember(member);
+
+      expect(controller.activeRoute.length, equals(3));
+      expect(controller.routeDistanceMeters.value, equals(500.0));
+      expect(controller.routeDurationSeconds.value, equals(300));
+      expect(controller.isRouteLoading.value, isFalse);
+    });
+
+    test('route error -> loading false dan activeRoute dikosongkan', () async {
+      mockRouteService.shouldFail = true;
+      const member = RoomMemberModel(
+        uid: 'u_fadli',
+        name: 'Fadli',
+        role: 'jamaah',
+        currentLocation: GeoPoint(21.4140, 39.8935),
+      );
+
+      await controller.selectMember(member);
+
+      expect(controller.isRouteLoading.value, isFalse);
+      expect(controller.activeRoute.isEmpty, isTrue);
+      expect(controller.routeError.value, isNotNull);
+    });
+
+    test('race condition: response request lama tidak menimpa route terbaru', () async {
+      final completerA = Completer<RouteResult>();
+      final completerB = Completer<RouteResult>();
+
+      mockRouteService.customHandler = (origin, dest) {
+        if (dest.latitude == 21.4140) {
+          return completerA.future;
+        } else {
+          return completerB.future;
+        }
+      };
+
+      const memberA = RoomMemberModel(
+        uid: 'u_a',
+        name: 'Ahmad',
+        role: 'jamaah',
+        currentLocation: GeoPoint(21.4140, 39.8935),
+      );
+      const memberB = RoomMemberModel(
+        uid: 'u_b',
+        name: 'Budi',
+        role: 'jamaah',
+        currentLocation: GeoPoint(21.4150, 39.8945),
+      );
+
+      // Trigger selection A, lalu cepat memilih B
+      final futureA = controller.selectMember(memberA);
+      final futureB = controller.selectMember(memberB);
+
+      // Response B selesai lebih dulu
+      completerB.complete(const RouteResult(
+        points: [LatLng(21.4135, 39.8930), LatLng(21.4150, 39.8945)],
+        distanceMeters: 200,
+        durationSeconds: 150,
+      ));
+      await futureB;
+      expect(controller.activeRoute.last, equals(const LatLng(21.4150, 39.8945)));
+      expect(controller.routeDistanceMeters.value, equals(200));
+
+      // Response A selesai belakangan (obsolete)
+      completerA.complete(const RouteResult(
+        points: [LatLng(21.4135, 39.8930), LatLng(21.4140, 39.8935)],
+        distanceMeters: 100,
+        durationSeconds: 80,
+      ));
+      await futureA;
+
+      // activeRoute TIDAK boleh tertimpa oleh response A
+      expect(controller.activeRoute.last, equals(const LatLng(21.4150, 39.8945)));
+      expect(controller.routeDistanceMeters.value, equals(200));
+    });
+
+    test('GPS update tidak memanggil ORS secara otomatis', () {
+      final callsBefore = mockRouteService.callCount;
+      controller.currentUserLocation.value = const LatLng(21.4138, 39.8934);
+      expect(mockRouteService.callCount, equals(callsBefore));
+    });
+  });
+}
+
+class MockRouteService extends RouteService {
+  int callCount = 0;
+  bool shouldFail = false;
+  Future<RouteResult> Function(LatLng origin, LatLng destination)? customHandler;
+
+  MockRouteService() : super(apiKey: 'dummy');
+
+  @override
+  Future<RouteResult> getWalkingRoute({
+    required LatLng origin,
+    required LatLng destination,
+  }) async {
+    callCount++;
+    if (shouldFail) {
+      throw const RouteException('Simulated route error');
+    }
+    if (customHandler != null) {
+      return customHandler!(origin, destination);
+    }
+    return RouteResult(
+      points: [origin, destination, const LatLng(2.0, 2.0)],
+      distanceMeters: 500.0,
+      durationSeconds: 300,
+    );
+  }
 }

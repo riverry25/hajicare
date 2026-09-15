@@ -105,6 +105,11 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
 
           // 4. Dynamic Contextual Bottom Sheets
           Obx(() {
+            final bottomPadding = MediaQuery.of(context).padding.bottom;
+            final sheetBottomOffset = widget.showBottomNav
+                ? (84.0 + bottomPadding)
+                : bottomPadding;
+
             final selectedPoi = mapCtrl.selectedPoi.value;
             if (selectedPoi != null) {
               final userPos = mapCtrl.currentUserLocation.value ??
@@ -117,12 +122,15 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
               return Positioned(
                 left: 0,
                 right: 0,
-                bottom: widget.showBottomNav ? 84.0 : 0.0,
+                bottom: sheetBottomOffset,
                 child: LocationDetailSheet(
                   poi: selectedPoi,
                   distanceMeters: dist,
-                  onRoute: () => mapCtrl.selectPoi(selectedPoi),
-                  onClose: mapCtrl.clearSelection,
+                  onRoute: () {
+                    debugPrint('[2] ROUTE BUTTON PRESSED');
+                    mapCtrl.requestRouteToPoi(selectedPoi);
+                  },
+                  onClose: mapCtrl.clearSelectionAndRoute,
                 ),
               );
             }
@@ -133,16 +141,22 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
               roomMembers: mapCtrl.filteredMembers,
               getMemberDistanceText: mapCtrl.getMemberDistanceText,
               onMemberTap: (m) => mapCtrl.selectMember(m),
-              onCloseMemberDetail: () => mapCtrl.clearSelection(),
+              onCloseMemberDetail: mapCtrl.clearSelectionAndRoute,
               activeJamaah: mapCtrl.selectedJamaah.value,
               onNavigate: () {
+                debugPrint('[2] ROUTE BUTTON PRESSED');
                 if (mapCtrl.selectedMember.value != null) {
-                  mapCtrl.selectMember(mapCtrl.selectedMember.value!);
+                  mapCtrl.requestRouteToMember(mapCtrl.selectedMember.value!);
                 } else {
                   final j = mapCtrl.selectedJamaah.value ?? state.self;
-                  mapCtrl.selectJamaah(j);
+                  mapCtrl.requestRouteToJamaah(j);
                 }
               },
+              isRouteLoading: mapCtrl.isRouteLoading.value,
+              routeDistanceMeters: mapCtrl.routeDistanceMeters.value,
+              routeDurationSeconds: mapCtrl.routeDurationSeconds.value,
+              routeError: mapCtrl.routeError.value,
+              onRetryRoute: mapCtrl.retryRoute,
               onShareLocation: () {
                 AppAlert.success(
                   context,
@@ -157,7 +171,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                   message: 'Menghubungi nomor darurat anggota room...',
                 );
               },
-              bottomOffset: widget.showBottomNav ? 84.0 : 0.0,
+              bottomOffset: sheetBottomOffset,
             );
           }),
         ],
@@ -181,69 +195,82 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
     HajiCareController state,
     MapController mapCtrl,
   ) {
-    return Obx(() {
-      final center = mapCtrl.currentUserLocation.value ??
-          MapController.defaultMinaBase;
-      final tileUrl = mapCtrl.activeTileUrl.value;
-      final routePoints = mapCtrl.activeRoute.toList();
-      final userLocation = mapCtrl.currentUserLocation.value ??
-          MapController.defaultMinaBase;
-
-      return fmap.FlutterMap(
-        mapController: mapCtrl.flutterMapController,
-        options: fmap.MapOptions(
-          initialCenter: center,
-          initialZoom: 16.5,
-          minZoom: 11.0,
-          maxZoom: 19.0,
-          onPositionChanged: (camera, hasGesture) {
-            mapCtrl.compassRotation.value = camera.rotation;
-          },
-          onTap: (tapPosition, point) {
+    // FlutterMap is created ONCE and never recreated.
+    // Each layer uses its own Obx so only that layer rebuilds when its
+    // reactive data changes. This prevents the entire map from being
+    // destroyed and recreated on every GPS tick, and eliminates the race
+    // condition between activeRoute being populated and onTap clearing it.
+    return fmap.FlutterMap(
+      mapController: mapCtrl.flutterMapController,
+      options: fmap.MapOptions(
+        initialCenter: mapCtrl.currentUserLocation.value ??
+            MapController.defaultMinaBase,
+        initialZoom: 16.5,
+        minZoom: 11.0,
+        maxZoom: 19.0,
+        onPositionChanged: (camera, hasGesture) {
+          mapCtrl.compassRotation.value = camera.rotation;
+        },
+        onTap: (tapPosition, point) {
+          // Only clear selection if there is no active route being shown.
+          // This prevents an accidental tap (e.g. during camera animation)
+          // from wiping the freshly drawn route.
+          if (mapCtrl.activeRoute.isEmpty) {
             mapCtrl.clearSelection();
-          },
-        ),
-        children: [
-          // 1. High-DPI Tile Layer
-          fmap.TileLayer(
-            urlTemplate: tileUrl,
-            userAgentPackageName: 'com.example.hajicare',
-          ),
+          }
+        },
+      ),
+      children: [
+        // 1. Tile Layer — changes only on layer toggle
+        Obx(() => fmap.TileLayer(
+              urlTemplate: mapCtrl.activeTileUrl.value,
+              userAgentPackageName: 'com.example.hajicare',
+            )),
 
-          // 2. Safe Radius Circle Layer (200m)
-          fmap.CircleLayer(
-            circles: [
-              fmap.CircleMarker(
-                point: mapCtrl.currentUserLocation.value ??
-                    MapController.defaultMinaBase,
-                radius: mapCtrl.safeRadiusMeters.value,
-                useRadiusInMeter: true,
-                color: AppColors.statusSafe.withValues(alpha: 0.08),
-                borderColor: AppColors.statusSafe.withValues(alpha: 0.5),
+        // 2. Walking Route Polyline Layer — Obx (placed directly above TileLayer, below MarkerLayer)
+        Obx(() {
+          final routePoints = mapCtrl.activeRoute.toList();
+          debugPrint('[MAP] Polyline points = ${routePoints.length}');
+
+          if (routePoints.length < 2) {
+            return const fmap.PolylineLayer(
+              polylines: <fmap.Polyline<Object>>[],
+            );
+          }
+
+          return fmap.PolylineLayer(
+            polylines: [
+              fmap.Polyline<Object>(
+                points: routePoints,
+                strokeWidth: 8.0,
+                color: const Color(0xFF173B78), // Deep navy navigation blue, high contrast
                 borderStrokeWidth: 2.0,
+                borderColor: const Color(0xFF0D254C),
               ),
             ],
-          ),
+          );
+        }),
 
-          // 3. Dynamic Walking Route Polyline
-          if (routePoints.isNotEmpty)
-            fmap.PolylineLayer(
-              polylines: [
-                fmap.Polyline(
-                  points: routePoints,
-                  strokeWidth: 6.0,
-                  color: AppColors.espressoDark.withValues(alpha: 0.7),
-                ),
-                fmap.Polyline(
-                  points: routePoints,
-                  strokeWidth: 3.5,
-                  color: AppColors.accentGoldStar,
+        // 3. Safe Radius Circle Layer — changes on GPS update
+        Obx(() => fmap.CircleLayer(
+              circles: [
+                fmap.CircleMarker(
+                  point: mapCtrl.currentUserLocation.value ??
+                      MapController.defaultMinaBase,
+                  radius: mapCtrl.safeRadiusMeters.value,
+                  useRadiusInMeter: true,
+                  color: AppColors.statusSafe.withValues(alpha: 0.08),
+                  borderColor: AppColors.statusSafe.withValues(alpha: 0.5),
+                  borderStrokeWidth: 2.0,
                 ),
               ],
-            ),
+            )),
 
-          // 4. Interactive Marker Layer
-          fmap.MarkerLayer(
+        // 4. Marker Layer — rebuilds on room members, location, and filter change
+        Obx(() {
+          final userLocation = mapCtrl.currentUserLocation.value ??
+              MapController.defaultMinaBase;
+          return fmap.MarkerLayer(
             markers: [
               // Current User Marker ("Anda") - Exactly ONE
               fmap.Marker(
@@ -253,7 +280,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                 child: _buildCompanionMarker(),
               ),
 
-              // Room Member Markers (Filtered by role, strictly excluding current user)
+              // Room Member Markers (filtered, excluding current user)
               if (mapCtrl.roomMembers.isNotEmpty)
                 ..._buildRoomMemberMarkers(mapCtrl)
               else
@@ -262,10 +289,10 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
               // Filtered POI Markers
               ..._buildPoiMarkers(mapCtrl),
             ],
-          ),
-        ],
-      );
-    });
+          );
+        }),
+      ],
+    );
   }
 
   // ---------------------------------------------------------------------------

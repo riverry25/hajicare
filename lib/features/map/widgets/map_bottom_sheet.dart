@@ -18,6 +18,12 @@ class MapBottomSheet extends StatelessWidget {
   final VoidCallback? onShareLocation;
   final VoidCallback? onCall;
 
+  final bool isRouteLoading;
+  final double? routeDistanceMeters;
+  final int? routeDurationSeconds;
+  final String? routeError;
+  final VoidCallback? onRetryRoute;
+
   final double bottomOffset;
 
   const MapBottomSheet({
@@ -32,6 +38,11 @@ class MapBottomSheet extends StatelessWidget {
     this.onNavigate,
     this.onShareLocation,
     this.onCall,
+    this.isRouteLoading = false,
+    this.routeDistanceMeters,
+    this.routeDurationSeconds,
+    this.routeError,
+    this.onRetryRoute,
     this.bottomOffset = 0.0,
   });
 
@@ -93,17 +104,23 @@ class MapBottomSheet extends StatelessWidget {
     final locStatus = member.getLocationStatus();
     final isPendamping = member.isPendamping;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.xs,
-        AppSpacing.lg,
-        AppSpacing.md,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
+    final mq = MediaQuery.of(context);
+    final double maxDetailHeight = (mq.size.height * 0.45).clamp(240.0, 420.0);
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxDetailHeight),
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.xs,
+          AppSpacing.lg,
+          AppSpacing.md,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
             children: [
               // Avatar with Role Icon
               Container(
@@ -217,29 +234,160 @@ class MapBottomSheet extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             height: AppSizes.buttonHeightSecondary,
-            child: ElevatedButton.icon(
-              onPressed: member.hasLocation ? onNavigate : null,
-              icon: const Icon(Icons.directions, size: 18),
-              label: Text(
-                member.hasLocation
-                    ? 'Arahkan Rute ke ${member.name.split(' ').first}'
-                    : 'Lokasi Belum Tersedia',
-                style: AppTypography.labelLarge.copyWith(
-                  color: AppColors.surfaceWhite,
+            child: _buildRouteButton(member),
+          ),
+          if (routeDistanceMeters != null && routeDurationSeconds != null)
+            _buildRouteInfoBar(distText),
+        ],
+      ),
+      ),
+    );
+  }
+
+  Widget _buildRouteButton(RoomMemberModel member) {
+    if (!member.hasLocation) {
+      return ElevatedButton.icon(
+        onPressed: null,
+        icon: const Icon(Icons.directions, size: 18),
+        label: Text(
+          'Lokasi Belum Tersedia',
+          style: AppTypography.labelLarge.copyWith(color: AppColors.surfaceWhite),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.outlineVariant,
+          foregroundColor: AppColors.surfaceWhite,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+          ),
+        ),
+      );
+    }
+
+    if (isRouteLoading) {
+      return ElevatedButton.icon(
+        onPressed: null,
+        icon: const SizedBox(
+          width: 16,
+          height: 16,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.outlineVariant),
+          ),
+        ),
+        label: Text(
+          'Mencari rute jalan kaki...',
+          style: AppTypography.labelLarge.copyWith(color: AppColors.outlineVariant),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.surfaceWhite,
+          disabledBackgroundColor: AppColors.surfaceWhite,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            side: const BorderSide(color: AppColors.outlineVariant),
+          ),
+        ),
+      );
+    }
+
+    if (routeError != null) {
+      return ElevatedButton.icon(
+        onPressed: onRetryRoute,
+        icon: const Icon(Icons.refresh, size: 18),
+        label: Text(
+          'Rute tidak ditemukan · Coba Lagi',
+          style: AppTypography.labelLarge.copyWith(color: AppColors.surfaceWhite),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.error,
+          foregroundColor: AppColors.surfaceWhite,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+          ),
+        ),
+      );
+    }
+
+    return ElevatedButton.icon(
+      onPressed: onNavigate,
+      icon: const Icon(Icons.directions, size: 18),
+      label: Text(
+        'Arahkan Rute ke ${member.name.split(' ').first}',
+        style: AppTypography.labelLarge.copyWith(color: AppColors.surfaceWhite),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.espressoDark,
+        foregroundColor: AppColors.onPrimary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRouteInfoBar(String directDist) {
+    return Container(
+      margin: const EdgeInsets.only(top: AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: AppColors.canvasCream,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.goldLight.withValues(alpha: 0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.near_me, size: 14, color: AppColors.primary),
+              const SizedBox(width: 6),
+              Text(
+                'Jarak langsung: $directDist',
+                style: AppTypography.captionSmall.copyWith(color: AppColors.textBody),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              const Icon(Icons.directions_walk, size: 14, color: AppColors.primary),
+              const SizedBox(width: 6),
+              Text(
+                'Walking distance: ${_formatDistance(routeDistanceMeters!)}',
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.espressoDark,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.espressoDark,
-                foregroundColor: AppColors.onPrimary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              const Icon(Icons.timer, size: 14, color: AppColors.primary),
+              const SizedBox(width: 6),
+              Text(
+                'ETA: ${_formatDuration(routeDurationSeconds!)}',
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.espressoDark,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-            ),
+            ],
           ),
         ],
       ),
     );
+  }
+
+  String _formatDistance(double meters) {
+    if (meters < 1000) return '${meters.toInt()} m';
+    return '${(meters / 1000).toStringAsFixed(1)} km';
+  }
+
+  String _formatDuration(int seconds) {
+    if (seconds < 60) return '$seconds detik';
+    if (seconds < 3600) return '${seconds ~/ 60} menit';
+    return '${seconds ~/ 3600} j ${(seconds % 3600) ~/ 60} mnt';
   }
 
   // ── 2. ROOM MEMBERS LIST PANEL ─────────────────────────────────────────────
@@ -297,101 +445,128 @@ class MapBottomSheet extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 190),
-            child: ListView.separated(
-              shrinkWrap: true,
-              itemCount: sorted.length,
-              separatorBuilder: (_, _) => const Divider(
-                height: 1,
-                color: AppColors.outlineVariant,
-              ),
-              itemBuilder: (context, index) {
-                final m = sorted[index];
-                final dist = getMemberDistanceText != null
-                    ? getMemberDistanceText!(m) ?? 'Lokasi belum tersedia'
-                    : (m.hasLocation ? 'Lokasi aktif' : 'Lokasi belum tersedia');
-                final isPendamping = m.isPendamping;
-                final locStatus = m.getLocationStatus();
+          _buildMemberListView(context, sorted),
+        ],
+      ),
+    );
+  }
 
-                return InkWell(
-                  onTap: () => onMemberTap?.call(m),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isPendamping
-                                ? AppColors.accentGoldStar.withValues(alpha: 0.2)
-                                : AppColors.statusSafe.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                          ),
-                          child: Text(
-                            isPendamping ? 'Pendamping' : 'Jamaah',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: isPendamping
-                                  ? AppColors.primary
-                                  : AppColors.statusSafe,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        Expanded(
-                          child: Text(
-                            m.name,
-                            style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.espressoDark,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              dist,
-                              style: AppTypography.captionSmall.copyWith(
-                                color: m.hasLocation
-                                    ? AppColors.primary
-                                    : AppColors.outlineVariant,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              locStatus,
-                              style: TextStyle(
-                                fontSize: 9,
-                                color: locStatus == 'Online'
-                                    ? AppColors.statusSafe
-                                    : AppColors.textBody,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(width: 4),
-                        const Icon(
-                          Icons.chevron_right,
-                          size: 16,
-                          color: AppColors.tanMedium,
-                        ),
-                      ],
+  Widget _buildMemberListView(
+    BuildContext context,
+    List<RoomMemberModel> sorted,
+  ) {
+    // Compute usable height for the list:
+    //   screenHeight
+    //   - statusBar / top safe-area  (MediaQuery.padding.top)
+    //   - bottomOffset (nav bar height, e.g. 84)
+    //   - bottomSafeArea (system gesture bar)
+    //   - overhead: drag handle (30) + section header row (~44) + section spacing (~24)
+    //              + list top/bottom padding inside Padding widget (~AppSpacing.md)
+    final mq = MediaQuery.of(context);
+    const double kOverhead = 30 + 44 + 24 + 16; // handle + header + spacing + padding
+    final double listMaxHeight = mq.size.height
+        - mq.padding.top
+        - bottomOffset
+        - mq.padding.bottom
+        - kOverhead;
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: listMaxHeight.clamp(160.0, double.infinity),
+      ),
+      child: ListView.separated(
+        padding: EdgeInsets.only(
+          // Extra spacer at the bottom so the last item clears the bottom nav
+          bottom: mq.padding.bottom + 8,
+        ),
+        itemCount: sorted.length,
+        separatorBuilder: (context, index) => const Divider(
+          height: 1,
+          color: AppColors.outlineVariant,
+        ),
+        itemBuilder: (context, index) {
+          final m = sorted[index];
+          final dist = getMemberDistanceText != null
+              ? getMemberDistanceText!(m) ?? 'Lokasi belum tersedia'
+              : (m.hasLocation ? 'Lokasi aktif' : 'Lokasi belum tersedia');
+          final isPendamping = m.isPendamping;
+          final locStatus = m.getLocationStatus();
+
+          return InkWell(
+            onTap: () => onMemberTap?.call(m),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isPendamping
+                          ? AppColors.accentGoldStar.withValues(alpha: 0.2)
+                          : AppColors.statusSafe.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    child: Text(
+                      isPendamping ? 'Pendamping' : 'Jamaah',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: isPendamping
+                            ? AppColors.primary
+                            : AppColors.statusSafe,
+                      ),
                     ),
                   ),
-                );
-              },
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      m.name,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.espressoDark,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        dist,
+                        style: AppTypography.captionSmall.copyWith(
+                          color: m.hasLocation
+                              ? AppColors.primary
+                              : AppColors.outlineVariant,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        locStatus,
+                        style: TextStyle(
+                          fontSize: 9,
+                          color: locStatus == 'Online'
+                              ? AppColors.statusSafe
+                              : AppColors.textBody,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.chevron_right,
+                    size: 16,
+                    color: AppColors.tanMedium,
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
