@@ -51,6 +51,21 @@ class JamaahDistanceCard extends StatelessWidget {
     return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 
+  String _formatDistanceValue(double distanceMeters) {
+    if (distanceMeters >= 100000) {
+      return (distanceMeters / 1000).toStringAsFixed(0);
+    } else if (distanceMeters >= 1000) {
+      final km = distanceMeters / 1000;
+      return km >= 10 ? km.toStringAsFixed(0) : km.toStringAsFixed(1);
+    } else {
+      return distanceMeters.toInt().toString();
+    }
+  }
+
+  String _formatDistanceUnit(BuildContext context, double distanceMeters) {
+    return distanceMeters >= 1000 ? 'km' : context.tr('meterUnit');
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
@@ -233,25 +248,30 @@ class JamaahDistanceCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
-                    Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 4,
-                      children: [
-                        Text(
-                          '${jamaah.distance.toInt()}',
-                          style: AppTypography.displayMedium.copyWith(
-                            color: jamaah.tier.color,
-                            fontWeight: FontWeight.w800,
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            _formatDistanceValue(jamaah.distance),
+                            style: AppTypography.displayMedium.copyWith(
+                              color: jamaah.tier.color,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
-                        ),
-                        Text(
-                          context.tr('meterUnit'),
-                          style: AppTypography.bodySmall.copyWith(
-                            color: bodyColor,
-                            fontWeight: FontWeight.w600,
+                          const SizedBox(width: 4),
+                          Text(
+                            _formatDistanceUnit(context, jamaah.distance),
+                            style: AppTypography.bodySmall.copyWith(
+                              color: bodyColor,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ],
                 ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../../core/locales/app_translations.dart';
 import '../../../../core/services/app_alert_service.dart';
@@ -52,75 +53,231 @@ class PendampingRadarCard extends StatelessWidget {
     return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 
+  String _formatDistanceValue(double distanceMeters) {
+    if (distanceMeters >= 100000) {
+      // >= 100 km (e.g. 7858 km)
+      return (distanceMeters / 1000).toStringAsFixed(0);
+    } else if (distanceMeters >= 1000) {
+      // 1 km - 99.9 km (e.g. 1.2 km or 12.5 km)
+      final km = distanceMeters / 1000;
+      return km >= 10 ? km.toStringAsFixed(0) : km.toStringAsFixed(1);
+    } else {
+      return distanceMeters.toInt().toString();
+    }
+  }
+
+  String _formatDistanceUnit(BuildContext context, double distanceMeters) {
+    return distanceMeters >= 1000 ? 'km' : context.tr('meterUnit');
+  }
+
   void _showRadiusSheet(BuildContext context) {
     final isDark = AppColors.isDark(context);
     final headingColor = AppColors.textHeadingColor(context);
+    final bodyColor = AppColors.textBodyColor(context);
     final state = Get.isRegistered<HajiCareController>() ? Get.find<HajiCareController>() : null;
-    final radii = [50, 100, 150, 200, 300];
+    const presetRadii = [50, 100, 150, 200, 300, 500];
+
+    // Custom input controller pre-filled with current radius
+    final customCtrl = TextEditingController(
+      text: state?.safeRadiusMeters.value.toInt().toString() ?? '200',
+    );
+    final customError = ''.obs;
 
     Get.bottomSheet(
-      Container(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      isScrollControlled: true,
+      Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkOutlineVariant : AppColors.surfaceVariant,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Handle bar
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.darkOutlineVariant : AppColors.surfaceVariant,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              'Atur Radius Batas Aman Jamaah',
-              style: AppTypography.titleMedium.copyWith(
-                color: headingColor,
-                fontWeight: FontWeight.bold,
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                'Atur Radius Batas Aman Jamaah',
+                style: AppTypography.titleMedium.copyWith(
+                  color: headingColor,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Peringatan getar & notifikasi akan aktif jika jamaah berada di luar radius ini.',
-              style: AppTypography.captionSmall.copyWith(
-                color: AppColors.textBodyColor(context),
+              const SizedBox(height: 4),
+              Text(
+                'Peringatan getar & notifikasi akan aktif jika jamaah berada di luar radius ini.',
+                style: AppTypography.captionSmall.copyWith(color: bodyColor),
               ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Obx(() {
-              final currentRadius = state?.safeRadiusMeters.value.toInt() ?? 200;
-              return Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.sm,
-                children: radii.map((r) {
-                  final isSelected = r == currentRadius;
-                  return ChoiceChip(
-                    label: Text('$r Meter'),
-                    selected: isSelected,
-                    selectedColor: isDark ? AppColors.darkPrimaryContainer : AppColors.goldLight,
-                    onSelected: (_) {
-                      state?.setSafeRadius(r.toDouble());
-                      Get.back();
-                      AppAlert.success(
-                        context,
-                        title: 'Radius Diperbarui',
-                        message: 'Batas aman berhasil diatur menjadi $r meter.',
+              const SizedBox(height: AppSpacing.md),
+
+              // ── Preset chips ─────────────────────────────────────────────
+              Text(
+                'Pilih Preset',
+                style: AppTypography.caption.copyWith(
+                  color: bodyColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Obx(() {
+                final currentRadius = state?.safeRadiusMeters.value.toInt() ?? 200;
+                final isCustom = !presetRadii.contains(currentRadius);
+                return Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
+                  children: [
+                    ...presetRadii.map((r) {
+                      final isSelected = r == currentRadius;
+                      return ChoiceChip(
+                        label: Text('$r m'),
+                        selected: isSelected,
+                        selectedColor: isDark ? AppColors.darkPrimaryContainer : AppColors.goldLight,
+                        onSelected: (_) {
+                          state?.setSafeRadius(r.toDouble());
+                          customCtrl.text = r.toString();
+                          customError.value = '';
+                        },
                       );
-                    },
-                  );
-                }).toList(),
-              );
-            }),
-            const SizedBox(height: AppSpacing.lg),
-          ],
+                    }),
+                    ChoiceChip(
+                      label: const Text('Custom'),
+                      selected: isCustom,
+                      selectedColor: isDark ? AppColors.darkPrimaryContainer : AppColors.goldLight,
+                      onSelected: (_) {
+                        // Focus the text field
+                      },
+                    ),
+                  ],
+                );
+              }),
+              const SizedBox(height: AppSpacing.md),
+
+              // ── Custom input field ────────────────────────────────────────
+              Text(
+                'Atau masukkan radius sendiri (meter)',
+                style: AppTypography.caption.copyWith(
+                  color: bodyColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Obx(() {
+                return TextField(
+                  controller: customCtrl,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  style: AppTypography.titleMedium.copyWith(color: headingColor),
+                  decoration: InputDecoration(
+                    hintText: 'Contoh: 250',
+                    hintStyle: AppTypography.captionSmall.copyWith(color: bodyColor),
+                    suffixText: 'meter',
+                    suffixStyle: AppTypography.caption.copyWith(color: bodyColor),
+                    errorText: customError.value.isEmpty ? null : customError.value,
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderSide: BorderSide(
+                        color: isDark ? AppColors.darkOutlineVariant : AppColors.goldLight,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderSide: BorderSide(
+                        color: isDark ? AppColors.darkPrimary : AppColors.espressoDark,
+                        width: 1.5,
+                      ),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderSide: const BorderSide(color: AppColors.error),
+                    ),
+                    focusedErrorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderSide: const BorderSide(color: AppColors.error, width: 1.5),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.sm,
+                    ),
+                    filled: true,
+                    fillColor: isDark
+                        ? AppColors.darkSurfaceContainer
+                        : AppColors.canvasCream.withValues(alpha: 0.5),
+                  ),
+                  onChanged: (val) {
+                    customError.value = '';
+                    final parsed = int.tryParse(val);
+                    if (parsed != null && parsed > 0 && parsed <= 5000) {
+                      state?.setSafeRadius(parsed.toDouble());
+                    }
+                  },
+                );
+              }),
+              const SizedBox(height: AppSpacing.lg),
+
+              // ── Apply button ──────────────────────────────────────────────
+              SizedBox(
+                width: double.infinity,
+                height: AppSizes.buttonHeightPrimary,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isDark
+                        ? AppColors.darkPrimaryContainer
+                        : AppColors.primaryContainer,
+                    foregroundColor: isDark ? AppColors.darkPrimary : AppColors.surfaceWhite,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                  ),
+                  onPressed: () {
+                    final text = customCtrl.text.trim();
+                    if (text.isEmpty) {
+                      customError.value = 'Masukkan angka radius terlebih dahulu.';
+                      return;
+                    }
+                    final parsed = int.tryParse(text);
+                    if (parsed == null || parsed <= 0) {
+                      customError.value = 'Radius harus lebih dari 0.';
+                      return;
+                    }
+                    if (parsed > 5000) {
+                      customError.value = 'Radius maksimum adalah 5000 meter.';
+                      return;
+                    }
+                    state?.setSafeRadius(parsed.toDouble());
+                    Get.back();
+                    AppAlert.success(
+                      context,
+                      title: 'Radius Diperbarui',
+                      message: 'Batas aman berhasil diatur menjadi $parsed meter.',
+                    );
+                  },
+                  child: Text(
+                    'Terapkan Radius',
+                    style: AppTypography.labelLarge.copyWith(
+                      color: isDark ? AppColors.darkPrimary : AppColors.surfaceWhite,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+            ],
+          ),
         ),
       ),
     );
@@ -135,7 +292,9 @@ class PendampingRadarCard extends StatelessWidget {
 
     return Obx(() {
       final safeRadius = state?.safeRadiusMeters.value ?? 200.0;
-      final hasSignal = jamaah.currentLocation != null || jamaah.locationUpdatedAt != null || jamaah.distance > 0.0;
+      // GPS signal is only considered valid if we have a real coordinate AND isGpsActive flag.
+      // Distance alone is NOT a reliable indicator — it can be huge when using default coords.
+      final hasSignal = jamaah.currentLocation != null && jamaah.isGpsActive;
 
       return AppCard(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -230,26 +389,35 @@ class PendampingRadarCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.baseline,
                   textBaseline: TextBaseline.alphabetic,
                   children: [
-                    Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 4,
-                      children: [
-                        Text(
-                          hasSignal ? '${jamaah.distance.toInt()}' : '--',
-                          style: AppTypography.heroNumberLarge.copyWith(
-                            color: jamaah.tier.color,
-                          ),
+                    Expanded(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Text(
+                              hasSignal ? _formatDistanceValue(jamaah.distance) : '--',
+                              style: AppTypography.heroNumberLarge.copyWith(
+                                color: jamaah.tier.color,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              hasSignal ? _formatDistanceUnit(context, jamaah.distance) : context.tr('meterUnit'),
+                              style: AppTypography.titleMedium.copyWith(
+                                color: bodyColor,
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(
-                          context.tr('meterUnit'),
-                          style: AppTypography.titleMedium.copyWith(
-                            color: bodyColor,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
+                    const SizedBox(width: AppSpacing.sm),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           context.tr('maxLimit'),
@@ -258,7 +426,9 @@ class PendampingRadarCard extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '${safeRadius.toInt()} ${context.tr('meterUnit')}',
+                          safeRadius >= 1000
+                              ? '${_formatDistanceValue(safeRadius)} ${_formatDistanceUnit(context, safeRadius)}'
+                              : '${safeRadius.toInt()} ${context.tr('meterUnit')}',
                           style: AppTypography.labelLarge.copyWith(
                             color: headingColor,
                             fontWeight: FontWeight.bold,
@@ -283,9 +453,12 @@ class PendampingRadarCard extends StatelessWidget {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                     child: LinearProgressIndicator(
-                      value: (jamaah.distance / safeRadius).clamp(0.0, 1.0),
+                      // Show 0 progress when GPS unavailable; never show fake 100% bar.
+                      value: hasSignal
+                          ? (jamaah.distance / safeRadius).clamp(0.0, 1.0)
+                          : 0.0,
                       backgroundColor: Colors.transparent,
-                      color: jamaah.tier.color,
+                      color: hasSignal ? jamaah.tier.color : AppColors.tanMedium,
                       minHeight: 12,
                     ),
                   ),
@@ -294,21 +467,35 @@ class PendampingRadarCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      context.tr('nearDistanceLabel'),
-                      style: AppTypography.captionSmall.copyWith(
-                        color: bodyColor,
+                    Flexible(
+                      child: Text(
+                        context.tr('nearDistanceLabel'),
+                        style: AppTypography.captionSmall.copyWith(
+                          color: bodyColor,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    Text(
-                      '${((jamaah.distance / safeRadius) * 100).toInt()}% ${context.tr('fromRadiusLimit')}',
-                      style: AppTypography.captionSmall.copyWith(
-                        color: headingColor,
-                        fontWeight: FontWeight.bold,
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        hasSignal
+                            ? '${((jamaah.distance / safeRadius) * 100).toInt()}% ${context.tr('fromRadiusLimit')}'
+                            : 'Menunggu GPS...',
+                        style: AppTypography.captionSmall.copyWith(
+                          color: hasSignal ? headingColor : bodyColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    const SizedBox(width: 4),
                     Text(
-                      '${safeRadius.toInt()}m (${context.tr('statusWarning')})',
+                      safeRadius >= 1000
+                          ? '${_formatDistanceValue(safeRadius)}km (${context.tr('statusWarning')})'
+                          : '${safeRadius.toInt()}m (${context.tr('statusWarning')})',
                       style: AppTypography.captionSmall.copyWith(
                         color: bodyColor,
                       ),

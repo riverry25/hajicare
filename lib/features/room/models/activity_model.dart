@@ -7,6 +7,7 @@ enum ActivityType {
   roomActivated,
   roomDeactivated,
   memberJoined,
+  memberLeft,
   sosActive,
   unknown,
 }
@@ -53,6 +54,9 @@ class ActivityModel {
       case 'member_joined':
         type = ActivityType.memberJoined;
         break;
+      case 'member_left':
+        type = ActivityType.memberLeft;
+        break;
       case 'sos_active':
         type = ActivityType.sosActive;
         break;
@@ -98,6 +102,9 @@ class ActivityModel {
       case ActivityType.memberJoined:
         rawType = 'member_joined';
         break;
+      case ActivityType.memberLeft:
+        rawType = 'member_left';
+        break;
       case ActivityType.sosActive:
         rawType = 'sos_active';
         break;
@@ -131,6 +138,8 @@ class ActivityModel {
         return role?.toLowerCase() == 'pendamping'
             ? Icons.health_and_safety_rounded
             : Icons.person_add_alt_1_rounded;
+      case ActivityType.memberLeft:
+        return Icons.person_remove_rounded;
       case ActivityType.sosActive:
         return Icons.warning_rounded;
       case ActivityType.unknown:
@@ -150,6 +159,8 @@ class ActivityModel {
         return role?.toLowerCase() == 'pendamping'
             ? AppColors.primaryGold
             : const Color(0xFF2E7D32);
+      case ActivityType.memberLeft:
+        return AppColors.error;
       case ActivityType.sosActive:
         return AppColors.sosEmergency;
       case ActivityType.unknown:

@@ -33,8 +33,62 @@ class ActiveRoomCard extends StatelessWidget {
       final members = state.activeRoomMembers;
       final jamaahCount = isPendamping ? state.jamaahList.length : members.length;
 
-      final roomName = room?.name ?? 'Room Pemantauan';
+      final hasRoom = roomId != null && roomId.isNotEmpty;
+      final roomName = room?.name ?? (hasRoom ? 'Room Pemantauan' : 'Belum Ada Room');
       final roomCode = room?.code ?? '';
+
+      if (!hasRoom) {
+        return AppCard(
+          backgroundColor: cardBg,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.sm),
+                  decoration: BoxDecoration(
+                    color: AppColors.statusWarning.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: const Icon(Icons.meeting_room_outlined, color: AppColors.statusWarning, size: 22),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Belum Terhubung ke Room',
+                        style: AppTypography.titleSmall.copyWith(
+                          color: headingColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        'Gabung ke room untuk pemantauan lokasi realtime.',
+                        style: AppTypography.captionSmall.copyWith(color: bodyColor),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                ElevatedButton(
+                  onPressed: () => Get.toNamed('/join_room'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: isDark ? AppColors.espressoDark : AppColors.surfaceWhite,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  ),
+                  child: const Text('Gabung', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
 
       return AppCard(
         backgroundColor: cardBg,
@@ -115,7 +169,7 @@ class ActiveRoomCard extends StatelessWidget {
               ),
 
               // Action button for Pendamping: "Tambah Jamaah"
-              if (isPendamping && roomId != null && roomId.isNotEmpty) ...[
+              if (isPendamping && roomId.isNotEmpty) ...[
                 const Divider(height: 20),
                 SizedBox(
                   width: double.infinity,
@@ -134,10 +188,61 @@ class ActiveRoomCard extends StatelessWidget {
                   ),
                 ),
               ],
+
+              // Action button for Jamaah: "Keluar Room"
+              if (!isPendamping && roomId.isNotEmpty) ...[
+                const Divider(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _confirmLeaveRoom(context, state, roomName),
+                    icon: const Icon(Icons.logout_rounded, size: 16, color: AppColors.error),
+                    label: const Text('Keluar dari Room'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                      side: BorderSide(color: AppColors.error.withValues(alpha: 0.4)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
       );
     });
+  }
+
+  void _confirmLeaveRoom(BuildContext context, HajiCareController state, String roomName) {
+    AppAlert.confirm(
+      context,
+      title: 'Keluar dari Room?',
+      message: 'Anda akan keluar dari "$roomName". Pendamping tidak dapat memantau lokasi Anda lagi sampai Anda bergabung kembali.',
+      confirmText: 'Ya, Keluar',
+      cancelText: 'Batal',
+      isDestructive: true,
+      onConfirm: () async {
+        AppAlert.loading(context, message: 'Keluar dari room...');
+        final success = await state.leaveRoom();
+        AppAlert.dismissLoading(Get.context);
+        if (success) {
+          Get.offAllNamed('/join_room');
+          AppAlert.success(
+            Get.context,
+            title: 'Berhasil Keluar',
+            message: 'Anda telah keluar dari room "$roomName".',
+          );
+        } else {
+          AppAlert.error(
+            Get.context,
+            title: 'Gagal',
+            message: 'Terjadi kendala saat keluar room. Silakan coba beberapa saat lagi.',
+          );
+        }
+      },
+    );
   }
 }

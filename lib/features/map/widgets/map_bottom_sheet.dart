@@ -613,7 +613,7 @@ class MapBottomSheet extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${jamaah.shortLabel} • ${jamaah.distance.toInt()}m',
+                      '${jamaah.shortLabel} • ${jamaah.distance >= 1000 ? '${(jamaah.distance / 1000).toStringAsFixed(jamaah.distance >= 100000 ? 0 : 1)}km' : '${jamaah.distance.toInt()}m'}',
                       style: AppTypography.bodySmall.copyWith(
                         color: AppColors.textBody,
                       ),

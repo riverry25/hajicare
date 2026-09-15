@@ -72,7 +72,9 @@ class PendampingJamaahSelector extends StatelessWidget {
                 _buildJamaahPill(
                   context: context,
                   name: jamaahList[i].shortLabel,
-                  distance: '${jamaahList[i].distance.toInt()}${context.tr('meterUnit')}',
+                  distance: jamaahList[i].distance >= 1000
+                      ? '${(jamaahList[i].distance / 1000).toStringAsFixed(jamaahList[i].distance >= 100000 ? 0 : 1)}km'
+                      : '${jamaahList[i].distance.toInt()}${context.tr('meterUnit')}',
                   isActive: selectedIndex == i,
                   tier: jamaahList[i].tier,
                   isDark: isDark,

@@ -439,13 +439,19 @@ class HajiCareController extends GetxController {
       final myPos = myCurrentPosition.value;
       for (final j in jamaahList) {
         final member = activeRoomMembers.firstWhereOrNull((m) => m.uid == j.id);
-        if (member != null && member.currentLocation != null) {
-          if (j.currentLocation == null ||
-              (member.locationUpdatedAt != null &&
-                  (j.locationUpdatedAt == null || member.locationUpdatedAt!.isAfter(j.locationUpdatedAt!)))) {
-            j.currentLocation = member.currentLocation;
-            j.locationUpdatedAt = member.locationUpdatedAt;
-            j.isGpsActive = true;
+        if (member != null) {
+          if (member.currentLocation != null) {
+            if (j.currentLocation == null ||
+                (member.locationUpdatedAt != null &&
+                    (j.locationUpdatedAt == null ||
+                        member.locationUpdatedAt!.isAfter(j.locationUpdatedAt!)))) {
+              j.currentLocation = member.currentLocation;
+              j.locationUpdatedAt = member.locationUpdatedAt;
+              j.isGpsActive = true;
+            }
+          } else {
+            // Member's GPS went offline — reflect that in JamaahData
+            j.isGpsActive = false;
           }
         }
 
@@ -467,6 +473,37 @@ class HajiCareController extends GetxController {
   void setSafeRadius(double radius) {
     safeRadiusMeters.value = radius;
     _recalculateRealDistance();
+  }
+
+  /// Leaves the current active room for this user.
+  Future<bool> leaveRoom() async {
+    final uid = currentUid;
+    final roomId = activeRoomId.value;
+    if (uid == null || roomId == null || roomId.isEmpty) return false;
+
+    try {
+      final roleStr = _role.value == UserRole.pendamping ? 'pendamping' : 'jamaah';
+      final uName = _self?.name ??
+          FirebaseAuth.instance.currentUser?.displayName ??
+          'Jamaah';
+      final rName = activeRoom.value?.name;
+
+      await _roomService.leaveRoom(
+        roomId: roomId,
+        uid: uid,
+        userName: uName,
+        role: roleStr,
+        roomName: rName,
+      );
+
+      _clearRoomListeners();
+      activeRoomId.value = null;
+      activeRoom.value = null;
+      return true;
+    } catch (e) {
+      debugPrint('[HajiCareController] Error leaving room: $e');
+      return false;
+    }
   }
 
   // ── SOS SYSTEM (TRUE FIRESTORE & REALTIME) ──────────────────────────────────
