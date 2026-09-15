@@ -49,15 +49,13 @@ class MapBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      left: 0,
-      right: 0,
+      left: AppSpacing.lg,
+      right: AppSpacing.lg,
       bottom: bottomOffset,
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surfaceWhite,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(AppRadius.lg),
-          ),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border(
             top: BorderSide(color: AppColors.goldLight.withValues(alpha: 0.3)),
           ),
@@ -97,7 +95,10 @@ class MapBottomSheet extends StatelessWidget {
 
   // ── 1. SELECTED MEMBER DETAIL CARD ─────────────────────────────────────────
 
-  Widget _buildSelectedMemberDetail(BuildContext context, RoomMemberModel member) {
+  Widget _buildSelectedMemberDetail(
+    BuildContext context,
+    RoomMemberModel member,
+  ) {
     final distText = getMemberDistanceText != null
         ? getMemberDistanceText!(member) ?? 'Lokasi belum tersedia'
         : (member.hasLocation ? 'Lokasi aktif' : 'Lokasi belum tersedia');
@@ -121,125 +122,131 @@ class MapBottomSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(
-            children: [
-              // Avatar with Role Icon
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: isPendamping
-                      ? AppColors.primaryContainer
-                      : AppColors.secondaryContainer,
-                  shape: BoxShape.circle,
-                  border: Border.all(
+              children: [
+                // Avatar with Role Icon
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
                     color: isPendamping
-                        ? AppColors.accentGoldStar
-                        : AppColors.statusSafe,
-                    width: 2,
+                        ? AppColors.primaryContainer
+                        : AppColors.secondaryContainer,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isPendamping
+                          ? AppColors.accentGoldStar
+                          : AppColors.statusSafe,
+                      width: 2,
+                    ),
+                  ),
+                  child: Icon(
+                    isPendamping ? Icons.shield : Icons.person,
+                    color: isPendamping
+                        ? AppColors.onPrimaryContainer
+                        : AppColors.onSecondaryContainer,
+                    size: 24,
                   ),
                 ),
-                child: Icon(
-                  isPendamping ? Icons.shield : Icons.person,
-                  color: isPendamping
-                      ? AppColors.onPrimaryContainer
-                      : AppColors.onSecondaryContainer,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              // Name & Role
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            member.name,
-                            style: AppTypography.titleMedium.copyWith(
-                              color: AppColors.espressoDark,
-                              fontWeight: FontWeight.bold,
+                const SizedBox(width: AppSpacing.md),
+                // Name & Role
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              member.name,
+                              style: AppTypography.titleMedium.copyWith(
+                                color: AppColors.espressoDark,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isPendamping
-                                ? AppColors.accentGoldStar.withValues(alpha: 0.2)
-                                : AppColors.statusSafe.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                          ),
-                          child: Text(
-                            isPendamping ? 'Pendamping' : 'Jamaah',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
                               color: isPendamping
-                                  ? AppColors.primary
-                                  : AppColors.statusSafe,
+                                  ? AppColors.accentGoldStar.withValues(
+                                      alpha: 0.2,
+                                    )
+                                  : AppColors.statusSafe.withValues(
+                                      alpha: 0.15,
+                                    ),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                            ),
+                            child: Text(
+                              isPendamping ? 'Pendamping' : 'Jamaah',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: isPendamping
+                                    ? AppColors.primary
+                                    : AppColors.statusSafe,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 3),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.near_me,
-                          size: 13,
-                          color: member.hasLocation
-                              ? AppColors.primary
-                              : AppColors.outlineVariant,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '$distText dari Anda',
-                          style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.espressoDark,
-                            fontWeight: FontWeight.w600,
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.near_me,
+                            size: 13,
+                            color: member.hasLocation
+                                ? AppColors.primary
+                                : AppColors.outlineVariant,
                           ),
-                        ),
-                        Text(
-                          ' • $locStatus',
-                          style: AppTypography.captionSmall.copyWith(
-                            color: locStatus == 'Online'
-                                ? AppColors.statusSafe
-                                : AppColors.textBody,
+                          const SizedBox(width: 4),
+                          Text(
+                            '$distText dari Anda',
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.espressoDark,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                          Text(
+                            ' • $locStatus',
+                            style: AppTypography.captionSmall.copyWith(
+                              color: locStatus == 'Online'
+                                  ? AppColors.statusSafe
+                                  : AppColors.textBody,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              // Close detail button
-              IconButton(
-                icon: const Icon(Icons.close, size: 20),
-                color: AppColors.outlineVariant,
-                onPressed: onCloseMemberDetail,
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          // Action button
-          SizedBox(
-            width: double.infinity,
-            height: AppSizes.buttonHeightSecondary,
-            child: _buildRouteButton(member),
-          ),
-          if (routeDistanceMeters != null && routeDurationSeconds != null)
-            _buildRouteInfoBar(distText),
-        ],
-      ),
+                // Close detail button
+                IconButton(
+                  icon: const Icon(Icons.close, size: 20),
+                  color: AppColors.outlineVariant,
+                  onPressed: onCloseMemberDetail,
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            // Action button
+            SizedBox(
+              width: double.infinity,
+              height: AppSizes.buttonHeightSecondary,
+              child: _buildRouteButton(member),
+            ),
+            if (routeDistanceMeters != null && routeDurationSeconds != null)
+              _buildRouteInfoBar(distText),
+          ],
+        ),
       ),
     );
   }
@@ -251,7 +258,9 @@ class MapBottomSheet extends StatelessWidget {
         icon: const Icon(Icons.directions, size: 18),
         label: Text(
           'Lokasi Belum Tersedia',
-          style: AppTypography.labelLarge.copyWith(color: AppColors.surfaceWhite),
+          style: AppTypography.labelLarge.copyWith(
+            color: AppColors.surfaceWhite,
+          ),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.outlineVariant,
@@ -276,7 +285,9 @@ class MapBottomSheet extends StatelessWidget {
         ),
         label: Text(
           'Mencari rute jalan kaki...',
-          style: AppTypography.labelLarge.copyWith(color: AppColors.outlineVariant),
+          style: AppTypography.labelLarge.copyWith(
+            color: AppColors.outlineVariant,
+          ),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.surfaceWhite,
@@ -295,7 +306,9 @@ class MapBottomSheet extends StatelessWidget {
         icon: const Icon(Icons.refresh, size: 18),
         label: Text(
           'Rute tidak ditemukan · Coba Lagi',
-          style: AppTypography.labelLarge.copyWith(color: AppColors.surfaceWhite),
+          style: AppTypography.labelLarge.copyWith(
+            color: AppColors.surfaceWhite,
+          ),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.error,
@@ -342,14 +355,20 @@ class MapBottomSheet extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 'Jarak langsung: $directDist',
-                style: AppTypography.captionSmall.copyWith(color: AppColors.textBody),
+                style: AppTypography.captionSmall.copyWith(
+                  color: AppColors.textBody,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 4),
           Row(
             children: [
-              const Icon(Icons.directions_walk, size: 14, color: AppColors.primary),
+              const Icon(
+                Icons.directions_walk,
+                size: 14,
+                color: AppColors.primary,
+              ),
               const SizedBox(width: 6),
               Text(
                 'Walking distance: ${_formatDistance(routeDistanceMeters!)}',
@@ -463,12 +482,14 @@ class MapBottomSheet extends StatelessWidget {
     //   - overhead: drag handle (30) + section header row (~44) + section spacing (~24)
     //              + list top/bottom padding inside Padding widget (~AppSpacing.md)
     final mq = MediaQuery.of(context);
-    const double kOverhead = 30 + 44 + 24 + 16; // handle + header + spacing + padding
-    final double listMaxHeight = mq.size.height
-        - mq.padding.top
-        - bottomOffset
-        - mq.padding.bottom
-        - kOverhead;
+    const double kOverhead =
+        30 + 44 + 24 + 16; // handle + header + spacing + padding
+    final double listMaxHeight =
+        mq.size.height -
+        mq.padding.top -
+        bottomOffset -
+        mq.padding.bottom -
+        kOverhead;
 
     return ConstrainedBox(
       constraints: BoxConstraints(
@@ -480,10 +501,8 @@ class MapBottomSheet extends StatelessWidget {
           bottom: mq.padding.bottom + 8,
         ),
         itemCount: sorted.length,
-        separatorBuilder: (context, index) => const Divider(
-          height: 1,
-          color: AppColors.outlineVariant,
-        ),
+        separatorBuilder: (context, index) =>
+            const Divider(height: 1, color: AppColors.outlineVariant),
         itemBuilder: (context, index) {
           final m = sorted[index];
           final dist = getMemberDistanceText != null
