@@ -60,7 +60,7 @@ class JamaahDistanceCard extends StatelessWidget {
     // 1. STATE: GPS is completely inactive on this device
     if (!jamaah.isGpsActive) {
       return AppCard(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(AppSpacing.cardPadding),
         borderColor: AppColors.error.withValues(alpha: isDark ? 0.6 : 0.4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,16 +68,16 @@ class JamaahDistanceCard extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  width: 44,
-                  height: 44,
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
-                    color: AppColors.error.withValues(alpha: 0.15),
+                    color: AppColors.error.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.location_off_rounded,
                     color: AppColors.error,
-                    size: 24,
+                    size: 26,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.md),
@@ -92,10 +92,10 @@ class JamaahDistanceCard extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 3),
                       Text(
-                        'Pendamping tidak dapat melacak jarak & posisi Anda saat GPS mati.',
-                        style: AppTypography.captionSmall.copyWith(
+                        'Pendamping tidak dapat melacak posisi Anda saat sensor GPS nonaktif.',
+                        style: AppTypography.bodySmall.copyWith(
                           color: bodyColor,
                         ),
                       ),
@@ -104,22 +104,29 @@ class JamaahDistanceCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.lg),
             SizedBox(
               width: double.infinity,
+              height: 48,
               child: ElevatedButton.icon(
                 onPressed: () async {
                   await Geolocator.openLocationSettings();
                   onRefreshGps?.call();
                 },
-                icon: const Icon(Icons.settings_rounded, size: 18),
-                label: const Text('Aktifkan GPS Sekarang'),
+                icon: const Icon(Icons.settings_rounded, size: 20),
+                label: Text(
+                  'Aktifkan GPS Sekarang',
+                  style: AppTypography.labelLarge.copyWith(
+                    color: AppColors.surfaceWhite,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.error,
                   foregroundColor: AppColors.surfaceWhite,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
+                  elevation: 0,
                 ),
               ),
             ),
@@ -132,15 +139,15 @@ class JamaahDistanceCard extends StatelessWidget {
     final hasDistance = jamaah.distance > 0.0 || jamaah.locationUpdatedAt != null;
     if (!hasDistance) {
       return AppCard(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(AppSpacing.cardPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Container(
-                  width: 44,
-                  height: 44,
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
                     color: isDark
                         ? AppColors.darkPrimaryContainer
@@ -150,7 +157,7 @@ class JamaahDistanceCard extends StatelessWidget {
                   child: Icon(
                     Icons.radar_rounded,
                     color: isDark ? AppColors.goldLight : AppColors.espressoDark,
-                    size: 24,
+                    size: 26,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.md),
@@ -159,22 +166,23 @@ class JamaahDistanceCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Menunggu Lokasi Pendamping',
+                        'Menghubungkan ke Pendamping',
                         style: AppTypography.titleMedium.copyWith(
                           color: headingColor,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 3),
                       Text(
-                        'GPS Anda aktif. Menunggu sinyal koordinat dari pendamping.',
-                        style: AppTypography.captionSmall.copyWith(
+                        'GPS Anda aktif. Menunggu pembaruan lokasi dari pendamping rombongan.',
+                        style: AppTypography.bodySmall.copyWith(
                           color: bodyColor,
                         ),
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(width: AppSpacing.xs),
                 const AppStatusBadge(
                   label: 'Menunggu',
                   statusType: AppStatusType.warning,
@@ -182,27 +190,33 @@ class JamaahDistanceCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.md),
-            LinearProgressIndicator(
-              backgroundColor: isDark
-                  ? AppColors.darkSurfaceContainerHighest
-                  : AppColors.surfaceVariant,
-              color: AppColors.accentGoldStar,
-              minHeight: 6,
+            const SizedBox(height: AppSpacing.lg),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              child: LinearProgressIndicator(
+                backgroundColor: isDark
+                    ? AppColors.darkSurfaceContainerHighest
+                    : AppColors.canvasCreamSubtle,
+                color: AppColors.goldPrimary,
+                minHeight: 6,
+              ),
             ),
           ],
         ),
       );
     }
 
-    // 3. STATE: Normal real distance available
+    // 3. STATE: Normal real distance available - Modernized clean card
+    final tierColor = jamaah.tier.color;
+
     return AppCard(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.cardPadding),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header Row
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
                 width: 44,
@@ -210,16 +224,16 @@ class JamaahDistanceCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: isDark
                       ? AppColors.darkPrimaryContainer
-                      : AppColors.surfaceContainer,
+                      : AppColors.canvasCream,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  Icons.radar,
+                  Icons.radar_rounded,
                   color: isDark ? AppColors.goldLight : AppColors.espressoDark,
                   size: 24,
                 ),
               ),
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -228,30 +242,17 @@ class JamaahDistanceCard extends StatelessWidget {
                       context.tr('distanceToCompanion'),
                       style: AppTypography.caption.copyWith(
                         color: bodyColor,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.2,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
-                    Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 4,
-                      children: [
-                        Text(
-                          '${jamaah.distance.toInt()}',
-                          style: AppTypography.displayMedium.copyWith(
-                            color: jamaah.tier.color,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        Text(
-                          context.tr('meterUnit'),
-                          style: AppTypography.bodySmall.copyWith(
-                            color: bodyColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                    const SizedBox(height: 1),
+                    Text(
+                      'Pemantauan Jarak Realtime',
+                      style: AppTypography.titleMedium.copyWith(
+                        color: headingColor,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ],
                 ),
@@ -263,25 +264,103 @@ class JamaahDistanceCard extends StatelessWidget {
               ),
             ],
           ),
+
+          const SizedBox(height: AppSpacing.lg),
+
+          // Big Distance Hero Section
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.md,
+            ),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppColors.darkSurfaceContainer
+                  : AppColors.canvasCream.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(
+                color: isDark
+                    ? AppColors.darkCardBorder
+                    : AppColors.lightCardBorder,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          '${jamaah.distance.toInt()}',
+                          style: AppTypography.heroNumberLarge.copyWith(
+                            color: tierColor,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          context.tr('meterUnit'),
+                          style: AppTypography.titleMedium.copyWith(
+                            color: headingColor,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      'Batas aman rombongan: 200 meter',
+                      style: AppTypography.caption.copyWith(
+                        color: bodyColor,
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.sm),
+                  decoration: BoxDecoration(
+                    color: tierColor.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    jamaah.tier.icon,
+                    color: tierColor,
+                    size: 28,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           const SizedBox(height: AppSpacing.md),
+
+          // Visual Safe Radius Progress
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.pill),
             child: LinearProgressIndicator(
               value: (jamaah.distance / 200).clamp(0.0, 1.0),
               backgroundColor: isDark
                   ? AppColors.darkSurfaceContainerHighest
-                  : AppColors.surfaceVariant,
-              color: jamaah.tier.color,
-              minHeight: 10,
+                  : AppColors.canvasCreamSubtle,
+              color: tierColor,
+              minHeight: 8,
             ),
           ),
+
           const SizedBox(height: AppSpacing.sm),
+
+          // Sync metadata row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 'Terakhir sinkron: ${_formatTimestamp(jamaah.locationUpdatedAt)}',
-                style: AppTypography.captionSmall.copyWith(
+                style: AppTypography.caption.copyWith(
                   color: bodyColor,
                 ),
               ),
@@ -296,9 +375,9 @@ class JamaahDistanceCard extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 5),
                   Text(
-                    'GPS Akurat',
+                    'GPS Presisi',
                     style: AppTypography.captionSmall.copyWith(
                       color: AppColors.statusSafe,
                       fontWeight: FontWeight.bold,
@@ -308,43 +387,52 @@ class JamaahDistanceCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.sm2),
-          Divider(
-            color: isDark ? AppColors.darkOutlineVariant : AppColors.canvasCreamSubtle,
-          ),
+
+          const SizedBox(height: AppSpacing.md),
+          const Divider(height: 1),
+          const SizedBox(height: AppSpacing.sm),
+
+          // View on Map Action
           InkWell(
             onTap: onViewMap,
             borderRadius: BorderRadius.circular(AppRadius.md),
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.xs,
+                vertical: AppSpacing.xs,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.pin_drop,
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? AppColors.darkPrimaryContainer
+                              : AppColors.canvasCream,
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                        ),
+                        child: const Icon(
+                          Icons.map_rounded,
                           color: AppColors.tanMedium,
                           size: 18,
                         ),
-                        const SizedBox(width: AppSpacing.sm),
-                        Flexible(
-                          child: Text(
-                            context.tr('viewCompanionOnMap'),
-                            style: AppTypography.labelLarge.copyWith(
-                              color: headingColor,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Text(
+                        context.tr('viewCompanionOnMap'),
+                        style: AppTypography.labelLarge.copyWith(
+                          color: headingColor,
+                          fontWeight: FontWeight.w700,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                   Icon(
-                    Icons.arrow_forward_ios,
-                    size: 14,
+                    Icons.chevron_right_rounded,
+                    size: 22,
                     color: headingColor,
                   ),
                 ],
@@ -356,4 +444,3 @@ class JamaahDistanceCard extends StatelessWidget {
     );
   }
 }
-

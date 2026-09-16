@@ -40,127 +40,167 @@ class MapTopHeader extends StatelessWidget {
       right: 0,
       child: Container(
         padding: EdgeInsets.only(
-          top: MediaQuery.of(context).padding.top + 4,
+          top: MediaQuery.of(context).padding.top + 6,
           left: AppSpacing.screenEdgeGutter,
           right: AppSpacing.screenEdgeGutter,
-          bottom: AppSpacing.sm,
+          bottom: AppSpacing.sm2,
         ),
         decoration: BoxDecoration(
-          color: AppColors.canvasCream.withValues(alpha: 0.95),
+          color: AppColors.canvasCream.withValues(alpha: 0.96),
+          border: Border(
+            bottom: BorderSide(
+              color: AppColors.cardBorderColor(context),
+              width: 1,
+            ),
+          ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.espressoDark.withValues(alpha: 0.06),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: AppColors.espressoDark.withValues(alpha: 0.07),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Top row: Live Tracking Badge + SOS Button
+            // ============================================================
+            // TOP STATUS ROW: Live Tracking Badge & Emergency SOS
+            // ============================================================
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: 4,
+                    horizontal: 12,
+                    vertical: 6,
                   ),
                   decoration: BoxDecoration(
                     color: AppColors.surfaceWhite,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(
+                      color: AppColors.cardBorderColor(context),
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.espressoDark.withValues(alpha: 0.05),
-                        blurRadius: 4,
+                        color: AppColors.espressoDark.withValues(alpha: 0.04),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       const AnimatedPingDot(
                         color: AppColors.statusPositive,
                         size: 8,
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 7),
                       Text(
                         'Pelacakan Aktif',
                         style: AppTypography.captionSmall.copyWith(
                           color: AppColors.espressoDark,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                       Text(
                         ' • GPS ${gpsAccuracy > 0 ? '${gpsAccuracy.round()}m' : 'OK'}',
-                        style: AppTypography.caption.copyWith(
+                        style: AppTypography.captionSmall.copyWith(
                           color: AppColors.textBody,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
                 ),
-                // SOS Button
-                GestureDetector(
-                  onTap: onSosPressed,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.sosEmergency,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.sosEmergency.withValues(alpha: 0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.sos,
-                          color: AppColors.surfaceWhite,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'SOS',
-                          style: AppTypography.captionSmall.copyWith(
-                            color: AppColors.surfaceWhite,
+
+                // Emergency SOS Button
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: onSosPressed,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    child: Ink(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.sosEmergency,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.sosEmergency.withValues(alpha: 0.35),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.emergency_rounded,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            'SOS',
+                            style: AppTypography.captionSmall.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
 
-            // Room status header (if room is active)
+            // ============================================================
+            // ACTIVE ROOM STATUS (If Bound)
+            // ============================================================
             if (roomName != null && roomName!.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.xs),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceWhite,
                   borderRadius: BorderRadius.circular(AppRadius.md),
                   border: Border.all(
-                    color: AppColors.goldLight.withValues(alpha: 0.6),
+                    color: AppColors.goldPrimary.withValues(alpha: 0.3),
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.espressoDark.withValues(alpha: 0.03),
+                      blurRadius: 6,
+                    ),
+                  ],
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.meeting_room, size: 15, color: AppColors.primary),
-                        const SizedBox(width: 5),
+                        const Icon(
+                          Icons.meeting_room_rounded,
+                          size: 16,
+                          color: AppColors.goldPrimary,
+                        ),
+                        const SizedBox(width: 6),
                         Text(
                           'Room: $roomName',
-                          style: AppTypography.captionBold.copyWith(
+                          style: AppTypography.captionSmall.copyWith(
                             color: AppColors.espressoDark,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
                       ],
@@ -169,8 +209,8 @@ class MapTopHeader extends StatelessWidget {
                       Text(
                         memberSummary!,
                         style: AppTypography.captionSmall.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryContainer,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                   ],
@@ -178,16 +218,18 @@ class MapTopHeader extends StatelessWidget {
               ),
             ],
 
-            // Legend & Nearest info row
+            // ============================================================
+            // LEGEND & NEAREST STATUS ROW
+            // ============================================================
             Padding(
-              padding: const EdgeInsets.only(top: 4, bottom: 2),
+              padding: const EdgeInsets.only(top: 6, bottom: 4),
               child: Row(
                 children: [
                   _buildLegendDot(AppColors.espressoDark, 'Anda'),
-                  const SizedBox(width: 10),
-                  _buildLegendDot(AppColors.accentGoldStar, 'Pendamping'),
-                  const SizedBox(width: 10),
-                  _buildLegendDot(AppColors.statusSafe, 'Jamaah'),
+                  const SizedBox(width: 12),
+                  _buildLegendDot(AppColors.goldPrimary, 'Pendamping'),
+                  const SizedBox(width: 12),
+                  _buildLegendDot(AppColors.statusPositive, 'Jamaah'),
                   if (nearestInfo != null && nearestInfo!.isNotEmpty) ...[
                     const SizedBox(width: 8),
                     Expanded(
@@ -196,7 +238,7 @@ class MapTopHeader extends StatelessWidget {
                         style: AppTypography.captionSmall.copyWith(
                           color: AppColors.textBody,
                           fontSize: 10,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -207,40 +249,44 @@ class MapTopHeader extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
 
-            // Search Bar
+            const SizedBox(height: 6),
+
+            // ============================================================
+            // SEARCH BAR
+            // ============================================================
             Container(
               height: 44,
               decoration: BoxDecoration(
                 color: AppColors.surfaceWhite,
                 borderRadius: BorderRadius.circular(AppRadius.pill),
                 border: Border.all(
-                  color: AppColors.goldLight.withValues(alpha: 0.6),
+                  color: AppColors.cardBorderColor(context),
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.espressoDark.withValues(alpha: 0.04),
-                    blurRadius: 4,
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
               child: Row(
                 children: [
                   const Padding(
-                    padding: EdgeInsets.only(left: AppSpacing.md),
+                    padding: EdgeInsets.only(left: 14),
                     child: Icon(
-                      Icons.search,
+                      Icons.search_rounded,
                       color: AppColors.tanMedium,
                       size: 20,
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.sm),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Cari toilet, tenda maktab, posko medis...',
+                      'Cari posko medis, toilet, tenda maktab...',
                       style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textBody,
+                        color: AppColors.textMuted,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -252,81 +298,105 @@ class MapTopHeader extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                       onTap: () {},
                       child: const Padding(
-                        padding: EdgeInsets.all(8),
+                        padding: EdgeInsets.all(10),
                         child: Icon(
-                          Icons.mic,
-                          color: AppColors.tanMedium,
-                          size: 18,
+                          Icons.mic_rounded,
+                          color: AppColors.goldPrimary,
+                          size: 19,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.sm2),
+                  const SizedBox(width: 4),
                 ],
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
 
-            // Filter Chips
+            const SizedBox(height: 8),
+
+            // ============================================================
+            // POI & ROLE FILTER CHIPS
+            // ============================================================
             SizedBox(
-              height: 34,
+              height: 36,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
                 itemCount: filters.length,
-                separatorBuilder: (_, _) =>
-                    const SizedBox(width: AppSpacing.sm2),
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
                 itemBuilder: (context, index) {
                   final filter = filters[index];
                   final isSelected = index == selectedFilter;
-                  return GestureDetector(
-                    onTap: () => onFilterSelected(index),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.md,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppColors.primaryContainer
-                            : AppColors.surfaceWhite,
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                        border: isSelected
-                            ? null
-                            : Border.all(
-                                color: AppColors.goldLight.withValues(
-                                  alpha: 0.7,
-                                ),
+
+                  return Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => onFilterSelected(index),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeOutCubic,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.espressoDark
+                              : AppColors.surfaceWhite,
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          border: Border.all(
+                            color: isSelected
+                                ? AppColors.goldPrimary
+                                : AppColors.cardBorderColor(context),
+                            width: isSelected ? 1.5 : 1,
+                          ),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: AppColors.espressoDark.withValues(
+                                      alpha: 0.18,
+                                    ),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ]
+                              : [
+                                  BoxShadow(
+                                    color: AppColors.espressoDark.withValues(
+                                      alpha: 0.03,
+                                    ),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (filter.icon != null) ...[
+                              Icon(
+                                filter.icon,
+                                size: 15,
+                                color: isSelected
+                                    ? AppColors.goldPrimary
+                                    : AppColors.tanMedium,
                               ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.espressoDark.withValues(
-                              alpha: 0.04,
+                              const SizedBox(width: 6),
+                            ],
+                            Text(
+                              filter.label,
+                              style: AppTypography.captionSmall.copyWith(
+                                color: isSelected
+                                    ? Colors.white
+                                    : AppColors.textHeadingColor(context),
+                                fontWeight: isSelected
+                                    ? FontWeight.w800
+                                    : FontWeight.w600,
+                              ),
                             ),
-                            blurRadius: 2,
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          if (filter.icon != null) ...[
-                            Icon(
-                              filter.icon,
-                              size: 14,
-                              color: isSelected
-                                  ? AppColors.surfaceWhite
-                                  : AppColors.espressoDark,
-                            ),
-                            const SizedBox(width: 4),
                           ],
-                          Text(
-                            filter.label,
-                            style: AppTypography.captionSmall.copyWith(
-                              color: isSelected
-                                  ? AppColors.surfaceWhite
-                                  : AppColors.espressoDark,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   );
@@ -349,6 +419,16 @@ class MapTopHeader extends StatelessWidget {
           decoration: BoxDecoration(
             color: color,
             shape: BoxShape.circle,
+            border: Border.all(
+              color: Colors.white,
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.15),
+                blurRadius: 2,
+              ),
+            ],
           ),
         ),
         const SizedBox(width: 4),
@@ -356,6 +436,7 @@ class MapTopHeader extends StatelessWidget {
           label,
           style: AppTypography.captionSmall.copyWith(
             color: AppColors.espressoDark,
+            fontWeight: FontWeight.w600,
             fontSize: 10,
           ),
         ),

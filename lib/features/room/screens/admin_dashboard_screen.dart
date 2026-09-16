@@ -1062,15 +1062,15 @@ class _AdminDashboardHome extends StatelessWidget {
                 final submitting = controller.isSubmitting.value;
                 return SizedBox(
                   width: double.infinity,
-                  height: 50,
+                  height: 54,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryGold,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
-                      elevation: 0,
+                      elevation: 2,
                     ),
                     onPressed: submitting
                         ? null

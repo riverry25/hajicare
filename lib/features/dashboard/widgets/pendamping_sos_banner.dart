@@ -34,28 +34,36 @@ class PendampingSosBanner extends StatelessWidget {
     );
 
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.cardPadding),
       decoration: BoxDecoration(
         color: AppColors.sosEmergency,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         boxShadow: [
           BoxShadow(
-            color: AppColors.sosEmergency.withValues(alpha: 0.4),
-            blurRadius: 16,
+            color: AppColors.sosEmergency.withValues(alpha: 0.35),
+            blurRadius: 18,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.warning_amber_rounded,
-                color: AppColors.surfaceWhite,
-                size: 36,
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.emergency_rounded,
+                  color: Colors.white,
+                  size: 28,
+                ),
               ),
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,14 +71,16 @@ class PendampingSosBanner extends StatelessWidget {
                     Text(
                       context.tr('sosEmergencyActive'),
                       style: AppTypography.titleMedium.copyWith(
-                        color: AppColors.surfaceWhite,
-                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.3,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       '${sosJamaah.name} ${context.tr('sosNeedsImmediateHelp')}',
                       style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.surfaceWhite.withValues(alpha: 0.9),
+                        color: Colors.white.withValues(alpha: 0.95),
                       ),
                     ),
                   ],
@@ -78,46 +88,53 @@ class PendampingSosBanner extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: AppSpacing.lg),
           Row(
             children: [
               Expanded(
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.surfaceWhite,
-                    foregroundColor: AppColors.sosEmergency,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                child: SizedBox(
+                  height: 44,
+                  child: ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: AppColors.sosEmergency,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      elevation: 0,
                     ),
-                  ),
-                  child: Text(
-                    context.tr('contactOfficer'),
-                    style: AppTypography.labelLarge.copyWith(
-                      color: AppColors.sosEmergency,
-                      fontWeight: FontWeight.bold,
+                    child: Text(
+                      context.tr('contactOfficer'),
+                      style: AppTypography.labelLarge.copyWith(
+                        color: AppColors.sosEmergency,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
-                child: OutlinedButton(
-                  onPressed: onDismissSos != null
-                      ? () => onDismissSos!(sosJamaah.id)
-                      : () => state.dismissSos(sosJamaah.id),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.surfaceWhite,
-                    side: const BorderSide(color: AppColors.surfaceWhite),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                child: SizedBox(
+                  height: 44,
+                  child: OutlinedButton(
+                    onPressed: onDismissSos != null
+                        ? () => onDismissSos!(sosJamaah.id)
+                        : () => state.dismissSos(sosJamaah.id),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(color: Colors.white, width: 1.5),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
                     ),
-                  ),
-                  child: Text(
-                    context.tr('endSos'),
-                    style: AppTypography.labelLarge.copyWith(
-                      color: AppColors.surfaceWhite,
-                      fontWeight: FontWeight.bold,
+                    child: Text(
+                      context.tr('endSos'),
+                      style: AppTypography.labelLarge.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                 ),
@@ -135,23 +152,26 @@ class PendampingSosBanner extends StatelessWidget {
     final bodyColor = AppColors.textBodyColor(context);
 
     return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.cardPadding),
       borderColor: isDark
-          ? AppColors.darkOutlineVariant
-          : AppColors.distanceWarning.withValues(alpha: 0.4),
-      padding: const EdgeInsets.all(AppSpacing.lg),
+          ? AppColors.darkCardBorder
+          : AppColors.lightCardBorder,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: AppColors.distanceWarning.withValues(alpha: 0.2),
+              color: isDark
+                  ? AppColors.darkPrimaryContainer
+                  : AppColors.canvasCream,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.health_and_safety_rounded,
-              color: AppColors.distanceWarning,
+              color: isDark ? AppColors.goldLight : AppColors.secondary,
+              size: 24,
             ),
           ),
           const SizedBox(width: AppSpacing.md),
@@ -165,7 +185,7 @@ class PendampingSosBanner extends StatelessWidget {
                     Flexible(
                       child: Text(
                         context.tr('sosStatusStandby'),
-                        style: AppTypography.labelLarge.copyWith(
+                        style: AppTypography.titleMedium.copyWith(
                           color: headingColor,
                           fontWeight: FontWeight.bold,
                         ),
@@ -182,7 +202,7 @@ class PendampingSosBanner extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: isDark
                             ? AppColors.darkPrimaryContainer
-                            : AppColors.secondaryContainer,
+                            : AppColors.secondaryContainer.withValues(alpha: 0.6),
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
                       child: Text(
@@ -197,7 +217,7 @@ class PendampingSosBanner extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 Text(
                   context.tr('sosStandbyDesc'),
                   style: AppTypography.bodySmall.copyWith(
@@ -207,7 +227,7 @@ class PendampingSosBanner extends StatelessWidget {
                 const SizedBox(height: AppSpacing.md),
                 Wrap(
                   spacing: AppSpacing.sm,
-                  runSpacing: AppSpacing.sm2,
+                  runSpacing: AppSpacing.sm,
                   children: [
                     _buildSmallBtn(
                       icon: Icons.volume_up_rounded,
@@ -245,23 +265,23 @@ class PendampingSosBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
-        vertical: 6,
+        vertical: 7,
       ),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: outline ? Border.all(color: borderColor ?? fg) : null,
+        border: outline ? Border.all(color: borderColor ?? fg, width: 1.2) : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: fg),
-          const SizedBox(width: 4),
+          Icon(icon, size: 15, color: fg),
+          const SizedBox(width: 5),
           Text(
             label,
-            style: AppTypography.captionSmall.copyWith(
+            style: AppTypography.caption.copyWith(
               color: fg,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -269,4 +289,3 @@ class PendampingSosBanner extends StatelessWidget {
     );
   }
 }
-

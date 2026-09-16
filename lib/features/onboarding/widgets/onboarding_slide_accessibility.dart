@@ -104,7 +104,8 @@ class OnboardingSlideAccessibility extends StatelessWidget {
                     child: Text(
                       'Text-to-Speech dan bantuan suara siap digunakan untuk membantu jamaah selama perjalanan ibadah.',
                       style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.espressoDark.withValues(alpha: 0.5),
+                        color: AppColors.textBody,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),

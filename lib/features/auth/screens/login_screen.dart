@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/locales/app_localizations.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -8,7 +9,6 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/pill_button.dart';
-import '../../../core/locales/app_localizations.dart';
 import '../controllers/login_controller.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -19,7 +19,7 @@ class LoginScreen extends StatelessWidget {
     final controller = Get.find<LoginController>();
 
     return Scaffold(
-      backgroundColor: AppColors.canvasCream,
+      backgroundColor: AppColors.scaffoldColor(context),
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -33,28 +33,32 @@ class LoginScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // ============================================================
-              // TOP BRAND
+              // TOP BRAND HEADER
               // ============================================================
               Row(
                 children: [
                   Container(
-                    width: 46,
-                    height: 46,
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
                       color: AppColors.espressoDark,
                       shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.goldPrimary.withValues(alpha: 0.35),
+                        width: 1.5,
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.espressoDark.withValues(alpha: 0.12),
-                          blurRadius: 12,
+                          color: AppColors.espressoDark.withValues(alpha: 0.16),
+                          blurRadius: 14,
                           offset: const Offset(0, 5),
                         ),
                       ],
                     ),
                     child: const Icon(
                       Icons.mosque_rounded,
-                      color: AppColors.canvasCream,
-                      size: 23,
+                      color: AppColors.goldPrimary,
+                      size: 24,
                     ),
                   ),
 
@@ -66,7 +70,7 @@ class LoginScreen extends StatelessWidget {
                       Text(
                         'HajiCare',
                         style: AppTypography.titleLarge.copyWith(
-                          color: AppColors.espressoDark,
+                          color: AppColors.textHeadingColor(context),
                           fontWeight: FontWeight.w800,
                           height: 1,
                         ),
@@ -76,6 +80,7 @@ class LoginScreen extends StatelessWidget {
                         context.tr('appTagline'),
                         style: AppTypography.captionSmall.copyWith(
                           color: AppColors.tanMedium,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
@@ -83,33 +88,40 @@ class LoginScreen extends StatelessWidget {
 
                   const Spacer(),
 
-                  // Secure indicator
+                  // Security status chip
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
+                      horizontal: 11,
                       vertical: 7,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceWhite,
+                      color: AppColors.cardBgColor(context),
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                       border: Border.all(
-                        color: AppColors.goldLight.withValues(alpha: 0.25),
+                        color: AppColors.cardBorderColor(context),
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.espressoDark.withValues(alpha: 0.03),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Icon(
-                          Icons.shield_outlined,
-                          size: 14,
+                          Icons.verified_user_rounded,
+                          size: 15,
                           color: AppColors.statusPositive,
                         ),
                         const SizedBox(width: 5),
                         Text(
-                          'Aman',
+                          'Aman & Resmi',
                           style: AppTypography.captionSmall.copyWith(
-                            color: AppColors.textBody,
-                            fontWeight: FontWeight.w600,
+                            color: AppColors.statusPositive,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],
@@ -118,75 +130,80 @@ class LoginScreen extends StatelessWidget {
                 ],
               ),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: 24),
 
               // ============================================================
-              // WELCOME / JOURNEY INTRO
+              // WELCOME / JOURNEY INTRO BANNER
               // ============================================================
               Container(
                 decoration: BoxDecoration(
-                  color: AppColors.espressoDark,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  gradient: const LinearGradient(
+                    colors: [AppColors.espressoDark, Color(0xFF22160E)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                  border: Border.all(
+                    color: AppColors.goldPrimary.withValues(alpha: 0.28),
+                    width: 1.2,
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.espressoDark.withValues(alpha: 0.16),
-                      blurRadius: 24,
+                      color: AppColors.espressoDark.withValues(alpha: 0.20),
+                      blurRadius: 26,
                       offset: const Offset(0, 10),
                     ),
                   ],
                 ),
                 child: Stack(
                   children: [
-                    // Decorative circle
+                    // Decorative ambient circles
                     Positioned(
-                      right: -35,
-                      top: -45,
+                      right: -30,
+                      top: -40,
                       child: Container(
-                        width: 130,
-                        height: 130,
+                        width: 140,
+                        height: 140,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppColors.goldLight.withValues(alpha: 0.08),
+                          color: AppColors.goldPrimary.withValues(alpha: 0.08),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      right: 40,
+                      bottom: -50,
+                      child: Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.goldPrimary.withValues(alpha: 0.05),
                         ),
                       ),
                     ),
 
-                    // Small decorative circle
-                    Positioned(
-                      right: 35,
-                      bottom: -55,
-                      child: Container(
-                        width: 90,
-                        height: 90,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.goldLight.withValues(alpha: 0.05),
-                        ),
-                      ),
-                    ),
-
-                    Container(
-                      padding: EdgeInsets.all(20),
+                    Padding(
+                      padding: const EdgeInsets.all(AppSpacing.cardPadding),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-
                         children: [
-                          // Badge
+                          // Luxury badge
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
+                              horizontal: 11,
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
                               color: AppColors.surfaceWhite.withValues(
-                                alpha: 0.10,
+                                alpha: 0.12,
                               ),
                               borderRadius: BorderRadius.circular(
                                 AppRadius.pill,
                               ),
                               border: Border.all(
-                                color: AppColors.goldLight.withValues(
-                                  alpha: 0.20,
+                                color: AppColors.goldPrimary.withValues(
+                                  alpha: 0.35,
                                 ),
                               ),
                             ),
@@ -196,14 +213,15 @@ class LoginScreen extends StatelessWidget {
                                 const Icon(
                                   Icons.auto_awesome_rounded,
                                   size: 14,
-                                  color: AppColors.accentGoldStar,
+                                  color: AppColors.goldPrimary,
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  'Teman Perjalanan Anda',
+                                  'Teman Perjalanan Jamaah',
                                   style: AppTypography.captionSmall.copyWith(
                                     color: AppColors.canvasCream,
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.2,
                                   ),
                                 ),
                               ],
@@ -221,52 +239,52 @@ class LoginScreen extends StatelessWidget {
                                   style: AppTypography.displayMedium.copyWith(
                                     color: AppColors.canvasCream,
                                     fontWeight: FontWeight.w500,
-                                    height: 1.05,
+                                    height: 1.1,
                                   ),
                                 ),
                                 TextSpan(
                                   text: 'Ahlan wa Sahlan.',
                                   style: AppTypography.displayMedium.copyWith(
-                                    color: AppColors.accentGoldStar,
+                                    color: AppColors.goldPrimary,
                                     fontWeight: FontWeight.w800,
-                                    height: 1.05,
+                                    height: 1.1,
                                   ),
                                 ),
                               ],
                             ),
                           ),
 
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 10),
 
                           // Description
                           ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 340),
+                            constraints: const BoxConstraints(maxWidth: 360),
                             child: Text(
-                              'Satu tempat untuk membantu perjalanan ibadah Anda tetap aman, terhubung, dan tenang.',
+                              'Satu tempat untuk mendampingi perjalanan ibadah Anda tetap aman, terhubung, dan khusyuk.',
                               style: AppTypography.bodyMedium.copyWith(
                                 color: AppColors.canvasCream.withValues(
-                                  alpha: 0.78,
+                                  alpha: 0.85,
                                 ),
-                                height: 1.5,
+                                height: 1.45,
                               ),
                             ),
                           ),
 
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 18),
 
-                          // Mini feature row
+                          // Mini feature tags
                           Row(
-                            children: [
+                            children: const [
                               _WelcomeFeature(
                                 icon: Icons.shield_outlined,
                                 label: 'Aman',
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8),
                               _WelcomeFeature(
                                 icon: Icons.people_outline_rounded,
                                 label: 'Terhubung',
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8),
                               _WelcomeFeature(
                                 icon: Icons.accessibility_new_rounded,
                                 label: 'Inklusif',
@@ -280,24 +298,22 @@ class LoginScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 26),
+              const SizedBox(height: 24),
 
               // ============================================================
-              // LOGIN FORM
+              // LOGIN FORM CARD
               // ============================================================
               Container(
-                padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
+                padding: const EdgeInsets.all(AppSpacing.cardPadding),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceWhite,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(
-                    color: AppColors.goldLight.withValues(alpha: 0.18),
-                  ),
+                  color: AppColors.cardBgColor(context),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                  border: Border.all(color: AppColors.cardBorderColor(context)),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.espressoDark.withValues(alpha: 0.055),
+                      color: AppColors.espressoDark.withValues(alpha: 0.05),
                       blurRadius: 24,
-                      offset: const Offset(0, 10),
+                      offset: const Offset(0, 8),
                     ),
                   ],
                 ),
@@ -308,36 +324,41 @@ class LoginScreen extends StatelessWidget {
                     Row(
                       children: [
                         Container(
-                          width: 38,
-                          height: 38,
+                          width: 42,
+                          height: 42,
                           decoration: BoxDecoration(
                             color: AppColors.canvasCream,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(13),
+                            border: Border.all(
+                              color: AppColors.goldPrimary.withValues(
+                                alpha: 0.25,
+                              ),
+                            ),
                           ),
                           child: const Icon(
                             Icons.login_rounded,
                             color: AppColors.espressoDark,
-                            size: 19,
+                            size: 21,
                           ),
                         ),
 
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 12),
 
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Masuk ke akun',
+                              'Masuk ke Akun',
                               style: AppTypography.titleMedium.copyWith(
-                                color: AppColors.espressoDark,
-                                fontWeight: FontWeight.w700,
+                                color: AppColors.textHeadingColor(context),
+                                fontWeight: FontWeight.w800,
                               ),
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Gunakan akun yang sudah terdaftar',
+                              'Gunakan email yang sudah terdaftar',
                               style: AppTypography.captionSmall.copyWith(
-                                color: AppColors.tanMedium,
+                                color: AppColors.textMuted,
                               ),
                             ),
                           ],
@@ -345,24 +366,22 @@ class LoginScreen extends StatelessWidget {
                       ],
                     ),
 
-                    const SizedBox(height: 22),
+                    const SizedBox(height: 24),
 
-                    // ------------------------------------------------------
-                    // EMAIL
-                    // ------------------------------------------------------
+                    // EMAIL FIELD
                     Text(
                       'Email',
                       style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.textHeading,
-                        fontWeight: FontWeight.w600,
+                        color: AppColors.textHeadingColor(context),
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
 
-                    const SizedBox(height: 7),
+                    const SizedBox(height: 8),
 
                     AppTextField(
                       controller: controller.emailController,
-                      hintText: 'email@contoh.com',
+                      hintText: 'nama@email.com',
                       keyboardType: TextInputType.emailAddress,
                       prefixIcon: const Icon(
                         Icons.email_outlined,
@@ -371,40 +390,36 @@ class LoginScreen extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 18),
 
-                    // ------------------------------------------------------
-                    // PASSWORD
-                    // ------------------------------------------------------
+                    // PASSWORD FIELD
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           'Kata Sandi / PIN',
                           style: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.textHeading,
-                            fontWeight: FontWeight.w600,
+                            color: AppColors.textHeadingColor(context),
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
 
                         GestureDetector(
                           onTap: () {
-                            // Mekanisme existing tetap bisa
-                            // ditambahkan di sini jika controller
-                            // memiliki fungsi forgot password.
+                            // Forgot password hook
                           },
                           child: Text(
                             'Lupa kata sandi?',
                             style: AppTypography.captionSmall.copyWith(
                               color: AppColors.secondary,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
                       ],
                     ),
 
-                    const SizedBox(height: 7),
+                    const SizedBox(height: 8),
 
                     Obx(
                       () => AppTextField(
@@ -418,6 +433,9 @@ class LoginScreen extends StatelessWidget {
                         ),
                         suffixIcon: IconButton(
                           splashRadius: 20,
+                          tooltip: controller.obscurePassword.value
+                              ? 'Tampilkan kata sandi'
+                              : 'Sembunyikan kata sandi',
                           icon: Icon(
                             controller.obscurePassword.value
                                 ? Icons.visibility_outlined
@@ -430,53 +448,56 @@ class LoginScreen extends StatelessWidget {
                       ),
                     ),
 
-                    // ------------------------------------------------------
+                    const SizedBox(height: 6),
+
                     // REMEMBER ME
-                    // ------------------------------------------------------
                     Obx(
-                      () => Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: 42,
-                              height: 42,
-                              child: Checkbox(
-                                value: controller.rememberMe.value,
-                                onChanged: (value) =>
-                                    controller.setRememberMe(value ?? true),
-                                activeColor: AppColors.espressoDark,
-                                side: const BorderSide(
-                                  color: AppColors.goldLight,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(5),
-                                ),
+                      () => Row(
+                        children: [
+                          SizedBox(
+                            width: 38,
+                            height: 38,
+                            child: Checkbox(
+                              value: controller.rememberMe.value,
+                              onChanged: (value) =>
+                                  controller.setRememberMe(value ?? true),
+                              activeColor: AppColors.espressoDark,
+                              side: const BorderSide(
+                                color: AppColors.goldLight,
+                                width: 1.5,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(5),
                               ),
                             ),
-                            const SizedBox(width: 2),
-                            Text(
+                          ),
+                          const SizedBox(width: 4),
+                          GestureDetector(
+                            onTap: () => controller.setRememberMe(
+                              !controller.rememberMe.value,
+                            ),
+                            child: Text(
                               'Ingat saya di perangkat ini',
                               style: AppTypography.caption.copyWith(
-                                color: AppColors.textBody,
+                                color: AppColors.textBodyColor(context),
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
 
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 14),
 
-                    // ------------------------------------------------------
                     // LOGIN BUTTON
-                    // ------------------------------------------------------
                     Obx(
                       () => SizedBox(
                         width: double.infinity,
+                        height: 54,
                         child: PillButton(
                           label: controller.isLoading.value
-                              ? 'Memproses...'
+                              ? 'Memproses Masuk...'
                               : (context.tr('btnLogin').isEmpty
                                     ? 'Masuk ke Aplikasi'
                                     : context.tr('btnLogin')),
@@ -490,29 +511,28 @@ class LoginScreen extends StatelessWidget {
 
                     const SizedBox(height: 18),
 
-                    // ------------------------------------------------------
                     // DIVIDER
-                    // ------------------------------------------------------
                     Row(
                       children: [
-                        const Expanded(
+                        Expanded(
                           child: Divider(
-                            color: AppColors.outlineVariant,
+                            color: AppColors.cardBorderColor(context),
                             height: 1,
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
                           child: Text(
                             'atau',
                             style: AppTypography.captionSmall.copyWith(
                               color: AppColors.tanMedium,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
-                        const Expanded(
+                        Expanded(
                           child: Divider(
-                            color: AppColors.outlineVariant,
+                            color: AppColors.cardBorderColor(context),
                             height: 1,
                           ),
                         ),
@@ -521,12 +541,10 @@ class LoginScreen extends StatelessWidget {
 
                     const SizedBox(height: 16),
 
-                    // ------------------------------------------------------
-                    // WHATSAPP
-                    // ------------------------------------------------------
+                    // WHATSAPP LOGIN
                     SizedBox(
                       width: double.infinity,
-                      height: 50,
+                      height: 52,
                       child: OutlinedButton(
                         onPressed: () {},
                         style: OutlinedButton.styleFrom(
@@ -534,7 +552,7 @@ class LoginScreen extends StatelessWidget {
                             alpha: 0.35,
                           ),
                           side: BorderSide(
-                            color: AppColors.goldLight.withValues(alpha: 0.65),
+                            color: AppColors.cardBorderColor(context),
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -544,8 +562,8 @@ class LoginScreen extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Container(
-                              width: 27,
-                              height: 27,
+                              width: 28,
+                              height: 28,
                               decoration: const BoxDecoration(
                                 color: Color(0xFF25D366),
                                 shape: BoxShape.circle,
@@ -553,15 +571,15 @@ class LoginScreen extends StatelessWidget {
                               child: const Icon(
                                 Icons.chat_rounded,
                                 color: Colors.white,
-                                size: 15,
+                                size: 16,
                               ),
                             ),
-                            const SizedBox(width: 9),
+                            const SizedBox(width: 10),
                             Text(
                               'Masuk Cepat via WhatsApp',
                               style: AppTypography.bodyMedium.copyWith(
                                 color: AppColors.espressoDark,
-                                fontWeight: FontWeight.w600,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ],
@@ -575,32 +593,36 @@ class LoginScreen extends StatelessWidget {
               const SizedBox(height: 24),
 
               // ============================================================
-              // REGISTER
+              // REGISTER REDIRECTION LINK
               // ============================================================
               Center(
                 child: GestureDetector(
-                  onTap: () {
-                    Get.toNamed(AppRoutes.register);
-                  },
-                  child: RichText(
-                    textAlign: TextAlign.center,
-                    text: TextSpan(
-                      text: 'Belum memiliki akun? ',
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.textBody,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: 'Daftar sekarang',
-                          style: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.espressoDark,
-                            fontWeight: FontWeight.w700,
-                            decoration: TextDecoration.underline,
-                            decorationColor: AppColors.goldLight,
-                            decorationThickness: 2,
-                          ),
+                  onTap: () => Get.toNamed(AppRoutes.register),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 6,
+                      horizontal: 12,
+                    ),
+                    child: RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        text: 'Belum memiliki akun? ',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.textBodyColor(context),
                         ),
-                      ],
+                        children: [
+                          TextSpan(
+                            text: 'Daftar sekarang',
+                            style: AppTypography.bodyMedium.copyWith(
+                              color: AppColors.espressoDark,
+                              fontWeight: FontWeight.w800,
+                              decoration: TextDecoration.underline,
+                              decorationColor: AppColors.goldPrimary,
+                              decorationThickness: 2,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -609,54 +631,55 @@ class LoginScreen extends StatelessWidget {
               const SizedBox(height: 16),
 
               // ============================================================
-              // HELP / TRUST FOOTER
+              // HELP / SUPPORT BANNER
               // ============================================================
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 11,
+                  horizontal: 16,
+                  vertical: 13,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceWhite.withValues(alpha: 0.55),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(
-                    color: AppColors.goldLight.withValues(alpha: 0.15),
-                  ),
+                  color: AppColors.cardBgColor(context).withValues(alpha: 0.7),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  border: Border.all(color: AppColors.cardBorderColor(context)),
                 ),
                 child: Row(
                   children: [
                     Container(
-                      width: 32,
-                      height: 32,
+                      width: 36,
+                      height: 36,
                       decoration: BoxDecoration(
                         color: AppColors.canvasCream,
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(11),
+                        border: Border.all(
+                          color: AppColors.goldPrimary.withValues(alpha: 0.25),
+                        ),
                       ),
                       child: const Icon(
                         Icons.support_agent_rounded,
                         color: AppColors.sosEmergency,
-                        size: 17,
+                        size: 19,
                       ),
                     ),
 
-                    const SizedBox(width: 9),
+                    const SizedBox(width: 12),
 
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Butuh bantuan?',
+                            'Butuh bantuan masuk?',
                             style: AppTypography.captionSmall.copyWith(
-                              color: AppColors.espressoDark,
-                              fontWeight: FontWeight.w700,
+                              color: AppColors.textHeadingColor(context),
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Petugas Maktab siap membantu Anda.',
+                            'Petugas Maktab & Pos Kesehatan siap memandu.',
                             style: AppTypography.captionSmall.copyWith(
-                              color: AppColors.tanMedium,
+                              color: AppColors.textMuted,
                             ),
                           ),
                         ],
@@ -665,31 +688,32 @@ class LoginScreen extends StatelessWidget {
 
                     const Icon(
                       Icons.arrow_forward_ios_rounded,
-                      size: 13,
+                      size: 14,
                       color: AppColors.tanMedium,
                     ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
 
-              // Security note
+              // Security footer note
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(
-                    Icons.verified_user_outlined,
+                    Icons.lock_outline_rounded,
                     color: AppColors.statusPositive,
                     size: 15,
                   ),
-                  const SizedBox(width: 5),
+                  const SizedBox(width: 6),
                   Flexible(
                     child: Text(
-                      'Data jamaah Anda terlindungi dan aman',
+                      'Kerahasiaan data jamaah terenkripsi dan terlindungi',
                       textAlign: TextAlign.center,
                       style: AppTypography.captionSmall.copyWith(
                         color: AppColors.tanMedium,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
@@ -712,21 +736,24 @@ class _WelcomeFeature extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: AppColors.surfaceWhite.withValues(alpha: 0.08),
+        color: AppColors.surfaceWhite.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(
+          color: AppColors.goldPrimary.withValues(alpha: 0.22),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: AppColors.accentGoldStar),
-          const SizedBox(width: 5),
+          Icon(icon, size: 14, color: AppColors.goldPrimary),
+          const SizedBox(width: 6),
           Text(
             label,
             style: AppTypography.captionSmall.copyWith(
-              color: AppColors.canvasCream.withValues(alpha: 0.82),
-              fontWeight: FontWeight.w600,
+              color: AppColors.canvasCream,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],

@@ -101,20 +101,39 @@ class DashboardJamaahScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(right: AppSpacing.screenEdgeGutter),
             child: Center(
-              child: CircleAvatar(
-                backgroundColor: isDark
-                    ? AppColors.darkPrimaryContainer
-                    : AppColors.errorContainer,
-                radius: 18,
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.sos_rounded,
-                    color: AppColors.sosEmergency,
-                    size: 20,
+              child: InkWell(
+                onTap: () => Get.toNamed(AppRoutes.modalSos),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.darkPrimaryContainer
+                        : AppColors.errorContainer,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(
+                      color: AppColors.sosEmergency.withValues(alpha: 0.4),
+                      width: 1,
+                    ),
                   ),
-                  padding: EdgeInsets.zero,
-                  tooltip: context.tr('sosTooltip'),
-                  onPressed: () => Get.toNamed(AppRoutes.modalSos),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.sos_rounded,
+                        color: AppColors.sosEmergency,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'SOS',
+                        style: AppTypography.captionSmall.copyWith(
+                          color: AppColors.sosEmergency,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -156,27 +175,54 @@ class DashboardJamaahScreen extends StatelessWidget {
   Widget _buildSeparatedBanner(BuildContext context, bool isDark) {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.lg),
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.cardPadding),
       decoration: BoxDecoration(
         color: isDark
             ? AppColors.darkSurfaceContainer
             : AppColors.errorContainer,
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
-          color: AppColors.sosEmergency.withValues(alpha: 0.6),
+          color: AppColors.sosEmergency.withValues(alpha: 0.5),
+          width: 1.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.sosEmergency.withValues(alpha: 0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          const Icon(Icons.warning_rounded, color: AppColors.sosEmergency),
-          const SizedBox(width: AppSpacing.sm),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: const BoxDecoration(
+              color: AppColors.sosEmergency,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.warning_rounded, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
-            child: Text(
-              context.tr('separatedWarning'),
-              style: AppTypography.captionSmall.copyWith(
-                color: AppColors.sosEmergency,
-                fontWeight: FontWeight.bold,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Peringatan Terpisah',
+                  style: AppTypography.titleSmall.copyWith(
+                    color: AppColors.sosEmergency,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  context.tr('separatedWarning'),
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.sosEmergency,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -190,33 +236,34 @@ class DashboardJamaahScreen extends StatelessWidget {
     Color headingColor,
   ) {
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.cardPadding),
       decoration: BoxDecoration(
         color: isDark
             ? AppColors.darkSurfaceContainer
             : AppColors.surfaceContainer,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
           color: isDark
-              ? AppColors.darkOutlineVariant
-              : AppColors.secondaryContainer,
+              ? AppColors.darkCardBorder
+              : AppColors.lightCardBorder,
         ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
               color: isDark
                   ? AppColors.darkPrimaryContainer
-                  : AppColors.tanMedium.withValues(alpha: 0.2),
+                  : AppColors.canvasCream,
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.lightbulb_outline_rounded,
               color: isDark ? AppColors.goldLight : AppColors.espressoDark,
+              size: 24,
             ),
           ),
           const SizedBox(width: AppSpacing.md),
@@ -226,18 +273,20 @@ class DashboardJamaahScreen extends StatelessWidget {
               children: [
                 Text(
                   context.tr('officerAdviceTitle'),
-                  style: AppTypography.captionSmall.copyWith(
+                  style: AppTypography.titleSmall.copyWith(
                     color: isDark
                         ? AppColors.darkPrimary
                         : AppColors.espressoDark,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   context.tr('officerAdviceBody'),
-                  style: AppTypography.bodySmall.copyWith(color: headingColor),
+                  style: AppTypography.bodySmall.copyWith(
+                    color: headingColor,
+                    height: 1.45,
+                  ),
                 ),
               ],
             ),

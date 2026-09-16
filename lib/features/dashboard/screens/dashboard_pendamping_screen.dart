@@ -119,12 +119,13 @@ class DashboardPendampingScreen extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: isDark ? AppColors.darkOutlineVariant : AppColors.goldLight,
-                  width: 2,
+                  width: 1.5,
                 ),
               ),
               child: Icon(
                 Icons.person,
                 color: isDark ? AppColors.goldLight : AppColors.tanMedium,
+                size: 20,
               ),
             ),
           ),
@@ -191,22 +192,30 @@ class DashboardPendampingScreen extends StatelessWidget {
   Widget _buildSeparatedBanner(BuildContext context, HajiCareController state, bool isDark) {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.lg),
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.cardPadding),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurfaceContainer : AppColors.errorContainer,
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
-          color: AppColors.sosEmergency.withValues(alpha: 0.6),
+          color: AppColors.sosEmergency.withValues(alpha: 0.5),
+          width: 1.5,
         ),
       ),
       child: Row(
         children: [
-          const Icon(Icons.warning_rounded, color: AppColors.sosEmergency),
-          const SizedBox(width: AppSpacing.sm),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: const BoxDecoration(
+              color: AppColors.sosEmergency,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.warning_rounded, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Text(
               '${context.tr('warningDistanceLabel')}: ${state.separatedJamaahName} ${context.tr('separatedAlertDetail')}',
-              style: AppTypography.captionSmall.copyWith(
+              style: AppTypography.caption.copyWith(
                 color: AppColors.sosEmergency,
                 fontWeight: FontWeight.bold,
               ),
@@ -246,7 +255,7 @@ class DashboardPendampingScreen extends StatelessWidget {
     final hasPositions = selfLatLng != null && targetJamaahLatLng != null;
 
     return AppCard(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.cardPadding),
       child: Column(
         children: [
           Row(
@@ -254,15 +263,22 @@ class DashboardPendampingScreen extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(
-                    Icons.explore_rounded,
-                    color: AppColors.tanMedium,
-                    size: 20,
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.darkPrimaryContainer : AppColors.canvasCream,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    child: const Icon(
+                      Icons.explore_rounded,
+                      color: AppColors.tanMedium,
+                      size: 20,
+                    ),
                   ),
-                  const SizedBox(width: AppSpacing.sm2),
+                  const SizedBox(width: AppSpacing.sm),
                   Text(
                     context.tr('realtimePosition'),
-                    style: AppTypography.labelLarge.copyWith(
+                    style: AppTypography.titleMedium.copyWith(
                       color: headingColor,
                       fontWeight: FontWeight.bold,
                     ),
@@ -270,7 +286,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                 decoration: BoxDecoration(
                   color: (state.isMyGpsActive.value
                           ? AppColors.statusSafe
@@ -278,14 +294,30 @@ class DashboardPendampingScreen extends StatelessWidget {
                       .withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
-                child: Text(
-                  state.isMyGpsActive.value ? 'GPS Aktif' : 'GPS Mati',
-                  style: AppTypography.captionSmall.copyWith(
-                    color: state.isMyGpsActive.value
-                        ? AppColors.statusSafe
-                        : AppColors.error,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: state.isMyGpsActive.value
+                            ? AppColors.statusSafe
+                            : AppColors.error,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      state.isMyGpsActive.value ? 'GPS Aktif' : 'GPS Mati',
+                      style: AppTypography.captionSmall.copyWith(
+                        color: state.isMyGpsActive.value
+                            ? AppColors.statusSafe
+                            : AppColors.error,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -293,7 +325,7 @@ class DashboardPendampingScreen extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           // FlutterMap Mini-Preview
           ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             child: SizedBox(
               height: 180,
               child: AbsorbPointer(
@@ -318,7 +350,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                           fmap.Polyline(
                             points: [selfLatLng, targetJamaahLatLng],
                             strokeWidth: 4,
-                            color: AppColors.accentGoldStar.withValues(alpha: 0.9),
+                            color: AppColors.goldPrimary.withValues(alpha: 0.9),
                           ),
                         ],
                       ),
@@ -332,7 +364,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                             child: _buildMapPin(
                               label: context.tr('youLabel'),
                               icon: Icons.my_location,
-                              color: AppColors.accentGoldStar,
+                              color: AppColors.goldPrimary,
                             ),
                           ),
                         if (targetJamaahLatLng != null)
@@ -371,7 +403,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                   Flexible(
                     child: Text(
                       context.tr('openFullNavigation'),
-                      style: AppTypography.captionSmall.copyWith(
+                      style: AppTypography.labelLarge.copyWith(
                         color: headingColor,
                         fontWeight: FontWeight.bold,
                       ),
@@ -397,7 +429,7 @@ class DashboardPendampingScreen extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
           decoration: BoxDecoration(
             color: AppColors.espressoDark,
             borderRadius: BorderRadius.circular(4),
@@ -406,7 +438,7 @@ class DashboardPendampingScreen extends StatelessWidget {
             label,
             style: const TextStyle(
               color: AppColors.surfaceWhite,
-              fontSize: 8,
+              fontSize: 9,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -459,7 +491,7 @@ class DashboardPendampingScreen extends StatelessWidget {
       children: [
         Text(
           context.tr('pendampingServices'),
-          style: AppTypography.titleMedium.copyWith(
+          style: AppTypography.titleLarge.copyWith(
             color: headingColor,
             fontWeight: FontWeight.bold,
           ),
@@ -467,8 +499,8 @@ class DashboardPendampingScreen extends StatelessWidget {
         const SizedBox(height: AppSpacing.sm),
         LayoutBuilder(
           builder: (context, constraints) {
-            final cardWidth = (constraints.maxWidth - AppSpacing.sm) / 2;
-            double ratio = cardWidth < 170 ? 1.05 : 1.15;
+            final cardWidth = (constraints.maxWidth - AppSpacing.md) / 2;
+            double ratio = cardWidth < 170 ? 1.0 : 1.12;
             if (textScale > 1.1) {
               ratio = ratio * 0.88;
             }
@@ -479,14 +511,14 @@ class DashboardPendampingScreen extends StatelessWidget {
               itemCount: features.length,
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                crossAxisSpacing: AppSpacing.sm,
-                mainAxisSpacing: AppSpacing.sm,
+                crossAxisSpacing: AppSpacing.md,
+                mainAxisSpacing: AppSpacing.md,
                 childAspectRatio: ratio,
               ),
               itemBuilder: (context, index) {
                 final item = features[index];
                 return AppCard(
-                  padding: const EdgeInsets.all(AppSpacing.md),
+                  padding: const EdgeInsets.all(AppSpacing.cardPadding),
                   onTap: () {
                     if (item['tabIndex'] != null) {
                       dashboardCtrl.changeTab(item['tabIndex'] as int);
@@ -499,18 +531,18 @@ class DashboardPendampingScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
-                        width: 44,
-                        height: 44,
+                        width: 48,
+                        height: 48,
                         decoration: BoxDecoration(
                           color: isDark
                               ? AppColors.darkPrimaryContainer
                               : AppColors.canvasCream,
-                          shape: BoxShape.circle,
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                         child: Icon(
                           item['icon'] as IconData,
                           color: isDark ? AppColors.goldLight : AppColors.espressoDark,
-                          size: 22,
+                          size: 24,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.xs),
@@ -519,16 +551,17 @@ class DashboardPendampingScreen extends StatelessWidget {
                         children: [
                           Text(
                             item['title'] as String,
-                            style: AppTypography.labelLarge.copyWith(
+                            style: AppTypography.titleMedium.copyWith(
                               color: headingColor,
+                              fontWeight: FontWeight.w700,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 3),
                           Text(
                             item['subtitle'] as String,
-                            style: AppTypography.captionSmall.copyWith(
+                            style: AppTypography.caption.copyWith(
                               color: bodyColor,
                               fontWeight: FontWeight.normal,
                             ),
@@ -548,5 +581,3 @@ class DashboardPendampingScreen extends StatelessWidget {
     );
   }
 }
-
-

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../core/widgets/pill_button.dart';
 import '../models/map_poi.dart';
 
 /// Bottom sheet displaying dynamic information and action controls for a selected Point of Interest.
@@ -31,26 +31,44 @@ class LocationDetailSheet extends StatelessWidget {
         : 'Dekat';
 
     return Container(
-      padding: const EdgeInsets.all(AppConstants.spaceLg),
-      decoration: const BoxDecoration(
-        color: AppColors.surfaceWhite,
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppConstants.radiusSheet),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.cardPadding,
+        14,
+        AppSpacing.cardPadding,
+        AppSpacing.lg,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.cardBgColor(context),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(24),
         ),
+        border: Border(
+          top: BorderSide(
+            color: AppColors.cardBorderColor(context),
+            width: 1.2,
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.espressoDark.withValues(alpha: 0.15),
+            blurRadius: 24,
+            offset: const Offset(0, -6),
+          ),
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Drag handle
+          // Drag Handle
           Center(
             child: Container(
               width: 44,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: AppConstants.spaceMd),
+              height: 5,
+              margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: AppColors.outlineVariant,
-                borderRadius: BorderRadius.circular(AppConstants.radiusPill),
+                color: AppColors.cardBorderColor(context),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
             ),
           ),
@@ -64,14 +82,15 @@ class LocationDetailSheet extends StatelessWidget {
                 height: 60,
                 decoration: BoxDecoration(
                   color: poi.color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+                  borderRadius: BorderRadius.circular(18),
                   border: Border.all(
                     color: poi.color.withValues(alpha: 0.4),
+                    width: 1.5,
                   ),
                 ),
-                child: Icon(poi.icon, color: poi.color, size: 30),
+                child: Icon(poi.icon, color: poi.color, size: 28),
               ),
-              const SizedBox(width: AppConstants.spaceMd),
+              const SizedBox(width: AppSpacing.md),
 
               // Title and details
               Expanded(
@@ -80,41 +99,82 @@ class LocationDetailSheet extends StatelessWidget {
                   children: [
                     Text(
                       poi.name,
-                      style: AppTypography.headlineMd.copyWith(
-                        color: AppColors.espressoDark,
-                        fontWeight: FontWeight.bold,
+                      style: AppTypography.titleMedium.copyWith(
+                        color: AppColors.textHeadingColor(context),
+                        fontWeight: FontWeight.w800,
                       ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.near_me_rounded,
+                          size: 13,
+                          color: AppColors.tanMedium,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$formattedDistance dari posisi Anda',
+                          style: AppTypography.captionSmall.copyWith(
+                            color: AppColors.textBodyColor(context),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 3),
-                    Text(
-                      'Jarak: $formattedDistance • ${poi.isAccessible ? "Akses Kursi Roda Tersedia" : "Jalan Tangga"}',
-                      style: AppTypography.caption.copyWith(
-                        color: AppColors.textBody,
-                      ),
+                    Row(
+                      children: [
+                        Icon(
+                          poi.isAccessible
+                              ? Icons.accessible_rounded
+                              : Icons.stairs_rounded,
+                          size: 13,
+                          color: poi.isAccessible
+                              ? AppColors.statusPositive
+                              : AppColors.tanMedium,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          poi.isAccessible
+                              ? 'Akses Kursi Roda Tersedia'
+                              : 'Jalur Bertangga',
+                          style: AppTypography.captionSmall.copyWith(
+                            color: poi.isAccessible
+                                ? AppColors.statusPositive
+                                : AppColors.textMuted,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                     if (poi.subtitle != null) ...[
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       Text(
                         poi.subtitle!,
                         style: AppTypography.captionSmall.copyWith(
-                          color: AppColors.tanMedium,
+                          color: AppColors.textMuted,
                         ),
                       ),
                     ],
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
+                        horizontal: 10,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.statusPositive.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(AppConstants.radiusPill),
+                        color: poi.color.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        border: Border.all(
+                          color: poi.color.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: Text(
                         poi.statusLabel,
-                        style: AppTypography.captionBold.copyWith(
-                          color: AppColors.statusPositive,
+                        style: AppTypography.captionSmall.copyWith(
+                          color: poi.color,
+                          fontWeight: FontWeight.w800,
                           fontSize: 10,
                         ),
                       ),
@@ -126,33 +186,85 @@ class LocationDetailSheet extends StatelessWidget {
               // Close button
               if (onClose != null)
                 IconButton(
-                  icon: const Icon(Icons.close, size: 20),
-                  color: AppColors.textBody,
+                  icon: const Icon(Icons.close_rounded, size: 20),
+                  color: AppColors.tanMedium,
+                  splashRadius: 20,
                   onPressed: onClose,
                 ),
             ],
           ),
-          const SizedBox(height: AppConstants.spaceLg),
 
-          // Actions Row
+          const SizedBox(height: 20),
+
+          // Actions Row: Rute Berjalan (Primary 52px) & Bagikan (Secondary)
           Row(
             children: [
               Expanded(
-                child: PillButton(
-                  label: 'Rute Berjalan',
-                  icon: Icons.directions_walk,
-                  onPressed: onRoute ?? () {},
+                flex: 3,
+                child: SizedBox(
+                  height: 52,
+                  child: ElevatedButton.icon(
+                    onPressed: onRoute ?? () {},
+                    icon: const Icon(
+                      Icons.directions_walk_rounded,
+                      size: 20,
+                      color: AppColors.goldPrimary,
+                    ),
+                    label: Text(
+                      'Rute Jalan Kaki',
+                      style: AppTypography.labelLarge.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.espressoDark,
+                      foregroundColor: Colors.white,
+                      elevation: 4,
+                      shadowColor: AppColors.espressoDark.withValues(alpha: 0.3),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        side: BorderSide(
+                          color: AppColors.goldPrimary.withValues(alpha: 0.5),
+                          width: 1.2,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(width: AppConstants.spaceSm),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(
-                child: PillButton(
-                  label: 'Bagikan',
-                  icon: Icons.share_outlined,
-                  onPressed: onShare ?? () {},
-                  isOutline: true,
-                  color: AppColors.goldLight,
-                  textColor: AppColors.espressoDark,
+                flex: 2,
+                child: SizedBox(
+                  height: 52,
+                  child: OutlinedButton.icon(
+                    onPressed: onShare ?? () {},
+                    icon: const Icon(
+                      Icons.share_outlined,
+                      size: 18,
+                      color: AppColors.espressoDark,
+                    ),
+                    label: Text(
+                      'Bagikan',
+                      style: AppTypography.labelLarge.copyWith(
+                        color: AppColors.espressoDark,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: AppColors.canvasCream.withValues(
+                        alpha: 0.35,
+                      ),
+                      side: BorderSide(
+                        color: AppColors.cardBorderColor(context),
+                        width: 1.2,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],

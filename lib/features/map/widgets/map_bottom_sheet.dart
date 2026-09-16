@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/state/hajicare_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
-import '../../../../core/theme/app_sizes.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 
@@ -54,18 +53,21 @@ class MapBottomSheet extends StatelessWidget {
       bottom: bottomOffset,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surfaceWhite,
+          color: AppColors.cardBgColor(context),
           borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(AppRadius.lg),
+            top: Radius.circular(24),
           ),
           border: Border(
-            top: BorderSide(color: AppColors.goldLight.withValues(alpha: 0.3)),
+            top: BorderSide(
+              color: AppColors.cardBorderColor(context),
+              width: 1.2,
+            ),
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.espressoDark.withValues(alpha: 0.15),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
+              color: AppColors.espressoDark.withValues(alpha: 0.16),
+              blurRadius: 24,
+              offset: const Offset(0, -6),
             ),
           ],
         ),
@@ -74,11 +76,11 @@ class MapBottomSheet extends StatelessWidget {
           children: [
             // Drag Handle
             Container(
-              margin: const EdgeInsets.only(top: 10, bottom: 6),
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
               width: 44,
-              height: 4,
+              height: 5,
               decoration: BoxDecoration(
-                color: AppColors.outlineVariant.withValues(alpha: 0.7),
+                color: AppColors.cardBorderColor(context),
                 borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
             ),
@@ -105,141 +107,173 @@ class MapBottomSheet extends StatelessWidget {
     final isPendamping = member.isPendamping;
 
     final mq = MediaQuery.of(context);
-    final double maxDetailHeight = (mq.size.height * 0.45).clamp(240.0, 420.0);
+    final double maxDetailHeight = (mq.size.height * 0.46).clamp(240.0, 420.0);
 
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: maxDetailHeight),
       child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg,
+          AppSpacing.cardPadding,
           AppSpacing.xs,
-          AppSpacing.lg,
+          AppSpacing.cardPadding,
           AppSpacing.md,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(
-            children: [
-              // Avatar with Role Icon
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: isPendamping
-                      ? AppColors.primaryContainer
-                      : AppColors.secondaryContainer,
-                  shape: BoxShape.circle,
-                  border: Border.all(
+              children: [
+                // Avatar with Role Icon
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
                     color: isPendamping
-                        ? AppColors.accentGoldStar
-                        : AppColors.statusSafe,
-                    width: 2,
+                        ? AppColors.primaryContainer
+                        : AppColors.canvasCream,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isPendamping
+                          ? AppColors.goldPrimary
+                          : AppColors.statusSafe,
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.espressoDark.withValues(alpha: 0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    isPendamping ? Icons.shield_rounded : Icons.person_rounded,
+                    color: isPendamping
+                        ? AppColors.goldPrimary
+                        : AppColors.espressoDark,
+                    size: 26,
                   ),
                 ),
-                child: Icon(
-                  isPendamping ? Icons.shield : Icons.person,
-                  color: isPendamping
-                      ? AppColors.onPrimaryContainer
-                      : AppColors.onSecondaryContainer,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              // Name & Role
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            member.name,
-                            style: AppTypography.titleMedium.copyWith(
-                              color: AppColors.espressoDark,
-                              fontWeight: FontWeight.bold,
+                const SizedBox(width: AppSpacing.md),
+
+                // Name & Role
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              member.name,
+                              style: AppTypography.titleMedium.copyWith(
+                                color: AppColors.textHeadingColor(context),
+                                fontWeight: FontWeight.w800,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isPendamping
-                                ? AppColors.accentGoldStar.withValues(alpha: 0.2)
-                                : AppColors.statusSafe.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                          ),
-                          child: Text(
-                            isPendamping ? 'Pendamping' : 'Jamaah',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
                               color: isPendamping
-                                  ? AppColors.primary
-                                  : AppColors.statusSafe,
+                                  ? AppColors.goldPrimary.withValues(alpha: 0.16)
+                                  : AppColors.statusSafe.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(AppRadius.pill),
+                              border: Border.all(
+                                color: isPendamping
+                                    ? AppColors.goldPrimary.withValues(alpha: 0.4)
+                                    : AppColors.statusSafe.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Text(
+                              isPendamping ? 'Pendamping' : 'Jamaah',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: isPendamping
+                                    ? AppColors.espressoDark
+                                    : AppColors.statusSafe,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 3),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.near_me,
-                          size: 13,
-                          color: member.hasLocation
-                              ? AppColors.primary
-                              : AppColors.outlineVariant,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '$distText dari Anda',
-                          style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.espressoDark,
-                            fontWeight: FontWeight.w600,
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.near_me_rounded,
+                            size: 14,
+                            color: member.hasLocation
+                                ? AppColors.goldPrimary
+                                : AppColors.outlineVariant,
                           ),
-                        ),
-                        Text(
-                          ' • $locStatus',
-                          style: AppTypography.captionSmall.copyWith(
-                            color: locStatus == 'Online'
-                                ? AppColors.statusSafe
-                                : AppColors.textBody,
+                          const SizedBox(width: 4),
+                          Text(
+                            '$distText dari Anda',
+                            style: AppTypography.captionSmall.copyWith(
+                              color: AppColors.textBodyColor(context),
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                          const SizedBox(width: 6),
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: locStatus == 'Online'
+                                  ? AppColors.statusSafe
+                                  : AppColors.textMuted,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            locStatus,
+                            style: AppTypography.captionSmall.copyWith(
+                              color: locStatus == 'Online'
+                                  ? AppColors.statusSafe
+                                  : AppColors.textMuted,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              // Close detail button
-              IconButton(
-                icon: const Icon(Icons.close, size: 20),
-                color: AppColors.outlineVariant,
-                onPressed: onCloseMemberDetail,
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          // Action button
-          SizedBox(
-            width: double.infinity,
-            height: AppSizes.buttonHeightSecondary,
-            child: _buildRouteButton(member),
-          ),
-          if (routeDistanceMeters != null && routeDurationSeconds != null)
-            _buildRouteInfoBar(distText),
-        ],
-      ),
+
+                // Close detail button
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, size: 20),
+                  color: AppColors.tanMedium,
+                  splashRadius: 20,
+                  onPressed: onCloseMemberDetail,
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
+            // Action button (52px height)
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: _buildRouteButton(member),
+            ),
+
+            if (routeDistanceMeters != null && routeDurationSeconds != null)
+              _buildRouteInfoBar(distText),
+          ],
+        ),
       ),
     );
   }
@@ -248,14 +282,17 @@ class MapBottomSheet extends StatelessWidget {
     if (!member.hasLocation) {
       return ElevatedButton.icon(
         onPressed: null,
-        icon: const Icon(Icons.directions, size: 18),
+        icon: const Icon(Icons.directions_rounded, size: 18),
         label: Text(
-          'Lokasi Belum Tersedia',
-          style: AppTypography.labelLarge.copyWith(color: AppColors.surfaceWhite),
+          'Lokasi Anggota Belum Tersedia',
+          style: AppTypography.labelLarge.copyWith(
+            color: AppColors.textMuted,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.outlineVariant,
-          foregroundColor: AppColors.surfaceWhite,
+          backgroundColor: AppColors.canvasCream,
+          disabledBackgroundColor: AppColors.canvasCream,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
@@ -267,23 +304,26 @@ class MapBottomSheet extends StatelessWidget {
       return ElevatedButton.icon(
         onPressed: null,
         icon: const SizedBox(
-          width: 16,
-          height: 16,
+          width: 18,
+          height: 18,
           child: CircularProgressIndicator(
-            strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation<Color>(AppColors.outlineVariant),
+            strokeWidth: 2.2,
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.espressoDark),
           ),
         ),
         label: Text(
-          'Mencari rute jalan kaki...',
-          style: AppTypography.labelLarge.copyWith(color: AppColors.outlineVariant),
+          'Mencari rute jalan kaki terbaik...',
+          style: AppTypography.labelLarge.copyWith(
+            color: AppColors.espressoDark,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.surfaceWhite,
-          disabledBackgroundColor: AppColors.surfaceWhite,
+          backgroundColor: AppColors.canvasCream,
+          disabledBackgroundColor: AppColors.canvasCream,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.pill),
-            side: const BorderSide(color: AppColors.outlineVariant),
+            side: const BorderSide(color: AppColors.goldLight),
           ),
         ),
       );
@@ -292,14 +332,17 @@ class MapBottomSheet extends StatelessWidget {
     if (routeError != null) {
       return ElevatedButton.icon(
         onPressed: onRetryRoute,
-        icon: const Icon(Icons.refresh, size: 18),
+        icon: const Icon(Icons.refresh_rounded, size: 18),
         label: Text(
           'Rute tidak ditemukan · Coba Lagi',
-          style: AppTypography.labelLarge.copyWith(color: AppColors.surfaceWhite),
+          style: AppTypography.labelLarge.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+          ),
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.error,
-          foregroundColor: AppColors.surfaceWhite,
+          backgroundColor: AppColors.sosEmergency,
+          foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
@@ -309,16 +352,29 @@ class MapBottomSheet extends StatelessWidget {
 
     return ElevatedButton.icon(
       onPressed: onNavigate,
-      icon: const Icon(Icons.directions, size: 18),
+      icon: const Icon(
+        Icons.directions_walk_rounded,
+        size: 20,
+        color: AppColors.goldPrimary,
+      ),
       label: Text(
         'Arahkan Rute ke ${member.name.split(' ').first}',
-        style: AppTypography.labelLarge.copyWith(color: AppColors.surfaceWhite),
+        style: AppTypography.labelLarge.copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.w800,
+        ),
       ),
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.espressoDark,
-        foregroundColor: AppColors.onPrimary,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        shadowColor: AppColors.espressoDark.withValues(alpha: 0.3),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.pill),
+          side: BorderSide(
+            color: AppColors.goldPrimary.withValues(alpha: 0.5),
+            width: 1.2,
+          ),
         ),
       ),
     );
@@ -326,56 +382,88 @@ class MapBottomSheet extends StatelessWidget {
 
   Widget _buildRouteInfoBar(String directDist) {
     return Container(
-      margin: const EdgeInsets.only(top: AppSpacing.md),
-      padding: const EdgeInsets.all(AppSpacing.sm),
+      margin: const EdgeInsets.only(top: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.canvasCream,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.goldLight.withValues(alpha: 0.5)),
+        color: AppColors.canvasCream.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: AppColors.goldPrimary.withValues(alpha: 0.3),
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.near_me, size: 14, color: AppColors.primary),
-              const SizedBox(width: 6),
-              Text(
-                'Jarak langsung: $directDist',
-                style: AppTypography.captionSmall.copyWith(color: AppColors.textBody),
-              ),
-            ],
+          _buildInfoItem(
+            icon: Icons.straighten_rounded,
+            label: 'Jarak Langsung',
+            value: directDist,
           ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              const Icon(Icons.directions_walk, size: 14, color: AppColors.primary),
-              const SizedBox(width: 6),
-              Text(
-                'Walking distance: ${_formatDistance(routeDistanceMeters!)}',
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.espressoDark,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+          Container(
+            width: 1,
+            height: 28,
+            color: AppColors.goldLight.withValues(alpha: 0.4),
           ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              const Icon(Icons.timer, size: 14, color: AppColors.primary),
-              const SizedBox(width: 6),
-              Text(
-                'ETA: ${_formatDuration(routeDurationSeconds!)}',
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.espressoDark,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+          _buildInfoItem(
+            icon: Icons.directions_walk_rounded,
+            label: 'Jalan Kaki',
+            value: _formatDistance(routeDistanceMeters!),
+            highlight: true,
+          ),
+          Container(
+            width: 1,
+            height: 28,
+            color: AppColors.goldLight.withValues(alpha: 0.4),
+          ),
+          _buildInfoItem(
+            icon: Icons.timer_outlined,
+            label: 'Estimasi Tiba',
+            value: _formatDuration(routeDurationSeconds!),
+            highlight: true,
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildInfoItem({
+    required IconData icon,
+    required String label,
+    required String value,
+    bool highlight = false,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 13,
+              color: highlight ? AppColors.espressoDark : AppColors.tanMedium,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: AppTypography.captionSmall.copyWith(
+                color: AppColors.textMuted,
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: AppTypography.captionSmall.copyWith(
+            color: highlight
+                ? AppColors.espressoDark
+                : AppColors.textHeading,
+            fontWeight: highlight ? FontWeight.w800 : FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 
@@ -385,9 +473,9 @@ class MapBottomSheet extends StatelessWidget {
   }
 
   String _formatDuration(int seconds) {
-    if (seconds < 60) return '$seconds detik';
-    if (seconds < 3600) return '${seconds ~/ 60} menit';
-    return '${seconds ~/ 3600} j ${(seconds % 3600) ~/ 60} mnt';
+    if (seconds < 60) return '$seconds dtk';
+    if (seconds < 3600) return '${seconds ~/ 60} mnt';
+    return '${seconds ~/ 3600}j ${(seconds % 3600) ~/ 60}m';
   }
 
   // ── 2. ROOM MEMBERS LIST PANEL ─────────────────────────────────────────────
@@ -396,7 +484,6 @@ class MapBottomSheet extends StatelessWidget {
     BuildContext context,
     List<RoomMemberModel> members,
   ) {
-    // Sort: members with location first, sorted by distance; then members without location
     final sorted = List<RoomMemberModel>.from(members);
     sorted.sort((a, b) {
       if (a.hasLocation && !b.hasLocation) return -1;
@@ -406,9 +493,9 @@ class MapBottomSheet extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
+        AppSpacing.cardPadding,
         AppSpacing.xs,
-        AppSpacing.lg,
+        AppSpacing.cardPadding,
         AppSpacing.md,
       ),
       child: Column(
@@ -421,24 +508,27 @@ class MapBottomSheet extends StatelessWidget {
               Text(
                 'Anggota Room',
                 style: AppTypography.titleMedium.copyWith(
-                  color: AppColors.espressoDark,
-                  fontWeight: FontWeight.bold,
+                  color: AppColors.textHeadingColor(context),
+                  fontWeight: FontWeight.w800,
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.canvasCream,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                   border: Border.all(
-                    color: AppColors.goldLight.withValues(alpha: 0.6),
+                    color: AppColors.cardBorderColor(context),
                   ),
                 ),
                 child: Text(
-                  '${members.length} orang',
+                  '${members.length} anggota',
                   style: AppTypography.captionSmall.copyWith(
                     color: AppColors.espressoDark,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
@@ -455,15 +545,8 @@ class MapBottomSheet extends StatelessWidget {
     BuildContext context,
     List<RoomMemberModel> sorted,
   ) {
-    // Compute usable height for the list:
-    //   screenHeight
-    //   - statusBar / top safe-area  (MediaQuery.padding.top)
-    //   - bottomOffset (nav bar height, e.g. 84)
-    //   - bottomSafeArea (system gesture bar)
-    //   - overhead: drag handle (30) + section header row (~44) + section spacing (~24)
-    //              + list top/bottom padding inside Padding widget (~AppSpacing.md)
     final mq = MediaQuery.of(context);
-    const double kOverhead = 30 + 44 + 24 + 16; // handle + header + spacing + padding
+    const double kOverhead = 30 + 44 + 24 + 16;
     final double listMaxHeight = mq.size.height
         - mq.padding.top
         - bottomOffset
@@ -476,13 +559,12 @@ class MapBottomSheet extends StatelessWidget {
       ),
       child: ListView.separated(
         padding: EdgeInsets.only(
-          // Extra spacer at the bottom so the last item clears the bottom nav
           bottom: mq.padding.bottom + 8,
         ),
         itemCount: sorted.length,
-        separatorBuilder: (context, index) => const Divider(
+        separatorBuilder: (context, index) => Divider(
           height: 1,
-          color: AppColors.outlineVariant,
+          color: AppColors.cardBorderColor(context),
         ),
         itemBuilder: (context, index) {
           final m = sorted[index];
@@ -495,27 +577,32 @@ class MapBottomSheet extends StatelessWidget {
           return InkWell(
             onTap: () => onMemberTap?.call(m),
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.symmetric(vertical: 10),
               child: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
+                      horizontal: 8,
+                      vertical: 3,
                     ),
                     decoration: BoxDecoration(
                       color: isPendamping
-                          ? AppColors.accentGoldStar.withValues(alpha: 0.2)
-                          : AppColors.statusSafe.withValues(alpha: 0.15),
+                          ? AppColors.goldPrimary.withValues(alpha: 0.16)
+                          : AppColors.statusSafe.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(AppRadius.pill),
+                      border: Border.all(
+                        color: isPendamping
+                            ? AppColors.goldPrimary.withValues(alpha: 0.35)
+                            : AppColors.statusSafe.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Text(
                       isPendamping ? 'Pendamping' : 'Jamaah',
                       style: TextStyle(
                         fontSize: 10,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w800,
                         color: isPendamping
-                            ? AppColors.primary
+                            ? AppColors.espressoDark
                             : AppColors.statusSafe,
                       ),
                     ),
@@ -525,8 +612,8 @@ class MapBottomSheet extends StatelessWidget {
                     child: Text(
                       m.name,
                       style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.espressoDark,
-                        fontWeight: FontWeight.w600,
+                        color: AppColors.textHeadingColor(context),
+                        fontWeight: FontWeight.w700,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -540,26 +627,27 @@ class MapBottomSheet extends StatelessWidget {
                         dist,
                         style: AppTypography.captionSmall.copyWith(
                           color: m.hasLocation
-                              ? AppColors.primary
-                              : AppColors.outlineVariant,
-                          fontWeight: FontWeight.bold,
+                              ? AppColors.goldPrimary
+                              : AppColors.textMuted,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                       Text(
                         locStatus,
                         style: TextStyle(
                           fontSize: 9,
+                          fontWeight: FontWeight.w600,
                           color: locStatus == 'Online'
                               ? AppColors.statusSafe
-                              : AppColors.textBody,
+                              : AppColors.textMuted,
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(width: 4),
                   const Icon(
-                    Icons.chevron_right,
-                    size: 16,
+                    Icons.chevron_right_rounded,
+                    size: 18,
                     color: AppColors.tanMedium,
                   ),
                 ],
@@ -577,23 +665,25 @@ class MapBottomSheet extends StatelessWidget {
     final jamaah = activeJamaah ?? state.self;
 
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.cardPadding),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
                   color: AppColors.canvasCream,
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.goldLight),
+                  border: Border.all(
+                    color: AppColors.goldPrimary.withValues(alpha: 0.35),
+                  ),
                 ),
                 child: const Icon(
-                  Icons.elderly,
-                  color: AppColors.tanMedium,
+                  Icons.elderly_rounded,
+                  color: AppColors.espressoDark,
                   size: 24,
                 ),
               ),
@@ -605,17 +695,17 @@ class MapBottomSheet extends StatelessWidget {
                     Text(
                       jamaah.name,
                       style: AppTypography.titleMedium.copyWith(
-                        color: AppColors.espressoDark,
-                        fontWeight: FontWeight.bold,
+                        color: AppColors.textHeadingColor(context),
+                        fontWeight: FontWeight.w800,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${jamaah.shortLabel} • ${jamaah.distance.toInt()}m',
+                      '${jamaah.shortLabel} • Jarak ${jamaah.distance.toInt()}m',
                       style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textBody,
+                        color: AppColors.textBodyColor(context),
                       ),
                     ),
                   ],
@@ -623,24 +713,33 @@ class MapBottomSheet extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
-            height: AppSizes.buttonHeightSecondary,
+            height: 52,
             child: ElevatedButton.icon(
               onPressed: onNavigate,
-              icon: const Icon(Icons.directions, size: 18),
+              icon: const Icon(
+                Icons.directions_walk_rounded,
+                size: 20,
+                color: AppColors.goldPrimary,
+              ),
               label: Text(
-                'Navigasi',
+                'Mulai Navigasi',
                 style: AppTypography.labelLarge.copyWith(
-                  color: AppColors.surfaceWhite,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.espressoDark,
-                foregroundColor: AppColors.onPrimary,
+                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.pill),
+                  side: BorderSide(
+                    color: AppColors.goldPrimary.withValues(alpha: 0.5),
+                    width: 1.2,
+                  ),
                 ),
               ),
             ),

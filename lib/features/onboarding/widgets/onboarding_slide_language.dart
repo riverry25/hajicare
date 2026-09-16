@@ -253,28 +253,29 @@ class OnboardingSlideLanguage extends StatelessWidget {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(AppRadius.card),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.all(16),
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(AppSpacing.cardPadding),
         decoration: BoxDecoration(
           color: AppColors.surfaceWhite,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           border: Border.all(
             color: isSelected
-                ? AppColors.espressoDark
-                : AppColors.goldLight.withValues(alpha: .25),
-            width: isSelected ? 2 : 1,
+                ? AppColors.primaryContainer
+                : AppColors.lightCardBorder,
+            width: isSelected ? 2.0 : 1.0,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: .04),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
+              color: isSelected
+                  ? AppColors.primary.withValues(alpha: 0.08)
+                  : Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
-
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -282,62 +283,61 @@ class OnboardingSlideLanguage extends StatelessWidget {
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
+                    horizontal: 8,
+                    vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.canvasCream,
-                    borderRadius: BorderRadius.circular(50),
+                    color: isSelected
+                        ? AppColors.goldPrimary.withValues(alpha: 0.15)
+                        : AppColors.canvasCream,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Text(
                     type,
                     style: AppTypography.captionSmall.copyWith(
-                      color: AppColors.espressoDark.withValues(alpha: 0.5),
-                      overflow: TextOverflow.ellipsis,
+                      color: isSelected
+                          ? AppColors.espressoDark
+                          : AppColors.textBody,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
-
                 const Spacer(),
-
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 200),
                   child: isSelected
                       ? const Icon(
                           Icons.check_circle_rounded,
                           key: ValueKey(true),
-                          color: AppColors.statusPositive,
+                          color: AppColors.statusSafe,
+                          size: 22,
                         )
                       : const Icon(
-                          Icons.radio_button_unchecked,
+                          Icons.radio_button_unchecked_rounded,
                           key: ValueKey(false),
                           color: AppColors.tanMedium,
+                          size: 22,
                         ),
                 ),
               ],
             ),
-
             const Spacer(),
-
             Text(
               title,
               style: AppTypography.titleMedium.copyWith(
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w800,
                 color: AppColors.espressoDark,
               ),
-              maxLines: 2,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-
-            const SizedBox(height: 6),
-
-            Expanded(
-              child: Text(
-                subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.espressoDark.withValues(alpha: 0.5),
-                ),
+            const SizedBox(height: 3),
+            Text(
+              subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.caption.copyWith(
+                color: AppColors.textBody,
               ),
             ),
           ],

@@ -11,6 +11,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
 import '../../../core/state/app_settings_controller.dart';
 import '../../../core/state/app_startup_controller.dart';
+import '../../../core/state/hajicare_controller.dart';
 import '../../../core/locales/app_localizations.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -21,21 +22,19 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final settings = Get.find<AppSettingsController>();
     final profileCtrl = Get.put(ProfileController());
+    final state = Get.isRegistered<HajiCareController>()
+        ? Get.find<HajiCareController>()
+        : null;
 
     return Obx(() {
-      // Observe settings to trigger rebuild on change
       settings.currentTextScale;
       settings.currentLocale;
       {
         final isDark = AppColors.isDark(context);
-        final scaffoldBg = isDark
-            ? AppColors.darkScaffold
-            : AppColors.canvasCream;
-        final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-        final headingColor = isDark
-            ? AppColors.darkTextHeading
-            : AppColors.espressoDark;
-        final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
+        final scaffoldBg = AppColors.scaffoldColor(context);
+        final cardBg = AppColors.cardBgColor(context);
+        final headingColor = AppColors.textHeadingColor(context);
+        final bodyColor = AppColors.textBodyColor(context);
 
         return Scaffold(
           backgroundColor: scaffoldBg,
@@ -44,60 +43,84 @@ class ProfileScreen extends StatelessWidget {
             backgroundColor: scaffoldBg,
             elevation: 0,
             title: Text(
-              context.tr('profileTitle'),
-              style: AppTypography.headlineMd.copyWith(color: headingColor),
+              context.tr('profileTitle').isEmpty
+                  ? 'Profil & Pengaturan'
+                  : context.tr('profileTitle'),
+              style: AppTypography.titleLarge.copyWith(
+                color: headingColor,
+                fontWeight: FontWeight.w800,
+              ),
             ),
             centerTitle: true,
           ),
           body: ListView(
+            physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.lg,
-              AppSpacing.lg,
+              AppSpacing.screenEdgeGutter,
+              AppSpacing.md,
+              AppSpacing.screenEdgeGutter,
               100,
             ),
             children: [
+              // 1. Profile Identity Header Card
               _ProfileHeader(
                 controller: profileCtrl,
+                state: state,
                 cardBg: cardBg,
                 headingColor: headingColor,
                 bodyColor: bodyColor,
                 isDark: isDark,
               ),
-              const SizedBox(height: AppSpacing.gapSection),
+              const SizedBox(height: AppSpacing.lg),
+
+              // 2. Data Jamaah & Rombongan
               _SettingsGroup(
-                title: context.tr('accountData'),
-                titleColor: bodyColor,
+                title: context.tr('accountData').isEmpty
+                    ? 'Data Jamaah & Rombongan'
+                    : context.tr('accountData'),
+                titleColor: AppColors.tanMedium,
                 cardBg: cardBg,
                 children: [
                   _SettingsTile(
-                    icon: Icons.medical_information_outlined,
-                    label: context.tr('medicalData'),
+                    icon: Icons.medical_information_rounded,
+                    label: context.tr('medicalData').isEmpty
+                        ? 'Data Medis & Riwayat'
+                        : context.tr('medicalData'),
+                    trailingLabel: 'Lihat',
                     cardBg: cardBg,
                     headingColor: headingColor,
                     bodyColor: bodyColor,
-                    onTap: () {},
+                    onTap: () => _showMedicalDataSheet(context, state),
                   ),
                   _DividerThin(),
                   _SettingsTile(
-                    icon: Icons.link_rounded,
-                    label: context.tr('manageCompanion'),
+                    icon: Icons.groups_rounded,
+                    label: context.tr('manageCompanion').isEmpty
+                        ? 'Kontak Pendamping & Room'
+                        : context.tr('manageCompanion'),
+                    trailingLabel: state?.activeRoom.value?.name ?? 'Aktif',
                     cardBg: cardBg,
                     headingColor: headingColor,
                     bodyColor: bodyColor,
-                    onTap: () {},
+                    onTap: () => _showCompanionInfoSheet(context, state),
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.gapCards),
+              const SizedBox(height: AppSpacing.md),
+
+              // 3. Aksesibilitas
               _SettingsGroup(
-                title: context.tr('accessibilitySettings'),
-                titleColor: bodyColor,
+                title: context.tr('accessibilitySettings').isEmpty
+                    ? 'Aksesibilitas'
+                    : context.tr('accessibilitySettings'),
+                titleColor: AppColors.tanMedium,
                 cardBg: cardBg,
                 children: [
                   _SettingsTile(
-                    icon: Icons.text_increase_rounded,
-                    label: context.tr('textSize'),
+                    icon: Icons.text_fields_rounded,
+                    label: context.tr('textSize').isEmpty
+                        ? 'Ukuran Teks'
+                        : context.tr('textSize'),
                     trailingLabel: settings.currentTextScale.label,
                     cardBg: cardBg,
                     headingColor: headingColor,
@@ -106,15 +129,21 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.gapCards),
+              const SizedBox(height: AppSpacing.md),
+
+              // 4. Preferensi & Tampilan
               _SettingsGroup(
-                title: context.tr('preferenceSettings'),
-                titleColor: bodyColor,
+                title: context.tr('preferenceSettings').isEmpty
+                    ? 'Preferensi & Tampilan'
+                    : context.tr('preferenceSettings'),
+                titleColor: AppColors.tanMedium,
                 cardBg: cardBg,
                 children: [
                   _SettingsTile(
                     icon: Icons.language_rounded,
-                    label: context.tr('language'),
+                    label: context.tr('language').isEmpty
+                        ? 'Bahasa Aplikasi'
+                        : context.tr('language'),
                     trailingLabel: settings.localeName,
                     cardBg: cardBg,
                     headingColor: headingColor,
@@ -123,8 +152,10 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   _DividerThin(),
                   _SettingsTile(
-                    icon: Icons.contrast_rounded,
-                    label: context.tr('theme'),
+                    icon: Icons.brightness_6_rounded,
+                    label: context.tr('theme').isEmpty
+                        ? 'Tema Tampilan'
+                        : context.tr('theme'),
                     trailingLabel: settings.themeModeName,
                     cardBg: cardBg,
                     headingColor: headingColor,
@@ -133,15 +164,21 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.gapCards),
+              const SizedBox(height: AppSpacing.md),
+
+              // 5. Informasi & Bantuan
               _SettingsGroup(
-                title: context.tr('otherSettings'),
-                titleColor: bodyColor,
+                title: context.tr('otherSettings').isEmpty
+                    ? 'Bantuan & Informasi'
+                    : context.tr('otherSettings'),
+                titleColor: AppColors.tanMedium,
                 cardBg: cardBg,
                 children: [
                   _SettingsTile(
                     icon: Icons.help_outline_rounded,
-                    label: context.tr('helpCenter'),
+                    label: context.tr('helpCenter').isEmpty
+                        ? 'Pusat Bantuan & FAQ'
+                        : context.tr('helpCenter'),
                     cardBg: cardBg,
                     headingColor: headingColor,
                     bodyColor: bodyColor,
@@ -150,7 +187,9 @@ class ProfileScreen extends StatelessWidget {
                   _DividerThin(),
                   _SettingsTile(
                     icon: Icons.info_outline_rounded,
-                    label: context.tr('aboutApp'),
+                    label: context.tr('aboutApp').isEmpty
+                        ? 'Tentang HajiCare'
+                        : context.tr('aboutApp'),
                     trailingLabel: AppConstants.appVersion,
                     cardBg: cardBg,
                     headingColor: headingColor,
@@ -159,8 +198,14 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.gapSection),
-              _LogoutButton(label: context.tr('logout')),
+              const SizedBox(height: AppSpacing.xl),
+
+              // 6. Logout Button
+              _LogoutButton(
+                label: context.tr('logout').isEmpty
+                    ? 'Keluar dari Akun'
+                    : context.tr('logout'),
+              ),
               const SizedBox(height: AppSpacing.md),
             ],
           ),
@@ -170,6 +215,264 @@ class ProfileScreen extends StatelessWidget {
         );
       }
     });
+  }
+
+  // ── Dialogs & Bottom Sheets ───────────────────────────────────────────────
+
+  void _showMedicalDataSheet(BuildContext context, HajiCareController? state) {
+    final isDark = AppColors.isDark(context);
+    final cardBg = AppColors.cardBgColor(context);
+    final headingColor = AppColors.textHeadingColor(context);
+
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      backgroundColor: cardBg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.cardPadding),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 5,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBorderColor(context),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                ),
+              ),
+              Row(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: AppColors.sosEmergency.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.medical_information_rounded,
+                      color: AppColors.sosEmergency,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Data Medis & Riwayat Jamaah',
+                          style: AppTypography.titleMedium.copyWith(
+                            color: headingColor,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Digunakan saat penanganan darurat di Posko PPIH',
+                          style: AppTypography.captionSmall.copyWith(
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.darkSurfaceContainer
+                      : AppColors.canvasCream,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  border: Border.all(color: AppColors.cardBorderColor(context)),
+                ),
+                child: Column(
+                  children: [
+                    _buildMedRow('Golongan Darah', 'O Rhesus (+) Positif'),
+                    const Divider(height: 16),
+                    _buildMedRow('Riwayat Alergi', 'Tidak ada alergi obat'),
+                    const Divider(height: 16),
+                    _buildMedRow('Kondisi Khusus', 'Hipertensi Ringan (Terkontrol)'),
+                    const Divider(height: 16),
+                    _buildMedRow('Kontak Darurat', '0812-3456-7890 (Keluarga)'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.espressoDark,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                  ),
+                  onPressed: () => Get.back(),
+                  child: const Text(
+                    'Tutup',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMedRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: AppTypography.bodySmall.copyWith(
+            color: AppColors.textMuted,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        Text(
+          value,
+          style: AppTypography.bodySmall.copyWith(
+            color: AppColors.espressoDark,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showCompanionInfoSheet(BuildContext context, HajiCareController? state) {
+    final isDark = AppColors.isDark(context);
+    final cardBg = AppColors.cardBgColor(context);
+    final headingColor = AppColors.textHeadingColor(context);
+    final roomName = state?.activeRoom.value?.name ?? 'Maktab 48 Mina';
+    final pendamping = state?.pendampingName.value ?? 'Ustadz Ahmad & Tim PPIH';
+
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      backgroundColor: cardBg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.cardPadding),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 5,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBorderColor(context),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                ),
+              ),
+              Row(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: AppColors.goldPrimary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.groups_rounded,
+                      color: AppColors.goldPrimary,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Pendamping & Room Aktif',
+                          style: AppTypography.titleMedium.copyWith(
+                            color: headingColor,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Terhubung ke pengawasan rombongan Anda',
+                          style: AppTypography.captionSmall.copyWith(
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.darkSurfaceContainer
+                      : AppColors.canvasCream,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  border: Border.all(color: AppColors.cardBorderColor(context)),
+                ),
+                child: Column(
+                  children: [
+                    _buildMedRow('Room Pemantauan', roomName),
+                    const Divider(height: 16),
+                    _buildMedRow('Ketua Rombongan', pendamping),
+                    const Divider(height: 16),
+                    _buildMedRow('Status Sambungan', 'Terkoneksi Realtime'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.espressoDark,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                  ),
+                  onPressed: () => Get.back(),
+                  child: const Text(
+                    'Selesai',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _showLanguagePicker(
@@ -184,7 +487,9 @@ class ProfileScreen extends StatelessWidget {
     ];
     _showPickerSheet(
       context: context,
-      title: context.tr('selectLanguageTitle'),
+      title: context.tr('selectLanguageTitle').isEmpty
+          ? 'Pilih Bahasa'
+          : context.tr('selectLanguageTitle'),
       children: options.map((opt) {
         final isSelected =
             settings.currentLocale.languageCode == opt.$1.languageCode;
@@ -204,15 +509,25 @@ class ProfileScreen extends StatelessWidget {
     final options = [
       (
         ThemeMode.system,
-        context.tr('themeSystem'),
+        context.tr('themeSystem').isEmpty ? 'Ikuti Sistem' : context.tr('themeSystem'),
         Icons.brightness_auto_rounded,
       ),
-      (ThemeMode.light, context.tr('themeLight'), Icons.light_mode_rounded),
-      (ThemeMode.dark, context.tr('themeDark'), Icons.dark_mode_rounded),
+      (
+        ThemeMode.light,
+        context.tr('themeLight').isEmpty ? 'Mode Terang' : context.tr('themeLight'),
+        Icons.light_mode_rounded,
+      ),
+      (
+        ThemeMode.dark,
+        context.tr('themeDark').isEmpty ? 'Mode Gelap' : context.tr('themeDark'),
+        Icons.dark_mode_rounded,
+      ),
     ];
     _showPickerSheet(
       context: context,
-      title: context.tr('selectThemeTitle'),
+      title: context.tr('selectThemeTitle').isEmpty
+          ? 'Pilih Tema'
+          : context.tr('selectThemeTitle'),
       children: options.map((opt) {
         final isSelected = settings.currentThemeMode == opt.$1;
         return _PickerOption(
@@ -234,7 +549,9 @@ class ProfileScreen extends StatelessWidget {
   ) {
     _showPickerSheet(
       context: context,
-      title: context.tr('selectTextSizeTitle'),
+      title: context.tr('selectTextSizeTitle').isEmpty
+          ? 'Pilih Ukuran Teks'
+          : context.tr('selectTextSizeTitle'),
       children: AppTextScale.values.map((scale) {
         final isSelected = settings.currentTextScale == scale;
         return _PickerOption(
@@ -259,7 +576,7 @@ class ProfileScreen extends StatelessWidget {
       context: context,
       useRootNavigator: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (_) => SafeArea(
         child: Padding(
@@ -275,10 +592,10 @@ class ProfileScreen extends StatelessWidget {
             children: [
               Center(
                 child: Container(
-                  width: 40,
-                  height: 4,
+                  width: 44,
+                  height: 5,
                   decoration: BoxDecoration(
-                    color: AppColors.outlineVariant,
+                    color: AppColors.cardBorderColor(context),
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                 ),
@@ -287,9 +604,8 @@ class ProfileScreen extends StatelessWidget {
               Text(
                 title,
                 style: AppTypography.titleLarge.copyWith(
-                  color: AppColors.isDark(Get.context!)
-                      ? AppColors.darkTextHeading
-                      : AppColors.textHeading,
+                  color: AppColors.textHeadingColor(context),
+                  fontWeight: FontWeight.w800,
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
@@ -306,6 +622,7 @@ class ProfileScreen extends StatelessWidget {
 
 class _ProfileHeader extends StatelessWidget {
   final ProfileController controller;
+  final HajiCareController? state;
   final Color cardBg;
   final Color headingColor;
   final Color bodyColor;
@@ -313,6 +630,7 @@ class _ProfileHeader extends StatelessWidget {
 
   const _ProfileHeader({
     required this.controller,
+    required this.state,
     required this.cardBg,
     required this.headingColor,
     required this.bodyColor,
@@ -321,24 +639,31 @@ class _ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final self = state?.self;
+    final porsiText = self?.porsi != null && self!.porsi!.isNotEmpty
+        ? 'Porsi: ${self.porsi}'
+        : 'Paspor: Indonesia';
+    final maktabText = self?.maktab != null && self!.maktab!.isNotEmpty
+        ? 'Maktab ${self.maktab}'
+        : (self?.kloter != null ? 'Kloter ${self!.kloter}' : 'Maktab 48 Mina');
+
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.xl,
-        vertical: AppSpacing.xxl,
+        vertical: AppSpacing.xl,
       ),
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(AppConstants.radiusCard),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(
-          color: isDark
-              ? AppColors.darkOutlineVariant
-              : AppColors.canvasCreamSubtle,
+          color: AppColors.cardBorderColor(context),
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.espressoDark.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: AppColors.espressoDark.withValues(alpha: 0.05),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -346,19 +671,21 @@ class _ProfileHeader extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Obx(
-            () =>
-                _InitialsAvatar(initials: controller.initials, isDark: isDark),
+            () => _InitialsAvatar(initials: controller.initials, isDark: isDark),
           ),
           const SizedBox(height: AppSpacing.md),
           Obx(
             () => Text(
               controller.displayName.value,
-              style: AppTypography.headlineMd.copyWith(color: headingColor),
+              style: AppTypography.headlineMd.copyWith(
+                color: headingColor,
+                fontWeight: FontWeight.w800,
+              ),
               textAlign: TextAlign.center,
               softWrap: true,
             ),
           ),
-          const SizedBox(height: AppSpacing.gapTitleSubtitle),
+          const SizedBox(height: 4),
           if (controller.safeEmail.isNotEmpty)
             Text(
               controller.safeEmail,
@@ -366,27 +693,62 @@ class _ProfileHeader extends StatelessWidget {
               textAlign: TextAlign.center,
               softWrap: true,
             ),
-          const SizedBox(height: AppSpacing.sm),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.xs,
-            ),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.darkPrimaryContainer.withValues(alpha: 0.5)
-                  : AppColors.secondaryContainer.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(AppRadius.pill),
-            ),
-            child: Text(
-              context.tr('jamaah'),
-              style: AppTypography.captionBold.copyWith(
-                color: isDark ? AppColors.darkPrimary : AppColors.espressoDark,
-                letterSpacing: 0.3,
+          const SizedBox(height: 10),
+
+          // Role & Identity Meta Tags
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            alignment: WrapAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.darkPrimaryContainer.withValues(alpha: 0.6)
+                      : AppColors.espressoDark,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  border: Border.all(
+                    color: AppColors.goldPrimary,
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  state?.role == UserRole.pendamping ? 'Pendamping' : 'Jamaah Haji',
+                  style: AppTypography.captionSmall.copyWith(
+                    color: isDark ? AppColors.goldPrimary : Colors.white,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ),
-            ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.darkSurfaceContainerHigh
+                      : AppColors.canvasCream,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  border: Border.all(
+                    color: AppColors.cardBorderColor(context),
+                  ),
+                ),
+                child: Text(
+                  '$porsiText • $maktabText',
+                  style: AppTypography.captionSmall.copyWith(
+                    color: AppColors.textHeadingColor(context),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: 12),
           _EditNameButton(controller: controller, isDark: isDark),
         ],
       ),
@@ -405,8 +767,8 @@ class _InitialsAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 80,
-      height: 80,
+      width: 82,
+      height: 82,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: LinearGradient(
@@ -415,20 +777,27 @@ class _InitialsAvatar extends StatelessWidget {
                   AppColors.darkPrimaryContainer,
                   AppColors.darkSurfaceContainerHigh,
                 ]
-              : [AppColors.espressoDark, AppColors.primaryContainer],
+              : [AppColors.espressoDark, Color(0xFF22160E)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         border: Border.all(
-          color: isDark ? AppColors.darkPrimary : AppColors.goldLight,
+          color: AppColors.goldPrimary,
           width: 2.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.goldPrimary.withValues(alpha: 0.25),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       alignment: Alignment.center,
       child: Text(
         initials,
         style: AppTypography.displayMedium.copyWith(
-          color: isDark ? AppColors.darkTextHeading : AppColors.surfaceWhite,
+          color: Colors.white,
           fontWeight: FontWeight.w800,
           letterSpacing: 1,
         ),
@@ -448,6 +817,7 @@ class _EditNameButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accentColor = isDark ? AppColors.darkPrimary : AppColors.espressoDark;
+
     return Semantics(
       button: true,
       label: context.tr('editName'),
@@ -465,10 +835,10 @@ class _EditNameButton extends StatelessWidget {
               Icon(Icons.edit_rounded, size: 14, color: accentColor),
               const SizedBox(width: AppSpacing.xs),
               Text(
-                context.tr('editName'),
+                context.tr('editName').isEmpty ? 'Ubah Nama' : context.tr('editName'),
                 style: AppTypography.bodySmall.copyWith(
                   color: accentColor,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
@@ -489,7 +859,7 @@ class _EditNameButton extends StatelessWidget {
     final bodyClr = isDarkSheet ? AppColors.darkTextBody : AppColors.textBody;
     final borderClr = isDarkSheet
         ? AppColors.darkOutlineVariant
-        : AppColors.outlineVariant;
+        : AppColors.cardBorderColor(context);
     final nameCtrl = TextEditingController(text: controller.displayName.value);
     final inputError = RxnString();
 
@@ -499,7 +869,7 @@ class _EditNameButton extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: sheetBg,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (sheetCtx) => Padding(
         padding: EdgeInsets.only(
@@ -519,8 +889,8 @@ class _EditNameButton extends StatelessWidget {
               children: [
                 Center(
                   child: Container(
-                    width: 40,
-                    height: 4,
+                    width: 44,
+                    height: 5,
                     decoration: BoxDecoration(
                       color: borderClr,
                       borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -529,15 +899,20 @@ class _EditNameButton extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 Text(
-                  sheetCtx.tr('editNameTitle'),
-                  style: AppTypography.titleLarge.copyWith(color: headingClr),
+                  sheetCtx.tr('editNameTitle').isEmpty
+                      ? 'Ubah Nama Lengkap'
+                      : sheetCtx.tr('editNameTitle'),
+                  style: AppTypography.titleLarge.copyWith(
+                    color: headingClr,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 Text(
-                  sheetCtx.tr('name'),
+                  sheetCtx.tr('name').isEmpty ? 'Nama' : sheetCtx.tr('name'),
                   style: AppTypography.bodySmall.copyWith(
                     color: bodyClr,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
@@ -551,11 +926,7 @@ class _EditNameButton extends StatelessWidget {
                     style: AppTypography.bodyLarge.copyWith(color: headingClr),
                     decoration: InputDecoration(
                       counterText: '',
-                      hintText: sheetCtx.tr('name'),
-                      hintStyle: AppTypography.bodyLarge.copyWith(
-                        color: bodyClr.withValues(alpha: 0.5),
-                      ),
-                      errorText: inputError.value,
+                      hintText: sheetCtx.tr('name').isEmpty ? 'Nama Lengkap' : sheetCtx.tr('name'),
                       filled: true,
                       fillColor: isDarkSheet
                           ? AppColors.darkSurfaceContainer
@@ -574,22 +945,9 @@ class _EditNameButton extends StatelessWidget {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppRadius.lg),
-                        borderSide: BorderSide(
-                          color: isDarkSheet
-                              ? AppColors.darkPrimary
-                              : AppColors.espressoDark,
-                          width: 1.5,
-                        ),
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                        borderSide: const BorderSide(color: AppColors.error),
-                      ),
-                      focusedErrorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
                         borderSide: const BorderSide(
-                          color: AppColors.error,
-                          width: 1.5,
+                          color: AppColors.goldPrimary,
+                          width: 1.8,
                         ),
                       ),
                     ),
@@ -598,95 +956,64 @@ class _EditNameButton extends StatelessWidget {
                 const SizedBox(height: AppSpacing.lg),
                 Obx(() {
                   final saving = controller.isSavingName.value;
-                  return ElevatedButton(
-                    onPressed: saving
-                        ? null
-                        : () async {
-                            final input = nameCtrl.text.trim();
-                            if (input.isEmpty) {
-                              inputError.value = sheetCtx.tr('nameRequired');
-                              return;
-                            }
-                            if (input.length > 50) {
-                              inputError.value = sheetCtx.tr('nameTooLong');
-                              return;
-                            }
-                            inputError.value = null;
+                  return SizedBox(
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: saving
+                          ? null
+                          : () async {
+                              final input = nameCtrl.text.trim();
+                              if (input.isEmpty) {
+                                inputError.value = 'Nama tidak boleh kosong';
+                                return;
+                              }
+                              inputError.value = null;
 
-                            final successTitle = sheetCtx.tr('success');
-                            final successMsg = sheetCtx.tr('nameUpdated');
-                            final errorTitle = sheetCtx.tr('error');
-                            final errorMsg = sheetCtx.tr('updateNameError');
-
-                            try {
-                              await controller.updateDisplayName(input);
-                              Get.back();
-                              Get.snackbar(
-                                successTitle,
-                                successMsg,
-                                snackPosition: SnackPosition.BOTTOM,
-                                backgroundColor: AppColors.statusSafe
-                                    .withValues(alpha: 0.9),
-                                colorText: AppColors.surfaceWhite,
-                                margin: const EdgeInsets.all(AppSpacing.lg),
-                                borderRadius: AppRadius.lg,
-                                duration: const Duration(seconds: 3),
-                              );
-                            } catch (_) {
-                              Get.snackbar(
-                                errorTitle,
-                                errorMsg,
-                                snackPosition: SnackPosition.BOTTOM,
-                                backgroundColor: AppColors.error.withValues(
-                                  alpha: 0.9,
-                                ),
-                                colorText: AppColors.surfaceWhite,
-                                margin: const EdgeInsets.all(AppSpacing.lg),
-                                borderRadius: AppRadius.lg,
-                                duration: const Duration(seconds: 4),
-                              );
-                            }
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isDarkSheet
-                          ? AppColors.darkPrimary
-                          : AppColors.espressoDark,
-                      foregroundColor: isDarkSheet
-                          ? AppColors.darkOnPrimary
-                          : AppColors.surfaceWhite,
-                      disabledBackgroundColor: isDarkSheet
-                          ? AppColors.darkSurfaceContainer
-                          : AppColors.outlineVariant,
-                      minimumSize: const Size(
-                        double.infinity,
-                        AppSizes.buttonHeightPrimary,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppConstants.radiusPill,
+                              try {
+                                await controller.updateDisplayName(input);
+                                Get.back();
+                                Get.snackbar(
+                                  'Berhasil',
+                                  'Nama berhasil diperbarui',
+                                  snackPosition: SnackPosition.BOTTOM,
+                                  backgroundColor: AppColors.statusSafe,
+                                  colorText: Colors.white,
+                                  margin: const EdgeInsets.all(AppSpacing.lg),
+                                );
+                              } catch (_) {
+                                Get.snackbar(
+                                  'Gagal',
+                                  'Gagal memperbarui nama',
+                                  snackPosition: SnackPosition.BOTTOM,
+                                  backgroundColor: AppColors.sosEmergency,
+                                  colorText: Colors.white,
+                                  margin: const EdgeInsets.all(AppSpacing.lg),
+                                );
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.espressoDark,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
                       ),
-                      elevation: 0,
+                      child: saving
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'Simpan Perubahan',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
                     ),
-                    child: saving
-                        ? SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              color: isDarkSheet
-                                  ? AppColors.darkOnPrimary
-                                  : AppColors.surfaceWhite,
-                            ),
-                          )
-                        : Text(
-                            sheetCtx.tr('save'),
-                            style: AppTypography.titleMedium.copyWith(
-                              color: isDarkSheet
-                                  ? AppColors.darkOnPrimary
-                                  : AppColors.surfaceWhite,
-                            ),
-                          ),
                   );
                 }),
               ],
@@ -720,27 +1047,33 @@ class _SettingsGroup extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(
-            left: AppSpacing.sm,
-            bottom: AppSpacing.xs,
-            top: AppSpacing.sm,
+            left: 6,
+            bottom: 6,
+            top: 4,
           ),
           child: Text(
             title.toUpperCase(),
-            style: AppTypography.labelPill.copyWith(
+            style: AppTypography.captionSmall.copyWith(
               color: titleColor,
-              letterSpacing: 0.6,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
             ),
           ),
         ),
         Container(
           decoration: BoxDecoration(
             color: cardBg,
-            borderRadius: BorderRadius.circular(AppConstants.radiusCard),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
             border: Border.all(
-              color: AppColors.isDark(context)
-                  ? AppColors.darkOutlineVariant
-                  : AppColors.canvasCreamSubtle,
+              color: AppColors.cardBorderColor(context),
             ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.espressoDark.withValues(alpha: 0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Column(children: children),
         ),
@@ -777,44 +1110,50 @@ class _SettingsTile extends StatelessWidget {
       label: '$label${trailingLabel != null ? ': $trailingLabel' : ''}',
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppConstants.radiusCard),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.md,
+            horizontal: 16,
+            vertical: 14,
           ),
           child: Row(
             children: [
               Container(
-                width: AppSizes.touchTargetMin,
-                height: AppSizes.touchTargetMin,
+                width: 38,
+                height: 38,
                 decoration: BoxDecoration(
-                  color: AppColors.isDark(context)
-                      ? AppColors.darkSurfaceContainer
-                      : AppColors.canvasCream,
+                  color: AppColors.canvasCream,
                   shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.cardBorderColor(context),
+                  ),
                 ),
-                child: Icon(icon, color: headingColor, size: 20),
+                child: Icon(icon, color: AppColors.espressoDark, size: 20),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
                   label,
-                  style: AppTypography.bodyMd.copyWith(color: headingColor),
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: headingColor,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               if (trailingLabel != null) ...[
                 Text(
                   trailingLabel!,
-                  style: AppTypography.caption.copyWith(color: bodyColor),
+                  style: AppTypography.captionSmall.copyWith(
+                    color: AppColors.textMuted,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.xs),
               ],
-              Icon(
+              const Icon(
                 Icons.chevron_right_rounded,
-                color: AppColors.isDark(context)
-                    ? AppColors.darkOutline
-                    : AppColors.tanMedium,
+                color: AppColors.tanMedium,
+                size: 20,
               ),
             ],
           ),
@@ -831,10 +1170,8 @@ class _DividerThin extends StatelessWidget {
   Widget build(BuildContext context) {
     return Divider(
       height: 1,
-      indent: AppSpacing.xl + AppSizes.touchTargetMin,
-      color: AppColors.isDark(context)
-          ? AppColors.darkOutlineVariant
-          : AppColors.canvasCreamSubtle,
+      indent: 58,
+      color: AppColors.cardBorderColor(context),
     );
   }
 }
@@ -850,57 +1187,73 @@ class _LogoutButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: label,
-      child: ElevatedButton(
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (dialogContext) => AlertDialog(
-              title: Text(label),
-              content: Text(
-                dialogContext.tr('apakahYakinKeluar').isEmpty
-                    ? 'Yakin ingin keluar dari akun?'
-                    : dialogContext.tr('apakahYakinKeluar'),
+      child: SizedBox(
+        height: 52,
+        child: OutlinedButton.icon(
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (dialogContext) => AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                title: Text(
+                  label,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                content: const Text(
+                  'Apakah Anda yakin ingin keluar? Anda perlu login kembali untuk mengakses data room rombongan.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Get.back(),
+                    child: Text(
+                      dialogContext.tr('cancel').isEmpty
+                          ? 'Batal'
+                          : dialogContext.tr('cancel'),
+                      style: const TextStyle(color: AppColors.espressoDark),
+                    ),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.sosEmergency,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                    ),
+                    onPressed: () async {
+                      await Get.find<AppStartupController>().signOut();
+                    },
+                    child: const Text('Keluar'),
+                  ),
+                ],
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Get.back(),
-                  child: Text(
-                    dialogContext.tr('cancel').isEmpty
-                        ? 'Batal'
-                        : dialogContext.tr('cancel'),
-                  ),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.error,
-                  ),
-                  onPressed: () async {
-                    await Get.find<AppStartupController>().signOut();
-                  },
-                  child: Text(
-                    dialogContext.tr('yes').isEmpty
-                        ? 'Ya'
-                        : dialogContext.tr('yes'),
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ),
-              ],
+            );
+          },
+          style: OutlinedButton.styleFrom(
+            side: BorderSide(
+              color: AppColors.sosEmergency.withValues(alpha: 0.4),
+              width: 1.2,
             ),
-          );
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.errorContainer,
-          foregroundColor: AppColors.error,
-          elevation: 0,
-          minimumSize: const Size(
-            double.infinity,
-            AppSizes.buttonHeightPrimary,
+            backgroundColor: AppColors.sosEmergency.withValues(alpha: 0.05),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+            ),
           ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppConstants.radiusPill),
+          icon: const Icon(
+            Icons.logout_rounded,
+            size: 18,
+            color: AppColors.sosEmergency,
+          ),
+          label: Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.sosEmergency,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ),
-        child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
       ),
     );
   }
@@ -926,10 +1279,8 @@ class _PickerOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
-    final activeColor = isDark ? AppColors.darkPrimary : AppColors.espressoDark;
-    final textColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.textHeading;
+    final activeColor = isDark ? AppColors.goldPrimary : AppColors.espressoDark;
+    final textColor = AppColors.textHeadingColor(context);
     final selectedBg = isDark
         ? AppColors.darkPrimaryContainer.withValues(alpha: 0.40)
         : AppColors.espressoDark.withValues(alpha: 0.07);
@@ -968,30 +1319,30 @@ class _PickerOption extends StatelessWidget {
                   label,
                   style: AppTypography.bodyLarge.copyWith(
                     color: isSelected ? activeColor : textColor,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
                   ),
                 ),
               ),
               if (trailingHint != null) ...[
                 Text(
                   trailingHint!,
-                  style: AppTypography.caption.copyWith(
+                  style: AppTypography.captionSmall.copyWith(
                     color: AppColors.textBodyColor(context),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
               ],
               if (isSelected)
-                Icon(Icons.check_circle_rounded, color: activeColor, size: 20)
+                Icon(Icons.check_circle_rounded, color: activeColor, size: 22)
               else
                 Container(
-                  width: 20,
-                  height: 20,
+                  width: 22,
+                  height: 22,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: AppColors.outlineColor(context),
-                      width: 2,
+                      color: AppColors.cardBorderColor(context),
+                      width: 1.8,
                     ),
                   ),
                 ),

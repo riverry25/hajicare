@@ -47,166 +47,133 @@ class JamaahSosBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
-    final headingColor = AppColors.textHeadingColor(context);
     final bodyColor = AppColors.textBodyColor(context);
 
-    return GestureDetector(
-      onTap: () => _handleSosTrigger(context),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -20,
-            top: -20,
-            child: Container(
-              width: 112,
-              height: 112,
-              decoration: BoxDecoration(
-                color: AppColors.sosEmergency.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-            ),
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(
+          color: AppColors.sosEmergency.withValues(alpha: isDark ? 0.35 : 0.25),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.sosEmergency.withValues(alpha: isDark ? 0.08 : 0.08),
+            blurRadius: 18,
+            offset: const Offset(0, 4),
           ),
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
-              borderRadius: BorderRadius.circular(AppRadius.xl),
-              border: Border.all(
-                color: AppColors.sosEmergency.withValues(alpha: 0.3),
-                width: 2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.sosEmergency.withValues(alpha: isDark ? 0.05 : 0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 4),
+        ],
+      ),
+      padding: const EdgeInsets.all(AppSpacing.cardPadding),
+      child: Column(
+        children: [
+          // Big tactile SOS Button
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _handleSosTrigger(context),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.md,
                 ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: AppSpacing.md,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.sosEmergency,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.sosEmergency.withValues(alpha: 0.3),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFFE53935),
+                      Color(0xFFD32F2F),
                     ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceWhite.withValues(alpha: 0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.emergency_share_rounded,
-                          color: AppColors.surfaceWhite,
-                          size: 30,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              context.tr('sosButtonTitle'),
-                              style: AppTypography.titleMedium.copyWith(
-                                color: AppColors.surfaceWhite,
-                                fontWeight: FontWeight.w800,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              context.tr('sosButtonSubtitle'),
-                              style: AppTypography.caption.copyWith(
-                                color: AppColors.surfaceWhite.withValues(alpha: 0.95),
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                RichText(
-                  textAlign: TextAlign.center,
-                  text: TextSpan(
-                    style: AppTypography.bodySmall.copyWith(
-                      color: bodyColor,
-                    ),
-                    children: [
-                      TextSpan(
-                        text: context.tr('sosForwardedTo'),
-                      ),
-                      TextSpan(
-                        text: context.tr('sosSectorOfficers'),
-                        style: AppTypography.bodySmall.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: headingColor,
-                        ),
-                      ),
-                      TextSpan(text: context.tr('sosAnd')),
-                      TextSpan(
-                        text: context.tr('sosFamilyCompanion'),
-                        style: AppTypography.bodySmall.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: headingColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Divider(
-                  color: isDark ? AppColors.darkOutlineVariant : AppColors.canvasCreamSubtle,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: AppColors.sosEmergency,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Flexible(
-                      child: Text(
-                        context.tr('sos24HoursResponse'),
-                        style: AppTypography.caption.copyWith(
-                          color: bodyColor,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.sosEmergency.withValues(alpha: 0.35),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
-              ],
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.sos_rounded,
+                        color: Colors.white,
+                        size: 32,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            context.tr('sosButtonTitle'),
+                            style: AppTypography.titleLarge.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 1),
+                          Text(
+                            context.tr('sosButtonSubtitle'),
+                            style: AppTypography.caption.copyWith(
+                              color: Colors.white.withValues(alpha: 0.92),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      color: Colors.white,
+                      size: 26,
+                    ),
+                  ],
+                ),
+              ),
             ),
+          ),
+
+          const SizedBox(height: AppSpacing.md),
+
+          // Clarifying text beneath
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.security_rounded,
+                size: 16,
+                color: isDark ? AppColors.goldLight : AppColors.secondary,
+              ),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  'Koordinat GPS dikirim instan ke Pendamping & Maktab',
+                  style: AppTypography.caption.copyWith(
+                    color: bodyColor,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 }
-

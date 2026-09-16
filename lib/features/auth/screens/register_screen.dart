@@ -17,7 +17,7 @@ class RegisterScreen extends StatelessWidget {
     final controller = Get.find<RegisterController>();
 
     return Scaffold(
-      backgroundColor: AppColors.canvasCream,
+      backgroundColor: AppColors.scaffoldColor(context),
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -31,9 +31,8 @@ class RegisterScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // ============================================================
-              // HEADER
+              // TOP APP BAR
               // ============================================================
-
               Row(
                 children: [
                   _BackButton(onTap: () => Get.back()),
@@ -45,11 +44,11 @@ class RegisterScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Buat akun HajiCare',
+                          'Buat Akun HajiCare',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTypography.titleLarge.copyWith(
-                            color: AppColors.espressoDark,
+                            color: AppColors.textHeadingColor(context),
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -69,39 +68,54 @@ class RegisterScreen extends StatelessWidget {
 
                   const SizedBox(width: AppSpacing.sm),
 
-                  // Secure indicator
+                  // Verified badge
                   Container(
-                    width: 38,
-                    height: 38,
+                    width: 42,
+                    height: 42,
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceWhite,
-                      borderRadius: BorderRadius.circular(12),
+                      color: AppColors.cardBgColor(context),
+                      borderRadius: BorderRadius.circular(13),
                       border: Border.all(
-                        color: AppColors.goldLight.withValues(alpha: 0.22),
+                        color: AppColors.cardBorderColor(context),
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.espressoDark.withValues(alpha: 0.03),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: const Icon(
-                      Icons.verified_user_outlined,
+                      Icons.verified_user_rounded,
                       color: AppColors.statusPositive,
-                      size: 19,
+                      size: 20,
                     ),
                   ),
                 ],
               ),
 
-              const SizedBox(height: AppSpacing.xl),
+              const SizedBox(height: AppSpacing.lg),
 
               // ============================================================
-              // INTRO
+              // INTRO BANNER
               // ============================================================
               Container(
-                padding: const EdgeInsets.all(18),
+                padding: const EdgeInsets.all(AppSpacing.cardPadding),
                 decoration: BoxDecoration(
-                  color: AppColors.espressoDark,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  gradient: const LinearGradient(
+                    colors: [AppColors.espressoDark, Color(0xFF22160E)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                  border: Border.all(
+                    color: AppColors.goldPrimary.withValues(alpha: 0.28),
+                    width: 1.2,
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.espressoDark.withValues(alpha: 0.14),
+                      color: AppColors.espressoDark.withValues(alpha: 0.16),
                       blurRadius: 22,
                       offset: const Offset(0, 8),
                     ),
@@ -111,38 +125,41 @@ class RegisterScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      width: 42,
-                      height: 42,
+                      width: 44,
+                      height: 44,
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceWhite.withValues(alpha: 0.10),
-                        borderRadius: BorderRadius.circular(13),
+                        color: AppColors.surfaceWhite.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: AppColors.goldPrimary.withValues(alpha: 0.35),
+                        ),
                       ),
                       child: const Icon(
                         Icons.auto_awesome_rounded,
-                        color: AppColors.accentGoldStar,
-                        size: 21,
+                        color: AppColors.goldPrimary,
+                        size: 22,
                       ),
                     ),
 
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 14),
 
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Teman perjalanan ibadah Anda',
+                            'Teman Perjalanan Ibadah Anda',
                             style: AppTypography.bodyMedium.copyWith(
                               color: AppColors.canvasCream,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 5),
                           Text(
-                            'Daftar sekali untuk mendapatkan pengalaman HajiCare yang lebih personal, aman, dan inklusif.',
+                            'Daftar sekali untuk mendapatkan pengalaman HajiCare yang aman, terpantau, dan inklusif.',
                             style: AppTypography.captionSmall.copyWith(
                               color: AppColors.canvasCream.withValues(
-                                alpha: 0.72,
+                                alpha: 0.85,
                               ),
                               height: 1.45,
                             ),
@@ -157,7 +174,7 @@ class RegisterScreen extends StatelessWidget {
               const SizedBox(height: AppSpacing.xl),
 
               // ============================================================
-              // ROLE SECTION
+              // ROLE SELECTION SECTION
               // ============================================================
               _SectionHeader(
                 icon: Icons.people_outline_rounded,
@@ -173,7 +190,7 @@ class RegisterScreen extends StatelessWidget {
                     Expanded(
                       child: _RegisterRoleCard(
                         title: 'Jamaah',
-                        subtitle: 'Haji / Umrah',
+                        subtitle: 'Haji & Umrah',
                         icon: Icons.person_outline_rounded,
                         selected: controller.selectedRole.value == 'jamaah',
                         onTap: () => controller.setRole('jamaah'),
@@ -198,12 +215,12 @@ class RegisterScreen extends StatelessWidget {
               const SizedBox(height: AppSpacing.xl),
 
               // ============================================================
-              // IDENTITY FORM
+              // IDENTITY FORM SECTION
               // ============================================================
               _SectionHeader(
                 icon: Icons.badge_outlined,
-                title: 'Data diri',
-                subtitle: 'Gunakan data sesuai identitas Anda',
+                title: 'Data Diri',
+                subtitle: 'Gunakan data sesuai identitas resmi Anda',
               ),
 
               const SizedBox(height: AppSpacing.md),
@@ -212,9 +229,9 @@ class RegisterScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _FieldLabel(label: 'Nama Lengkap', required: true),
+                    const _FieldLabel(label: 'Nama Lengkap', required: true),
 
-                    const SizedBox(height: 7),
+                    const SizedBox(height: 8),
 
                     AppTextField(
                       controller: controller.fullNameController,
@@ -240,29 +257,34 @@ class RegisterScreen extends StatelessWidget {
 
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
+                            horizontal: 9,
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
                             color: AppColors.canvasCream,
                             borderRadius: BorderRadius.circular(AppRadius.pill),
+                            border: Border.all(
+                              color: AppColors.goldPrimary.withValues(
+                                alpha: 0.25,
+                              ),
+                            ),
                           ),
                           child: Text(
                             'Opsional',
                             style: AppTypography.captionSmall.copyWith(
                               color: AppColors.tanMedium,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
                       ],
                     ),
 
-                    const SizedBox(height: 7),
+                    const SizedBox(height: 8),
 
                     AppTextField(
                       controller: controller.porsiController,
-                      hintText: 'Masukkan nomor porsi / NIK',
+                      hintText: 'Masukkan nomor porsi atau NIK',
                       keyboardType: TextInputType.number,
                       prefixIcon: const Icon(
                         Icons.credit_card_outlined,
@@ -271,22 +293,22 @@ class RegisterScreen extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 9),
+                    const SizedBox(height: 10),
 
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Icon(
                           Icons.info_outline_rounded,
-                          size: 14,
+                          size: 15,
                           color: AppColors.tanMedium,
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 7),
                         Expanded(
                           child: Text(
-                            'Data ini membantu HajiCare memberikan layanan yang lebih sesuai.',
+                            'Data ini membantu HajiCare mengaitkan rombongan dan maktab secara akurat.',
                             style: AppTypography.captionSmall.copyWith(
-                              color: AppColors.tanMedium,
+                              color: AppColors.textMuted,
                               height: 1.35,
                             ),
                           ),
@@ -300,12 +322,12 @@ class RegisterScreen extends StatelessWidget {
               const SizedBox(height: AppSpacing.xl),
 
               // ============================================================
-              // ACCOUNT FORM
+              // ACCOUNT FORM SECTION
               // ============================================================
               _SectionHeader(
                 icon: Icons.lock_outline_rounded,
-                title: 'Informasi akun',
-                subtitle: 'Gunakan email dan kata sandi yang aktif',
+                title: 'Informasi Akun',
+                subtitle: 'Gunakan email aktif dan kata sandi yang aman',
               ),
 
               const SizedBox(height: AppSpacing.md),
@@ -314,13 +336,13 @@ class RegisterScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _FieldLabel(label: 'Email Aktif', required: true),
+                    const _FieldLabel(label: 'Email Aktif', required: true),
 
-                    const SizedBox(height: 7),
+                    const SizedBox(height: 8),
 
                     AppTextField(
                       controller: controller.emailController,
-                      hintText: 'email@contoh.com',
+                      hintText: 'nama@email.com',
                       keyboardType: TextInputType.emailAddress,
                       prefixIcon: const Icon(
                         Icons.email_outlined,
@@ -331,9 +353,9 @@ class RegisterScreen extends StatelessWidget {
 
                     const SizedBox(height: AppSpacing.lg),
 
-                    _FieldLabel(label: 'Kata Sandi', required: true),
+                    const _FieldLabel(label: 'Kata Sandi', required: true),
 
-                    const SizedBox(height: 7),
+                    const SizedBox(height: 8),
 
                     Obx(
                       () => AppTextField(
@@ -361,22 +383,22 @@ class RegisterScreen extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 9),
+                    const SizedBox(height: 10),
 
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Icon(
-                          Icons.lock_outline_rounded,
-                          size: 14,
+                          Icons.check_circle_outline_rounded,
+                          size: 15,
                           color: AppColors.statusPositive,
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 7),
                         Expanded(
                           child: Text(
-                            'Gunakan minimal 6 karakter agar akun tetap aman.',
+                            'Gunakan kombinasi minimal 6 karakter agar akun tetap aman.',
                             style: AppTypography.captionSmall.copyWith(
-                              color: AppColors.tanMedium,
+                              color: AppColors.textMuted,
                               height: 1.35,
                             ),
                           ),
@@ -393,53 +415,54 @@ class RegisterScreen extends StatelessWidget {
               // REGISTER BUTTON
               // ============================================================
               Obx(
-                () => PillButton(
-                  label: controller.isLoading.value
-                      ? 'Mendaftarkan akun...'
-                      : 'Buat Akun',
-                  icon: controller.isLoading.value
-                      ? null
-                      : Icons.arrow_forward_rounded,
-                  onPressed: controller.isLoading.value
-                      ? null
-                      : controller.register,
+                () => SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: PillButton(
+                    label: controller.isLoading.value
+                        ? 'Mendaftarkan Akun...'
+                        : 'Buat Akun Sekarang',
+                    icon: controller.isLoading.value
+                        ? null
+                        : Icons.arrow_forward_rounded,
+                    onPressed: controller.isLoading.value
+                        ? null
+                        : controller.register,
+                  ),
                 ),
               ),
 
               const SizedBox(height: AppSpacing.md),
 
               // ============================================================
-              // SECURITY NOTE
+              // SECURITY PRIVACY NOTE
               // ============================================================
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
+                  horizontal: 16,
+                  vertical: 13,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceWhite.withValues(alpha: 0.55),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(
-                    color: AppColors.goldLight.withValues(alpha: 0.15),
-                  ),
+                  color: AppColors.cardBgColor(context).withValues(alpha: 0.7),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  border: Border.all(color: AppColors.cardBorderColor(context)),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Icon(
-                      Icons.verified_user_outlined,
+                      Icons.verified_user_rounded,
                       color: AppColors.statusPositive,
-                      size: 17,
+                      size: 18,
                     ),
 
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
 
                     Expanded(
                       child: Text(
-                        'Informasi pribadi Anda digunakan untuk kebutuhan layanan HajiCare dan dijaga dengan aman.',
-                        textAlign: TextAlign.center,
+                        'Informasi pribadi Anda terenkripsi dan hanya digunakan untuk kebutuhan navigasi & keselamatan ibadah.',
                         style: AppTypography.captionSmall.copyWith(
-                          color: AppColors.tanMedium,
+                          color: AppColors.textMuted,
                           height: 1.4,
                         ),
                       ),
@@ -451,45 +474,51 @@ class RegisterScreen extends StatelessWidget {
               const SizedBox(height: AppSpacing.lg),
 
               // ============================================================
-              // LOGIN LINK
+              // LOGIN REDIRECTION LINK
               // ============================================================
               Center(
-                child: Wrap(
-                  alignment: WrapAlignment.center,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Text(
-                      'Sudah memiliki akun? ',
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.textBody,
-                      ),
+                child: GestureDetector(
+                  onTap: () => Get.back(),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 6,
+                      horizontal: 12,
                     ),
-                    GestureDetector(
-                      onTap: () => Get.back(),
-                      child: Text(
-                        'Masuk sekarang',
+                    child: RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        text: 'Sudah memiliki akun? ',
                         style: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.espressoDark,
-                          fontWeight: FontWeight.w700,
-                          decoration: TextDecoration.underline,
-                          decorationColor: AppColors.goldLight,
-                          decorationThickness: 2,
+                          color: AppColors.textBodyColor(context),
                         ),
+                        children: [
+                          TextSpan(
+                            text: 'Masuk sekarang',
+                            style: AppTypography.bodyMedium.copyWith(
+                              color: AppColors.espressoDark,
+                              fontWeight: FontWeight.w800,
+                              decoration: TextDecoration.underline,
+                              decorationColor: AppColors.goldPrimary,
+                              decorationThickness: 2,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
 
               const SizedBox(height: AppSpacing.md),
 
-              // Bottom breathing room
+              // Bottom Brandmark
               Center(
                 child: Text(
-                  'HajiCare • Aman • Terhubung • Inklusif',
+                  'HajiCare • Aman • Terhubung • Khusyuk',
                   textAlign: TextAlign.center,
                   style: AppTypography.captionSmall.copyWith(
-                    color: AppColors.tanMedium.withValues(alpha: 0.75),
+                    color: AppColors.tanMedium.withValues(alpha: 0.8),
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -516,21 +545,26 @@ class _BackButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(14),
         child: Ink(
-          width: 42,
-          height: 42,
+          width: 44,
+          height: 44,
           decoration: BoxDecoration(
-            color: AppColors.surfaceWhite,
-            borderRadius: BorderRadius.circular(13),
-            border: Border.all(
-              color: AppColors.goldLight.withValues(alpha: 0.22),
-            ),
+            color: AppColors.cardBgColor(context),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.cardBorderColor(context)),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.espressoDark.withValues(alpha: 0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: const Icon(
             Icons.arrow_back_rounded,
             color: AppColors.espressoDark,
-            size: 20,
+            size: 21,
           ),
         ),
       ),
@@ -559,19 +593,17 @@ class _SectionHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          width: 36,
-          height: 36,
+          width: 38,
+          height: 38,
           decoration: BoxDecoration(
-            color: AppColors.surfaceWhite,
-            borderRadius: BorderRadius.circular(11),
-            border: Border.all(
-              color: AppColors.goldLight.withValues(alpha: 0.20),
-            ),
+            color: AppColors.cardBgColor(context),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.cardBorderColor(context)),
           ),
-          child: Icon(icon, color: AppColors.espressoDark, size: 18),
+          child: Icon(icon, color: AppColors.espressoDark, size: 20),
         ),
 
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
 
         Expanded(
           child: Column(
@@ -582,8 +614,8 @@ class _SectionHeader extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.titleMedium.copyWith(
-                  color: AppColors.espressoDark,
-                  fontWeight: FontWeight.w700,
+                  color: AppColors.textHeadingColor(context),
+                  fontWeight: FontWeight.w800,
                 ),
               ),
               const SizedBox(height: 2),
@@ -592,7 +624,7 @@ class _SectionHeader extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.captionSmall.copyWith(
-                  color: AppColors.tanMedium,
+                  color: AppColors.textMuted,
                   height: 1.3,
                 ),
               ),
@@ -616,16 +648,16 @@ class _FormCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(18, 19, 18, 18),
+      padding: const EdgeInsets.all(AppSpacing.cardPadding),
       decoration: BoxDecoration(
-        color: AppColors.surfaceWhite,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.goldLight.withValues(alpha: 0.18)),
+        color: AppColors.cardBgColor(context),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: AppColors.cardBorderColor(context)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.espressoDark.withValues(alpha: 0.055),
-            blurRadius: 24,
-            offset: const Offset(0, 9),
+            color: AppColors.espressoDark.withValues(alpha: 0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 7),
           ),
         ],
       ),
@@ -654,8 +686,8 @@ class _FieldLabel extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textHeading,
-              fontWeight: FontWeight.w600,
+              color: AppColors.textHeadingColor(context),
+              fontWeight: FontWeight.w700,
             ),
           ),
         ),
@@ -666,7 +698,7 @@ class _FieldLabel extends StatelessWidget {
             '*',
             style: AppTypography.bodyMedium.copyWith(
               color: AppColors.sosEmergency,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ],
@@ -700,29 +732,37 @@ class _RegisterRoleCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
           decoration: BoxDecoration(
-            color: selected ? AppColors.espressoDark : AppColors.surfaceWhite,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
+            color: selected
+                ? AppColors.espressoDark
+                : AppColors.cardBgColor(context),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
             border: Border.all(
               color: selected
-                  ? AppColors.espressoDark
-                  : AppColors.goldLight.withValues(alpha: 0.28),
-              width: selected ? 1.5 : 1,
+                  ? AppColors.goldPrimary
+                  : AppColors.cardBorderColor(context),
+              width: selected ? 1.8 : 1,
             ),
             boxShadow: selected
                 ? [
                     BoxShadow(
-                      color: AppColors.espressoDark.withValues(alpha: 0.14),
-                      blurRadius: 15,
+                      color: AppColors.espressoDark.withValues(alpha: 0.18),
+                      blurRadius: 18,
                       offset: const Offset(0, 6),
                     ),
                   ]
-                : null,
+                : [
+                    BoxShadow(
+                      color: AppColors.espressoDark.withValues(alpha: 0.02),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
           ),
           child: Row(
             children: [
@@ -734,18 +774,23 @@ class _RegisterRoleCard extends StatelessWidget {
                   color: selected
                       ? AppColors.surfaceWhite.withValues(alpha: 0.12)
                       : AppColors.canvasCream,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(13),
+                  border: selected
+                      ? Border.all(
+                          color: AppColors.goldPrimary.withValues(alpha: 0.35),
+                        )
+                      : null,
                 ),
                 child: Icon(
                   icon,
                   color: selected
-                      ? AppColors.canvasCream
+                      ? AppColors.goldPrimary
                       : AppColors.espressoDark,
-                  size: 20,
+                  size: 22,
                 ),
               ),
 
-              const SizedBox(width: 9),
+              const SizedBox(width: 10),
 
               Expanded(
                 child: Column(
@@ -758,48 +803,47 @@ class _RegisterRoleCard extends StatelessWidget {
                       style: AppTypography.bodyMedium.copyWith(
                         color: selected
                             ? AppColors.surfaceWhite
-                            : AppColors.espressoDark,
-                        fontWeight: FontWeight.w700,
+                            : AppColors.textHeadingColor(context),
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 2),
                     Text(
                       subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.captionSmall.copyWith(
                         color: selected
-                            ? AppColors.canvasCream.withValues(alpha: 0.72)
+                            ? AppColors.canvasCream.withValues(alpha: 0.78)
                             : AppColors.tanMedium,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
               ),
 
-              const SizedBox(width: 5),
+              const SizedBox(width: 6),
 
               AnimatedContainer(
                 duration: const Duration(milliseconds: 220),
-                width: 20,
-                height: 20,
+                width: 22,
+                height: 22,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: selected
-                      ? AppColors.accentGoldStar
-                      : Colors.transparent,
+                  color: selected ? AppColors.goldPrimary : Colors.transparent,
                   border: Border.all(
                     color: selected
-                        ? AppColors.accentGoldStar
-                        : AppColors.goldLight,
-                    width: 1.5,
+                        ? AppColors.goldPrimary
+                        : AppColors.cardBorderColor(context),
+                    width: 1.8,
                   ),
                 ),
                 child: selected
                     ? const Icon(
                         Icons.check_rounded,
-                        size: 13,
-                        color: Colors.white,
+                        size: 14,
+                        color: AppColors.espressoDark,
                       )
                     : null,
               ),

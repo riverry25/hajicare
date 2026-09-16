@@ -20,10 +20,10 @@ class JamaahServiceGrid extends StatelessWidget {
 
     Get.bottomSheet(
       Container(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(AppSpacing.cardPadding),
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -34,7 +34,7 @@ class JamaahServiceGrid extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkOutlineVariant : AppColors.surfaceVariant,
+                  color: isDark ? AppColors.darkOutlineVariant : AppColors.outlineVariant,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
               ),
@@ -65,7 +65,7 @@ class JamaahServiceGrid extends StatelessWidget {
                       ),
                       Text(
                         'Status: Terhubung (BLE Sync Aktif)',
-                        style: AppTypography.captionSmall.copyWith(
+                        style: AppTypography.caption.copyWith(
                           color: AppColors.statusSafe,
                           fontWeight: FontWeight.w600,
                         ),
@@ -104,7 +104,7 @@ class JamaahServiceGrid extends StatelessWidget {
                     icon: Icons.directions_walk_rounded,
                     label: 'Langkah',
                     value: '4.210',
-                    color: AppColors.accentGoldStar,
+                    color: AppColors.goldPrimary,
                   ),
                 ),
               ],
@@ -112,6 +112,7 @@ class JamaahServiceGrid extends StatelessWidget {
             const SizedBox(height: AppSpacing.lg),
             SizedBox(
               width: double.infinity,
+              height: 48,
               child: ElevatedButton.icon(
                 onPressed: () {
                   Get.back();
@@ -124,11 +125,12 @@ class JamaahServiceGrid extends StatelessWidget {
                 icon: const Icon(Icons.sync_rounded),
                 label: const Text('Sinkronisasi Sekarang'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.espressoDark,
+                  backgroundColor: AppColors.primaryContainer,
                   foregroundColor: AppColors.surfaceWhite,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
+                  elevation: 0,
                 ),
               ),
             ),
@@ -152,28 +154,32 @@ class JamaahServiceGrid extends StatelessWidget {
     final bodyColor = AppColors.textBodyColor(context);
 
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.sm),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.md),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCreamSubtle,
+        color: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream,
         borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(
+          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
+        ),
       ),
       child: Column(
         children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 4),
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 6),
           Text(
             value,
-            style: AppTypography.labelLarge.copyWith(
+            style: AppTypography.titleMedium.copyWith(
               color: headingColor,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w700,
             ),
           ),
+          const SizedBox(height: 2),
           Text(
             label,
-            style: AppTypography.captionSmall.copyWith(
+            style: AppTypography.caption.copyWith(
               color: bodyColor,
-              fontSize: 10,
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -208,11 +214,11 @@ class JamaahServiceGrid extends StatelessWidget {
 
     Get.bottomSheet(
       Container(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(AppSpacing.cardPadding),
         constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.75),
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,7 +228,7 @@ class JamaahServiceGrid extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkOutlineVariant : AppColors.surfaceVariant,
+                  color: isDark ? AppColors.darkOutlineVariant : AppColors.outlineVariant,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
               ),
@@ -255,36 +261,34 @@ class JamaahServiceGrid extends StatelessWidget {
                       children: [
                         Text(
                           item['title']!,
-                          style: AppTypography.labelLarge.copyWith(
+                          style: AppTypography.titleSmall.copyWith(
                             color: headingColor,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Text(
-                            item['arabic']!,
-                            textAlign: TextAlign.right,
-                            style: AppTypography.titleMedium.copyWith(
-                              color: isDark ? AppColors.goldLight : AppColors.espressoDark,
-                              fontWeight: FontWeight.w600,
-                              height: 1.6,
-                            ),
+                        Text(
+                          item['arabic']!,
+                          style: const TextStyle(
+                            fontFamily: 'Amiri',
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.espressoDark,
                           ),
+                          textDirection: TextDirection.rtl,
                         ),
                         const SizedBox(height: 6),
                         Text(
                           item['latin']!,
                           style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.accentGoldStar,
+                            color: AppColors.tanMedium,
                             fontStyle: FontStyle.italic,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           item['arti']!,
-                          style: AppTypography.captionSmall.copyWith(
+                          style: AppTypography.caption.copyWith(
                             color: bodyColor,
                           ),
                         ),
@@ -383,11 +387,20 @@ class JamaahServiceGrid extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
-            Text(
-              context.tr('easyTouch'),
-              style: AppTypography.caption.copyWith(
-                color: isDark ? AppColors.accentGoldStar : AppColors.tanMedium,
-                fontWeight: FontWeight.w600,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.darkPrimaryContainer
+                    : AppColors.canvasCream,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+              ),
+              child: Text(
+                context.tr('easyTouch'),
+                style: AppTypography.captionSmall.copyWith(
+                  color: isDark ? AppColors.goldLight : AppColors.espressoDark,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],
@@ -407,8 +420,8 @@ class JamaahServiceGrid extends StatelessWidget {
               itemCount: services.length,
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                crossAxisSpacing: AppSpacing.sm,
-                mainAxisSpacing: AppSpacing.sm,
+                crossAxisSpacing: AppSpacing.md,
+                mainAxisSpacing: AppSpacing.md,
                 childAspectRatio: ratio,
               ),
               itemBuilder: (context, index) {
@@ -441,25 +454,25 @@ class JamaahServiceGrid extends StatelessWidget {
     final bodyColor = AppColors.textBodyColor(context);
 
     return AppCard(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.cardPadding),
       onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Container(
-            width: 44,
-            height: 44,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
               color: isDark
                   ? AppColors.darkPrimaryContainer
                   : AppColors.canvasCream,
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Icon(
               icon,
               color: isDark ? AppColors.goldLight : AppColors.espressoDark,
-              size: 22,
+              size: 24,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -468,18 +481,18 @@ class JamaahServiceGrid extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: AppTypography.labelLarge.copyWith(
+                style: AppTypography.titleMedium.copyWith(
                   color: headingColor,
+                  fontWeight: FontWeight.w700,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 3),
               Text(
                 subtitle,
-                style: AppTypography.captionSmall.copyWith(
+                style: AppTypography.caption.copyWith(
                   color: bodyColor,
-                  fontWeight: FontWeight.normal,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -491,5 +504,3 @@ class JamaahServiceGrid extends StatelessWidget {
     );
   }
 }
-
-

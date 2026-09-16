@@ -35,11 +35,27 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
   late AnimationController _pulseController;
 
   final List<FilterChipItem> _filters = const [
-    FilterChipItem(label: 'Semua', icon: Icons.grid_view, isDefault: true),
-    FilterChipItem(label: 'Jamaah', icon: Icons.person),
-    FilterChipItem(label: 'Pendamping', icon: Icons.shield),
-    FilterChipItem(label: 'Posko Medis', icon: Icons.medical_services),
-    FilterChipItem(label: 'Toilet & Wudhu', icon: Icons.wc),
+    FilterChipItem(
+      label: 'Semua',
+      icon: Icons.grid_view_rounded,
+      isDefault: true,
+    ),
+    FilterChipItem(
+      label: 'Jamaah',
+      icon: Icons.person_rounded,
+    ),
+    FilterChipItem(
+      label: 'Pendamping',
+      icon: Icons.shield_rounded,
+    ),
+    FilterChipItem(
+      label: 'Posko Medis',
+      icon: Icons.medical_services_rounded,
+    ),
+    FilterChipItem(
+      label: 'Toilet & Wudhu',
+      icon: Icons.wc_rounded,
+    ),
   ];
 
   @override
@@ -89,7 +105,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
             ),
           ),
 
-          // 3. Floating Quick Action Controls (Compass, MyLocation, Focus All, Layers, Band)
+          // 3. Floating Quick Action Controls (Compass, MyLocation, Zoom In/Out, Focus All, Layers, Band)
           Obx(
             () => MapFloatingControls(
               compassRotation: mapCtrl.compassRotation.value,
@@ -100,6 +116,20 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
               onFitAllTap: mapCtrl.focusToAllMembers,
               onLayersTap: mapCtrl.toggleMapTileLayer,
               onBandTap: () => _showSmartBandDialog(context, state),
+              onZoomInTap: () {
+                final cam = mapCtrl.flutterMapController.camera;
+                mapCtrl.flutterMapController.move(
+                  cam.center,
+                  (cam.zoom + 1.0).clamp(11.0, 19.0),
+                );
+              },
+              onZoomOutTap: () {
+                final cam = mapCtrl.flutterMapController.camera;
+                mapCtrl.flutterMapController.move(
+                  cam.center,
+                  (cam.zoom - 1.0).clamp(11.0, 19.0),
+                );
+              },
             ),
           ),
 
@@ -195,11 +225,6 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
     HajiCareController state,
     MapController mapCtrl,
   ) {
-    // FlutterMap is created ONCE and never recreated.
-    // Each layer uses its own Obx so only that layer rebuilds when its
-    // reactive data changes. This prevents the entire map from being
-    // destroyed and recreated on every GPS tick, and eliminates the race
-    // condition between activeRoute being populated and onTap clearing it.
     return fmap.FlutterMap(
       mapController: mapCtrl.flutterMapController,
       options: fmap.MapOptions(
@@ -212,9 +237,6 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
           mapCtrl.compassRotation.value = camera.rotation;
         },
         onTap: (tapPosition, point) {
-          // Only clear selection if there is no active route being shown.
-          // This prevents an accidental tap (e.g. during camera animation)
-          // from wiping the freshly drawn route.
           if (mapCtrl.activeRoute.isEmpty) {
             mapCtrl.clearSelection();
           }
@@ -227,7 +249,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
               userAgentPackageName: 'com.example.hajicare',
             )),
 
-        // 2. Walking Route Polyline Layer — Obx (placed directly above TileLayer, below MarkerLayer)
+        // 2. Walking Route Polyline Layer
         Obx(() {
           final routePoints = mapCtrl.activeRoute.toList();
           debugPrint('[MAP] Polyline points = ${routePoints.length}');
@@ -243,8 +265,8 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
               fmap.Polyline<Object>(
                 points: routePoints,
                 strokeWidth: 8.0,
-                color: const Color(0xFF173B78), // Deep navy navigation blue, high contrast
-                borderStrokeWidth: 2.0,
+                color: const Color(0xFF173B78), // Deep navy navigation blue
+                borderStrokeWidth: 2.5,
                 borderColor: const Color(0xFF0D254C),
               ),
             ],
@@ -276,7 +298,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
               fmap.Marker(
                 point: userLocation,
                 width: 130,
-                height: 70,
+                height: 75,
                 child: _buildCompanionMarker(),
               ),
 
@@ -304,17 +326,18 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
           decoration: BoxDecoration(
             color: AppColors.espressoDark,
             borderRadius: BorderRadius.circular(AppRadius.pill),
             border: Border.all(
-              color: AppColors.goldLight.withValues(alpha: 0.5),
+              color: AppColors.goldPrimary,
+              width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.25),
-                blurRadius: 4,
+                blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
             ],
@@ -323,25 +346,25 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 6,
-                height: 6,
+                width: 7,
+                height: 7,
                 decoration: const BoxDecoration(
                   color: AppColors.statusSafe,
                   shape: BoxShape.circle,
                 ),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 5),
               Text(
                 'Anda',
                 style: AppTypography.captionSmall.copyWith(
                   color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 3),
         AnimatedBuilder(
           animation: _pulseController,
           builder: (context, child) {
@@ -349,33 +372,36 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
               alignment: Alignment.center,
               children: [
                 Container(
-                  width: 38 + (_pulseController.value * 6),
-                  height: 38 + (_pulseController.value * 6),
+                  width: 38 + (_pulseController.value * 8),
+                  height: 38 + (_pulseController.value * 8),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.goldLight.withValues(
-                      alpha: 0.35 - (_pulseController.value * 0.2),
+                    color: AppColors.goldPrimary.withValues(
+                      alpha: 0.35 - (_pulseController.value * 0.22),
                     ),
                   ),
                 ),
                 Container(
-                  width: 32,
-                  height: 32,
+                  width: 34,
+                  height: 34,
                   decoration: BoxDecoration(
                     color: AppColors.surfaceWhite,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.espressoDark, width: 2),
+                    border: Border.all(
+                      color: AppColors.espressoDark,
+                      width: 2.2,
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 4,
+                        color: Colors.black.withValues(alpha: 0.25),
+                        blurRadius: 6,
                       ),
                     ],
                   ),
                   child: const Icon(
-                    Icons.navigation,
-                    color: AppColors.primary,
-                    size: 18,
+                    Icons.navigation_rounded,
+                    color: AppColors.goldPrimary,
+                    size: 19,
                   ),
                 ),
               ],
@@ -396,7 +422,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
     final markers = <fmap.Marker>[];
 
     for (final member in members) {
-      // 1. Never render current user twice! (Anti-duplication)
+      // 1. Never render current user twice
       if (currentUid != null && member.uid == currentUid) {
         continue;
       }
@@ -410,7 +436,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
       final isSelected = mapCtrl.selectedMember.value?.uid == member.uid;
       final isPendamping = member.isPendamping;
       final markerColor = isPendamping
-          ? AppColors.accentGoldStar
+          ? AppColors.goldPrimary
           : AppColors.statusSafe;
       final distText = mapCtrl.getMemberDistanceText(member);
 
@@ -427,8 +453,8 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                 // Callout Banner
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 7,
-                    vertical: 2.5,
+                    horizontal: 8,
+                    vertical: 3,
                   ),
                   decoration: BoxDecoration(
                     color: AppColors.surfaceWhite,
@@ -440,7 +466,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.18),
-                        blurRadius: 5,
+                        blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
                     ],
@@ -449,7 +475,9 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        isPendamping ? Icons.shield : Icons.person,
+                        isPendamping
+                            ? Icons.shield_rounded
+                            : Icons.person_rounded,
                         size: 12,
                         color: markerColor,
                       ),
@@ -457,8 +485,9 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                       Flexible(
                         child: Text(
                           member.name.split(' ').take(2).join(' '),
-                          style: AppTypography.captionBold.copyWith(
+                          style: AppTypography.captionSmall.copyWith(
                             color: AppColors.espressoDark,
+                            fontWeight: FontWeight.w800,
                             fontSize: 10,
                           ),
                           maxLines: 1,
@@ -470,19 +499,19 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                         distText,
                         style: TextStyle(
                           fontSize: 9,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w800,
                           color: markerColor,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
 
                 // Avatar Icon Pin
                 Container(
-                  width: 32,
-                  height: 32,
+                  width: 34,
+                  height: 34,
                   decoration: BoxDecoration(
                     color: AppColors.surfaceWhite,
                     shape: BoxShape.circle,
@@ -493,14 +522,16 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 4,
+                        blurRadius: 5,
                       ),
                     ],
                   ),
                   child: Icon(
-                    isPendamping ? Icons.shield : Icons.person,
+                    isPendamping
+                        ? Icons.shield_rounded
+                        : Icons.person_rounded,
                     color: markerColor,
-                    size: 18,
+                    size: 19,
                   ),
                 ),
               ],
@@ -558,15 +589,16 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      Icons.elderly,
+                      Icons.elderly_rounded,
                       size: 13,
                       color: jamaah.tier.color,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       jamaah.shortLabel,
-                      style: AppTypography.captionBold.copyWith(
+                      style: AppTypography.captionSmall.copyWith(
                         color: AppColors.espressoDark,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -574,7 +606,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                       '${jamaah.distance.round()}m',
                       style: AppTypography.captionSmall.copyWith(
                         color: jamaah.tier.color,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ],
@@ -599,7 +631,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                   ],
                 ),
                 child: const Icon(
-                  Icons.person,
+                  Icons.person_rounded,
                   color: AppColors.tanMedium,
                   size: 20,
                 ),
@@ -618,7 +650,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
       return fmap.Marker(
         point: poi.coordinate,
         width: 100,
-        height: 60,
+        height: 62,
         child: GestureDetector(
           onTap: () => mapCtrl.selectPoi(poi),
           child: Column(
@@ -650,12 +682,18 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                   ),
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 3),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                 decoration: BoxDecoration(
-                  color: AppColors.espressoDark.withValues(alpha: 0.85),
+                  color: AppColors.espressoDark.withValues(alpha: 0.88),
                   borderRadius: BorderRadius.circular(AppRadius.pill),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: 4,
+                    ),
+                  ],
                 ),
                 child: Text(
                   poi.name.split(' ').take(2).join(' '),
@@ -663,7 +701,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 9,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
@@ -678,7 +716,8 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
     AppAlert.confirm(
       context,
       title: 'Panggil Gelang Pintar',
-      message: 'Kirimkan sinyal getar dan alarm suara ke gelang pintar ${state.self.name} untuk memandu arah kembali.',
+      message:
+          'Kirimkan sinyal getar dan alarm suara ke gelang pintar ${state.self.name} untuk memandu arah kembali.',
       confirmText: 'Kirim Sinyal',
       cancelText: 'Batal',
       onConfirm: () {
