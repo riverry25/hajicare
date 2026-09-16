@@ -33,16 +33,22 @@ class RouteService {
   final http.Client _httpClient;
   final String _apiKey;
 
-  RouteService({http.Client? client, String? apiKey}) 
-      : _httpClient = client ?? http.Client(),
-        _apiKey = apiKey ?? AppConfig.orsApiKey;
+  RouteService({http.Client? client, String? apiKey})
+    : _httpClient = client ?? http.Client(),
+      _apiKey = apiKey ?? AppConfig.orsApiKey;
 
   Future<RouteResult> getWalkingRoute({
     required LatLng origin,
     required LatLng destination,
   }) async {
     // 1. If ORS API key is configured, use OpenRouteService
-    if (_apiKey.isNotEmpty) {
+    final keyAvailable = _apiKey.isNotEmpty;
+    debugPrint('[ROUTE CONFIG] ORS key available = $keyAvailable');
+    debugPrint(
+      '[ROUTE CONFIG] provider selected = ${keyAvailable ? 'ORS' : 'OSRM'}',
+    );
+
+    if (keyAvailable) {
       return _getOrsWalkingRoute(origin: origin, destination: destination);
     }
 
@@ -58,7 +64,7 @@ class RouteService {
     final headers = {
       'Authorization': _apiKey,
       'Content-Type': 'application/json; charset=utf-8',
-      'Accept': 'application/json',
+      'Accept': 'application/geo+json',
     };
 
     // ORS expects [longitude, latitude]
@@ -92,33 +98,45 @@ class RouteService {
       final features = data['features'] as List<dynamic>?;
 
       if (features == null || features.isEmpty) {
-        throw const RouteException('Rute berjalan tidak ditemukan untuk koordinat ini');
+        throw const RouteException(
+          'Rute berjalan tidak ditemukan untuk koordinat ini',
+        );
       }
 
-      debugPrint('[ROUTE] route alternatives = ${features.length}');
+      debugPrint('[ROUTE] ORS alternatives returned = ${features.length}');
 
       // Find the fastest route by duration
       Map<String, dynamic>? fastestFeature;
       double minDuration = double.infinity;
+      int fastestIndex = -1;
 
-      for (final feature in features) {
+      for (int i = 0; i < features.length; i++) {
+        final feature = features[i];
         final props = feature['properties'] as Map<String, dynamic>?;
         if (props != null) {
           final summary = props['summary'] as Map<String, dynamic>?;
           if (summary != null) {
-            final duration = (summary['duration'] as num?)?.toDouble() ?? double.infinity;
-            if (duration < minDuration) {
-              minDuration = duration;
+            final dist = (summary['distance'] as num?)?.toDouble() ?? 0.0;
+            final dur =
+                (summary['duration'] as num?)?.toDouble() ?? double.infinity;
+            debugPrint('[ROUTE] option ${i + 1} distance = ${dist.toInt()} m');
+            debugPrint('[ROUTE] option ${i + 1} duration = ${dur.toInt()} sec');
+            if (dur < minDuration) {
+              minDuration = dur;
+              fastestIndex = i;
               fastestFeature = feature as Map<String, dynamic>;
             }
           }
         }
       }
 
-      debugPrint('[ROUTE] selected duration = $minDuration');
+      debugPrint('[ROUTE] selected fastest = option ${fastestIndex + 1}');
+      debugPrint('[ROUTE] selected duration = ${minDuration.toInt()} sec');
 
       if (fastestFeature == null) {
-        throw const RouteException('Rute berjalan tidak memiliki durasi yang valid');
+        throw const RouteException(
+          'Rute berjalan tidak memiliki durasi yang valid',
+        );
       }
 
       final geometry = fastestFeature['geometry'] as Map<String, dynamic>?;
@@ -133,14 +151,17 @@ class RouteService {
 
       final points = _decodeGeoJsonCoords(coordinates);
       debugPrint('[ROUTE] route points = ${points.length}');
-      
+
       if (points.isEmpty) {
         throw const RouteException('Koordinat rute kosong setelah parsing');
       }
-      
-      final summary = fastestFeature['properties']['summary'] as Map<String, dynamic>;
+
+      final summary =
+          fastestFeature['properties']['summary'] as Map<String, dynamic>;
       final distance = (summary['distance'] as num).toDouble();
       final duration = (summary['duration'] as num).toInt();
+
+      debugPrint('[ROUTE] selected distance = ${distance.toInt()} m');
 
       return RouteResult(
         points: points,
@@ -169,6 +190,18 @@ class RouteService {
 
       if (response.statusCode != 200) {
         debugPrint('[ROUTE] OSM ERROR BODY: ${response.body}');
+        try {
+          final errBody = jsonDecode(response.body);
+          if (errBody is Map &&
+              (errBody['code'] == 'NoRoute' ||
+                  errBody['message'] == 'Impossible route between points')) {
+            throw const RouteException(
+              'Rute jalan kaki terlalu jauh atau tidak terjangkau',
+            );
+          }
+        } catch (e) {
+          if (e is RouteException) rethrow;
+        }
         throw RouteException('Routing gagal: HTTP ${response.statusCode}');
       }
 
@@ -205,7 +238,9 @@ class RouteService {
       rethrow;
     } catch (e) {
       debugPrint('[ROUTE] OSM error: $e');
-      throw const RouteException('Gagal terhubung ke layanan routing jalan kaki');
+      throw const RouteException(
+        'Gagal terhubung ke layanan routing jalan kaki',
+      );
     }
   }
 

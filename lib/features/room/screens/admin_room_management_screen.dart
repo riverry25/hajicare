@@ -671,7 +671,9 @@ class _RoomManagementCard extends StatelessWidget {
                 const SizedBox(height: AppSpacing.sm),
 
                 // Metrics Badges (Jamaah, Pendamping, SOS)
-                Row(
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
                   children: [
                     _BadgeMetric(
                       icon: Icons.groups_rounded,
@@ -679,36 +681,36 @@ class _RoomManagementCard extends StatelessWidget {
                       label: 'Jamaah',
                       color: const Color(0xFF2E7D32),
                     ),
-                    const SizedBox(width: 8),
                     _BadgeMetric(
                       icon: Icons.health_and_safety_rounded,
                       count: pendampingCount,
                       label: 'Pendamping',
                       color: const Color(0xFF1976D2),
                     ),
-                    if (hasSos) ...[
-                      const SizedBox(width: 8),
+                    if (hasSos)
                       _BadgeMetric(
                         icon: Icons.warning_rounded,
                         count: sosCount,
                         label: 'SOS',
                         color: AppColors.sosEmergency,
                       ),
-                    ],
-                    const Spacer(),
-                    Row(
-                      children: [
-                        Text(
-                          'Detail Member',
-                          style: AppTypography.captionSmall.copyWith(
-                            color: primaryColor,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Icon(Icons.arrow_forward_ios_rounded, size: 12, color: primaryColor),
-                      ],
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+
+                // Action Row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      'Detail Member',
+                      style: AppTypography.captionSmall.copyWith(
+                        color: primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
+                    const SizedBox(width: 4),
+                    Icon(Icons.arrow_forward_ios_rounded, size: 12, color: primaryColor),
                   ],
                 ),
               ],

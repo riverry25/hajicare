@@ -51,6 +51,21 @@ class JamaahDistanceCard extends StatelessWidget {
     return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 
+  String _formatDistanceValue(double distanceMeters) {
+    if (distanceMeters >= 100000) {
+      return (distanceMeters / 1000).toStringAsFixed(0);
+    } else if (distanceMeters >= 1000) {
+      final km = distanceMeters / 1000;
+      return km >= 10 ? km.toStringAsFixed(0) : km.toStringAsFixed(1);
+    } else {
+      return distanceMeters.toInt().toString();
+    }
+  }
+
+  String _formatDistanceUnit(BuildContext context, double distanceMeters) {
+    return distanceMeters >= 1000 ? 'km' : context.tr('meterUnit');
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
@@ -136,7 +151,8 @@ class JamaahDistanceCard extends StatelessWidget {
     }
 
     // 2. STATE: GPS active, but waiting for companion's location signal
-    final hasDistance = jamaah.distance > 0.0 || jamaah.locationUpdatedAt != null;
+    final hasDistance =
+        jamaah.distance > 0.0 || jamaah.locationUpdatedAt != null;
     if (!hasDistance) {
       return AppCard(
         padding: const EdgeInsets.all(AppSpacing.cardPadding),
@@ -156,7 +172,9 @@ class JamaahDistanceCard extends StatelessWidget {
                   ),
                   child: Icon(
                     Icons.radar_rounded,
-                    color: isDark ? AppColors.goldLight : AppColors.espressoDark,
+                    color: isDark
+                        ? AppColors.goldLight
+                        : AppColors.espressoDark,
                     size: 26,
                   ),
                 ),
@@ -246,12 +264,30 @@ class JamaahDistanceCard extends StatelessWidget {
                         letterSpacing: 0.2,
                       ),
                     ),
-                    const SizedBox(height: 1),
-                    Text(
-                      'Pemantauan Jarak Realtime',
-                      style: AppTypography.titleMedium.copyWith(
-                        color: headingColor,
-                        fontWeight: FontWeight.w700,
+                    const SizedBox(height: 2),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            _formatDistanceValue(jamaah.distance),
+                            style: AppTypography.displayMedium.copyWith(
+                              color: jamaah.tier.color,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _formatDistanceUnit(context, jamaah.distance),
+                            style: AppTypography.bodySmall.copyWith(
+                              color: bodyColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -289,49 +325,58 @@ class JamaahDistanceCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          '${jamaah.distance.toInt()}',
-                          style: AppTypography.heroNumberLarge.copyWith(
-                            color: tierColor,
-                            fontWeight: FontWeight.w800,
-                          ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      FittedBox(
+                        alignment: Alignment.centerLeft,
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Text(
+                              jamaah.distance >= 1000
+                                  ? (jamaah.distance / 1000).toStringAsFixed(
+                                      jamaah.distance >= 100000 ? 0 : 1,
+                                    )
+                                  : '${jamaah.distance.toInt()}',
+                              style: AppTypography.heroNumberLarge.copyWith(
+                                color: tierColor,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              jamaah.distance >= 1000
+                                  ? 'km'
+                                  : context.tr('meterUnit'),
+                              style: AppTypography.titleMedium.copyWith(
+                                color: headingColor,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          context.tr('meterUnit'),
-                          style: AppTypography.titleMedium.copyWith(
-                            color: headingColor,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      'Batas aman rombongan: 200 meter',
-                      style: AppTypography.caption.copyWith(
-                        color: bodyColor,
                       ),
-                    ),
-                  ],
+                      Text(
+                        'Batas aman rombongan: 200 meter',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.caption.copyWith(color: bodyColor),
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: AppSpacing.sm),
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.sm),
                   decoration: BoxDecoration(
                     color: tierColor.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    jamaah.tier.icon,
-                    color: tierColor,
-                    size: 28,
-                  ),
+                  child: Icon(jamaah.tier.icon, color: tierColor, size: 28),
                 ),
               ],
             ),
@@ -358,12 +403,15 @@ class JamaahDistanceCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Terakhir sinkron: ${_formatTimestamp(jamaah.locationUpdatedAt)}',
-                style: AppTypography.caption.copyWith(
-                  color: bodyColor,
+              Expanded(
+                child: Text(
+                  'Terakhir sinkron: ${_formatTimestamp(jamaah.locationUpdatedAt)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.caption.copyWith(color: bodyColor),
                 ),
               ),
+              const SizedBox(width: AppSpacing.xs),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [

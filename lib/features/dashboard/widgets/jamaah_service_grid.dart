@@ -410,7 +410,9 @@ class JamaahServiceGrid extends StatelessWidget {
           builder: (context, constraints) {
             final double cardWidth = (constraints.maxWidth - AppSpacing.sm) / 2;
             double ratio = cardWidth < 170 ? 0.95 : 1.05;
-            if (textScale > 1.1) {
+            if (textScale > 1.25) {
+              ratio = ratio * 0.76;
+            } else if (textScale > 1.1) {
               ratio = ratio * 0.88;
             }
 

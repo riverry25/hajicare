@@ -316,6 +316,47 @@ class RoomService {
     return RoomModel.fromFirestore(roomDoc);
   }
 
+  // ── Keluar Room (Leave Room) ───────────────────────────────────────────────
+
+  /// Allows a member (Jamaah or Pendamping) to leave their active room.
+  Future<void> leaveRoom({
+    required String roomId,
+    required String uid,
+    required String userName,
+    required String role,
+    String? roomName,
+  }) async {
+    final memberRef = _firestore
+        .collection('rooms')
+        .doc(roomId)
+        .collection('members')
+        .doc(uid);
+    final userRef = _firestore.collection('users').doc(uid);
+
+    final batch = _firestore.batch();
+    batch.delete(memberRef);
+    batch.update(userRef, {
+      'activeRoomId': FieldValue.delete(),
+      'sosActive': false,
+    });
+
+    await batch.commit();
+    debugPrint('[RoomService] User $uid successfully left room $roomId');
+
+    // Log Activity
+    final isPendamping = role.trim().toLowerCase() == 'pendamping';
+    await logActivity(
+      type: ActivityType.memberLeft,
+      title: isPendamping ? 'Pendamping Keluar' : 'Jamaah Keluar',
+      description: '$userName telah keluar dari room ${roomName != null ? '"$roomName"' : roomId}.',
+      roomId: roomId,
+      roomName: roomName,
+      userId: uid,
+      userName: userName,
+      role: role,
+    );
+  }
+
   // ── Tambah Jamaah (By Pendamping) ──────────────────────────────────────────
 
   /// Allows a Pendamping of an active room to add an unassigned Jamaah.

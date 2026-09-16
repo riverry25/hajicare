@@ -501,7 +501,9 @@ class DashboardPendampingScreen extends StatelessWidget {
           builder: (context, constraints) {
             final cardWidth = (constraints.maxWidth - AppSpacing.md) / 2;
             double ratio = cardWidth < 170 ? 1.0 : 1.12;
-            if (textScale > 1.1) {
+            if (textScale > 1.25) {
+              ratio = ratio * 0.76;
+            } else if (textScale > 1.1) {
               ratio = ratio * 0.88;
             }
 
