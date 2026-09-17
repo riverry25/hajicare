@@ -1,0 +1,276 @@
+[33mcommit ed3555ac8ab7f89a7bd345250500668e8733a908[m[33m ([m[1;36mHEAD[m[33m, [m[1;32mmain[m[33m)[m
+Author: Your Name <you@example.com>
+Date:   Thu Sep 17 16:59:02 2026 +0700
+
+    intergrasi google
+
+[33mcommit 5a385615e60110eb2b782679ab0a4c7b1f5eb4a8[m
+Author: Muhammad Abdurrahman Hafizhuddin <hafizhthericky123@gmail.com>
+Date:   Thu Sep 17 15:31:35 2026 +0700
+
+    fix: ui profile
+
+[33mcommit ea9bfd48c49697477720290cad8f466d961eac5c[m
+Author: Muhammad Abdurrahman Hafizhuddin <hafizhthericky123@gmail.com>
+Date:   Thu Sep 17 12:29:41 2026 +0700
+
+    uncompleted: ui maps
+
+[33mcommit 5478ec832a80eba125216ba36e57ef7d26b4329e[m
+Merge: 55d99a7 78b8729
+Author: Muhammad Abdurrahman Hafizhuddin <hafizhthericky123@gmail.com>
+Date:   Wed Sep 16 12:49:31 2026 +0700
+
+    fix: profile page
+
+[33mcommit 55d99a7c7755104e9719c2372b2ef410b9c2adb0[m
+Author: Muhammad Abdurrahman Hafizhuddin <hafizhthericky123@gmail.com>
+Date:   Wed Sep 16 12:19:15 2026 +0700
+
+    fix: profile page
+
+[33mcommit 78b8729071a96065523a0256358b9d92617b56cb[m
+Author: Your Name <you@example.com>
+Date:   Wed Sep 16 00:53:21 2026 +0700
+
+    fix: update routing and map bottom sheet
+
+[33mcommit e83ec39def72d7c7c74a14f62efc18e99e9495d0[m
+Author: Your Name <you@example.com>
+Date:   Tue Sep 15 22:37:22 2026 +0700
+
+    fix: align bottom sheet margin
+
+[33mcommit 5b0fe3d3d005ee29a722cbec4c390ccd4e1188ba[m
+Author: unknown <241730042.fadlihifziansyah@uinbanten.ac.id>
+Date:   Tue Sep 15 22:36:35 2026 +0700
+
+    Fix: ui dashboard pendamping
+
+[33mcommit f999215cab4dceefa7f460d0376b7cb01fae754f[m
+Merge: a290a03 357ce3c
+Author: Muhammad Abdurrahman Hafizhuddin <hafizhthericky123@gmail.com>
+Date:   Tue Sep 15 15:11:14 2026 +0700
+
+    merginf
+
+[33mcommit a290a03bfef1db5e05b65637db9e0ff34f9ed852[m
+Author: Muhammad Abdurrahman Hafizhuddin <hafizhthericky123@gmail.com>
+Date:   Tue Sep 15 15:10:22 2026 +0700
+
+    dependencies
+
+[33mcommit 357ce3cadaf48630de2ca64fa80ddf80b40cee24[m
+Author: Your Name <you@example.com>
+Date:   Tue Sep 15 12:04:49 2026 +0700
+
+    realtime map
+
+[33mcommit e1439c57b60d77a0b4f619ec8955e147e7ac450c[m
+Author: unknown <241730042.fadlihifziansyah@uinbanten.ac.id>
+Date:   Mon Sep 14 23:44:07 2026 +0700
+
+    fix: ui admin
+
+[33mcommit 743962d7b0f89b24492a68f71aa380f8ca40e9db[m
+Author: Your Name <you@example.com>
+Date:   Mon Sep 14 21:49:08 2026 +0700
+
+    map jamaah dan pendamping
+
+[33mcommit 3344c9d863faed348200f01ddbfb026f8e0667e2[m
+Author: unknown <241730042.fadlihifziansyah@uinbanten.ac.id>
+Date:   Mon Sep 14 21:49:50 2026 +0700
+
+    fix: ui admin
+
+[33mcommit fbb447678e77dd4a3e3a123dd3441d5aef2b6b9b[m
+Author: unknown <241730042.fadlihifziansyah@uinbanten.ac.id>
+Date:   Mon Sep 14 21:07:20 2026 +0700
+
+    refactor: admin ui
+
+[33mcommit 4a0d5592630be266042b9a4d5996cf68d88dfd8a[m
+Merge: 9e49f7c 5701eec
+Author: unknown <241730042.fadlihifziansyah@uinbanten.ac.id>
+Date:   Mon Sep 14 20:00:28 2026 +0700
+
+    merge
+
+[33mcommit 9e49f7c091ed8f03e6c8681b3434d1ebe72a023b[m
+Author: unknown <241730042.fadlihifziansyah@uinbanten.ac.id>
+Date:   Mon Sep 14 19:59:09 2026 +0700
+
+    fix: ui prayer time
+
+[33mcommit 5701eec1476f49952e520f22a80b035726ccf11f[m
+Author: Your Name <you@example.com>
+Date:   Mon Sep 14 19:57:19 2026 +0700
+
+    dahsboard admin
+
+[33mcommit 009dd97247b631e8cf6ad9677f170682d7a24a28[m
+Author: Your Name <you@example.com>
+Date:   Mon Sep 14 14:35:17 2026 +0700
+
+    add ui admin
+
+[33mcommit 3edd8c1b6fa3b88ead9f7817c1c00eab532c5a70[m
+Author: Your Name <you@example.com>
+Date:   Mon Sep 14 12:17:47 2026 +0700
+
+    fix: ui map
+
+[33mcommit bfee19f64384fc1e09aadd16c4594e8005c79573[m
+Author: Your Name <you@example.com>
+Date:   Mon Sep 14 11:23:23 2026 +0700
+
+    change logic detection
+
+[33mcommit 4a6337787e1410b685f08c4d23b61c38e37331b1[m
+Merge: c1117be d2d796c
+Author: Your Name <you@example.com>
+Date:   Mon Sep 14 10:51:32 2026 +0700
+
+    Merge branch 'main' of https://github.com/riverry25/hajicare
+
+[33mcommit c1117be99d6f70aa949395e4c9c4a81f4753a55e[m
+Author: Your Name <you@example.com>
+Date:   Mon Sep 14 10:50:44 2026 +0700
+
+    uncomplete ui money recognation
+
+[33mcommit d2d796c4e80054c7acfa7c73ac0fafb91950024a[m
+Author: unknown <241730042.fadlihifziansyah@uinbanten.ac.id>
+Date:   Sun Sep 13 22:10:38 2026 +0700
+
+    fix: ui prayer time
+
+[33mcommit 6437edfe8e5a7b85ebe3e14418f519e1b5f5dac8[m
+Author: unknown <241730042.fadlihifziansyah@uinbanten.ac.id>
+Date:   Sun Sep 13 21:51:24 2026 +0700
+
+    fix: ui dashboard
+
+[33mcommit 74d528e35e0966863dc42bdd1b0e82ea29e3c393[m
+Author: unknown <241730042.fadlihifziansyah@uinbanten.ac.id>
+Date:   Sun Sep 13 21:32:15 2026 +0700
+
+    fix: ui dashboard
+
+[33mcommit 87f1fbb95f31927288a7c39321c00d1439d6cd98[m
+Author: unknown <241730042.fadlihifziansyah@uinbanten.ac.id>
+Date:   Sun Sep 13 17:43:23 2026 +0700
+
+    fix: ui jadwal
+
+[33mcommit be7bf9fa83cd838b78581a352bd9ff5a430cf85c[m
+Author: unknown <241730042.fadlihifziansyah@uinbanten.ac.id>
+Date:   Sun Sep 13 17:35:13 2026 +0700
+
+    fix: ui jadwal
+
+[33mcommit bfac22f331cc663a0f71441986781bb45258d29d[m
+Merge: 4cbb417 3f1639b
+Author: Your Name <you@example.com>
+Date:   Sun Sep 13 17:25:23 2026 +0700
+
+    merge: pull latest changes from origin/main
+
+[33mcommit 4cbb417f48b40f800fc8b330608324b3f480e0ee[m
+Author: Your Name <you@example.com>
+Date:   Sun Sep 13 17:23:17 2026 +0700
+
+    fixed inconsistent jvm
+
+[33mcommit 3f1639bb4bfca736dbc64a0f6ad8d3afb90ea475[m
+Author: unknown <241730042.fadlihifziansyah@uinbanten.ac.id>
+Date:   Sun Sep 13 17:05:06 2026 +0700
+
+    fix: login logic
+
+[33mcommit daf4eb7b07fa3e766ece2ba00ba856823ae89248[m
+Author: Your Name <you@example.com>
+Date:   Sun Sep 13 12:36:37 2026 +0700
+
+    Update pubspec.lock
+
+[33mcommit 5f25e5273562fbf5748c1e51d7838d7c6938ea5a[m
+Merge: 6759da9 07affb3
+Author: unknown <241730042.fadlihifziansyah@uinbanten.ac.id>
+Date:   Sun Sep 13 11:43:43 2026 +0700
+
+    merge
+
+[33mcommit 6759da9fa715387b6387baa48bdbc9129e0e3f7a[m
+Author: unknown <241730042.fadlihifziansyah@uinbanten.ac.id>
+Date:   Sun Sep 13 11:39:20 2026 +0700
+
+    add help page
+
+[33mcommit 07affb343f0b749e63ad0ecf20369a10bcf0ba5d[m
+Merge: 67650b6 c2089e7
+Author: Your Name <you@example.com>
+Date:   Sun Sep 13 11:33:59 2026 +0700
+
+    Resolve pubspec.lock conflict
+
+[33mcommit 67650b6e3a29630edd2ebe65ae80d9c1a79a595e[m
+Author: Your Name <you@example.com>
+Date:   Sun Sep 13 11:32:00 2026 +0700
+
+    Integrasi Firebase, TFLite Money Recognition
+
+[33mcommit c2089e735f0ab25ededfab2291a8ee265e2267e1[m
+Author: unknown <241730042.fadlihifziansyah@uinbanten.ac.id>
+Date:   Sun Sep 13 10:40:02 2026 +0700
+
+    refactor: ui register
+
+[33mcommit 5e62ae4204cff7c0139bb63140dd1a3f2a994b5f[m
+Author: unknown <241730042.fadlihifziansyah@uinbanten.ac.id>
+Date:   Sun Sep 13 00:28:54 2026 +0700
+
+    fix ui
+
+[33mcommit 9916d8c42f9afaac0a258eca10cdedaa9345c37e[m
+Author: Your Name <you@example.com>
+Date:   Sun Sep 13 00:18:13 2026 +0700
+
+    fix: remove trailing dot in flutter_lints version constraint
+
+[33mcommit d6de581cda9066bd946636db3b4f0ee9667bb739[m
+Merge: e3cc8b8 a513116
+Author: Your Name <you@example.com>
+Date:   Sun Sep 13 00:07:12 2026 +0700
+
+    merge: resolve conflicts - integrate Firebase Auth into GetX architecture
+
+[33mcommit e3cc8b8d5cdb1d476c412336203d0374f47a9276[m
+Author: Your Name <you@example.com>
+Date:   Sat Sep 12 23:59:27 2026 +0700
+
+    fixed firestore
+
+[33mcommit a513116b8f3a4532aedefcc921185ea73cf79f6a[m
+Author: unknown <241730042.fadlihifziansyah@uinbanten.ac.id>
+Date:   Sat Sep 12 21:28:10 2026 +0700
+
+    fix: ui login screen
+
+[33mcommit 221647a89c3ba63a8db5ae3b8b1ff80c64e423b0[m
+Author: unknown <241730042.fadlihifziansyah@uinbanten.ac.id>
+Date:   Sat Sep 12 21:10:59 2026 +0700
+
+    fix: ui onbording page
+
+[33mcommit 030a3f2ca762f540aba0e0b145992e058953b4a0[m
+Merge: bf87d7b 0fb05fa
+Author: Your Name <you@example.com>
+Date:   Sat Sep 12 17:13:08 2026 +0700
+
+    merge: resolve conflicts - integrate Firebase Auth into GetX architecture
+    
+    - Resolved merge conflicts in 5 files: login_screen, register_screen,
+      register_controller, profile_screen, pubspec.yaml
+    - LoginScreen/RegisterScreen: convert
