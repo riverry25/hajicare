@@ -75,6 +75,24 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   final pois = <MapPoi>[].obs;
   final safeRadiusMeters = 200.0.obs;
   final activeTileUrl = AppConstants.cartoVoyagerUrl.obs;
+  final isBottomSheetOpen = true.obs;
+
+  void closeBottomSheet() {
+    isBottomSheetOpen.value = false;
+    clearSelectionAndRoute();
+  }
+
+  void openBottomSheet() {
+    isBottomSheetOpen.value = true;
+  }
+
+  void backToMembersList() {
+    selectedMember.value = null;
+    selectedJamaah.value = null;
+    selectedPoi.value = null;
+    clearRoute();
+    isBottomSheetOpen.value = true;
+  }
 
   bool _initialMoveDone = false;
 
@@ -391,6 +409,10 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     // Map chip index to role filter: 0: Semua, 1: Jamaah, 2: Pendamping
     if (index >= 0 && index <= 2) {
       selectedRoleFilter.value = index;
+      selectedMember.value = null;
+      selectedJamaah.value = null;
+      selectedPoi.value = null;
+      openBottomSheet();
     }
   }
 
@@ -419,6 +441,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
   void selectPoi(MapPoi poi) {
     debugPrint('[SELECT] poi = ${poi.name}');
+    isBottomSheetOpen.value = true;
     if (selectedPoi.value?.id == poi.id) return;
     selectedPoi.value = poi;
     selectedJamaah.value = null;
@@ -433,6 +456,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     debugPrint('[SELECT] currentLocation available = $hasUserLoc');
     debugPrint('[SELECT] destination available = $hasDestLoc');
 
+    isBottomSheetOpen.value = true;
     selectedMember.value = member;
     selectedPoi.value = null;
     selectedJamaah.value = null;
@@ -462,6 +486,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     debugPrint('[SELECT] currentLocation available = $hasUserLoc');
     debugPrint('[SELECT] destination available = $hasDestLoc');
 
+    isBottomSheetOpen.value = true;
     selectedJamaah.value = jamaah;
     selectedPoi.value = null;
     selectedMember.value = null;
@@ -682,6 +707,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   }
 
   void focusToAllMembers() {
+    openBottomSheet();
     final points = <LatLng>[];
     if (currentUserLocation.value != null) {
       points.add(currentUserLocation.value!);

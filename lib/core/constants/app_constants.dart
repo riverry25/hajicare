@@ -44,4 +44,7 @@ class AppConstants {
   static const String cartoApiKey = 'cb1_3juo_1_5f067ded7575ce8152ef26fc';
   static const String cartoVoyagerUrl =
       'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=$cartoApiKey';
+  static const String cartoDarkMatterUrl =
+      'https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png?key=$cartoApiKey';
 }
+

@@ -102,6 +102,7 @@ class AppColors {
   static const Color darkOutline = Color(0xFF6E5C50);
   static const Color darkBorder = darkOutline; // Alias
   static const Color darkOutlineVariant = Color(0xFF46382E);
+  static const Color darkBorderSubtle = darkOutlineVariant;
 
   // ── Semantic Brightness & Adaptive Helpers ─────────────────────────────────
   static bool isDark(BuildContext context) =>

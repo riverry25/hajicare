@@ -17,6 +17,7 @@ class MapTopHeader extends StatelessWidget {
   final String? roomName;
   final String? memberSummary;
   final String? nearestInfo;
+  final VoidCallback? onRoomTap;
 
   const MapTopHeader({
     super.key,
@@ -30,10 +31,13 @@ class MapTopHeader extends StatelessWidget {
     this.roomName,
     this.memberSummary,
     this.nearestInfo,
+    this.onRoomTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppColors.isDark(context);
+
     return Positioned(
       top: 0,
       left: 0,
@@ -46,7 +50,9 @@ class MapTopHeader extends StatelessWidget {
           bottom: AppSpacing.sm2,
         ),
         decoration: BoxDecoration(
-          color: AppColors.canvasCream.withValues(alpha: 0.96),
+          color: isDark
+              ? AppColors.darkSurface.withValues(alpha: 0.96)
+              : AppColors.canvasCream.withValues(alpha: 0.96),
           border: Border(
             bottom: BorderSide(
               color: AppColors.cardBorderColor(context),
@@ -55,7 +61,7 @@ class MapTopHeader extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.espressoDark.withValues(alpha: 0.07),
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.07),
               blurRadius: 12,
               offset: const Offset(0, 3),
             ),
@@ -76,14 +82,16 @@ class MapTopHeader extends StatelessWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceWhite,
+                    color: isDark
+                        ? AppColors.darkSurfaceContainer
+                        : AppColors.surfaceWhite,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                     border: Border.all(
                       color: AppColors.cardBorderColor(context),
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.espressoDark.withValues(alpha: 0.04),
+                        color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
@@ -100,14 +108,18 @@ class MapTopHeader extends StatelessWidget {
                       Text(
                         'Pelacakan Aktif',
                         style: AppTypography.captionSmall.copyWith(
-                          color: AppColors.espressoDark,
+                          color: isDark
+                              ? AppColors.darkTextHeading
+                              : AppColors.espressoDark,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                       Text(
                         ' • GPS ${gpsAccuracy > 0 ? '${gpsAccuracy.round()}m' : 'OK'}',
                         style: AppTypography.captionSmall.copyWith(
-                          color: AppColors.textBody,
+                          color: isDark
+                              ? AppColors.darkTextBody
+                              : AppColors.textBody,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -167,53 +179,76 @@ class MapTopHeader extends StatelessWidget {
             // ============================================================
             if (roomName != null && roomName!.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.xs),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceWhite,
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onRoomTap,
                   borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(
-                    color: AppColors.goldPrimary.withValues(alpha: 0.3),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.espressoDark.withValues(alpha: 0.03),
-                      blurRadius: 6,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
                     ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.meeting_room_rounded,
-                          size: 16,
-                          color: AppColors.goldPrimary,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Room: $roomName',
-                          style: AppTypography.captionSmall.copyWith(
-                            color: AppColors.espressoDark,
-                            fontWeight: FontWeight.w800,
-                          ),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.darkSurfaceContainer
+                          : AppColors.surfaceWhite,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(
+                        color: AppColors.goldPrimary.withValues(alpha: 0.35),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                          blurRadius: 6,
                         ),
                       ],
                     ),
-                    if (memberSummary != null && memberSummary!.isNotEmpty)
-                      Text(
-                        memberSummary!,
-                        style: AppTypography.captionSmall.copyWith(
-                          color: AppColors.primaryContainer,
-                          fontWeight: FontWeight.w700,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.meeting_room_rounded,
+                              size: 16,
+                              color: AppColors.goldPrimary,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Room: $roomName',
+                              style: AppTypography.captionSmall.copyWith(
+                                color: isDark
+                                    ? AppColors.darkTextHeading
+                                    : AppColors.espressoDark,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                  ],
+                        if (memberSummary != null && memberSummary!.isNotEmpty)
+                          Row(
+                            children: [
+                              Text(
+                                memberSummary!,
+                                style: AppTypography.captionSmall.copyWith(
+                                  color: isDark
+                                      ? AppColors.goldPrimary
+                                      : AppColors.primaryContainer,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                size: 16,
+                                color: AppColors.goldPrimary,
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -225,18 +260,32 @@ class MapTopHeader extends StatelessWidget {
               padding: const EdgeInsets.only(top: 6, bottom: 4),
               child: Row(
                 children: [
-                  _buildLegendDot(AppColors.espressoDark, 'Anda'),
+                  _buildLegendDot(
+                    isDark ? Colors.white : AppColors.espressoDark,
+                    'Anda',
+                    isDark,
+                  ),
                   const SizedBox(width: 12),
-                  _buildLegendDot(AppColors.goldPrimary, 'Pendamping'),
+                  _buildLegendDot(
+                    AppColors.goldPrimary,
+                    'Pendamping',
+                    isDark,
+                  ),
                   const SizedBox(width: 12),
-                  _buildLegendDot(AppColors.statusPositive, 'Jamaah'),
+                  _buildLegendDot(
+                    AppColors.statusPositive,
+                    'Jamaah',
+                    isDark,
+                  ),
                   if (nearestInfo != null && nearestInfo!.isNotEmpty) ...[
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         nearestInfo!,
                         style: AppTypography.captionSmall.copyWith(
-                          color: AppColors.textBody,
+                          color: isDark
+                              ? AppColors.darkTextBody
+                              : AppColors.textBody,
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                         ),
@@ -258,14 +307,16 @@ class MapTopHeader extends StatelessWidget {
             Container(
               height: 44,
               decoration: BoxDecoration(
-                color: AppColors.surfaceWhite,
+                color: isDark
+                    ? AppColors.darkSurfaceContainer
+                    : AppColors.surfaceWhite,
                 borderRadius: BorderRadius.circular(AppRadius.pill),
                 border: Border.all(
                   color: AppColors.cardBorderColor(context),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.espressoDark.withValues(alpha: 0.04),
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -273,11 +324,11 @@ class MapTopHeader extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.only(left: 14),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 14),
                     child: Icon(
                       Icons.search_rounded,
-                      color: AppColors.tanMedium,
+                      color: isDark ? AppColors.goldPrimary : AppColors.tanMedium,
                       size: 20,
                     ),
                   ),
@@ -286,7 +337,9 @@ class MapTopHeader extends StatelessWidget {
                     child: Text(
                       'Cari posko medis, toilet, tenda maktab...',
                       style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textMuted,
+                        color: isDark
+                            ? AppColors.darkTextBody.withValues(alpha: 0.7)
+                            : AppColors.textMuted,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -342,8 +395,12 @@ class MapTopHeader extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? AppColors.espressoDark
-                              : AppColors.surfaceWhite,
+                              ? (isDark
+                                  ? AppColors.goldPrimary
+                                  : AppColors.espressoDark)
+                              : (isDark
+                                  ? AppColors.darkSurfaceContainer
+                                  : AppColors.surfaceWhite),
                           borderRadius: BorderRadius.circular(AppRadius.pill),
                           border: Border.all(
                             color: isSelected
@@ -354,17 +411,18 @@ class MapTopHeader extends StatelessWidget {
                           boxShadow: isSelected
                               ? [
                                   BoxShadow(
-                                    color: AppColors.espressoDark.withValues(
-                                      alpha: 0.18,
-                                    ),
+                                    color: (isDark
+                                            ? AppColors.goldPrimary
+                                            : AppColors.espressoDark)
+                                        .withValues(alpha: 0.25),
                                     blurRadius: 8,
                                     offset: const Offset(0, 3),
                                   ),
                                 ]
                               : [
                                   BoxShadow(
-                                    color: AppColors.espressoDark.withValues(
-                                      alpha: 0.03,
+                                    color: Colors.black.withValues(
+                                      alpha: isDark ? 0.15 : 0.03,
                                     ),
                                     blurRadius: 4,
                                     offset: const Offset(0, 1),
@@ -379,8 +437,12 @@ class MapTopHeader extends StatelessWidget {
                                 filter.icon,
                                 size: 15,
                                 color: isSelected
-                                    ? AppColors.goldPrimary
-                                    : AppColors.tanMedium,
+                                    ? (isDark
+                                        ? AppColors.espressoDark
+                                        : AppColors.goldPrimary)
+                                    : (isDark
+                                        ? AppColors.darkTextBody
+                                        : AppColors.tanMedium),
                               ),
                               const SizedBox(width: 6),
                             ],
@@ -388,7 +450,9 @@ class MapTopHeader extends StatelessWidget {
                               filter.label,
                               style: AppTypography.captionSmall.copyWith(
                                 color: isSelected
-                                    ? Colors.white
+                                    ? (isDark
+                                        ? AppColors.espressoDark
+                                        : Colors.white)
                                     : AppColors.textHeadingColor(context),
                                 fontWeight: isSelected
                                     ? FontWeight.w800
@@ -409,7 +473,7 @@ class MapTopHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildLegendDot(Color color, String label) {
+  Widget _buildLegendDot(Color color, String label, bool isDark) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -420,7 +484,7 @@ class MapTopHeader extends StatelessWidget {
             color: color,
             shape: BoxShape.circle,
             border: Border.all(
-              color: Colors.white,
+              color: isDark ? Colors.white70 : Colors.white,
               width: 1,
             ),
             boxShadow: [
@@ -435,7 +499,7 @@ class MapTopHeader extends StatelessWidget {
         Text(
           label,
           style: AppTypography.captionSmall.copyWith(
-            color: AppColors.espressoDark,
+            color: isDark ? AppColors.darkTextBody : AppColors.espressoDark,
             fontWeight: FontWeight.w600,
             fontSize: 10,
           ),
