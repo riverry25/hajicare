@@ -12,7 +12,20 @@
           "package_name": "com.example.hajicare"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "130436723221-u1bdue8vd4krdfb5co0fqifb6jsgqloj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.hajicare",
+            "certificate_hash": "1ccf1fc0b28beec6511c95f2665d265f46f947b8"
+          }
+        },
+        {
+          "client_id": "130436723221-l3spcu8ngaano7f8msjsgsh1v00bmnqf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyArYIm5aj1Gmgk2GNm6HYzIR8meC3UViGo"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "130436723221-l3spcu8ngaano7f8msjsgsh1v00bmnqf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

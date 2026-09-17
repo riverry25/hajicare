@@ -541,48 +541,49 @@ class LoginScreen extends StatelessWidget {
 
                     const SizedBox(height: 16),
 
-                    // WHATSAPP LOGIN
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: OutlinedButton(
-                        onPressed: () {},
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: AppColors.canvasCream.withValues(
-                            alpha: 0.35,
-                          ),
-                          side: BorderSide(
-                            color: AppColors.cardBorderColor(context),
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 28,
-                              height: 28,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF25D366),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.chat_rounded,
-                                color: Colors.white,
-                                size: 16,
-                              ),
+                    // GOOGLE SIGN-IN
+                    Obx(
+                      () => SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: OutlinedButton(
+                          onPressed: controller.isLoading.value
+                              ? null
+                              : () => controller.loginWithGoogle(),
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: AppColors.canvasCream.withValues(
+                              alpha: 0.35,
                             ),
-                            const SizedBox(width: 10),
-                            Text(
-                              'Masuk Cepat via WhatsApp',
-                              style: AppTypography.bodyMedium.copyWith(
-                                color: AppColors.espressoDark,
-                                fontWeight: FontWeight.w700,
-                              ),
+                            side: BorderSide(
+                              color: AppColors.cardBorderColor(context),
                             ),
-                          ],
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.pill),
+                            ),
+                          ),
+                          child: controller.isGoogleLoading.value
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.2,
+                                    color: AppColors.goldPrimary,
+                                  ),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const _GoogleLogo(size: 20),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      'Masuk dengan Google',
+                                      style: AppTypography.bodyMedium.copyWith(
+                                        color: AppColors.espressoDark,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                         ),
                       ),
                     ),
@@ -760,4 +761,98 @@ class _WelcomeFeature extends StatelessWidget {
       ),
     );
   }
+}
+
+class _GoogleLogo extends StatelessWidget {
+  final double size;
+
+  const _GoogleLogo({this.size = 20});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size + 8,
+      height: size + 8,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x18000000),
+            blurRadius: 4,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      alignment: Alignment.center,
+      child: CustomPaint(
+        size: Size(size, size),
+        painter: const _GoogleLogoPainter(),
+      ),
+    );
+  }
+}
+
+class _GoogleLogoPainter extends CustomPainter {
+  const _GoogleLogoPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.scale(size.width / 24.0, size.height / 24.0);
+
+    // Red (top segment)
+    final redPath = Path()
+      ..moveTo(12.0, 5.0)
+      ..cubicTo(13.85, 5.0, 15.35, 5.68, 16.48, 6.64)
+      ..lineTo(20.0, 3.12)
+      ..cubicTo(17.85, 1.15, 15.15, 0.0, 12.0, 0.0)
+      ..cubicTo(7.45, 0.0, 3.5, 2.65, 1.5, 6.5)
+      ..lineTo(5.62, 9.68)
+      ..cubicTo(6.62, 6.95, 9.1, 5.0, 12.0, 5.0)
+      ..close();
+    canvas.drawPath(redPath, Paint()..color = const Color(0xFFEA4335));
+
+    // Blue (right segment & crossbar)
+    final bluePath = Path()
+      ..moveTo(23.6, 12.25)
+      ..cubicTo(23.6, 11.45, 23.5, 10.65, 23.35, 9.9)
+      ..lineTo(12.0, 9.9)
+      ..lineTo(12.0, 14.5)
+      ..lineTo(18.5, 14.5)
+      ..cubicTo(18.2, 16.0, 17.3, 17.25, 16.0, 18.1)
+      ..lineTo(19.9, 21.1)
+      ..cubicTo(22.2, 19.0, 23.6, 15.9, 23.6, 12.25)
+      ..close();
+    canvas.drawPath(bluePath, Paint()..color = const Color(0xFF4285F4));
+
+    // Yellow (left segment)
+    final yellowPath = Path()
+      ..moveTo(1.5, 6.5)
+      ..cubicTo(0.55, 8.4, 0.0, 10.5, 0.0, 12.0)
+      ..cubicTo(0.0, 13.5, 0.55, 15.6, 1.5, 17.5)
+      ..lineTo(5.62, 14.32)
+      ..cubicTo(5.35, 13.55, 5.2, 12.8, 5.2, 12.0)
+      ..cubicTo(5.2, 11.2, 5.35, 10.45, 5.62, 9.68)
+      ..lineTo(1.5, 6.5)
+      ..close();
+    canvas.drawPath(yellowPath, Paint()..color = const Color(0xFFFBBC05));
+
+    // Green (bottom segment)
+    final greenPath = Path()
+      ..moveTo(12.0, 24.0)
+      ..cubicTo(15.2, 24.0, 17.9, 22.95, 19.9, 21.1)
+      ..lineTo(16.0, 18.1)
+      ..cubicTo(14.95, 18.8, 13.6, 19.2, 12.0, 19.2)
+      ..cubicTo(9.1, 19.2, 6.62, 17.25, 5.62, 14.52)
+      ..lineTo(1.5, 17.5)
+      ..cubicTo(3.5, 21.35, 7.45, 24.0, 12.0, 24.0)
+      ..close();
+    canvas.drawPath(greenPath, Paint()..color = const Color(0xFF34A853));
+
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
