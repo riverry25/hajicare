@@ -53,7 +53,11 @@ class MapBottomSheet extends StatefulWidget {
   State<MapBottomSheet> createState() => _MapBottomSheetState();
 }
 
-class _MapBottomSheetState extends State<MapBottomSheet> {
+class _MapBottomSheetState extends State<MapBottomSheet>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animCtrl;
+  Animation<double>? _slideAnim;
+  bool _isDismissing = false;
   double _dragOffset = 0.0;
 
   HajiCareState get state => widget.state;
@@ -75,111 +79,212 @@ class _MapBottomSheetState extends State<MapBottomSheet> {
   VoidCallback? get onRetryRoute => widget.onRetryRoute;
   double get bottomOffset => widget.bottomOffset;
 
+  @override
+  void initState() {
+    super.initState();
+    _animCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 240),
+    );
+    // Smooth entrance slide up
+    _dragOffset = 60.0;
+    _slideAnim = Tween<double>(begin: 60.0, end: 0.0).animate(
+      CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic),
+    )..addListener(_onAnimTick);
+    _animCtrl.forward();
+  }
+
+  void _onAnimTick() {
+    if (mounted && _slideAnim != null) {
+      setState(() {
+        _dragOffset = _slideAnim!.value;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _slideAnim?.removeListener(_onAnimTick);
+    _animCtrl.dispose();
+    super.dispose();
+  }
+
+  void _dismissWithAnimation({double velocity = 0.0}) {
+    if (_isDismissing) return;
+    _isDismissing = true;
+
+    final startOffset = _dragOffset;
+    final targetOffset = math.max(450.0, startOffset + 320.0);
+
+    // Dynamic duration based on downward velocity
+    int durationMs = 220;
+    if (velocity > 800) {
+      durationMs = 150;
+    } else if (velocity > 400) {
+      durationMs = 180;
+    }
+
+    _slideAnim?.removeListener(_onAnimTick);
+    _animCtrl.duration = Duration(milliseconds: durationMs);
+    _slideAnim = Tween<double>(begin: startOffset, end: targetOffset).animate(
+      CurvedAnimation(parent: _animCtrl, curve: Curves.easeInCubic),
+    )..addListener(_onAnimTick);
+
+    _animCtrl.reset();
+    _animCtrl.forward().then((_) {
+      if (mounted) {
+        widget.onCloseMemberDetail?.call();
+      }
+    });
+  }
+
+  void _springBackAnimation() {
+    if (_isDismissing) return;
+    if (_dragOffset == 0.0) return;
+
+    final startOffset = _dragOffset;
+    _slideAnim?.removeListener(_onAnimTick);
+    _animCtrl.duration = const Duration(milliseconds: 220);
+    _slideAnim = Tween<double>(begin: startOffset, end: 0.0).animate(
+      CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic),
+    )..addListener(_onAnimTick);
+
+    _animCtrl.reset();
+    _animCtrl.forward();
+  }
+
   void _onVerticalDragUpdate(DragUpdateDetails details) {
+    if (_isDismissing) return;
+    if (_animCtrl.isAnimating) {
+      _animCtrl.stop();
+    }
     if (details.primaryDelta != null) {
       setState(() {
-        _dragOffset = math.max(0.0, _dragOffset + details.primaryDelta!);
+        if (details.primaryDelta! > 0) {
+          _dragOffset += details.primaryDelta!;
+        } else {
+          if (_dragOffset > 0) {
+            _dragOffset = math.max(0.0, _dragOffset + details.primaryDelta!);
+          } else {
+            _dragOffset = math.max(
+              -20.0,
+              _dragOffset + details.primaryDelta! * 0.25,
+            );
+          }
+        }
       });
-      if (_dragOffset > 85.0) {
-        widget.onCloseMemberDetail?.call();
-        _dragOffset = 0.0;
-      }
     }
   }
 
   void _onVerticalDragEnd(DragEndDetails details) {
+    if (_isDismissing) return;
     final velocity = details.primaryVelocity ?? 0.0;
-    if (_dragOffset > 35.0 || velocity > 80.0) {
-      widget.onCloseMemberDetail?.call();
+    final isFlingDown = velocity > 300.0;
+    final isDraggedDown = _dragOffset > 60.0 && velocity > -100.0;
+    final isDeepDrag = _dragOffset > 110.0;
+
+    if (isFlingDown || isDraggedDown || isDeepDrag) {
+      _dismissWithAnimation(velocity: velocity);
+    } else {
+      _springBackAnimation();
     }
-    setState(() {
-      _dragOffset = 0.0;
-    });
   }
 
   void _onVerticalDragCancel() {
-    setState(() {
-      _dragOffset = 0.0;
-    });
+    if (!_isDismissing) {
+      _springBackAnimation();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
+    final opacity = (1.0 - (_dragOffset / 280.0)).clamp(0.0, 1.0);
 
     return Positioned(
       left: AppSpacing.md,
       right: AppSpacing.md,
       bottom: bottomOffset,
-      child: Transform.translate(
-        offset: Offset(0, _dragOffset),
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onVerticalDragUpdate: _onVerticalDragUpdate,
-          onVerticalDragEnd: _onVerticalDragEnd,
-          onVerticalDragCancel: _onVerticalDragCancel,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-            child: Container(
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+      child: RepaintBoundary(
+        child: Opacity(
+          opacity: opacity,
+          child: Transform.translate(
+            offset: Offset(0, _dragOffset),
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onVerticalDragUpdate: _onVerticalDragUpdate,
+              onVerticalDragEnd: _onVerticalDragEnd,
+              onVerticalDragCancel: _onVerticalDragCancel,
+              child: ClipRRect(
                 borderRadius: BorderRadius.circular(AppRadius.xl),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.08)
-                      : AppColors.espressoDark.withValues(alpha: 0.06),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.08),
-                    blurRadius: 20,
-                    spreadRadius: 0,
-                    offset: const Offset(0, 6),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.darkSurface
+                        : AppColors.surfaceWhite,
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : AppColors.espressoDark.withValues(alpha: 0.06),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(
+                          alpha: isDark ? 0.25 : 0.08,
+                        ),
+                        blurRadius: 20,
+                        spreadRadius: 0,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Interactive Drag Handle Bar
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: onCloseMemberDetail,
-                    onVerticalDragUpdate: _onVerticalDragUpdate,
-                    onVerticalDragEnd: _onVerticalDragEnd,
-                    onVerticalDragCancel: _onVerticalDragCancel,
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      color: Colors.transparent,
-                      child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Interactive Drag Handle Bar
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => _dismissWithAnimation(),
+                        onVerticalDragUpdate: _onVerticalDragUpdate,
+                        onVerticalDragEnd: _onVerticalDragEnd,
+                        onVerticalDragCancel: _onVerticalDragCancel,
                         child: Container(
-                          width: 44,
-                          height: 4.5,
-                          decoration: BoxDecoration(
-                            color: AppColors.outlineVariant.withValues(
-                              alpha: 0.7,
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          color: Colors.transparent,
+                          child: Center(
+                            child: Container(
+                              width: 44,
+                              height: 4.5,
+                              decoration: BoxDecoration(
+                                color: AppColors.outlineVariant.withValues(
+                                  alpha: 0.7,
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.pill,
+                                ),
+                              ),
                             ),
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
                           ),
                         ),
                       ),
-                    ),
-                  ),
 
-                  if (selectedMember != null)
-                    _buildSelectedMemberDetail(context, selectedMember!)
-                  else if (roomMembers != null && roomMembers!.isNotEmpty)
-                    _buildRoomMembersList(context, roomMembers!)
-                  else
-                    _buildLegacyJamaahCard(context),
-                ],
-              ), // Column
-            ), // Container
-          ), // ClipRRect
-        ), // GestureDetector
-      ), // Transform.translate
+                      if (selectedMember != null)
+                        _buildSelectedMemberDetail(context, selectedMember!)
+                      else if (roomMembers != null && roomMembers!.isNotEmpty)
+                        _buildRoomMembersList(context, roomMembers!)
+                      else
+                        _buildLegacyJamaahCard(context),
+                    ],
+                  ), // Column
+                ), // Container
+              ), // ClipRRect
+            ), // GestureDetector
+          ), // Transform.translate
+        ), // Opacity
+      ), // RepaintBoundary
     ); // Positioned
   }
 
@@ -206,26 +311,21 @@ class _MapBottomSheetState extends State<MapBottomSheet> {
       constraints: BoxConstraints(maxHeight: maxDetailHeight),
       child: NotificationListener<ScrollNotification>(
         onNotification: (notification) {
+          if (_isDismissing) return false;
           if (notification is OverscrollNotification &&
               notification.overscroll < 0) {
+            if (_animCtrl.isAnimating) _animCtrl.stop();
             setState(() {
               _dragOffset = math.max(
                 0.0,
-                _dragOffset - notification.overscroll * 0.5,
+                _dragOffset - notification.overscroll * 0.4,
               );
             });
-            if (_dragOffset > 85.0) {
-              widget.onCloseMemberDetail?.call();
-              _dragOffset = 0.0;
-            }
           } else if (notification is ScrollEndNotification) {
-            if (_dragOffset > 35.0) {
-              widget.onCloseMemberDetail?.call();
-            }
-            if (_dragOffset != 0.0) {
-              setState(() {
-                _dragOffset = 0.0;
-              });
+            if (_dragOffset > 60.0) {
+              _dismissWithAnimation();
+            } else if (_dragOffset > 0.0) {
+              _springBackAnimation();
             }
           }
           return false;
@@ -374,7 +474,7 @@ class _MapBottomSheetState extends State<MapBottomSheet> {
                       icon: const Icon(Icons.close_rounded, size: 20),
                       color: AppColors.outlineVariant,
                       tooltip: 'Tutup Panel',
-                      onPressed: onCloseMemberDetail,
+                      onPressed: () => _dismissWithAnimation(),
                     ),
                   ],
                 ),
@@ -708,7 +808,7 @@ class _MapBottomSheetState extends State<MapBottomSheet> {
                 IconButton(
                   icon: const Icon(Icons.close_rounded, size: 20),
                   color: AppColors.outlineVariant,
-                  onPressed: onCloseMemberDetail,
+                  onPressed: () => _dismissWithAnimation(),
                 ),
               ],
             ),
@@ -737,26 +837,21 @@ class _MapBottomSheetState extends State<MapBottomSheet> {
 
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
+        if (_isDismissing) return false;
         if (notification is OverscrollNotification &&
             notification.overscroll < 0) {
+          if (_animCtrl.isAnimating) _animCtrl.stop();
           setState(() {
             _dragOffset = math.max(
               0.0,
-              _dragOffset - notification.overscroll * 0.5,
+              _dragOffset - notification.overscroll * 0.4,
             );
           });
-          if (_dragOffset > 85.0) {
-            widget.onCloseMemberDetail?.call();
-            _dragOffset = 0.0;
-          }
         } else if (notification is ScrollEndNotification) {
-          if (_dragOffset > 35.0) {
-            widget.onCloseMemberDetail?.call();
-          }
-          if (_dragOffset != 0.0) {
-            setState(() {
-              _dragOffset = 0.0;
-            });
+          if (_dragOffset > 60.0) {
+            _dismissWithAnimation();
+          } else if (_dragOffset > 0.0) {
+            _springBackAnimation();
           }
         }
         return false;
@@ -928,7 +1023,7 @@ class _MapBottomSheetState extends State<MapBottomSheet> {
               IconButton(
                 icon: const Icon(Icons.close_rounded, size: 20),
                 color: AppColors.outlineVariant,
-                onPressed: onCloseMemberDetail,
+                onPressed: () => _dismissWithAnimation(),
               ),
             ],
           ),

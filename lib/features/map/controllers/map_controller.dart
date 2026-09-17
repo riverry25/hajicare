@@ -19,9 +19,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   RoomService? _lazyRoomService;
   final RouteService _routeService;
 
-  MapController({RoomService? roomService, RouteService? routeService}) 
-      : _injectedRoomService = roomService,
-        _routeService = routeService ?? RouteService();
+  MapController({RoomService? roomService, RouteService? routeService})
+    : _injectedRoomService = roomService,
+      _routeService = routeService ?? RouteService();
 
   RoomService? get _roomService {
     if (_injectedRoomService != null) return _injectedRoomService;
@@ -29,7 +29,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     try {
       _lazyRoomService = RoomService();
     } catch (e) {
-      debugPrint('[MapController] RoomService initialization deferred or unavailable: $e');
+      debugPrint(
+        '[MapController] RoomService initialization deferred or unavailable: $e',
+      );
     }
     return _lazyRoomService;
   }
@@ -43,12 +45,11 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   final selectedJamaah = Rxn<JamaahData>();
   final selectedMember = Rxn<RoomMemberModel>();
   final activeRoute = <LatLng>[].obs;
-  
+
   final isRouteLoading = false.obs;
   final routeError = RxnString();
   final routeDistanceMeters = Rxn<double>();
   final routeDurationSeconds = Rxn<int>();
-
 
   static const LatLng defaultMinaBase = LatLng(21.4135, 39.8930);
   final currentUserLocation = Rxn<LatLng>(defaultMinaBase);
@@ -57,9 +58,11 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
   final isLiveTracking = false.obs;
   final gpsAccuracy = 0.0.obs;
-  StreamSubscription<Position>? _positionStreamSub;
+  StreamSubscription<Position>? _nativePositionSub;
+  StreamSubscription<Position?>? _statePositionSub;
   StreamSubscription<List<RoomMemberModel>>? _roomMembersSub;
   Worker? _roomWorker;
+  AnimationController? _moveAnimCtrl;
 
   // Realtime location throttle trackers (Foreground-only, dual-gate)
   DateTime? _lastFirestoreWriteTime;
@@ -144,17 +147,19 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     }
 
     try {
-      _roomMembersSub = service.watchRoomMembers(roomId).listen(
-        (members) {
-          roomMembers.value = members;
-          isRoomMembersLoading.value = false;
-        },
-        onError: (e) {
-          debugPrint('[MapController] watchRoomMembers error: $e');
-          roomMembersError.value = e.toString();
-          isRoomMembersLoading.value = false;
-        },
-      );
+      _roomMembersSub = service
+          .watchRoomMembers(roomId)
+          .listen(
+            (members) {
+              roomMembers.value = members;
+              isRoomMembersLoading.value = false;
+            },
+            onError: (e) {
+              debugPrint('[MapController] watchRoomMembers error: $e');
+              roomMembersError.value = e.toString();
+              isRoomMembersLoading.value = false;
+            },
+          );
     } catch (e) {
       debugPrint('[MapController] watchRoomMembers exception: $e');
       isRoomMembersLoading.value = false;
@@ -193,50 +198,42 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     }
   }
 
-  /// Finds nearest member with location excluding current user
-  RoomMemberModel? get nearestMember {
+  /// Finds nearest member with location excluding current user in a single O(N) pass.
+  RoomMemberModel? get nearestMember => _findNearestMemberData()?.member;
+
+  /// Returns computed (nearestMember, distanceInMeters) in a single O(N) pass without repeated distance calculations.
+  ({RoomMemberModel member, double distance})? _findNearestMemberData() {
     final myLoc = currentUserLocation.value;
     if (myLoc == null || roomMembers.isEmpty) return null;
 
     final myUid = currentUserId;
-    final candidates = roomMembers
-        .where((m) => m.hasLocation && (myUid == null || m.uid != myUid))
-        .toList();
+    RoomMemberModel? bestMember;
+    double bestDist = double.infinity;
 
-    if (candidates.isEmpty) return null;
-
-    candidates.sort((a, b) {
-      final distA = Geolocator.distanceBetween(
+    for (final m in roomMembers) {
+      if (!m.hasLocation || (myUid != null && m.uid == myUid)) continue;
+      final dist = Geolocator.distanceBetween(
         myLoc.latitude,
         myLoc.longitude,
-        a.latitude!,
-        a.longitude!,
+        m.latitude!,
+        m.longitude!,
       );
-      final distB = Geolocator.distanceBetween(
-        myLoc.latitude,
-        myLoc.longitude,
-        b.latitude!,
-        b.longitude!,
-      );
-      return distA.compareTo(distB);
-    });
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestMember = m;
+      }
+    }
 
-    return candidates.first;
+    if (bestMember == null) return null;
+    return (member: bestMember, distance: bestDist);
   }
 
   String get nearestMemberInfo {
-    final nearest = nearestMember;
-    final myLoc = currentUserLocation.value;
-    if (nearest == null || myLoc == null) return '';
+    final data = _findNearestMemberData();
+    if (data == null) return '';
 
-    final dist = Geolocator.distanceBetween(
-      myLoc.latitude,
-      myLoc.longitude,
-      nearest.latitude!,
-      nearest.longitude!,
-    );
-    final roleLabel = nearest.isPendamping ? 'Pendamping' : 'Jamaah';
-    return '$roleLabel terdekat: ${nearest.name} · ${formatDistance(dist)}';
+    final roleLabel = data.member.isPendamping ? 'Pendamping' : 'Jamaah';
+    return '$roleLabel terdekat: ${data.member.name} · ${formatDistance(data.distance)}';
   }
 
   static String formatDistance(double meters) {
@@ -269,6 +266,17 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     isLocationLoading.value = true;
     locationError.value = null;
 
+    // Fast-path: Check if HajiCareController is already providing a valid GPS location
+    if (Get.isRegistered<HajiCareController>()) {
+      final state = Get.find<HajiCareController>();
+      if (state.myCurrentPosition.value != null) {
+        _applyPosition(state.myCurrentPosition.value!, publishToRoom: false);
+        isLocationLoading.value = false;
+        _subscribeToStatePosition(state);
+        return;
+      }
+    }
+
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
@@ -293,7 +301,8 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
           AppAlert.warning(
             Get.context,
             title: 'Izin Lokasi Diperlukan',
-            message: 'Izin akses lokasi diperlukan agar peta dapat menampilkan posisi Anda.',
+            message:
+                'Izin akses lokasi diperlukan agar peta dapat menampilkan posisi Anda.',
           );
           return;
         }
@@ -318,9 +327,17 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
           timeLimit: Duration(seconds: 10),
         ),
       );
-      _applyPosition(firstPosition);
-      isLocationLoading.value = false;
-      _startPositionStream();
+
+      if (Get.isRegistered<HajiCareController>()) {
+        final state = Get.find<HajiCareController>();
+        _applyPosition(firstPosition, publishToRoom: false);
+        isLocationLoading.value = false;
+        _subscribeToStatePosition(state);
+      } else {
+        _applyPosition(firstPosition, publishToRoom: true);
+        isLocationLoading.value = false;
+        _startPositionStream();
+      }
     } catch (e) {
       debugPrint('[MapController] GPS init error: $e');
       locationError.value = e.toString();
@@ -329,48 +346,64 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     }
   }
 
-  void _startPositionStream() {
-    _positionStreamSub?.cancel();
-    _positionStreamSub = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 10,
-      ),
-    ).listen(
-      _applyPosition,
-      onError: (e) {
-        debugPrint('[MapController] Stream error: $e');
-        isLiveTracking.value = false;
-      },
-    );
+  void _subscribeToStatePosition(HajiCareController state) {
+    _nativePositionSub?.cancel();
+    _statePositionSub?.cancel();
+    _statePositionSub = state.myCurrentPosition.listen((pos) {
+      if (pos != null) {
+        _applyPosition(pos, publishToRoom: false);
+      }
+    });
     isLiveTracking.value = true;
   }
 
-  void _applyPosition(Position position) {
+  void _startPositionStream() {
+    _statePositionSub?.cancel();
+    _nativePositionSub?.cancel();
+    _nativePositionSub =
+        Geolocator.getPositionStream(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 10,
+          ),
+        ).listen(
+          (pos) => _applyPosition(pos, publishToRoom: true),
+          onError: (e) {
+            debugPrint('[MapController] Stream error: $e');
+            isLiveTracking.value = false;
+          },
+        );
+    isLiveTracking.value = true;
+  }
+
+  void _applyPosition(Position position, {bool publishToRoom = true}) {
     final newCoord = LatLng(position.latitude, position.longitude);
     currentUserLocation.value = newCoord;
     gpsAccuracy.value = position.accuracy;
 
-    // Dual-gate throttling: minimum 8 seconds AND 10 meters distance
-    final now = DateTime.now();
-    final timeDiffSec = _lastFirestoreWriteTime == null
-        ? double.infinity
-        : now.difference(_lastFirestoreWriteTime!).inMilliseconds / 1000.0;
+    if (publishToRoom) {
+      // Dual-gate throttling: minimum 8 seconds AND 10 meters distance
+      final now = DateTime.now();
+      final timeDiffSec = _lastFirestoreWriteTime == null
+          ? double.infinity
+          : now.difference(_lastFirestoreWriteTime!).inMilliseconds / 1000.0;
 
-    double distMoved = double.infinity;
-    if (_lastWrittenPosition != null) {
-      distMoved = Geolocator.distanceBetween(
-        _lastWrittenPosition!.latitude,
-        _lastWrittenPosition!.longitude,
-        position.latitude,
-        position.longitude,
-      );
-    }
+      double distMoved = double.infinity;
+      if (_lastWrittenPosition != null) {
+        distMoved = Geolocator.distanceBetween(
+          _lastWrittenPosition!.latitude,
+          _lastWrittenPosition!.longitude,
+          position.latitude,
+          position.longitude,
+        );
+      }
 
-    if (_lastFirestoreWriteTime == null || (timeDiffSec >= 8.0 && distMoved >= 10.0)) {
-      _lastFirestoreWriteTime = now;
-      _lastWrittenPosition = position;
-      _publishLocationToRoom(position.latitude, position.longitude);
+      if (_lastFirestoreWriteTime == null ||
+          (timeDiffSec >= 8.0 && distMoved >= 10.0)) {
+        _lastFirestoreWriteTime = now;
+        _lastWrittenPosition = position;
+        _publishLocationToRoom(position.latitude, position.longitude);
+      }
     }
 
     if (!_initialMoveDone) {
@@ -389,15 +422,20 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       final state = Get.find<HajiCareController>();
       final roomId = state.activeRoomId.value;
       final uid = state.currentUid;
-      if (roomId != null && roomId.isNotEmpty && uid != null && uid.isNotEmpty) {
-        service.updateMemberLocation(
-          roomId: roomId,
-          uid: uid,
-          latitude: lat,
-          longitude: lng,
-        ).catchError((e) {
-          debugPrint('[MapController] Failed to publish location: $e');
-        });
+      if (roomId != null &&
+          roomId.isNotEmpty &&
+          uid != null &&
+          uid.isNotEmpty) {
+        service
+            .updateMemberLocation(
+              roomId: roomId,
+              uid: uid,
+              latitude: lat,
+              longitude: lng,
+            )
+            .catchError((e) {
+              debugPrint('[MapController] Failed to publish location: $e');
+            });
       }
     }
   }
@@ -554,10 +592,12 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
       // Race condition check: ignore obsolete responses
       if (requestId != _routeRequestId) {
-        debugPrint('[ROUTE] obsolete response ignored (request $requestId != $_routeRequestId)');
+        debugPrint(
+          '[ROUTE] obsolete response ignored (request $requestId != $_routeRequestId)',
+        );
         return;
       }
-      
+
       debugPrint('[ROUTE] activeRoute = ${result.points.length}');
 
       activeRoute.assignAll(result.points);
@@ -583,7 +623,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
   void _fitCameraToRoute(LatLng origin, LatLng dest, List<LatLng> routePoints) {
     if (!isMapAttached) return;
-    
+
     final allPoints = [origin, dest, ...routePoints];
     if (allPoints.isEmpty) return;
 
@@ -649,7 +689,12 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
   void retryRoute() {
     if (selectedMember.value != null && selectedMember.value!.hasLocation) {
-      _updateRouteTo(LatLng(selectedMember.value!.latitude!, selectedMember.value!.longitude!));
+      _updateRouteTo(
+        LatLng(
+          selectedMember.value!.latitude!,
+          selectedMember.value!.longitude!,
+        ),
+      );
     } else if (selectedJamaah.value != null) {
       _updateRouteTo(getJamaahCoordinate(selectedJamaah.value!));
     } else if (selectedPoi.value != null) {
@@ -753,6 +798,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   void animatedMove(LatLng destLocation, double destZoom) {
     if (!isMapAttached) return;
 
+    _moveAnimCtrl?.dispose();
+    _moveAnimCtrl = null;
+
     final latTween = Tween<double>(
       begin: flutterMapController.camera.center.latitude,
       end: destLocation.latitude,
@@ -770,6 +818,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       vsync: this,
       duration: const Duration(milliseconds: 700),
     );
+    _moveAnimCtrl = animCtrl;
     final animation = CurvedAnimation(
       parent: animCtrl,
       curve: Curves.easeInOutCubic,
@@ -787,6 +836,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     animation.addStatusListener((status) {
       if (status == AnimationStatus.completed ||
           status == AnimationStatus.dismissed) {
+        if (_moveAnimCtrl == animCtrl) {
+          _moveAnimCtrl = null;
+        }
         animCtrl.dispose();
       }
     });
@@ -801,27 +853,43 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
   void zoomIn() {
     if (!isMapAttached) return;
-    animatedMove(flutterMapController.camera.center, flutterMapController.camera.zoom + 1.0);
+    animatedMove(
+      flutterMapController.camera.center,
+      flutterMapController.camera.zoom + 1.0,
+    );
   }
 
   void zoomOut() {
     if (!isMapAttached) return;
-    animatedMove(flutterMapController.camera.center, flutterMapController.camera.zoom - 1.0);
+    animatedMove(
+      flutterMapController.camera.center,
+      flutterMapController.camera.zoom - 1.0,
+    );
   }
 
   void toggleMapTileLayer() {
     if (activeTileUrl.value.contains('cartocdn')) {
       activeTileUrl.value = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-      AppAlert.info(Get.context, title: 'Mode Peta: OpenStreetMap', message: 'Menampilkan peta standar OpenStreetMap.');
+      AppAlert.info(
+        Get.context,
+        title: 'Mode Peta: OpenStreetMap',
+        message: 'Menampilkan peta standar OpenStreetMap.',
+      );
     } else {
       activeTileUrl.value = AppConstants.cartoVoyagerUrl;
-      AppAlert.info(Get.context, title: 'Mode Peta: Voyager', message: 'Menampilkan peta bertema hangat & bersih.');
+      AppAlert.info(
+        Get.context,
+        title: 'Mode Peta: Voyager',
+        message: 'Menampilkan peta bertema hangat & bersih.',
+      );
     }
   }
 
   @override
   void onClose() {
-    _positionStreamSub?.cancel();
+    _moveAnimCtrl?.dispose();
+    _nativePositionSub?.cancel();
+    _statePositionSub?.cancel();
     _roomMembersSub?.cancel();
     _roomWorker?.dispose();
     flutterMapController.dispose();

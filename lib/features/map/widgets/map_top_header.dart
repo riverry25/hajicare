@@ -6,7 +6,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/animated_ping_dot.dart';
 
-class MapTopHeader extends StatelessWidget {
+class MapTopHeader extends StatefulWidget {
   final List<FilterChipItem> filters;
   final int selectedFilter;
   final ValueChanged<int> onFilterSelected;
@@ -35,476 +35,500 @@ class MapTopHeader extends StatelessWidget {
   });
 
   @override
+  State<MapTopHeader> createState() => _MapTopHeaderState();
+}
+
+class _MapTopHeaderState extends State<MapTopHeader> {
+  late final TextEditingController _searchCtrl;
+  bool _hasSearchText = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchCtrl = TextEditingController();
+    _searchCtrl.addListener(() {
+      final hasText = _searchCtrl.text.trim().isNotEmpty;
+      if (hasText != _hasSearchText) {
+        setState(() {
+          _hasSearchText = hasText;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
+    final topSafeArea = MediaQuery.of(context).padding.top;
+    final hasRoom =
+        widget.roomName != null && widget.roomName!.trim().isNotEmpty;
 
     return Positioned(
       top: 0,
       left: 0,
       right: 0,
-      child: Container(
-        padding: EdgeInsets.only(
-          top: MediaQuery.of(context).padding.top + 6,
-          left: AppSpacing.screenEdgeGutter,
-          right: AppSpacing.screenEdgeGutter,
-          bottom: AppSpacing.sm2,
-        ),
-        decoration: BoxDecoration(
-          color: isDark
-              ? AppColors.darkSurface.withValues(alpha: 0.96)
-              : AppColors.canvasCream.withValues(alpha: 0.96),
-          border: Border(
-            bottom: BorderSide(
-              color: AppColors.cardBorderColor(context),
-              width: 1,
-            ),
+      child: RepaintBoundary(
+        child: Container(
+          padding: EdgeInsets.only(
+            top: topSafeArea + 6,
+            left: AppSpacing.md,
+            right: AppSpacing.md,
+            bottom: 8,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.07),
-              blurRadius: 12,
-              offset: const Offset(0, 3),
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppColors.darkSurface.withValues(alpha: 0.95)
+                : AppColors.canvasCream.withValues(alpha: 0.97),
+            border: Border(
+              bottom: BorderSide(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : AppColors.espressoDark.withValues(alpha: 0.06),
+                width: 1,
+              ),
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // ============================================================
-            // TOP STATUS ROW: Live Tracking Badge & Emergency SOS
-            // ============================================================
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkSurfaceContainer
-                        : AppColors.surfaceWhite,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                    border: Border.all(
-                      color: AppColors.cardBorderColor(context),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const AnimatedPingDot(
-                        color: AppColors.statusPositive,
-                        size: 8,
-                      ),
-                      const SizedBox(width: 7),
-                      Text(
-                        'Pelacakan Aktif',
-                        style: AppTypography.captionSmall.copyWith(
-                          color: isDark
-                              ? AppColors.darkTextHeading
-                              : AppColors.espressoDark,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(
-                        ' • GPS ${gpsAccuracy > 0 ? '${gpsAccuracy.round()}m' : 'OK'}',
-                        style: AppTypography.captionSmall.copyWith(
-                          color: isDark
-                              ? AppColors.darkTextBody
-                              : AppColors.textBody,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Emergency SOS Button
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: onSosPressed,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                    child: Ink(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 7,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.sosEmergency,
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.sosEmergency.withValues(alpha: 0.35),
-                            blurRadius: 10,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.emergency_rounded,
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            'SOS',
-                            style: AppTypography.captionSmall.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            // ============================================================
-            // ACTIVE ROOM STATUS (If Bound)
-            // ============================================================
-            if (roomName != null && roomName!.isNotEmpty) ...[
-              const SizedBox(height: AppSpacing.xs),
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: onRoomTap,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkSurfaceContainer
-                          : AppColors.surfaceWhite,
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      border: Border.all(
-                        color: AppColors.goldPrimary.withValues(alpha: 0.35),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-                          blurRadius: 6,
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.meeting_room_rounded,
-                              size: 16,
-                              color: AppColors.goldPrimary,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Room: $roomName',
-                              style: AppTypography.captionSmall.copyWith(
-                                color: isDark
-                                    ? AppColors.darkTextHeading
-                                    : AppColors.espressoDark,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (memberSummary != null && memberSummary!.isNotEmpty)
-                          Row(
-                            children: [
-                              Text(
-                                memberSummary!,
-                                style: AppTypography.captionSmall.copyWith(
-                                  color: isDark
-                                      ? AppColors.goldPrimary
-                                      : AppColors.primaryContainer,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              const Icon(
-                                Icons.keyboard_arrow_down_rounded,
-                                size: 16,
-                                color: AppColors.goldPrimary,
-                              ),
-                            ],
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.06),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
               ),
             ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ── ROW 1: STATUS & HUB ROW (GPS BADGE, ROOM INFO, SOS) ──
+              SizedBox(
+                height: 32,
+                child: Row(
+                  children: [
+                    // GPS Tracking Status Pill
+                    _buildGpsStatusPill(isDark),
 
-            // ============================================================
-            // LEGEND & NEAREST STATUS ROW
-            // ============================================================
-            Padding(
-              padding: const EdgeInsets.only(top: 6, bottom: 4),
-              child: Row(
-                children: [
-                  _buildLegendDot(
-                    isDark ? Colors.white : AppColors.espressoDark,
-                    'Anda',
-                    isDark,
-                  ),
-                  const SizedBox(width: 12),
-                  _buildLegendDot(
-                    AppColors.goldPrimary,
-                    'Pendamping',
-                    isDark,
-                  ),
-                  const SizedBox(width: 12),
-                  _buildLegendDot(
-                    AppColors.statusPositive,
-                    'Jamaah',
-                    isDark,
-                  ),
-                  if (nearestInfo != null && nearestInfo!.isNotEmpty) ...[
                     const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        nearestInfo!,
-                        style: AppTypography.captionSmall.copyWith(
-                          color: isDark
-                              ? AppColors.darkTextBody
-                              : AppColors.textBody,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.end,
-                      ),
-                    ),
+
+                    // Contextual Active Room Pill (if in a room)
+                    if (hasRoom)
+                      Expanded(child: _buildRoomHubPill(context, isDark))
+                    else
+                      const Spacer(),
+
+                    const SizedBox(width: 8),
+
+                    // Emergency SOS Quick Button
+                    _buildSosButton(),
                   ],
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 6),
-
-            // ============================================================
-            // SEARCH BAR
-            // ============================================================
-            Container(
-              height: 44,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.darkSurfaceContainer
-                    : AppColors.surfaceWhite,
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-                border: Border.all(
-                  color: AppColors.cardBorderColor(context),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
               ),
-              child: Row(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 14),
-                    child: Icon(
-                      Icons.search_rounded,
-                      color: isDark ? AppColors.goldPrimary : AppColors.tanMedium,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Cari posko medis, toilet, tenda maktab...',
-                      style: AppTypography.bodySmall.copyWith(
-                        color: isDark
-                            ? AppColors.darkTextBody.withValues(alpha: 0.7)
-                            : AppColors.textMuted,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(20),
-                      onTap: () {},
-                      child: const Padding(
-                        padding: EdgeInsets.all(10),
-                        child: Icon(
-                          Icons.mic_rounded,
-                          color: AppColors.goldPrimary,
-                          size: 19,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                ],
-              ),
-            ),
 
-            const SizedBox(height: 8),
+              const SizedBox(height: 8),
 
-            // ============================================================
-            // POI & ROLE FILTER CHIPS
-            // ============================================================
-            SizedBox(
-              height: 36,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                itemCount: filters.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final filter = filters[index];
-                  final isSelected = index == selectedFilter;
+              // ── ROW 2: SLEEK INTERACTIVE SEARCH BAR ──
+              _buildSearchBar(context, isDark),
 
-                  return Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () => onFilterSelected(index),
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        curve: Curves.easeOutCubic,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 7,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? (isDark
-                                  ? AppColors.goldPrimary
-                                  : AppColors.espressoDark)
-                              : (isDark
-                                  ? AppColors.darkSurfaceContainer
-                                  : AppColors.surfaceWhite),
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                          border: Border.all(
-                            color: isSelected
-                                ? AppColors.goldPrimary
-                                : AppColors.cardBorderColor(context),
-                            width: isSelected ? 1.5 : 1,
-                          ),
-                          boxShadow: isSelected
-                              ? [
-                                  BoxShadow(
-                                    color: (isDark
-                                            ? AppColors.goldPrimary
-                                            : AppColors.espressoDark)
-                                        .withValues(alpha: 0.25),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ]
-                              : [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(
-                                      alpha: isDark ? 0.15 : 0.03,
-                                    ),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 1),
-                                  ),
-                                ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (filter.icon != null) ...[
-                              Icon(
-                                filter.icon,
-                                size: 15,
-                                color: isSelected
-                                    ? (isDark
-                                        ? AppColors.espressoDark
-                                        : AppColors.goldPrimary)
-                                    : (isDark
-                                        ? AppColors.darkTextBody
-                                        : AppColors.tanMedium),
-                              ),
-                              const SizedBox(width: 6),
-                            ],
-                            Text(
-                              filter.label,
-                              style: AppTypography.captionSmall.copyWith(
-                                color: isSelected
-                                    ? (isDark
-                                        ? AppColors.espressoDark
-                                        : Colors.white)
-                                    : AppColors.textHeadingColor(context),
-                                fontWeight: isSelected
-                                    ? FontWeight.w800
-                                    : FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
+              const SizedBox(height: 8),
+
+              // ── ROW 3: CATEGORY & ROLE FILTER CHIPS ──
+              _buildFilterChips(context, isDark),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildLegendDot(Color color, String label, bool isDark) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 8,
-          height: 8,
+  // ===========================================================================
+  // ROW 1 WIDGETS
+  // ===========================================================================
+
+  Widget _buildGpsStatusPill(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.10)
+              : AppColors.goldLight.withValues(alpha: 0.40),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.03),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const AnimatedPingDot(color: AppColors.statusPositive, size: 7),
+          const SizedBox(width: 6),
+          Text(
+            widget.gpsAccuracy > 0
+                ? 'GPS ±${widget.gpsAccuracy.round()}m'
+                : 'GPS Aktif',
+            style: AppTypography.captionSmall.copyWith(
+              color: isDark
+                  ? AppColors.darkTextHeading
+                  : AppColors.espressoDark,
+              fontWeight: FontWeight.w700,
+              fontSize: 10.5,
+              letterSpacing: 0.1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRoomHubPill(BuildContext context, bool isDark) {
+    final summaryText =
+        widget.nearestInfo != null && widget.nearestInfo!.isNotEmpty
+        ? widget.nearestInfo!
+        : (widget.memberSummary != null && widget.memberSummary!.isNotEmpty
+              ? widget.memberSummary!.split('·').first.trim()
+              : 'Terhubung');
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: widget.onRoomTap,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
+            color: isDark
+                ? AppColors.goldPrimary.withValues(alpha: 0.14)
+                : AppColors.goldLight.withValues(alpha: 0.28),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
             border: Border.all(
-              color: isDark ? Colors.white70 : Colors.white,
+              color: isDark
+                  ? AppColors.goldPrimary.withValues(alpha: 0.40)
+                  : AppColors.goldPrimary.withValues(alpha: 0.35),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
-                blurRadius: 2,
+                color: AppColors.goldPrimary.withValues(
+                  alpha: isDark ? 0.08 : 0.05,
+                ),
+                blurRadius: 4,
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.meeting_room_rounded,
+                size: 13,
+                color: isDark ? AppColors.goldPrimary : AppColors.espressoDark,
+              ),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: widget.roomName!,
+                        style: AppTypography.captionSmall.copyWith(
+                          color: isDark
+                              ? AppColors.goldPrimary
+                              : AppColors.espressoDark,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 11,
+                        ),
+                      ),
+                      TextSpan(
+                        text: ' • $summaryText',
+                        style: AppTypography.captionSmall.copyWith(
+                          color: isDark ? Colors.white70 : AppColors.textBody,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 2),
+              Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 14,
+                color: isDark ? AppColors.goldPrimary : AppColors.espressoDark,
               ),
             ],
           ),
         ),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: AppTypography.captionSmall.copyWith(
-            color: isDark ? AppColors.darkTextBody : AppColors.espressoDark,
-            fontWeight: FontWeight.w600,
-            fontSize: 10,
+      ),
+    );
+  }
+
+  Widget _buildSosButton() {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: widget.onSosPressed,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFE53935), Color(0xFFC62828)],
+            ),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFE53935).withValues(alpha: 0.38),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.emergency_rounded,
+                color: Colors.white,
+                size: 13,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'SOS',
+                style: AppTypography.captionSmall.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 11,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
           ),
         ),
-      ],
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // ROW 2: SEARCH BAR
+  // ===========================================================================
+
+  Widget _buildSearchBar(BuildContext context, bool isDark) {
+    return Container(
+      height: 38,
+      decoration: BoxDecoration(
+        color: isDark
+            ? AppColors.darkSurfaceContainer.withValues(alpha: 0.85)
+            : AppColors.surfaceWhite,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : AppColors.goldLight.withValues(alpha: 0.35),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const SizedBox(width: 12),
+          Icon(
+            Icons.search_rounded,
+            color: isDark ? AppColors.goldPrimary : AppColors.espressoDark,
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              controller: _searchCtrl,
+              onChanged: widget.onSearchChanged,
+              style: AppTypography.bodySmall.copyWith(
+                color: isDark ? Colors.white : AppColors.espressoDark,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+              decoration: InputDecoration(
+                hintText: 'Cari posko medis, toilet, tenda maktab...',
+                hintStyle: AppTypography.bodySmall.copyWith(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.45)
+                      : AppColors.textMuted,
+                  fontSize: 12,
+                ),
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+          ),
+          if (_hasSearchText)
+            IconButton(
+              icon: const Icon(Icons.close_rounded, size: 16),
+              color: isDark ? Colors.white70 : AppColors.textMuted,
+              splashRadius: 16,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              onPressed: () {
+                _searchCtrl.clear();
+                widget.onSearchChanged?.call('');
+              },
+            )
+          else
+            IconButton(
+              icon: Icon(
+                Icons.mic_none_rounded,
+                size: 17,
+                color: isDark ? AppColors.goldPrimary : AppColors.tanMedium,
+              ),
+              splashRadius: 16,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              tooltip: 'Pencarian Suara',
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Pencarian suara segera tersedia.'),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+              },
+            ),
+          const SizedBox(width: 4),
+        ],
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // ROW 3: FILTER CHIPS
+  // ===========================================================================
+
+  Widget _buildFilterChips(BuildContext context, bool isDark) {
+    return SizedBox(
+      height: 32,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: widget.filters.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 6),
+        itemBuilder: (context, index) {
+          final filter = widget.filters[index];
+          final isSelected = index == widget.selectedFilter;
+
+          return Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => widget.onFilterSelected(index),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOutCubic,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? (isDark
+                            ? AppColors.goldPrimary
+                            : AppColors.espressoDark)
+                      : (isDark
+                            ? AppColors.darkSurfaceContainer.withValues(
+                                alpha: 0.70,
+                              )
+                            : AppColors.surfaceWhite),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  border: Border.all(
+                    color: isSelected
+                        ? (isDark
+                              ? AppColors.goldPrimary
+                              : AppColors.goldPrimary.withValues(alpha: 0.6))
+                        : (isDark
+                              ? Colors.white.withValues(alpha: 0.08)
+                              : AppColors.goldLight.withValues(alpha: 0.35)),
+                    width: isSelected ? 1.2 : 1.0,
+                  ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color:
+                                (isDark
+                                        ? AppColors.goldPrimary
+                                        : AppColors.espressoDark)
+                                    .withValues(alpha: 0.25),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withValues(
+                              alpha: isDark ? 0.12 : 0.02,
+                            ),
+                            blurRadius: 3,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (filter.icon != null) ...[
+                      Icon(
+                        filter.icon,
+                        size: 14,
+                        color: isSelected
+                            ? (isDark
+                                  ? AppColors.espressoDark
+                                  : AppColors.goldPrimary)
+                            : (isDark
+                                  ? AppColors.darkTextBody
+                                  : AppColors.espressoDark.withValues(
+                                      alpha: 0.7,
+                                    )),
+                      ),
+                      const SizedBox(width: 5),
+                    ],
+                    Text(
+                      filter.label,
+                      style: AppTypography.captionSmall.copyWith(
+                        color: isSelected
+                            ? (isDark ? AppColors.espressoDark : Colors.white)
+                            : (isDark
+                                  ? Colors.white70
+                                  : AppColors.espressoDark),
+                        fontWeight: isSelected
+                            ? FontWeight.w800
+                            : FontWeight.w600,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }

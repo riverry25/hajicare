@@ -73,7 +73,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
       body: Stack(
         children: [
           // 1. Core Interactive Map Layer
-          _buildInteractiveMap(state, mapCtrl),
+          RepaintBoundary(child: _buildInteractiveMap(state, mapCtrl)),
 
           // 2. Top Header with live GPS tracking status, room status, legend, and filter chips
           Obx(
@@ -149,14 +149,16 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                 left: AppSpacing.md,
                 right: AppSpacing.md,
                 bottom: sheetBottomOffset,
-                child: LocationDetailSheet(
-                  poi: selectedPoi,
-                  distanceMeters: dist,
-                  onRoute: () {
-                    debugPrint('[2] ROUTE BUTTON PRESSED');
-                    mapCtrl.requestRouteToPoi(selectedPoi);
-                  },
-                  onClose: mapCtrl.closeBottomSheet,
+                child: RepaintBoundary(
+                  child: LocationDetailSheet(
+                    poi: selectedPoi,
+                    distanceMeters: dist,
+                    onRoute: () {
+                      debugPrint('[2] ROUTE BUTTON PRESSED');
+                      mapCtrl.requestRouteToPoi(selectedPoi);
+                    },
+                    onClose: mapCtrl.closeBottomSheet,
+                  ),
                 ),
               );
             }
@@ -238,39 +240,77 @@ class _CollapsedMemberBar extends StatefulWidget {
   State<_CollapsedMemberBar> createState() => _CollapsedMemberBarState();
 }
 
-class _CollapsedMemberBarState extends State<_CollapsedMemberBar> {
+class _CollapsedMemberBarState extends State<_CollapsedMemberBar>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animCtrl;
+  Animation<double>? _slideAnim;
   double _dragUpOffset = 0.0;
 
+  @override
+  void initState() {
+    super.initState();
+    _animCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 220),
+    );
+    // Smooth entrance glide up from +28px to 0.0
+    _dragUpOffset = 28.0;
+    _slideAnim = Tween<double>(begin: 28.0, end: 0.0).animate(
+      CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic),
+    )..addListener(_onAnimTick);
+    _animCtrl.forward();
+  }
+
+  void _onAnimTick() {
+    if (mounted && _slideAnim != null) {
+      setState(() {
+        _dragUpOffset = _slideAnim!.value;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _slideAnim?.removeListener(_onAnimTick);
+    _animCtrl.dispose();
+    super.dispose();
+  }
+
+  void _springBackAnimation() {
+    if (_dragUpOffset == 0.0) return;
+    final startOffset = _dragUpOffset;
+    _slideAnim?.removeListener(_onAnimTick);
+    _animCtrl.duration = const Duration(milliseconds: 180);
+    _slideAnim = Tween<double>(begin: startOffset, end: 0.0).animate(
+      CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic),
+    )..addListener(_onAnimTick);
+    _animCtrl.reset();
+    _animCtrl.forward();
+  }
+
   void _onVerticalDragUpdate(DragUpdateDetails details) {
+    if (_animCtrl.isAnimating) _animCtrl.stop();
     if (details.primaryDelta != null) {
       setState(() {
         _dragUpOffset = (_dragUpOffset + details.primaryDelta!).clamp(
           -70.0,
-          0.0,
+          15.0,
         );
       });
-      // Dragging up by 25px opens the sheet
-      if (_dragUpOffset <= -25.0) {
-        widget.mapCtrl.openBottomSheet();
-        _dragUpOffset = 0.0;
-      }
     }
   }
 
   void _onVerticalDragEnd(DragEndDetails details) {
     final velocity = details.primaryVelocity ?? 0.0;
-    if (_dragUpOffset < -10.0 || velocity < -30.0) {
+    if (_dragUpOffset < -25.0 || velocity < -180.0) {
       widget.mapCtrl.openBottomSheet();
+    } else {
+      _springBackAnimation();
     }
-    setState(() {
-      _dragUpOffset = 0.0;
-    });
   }
 
   void _onVerticalDragCancel() {
-    setState(() {
-      _dragUpOffset = 0.0;
-    });
+    _springBackAnimation();
   }
 
   @override
@@ -288,144 +328,137 @@ class _CollapsedMemberBarState extends State<_CollapsedMemberBar> {
       left: AppSpacing.md,
       right: AppSpacing.md,
       bottom: widget.sheetBottomOffset,
-      child: Transform.translate(
-        offset: Offset(0, _dragUpOffset),
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: widget.mapCtrl.openBottomSheet,
-          onVerticalDragUpdate: _onVerticalDragUpdate,
-          onVerticalDragEnd: _onVerticalDragEnd,
-          onVerticalDragCancel: _onVerticalDragCancel,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
-              borderRadius: BorderRadius.circular(AppRadius.xl),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : AppColors.espressoDark.withValues(alpha: 0.06),
-                width: 1,
+      child: RepaintBoundary(
+        child: Opacity(
+          opacity: (1.0 - (_dragUpOffset.abs() / 140.0)).clamp(0.0, 1.0),
+          child: Transform.translate(
+            offset: Offset(0, _dragUpOffset),
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: widget.mapCtrl.openBottomSheet,
+              onVerticalDragUpdate: _onVerticalDragUpdate,
+              onVerticalDragEnd: _onVerticalDragEnd,
+              onVerticalDragCancel: _onVerticalDragCancel,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.darkSurface
+                      : AppColors.surfaceWhite,
+                borderRadius: BorderRadius.circular(AppRadius.xl),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : AppColors.espressoDark.withValues(alpha: 0.06),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.08),
+                    blurRadius: 16,
+                    spreadRadius: 0,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.08),
-                  blurRadius: 16,
-                  spreadRadius: 0,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: AppColors.goldPrimary.withValues(
-                      alpha: isDark ? 0.25 : 0.16,
-                    ),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.groups_rounded,
-                    color: isDark
-                        ? AppColors.goldPrimary
-                        : AppColors.espressoDark,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        label,
-                        style: AppTypography.titleSmall.copyWith(
-                          color: isDark ? Colors.white : AppColors.espressoDark,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 13,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.goldPrimary.withValues(
+                        alpha: isDark ? 0.25 : 0.16,
                       ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.swipe_up_rounded,
-                            size: 13,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.groups_rounded,
+                      color: isDark
+                          ? AppColors.goldPrimary
+                          : AppColors.espressoDark,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          label,
+                          style: AppTypography.titleSmall.copyWith(
                             color: isDark
-                                ? Colors.white60
-                                : AppColors.tanMedium,
+                                ? Colors.white
+                                : AppColors.espressoDark,
+                            fontWeight: FontWeight.w800,
                           ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              'Ketuk atau seret ke atas untuk buka',
-                              style: AppTypography.captionSmall.copyWith(
-                                color: isDark
-                                    ? Colors.white60
-                                    : AppColors.textBody,
-                                fontSize: 10.5,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Tarik ke atas atau ketuk untuk detail',
+                          style: AppTypography.captionSmall.copyWith(
+                            color: isDark ? Colors.white60 : AppColors.textBody,
+                            fontWeight: FontWeight.w600,
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkSurfaceContainer
-                        : AppColors.canvasCream,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                    border: Border.all(
-                      color: AppColors.goldPrimary.withValues(alpha: 0.35),
+                        ),
+                      ],
                     ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Buka',
-                        style: TextStyle(
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.darkSurfaceContainer
+                          : AppColors.canvasCream,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      border: Border.all(
+                        color: isDark
+                            ? AppColors.goldPrimary.withValues(alpha: 0.3)
+                            : AppColors.espressoDark.withValues(alpha: 0.1),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Buka',
+                          style: TextStyle(
+                            color: isDark
+                                ? AppColors.goldPrimary
+                                : AppColors.espressoDark,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.keyboard_arrow_up_rounded,
                           color: isDark
                               ? AppColors.goldPrimary
                               : AppColors.espressoDark,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
+                          size: 16,
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.keyboard_arrow_up_rounded,
-                        color: isDark
-                            ? AppColors.goldPrimary
-                            : AppColors.espressoDark,
-                        size: 16,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
@@ -443,7 +476,9 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
         minZoom: 11.0,
         maxZoom: 19.0,
         onPositionChanged: (camera, hasGesture) {
-          mapCtrl.compassRotation.value = camera.rotation;
+          if ((mapCtrl.compassRotation.value - camera.rotation).abs() > 0.05) {
+            mapCtrl.compassRotation.value = camera.rotation;
+          }
         },
         onTap: (tapPosition, point) {
           mapCtrl.closeBottomSheet();
@@ -463,25 +498,23 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
           return fmap.TileLayer(
             urlTemplate: effectiveUrl,
             userAgentPackageName: 'com.example.hajicare',
+            panBuffer: 1,
           );
         }),
 
         // 2. Walking Route Polyline Layer
         Obx(() {
           final isDark = AppColors.isDark(context);
-          final routePoints = mapCtrl.activeRoute.toList();
-          debugPrint('[MAP] Polyline points = ${routePoints.length}');
+          final routePoints = mapCtrl.activeRoute;
 
           if (routePoints.length < 2) {
-            return const fmap.PolylineLayer(
-              polylines: <fmap.Polyline<Object>>[],
-            );
+            return const SizedBox.shrink();
           }
 
           return fmap.PolylineLayer(
             polylines: [
               fmap.Polyline<Object>(
-                points: routePoints,
+                points: routePoints.toList(),
                 strokeWidth: 8.0,
                 color: isDark ? AppColors.goldPrimary : const Color(0xFF1E60CC),
                 borderStrokeWidth: 2.5,
@@ -523,7 +556,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                 point: userLocation,
                 width: 130,
                 height: 75,
-                child: _buildCompanionMarker(),
+                child: RepaintBoundary(child: _buildCompanionMarker()),
               ),
 
               // Room Member Markers (filtered, excluding current user)
@@ -587,52 +620,54 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
           ),
         ),
         const SizedBox(height: 3),
-        AnimatedBuilder(
-          animation: _pulseController,
-          builder: (context, child) {
-            return Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  width: 38 + (_pulseController.value * 8),
-                  height: 38 + (_pulseController.value * 8),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.goldPrimary.withValues(
-                      alpha: 0.35 - (_pulseController.value * 0.22),
-                    ),
-                  ),
-                ),
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkSurfaceContainer
-                        : AppColors.surfaceWhite,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isDark
-                          ? AppColors.goldPrimary
-                          : AppColors.espressoDark,
-                      width: 2.2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.25),
-                        blurRadius: 6,
+        RepaintBoundary(
+          child: AnimatedBuilder(
+            animation: _pulseController,
+            builder: (context, child) {
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    width: 38 + (_pulseController.value * 8),
+                    height: 38 + (_pulseController.value * 8),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.goldPrimary.withValues(
+                        alpha: 0.35 - (_pulseController.value * 0.22),
                       ),
-                    ],
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.navigation_rounded,
-                    color: AppColors.goldPrimary,
-                    size: 19,
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.darkSurfaceContainer
+                          : AppColors.surfaceWhite,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isDark
+                            ? AppColors.goldPrimary
+                            : AppColors.espressoDark,
+                        width: 2.2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.25),
+                          blurRadius: 6,
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.navigation_rounded,
+                      color: AppColors.goldPrimary,
+                      size: 19,
+                    ),
                   ),
-                ),
-              ],
-            );
-          },
+                ],
+              );
+            },
+          ),
         ),
       ],
     );
@@ -672,116 +707,120 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
           point: coord,
           width: 140,
           height: 75,
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () {
-              if (mapCtrl.selectedMember.value?.uid == member.uid &&
-                  mapCtrl.isBottomSheetOpen.value) {
-                mapCtrl.closeBottomSheet();
-              } else {
-                mapCtrl.selectMember(member);
-              }
-            },
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Callout Banner
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkSurface
-                        : AppColors.surfaceWhite,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                    border: Border.all(
-                      color: isSelected
-                          ? (isDark
-                                ? AppColors.goldPrimary
-                                : AppColors.espressoDark)
-                          : markerColor,
-                      width: isSelected ? 2.5 : 1.5,
+          child: RepaintBoundary(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                if (mapCtrl.selectedMember.value?.uid == member.uid &&
+                    mapCtrl.isBottomSheetOpen.value) {
+                  mapCtrl.closeBottomSheet();
+                } else {
+                  mapCtrl.selectMember(member);
+                }
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Callout Banner
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.18),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.darkSurface
+                          : AppColors.surfaceWhite,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      border: Border.all(
+                        color: isSelected
+                            ? (isDark
+                                  ? AppColors.goldPrimary
+                                  : AppColors.espressoDark)
+                            : markerColor,
+                        width: isSelected ? 2.5 : 1.5,
                       ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        isPendamping
-                            ? Icons.shield_rounded
-                            : Icons.person_rounded,
-                        size: 12,
-                        color: markerColor,
-                      ),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          member.name.split(' ').take(2).join(' '),
-                          style: AppTypography.captionSmall.copyWith(
-                            color: isDark
-                                ? AppColors.darkTextHeading
-                                : AppColors.espressoDark,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 10,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.18),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        distText,
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w800,
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isPendamping
+                              ? Icons.shield_rounded
+                              : Icons.person_rounded,
+                          size: 12,
                           color: markerColor,
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 3),
-
-                // Avatar Icon Pin
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkSurfaceContainer
-                        : AppColors.surfaceWhite,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected
-                          ? (isDark
-                                ? AppColors.goldPrimary
-                                : AppColors.espressoDark)
-                          : markerColor,
-                      width: 2.2,
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            member.name.split(' ').take(2).join(' '),
+                            style: AppTypography.captionSmall.copyWith(
+                              color: isDark
+                                  ? AppColors.darkTextHeading
+                                  : AppColors.espressoDark,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 10,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          distText,
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            color: markerColor,
+                          ),
+                        ),
+                      ],
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 5,
+                  ),
+                  const SizedBox(height: 3),
+
+                  // Avatar Icon Pin
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.darkSurfaceContainer
+                          : AppColors.surfaceWhite,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isSelected
+                            ? (isDark
+                                  ? AppColors.goldPrimary
+                                  : AppColors.espressoDark)
+                            : markerColor,
+                        width: 2.2,
                       ),
-                    ],
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 5,
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      isPendamping
+                          ? Icons.shield_rounded
+                          : Icons.person_rounded,
+                      color: markerColor,
+                      size: 19,
+                    ),
                   ),
-                  child: Icon(
-                    isPendamping ? Icons.shield_rounded : Icons.person_rounded,
-                    color: markerColor,
-                    size: 19,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -809,95 +848,100 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
         point: coord,
         width: 140,
         height: 80,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () {
-            if (mapCtrl.selectedJamaah.value?.id == jamaah.id &&
-                mapCtrl.isBottomSheetOpen.value) {
-              mapCtrl.closeBottomSheet();
-            } else {
-              mapCtrl.selectJamaah(jamaah);
-            }
-          },
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkSurface
-                      : AppColors.surfaceWhite,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                  border: Border.all(
-                    color: isSelected
-                        ? (isDark
-                              ? AppColors.goldPrimary
-                              : AppColors.espressoDark)
-                        : jamaah.tier.color,
-                    width: isSelected ? 2.5 : 1.5,
+        child: RepaintBoundary(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              if (mapCtrl.selectedJamaah.value?.id == jamaah.id &&
+                  mapCtrl.isBottomSheetOpen.value) {
+                mapCtrl.closeBottomSheet();
+              } else {
+                mapCtrl.selectJamaah(jamaah);
+              }
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.18),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.darkSurface
+                        : AppColors.surfaceWhite,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(
+                      color: isSelected
+                          ? (isDark
+                                ? AppColors.goldPrimary
+                                : AppColors.espressoDark)
+                          : jamaah.tier.color,
+                      width: isSelected ? 2.5 : 1.5,
                     ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.elderly_rounded,
-                      size: 13,
-                      color: jamaah.tier.color,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      jamaah.shortLabel,
-                      style: AppTypography.captionSmall.copyWith(
-                        color: isDark
-                            ? AppColors.darkTextHeading
-                            : AppColors.espressoDark,
-                        fontWeight: FontWeight.w800,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.18),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${jamaah.distance.round()}m',
-                      style: AppTypography.captionSmall.copyWith(
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.elderly_rounded,
+                        size: 13,
                         color: jamaah.tier.color,
-                        fontWeight: FontWeight.w800,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 4),
+                      Text(
+                        jamaah.shortLabel,
+                        style: AppTypography.captionSmall.copyWith(
+                          color: isDark
+                              ? AppColors.darkTextHeading
+                              : AppColors.espressoDark,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${jamaah.distance.round()}m',
+                        style: AppTypography.captionSmall.copyWith(
+                          color: jamaah.tier.color,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 3),
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkSurfaceContainer
-                      : AppColors.surfaceWhite,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: jamaah.tier.color, width: 2.5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.25),
-                      blurRadius: 6,
-                    ),
-                  ],
+                const SizedBox(height: 3),
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.darkSurfaceContainer
+                        : AppColors.surfaceWhite,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: jamaah.tier.color, width: 2.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.25),
+                        blurRadius: 6,
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.person_rounded,
+                    color: isDark ? AppColors.goldPrimary : AppColors.tanMedium,
+                    size: 20,
+                  ),
                 ),
-                child: Icon(
-                  Icons.person_rounded,
-                  color: isDark ? AppColors.goldPrimary : AppColors.tanMedium,
-                  size: 20,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );
@@ -913,81 +957,86 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
         point: poi.coordinate,
         width: 100,
         height: 62,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () {
-            if (mapCtrl.selectedPoi.value?.id == poi.id &&
-                mapCtrl.isBottomSheetOpen.value) {
-              mapCtrl.closeBottomSheet();
-            } else {
-              mapCtrl.selectPoi(poi);
-            }
-          },
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: isSelected ? 38 : 32,
-                height: isSelected ? 38 : 32,
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? poi.color
-                      : (isDark
-                            ? AppColors.darkSurface
-                            : AppColors.surfaceWhite),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isSelected ? Colors.white : poi.color,
-                    width: 2.0,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: poi.color.withValues(alpha: 0.35),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
+        child: RepaintBoundary(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              if (mapCtrl.selectedPoi.value?.id == poi.id &&
+                  mapCtrl.isBottomSheetOpen.value) {
+                mapCtrl.closeBottomSheet();
+              } else {
+                mapCtrl.selectPoi(poi);
+              }
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: isSelected ? 38 : 32,
+                  height: isSelected ? 38 : 32,
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? poi.color
+                        : (isDark
+                              ? AppColors.darkSurface
+                              : AppColors.surfaceWhite),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected ? Colors.white : poi.color,
+                      width: 2.0,
                     ),
-                  ],
-                ),
-                child: Center(
-                  child: Icon(
-                    poi.icon,
-                    color: isSelected ? Colors.white : poi.color,
-                    size: isSelected ? 20 : 17,
+                    boxShadow: [
+                      BoxShadow(
+                        color: poi.color.withValues(alpha: 0.35),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
-                ),
-              ),
-              const SizedBox(height: 3),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 1.5,
-                ),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkSurface.withValues(alpha: 0.92)
-                      : AppColors.espressoDark.withValues(alpha: 0.88),
-                  border: isDark
-                      ? Border.all(color: AppColors.darkBorderSubtle, width: 1)
-                      : null,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
-                      blurRadius: 4,
+                  child: Center(
+                    child: Icon(
+                      poi.icon,
+                      color: isSelected ? Colors.white : poi.color,
+                      size: isSelected ? 20 : 17,
                     ),
-                  ],
-                ),
-                child: Text(
-                  poi.name.split(' ').take(2).join(' '),
-                  maxLines: 1,
-                  style: TextStyle(
-                    color: isDark ? AppColors.darkTextHeading : Colors.white,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 3),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 1.5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.darkSurface.withValues(alpha: 0.92)
+                        : AppColors.espressoDark.withValues(alpha: 0.88),
+                    border: isDark
+                        ? Border.all(
+                            color: AppColors.darkBorderSubtle,
+                            width: 1,
+                          )
+                        : null,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    poi.name.split(' ').take(2).join(' '),
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: isDark ? AppColors.darkTextHeading : Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );

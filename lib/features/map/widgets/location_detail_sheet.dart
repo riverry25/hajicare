@@ -48,7 +48,11 @@ class LocationDetailSheet extends StatefulWidget {
   }
 }
 
-class _LocationDetailSheetState extends State<LocationDetailSheet> {
+class _LocationDetailSheetState extends State<LocationDetailSheet>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animCtrl;
+  Animation<double>? _slideAnim;
+  bool _isDismissing = false;
   double _dragOffset = 0.0;
 
   MapPoi get poi => widget.poi;
@@ -57,32 +61,121 @@ class _LocationDetailSheetState extends State<LocationDetailSheet> {
   VoidCallback? get onShare => widget.onShare;
   VoidCallback? get onClose => widget.onClose;
 
+  @override
+  void initState() {
+    super.initState();
+    _animCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 240),
+    );
+    // Smooth entrance slide up
+    _dragOffset = 60.0;
+    _slideAnim = Tween<double>(begin: 60.0, end: 0.0).animate(
+      CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic),
+    )..addListener(_onAnimTick);
+    _animCtrl.forward();
+  }
+
+  void _onAnimTick() {
+    if (mounted && _slideAnim != null) {
+      setState(() {
+        _dragOffset = _slideAnim!.value;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _slideAnim?.removeListener(_onAnimTick);
+    _animCtrl.dispose();
+    super.dispose();
+  }
+
+  void _dismissWithAnimation({double velocity = 0.0}) {
+    if (_isDismissing) return;
+    _isDismissing = true;
+
+    final startOffset = _dragOffset;
+    final targetOffset = math.max(450.0, startOffset + 320.0);
+
+    // Dynamic duration based on downward velocity
+    int durationMs = 220;
+    if (velocity > 800) {
+      durationMs = 150;
+    } else if (velocity > 400) {
+      durationMs = 180;
+    }
+
+    _slideAnim?.removeListener(_onAnimTick);
+    _animCtrl.duration = Duration(milliseconds: durationMs);
+    _slideAnim = Tween<double>(begin: startOffset, end: targetOffset).animate(
+      CurvedAnimation(parent: _animCtrl, curve: Curves.easeInCubic),
+    )..addListener(_onAnimTick);
+
+    _animCtrl.reset();
+    _animCtrl.forward().then((_) {
+      if (mounted) {
+        widget.onClose?.call();
+      }
+    });
+  }
+
+  void _springBackAnimation() {
+    if (_isDismissing) return;
+    if (_dragOffset == 0.0) return;
+
+    final startOffset = _dragOffset;
+    _slideAnim?.removeListener(_onAnimTick);
+    _animCtrl.duration = const Duration(milliseconds: 220);
+    _slideAnim = Tween<double>(begin: startOffset, end: 0.0).animate(
+      CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic),
+    )..addListener(_onAnimTick);
+
+    _animCtrl.reset();
+    _animCtrl.forward();
+  }
+
   void _onVerticalDragUpdate(DragUpdateDetails details) {
+    if (_isDismissing) return;
+    if (_animCtrl.isAnimating) {
+      _animCtrl.stop();
+    }
     if (details.primaryDelta != null) {
       setState(() {
-        _dragOffset = math.max(0.0, _dragOffset + details.primaryDelta!);
+        if (details.primaryDelta! > 0) {
+          _dragOffset += details.primaryDelta!;
+        } else {
+          if (_dragOffset > 0) {
+            _dragOffset = math.max(0.0, _dragOffset + details.primaryDelta!);
+          } else {
+            _dragOffset = math.max(
+              -20.0,
+              _dragOffset + details.primaryDelta! * 0.25,
+            );
+          }
+        }
       });
-      if (_dragOffset > 80) {
-        onClose?.call();
-        _dragOffset = 0.0;
-      }
     }
   }
 
   void _onVerticalDragEnd(DragEndDetails details) {
+    if (_isDismissing) return;
     final velocity = details.primaryVelocity ?? 0.0;
-    if (_dragOffset > 35 || velocity > 80) {
-      onClose?.call();
+    final isFlingDown = velocity > 300.0;
+    final isDraggedDown = _dragOffset > 60.0 && velocity > -100.0;
+    final isDeepDrag = _dragOffset > 110.0;
+
+    if (isFlingDown || isDraggedDown || isDeepDrag) {
+      _dismissWithAnimation(velocity: velocity);
+    } else {
+      _springBackAnimation();
     }
-    setState(() {
-      _dragOffset = 0.0;
-    });
   }
 
   void _onVerticalDragCancel() {
-    setState(() {
-      _dragOffset = 0.0;
-    });
+    if (!_isDismissing) {
+      _springBackAnimation();
+    }
   }
 
   @override
@@ -94,15 +187,18 @@ class _LocationDetailSheetState extends State<LocationDetailSheet> {
         : 'Dekat';
 
     final isDark = AppColors.isDark(context);
+    final opacity = (1.0 - (_dragOffset / 280.0)).clamp(0.0, 1.0);
 
-    return Transform.translate(
-      offset: Offset(0, _dragOffset),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onVerticalDragUpdate: _onVerticalDragUpdate,
-        onVerticalDragEnd: _onVerticalDragEnd,
-        onVerticalDragCancel: _onVerticalDragCancel,
-        child: ClipRRect(
+    return Opacity(
+      opacity: opacity,
+      child: Transform.translate(
+        offset: Offset(0, _dragOffset),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onVerticalDragUpdate: _onVerticalDragUpdate,
+          onVerticalDragEnd: _onVerticalDragEnd,
+          onVerticalDragCancel: _onVerticalDragCancel,
+          child: ClipRRect(
           borderRadius: BorderRadius.circular(AppRadius.xl),
           child: Container(
             padding: const EdgeInsets.fromLTRB(
@@ -137,7 +233,7 @@ class _LocationDetailSheetState extends State<LocationDetailSheet> {
                 Center(
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
-                    onTap: onClose,
+                    onTap: () => _dismissWithAnimation(),
                     onVerticalDragUpdate: _onVerticalDragUpdate,
                     onVerticalDragEnd: _onVerticalDragEnd,
                     onVerticalDragCancel: _onVerticalDragCancel,
@@ -288,7 +384,7 @@ class _LocationDetailSheetState extends State<LocationDetailSheet> {
                             ? AppColors.darkTextBody
                             : AppColors.tanMedium,
                         splashRadius: 20,
-                        onPressed: onClose,
+                        onPressed: () => _dismissWithAnimation(),
                       ),
                   ],
                 ),
@@ -395,6 +491,7 @@ class _LocationDetailSheetState extends State<LocationDetailSheet> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

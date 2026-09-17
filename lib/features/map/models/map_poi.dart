@@ -2,13 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/theme/app_colors.dart';
 
-enum PoiCategory {
-  maktab,
-  medis,
-  toilet,
-  posPantau,
-  ibadah,
-}
+enum PoiCategory { maktab, medis, toilet, posPantau, ibadah }
 
 class MapPoi {
   final String id;
