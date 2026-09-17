@@ -13,9 +13,11 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
 import '../controllers/map_controller.dart';
+import '../models/map_search_result.dart';
 import '../widgets/location_detail_sheet.dart';
 import '../widgets/map_bottom_sheet.dart';
 import '../widgets/map_floating_controls.dart';
+import '../widgets/map_search_dropdown.dart';
 import '../widgets/map_top_header.dart';
 
 /// Fullscreen Interactive Map screen powered by CartoDB/OSM and reactive GetX.
@@ -32,8 +34,9 @@ class InteractiveMapScreen extends StatefulWidget {
 class _InteractiveMapScreenState extends State<InteractiveMapScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
+  late final TextEditingController _searchCtrl;
 
-  final List<FilterChipItem> _filters = const [
+  static const List<FilterChipItem> _filters = [
     FilterChipItem(
       label: 'Semua',
       icon: Icons.grid_view_rounded,
@@ -48,6 +51,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
   @override
   void initState() {
     super.initState();
+    _searchCtrl = TextEditingController();
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
@@ -56,6 +60,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
 
   @override
   void dispose() {
+    _searchCtrl.dispose();
     _pulseController.dispose();
     super.dispose();
   }
@@ -70,6 +75,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
     return Scaffold(
       backgroundColor: AppColors.scaffoldColor(context),
       extendBody: true,
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
           // 1. Core Interactive Map Layer
@@ -82,6 +88,9 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
               selectedFilter: mapCtrl.selectedFilter.value,
               onFilterSelected: mapCtrl.selectFilter,
               onSosPressed: () => Get.toNamed(AppRoutes.modalSos),
+              searchController: _searchCtrl,
+              onSearchChanged: mapCtrl.onSearchQueryChanged,
+              onClearSearch: () => mapCtrl.clearSearch(clearMarker: false),
               isLiveTracking: mapCtrl.isLiveTracking.value,
               gpsAccuracy: mapCtrl.gpsAccuracy.value,
               roomName: mapCtrl.activeRoomName.value,
@@ -90,6 +99,20 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                   : null,
               nearestInfo: mapCtrl.nearestMemberInfo,
               onRoomTap: mapCtrl.openBottomSheet,
+            ),
+          ),
+
+          // 2.5 Floating Search Dropdown Overlay
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 90,
+            left: 0,
+            right: 0,
+            child: MapSearchDropdown(
+              mapCtrl: mapCtrl,
+              onSelect: (result) {
+                _searchCtrl.text = result.name;
+                mapCtrl.selectSearchResult(result);
+              },
             ),
           ),
 
@@ -481,6 +504,8 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
           }
         },
         onTap: (tapPosition, point) {
+          FocusScope.of(context).unfocus();
+          mapCtrl.clearSearch(clearMarker: false);
           mapCtrl.closeBottomSheet();
         },
       ),
@@ -549,6 +574,8 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
           final userLocation =
               mapCtrl.currentUserLocation.value ??
               MapController.defaultMinaBase;
+          final searchResult = mapCtrl.selectedSearchResult.value;
+
           return fmap.MarkerLayer(
             markers: [
               // Current User Marker ("Anda") - Exactly ONE
@@ -567,6 +594,9 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
 
               // Filtered POI Markers
               ..._buildPoiMarkers(mapCtrl),
+
+              // Dedicated Search Location Marker (isolated logic)
+              if (searchResult != null) _buildSearchMarker(searchResult),
             ],
           );
         }),
@@ -577,6 +607,85 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
   // ---------------------------------------------------------------------------
   // MARKER BUILDERS
   // ---------------------------------------------------------------------------
+
+  fmap.Marker _buildSearchMarker(MapSearchResult result) {
+    final isDark = AppColors.isDark(context);
+    return fmap.Marker(
+      point: result.coordinate,
+      width: 150,
+      height: 75,
+      alignment: Alignment.topCenter,
+      child: RepaintBoundary(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkSurface : AppColors.espressoDark,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                border: Border.all(color: AppColors.goldPrimary, width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.35),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.place_rounded,
+                    size: 13,
+                    color: AppColors.goldPrimary,
+                  ),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      result.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.captionSmall.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 10.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 2),
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFE53935), Color(0xFFC62828)],
+                ),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFE53935).withValues(alpha: 0.45),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.location_searching_rounded,
+                color: Colors.white,
+                size: 16,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildCompanionMarker() {
     final isDark = AppColors.isDark(context);

@@ -3,10 +3,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:hajicare/core/constants/app_constants.dart';
+import 'package:hajicare/core/services/geocoding_service.dart';
 import 'package:hajicare/features/map/controllers/map_controller.dart';
 import 'package:hajicare/features/map/models/map_poi.dart';
+import 'package:hajicare/features/map/models/map_search_result.dart';
 import 'package:hajicare/features/room/models/room_member_model.dart';
 import 'package:hajicare/features/map/services/route_service.dart';
+import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 
 void main() {
@@ -393,6 +396,192 @@ void main() {
       expect(mockRouteService.callCount, equals(callsBefore));
     });
   });
+
+  group('MapController Search Location Tests', () {
+    late MapController searchController;
+    late MockGeocodingService mockGeocoding;
+
+    setUp(() {
+      mockGeocoding = MockGeocodingService();
+      searchController = MapController(
+        routeService: mockRouteService,
+        geocodingService: mockGeocoding,
+      );
+      searchController.onInit();
+    });
+
+    tearDown(() {
+      searchController.onClose();
+    });
+
+    test('Search bar ignores queries with length < 2 and stays idle', () async {
+      searchController.onSearchQueryChanged('a');
+      expect(searchController.searchState.value, equals(MapSearchState.idle));
+      expect(searchController.searchResults.isEmpty, isTrue);
+
+      await Future.delayed(const Duration(milliseconds: 600));
+      expect(mockGeocoding.callCount, equals(0));
+    });
+
+    test('Search debounce calls searchLocations only after 500ms delay', () async {
+      searchController.onSearchQueryChanged('jak');
+      searchController.onSearchQueryChanged('jaka');
+      searchController.onSearchQueryChanged('jakarta');
+
+      // Before debounce delay (200ms), no API call should happen
+      await Future.delayed(const Duration(milliseconds: 200));
+      expect(mockGeocoding.callCount, equals(0));
+
+      // After debounce delay (600ms), exactly 1 call should be made
+      await Future.delayed(const Duration(milliseconds: 400));
+      expect(mockGeocoding.callCount, equals(1));
+      expect(searchController.searchState.value, equals(MapSearchState.results));
+      expect(searchController.searchResults.length, equals(2));
+      expect(searchController.searchResults.first.name, equals('Monumen Nasional'));
+    });
+
+    test('Search passes user current location as proximity bias to searchLocations', () async {
+      // Allow async onInit() GPS failure to settle before setting test coordinates
+      await Future.delayed(const Duration(milliseconds: 50));
+      searchController.currentUserLocation.value = const LatLng(-6.1754, 106.8272);
+
+      searchController.onSearchQueryChanged('masjid');
+      await Future.delayed(const Duration(milliseconds: 600));
+
+      expect(mockGeocoding.callCount, equals(1));
+      expect(mockGeocoding.lastLatitude, equals(-6.1754));
+      expect(mockGeocoding.lastLongitude, equals(106.8272));
+    });
+
+    test('Search returns empty state when no locations found', () async {
+      mockGeocoding.customHandler = (q) async => [];
+
+      searchController.onSearchQueryChanged('lokasitidakada12345');
+      await Future.delayed(const Duration(milliseconds: 600));
+
+      expect(searchController.searchState.value, equals(MapSearchState.empty));
+      expect(searchController.searchResults.isEmpty, isTrue);
+    });
+
+    test('Search handles API error gracefully without crashing', () async {
+      mockGeocoding.shouldFail = true;
+
+      searchController.onSearchQueryChanged('error_trigger');
+      await Future.delayed(const Duration(milliseconds: 600));
+
+      expect(searchController.searchState.value, equals(MapSearchState.error));
+      expect(searchController.searchErrorMessage.value, contains('Gagal'));
+      expect(searchController.searchResults.isEmpty, isTrue);
+    });
+
+    test('Race condition: stale search response is ignored', () async {
+      final completerA = Completer<List<MapSearchResult>>();
+
+      mockGeocoding.customHandler = (query) {
+        if (query == 'jakarta') {
+          return completerA.future;
+        } else {
+          return Future.value([
+            const MapSearchResult(
+              id: 'bdg',
+              name: 'Bandung',
+              address: 'Jawa Barat',
+              latitude: -6.9175,
+              longitude: 107.6191,
+            ),
+          ]);
+        }
+      };
+
+      // 1. User searches 'jakarta'
+      searchController.onSearchQueryChanged('jakarta');
+      await Future.delayed(const Duration(milliseconds: 550));
+
+      // 2. User quickly searches 'bandung'
+      searchController.onSearchQueryChanged('bandung');
+      await Future.delayed(const Duration(milliseconds: 550));
+
+      // 3. Bandung response arrives
+      expect(searchController.searchResults.first.name, equals('Bandung'));
+
+      // 4. Jakarta response arrives late
+      completerA.complete([
+        const MapSearchResult(
+          id: 'jkt',
+          name: 'Jakarta',
+          address: 'DKI Jakarta',
+          latitude: -6.2088,
+          longitude: 106.8456,
+        ),
+      ]);
+      await Future.delayed(const Duration(milliseconds: 50));
+
+      // Results must still be Bandung, Jakarta response ignored
+      expect(searchController.searchResults.first.name, equals('Bandung'));
+    });
+
+    test('Selecting search result sets location and marker without altering current location', () {
+      const result = MapSearchResult(
+        id: '1',
+        name: 'Monas',
+        address: 'Jakarta',
+        latitude: -6.1754,
+        longitude: 106.8272,
+      );
+
+      final initialUserLoc = searchController.currentUserLocation.value;
+
+      searchController.selectSearchResult(result);
+
+      expect(searchController.selectedSearchResult.value, equals(result));
+      expect(searchController.searchState.value, equals(MapSearchState.idle));
+      expect(searchController.searchResults.isEmpty, isTrue);
+      // Ensure current GPS user location is NOT mutated
+      expect(searchController.currentUserLocation.value, equals(initialUserLoc));
+    });
+
+    test('Selecting a second search result updates existing search marker', () {
+      const result1 = MapSearchResult(
+        id: '1',
+        name: 'Monas',
+        address: 'Jakarta',
+        latitude: -6.1754,
+        longitude: 106.8272,
+      );
+      const result2 = MapSearchResult(
+        id: '2',
+        name: 'Bandung',
+        address: 'Jawa Barat',
+        latitude: -6.9175,
+        longitude: 107.6191,
+      );
+
+      searchController.selectSearchResult(result1);
+      expect(searchController.selectedSearchResult.value?.name, equals('Monas'));
+
+      searchController.selectSearchResult(result2);
+      expect(searchController.selectedSearchResult.value?.name, equals('Bandung'));
+    });
+
+    test('clearSearch clears query and dropdown without moving map or clearing other markers', () {
+      const result = MapSearchResult(
+        id: '1',
+        name: 'Monas',
+        address: 'Jakarta',
+        latitude: -6.1754,
+        longitude: 106.8272,
+      );
+      searchController.selectSearchResult(result);
+
+      searchController.clearSearch(clearMarker: false);
+      expect(searchController.searchState.value, equals(MapSearchState.idle));
+      expect(searchController.searchResults.isEmpty, isTrue);
+      expect(searchController.selectedSearchResult.value, isNotNull);
+
+      searchController.clearSearch(clearMarker: true);
+      expect(searchController.selectedSearchResult.value, isNull);
+    });
+  });
 }
 
 class MockRouteService extends RouteService {
@@ -419,5 +608,48 @@ class MockRouteService extends RouteService {
       distanceMeters: 500.0,
       durationSeconds: 300,
     );
+  }
+}
+
+class MockGeocodingService extends GeocodingService {
+  int callCount = 0;
+  bool shouldFail = false;
+  double? lastLatitude;
+  double? lastLongitude;
+  Future<List<MapSearchResult>> Function(String query)? customHandler;
+
+  @override
+  Future<List<MapSearchResult>> searchLocations(
+    String query, {
+    double? latitude,
+    double? longitude,
+    int limit = 10,
+    http.Client? client,
+  }) async {
+    callCount++;
+    lastLatitude = latitude;
+    lastLongitude = longitude;
+    if (shouldFail) {
+      throw Exception('Simulated geocoding search failure');
+    }
+    if (customHandler != null) {
+      return customHandler!(query);
+    }
+    return [
+      const MapSearchResult(
+        id: '1',
+        name: 'Monumen Nasional',
+        address: 'Gambir, Jakarta Pusat, DKI Jakarta',
+        latitude: -6.1754,
+        longitude: 106.8272,
+      ),
+      const MapSearchResult(
+        id: '2',
+        name: 'Masjid Istiqlal',
+        address: 'Sawah Besar, Jakarta Pusat, DKI Jakarta',
+        latitude: -6.1702,
+        longitude: 106.8314,
+      ),
+    ];
   }
 }

@@ -6,10 +6,21 @@ import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/services/app_alert_service.dart';
+import '../../../core/services/geocoding_service.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../room/services/room_service.dart';
 import '../models/map_poi.dart';
+import '../models/map_search_result.dart';
 import '../services/route_service.dart';
+
+/// State of the location search workflow.
+enum MapSearchState {
+  idle,
+  loading,
+  results,
+  empty,
+  error,
+}
 
 /// Controller managing reactive interactive map state, camera,
 /// real geolocation with live streaming, dynamic POIs, and Room Member markers.
@@ -18,10 +29,15 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   final RoomService? _injectedRoomService;
   RoomService? _lazyRoomService;
   final RouteService _routeService;
+  final GeocodingService _geocodingService;
 
-  MapController({RoomService? roomService, RouteService? routeService})
-    : _injectedRoomService = roomService,
-      _routeService = routeService ?? RouteService();
+  MapController({
+    RoomService? roomService,
+    RouteService? routeService,
+    GeocodingService? geocodingService,
+  })  : _injectedRoomService = roomService,
+        _routeService = routeService ?? RouteService(),
+        _geocodingService = geocodingService ?? GeocodingService();
 
   RoomService? get _roomService {
     if (_injectedRoomService != null) return _injectedRoomService;
@@ -79,6 +95,14 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   final safeRadiusMeters = 200.0.obs;
   final activeTileUrl = AppConstants.cartoVoyagerUrl.obs;
   final isBottomSheetOpen = true.obs;
+
+  // ── SEARCH LOCATION STATE ──────────────────────────────────────────────────
+  final searchState = MapSearchState.idle.obs;
+  final searchResults = <MapSearchResult>[].obs;
+  final selectedSearchResult = Rxn<MapSearchResult>();
+  final searchErrorMessage = ''.obs;
+  Timer? _searchDebounceTimer;
+  int _searchRequestId = 0;
 
   void closeBottomSheet() {
     isBottomSheetOpen.value = false;
@@ -885,8 +909,101 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     }
   }
 
+  // ── SEARCH ACTIONS ─────────────────────────────────────────────────────────
+
+  /// Handles user input in search bar with 500ms debounce and race-condition safety.
+  void onSearchQueryChanged(String query) {
+    _searchDebounceTimer?.cancel();
+
+    final cleanQuery = query.trim();
+    if (cleanQuery.isEmpty) {
+      clearSearch();
+      return;
+    }
+
+    if (cleanQuery.length < 2) {
+      searchState.value = MapSearchState.idle;
+      searchResults.clear();
+      searchErrorMessage.value = '';
+      return;
+    }
+
+    _searchDebounceTimer = Timer(const Duration(milliseconds: 500), () async {
+      final currentId = ++_searchRequestId;
+      searchState.value = MapSearchState.loading;
+      searchErrorMessage.value = '';
+
+      // Dynamic current user location for proximity bias (ranking boost, not hard filter)
+      final userLoc = currentUserLocation.value;
+
+      try {
+        final results = await _geocodingService.searchLocations(
+          cleanQuery,
+          latitude: userLoc?.latitude,
+          longitude: userLoc?.longitude,
+          limit: 10,
+        );
+
+        // Race condition check: discard stale response
+        if (currentId != _searchRequestId) {
+          debugPrint(
+            '[SEARCH] stale response ignored (request $currentId != $_searchRequestId)',
+          );
+          return;
+        }
+
+        if (results.isEmpty) {
+          searchResults.clear();
+          searchState.value = MapSearchState.empty;
+        } else {
+          searchResults.assignAll(results);
+          searchState.value = MapSearchState.results;
+        }
+      } catch (e) {
+        if (currentId != _searchRequestId) return;
+        debugPrint('[SEARCH] error: $e');
+        searchResults.clear();
+        searchState.value = MapSearchState.error;
+        searchErrorMessage.value = 'Gagal mencari lokasi. Coba lagi.';
+      }
+    });
+  }
+
+  /// Selects a location result, dismisses dropdown, updates search marker,
+  /// and animates camera to the target coordinates.
+  void selectSearchResult(MapSearchResult result) {
+    selectedSearchResult.value = result;
+    searchState.value = MapSearchState.idle;
+    searchResults.clear();
+
+    // Close bottom sheet if open to emphasize the found location
+    isBottomSheetOpen.value = false;
+
+    // Smoothly animate camera to search result coordinate
+    animatedMove(result.coordinate, 16.5);
+  }
+
+  /// Clears the active search query and dropdown results.
+  /// Preserves the selected search marker on the map unless explicitly instructed.
+  void clearSearch({bool clearMarker = false}) {
+    _searchDebounceTimer?.cancel();
+    _searchRequestId++;
+    searchResults.clear();
+    searchState.value = MapSearchState.idle;
+    searchErrorMessage.value = '';
+    if (clearMarker) {
+      selectedSearchResult.value = null;
+    }
+  }
+
+  /// Explicitly removes the search marker from the map.
+  void clearSearchMarker() {
+    selectedSearchResult.value = null;
+  }
+
   @override
   void onClose() {
+    _searchDebounceTimer?.cancel();
     _moveAnimCtrl?.dispose();
     _nativePositionSub?.cancel();
     _statePositionSub?.cancel();

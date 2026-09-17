@@ -12,6 +12,8 @@ class MapTopHeader extends StatefulWidget {
   final ValueChanged<int> onFilterSelected;
   final VoidCallback onSosPressed;
   final ValueChanged<String>? onSearchChanged;
+  final VoidCallback? onClearSearch;
+  final TextEditingController? searchController;
   final bool isLiveTracking;
   final double gpsAccuracy;
   final String? roomName;
@@ -26,6 +28,8 @@ class MapTopHeader extends StatefulWidget {
     required this.onFilterSelected,
     required this.onSosPressed,
     this.onSearchChanged,
+    this.onClearSearch,
+    this.searchController,
     this.isLiveTracking = false,
     this.gpsAccuracy = 0.0,
     this.roomName,
@@ -39,26 +43,41 @@ class MapTopHeader extends StatefulWidget {
 }
 
 class _MapTopHeaderState extends State<MapTopHeader> {
-  late final TextEditingController _searchCtrl;
+  TextEditingController? _internalSearchCtrl;
+  TextEditingController get _effectiveSearchCtrl =>
+      widget.searchController ?? (_internalSearchCtrl ??= TextEditingController());
   bool _hasSearchText = false;
+
+  void _onSearchTextChanged() {
+    final hasText = _effectiveSearchCtrl.text.trim().isNotEmpty;
+    if (hasText != _hasSearchText) {
+      setState(() {
+        _hasSearchText = hasText;
+      });
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    _searchCtrl = TextEditingController();
-    _searchCtrl.addListener(() {
-      final hasText = _searchCtrl.text.trim().isNotEmpty;
-      if (hasText != _hasSearchText) {
-        setState(() {
-          _hasSearchText = hasText;
-        });
-      }
-    });
+    _effectiveSearchCtrl.addListener(_onSearchTextChanged);
+    _hasSearchText = _effectiveSearchCtrl.text.trim().isNotEmpty;
+  }
+
+  @override
+  void didUpdateWidget(MapTopHeader oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.searchController != widget.searchController) {
+      oldWidget.searchController?.removeListener(_onSearchTextChanged);
+      _effectiveSearchCtrl.addListener(_onSearchTextChanged);
+      _hasSearchText = _effectiveSearchCtrl.text.trim().isNotEmpty;
+    }
   }
 
   @override
   void dispose() {
-    _searchCtrl.dispose();
+    _effectiveSearchCtrl.removeListener(_onSearchTextChanged);
+    _internalSearchCtrl?.dispose();
     super.dispose();
   }
 
@@ -359,7 +378,7 @@ class _MapTopHeaderState extends State<MapTopHeader> {
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
-              controller: _searchCtrl,
+              controller: _effectiveSearchCtrl,
               onChanged: widget.onSearchChanged,
               style: AppTypography.bodySmall.copyWith(
                 color: isDark ? Colors.white : AppColors.espressoDark,
@@ -367,7 +386,7 @@ class _MapTopHeaderState extends State<MapTopHeader> {
                 fontWeight: FontWeight.w500,
               ),
               decoration: InputDecoration(
-                hintText: 'Cari posko medis, toilet, tenda maktab...',
+                hintText: 'Cari lokasi...',
                 hintStyle: AppTypography.bodySmall.copyWith(
                   color: isDark
                       ? Colors.white.withValues(alpha: 0.45)
@@ -388,7 +407,8 @@ class _MapTopHeaderState extends State<MapTopHeader> {
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
               onPressed: () {
-                _searchCtrl.clear();
+                _effectiveSearchCtrl.clear();
+                widget.onClearSearch?.call();
                 widget.onSearchChanged?.call('');
               },
             )
