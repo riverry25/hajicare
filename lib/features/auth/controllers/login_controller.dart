@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:awesome_dialog/awesome_dialog.dart';
 
 import '../../../core/state/app_startup_controller.dart';
 
@@ -63,8 +64,8 @@ class LoginController extends GetxController {
     final shouldRemember = rememberMe.value;
 
     if (email.isEmpty || password.isEmpty) {
-      errorMessage.value = 'Harap isi email dan password';
-      _showErrorSnackbar(errorMessage.value!);
+      errorMessage.value = 'Harap isi email dan password.';
+      _showErrorDialog(errorMessage.value!);
       return;
     }
 
@@ -86,7 +87,7 @@ class LoginController extends GetxController {
       if (uid == null) {
         if (!isClosed) {
           errorMessage.value = 'Data pengguna tidak ditemukan.';
-          _showErrorSnackbar(errorMessage.value!);
+          _showErrorDialog(errorMessage.value!);
         }
         return;
       }
@@ -116,19 +117,36 @@ class LoginController extends GetxController {
 
       if (isClosed) return;
 
-      Get.offAllNamed(destination);
+      // Show success dialog briefly, then navigate
+      if (Get.context != null) {
+        AwesomeDialog(
+          context: Get.context!,
+          dialogType: DialogType.success,
+          animType: AnimType.scale,
+          title: 'Selamat Datang!',
+          desc: 'Login berhasil. Anda akan diarahkan ke dashboard.',
+          descTextStyle: const TextStyle(fontSize: 13.5, height: 1.4),
+          autoHide: const Duration(milliseconds: 1500),
+          onDismissCallback: (_) => Get.offAllNamed(destination),
+          btnOkText: 'Masuk Sekarang',
+          btnOkColor: const Color(0xFF2E7D32),
+          btnOkOnPress: () => Get.offAllNamed(destination),
+        ).show();
+      } else {
+        Get.offAllNamed(destination);
+      }
     } on FirebaseAuthException catch (e) {
       if (isClosed) return;
 
-      errorMessage.value = e.message ?? e.code;
+      errorMessage.value = _friendlyAuthError(e.code);
 
-      _showErrorSnackbar('Error Auth: ${errorMessage.value}');
+      _showErrorDialog(errorMessage.value!);
     } catch (e) {
       if (isClosed) return;
 
-      errorMessage.value = 'Terjadi kesalahan: $e';
+      errorMessage.value = 'Terjadi kesalahan tidak terduga. Coba lagi.';
 
-      _showErrorSnackbar(errorMessage.value!);
+      _showErrorDialog(errorMessage.value!);
     } finally {
       if (!isClosed) {
         isLoading.value = false;
@@ -136,17 +154,41 @@ class LoginController extends GetxController {
     }
   }
 
-  void _showErrorSnackbar(String msg) {
-    if (isClosed) return;
-    if (Get.context != null) {
-      Get.snackbar(
-        'Gagal Masuk',
-        msg,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.shade800,
-        colorText: Colors.white,
-      );
+  /// Maps Firebase error codes to user-friendly Indonesian messages.
+  String _friendlyAuthError(String code) {
+    switch (code) {
+      case 'user-not-found':
+        return 'Akun dengan email ini tidak ditemukan.';
+      case 'wrong-password':
+      case 'invalid-credential':
+        return 'Email atau password yang Anda masukkan salah.';
+      case 'user-disabled':
+        return 'Akun ini telah dinonaktifkan. Hubungi administrator.';
+      case 'too-many-requests':
+        return 'Terlalu banyak percobaan. Coba beberapa saat lagi.';
+      case 'network-request-failed':
+        return 'Tidak ada koneksi internet. Periksa jaringan Anda.';
+      default:
+        return 'Gagal masuk. Periksa kembali email dan password Anda.';
     }
+  }
+
+  void _showErrorDialog(String message) {
+    if (isClosed || Get.context == null) return;
+    AwesomeDialog(
+      context: Get.context!,
+      dialogType: DialogType.error,
+      animType: AnimType.scale,
+      title: 'Gagal Masuk',
+      desc: message,
+      descTextStyle: const TextStyle(
+        fontSize: 13.5,
+        height: 1.45,
+      ),
+      btnOkText: 'Coba Lagi',
+      btnOkColor: const Color(0xFFB71C1C),
+      btnOkOnPress: () {},
+    ).show();
   }
 
   @override

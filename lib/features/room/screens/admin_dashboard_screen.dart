@@ -176,7 +176,13 @@ class _AdminDashboardHome extends StatelessWidget {
               const SizedBox(height: AppSpacing.md),
 
               // 3. Overview KPI (Adaptive, text-scale safe)
-              _buildKpiOverview(context, isDark, cardBg, headingColor, bodyColor),
+              _buildKpiOverview(
+                context,
+                isDark,
+                cardBg,
+                headingColor,
+                bodyColor,
+              ),
               const SizedBox(height: AppSpacing.lg),
 
               // 4. Quick Actions (Aksi Cepat)
@@ -225,14 +231,8 @@ class _AdminDashboardHome extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? [
-                  AppColors.darkSurfaceContainerHigh,
-                  AppColors.darkSurface,
-                ]
-              : [
-                  AppColors.primary,
-                  AppColors.primaryContainer,
-                ],
+              ? [AppColors.darkSurfaceContainerHigh, AppColors.darkSurface]
+              : [AppColors.primary, AppColors.primaryContainer],
         ),
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
@@ -402,9 +402,7 @@ class _AdminDashboardHome extends StatelessWidget {
         color: bgColor,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
-          color: hasSos
-              ? borderColor.withValues(alpha: 0.6)
-              : borderColor,
+          color: hasSos ? borderColor.withValues(alpha: 0.6) : borderColor,
           width: hasSos ? 1.5 : 1.0,
         ),
         boxShadow: [
@@ -412,8 +410,8 @@ class _AdminDashboardHome extends StatelessWidget {
             color: hasSos
                 ? AppColors.sosEmergency.withValues(alpha: 0.12)
                 : (isDark
-                    ? Colors.black.withValues(alpha: 0.2)
-                    : AppColors.primary.withValues(alpha: 0.04)),
+                      ? Colors.black.withValues(alpha: 0.2)
+                      : AppColors.primary.withValues(alpha: 0.04)),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -435,16 +433,18 @@ class _AdminDashboardHome extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: (hasSos
-                              ? AppColors.sosEmergency
-                              : AppColors.statusSafe)
-                          .withValues(alpha: 0.12),
+                      color:
+                          (hasSos
+                                  ? AppColors.sosEmergency
+                                  : AppColors.statusSafe)
+                              .withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                       border: Border.all(
-                        color: (hasSos
-                                ? AppColors.sosEmergency
-                                : AppColors.statusSafe)
-                            .withValues(alpha: 0.3),
+                        color:
+                            (hasSos
+                                    ? AppColors.sosEmergency
+                                    : AppColors.statusSafe)
+                                .withValues(alpha: 0.3),
                       ),
                     ),
                     child: Row(
@@ -502,7 +502,9 @@ class _AdminDashboardHome extends StatelessWidget {
                           borderRadius: BorderRadius.circular(AppRadius.pill),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.sosEmergency.withValues(alpha: 0.35),
+                              color: AppColors.sosEmergency.withValues(
+                                alpha: 0.35,
+                              ),
                               blurRadius: 6,
                               offset: const Offset(0, 2),
                             ),
@@ -569,7 +571,9 @@ class _AdminDashboardHome extends StatelessWidget {
                 _buildMiniBadge(
                   icon: Icons.meeting_room_rounded,
                   label: '$activeRooms Room Aktif',
-                  color: isDark ? AppColors.darkPrimary : AppColors.accentGoldStar,
+                  color: isDark
+                      ? AppColors.darkPrimary
+                      : AppColors.accentGoldStar,
                   isDark: isDark,
                 ),
               ],
@@ -591,9 +595,7 @@ class _AdminDashboardHome extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withValues(alpha: isDark ? 0.16 : 0.09),
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(
-          color: color.withValues(alpha: isDark ? 0.35 : 0.2),
-        ),
+        border: Border.all(color: color.withValues(alpha: isDark ? 0.35 : 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -661,7 +663,9 @@ class _AdminDashboardHome extends StatelessWidget {
                 value: '$activeRooms',
                 subtitle: 'dari $totalRooms room',
                 icon: Icons.meeting_room_rounded,
-                color: isDark ? AppColors.darkPrimary : AppColors.accentGoldStar,
+                color: isDark
+                    ? AppColors.darkPrimary
+                    : AppColors.accentGoldStar,
                 cardBg: cardBg,
                 headingColor: headingColor,
                 bodyColor: bodyColor,
@@ -884,10 +888,11 @@ class _AdminDashboardHome extends StatelessWidget {
                       width: 60,
                       height: 60,
                       decoration: BoxDecoration(
-                        color: (isDark
-                                ? AppColors.darkPrimary
-                                : AppColors.primaryGold)
-                            .withValues(alpha: 0.12),
+                        color:
+                            (isDark
+                                    ? AppColors.darkPrimary
+                                    : AppColors.primaryGold)
+                                .withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -912,9 +917,7 @@ class _AdminDashboardHome extends StatelessWidget {
                     Text(
                       'Buat room baru untuk mulai memantau jamaah dan koordinasi pendamping maktab.',
                       textAlign: TextAlign.center,
-                      style: AppTypography.bodySmall.copyWith(
-                        color: bodyColor,
-                      ),
+                      style: AppTypography.bodySmall.copyWith(color: bodyColor),
                     ),
 
                     const SizedBox(height: AppSpacing.lg),
@@ -922,7 +925,9 @@ class _AdminDashboardHome extends StatelessWidget {
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryColor,
-                        foregroundColor: isDark ? AppColors.darkOnPrimary : Colors.white,
+                        foregroundColor: isDark
+                            ? AppColors.darkOnPrimary
+                            : Colors.white,
                         minimumSize: const Size(160, 46),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -988,65 +993,175 @@ class _AdminDashboardHome extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Section Header with Live Stream Pill & View All
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(
-              'Aktivitas Terbaru',
-              style: AppTypography.titleMedium.copyWith(
-                color: headingColor,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.12),
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-                border: Border.all(
-                  color: primaryColor.withValues(alpha: 0.3),
-                ),
-              ),
+            Expanded(
               child: Row(
-                mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    width: 7,
-                    height: 7,
+                    width: 34,
+                    height: 34,
                     decoration: BoxDecoration(
+                      color: primaryColor.withValues(
+                        alpha: isDark ? 0.20 : 0.12,
+                      ),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      border: Border.all(
+                        color: primaryColor.withValues(
+                          alpha: isDark ? 0.35 : 0.20,
+                        ),
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.bolt_rounded,
+                      size: 19,
                       color: primaryColor,
-                      shape: BoxShape.circle,
                     ),
                   ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Realtime Stream',
-                    style: AppTypography.captionSmall.copyWith(
-                      color: primaryColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 11,
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Aktivitas Terbaru',
+                          style: AppTypography.titleMedium.copyWith(
+                            color: headingColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            _LivePulseIndicator(
+                              color: AppColors.statusSafe,
+                              isDark: isDark,
+                            ),
+                            const SizedBox(width: 5),
+                            Expanded(
+                              child: Text(
+                                activities.isEmpty
+                                    ? 'Realtime • Pemantauan aktif'
+                                    : 'Realtime • ${activities.length} aktivitas',
+                                style: AppTypography.captionSmall.copyWith(
+                                  color: bodyColor.withValues(alpha: 0.75),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 11,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
+            const SizedBox(width: AppSpacing.xs),
+            if (activities.isNotEmpty)
+              TextButton.icon(
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(44, 36),
+                  foregroundColor: primaryColor,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+                icon: const Text(
+                  'Lihat Semua',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+                label: const Icon(Icons.arrow_forward_ios_rounded, size: 11),
+                onPressed: () => _showAllActivitiesSheet(
+                  context,
+                  activities,
+                  controller,
+                  isDark,
+                  headingColor,
+                  bodyColor,
+                  primaryColor,
+                ),
+              )
+            else
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 3.5,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.statusSafe.withValues(
+                    alpha: isDark ? 0.18 : 0.10,
+                  ),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  border: Border.all(
+                    color: AppColors.statusSafe.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _LivePulseIndicator(
+                      color: AppColors.statusSafe,
+                      isDark: isDark,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      'Live',
+                      style: AppTypography.captionSmall.copyWith(
+                        color: AppColors.statusSafe,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 10.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: AppSpacing.sm + 2),
+
+        // Body: Empty State or Activity Cards List
         if (activities.isEmpty)
           AppCard(
             backgroundColor: cardBg,
             child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.xl),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.xl,
+              ),
               child: Center(
                 child: Column(
                   children: [
-                    Icon(
-                      Icons.history_rounded,
-                      size: 38,
-                      color: bodyColor.withValues(alpha: 0.4),
+                    Container(
+                      width: 58,
+                      height: 58,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.statusSafe.withValues(
+                          alpha: isDark ? 0.18 : 0.10,
+                        ),
+                        border: Border.all(
+                          color: AppColors.statusSafe.withValues(
+                            alpha: isDark ? 0.35 : 0.25,
+                          ),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.verified_user_rounded,
+                          size: 30,
+                          color: AppColors.statusSafe,
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: AppSpacing.xs),
+                    const SizedBox(height: AppSpacing.md),
                     Text(
                       'Semua Kondisi Terkendali',
                       style: AppTypography.titleSmall.copyWith(
@@ -1054,12 +1169,48 @@ class _AdminDashboardHome extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
-                      'Belum ada aktivitas operasional darurat atau mutasi kamar tercatat hari ini.',
+                      'Belum ada insiden darurat, mutasi kamar, atau perubahan operasional tercatat hari ini.',
                       textAlign: TextAlign.center,
-                      style: AppTypography.captionSmall.copyWith(
-                        color: bodyColor,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: bodyColor.withValues(alpha: 0.85),
+                        fontSize: 12.5,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color:
+                            (isDark
+                                    ? AppColors.darkCardBorder
+                                    : AppColors.canvasCreamSubtle)
+                                .withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.check_circle_outline_rounded,
+                            size: 13,
+                            color: AppColors.statusSafe,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            'Sinkronisasi Cloud Firestore Aktif',
+                            style: AppTypography.captionSmall.copyWith(
+                              color: bodyColor.withValues(alpha: 0.8),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 10.5,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -1071,32 +1222,839 @@ class _AdminDashboardHome extends StatelessWidget {
           AppCard(
             backgroundColor: cardBg,
             padding: EdgeInsets.zero,
-            child: ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: activities.length > 5 ? 5 : activities.length,
-              separatorBuilder: (context, index) => Divider(
-                height: 1,
-                thickness: 0.8,
-                indent: 58,
-                endIndent: AppSpacing.md,
-                color: isDark
-                    ? AppColors.darkCardBorder
-                    : AppColors.canvasCreamSubtle,
-              ),
-              itemBuilder: (context, idx) {
-                final act = activities[idx];
-                return _ActivityFeedTile(
-                  activity: act,
-                  headingColor: headingColor,
-                  bodyColor: bodyColor,
-                  isDark: isDark,
-                );
-              },
+            child: Column(
+              children: [
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: activities.length > 5 ? 5 : activities.length,
+                  separatorBuilder: (context, index) => Divider(
+                    height: 1,
+                    thickness: 0.8,
+                    indent: 58,
+                    endIndent: AppSpacing.md,
+                    color: isDark
+                        ? AppColors.darkCardBorder
+                        : AppColors.canvasCreamSubtle,
+                  ),
+                  itemBuilder: (context, idx) {
+                    final act = activities[idx];
+                    return _ActivityFeedTile(
+                      activity: act,
+                      headingColor: headingColor,
+                      bodyColor: bodyColor,
+                      isDark: isDark,
+                      onTap: () => _showActivityDetailSheet(
+                        context,
+                        act,
+                        controller,
+                        isDark,
+                        headingColor,
+                        bodyColor,
+                        primaryColor,
+                      ),
+                    );
+                  },
+                ),
+                if (activities.length > 5) ...[
+                  Divider(
+                    height: 1,
+                    thickness: 0.8,
+                    color: isDark
+                        ? AppColors.darkCardBorder
+                        : AppColors.canvasCreamSubtle,
+                  ),
+                  InkWell(
+                    onTap: () => _showAllActivitiesSheet(
+                      context,
+                      activities,
+                      controller,
+                      isDark,
+                      headingColor,
+                      bodyColor,
+                      primaryColor,
+                    ),
+                    borderRadius: const BorderRadius.vertical(
+                      bottom: Radius.circular(AppRadius.card),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.sm + 2,
+                        horizontal: AppSpacing.md,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Lihat ${activities.length - 5} Aktivitas Lainnya',
+                            style: AppTypography.captionSmall.copyWith(
+                              color: primaryColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            size: 18,
+                            color: primaryColor,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
       ],
     );
+  }
+
+  // ── Activity Detail Bottom Sheet ──────────────────────────────────────────
+  void _showActivityDetailSheet(
+    BuildContext context,
+    ActivityModel act,
+    AdminRoomController controller,
+    bool isDark,
+    Color headingColor,
+    Color bodyColor,
+    Color primaryColor,
+  ) {
+    HapticFeedback.lightImpact();
+    final matchingRoom = act.roomId != null
+        ? controller.rooms.firstWhereOrNull((r) => r.id == act.roomId)
+        : null;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.sheet),
+        ),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: AppSpacing.lg,
+            right: AppSpacing.lg,
+            top: AppSpacing.md,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + AppSpacing.xl,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Drag Handle
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: bodyColor.withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              // Header Badge & Type
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: act.color.withValues(alpha: isDark ? 0.22 : 0.12),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: act.color.withValues(
+                          alpha: isDark ? 0.45 : 0.30,
+                        ),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Icon(act.icon, color: act.color, size: 22),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: act.color.withValues(
+                                  alpha: isDark ? 0.20 : 0.12,
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.pill,
+                                ),
+                              ),
+                              child: Text(
+                                _activityTypeName(act.type),
+                                style: AppTypography.captionSmall.copyWith(
+                                  color: act.color,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 10.5,
+                                ),
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              act.timeAgo,
+                              style: AppTypography.captionSmall.copyWith(
+                                color: bodyColor.withValues(alpha: 0.7),
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          act.title,
+                          style: AppTypography.titleMedium.copyWith(
+                            color: headingColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              // Timestamp Card
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm + 2,
+                ),
+                decoration: BoxDecoration(
+                  color:
+                      (isDark
+                              ? AppColors.darkCardBorder
+                              : AppColors.canvasCreamSubtle)
+                          .withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.schedule_rounded,
+                      size: 16,
+                      color: bodyColor.withValues(alpha: 0.7),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _formatFullDate(act.timestamp),
+                      style: AppTypography.captionSmall.copyWith(
+                        color: bodyColor,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 11.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              // Description Box
+              Text(
+                'Keterangan Aktivitas',
+                style: AppTypography.captionSmall.copyWith(
+                  color: bodyColor.withValues(alpha: 0.8),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.darkScaffold.withValues(alpha: 0.5)
+                      : AppColors.canvasCream.withValues(alpha: 0.35),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.darkCardBorder
+                        : AppColors.canvasCreamSubtle,
+                  ),
+                ),
+                child: Text(
+                  act.description.isNotEmpty
+                      ? act.description
+                      : 'Tidak ada rincian tambahan untuk peristiwa ini.',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: headingColor,
+                    height: 1.45,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+
+              // Room Card info & navigation
+              if (act.roomName != null || matchingRoom != null) ...[
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  'Ruang Pantau Terkait',
+                  style: AppTypography.captionSmall.copyWith(
+                    color: bodyColor.withValues(alpha: 0.8),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withValues(alpha: isDark ? 0.12 : 0.06),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(
+                      color: primaryColor.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: primaryColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                        ),
+                        child: Icon(
+                          Icons.meeting_room_rounded,
+                          size: 18,
+                          color: primaryColor,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm + 2),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              act.roomName ??
+                                  matchingRoom?.name ??
+                                  'Room Pantau',
+                              style: AppTypography.titleSmall.copyWith(
+                                color: headingColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13.5,
+                              ),
+                            ),
+                            if (matchingRoom != null)
+                              Text(
+                                'Status: ${matchingRoom.isActive ? "Aktif Dipantau" : "Non-Aktif"}',
+                                style: AppTypography.captionSmall.copyWith(
+                                  color: matchingRoom.isActive
+                                      ? AppColors.statusSafe
+                                      : bodyColor.withValues(alpha: 0.7),
+                                  fontSize: 10.5,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      if (matchingRoom != null)
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryColor,
+                            foregroundColor: isDark
+                                ? AppColors.darkOnPrimary
+                                : Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            minimumSize: const Size(0, 34),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                            ),
+                          ),
+                          icon: const Icon(Icons.open_in_new_rounded, size: 14),
+                          label: const Text(
+                            'Buka Room',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            controller.selectedRoom.value = matchingRoom;
+                            controller.subscribeToRoomMembers(matchingRoom.id);
+                            Get.toNamed(
+                              AppRoutes.roomDetail,
+                              arguments: matchingRoom,
+                            );
+                          },
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+
+              // User/Actor Card
+              if (act.userName != null || act.role != null) ...[
+                const SizedBox(height: AppSpacing.md),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  ),
+                  decoration: BoxDecoration(
+                    color:
+                        (isDark
+                                ? AppColors.darkCardBorder
+                                : AppColors.canvasCreamSubtle)
+                            .withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.person_outline_rounded,
+                        size: 16,
+                        color: bodyColor.withValues(alpha: 0.7),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Pelaksana / Terkait: ',
+                        style: AppTypography.captionSmall.copyWith(
+                          color: bodyColor.withValues(alpha: 0.7),
+                          fontSize: 11,
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          '${act.userName ?? 'User'} ${act.role != null ? "(${act.role})" : ""}',
+                          style: AppTypography.captionSmall.copyWith(
+                            color: headingColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11.5,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: AppSpacing.lg),
+
+              // Close Button
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: headingColor,
+                    side: BorderSide(
+                      color: isDark
+                          ? AppColors.darkCardBorder
+                          : AppColors.canvasCreamSubtle,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text(
+                    'Tutup',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // ── Show All Activities Bottom Sheet ──────────────────────────────────────
+  void _showAllActivitiesSheet(
+    BuildContext context,
+    List<ActivityModel> activities,
+    AdminRoomController controller,
+    bool isDark,
+    Color headingColor,
+    Color bodyColor,
+    Color primaryColor,
+  ) {
+    HapticFeedback.lightImpact();
+    String activeFilter = 'Semua';
+    String searchQuery = '';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.sheet),
+        ),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final filtered = activities.where((a) {
+              if (activeFilter == 'Darurat' &&
+                  a.type != ActivityType.sosActive) {
+                return false;
+              }
+              if (activeFilter == 'Kamar' &&
+                  a.type != ActivityType.roomCreated &&
+                  a.type != ActivityType.roomActivated &&
+                  a.type != ActivityType.roomDeactivated) {
+                return false;
+              }
+              if (activeFilter == 'Anggota' &&
+                  a.type != ActivityType.memberJoined &&
+                  a.type != ActivityType.memberLeft) {
+                return false;
+              }
+              if (searchQuery.trim().isNotEmpty) {
+                final q = searchQuery.toLowerCase().trim();
+                final matchTitle = a.title.toLowerCase().contains(q);
+                final matchDesc = a.description.toLowerCase().contains(q);
+                final matchRoom =
+                    a.roomName?.toLowerCase().contains(q) ?? false;
+                final matchUser =
+                    a.userName?.toLowerCase().contains(q) ?? false;
+                if (!matchTitle && !matchDesc && !matchRoom && !matchUser) {
+                  return false;
+                }
+              }
+              return true;
+            }).toList();
+
+            return DraggableScrollableSheet(
+              initialChildSize: 0.85,
+              maxChildSize: 0.95,
+              minChildSize: 0.5,
+              expand: false,
+              builder: (context, scrollController) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                  ),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: AppSpacing.md),
+                      // Drag handle
+                      Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: bodyColor.withValues(alpha: 0.25),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+
+                      // Sheet Header
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Riwayat Aktivitas Lengkap',
+                                style: AppTypography.titleMedium.copyWith(
+                                  color: headingColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                '${filtered.length} dari ${activities.length} aktivitas tercatat',
+                                style: AppTypography.captionSmall.copyWith(
+                                  color: bodyColor.withValues(alpha: 0.7),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close_rounded),
+                            color: bodyColor,
+                            onPressed: () => Navigator.pop(ctx),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+
+                      // Search Box
+                      Container(
+                        decoration: BoxDecoration(
+                          color:
+                              (isDark
+                                      ? AppColors.darkCardBorder
+                                      : AppColors.canvasCreamSubtle)
+                                  .withValues(alpha: 0.35),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          border: Border.all(
+                            color: isDark
+                                ? AppColors.darkCardBorder
+                                : AppColors.canvasCreamSubtle,
+                          ),
+                        ),
+                        child: TextField(
+                          style: TextStyle(color: headingColor, fontSize: 13),
+                          decoration: InputDecoration(
+                            hintText: 'Cari aktivitas, kamar, atau jamaah...',
+                            hintStyle: TextStyle(
+                              color: bodyColor.withValues(alpha: 0.6),
+                              fontSize: 13,
+                            ),
+                            prefixIcon: Icon(
+                              Icons.search_rounded,
+                              size: 18,
+                              color: bodyColor.withValues(alpha: 0.7),
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.md,
+                              vertical: 12,
+                            ),
+                          ),
+                          onChanged: (val) {
+                            setModalState(() {
+                              searchQuery = val;
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+
+                      // Filter Chips
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _buildModalFilterChip(
+                              'Semua',
+                              activeFilter == 'Semua',
+                              primaryColor,
+                              headingColor,
+                              isDark,
+                              () => setModalState(() => activeFilter = 'Semua'),
+                            ),
+                            const SizedBox(width: 6),
+                            _buildModalFilterChip(
+                              'Darurat / SOS',
+                              activeFilter == 'Darurat',
+                              AppColors.sosEmergency,
+                              headingColor,
+                              isDark,
+                              () =>
+                                  setModalState(() => activeFilter = 'Darurat'),
+                            ),
+                            const SizedBox(width: 6),
+                            _buildModalFilterChip(
+                              'Room Pantau',
+                              activeFilter == 'Kamar',
+                              primaryColor,
+                              headingColor,
+                              isDark,
+                              () => setModalState(() => activeFilter = 'Kamar'),
+                            ),
+                            const SizedBox(width: 6),
+                            _buildModalFilterChip(
+                              'Anggota',
+                              activeFilter == 'Anggota',
+                              AppColors.statusSafe,
+                              headingColor,
+                              isDark,
+                              () =>
+                                  setModalState(() => activeFilter = 'Anggota'),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+
+                      // Activities List
+                      Expanded(
+                        child: filtered.isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.search_off_rounded,
+                                      size: 44,
+                                      color: bodyColor.withValues(alpha: 0.35),
+                                    ),
+                                    const SizedBox(height: AppSpacing.sm),
+                                    Text(
+                                      'Tidak Ada Aktivitas Sesuai Filter',
+                                      style: AppTypography.titleSmall.copyWith(
+                                        color: headingColor,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Coba ubah kata kunci pencarian atau kategori filter.',
+                                      textAlign: TextAlign.center,
+                                      style: AppTypography.captionSmall
+                                          .copyWith(color: bodyColor),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : ListView.separated(
+                                controller: scrollController,
+                                padding: const EdgeInsets.only(
+                                  bottom: AppSpacing.xl,
+                                ),
+                                itemCount: filtered.length,
+                                separatorBuilder: (context, index) => Divider(
+                                  height: 1,
+                                  thickness: 0.8,
+                                  indent: 58,
+                                  endIndent: AppSpacing.md,
+                                  color: isDark
+                                      ? AppColors.darkCardBorder
+                                      : AppColors.canvasCreamSubtle,
+                                ),
+                                itemBuilder: (context, idx) {
+                                  final act = filtered[idx];
+                                  return _ActivityFeedTile(
+                                    activity: act,
+                                    headingColor: headingColor,
+                                    bodyColor: bodyColor,
+                                    isDark: isDark,
+                                    onTap: () {
+                                      Navigator.pop(ctx);
+                                      _showActivityDetailSheet(
+                                        context,
+                                        act,
+                                        controller,
+                                        isDark,
+                                        headingColor,
+                                        bodyColor,
+                                        primaryColor,
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildModalFilterChip(
+    String label,
+    bool isSelected,
+    Color activeColor,
+    Color headingColor,
+    bool isDark,
+    VoidCallback onTap,
+  ) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? activeColor.withValues(alpha: isDark ? 0.25 : 0.15)
+              : (isDark
+                        ? AppColors.darkCardBorder
+                        : AppColors.canvasCreamSubtle)
+                    .withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          border: Border.all(
+            color: isSelected
+                ? activeColor
+                : (isDark
+                      ? AppColors.darkCardBorder
+                      : AppColors.canvasCreamSubtle),
+            width: isSelected ? 1.2 : 0.8,
+          ),
+        ),
+        child: Text(
+          label,
+          style: AppTypography.captionSmall.copyWith(
+            color: isSelected
+                ? activeColor
+                : headingColor.withValues(alpha: 0.8),
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+            fontSize: 11,
+          ),
+        ),
+      ),
+    );
+  }
+
+  static String _activityTypeName(ActivityType type) {
+    switch (type) {
+      case ActivityType.roomCreated:
+        return 'Room Dibuat';
+      case ActivityType.roomActivated:
+        return 'Room Diaktifkan';
+      case ActivityType.roomDeactivated:
+        return 'Room Dinonaktifkan';
+      case ActivityType.memberJoined:
+        return 'Anggota Masuk';
+      case ActivityType.memberLeft:
+        return 'Anggota Keluar';
+      case ActivityType.sosActive:
+        return 'Peringatan Darurat SOS';
+      case ActivityType.unknown:
+        return 'Aktivitas Operasional';
+    }
+  }
+
+  static String _formatFullDate(DateTime dt) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
+    final day = dt.day.toString().padLeft(2, '0');
+    final month = months[dt.month - 1];
+    final year = dt.year;
+    final hour = dt.hour.toString().padLeft(2, '0');
+    final minute = dt.minute.toString().padLeft(2, '0');
+    return '$day $month $year, $hour:$minute WIB';
   }
 
   // ── Create Room Modal Bottom Sheet ─────────────────────────────────────────
@@ -1106,7 +2064,9 @@ class _AdminDashboardHome extends StatelessWidget {
   ) {
     final textCtrl = TextEditingController();
     final isDark = AppColors.isDark(context);
-    final headingColor = isDark ? AppColors.darkTextHeading : AppColors.espressoDark;
+    final headingColor = isDark
+        ? AppColors.darkTextHeading
+        : AppColors.espressoDark;
     final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
     final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
 
@@ -1148,7 +2108,9 @@ class _AdminDashboardHome extends StatelessWidget {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.12),
+                      color: primaryColor.withValues(
+                        alpha: isDark ? 0.2 : 0.12,
+                      ),
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: Icon(
@@ -1197,7 +2159,10 @@ class _AdminDashboardHome extends StatelessWidget {
                   labelText: 'Nama Kelompok / Room',
                   hintText: 'Misal: Maktab 48 Kloter 12',
                   hintStyle: TextStyle(color: bodyColor.withValues(alpha: 0.5)),
-                  prefixIcon: Icon(Icons.meeting_room_rounded, color: primaryColor),
+                  prefixIcon: Icon(
+                    Icons.meeting_room_rounded,
+                    color: primaryColor,
+                  ),
                   filled: true,
                   fillColor: isDark
                       ? AppColors.darkSurfaceContainer
@@ -1233,7 +2198,9 @@ class _AdminDashboardHome extends StatelessWidget {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
-                      foregroundColor: isDark ? AppColors.darkOnPrimary : Colors.white,
+                      foregroundColor: isDark
+                          ? AppColors.darkOnPrimary
+                          : Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
@@ -1247,7 +2214,9 @@ class _AdminDashboardHome extends StatelessWidget {
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(
-                              color: isDark ? AppColors.darkOnPrimary : Colors.white,
+                              color: isDark
+                                  ? AppColors.darkOnPrimary
+                                  : Colors.white,
                               strokeWidth: 2,
                             ),
                           )
@@ -1311,14 +2280,17 @@ class _KpiMetricCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: effectiveBg,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: borderColor, width: isHighlighted ? 1.4 : 1.0),
+        border: Border.all(
+          color: borderColor,
+          width: isHighlighted ? 1.4 : 1.0,
+        ),
         boxShadow: [
           BoxShadow(
             color: isHighlighted
                 ? color.withValues(alpha: 0.15)
                 : (isDark
-                    ? Colors.black.withValues(alpha: 0.18)
-                    : AppColors.primary.withValues(alpha: 0.03)),
+                      ? Colors.black.withValues(alpha: 0.18)
+                      : AppColors.primary.withValues(alpha: 0.03)),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -1377,7 +2349,9 @@ class _KpiMetricCard extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: AppTypography.captionSmall.copyWith(
-                color: isHighlighted ? color : bodyColor.withValues(alpha: 0.75),
+                color: isHighlighted
+                    ? color
+                    : bodyColor.withValues(alpha: 0.75),
                 fontSize: 10.5,
               ),
             ),
@@ -1426,7 +2400,10 @@ class _QuickActionButton extends StatelessWidget {
       decoration: BoxDecoration(
         color: effectiveBg,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: effectiveBorder, width: isPrimary ? 1.3 : 1.0),
+        border: Border.all(
+          color: effectiveBorder,
+          width: isPrimary ? 1.3 : 1.0,
+        ),
         boxShadow: [
           BoxShadow(
             color: isDark
@@ -1473,7 +2450,9 @@ class _QuickActionButton extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.titleSmall.copyWith(
                           color: headingColor,
-                          fontWeight: isPrimary ? FontWeight.w800 : FontWeight.bold,
+                          fontWeight: isPrimary
+                              ? FontWeight.w800
+                              : FontWeight.bold,
                           fontSize: 13.5,
                         ),
                       ),
@@ -1544,9 +2523,7 @@ class _RoomPantauCard extends StatelessWidget {
             : cardBg,
         borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
-          color: hasSos
-              ? borderColor.withValues(alpha: 0.7)
-              : borderColor,
+          color: hasSos ? borderColor.withValues(alpha: 0.7) : borderColor,
           width: hasSos ? 1.5 : 1.0,
         ),
         boxShadow: [
@@ -1554,8 +2531,8 @@ class _RoomPantauCard extends StatelessWidget {
             color: hasSos
                 ? AppColors.sosEmergency.withValues(alpha: 0.12)
                 : (isDark
-                    ? Colors.black.withValues(alpha: 0.2)
-                    : AppColors.primary.withValues(alpha: 0.04)),
+                      ? Colors.black.withValues(alpha: 0.2)
+                      : AppColors.primary.withValues(alpha: 0.04)),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -1596,16 +2573,18 @@ class _RoomPantauCard extends StatelessWidget {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: (room.isActive
-                                ? AppColors.statusSafe
-                                : AppColors.textSecondary)
-                            .withValues(alpha: isDark ? 0.2 : 0.12),
+                        color:
+                            (room.isActive
+                                    ? AppColors.statusSafe
+                                    : AppColors.textSecondary)
+                                .withValues(alpha: isDark ? 0.2 : 0.12),
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                         border: Border.all(
-                          color: (room.isActive
-                                  ? AppColors.statusSafe
-                                  : AppColors.textSecondary)
-                              .withValues(alpha: 0.3),
+                          color:
+                              (room.isActive
+                                      ? AppColors.statusSafe
+                                      : AppColors.textSecondary)
+                                  .withValues(alpha: 0.3),
                         ),
                       ),
                       child: Row(
@@ -1693,12 +2672,16 @@ class _RoomPantauCard extends StatelessWidget {
                           AppAlert.info(
                             context,
                             title: 'Kode Disalin',
-                            message: 'Kode room "${room.code}" berhasil disalin ke clipboard.',
+                            message:
+                                'Kode room "${room.code}" berhasil disalin ke clipboard.',
                           );
                         },
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 2,
+                            horizontal: 2,
+                          ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -1805,86 +2788,318 @@ class _BadgeCount extends StatelessWidget {
   }
 }
 
+class _LivePulseIndicator extends StatefulWidget {
+  final Color color;
+  final bool isDark;
+
+  const _LivePulseIndicator({required this.color, required this.isDark});
+
+  @override
+  State<_LivePulseIndicator> createState() => _LivePulseIndicatorState();
+}
+
+class _LivePulseIndicatorState extends State<_LivePulseIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _pulseAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat(reverse: true);
+    _pulseAnimation = Tween<double>(
+      begin: 0.5,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _pulseAnimation,
+      builder: (context, child) {
+        return Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: widget.color,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: widget.color.withValues(
+                  alpha: 0.65 * _pulseAnimation.value,
+                ),
+                blurRadius: 6 * _pulseAnimation.value,
+                spreadRadius: 2 * _pulseAnimation.value,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _ActivityFeedTile extends StatelessWidget {
   final ActivityModel activity;
   final Color headingColor;
   final Color bodyColor;
   final bool isDark;
+  final VoidCallback? onTap;
 
   const _ActivityFeedTile({
     required this.activity,
     required this.headingColor,
     required this.bodyColor,
     required this.isDark,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm + 3,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: activity.color.withValues(alpha: isDark ? 0.20 : 0.12),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: activity.color.withValues(alpha: isDark ? 0.35 : 0.25),
-              ),
-            ),
-            child: Icon(activity.icon, color: activity.color, size: 17),
+    final isSos = activity.type == ActivityType.sosActive;
+
+    return Material(
+      color: isSos
+          ? AppColors.sosEmergency.withValues(alpha: isDark ? 0.12 : 0.05)
+          : Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        splashColor: activity.color.withValues(alpha: 0.12),
+        highlightColor: activity.color.withValues(alpha: 0.06),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm + 4,
           ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Icon Badge with alert styling
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: activity.color.withValues(alpha: isDark ? 0.20 : 0.12),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: activity.color.withValues(
+                      alpha: isDark ? 0.40 : 0.25,
+                    ),
+                    width: 1.2,
+                  ),
+                  boxShadow: isSos
+                      ? [
+                          BoxShadow(
+                            color: AppColors.sosEmergency.withValues(
+                              alpha: 0.25,
+                            ),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Icon(activity.icon, color: activity.color, size: 18),
+              ),
+              const SizedBox(width: AppSpacing.md),
+
+              // Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        activity.title,
-                        style: AppTypography.titleSmall.copyWith(
-                          color: headingColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13.5,
+                    // Title & Time & Alert pill
+                    Row(
+                      children: [
+                        if (isSos) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 1.5,
+                            ),
+                            margin: const EdgeInsets.only(right: 6),
+                            decoration: BoxDecoration(
+                              color: AppColors.sosEmergency,
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                            ),
+                            child: const Text(
+                              'DARURAT',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                        Expanded(
+                          child: Text(
+                            activity.title,
+                            style: AppTypography.titleSmall.copyWith(
+                              color: isSos
+                                  ? (isDark
+                                        ? const Color(0xFFFF6B6B)
+                                        : AppColors.sosEmergency)
+                                  : headingColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13.5,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                        const SizedBox(width: 6),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.access_time_rounded,
+                              size: 11,
+                              color: bodyColor.withValues(alpha: 0.6),
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              activity.timeAgo,
+                              style: AppTypography.captionSmall.copyWith(
+                                color: bodyColor.withValues(alpha: 0.75),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(height: 3),
+
+                    // Description
                     Text(
-                      activity.timeAgo,
-                      style: AppTypography.captionSmall.copyWith(
-                        color: bodyColor.withValues(alpha: 0.7),
-                        fontSize: 11,
+                      activity.description,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: bodyColor,
+                        height: 1.38,
+                        fontSize: 12.5,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
+
+                    // Context Chips (Room / Actor)
+                    if (activity.roomName != null ||
+                        activity.userName != null ||
+                        activity.role != null) ...[
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: [
+                          if (activity.roomName != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color:
+                                    (isDark
+                                            ? AppColors.darkCardBorder
+                                            : AppColors.canvasCreamSubtle)
+                                        .withValues(alpha: 0.5),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.pill,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.meeting_room_outlined,
+                                    size: 11,
+                                    color: bodyColor.withValues(alpha: 0.8),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    activity.roomName!,
+                                    style: AppTypography.captionSmall.copyWith(
+                                      color: bodyColor,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 10.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          if (activity.userName != null ||
+                              activity.role != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color:
+                                    (isDark
+                                            ? AppColors.darkCardBorder
+                                            : AppColors.canvasCreamSubtle)
+                                        .withValues(alpha: 0.5),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.pill,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.person_outline_rounded,
+                                    size: 11,
+                                    color: bodyColor.withValues(alpha: 0.8),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${activity.userName ?? ""}${activity.role != null ? " (${activity.role})" : ""}'
+                                        .trim(),
+                                    style: AppTypography.captionSmall.copyWith(
+                                      color: bodyColor,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 10.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  activity.description,
-                  style: AppTypography.bodySmall.copyWith(
-                    color: bodyColor,
-                    height: 1.35,
-                    fontSize: 12.5,
-                  ),
+              ),
+
+              // Trailing chevron icon
+              Padding(
+                padding: const EdgeInsets.only(left: 6, top: 2),
+                child: Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: bodyColor.withValues(alpha: 0.35),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 }
-

@@ -13,6 +13,7 @@ import '../../../core/state/app_settings_controller.dart';
 import '../../../core/state/app_startup_controller.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/locales/app_localizations.dart';
+import 'package:awesome_dialog/awesome_dialog.dart';
 
 class ProfileScreen extends StatelessWidget {
   final bool showBottomNav;
@@ -280,7 +281,9 @@ class ProfileScreen extends StatelessWidget {
                         Text(
                           'Digunakan saat penanganan darurat di Posko PPIH',
                           style: AppTypography.captionSmall.copyWith(
-                            color: isDark ? AppColors.darkTextBody : AppColors.textMuted,
+                            color: isDark
+                                ? AppColors.darkTextBody
+                                : AppColors.textMuted,
                           ),
                         ),
                       ],
@@ -300,13 +303,29 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    _buildMedRow(context, 'Golongan Darah', 'O Rhesus (+) Positif'),
+                    _buildMedRow(
+                      context,
+                      'Golongan Darah',
+                      'O Rhesus (+) Positif',
+                    ),
                     const Divider(height: 16),
-                    _buildMedRow(context, 'Riwayat Alergi', 'Tidak ada alergi obat'),
+                    _buildMedRow(
+                      context,
+                      'Riwayat Alergi',
+                      'Tidak ada alergi obat',
+                    ),
                     const Divider(height: 16),
-                    _buildMedRow(context, 'Kondisi Khusus', 'Hipertensi Ringan (Terkontrol)'),
+                    _buildMedRow(
+                      context,
+                      'Kondisi Khusus',
+                      'Hipertensi Ringan (Terkontrol)',
+                    ),
                     const Divider(height: 16),
-                    _buildMedRow(context, 'Kontak Darurat', '0812-3456-7890 (Keluarga)'),
+                    _buildMedRow(
+                      context,
+                      'Kontak Darurat',
+                      '0812-3456-7890 (Keluarga)',
+                    ),
                   ],
                 ),
               ),
@@ -359,7 +378,9 @@ class ProfileScreen extends StatelessWidget {
           child: Text(
             value,
             style: AppTypography.bodySmall.copyWith(
-              color: isDark ? AppColors.darkTextHeading : AppColors.espressoDark,
+              color: isDark
+                  ? AppColors.darkTextHeading
+                  : AppColors.espressoDark,
               fontWeight: FontWeight.w800,
             ),
             textAlign: TextAlign.end,
@@ -369,7 +390,10 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  void _showCompanionInfoSheet(BuildContext context, HajiCareController? state) {
+  void _showCompanionInfoSheet(
+    BuildContext context,
+    HajiCareController? state,
+  ) {
     final isDark = AppColors.isDark(context);
     final cardBg = AppColors.cardBgColor(context);
     final headingColor = AppColors.textHeadingColor(context);
@@ -432,7 +456,9 @@ class ProfileScreen extends StatelessWidget {
                         Text(
                           'Terhubung ke pengawasan rombongan Anda',
                           style: AppTypography.captionSmall.copyWith(
-                            color: isDark ? AppColors.darkTextBody : AppColors.textMuted,
+                            color: isDark
+                                ? AppColors.darkTextBody
+                                : AppColors.textMuted,
                           ),
                         ),
                       ],
@@ -456,7 +482,11 @@ class ProfileScreen extends StatelessWidget {
                     const Divider(height: 16),
                     _buildMedRow(context, 'Ketua Rombongan', pendamping),
                     const Divider(height: 16),
-                    _buildMedRow(context, 'Status Sambungan', 'Terkoneksi Realtime'),
+                    _buildMedRow(
+                      context,
+                      'Status Sambungan',
+                      'Terkoneksi Realtime',
+                    ),
                   ],
                 ),
               ),
@@ -524,17 +554,23 @@ class ProfileScreen extends StatelessWidget {
     final options = [
       (
         ThemeMode.system,
-        context.tr('themeSystem').isEmpty ? 'Ikuti Sistem' : context.tr('themeSystem'),
+        context.tr('themeSystem').isEmpty
+            ? 'Ikuti Sistem'
+            : context.tr('themeSystem'),
         Icons.brightness_auto_rounded,
       ),
       (
         ThemeMode.light,
-        context.tr('themeLight').isEmpty ? 'Mode Terang' : context.tr('themeLight'),
+        context.tr('themeLight').isEmpty
+            ? 'Mode Terang'
+            : context.tr('themeLight'),
         Icons.light_mode_rounded,
       ),
       (
         ThemeMode.dark,
-        context.tr('themeDark').isEmpty ? 'Mode Gelap' : context.tr('themeDark'),
+        context.tr('themeDark').isEmpty
+            ? 'Mode Gelap'
+            : context.tr('themeDark'),
         Icons.dark_mode_rounded,
       ),
     ];
@@ -661,7 +697,7 @@ class _ProfileHeader extends StatelessWidget {
         : 'Paspor: Indonesia';
     final maktabText = self?.maktab != null && self!.maktab!.isNotEmpty
         ? 'Maktab ${self.maktab}'
-        : (self?.kloter != null ? 'Kloter ${self!.kloter}' : 'Maktab 48 Mina');
+        : (self?.kloter != null ? '• Kloter ${self!.kloter}' : '');
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -687,7 +723,8 @@ class _ProfileHeader extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Obx(
-            () => _InitialsAvatar(initials: controller.initials, isDark: isDark),
+            () =>
+                _InitialsAvatar(initials: controller.initials, isDark: isDark),
           ),
           const SizedBox(height: AppSpacing.md),
           Obx(
@@ -727,13 +764,12 @@ class _ProfileHeader extends StatelessWidget {
                       ? AppColors.darkPrimaryContainer.withValues(alpha: 0.6)
                       : AppColors.espressoDark,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
-                  border: Border.all(
-                    color: AppColors.goldPrimary,
-                    width: 1,
-                  ),
+                  border: Border.all(color: AppColors.goldPrimary, width: 1),
                 ),
                 child: Text(
-                  state?.role == UserRole.pendamping ? 'Pendamping' : 'Jamaah Haji',
+                  state?.role == UserRole.pendamping
+                      ? 'Pendamping'
+                      : 'Jamaah Haji',
                   style: AppTypography.captionSmall.copyWith(
                     color: isDark ? AppColors.goldPrimary : Colors.white,
                     fontWeight: FontWeight.w800,
@@ -750,12 +786,10 @@ class _ProfileHeader extends StatelessWidget {
                       ? AppColors.darkSurfaceContainerHigh
                       : AppColors.canvasCream,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
-                  border: Border.all(
-                    color: AppColors.cardBorderColor(context),
-                  ),
+                  border: Border.all(color: AppColors.cardBorderColor(context)),
                 ),
                 child: Text(
-                  '$porsiText • $maktabText',
+                  '$porsiText  $maktabText',
                   style: AppTypography.captionSmall.copyWith(
                     color: AppColors.textHeadingColor(context),
                     fontWeight: FontWeight.w600,
@@ -797,10 +831,7 @@ class _InitialsAvatar extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        border: Border.all(
-          color: AppColors.goldPrimary,
-          width: 2.5,
-        ),
+        border: Border.all(color: AppColors.goldPrimary, width: 2.5),
         boxShadow: [
           BoxShadow(
             color: AppColors.goldPrimary.withValues(alpha: 0.25),
@@ -851,7 +882,9 @@ class _EditNameButton extends StatelessWidget {
               Icon(Icons.edit_rounded, size: 14, color: accentColor),
               const SizedBox(width: AppSpacing.xs),
               Text(
-                context.tr('editName').isEmpty ? 'Ubah Nama' : context.tr('editName'),
+                context.tr('editName').isEmpty
+                    ? 'Ubah Nama'
+                    : context.tr('editName'),
                 style: AppTypography.bodySmall.copyWith(
                   color: accentColor,
                   fontWeight: FontWeight.w700,
@@ -942,7 +975,9 @@ class _EditNameButton extends StatelessWidget {
                     style: AppTypography.bodyLarge.copyWith(color: headingClr),
                     decoration: InputDecoration(
                       counterText: '',
-                      hintText: sheetCtx.tr('name').isEmpty ? 'Nama Lengkap' : sheetCtx.tr('name'),
+                      hintText: sheetCtx.tr('name').isEmpty
+                          ? 'Nama Lengkap'
+                          : sheetCtx.tr('name'),
                       filled: true,
                       fillColor: isDarkSheet
                           ? AppColors.darkSurfaceContainer
@@ -1029,9 +1064,7 @@ class _EditNameButton extends StatelessWidget {
                             )
                           : const Text(
                               'Simpan Perubahan',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                              ),
+                              style: TextStyle(fontWeight: FontWeight.w800),
                             ),
                     ),
                   );
@@ -1066,11 +1099,7 @@ class _SettingsGroup extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(
-            left: 6,
-            bottom: 6,
-            top: 4,
-          ),
+          padding: const EdgeInsets.only(left: 6, bottom: 6, top: 4),
           child: Text(
             title.toUpperCase(),
             style: AppTypography.captionSmall.copyWith(
@@ -1084,9 +1113,7 @@ class _SettingsGroup extends StatelessWidget {
           decoration: BoxDecoration(
             color: cardBg,
             borderRadius: BorderRadius.circular(AppRadius.xl),
-            border: Border.all(
-              color: AppColors.cardBorderColor(context),
-            ),
+            border: Border.all(color: AppColors.cardBorderColor(context)),
             boxShadow: [
               BoxShadow(
                 color: AppColors.espressoDark.withValues(alpha: 0.03),
@@ -1133,10 +1160,7 @@ class _SettingsTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.xl),
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
               Container(
@@ -1221,63 +1245,46 @@ class _LogoutButton extends StatelessWidget {
         child: OutlinedButton.icon(
           onPressed: () {
             final isDarkDialog = AppColors.isDark(context);
-            showDialog(
+            AwesomeDialog(
               context: context,
-              builder: (dialogContext) => AlertDialog(
-                backgroundColor: isDarkDialog
-                    ? AppColors.darkSurface
-                    : AppColors.surfaceWhite,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                title: Text(
-                  label,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: isDarkDialog
-                        ? AppColors.darkTextHeading
-                        : AppColors.textHeading,
-                  ),
-                ),
-                content: Text(
-                  'Apakah Anda yakin ingin keluar? Anda perlu login kembali untuk mengakses data room rombongan.',
-                  style: TextStyle(
-                    color: isDarkDialog
-                        ? AppColors.darkTextBody
-                        : AppColors.textBody,
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Get.back(),
-                    child: Text(
-                      dialogContext.tr('cancel').isEmpty
-                          ? 'Batal'
-                          : dialogContext.tr('cancel'),
-                      style: TextStyle(
-                        color: isDarkDialog
-                            ? AppColors.darkTextBody
-                            : AppColors.espressoDark,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.sosEmergency,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                      ),
-                    ),
-                    onPressed: () async {
-                      await Get.find<AppStartupController>().signOut();
-                    },
-                    child: const Text('Keluar'),
-                  ),
-                ],
+              dialogType: DialogType.warning,
+              animType: AnimType.scale,
+              isDense: false,
+              dialogBackgroundColor: isDarkDialog
+                  ? AppColors.darkSurface
+                  : AppColors.surfaceWhite,
+              borderSide: BorderSide(
+                color: AppColors.sosEmergency.withValues(alpha: 0.35),
+                width: 1.2,
               ),
-            );
+              title: label,
+              titleTextStyle: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 17,
+                color: isDarkDialog
+                    ? AppColors.darkTextHeading
+                    : AppColors.espressoDark,
+              ),
+              desc:
+                  'Anda perlu login kembali untuk mengakses data room rombongan. Yakin ingin keluar?',
+              descTextStyle: TextStyle(
+                fontSize: 13.5,
+                height: 1.45,
+                color: isDarkDialog
+                    ? AppColors.darkTextBody
+                    : AppColors.textBody,
+              ),
+              btnCancelText: 'Batal',
+              btnCancelColor: isDarkDialog
+                  ? AppColors.darkSurfaceContainerHigh
+                  : AppColors.canvasCreamSubtle,
+              btnOkText: 'Ya, Keluar',
+              btnOkColor: AppColors.sosEmergency,
+              btnCancelOnPress: () {},
+              btnOkOnPress: () async {
+                await Get.find<AppStartupController>().signOut();
+              },
+            ).show();
           },
           style: OutlinedButton.styleFrom(
             side: BorderSide(
