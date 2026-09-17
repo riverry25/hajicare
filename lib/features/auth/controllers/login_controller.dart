@@ -5,8 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
-
-import 'package:awesome_dialog/awesome_dialog.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/state/app_startup_controller.dart';
 import '../../../core/state/hajicare_controller.dart';
