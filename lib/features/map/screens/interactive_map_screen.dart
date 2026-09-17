@@ -23,10 +23,7 @@ import '../widgets/map_top_header.dart';
 class InteractiveMapScreen extends StatefulWidget {
   final bool showBottomNav;
 
-  const InteractiveMapScreen({
-    super.key,
-    this.showBottomNav = true,
-  });
+  const InteractiveMapScreen({super.key, this.showBottomNav = true});
 
   @override
   State<InteractiveMapScreen> createState() => _InteractiveMapScreenState();
@@ -42,22 +39,10 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
       icon: Icons.grid_view_rounded,
       isDefault: true,
     ),
-    FilterChipItem(
-      label: 'Jamaah',
-      icon: Icons.person_rounded,
-    ),
-    FilterChipItem(
-      label: 'Pendamping',
-      icon: Icons.shield_rounded,
-    ),
-    FilterChipItem(
-      label: 'Posko Medis',
-      icon: Icons.medical_services_rounded,
-    ),
-    FilterChipItem(
-      label: 'Toilet & Wudhu',
-      icon: Icons.wc_rounded,
-    ),
+    FilterChipItem(label: 'Jamaah', icon: Icons.person_rounded),
+    FilterChipItem(label: 'Pendamping', icon: Icons.shield_rounded),
+    FilterChipItem(label: 'Posko Medis', icon: Icons.medical_services_rounded),
+    FilterChipItem(label: 'Toilet & Wudhu', icon: Icons.wc_rounded),
   ];
 
   @override
@@ -152,7 +137,8 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
 
             final selectedPoi = mapCtrl.selectedPoi.value;
             if (selectedPoi != null) {
-              final userPos = mapCtrl.currentUserLocation.value ??
+              final userPos =
+                  mapCtrl.currentUserLocation.value ??
                   MapController.defaultMinaBase;
               final dist = mapCtrl.calculateDistanceMeters(
                 userPos,
@@ -233,7 +219,6 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
   // ---------------------------------------------------------------------------
   // COLLAPSED DYNAMIC PEEK BAR
   // ---------------------------------------------------------------------------
-
 }
 
 // ---------------------------------------------------------------------------
@@ -259,7 +244,10 @@ class _CollapsedMemberBarState extends State<_CollapsedMemberBar> {
   void _onVerticalDragUpdate(DragUpdateDetails details) {
     if (details.primaryDelta != null) {
       setState(() {
-        _dragUpOffset = (_dragUpOffset + details.primaryDelta!).clamp(-70.0, 0.0);
+        _dragUpOffset = (_dragUpOffset + details.primaryDelta!).clamp(
+          -70.0,
+          0.0,
+        );
       });
       // Dragging up by 25px opens the sheet
       if (_dragUpOffset <= -25.0) {
@@ -293,8 +281,8 @@ class _CollapsedMemberBarState extends State<_CollapsedMemberBar> {
     final label = roleFilter == 1
         ? '$count Jamaah'
         : roleFilter == 2
-            ? '$count Pendamping'
-            : '$count Anggota & Pendamping';
+        ? '$count Pendamping'
+        : '$count Anggota & Pendamping';
 
     return Positioned(
       left: AppSpacing.md,
@@ -334,12 +322,16 @@ class _CollapsedMemberBarState extends State<_CollapsedMemberBar> {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: AppColors.goldPrimary.withValues(alpha: isDark ? 0.25 : 0.16),
+                    color: AppColors.goldPrimary.withValues(
+                      alpha: isDark ? 0.25 : 0.16,
+                    ),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.groups_rounded,
-                    color: isDark ? AppColors.goldPrimary : AppColors.espressoDark,
+                    color: isDark
+                        ? AppColors.goldPrimary
+                        : AppColors.espressoDark,
                     size: 20,
                   ),
                 ),
@@ -365,14 +357,18 @@ class _CollapsedMemberBarState extends State<_CollapsedMemberBar> {
                           Icon(
                             Icons.swipe_up_rounded,
                             size: 13,
-                            color: isDark ? Colors.white60 : AppColors.tanMedium,
+                            color: isDark
+                                ? Colors.white60
+                                : AppColors.tanMedium,
                           ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               'Ketuk atau seret ke atas untuk buka',
                               style: AppTypography.captionSmall.copyWith(
-                                color: isDark ? Colors.white60 : AppColors.textBody,
+                                color: isDark
+                                    ? Colors.white60
+                                    : AppColors.textBody,
                                 fontSize: 10.5,
                               ),
                               maxLines: 1,
@@ -386,9 +382,14 @@ class _CollapsedMemberBarState extends State<_CollapsedMemberBar> {
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream,
+                    color: isDark
+                        ? AppColors.darkSurfaceContainer
+                        : AppColors.canvasCream,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                     border: Border.all(
                       color: AppColors.goldPrimary.withValues(alpha: 0.35),
@@ -400,7 +401,9 @@ class _CollapsedMemberBarState extends State<_CollapsedMemberBar> {
                       Text(
                         'Buka',
                         style: TextStyle(
-                          color: isDark ? AppColors.goldPrimary : AppColors.espressoDark,
+                          color: isDark
+                              ? AppColors.goldPrimary
+                              : AppColors.espressoDark,
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
                         ),
@@ -408,7 +411,9 @@ class _CollapsedMemberBarState extends State<_CollapsedMemberBar> {
                       const SizedBox(width: 4),
                       Icon(
                         Icons.keyboard_arrow_up_rounded,
-                        color: isDark ? AppColors.goldPrimary : AppColors.espressoDark,
+                        color: isDark
+                            ? AppColors.goldPrimary
+                            : AppColors.espressoDark,
                         size: 16,
                       ),
                     ],
@@ -424,20 +429,16 @@ class _CollapsedMemberBarState extends State<_CollapsedMemberBar> {
 }
 
 extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
-
   // ---------------------------------------------------------------------------
   // INTERACTIVE FLUTTER_MAP CANVAS
   // ---------------------------------------------------------------------------
 
-  Widget _buildInteractiveMap(
-    HajiCareController state,
-    MapController mapCtrl,
-  ) {
+  Widget _buildInteractiveMap(HajiCareController state, MapController mapCtrl) {
     return fmap.FlutterMap(
       mapController: mapCtrl.flutterMapController,
       options: fmap.MapOptions(
-        initialCenter: mapCtrl.currentUserLocation.value ??
-            MapController.defaultMinaBase,
+        initialCenter:
+            mapCtrl.currentUserLocation.value ?? MapController.defaultMinaBase,
         initialZoom: 16.5,
         minZoom: 11.0,
         maxZoom: 19.0,
@@ -455,8 +456,8 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
           final currentUrl = mapCtrl.activeTileUrl.value;
           final effectiveUrl = isDark
               ? (currentUrl == AppConstants.cartoVoyagerUrl
-                  ? AppConstants.cartoDarkMatterUrl
-                  : currentUrl)
+                    ? AppConstants.cartoDarkMatterUrl
+                    : currentUrl)
               : currentUrl;
 
           return fmap.TileLayer(
@@ -493,23 +494,27 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
         }),
 
         // 3. Safe Radius Circle Layer — changes on GPS update
-        Obx(() => fmap.CircleLayer(
-              circles: [
-                fmap.CircleMarker(
-                  point: mapCtrl.currentUserLocation.value ??
-                      MapController.defaultMinaBase,
-                  radius: mapCtrl.safeRadiusMeters.value,
-                  useRadiusInMeter: true,
-                  color: AppColors.statusSafe.withValues(alpha: 0.08),
-                  borderColor: AppColors.statusSafe.withValues(alpha: 0.5),
-                  borderStrokeWidth: 2.0,
-                ),
-              ],
-            )),
+        Obx(
+          () => fmap.CircleLayer(
+            circles: [
+              fmap.CircleMarker(
+                point:
+                    mapCtrl.currentUserLocation.value ??
+                    MapController.defaultMinaBase,
+                radius: mapCtrl.safeRadiusMeters.value,
+                useRadiusInMeter: true,
+                color: AppColors.statusSafe.withValues(alpha: 0.08),
+                borderColor: AppColors.statusSafe.withValues(alpha: 0.5),
+                borderStrokeWidth: 2.0,
+              ),
+            ],
+          ),
+        ),
 
         // 4. Marker Layer — rebuilds on room members, location, and filter change
         Obx(() {
-          final userLocation = mapCtrl.currentUserLocation.value ??
+          final userLocation =
+              mapCtrl.currentUserLocation.value ??
               MapController.defaultMinaBase;
           return fmap.MarkerLayer(
             markers: [
@@ -550,10 +555,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
           decoration: BoxDecoration(
             color: isDark ? AppColors.darkSurface : AppColors.espressoDark,
             borderRadius: BorderRadius.circular(AppRadius.pill),
-            border: Border.all(
-              color: AppColors.goldPrimary,
-              width: 1.5,
-            ),
+            border: Border.all(color: AppColors.goldPrimary, width: 1.5),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.25),
@@ -605,10 +607,14 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                   width: 34,
                   height: 34,
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite,
+                    color: isDark
+                        ? AppColors.darkSurfaceContainer
+                        : AppColors.surfaceWhite,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: isDark ? AppColors.goldPrimary : AppColors.espressoDark,
+                      color: isDark
+                          ? AppColors.goldPrimary
+                          : AppColors.espressoDark,
                       width: 2.2,
                     ),
                     boxShadow: [
@@ -686,11 +692,15 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                     vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+                    color: isDark
+                        ? AppColors.darkSurface
+                        : AppColors.surfaceWhite,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                     border: Border.all(
                       color: isSelected
-                          ? (isDark ? AppColors.goldPrimary : AppColors.espressoDark)
+                          ? (isDark
+                                ? AppColors.goldPrimary
+                                : AppColors.espressoDark)
                           : markerColor,
                       width: isSelected ? 2.5 : 1.5,
                     ),
@@ -717,7 +727,9 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                         child: Text(
                           member.name.split(' ').take(2).join(' '),
                           style: AppTypography.captionSmall.copyWith(
-                            color: isDark ? AppColors.darkTextHeading : AppColors.espressoDark,
+                            color: isDark
+                                ? AppColors.darkTextHeading
+                                : AppColors.espressoDark,
                             fontWeight: FontWeight.w800,
                             fontSize: 10,
                           ),
@@ -744,11 +756,15 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                   width: 34,
                   height: 34,
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite,
+                    color: isDark
+                        ? AppColors.darkSurfaceContainer
+                        : AppColors.surfaceWhite,
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: isSelected
-                          ? (isDark ? AppColors.goldPrimary : AppColors.espressoDark)
+                          ? (isDark
+                                ? AppColors.goldPrimary
+                                : AppColors.espressoDark)
                           : markerColor,
                       width: 2.2,
                     ),
@@ -760,9 +776,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                     ],
                   ),
                   child: Icon(
-                    isPendamping
-                        ? Icons.shield_rounded
-                        : Icons.person_rounded,
+                    isPendamping ? Icons.shield_rounded : Icons.person_rounded,
                     color: markerColor,
                     size: 19,
                   ),
@@ -811,11 +825,15 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+                  color: isDark
+                      ? AppColors.darkSurface
+                      : AppColors.surfaceWhite,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                   border: Border.all(
                     color: isSelected
-                        ? (isDark ? AppColors.goldPrimary : AppColors.espressoDark)
+                        ? (isDark
+                              ? AppColors.goldPrimary
+                              : AppColors.espressoDark)
                         : jamaah.tier.color,
                     width: isSelected ? 2.5 : 1.5,
                   ),
@@ -839,7 +857,9 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                     Text(
                       jamaah.shortLabel,
                       style: AppTypography.captionSmall.copyWith(
-                        color: isDark ? AppColors.darkTextHeading : AppColors.espressoDark,
+                        color: isDark
+                            ? AppColors.darkTextHeading
+                            : AppColors.espressoDark,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -859,12 +879,11 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite,
+                  color: isDark
+                      ? AppColors.darkSurfaceContainer
+                      : AppColors.surfaceWhite,
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: jamaah.tier.color,
-                    width: 2.5,
-                  ),
+                  border: Border.all(color: jamaah.tier.color, width: 2.5),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.25),
@@ -913,7 +932,9 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                 decoration: BoxDecoration(
                   color: isSelected
                       ? poi.color
-                      : (isDark ? AppColors.darkSurface : AppColors.surfaceWhite),
+                      : (isDark
+                            ? AppColors.darkSurface
+                            : AppColors.surfaceWhite),
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: isSelected ? Colors.white : poi.color,
@@ -937,7 +958,10 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
               ),
               const SizedBox(height: 3),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 1.5,
+                ),
                 decoration: BoxDecoration(
                   color: isDark
                       ? AppColors.darkSurface.withValues(alpha: 0.92)

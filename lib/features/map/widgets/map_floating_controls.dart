@@ -72,7 +72,7 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
 
   @override
   Widget build(BuildContext context) {
-    final topOffset = MediaQuery.of(context).padding.top + 160;
+    final topOffset = MediaQuery.of(context).padding.top + 210;
     final isDark = AppColors.isDark(context);
 
     return Positioned(
@@ -94,14 +94,16 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                 decoration: BoxDecoration(
                   color: _isExpanded
                       ? AppColors.espressoDark
-                      : (isDark ? AppColors.darkSurface : AppColors.surfaceWhite),
+                      : (isDark
+                            ? AppColors.darkSurface
+                            : AppColors.surfaceWhite),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: _isExpanded
                         ? AppColors.goldPrimary
                         : (isDark
-                            ? Colors.white.withValues(alpha: 0.12)
-                            : AppColors.goldLight.withValues(alpha: 0.35)),
+                              ? Colors.white.withValues(alpha: 0.12)
+                              : AppColors.goldLight.withValues(alpha: 0.35)),
                     width: 1.2,
                   ),
                   boxShadow: [
@@ -180,7 +182,9 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                           : AppColors.espressoDark,
                       bgColor: widget.isLiveTracking
                           ? AppColors.espressoDark
-                          : (isDark ? AppColors.darkSurface : AppColors.surfaceWhite),
+                          : (isDark
+                                ? AppColors.darkSurface
+                                : AppColors.surfaceWhite),
                       borderColor: widget.isLiveTracking
                           ? AppColors.goldPrimary
                           : null,
@@ -208,8 +212,8 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                                   color: widget.isLiveTracking
                                       ? AppColors.canvasCream
                                       : (isDark
-                                          ? Colors.white
-                                          : AppColors.espressoDark),
+                                            ? Colors.white
+                                            : AppColors.espressoDark),
                                 ),
                                 if (widget.isLiveTracking)
                                   Positioned(
@@ -245,7 +249,9 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.espressoDark.withValues(alpha: 0.10),
+                              color: AppColors.espressoDark.withValues(
+                                alpha: 0.10,
+                              ),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -269,7 +275,9 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                                 thickness: 1,
                                 color: isDark
                                     ? Colors.white.withValues(alpha: 0.08)
-                                    : AppColors.goldLight.withValues(alpha: 0.25),
+                                    : AppColors.goldLight.withValues(
+                                        alpha: 0.25,
+                                      ),
                               ),
                             if (widget.onZoomOutTap != null)
                               _buildMicroButton(
@@ -316,8 +324,9 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                       context: context,
                       icon: Icons.ring_volume_rounded,
                       color: AppColors.espressoDark,
-                      bgColor:
-                          AppColors.secondaryContainer.withValues(alpha: 0.85),
+                      bgColor: AppColors.secondaryContainer.withValues(
+                        alpha: 0.85,
+                      ),
                       borderColor: AppColors.goldPrimary.withValues(alpha: 0.5),
                       tooltip: 'Panggil Gelang Jamaah',
                       onTap: widget.onBandTap,
@@ -355,7 +364,8 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
             color: bgColor,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: borderColor ??
+              color:
+                  borderColor ??
                   (isDark
                       ? Colors.white.withValues(alpha: 0.12)
                       : AppColors.goldLight.withValues(alpha: 0.35)),
@@ -369,9 +379,7 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
               ),
             ],
           ),
-          child: Center(
-            child: child ?? Icon(icon, size: 22, color: color),
-          ),
+          child: Center(child: child ?? Icon(icon, size: 22, color: color)),
         ),
       ),
     );

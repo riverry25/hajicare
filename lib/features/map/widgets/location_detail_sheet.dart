@@ -89,8 +89,8 @@ class _LocationDetailSheetState extends State<LocationDetailSheet> {
   Widget build(BuildContext context) {
     final formattedDistance = distanceMeters != null
         ? (distanceMeters! >= 1000
-            ? '${(distanceMeters! / 1000).toStringAsFixed(1)} km'
-            : '${distanceMeters!.round()} m')
+              ? '${(distanceMeters! / 1000).toStringAsFixed(1)} km'
+              : '${distanceMeters!.round()} m')
         : 'Dekat';
 
     final isDark = AppColors.isDark(context);
@@ -162,210 +162,239 @@ class _LocationDetailSheetState extends State<LocationDetailSheet> {
                   ),
                 ),
 
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Category Icon Box
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: poi.color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: poi.color.withValues(alpha: 0.4),
-                    width: 1.5,
-                  ),
-                ),
-                child: Icon(poi.icon, color: poi.color, size: 28),
-              ),
-              const SizedBox(width: AppSpacing.md),
-
-              // Title and details
-              Expanded(
-                child: Column(
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      poi.name,
-                      style: AppTypography.titleMedium.copyWith(
-                        color: AppColors.textHeadingColor(context),
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.near_me_rounded,
-                          size: 13,
-                          color: AppColors.tanMedium,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '$formattedDistance dari posisi Anda',
-                          style: AppTypography.captionSmall.copyWith(
-                            color: AppColors.textBodyColor(context),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 3),
-                    Row(
-                      children: [
-                        Icon(
-                          poi.isAccessible
-                              ? Icons.accessible_rounded
-                              : Icons.stairs_rounded,
-                          size: 13,
-                          color: poi.isAccessible
-                              ? AppColors.statusPositive
-                              : AppColors.tanMedium,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          poi.isAccessible
-                              ? 'Akses Kursi Roda Tersedia'
-                              : 'Jalur Bertangga',
-                          style: AppTypography.captionSmall.copyWith(
-                            color: poi.isAccessible
-                                ? AppColors.statusPositive
-                                : AppColors.textMuted,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (poi.subtitle != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        poi.subtitle!,
-                        style: AppTypography.captionSmall.copyWith(
-                          color: isDark ? AppColors.darkTextBody : AppColors.textMuted,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 8),
+                    // Category Icon Box
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
+                      width: 60,
+                      height: 60,
                       decoration: BoxDecoration(
-                        color: poi.color.withValues(alpha: isDark ? 0.2 : 0.12),
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        color: poi.color.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(18),
                         border: Border.all(
-                          color: poi.color.withValues(alpha: isDark ? 0.45 : 0.3),
+                          color: poi.color.withValues(alpha: 0.4),
+                          width: 1.5,
                         ),
                       ),
-                      child: Text(
-                        poi.statusLabel,
-                        style: AppTypography.captionSmall.copyWith(
-                          color: poi.color,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 10,
+                      child: Icon(poi.icon, color: poi.color, size: 28),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+
+                    // Title and details
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            poi.name,
+                            style: AppTypography.titleMedium.copyWith(
+                              color: AppColors.textHeadingColor(context),
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.near_me_rounded,
+                                size: 13,
+                                color: AppColors.tanMedium,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '$formattedDistance dari posisi Anda',
+                                style: AppTypography.captionSmall.copyWith(
+                                  color: AppColors.textBodyColor(context),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 3),
+                          Row(
+                            children: [
+                              Icon(
+                                poi.isAccessible
+                                    ? Icons.accessible_rounded
+                                    : Icons.stairs_rounded,
+                                size: 13,
+                                color: poi.isAccessible
+                                    ? AppColors.statusPositive
+                                    : AppColors.tanMedium,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                poi.isAccessible
+                                    ? 'Akses Kursi Roda Tersedia'
+                                    : 'Jalur Bertangga',
+                                style: AppTypography.captionSmall.copyWith(
+                                  color: poi.isAccessible
+                                      ? AppColors.statusPositive
+                                      : AppColors.textMuted,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (poi.subtitle != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              poi.subtitle!,
+                              style: AppTypography.captionSmall.copyWith(
+                                color: isDark
+                                    ? AppColors.darkTextBody
+                                    : AppColors.textMuted,
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: poi.color.withValues(
+                                alpha: isDark ? 0.2 : 0.12,
+                              ),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                              border: Border.all(
+                                color: poi.color.withValues(
+                                  alpha: isDark ? 0.45 : 0.3,
+                                ),
+                              ),
+                            ),
+                            child: Text(
+                              poi.statusLabel,
+                              style: AppTypography.captionSmall.copyWith(
+                                color: poi.color,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Close button
+                    if (onClose != null)
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded, size: 20),
+                        color: isDark
+                            ? AppColors.darkTextBody
+                            : AppColors.tanMedium,
+                        splashRadius: 20,
+                        onPressed: onClose,
+                      ),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+
+                // Actions Row: Rute Berjalan (Primary 52px) & Bagikan (Secondary)
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: SizedBox(
+                        height: 52,
+                        child: ElevatedButton.icon(
+                          onPressed: onRoute ?? () {},
+                          icon: Icon(
+                            Icons.directions_walk_rounded,
+                            size: 20,
+                            color: isDark
+                                ? AppColors.espressoDark
+                                : AppColors.goldPrimary,
+                          ),
+                          label: Text(
+                            'Rute Jalan Kaki',
+                            style: AppTypography.labelLarge.copyWith(
+                              color: isDark
+                                  ? AppColors.espressoDark
+                                  : Colors.white,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isDark
+                                ? AppColors.goldPrimary
+                                : AppColors.espressoDark,
+                            foregroundColor: isDark
+                                ? AppColors.espressoDark
+                                : Colors.white,
+                            elevation: 4,
+                            shadowColor: AppColors.espressoDark.withValues(
+                              alpha: 0.3,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                              side: BorderSide(
+                                color: isDark
+                                    ? AppColors.goldPrimary
+                                    : AppColors.goldPrimary.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                width: 1.2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      flex: 2,
+                      child: SizedBox(
+                        height: 52,
+                        child: OutlinedButton.icon(
+                          onPressed: onShare ?? () {},
+                          icon: Icon(
+                            Icons.share_outlined,
+                            size: 18,
+                            color: isDark
+                                ? AppColors.darkTextHeading
+                                : AppColors.espressoDark,
+                          ),
+                          label: Text(
+                            'Bagikan',
+                            style: AppTypography.labelLarge.copyWith(
+                              color: isDark
+                                  ? AppColors.darkTextHeading
+                                  : AppColors.espressoDark,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: isDark
+                                ? AppColors.darkSurfaceContainer
+                                : AppColors.canvasCream.withValues(alpha: 0.35),
+                            side: BorderSide(
+                              color: AppColors.cardBorderColor(context),
+                              width: 1.2,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
-              ),
-
-              // Close button
-              if (onClose != null)
-                IconButton(
-                  icon: const Icon(Icons.close_rounded, size: 20),
-                  color: isDark ? AppColors.darkTextBody : AppColors.tanMedium,
-                  splashRadius: 20,
-                  onPressed: onClose,
-                ),
-            ],
+              ],
+            ),
           ),
-
-          const SizedBox(height: 20),
-
-          // Actions Row: Rute Berjalan (Primary 52px) & Bagikan (Secondary)
-          Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: SizedBox(
-                  height: 52,
-                  child: ElevatedButton.icon(
-                    onPressed: onRoute ?? () {},
-                    icon: Icon(
-                      Icons.directions_walk_rounded,
-                      size: 20,
-                      color: isDark ? AppColors.espressoDark : AppColors.goldPrimary,
-                    ),
-                    label: Text(
-                      'Rute Jalan Kaki',
-                      style: AppTypography.labelLarge.copyWith(
-                        color: isDark ? AppColors.espressoDark : Colors.white,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isDark ? AppColors.goldPrimary : AppColors.espressoDark,
-                      foregroundColor: isDark ? AppColors.espressoDark : Colors.white,
-                      elevation: 4,
-                      shadowColor: AppColors.espressoDark.withValues(alpha: 0.3),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                        side: BorderSide(
-                          color: isDark
-                              ? AppColors.goldPrimary
-                              : AppColors.goldPrimary.withValues(alpha: 0.5),
-                          width: 1.2,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                flex: 2,
-                child: SizedBox(
-                  height: 52,
-                  child: OutlinedButton.icon(
-                    onPressed: onShare ?? () {},
-                    icon: Icon(
-                      Icons.share_outlined,
-                      size: 18,
-                      color: isDark ? AppColors.darkTextHeading : AppColors.espressoDark,
-                    ),
-                    label: Text(
-                      'Bagikan',
-                      style: AppTypography.labelLarge.copyWith(
-                        color: isDark ? AppColors.darkTextHeading : AppColors.espressoDark,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: isDark
-                          ? AppColors.darkSurfaceContainer
-                          : AppColors.canvasCream.withValues(alpha: 0.35),
-                      side: BorderSide(
-                        color: AppColors.cardBorderColor(context),
-                        width: 1.2,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
-    ),
-  ),
-),
-);
+    );
+  }
 }
-}
-

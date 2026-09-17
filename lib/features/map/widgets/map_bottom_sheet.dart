@@ -60,7 +60,8 @@ class _MapBottomSheetState extends State<MapBottomSheet> {
   JamaahData? get activeJamaah => widget.activeJamaah;
   RoomMemberModel? get selectedMember => widget.selectedMember;
   List<RoomMemberModel>? get roomMembers => widget.roomMembers;
-  String? Function(RoomMemberModel)? get getMemberDistanceText => widget.getMemberDistanceText;
+  String? Function(RoomMemberModel)? get getMemberDistanceText =>
+      widget.getMemberDistanceText;
   ValueChanged<RoomMemberModel>? get onMemberTap => widget.onMemberTap;
   VoidCallback? get onCloseMemberDetail => widget.onCloseMemberDetail;
   VoidCallback? get onBackToList => widget.onBackToList;
@@ -157,7 +158,9 @@ class _MapBottomSheetState extends State<MapBottomSheet> {
                           width: 44,
                           height: 4.5,
                           decoration: BoxDecoration(
-                            color: AppColors.outlineVariant.withValues(alpha: 0.7),
+                            color: AppColors.outlineVariant.withValues(
+                              alpha: 0.7,
+                            ),
                             borderRadius: BorderRadius.circular(AppRadius.pill),
                           ),
                         ),
@@ -203,9 +206,13 @@ class _MapBottomSheetState extends State<MapBottomSheet> {
       constraints: BoxConstraints(maxHeight: maxDetailHeight),
       child: NotificationListener<ScrollNotification>(
         onNotification: (notification) {
-          if (notification is OverscrollNotification && notification.overscroll < 0) {
+          if (notification is OverscrollNotification &&
+              notification.overscroll < 0) {
             setState(() {
-              _dragOffset = math.max(0.0, _dragOffset - notification.overscroll * 0.5);
+              _dragOffset = math.max(
+                0.0,
+                _dragOffset - notification.overscroll * 0.5,
+              );
             });
             if (_dragOffset > 85.0) {
               widget.onCloseMemberDetail?.call();
@@ -241,152 +248,152 @@ class _MapBottomSheetState extends State<MapBottomSheet> {
                 onVerticalDragCancel: _onVerticalDragCancel,
                 child: Row(
                   children: [
-                // Avatar with Role Icon
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: isPendamping
-                        ? AppColors.primaryContainer
-                        : AppColors.secondaryContainer,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isPendamping
-                          ? AppColors.accentGoldStar
-                          : AppColors.statusSafe,
-                      width: 2,
+                    // Avatar with Role Icon
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: isPendamping
+                            ? AppColors.primaryContainer
+                            : AppColors.secondaryContainer,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isPendamping
+                              ? AppColors.accentGoldStar
+                              : AppColors.statusSafe,
+                          width: 2,
+                        ),
+                      ),
+                      child: Icon(
+                        isPendamping ? Icons.shield : Icons.person,
+                        color: isPendamping
+                            ? AppColors.onPrimaryContainer
+                            : AppColors.onSecondaryContainer,
+                        size: 24,
+                      ),
                     ),
-                  ),
-                  child: Icon(
-                    isPendamping ? Icons.shield : Icons.person,
-                    color: isPendamping
-                        ? AppColors.onPrimaryContainer
-                        : AppColors.onSecondaryContainer,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                // Name & Role
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                    const SizedBox(width: AppSpacing.md),
+                    // Name & Role
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Flexible(
-                            child: Text(
-                              member.name,
-                              style: AppTypography.titleMedium.copyWith(
-                                color: isDark
-                                    ? AppColors.darkTextHeading
-                                    : AppColors.espressoDark,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isPendamping
-                                    ? (isDark
-                                        ? AppColors.goldPrimary.withValues(alpha: 0.25)
-                                        : AppColors.accentGoldStar.withValues(
-                                            alpha: 0.2,
-                                          ))
-                                    : AppColors.statusSafe.withValues(
-                                        alpha: 0.15,
-                                      ),
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.pill,
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  member.name,
+                                  style: AppTypography.titleMedium.copyWith(
+                                    color: isDark
+                                        ? AppColors.darkTextHeading
+                                        : AppColors.espressoDark,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              child: Text(
-                                isPendamping ? 'Pendamping' : 'Jamaah',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: isPendamping
-                                      ? (isDark
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isPendamping
+                                        ? (isDark
+                                              ? AppColors.goldPrimary
+                                                    .withValues(alpha: 0.25)
+                                              : AppColors.accentGoldStar
+                                                    .withValues(alpha: 0.2))
+                                        : AppColors.statusSafe.withValues(
+                                            alpha: 0.15,
+                                          ),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.pill,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    isPendamping ? 'Pendamping' : 'Jamaah',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: isPendamping
+                                          ? (isDark
+                                                ? AppColors.goldPrimary
+                                                : AppColors.primary)
+                                          : AppColors.statusSafe,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.near_me,
+                                size: 13,
+                                color: member.hasLocation
+                                    ? (isDark
                                           ? AppColors.goldPrimary
                                           : AppColors.primary)
-                                      : AppColors.statusSafe,
+                                    : AppColors.outlineVariant,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  '$distText dari Anda • $locStatus',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTypography.bodySmall.copyWith(
+                                    color: isDark
+                                        ? AppColors.darkTextBody
+                                        : AppColors.espressoDark,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
-                            ),
+                            ],
                           ),
                         ],
                       ),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.near_me,
-                            size: 13,
-                            color: member.hasLocation
-                                ? (isDark
-                                    ? AppColors.goldPrimary
-                                    : AppColors.primary)
-                                : AppColors.outlineVariant,
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              '$distText dari Anda • $locStatus',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppTypography.bodySmall.copyWith(
-                                color: isDark
-                                    ? AppColors.darkTextBody
-                                    : AppColors.espressoDark,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
+                    ),
+                    // Back & Close buttons
+                    if (onBackToList != null)
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back_rounded, size: 20),
+                        color: AppColors.outlineVariant,
+                        tooltip: 'Kembali ke Daftar',
+                        onPressed: onBackToList,
                       ),
-                    ],
-                  ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 20),
+                      color: AppColors.outlineVariant,
+                      tooltip: 'Tutup Panel',
+                      onPressed: onCloseMemberDetail,
+                    ),
+                  ],
                 ),
-                // Back & Close buttons
-                if (onBackToList != null)
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_rounded, size: 20),
-                    color: AppColors.outlineVariant,
-                    tooltip: 'Kembali ke Daftar',
-                    onPressed: onBackToList,
-                  ),
-                IconButton(
-                  icon: const Icon(Icons.close_rounded, size: 20),
-                  color: AppColors.outlineVariant,
-                  tooltip: 'Tutup Panel',
-                  onPressed: onCloseMemberDetail,
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              // Action button
+              SizedBox(
+                width: double.infinity,
+                height: AppSizes.buttonHeightSecondary,
+                child: _buildRouteButton(context, member),
+              ),
+              if (routeDistanceMeters != null && routeDurationSeconds != null)
+                _buildRouteInfoBar(context, distText),
+            ],
           ),
-          const SizedBox(height: AppSpacing.md),
-          // Action button
-          SizedBox(
-            width: double.infinity,
-            height: AppSizes.buttonHeightSecondary,
-            child: _buildRouteButton(context, member),
-          ),
-          if (routeDistanceMeters != null && routeDurationSeconds != null)
-            _buildRouteInfoBar(context, distText),
-        ],
+        ),
       ),
-    ),
-  ),
-);
-}
+    );
+  }
 
   Widget _buildRouteButton(BuildContext context, RoomMemberModel member) {
     final isDark = AppColors.isDark(context);
@@ -402,8 +409,12 @@ class _MapBottomSheetState extends State<MapBottomSheet> {
           ),
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream,
-          disabledBackgroundColor: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream,
+          backgroundColor: isDark
+              ? AppColors.darkSurfaceContainer
+              : AppColors.canvasCream,
+          disabledBackgroundColor: isDark
+              ? AppColors.darkSurfaceContainer
+              : AppColors.canvasCream,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
@@ -431,8 +442,12 @@ class _MapBottomSheetState extends State<MapBottomSheet> {
           ),
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream,
-          disabledBackgroundColor: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream,
+          backgroundColor: isDark
+              ? AppColors.darkSurfaceContainer
+              : AppColors.canvasCream,
+          disabledBackgroundColor: isDark
+              ? AppColors.darkSurfaceContainer
+              : AppColors.canvasCream,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.pill),
             side: BorderSide(
@@ -488,7 +503,9 @@ class _MapBottomSheetState extends State<MapBottomSheet> {
         ),
       ),
       style: ElevatedButton.styleFrom(
-        backgroundColor: isDark ? AppColors.goldPrimary : AppColors.espressoDark,
+        backgroundColor: isDark
+            ? AppColors.goldPrimary
+            : AppColors.espressoDark,
         foregroundColor: isDark ? AppColors.espressoDark : Colors.white,
         elevation: 4,
         shadowColor: AppColors.espressoDark.withValues(alpha: 0.3),
@@ -606,7 +623,6 @@ class _MapBottomSheetState extends State<MapBottomSheet> {
     );
   }
 
-
   String _formatDistance(double meters) {
     if (meters < 1000) return '${meters.toInt()} m';
     return '${(meters / 1000).toStringAsFixed(1)} km';
@@ -669,14 +685,20 @@ class _MapBottomSheetState extends State<MapBottomSheet> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream,
+                        color: isDark
+                            ? AppColors.darkSurfaceContainer
+                            : AppColors.canvasCream,
                         borderRadius: BorderRadius.circular(AppRadius.pill),
-                        border: Border.all(color: AppColors.cardBorderColor(context)),
+                        border: Border.all(
+                          color: AppColors.cardBorderColor(context),
+                        ),
                       ),
                       child: Text(
                         '${members.length} anggota',
                         style: AppTypography.captionSmall.copyWith(
-                          color: isDark ? AppColors.darkTextBody : AppColors.espressoDark,
+                          color: isDark
+                              ? AppColors.darkTextBody
+                              : AppColors.espressoDark,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -715,9 +737,13 @@ class _MapBottomSheetState extends State<MapBottomSheet> {
 
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
-        if (notification is OverscrollNotification && notification.overscroll < 0) {
+        if (notification is OverscrollNotification &&
+            notification.overscroll < 0) {
           setState(() {
-            _dragOffset = math.max(0.0, _dragOffset - notification.overscroll * 0.5);
+            _dragOffset = math.max(
+              0.0,
+              _dragOffset - notification.overscroll * 0.5,
+            );
           });
           if (_dragOffset > 85.0) {
             widget.onCloseMemberDetail?.call();
@@ -740,107 +766,107 @@ class _MapBottomSheetState extends State<MapBottomSheet> {
           maxHeight: listMaxHeight.clamp(160.0, double.infinity),
         ),
         child: ListView.separated(
-        shrinkWrap: true,
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.only(bottom: mq.padding.bottom + 8),
-        itemCount: sorted.length,
-        separatorBuilder: (context, index) =>
-            const Divider(height: 1, color: AppColors.outlineVariant),
-        itemBuilder: (context, index) {
-          final m = sorted[index];
-          final dist = getMemberDistanceText != null
-              ? getMemberDistanceText!(m) ?? 'Lokasi belum tersedia'
-              : (m.hasLocation ? 'Lokasi aktif' : 'Lokasi belum tersedia');
-          final isPendamping = m.isPendamping;
-          final locStatus = m.getLocationStatus();
+          shrinkWrap: true,
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.only(bottom: mq.padding.bottom + 8),
+          itemCount: sorted.length,
+          separatorBuilder: (context, index) =>
+              const Divider(height: 1, color: AppColors.outlineVariant),
+          itemBuilder: (context, index) {
+            final m = sorted[index];
+            final dist = getMemberDistanceText != null
+                ? getMemberDistanceText!(m) ?? 'Lokasi belum tersedia'
+                : (m.hasLocation ? 'Lokasi aktif' : 'Lokasi belum tersedia');
+            final isPendamping = m.isPendamping;
+            final locStatus = m.getLocationStatus();
 
-          return InkWell(
-            onTap: () => onMemberTap?.call(m),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isPendamping
-                          ? AppColors.goldPrimary.withValues(alpha: 0.16)
-                          : AppColors.statusSafe.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      border: Border.all(
+            return InkWell(
+              onTap: () => onMemberTap?.call(m),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
                         color: isPendamping
-                            ? AppColors.goldPrimary.withValues(alpha: 0.35)
-                            : AppColors.statusSafe.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Text(
-                      isPendamping ? 'Pendamping' : 'Jamaah',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: isPendamping
-                            ? (isDark
-                                ? AppColors.goldPrimary
-                                : AppColors.espressoDark)
-                            : AppColors.statusSafe,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Text(
-                      m.name,
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textHeadingColor(context),
-                        fontWeight: FontWeight.w700,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        dist,
-                        style: AppTypography.captionSmall.copyWith(
-                          color: m.hasLocation
-                              ? AppColors.goldPrimary
-                              : AppColors.textMuted,
-                          fontWeight: FontWeight.w800,
+                            ? AppColors.goldPrimary.withValues(alpha: 0.16)
+                            : AppColors.statusSafe.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        border: Border.all(
+                          color: isPendamping
+                              ? AppColors.goldPrimary.withValues(alpha: 0.35)
+                              : AppColors.statusSafe.withValues(alpha: 0.3),
                         ),
                       ),
-                      Text(
-                        locStatus,
+                      child: Text(
+                        isPendamping ? 'Pendamping' : 'Jamaah',
                         style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
-                          color: locStatus == 'Online'
-                              ? AppColors.statusSafe
-                              : AppColors.textMuted,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: isPendamping
+                              ? (isDark
+                                    ? AppColors.goldPrimary
+                                    : AppColors.espressoDark)
+                              : AppColors.statusSafe,
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(width: 4),
-                  const Icon(
-                    Icons.chevron_right_rounded,
-                    size: 18,
-                    color: AppColors.tanMedium,
-                  ),
-                ],
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        m.name,
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.textHeadingColor(context),
+                          fontWeight: FontWeight.w700,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          dist,
+                          style: AppTypography.captionSmall.copyWith(
+                            color: m.hasLocation
+                                ? AppColors.goldPrimary
+                                : AppColors.textMuted,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        Text(
+                          locStatus,
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
+                            color: locStatus == 'Online'
+                                ? AppColors.statusSafe
+                                : AppColors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      size: 18,
+                      color: AppColors.tanMedium,
+                    ),
+                  ],
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   // ── 3. LEGACY JAMAAH CARD FALLBACK ─────────────────────────────────────────
 
@@ -859,7 +885,9 @@ class _MapBottomSheetState extends State<MapBottomSheet> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream,
+                  color: isDark
+                      ? AppColors.darkSurfaceContainer
+                      : AppColors.canvasCream,
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: AppColors.goldPrimary.withValues(alpha: 0.35),
@@ -867,7 +895,9 @@ class _MapBottomSheetState extends State<MapBottomSheet> {
                 ),
                 child: Icon(
                   Icons.elderly_rounded,
-                  color: isDark ? AppColors.goldPrimary : AppColors.espressoDark,
+                  color: isDark
+                      ? AppColors.goldPrimary
+                      : AppColors.espressoDark,
                   size: 24,
                 ),
               ),
@@ -921,7 +951,9 @@ class _MapBottomSheetState extends State<MapBottomSheet> {
                 ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: isDark ? AppColors.goldPrimary : AppColors.espressoDark,
+                backgroundColor: isDark
+                    ? AppColors.goldPrimary
+                    : AppColors.espressoDark,
                 foregroundColor: isDark ? AppColors.espressoDark : Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.pill),

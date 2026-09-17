@@ -13,7 +13,6 @@ import '../../../core/state/app_settings_controller.dart';
 import '../../../core/state/app_startup_controller.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/locales/app_localizations.dart';
-import 'package:awesome_dialog/awesome_dialog.dart';
 
 class ProfileScreen extends StatelessWidget {
   final bool showBottomNav;
@@ -1245,46 +1244,63 @@ class _LogoutButton extends StatelessWidget {
         child: OutlinedButton.icon(
           onPressed: () {
             final isDarkDialog = AppColors.isDark(context);
-            AwesomeDialog(
+            showDialog(
               context: context,
-              dialogType: DialogType.warning,
-              animType: AnimType.scale,
-              isDense: false,
-              dialogBackgroundColor: isDarkDialog
-                  ? AppColors.darkSurface
-                  : AppColors.surfaceWhite,
-              borderSide: BorderSide(
-                color: AppColors.sosEmergency.withValues(alpha: 0.35),
-                width: 1.2,
+              builder: (dialogContext) => AlertDialog(
+                backgroundColor: isDarkDialog
+                    ? AppColors.darkSurface
+                    : AppColors.surfaceWhite,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                title: Text(
+                  label,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: isDarkDialog
+                        ? AppColors.darkTextHeading
+                        : AppColors.textHeading,
+                  ),
+                ),
+                content: Text(
+                  'Apakah Anda yakin ingin keluar? Anda perlu login kembali untuk mengakses data room rombongan.',
+                  style: TextStyle(
+                    color: isDarkDialog
+                        ? AppColors.darkTextBody
+                        : AppColors.textBody,
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Get.back(),
+                    child: Text(
+                      dialogContext.tr('cancel').isEmpty
+                          ? 'Batal'
+                          : dialogContext.tr('cancel'),
+                      style: TextStyle(
+                        color: isDarkDialog
+                            ? AppColors.darkTextBody
+                            : AppColors.espressoDark,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.sosEmergency,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                    ),
+                    onPressed: () async {
+                      await Get.find<AppStartupController>().signOut();
+                    },
+                    child: const Text('Keluar'),
+                  ),
+                ],
               ),
-              title: label,
-              titleTextStyle: TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 17,
-                color: isDarkDialog
-                    ? AppColors.darkTextHeading
-                    : AppColors.espressoDark,
-              ),
-              desc:
-                  'Anda perlu login kembali untuk mengakses data room rombongan. Yakin ingin keluar?',
-              descTextStyle: TextStyle(
-                fontSize: 13.5,
-                height: 1.45,
-                color: isDarkDialog
-                    ? AppColors.darkTextBody
-                    : AppColors.textBody,
-              ),
-              btnCancelText: 'Batal',
-              btnCancelColor: isDarkDialog
-                  ? AppColors.darkSurfaceContainerHigh
-                  : AppColors.canvasCreamSubtle,
-              btnOkText: 'Ya, Keluar',
-              btnOkColor: AppColors.sosEmergency,
-              btnCancelOnPress: () {},
-              btnOkOnPress: () async {
-                await Get.find<AppStartupController>().signOut();
-              },
-            ).show();
+            );
           },
           style: OutlinedButton.styleFrom(
             side: BorderSide(
