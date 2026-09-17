@@ -16,6 +16,47 @@ class JoinRoomController extends GetxController {
   final isLoading = false.obs;
   final errorMessage = RxnString();
 
+  Worker? _roomWorker;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _checkExistingRoomAndListen();
+  }
+
+  void _checkExistingRoomAndListen() {
+    if (!Get.isRegistered<HajiCareController>()) return;
+    final state = Get.find<HajiCareController>();
+
+    // 1. If user already has an active room, forward immediately to their dashboard
+    final existingRoom = (state.activeRoomId.value != null && state.activeRoomId.value!.trim().isNotEmpty)
+        ? state.activeRoomId.value!.trim()
+        : (state.cachedRoomId != null && state.cachedRoomId!.trim().isNotEmpty
+            ? state.cachedRoomId!.trim()
+            : null);
+
+    if (existingRoom != null && existingRoom.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _navigateToDashboard();
+      });
+      return;
+    }
+
+    // 2. Reactively listen if room is resolved asynchronously in the background
+    _roomWorker = ever<String?>(state.activeRoomId, (roomId) {
+      if (roomId != null && roomId.trim().isNotEmpty) {
+        _navigateToDashboard();
+      }
+    });
+  }
+
+  void _navigateToDashboard() {
+    if (isClosed) return;
+    final state = Get.isRegistered<HajiCareController>() ? Get.find<HajiCareController>() : null;
+    final isPendamping = state?.role == UserRole.pendamping;
+    Get.offAllNamed(isPendamping ? AppRoutes.dashboardPendamping : AppRoutes.dashboardJamaah);
+  }
+
   Future<void> joinRoom() async {
     final roomName = roomNameController.text.trim();
     final roomCode = roomCodeController.text.trim().toUpperCase();
@@ -52,8 +93,11 @@ class JoinRoomController extends GetxController {
         role: roleStr,
       );
 
-      // Reflect in local state
-      state.activeRoomId.value = joinedRoom.id;
+      // Reflect in local state and persist to cache
+      await state.applyUserData(
+        roleStr: roleStr,
+        roomId: joinedRoom.id,
+      );
       state.activeRoom.value = joinedRoom;
 
       // Navigate to respective dashboard
@@ -94,6 +138,7 @@ class JoinRoomController extends GetxController {
 
   @override
   void onClose() {
+    _roomWorker?.dispose();
     roomNameController.dispose();
     roomCodeController.dispose();
     super.onClose();

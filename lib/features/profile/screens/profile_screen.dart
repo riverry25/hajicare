@@ -13,6 +13,8 @@ import '../../../core/state/app_settings_controller.dart';
 import '../../../core/state/app_startup_controller.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/locales/app_localizations.dart';
+import '../../../core/services/app_alert_service.dart';
+import 'package:awesome_dialog/awesome_dialog.dart';
 
 class ProfileScreen extends StatelessWidget {
   final bool showBottomNav;
@@ -868,7 +870,7 @@ class _EditNameButton extends StatelessWidget {
       button: true,
       label: context.tr('editName'),
       child: InkWell(
-        onTap: () => _showEditNameSheet(context),
+        onTap: () => _showEditNameDialog(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Padding(
           padding: const EdgeInsets.symmetric(
@@ -896,179 +898,263 @@ class _EditNameButton extends StatelessWidget {
     );
   }
 
-  void _showEditNameSheet(BuildContext context) {
-    final isDarkSheet = AppColors.isDark(context);
-    final sheetBg = isDarkSheet
+  void _showEditNameDialog(BuildContext context) {
+    final isDarkDialog = AppColors.isDark(context);
+    final dialogBg = isDarkDialog
         ? AppColors.darkSurface
         : AppColors.surfaceWhite;
-    final headingClr = isDarkSheet
+    final headingClr = isDarkDialog
         ? AppColors.darkTextHeading
         : AppColors.espressoDark;
-    final bodyClr = isDarkSheet ? AppColors.darkTextBody : AppColors.textBody;
-    final borderClr = isDarkSheet
+    final bodyClr = isDarkDialog ? AppColors.darkTextBody : AppColors.textBody;
+    final borderClr = isDarkDialog
         ? AppColors.darkOutlineVariant
         : AppColors.cardBorderColor(context);
     final nameCtrl = TextEditingController(text: controller.displayName.value);
     final inputError = RxnString();
 
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      backgroundColor: sheetBg,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (sheetCtx) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(sheetCtx).viewInsets.bottom,
+      barrierDismissible: true,
+      builder: (dialogCtx) => Dialog(
+        backgroundColor: dialogBg,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(
+            color: AppColors.goldPrimary.withValues(alpha: 0.35),
+            width: 1.2,
+          ),
         ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.lg,
-              AppSpacing.lg,
-              AppSpacing.xl,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 44,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: borderClr,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                Text(
-                  sheetCtx.tr('editNameTitle').isEmpty
-                      ? 'Ubah Nama Lengkap'
-                      : sheetCtx.tr('editNameTitle'),
-                  style: AppTypography.titleLarge.copyWith(
-                    color: headingClr,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                Text(
-                  sheetCtx.tr('name').isEmpty ? 'Nama' : sheetCtx.tr('name'),
-                  style: AppTypography.bodySmall.copyWith(
-                    color: bodyClr,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Obx(
-                  () => TextField(
-                    controller: nameCtrl,
-                    autofocus: true,
-                    keyboardType: TextInputType.name,
-                    textCapitalization: TextCapitalization.words,
-                    maxLength: 50,
-                    style: AppTypography.bodyLarge.copyWith(color: headingClr),
-                    decoration: InputDecoration(
-                      counterText: '',
-                      hintText: sheetCtx.tr('name').isEmpty
-                          ? 'Nama Lengkap'
-                          : sheetCtx.tr('name'),
-                      filled: true,
-                      fillColor: isDarkSheet
-                          ? AppColors.darkSurfaceContainer
-                          : AppColors.canvasCream,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.lg,
-                        vertical: AppSpacing.md,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                        borderSide: BorderSide(color: borderClr),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                        borderSide: BorderSide(color: borderClr),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                        borderSide: const BorderSide(
-                          color: AppColors.goldPrimary,
-                          width: 1.8,
+        elevation: 12,
+        insetPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.screenEdgeGutter,
+          vertical: 24,
+        ),
+        child: SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Center Icon Badge
+                  Center(
+                    child: Container(
+                      width: 58,
+                      height: 58,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.goldPrimary.withValues(alpha: 0.22),
+                            AppColors.goldPrimary.withValues(alpha: 0.06),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        border: Border.all(
+                          color: AppColors.goldPrimary.withValues(alpha: 0.45),
+                          width: 1.5,
                         ),
                       ),
+                      child: const Icon(
+                        Icons.edit_note_rounded,
+                        color: AppColors.goldPrimary,
+                        size: 30,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                Obx(() {
-                  final saving = controller.isSavingName.value;
-                  return SizedBox(
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: saving
-                          ? null
-                          : () async {
-                              final input = nameCtrl.text.trim();
-                              if (input.isEmpty) {
-                                inputError.value = 'Nama tidak boleh kosong';
-                                return;
-                              }
-                              inputError.value = null;
+                  const SizedBox(height: AppSpacing.md),
 
-                              try {
-                                await controller.updateDisplayName(input);
-                                Get.back();
-                                Get.snackbar(
-                                  'Berhasil',
-                                  'Nama berhasil diperbarui',
-                                  snackPosition: SnackPosition.BOTTOM,
-                                  backgroundColor: AppColors.statusSafe,
-                                  colorText: Colors.white,
-                                  margin: const EdgeInsets.all(AppSpacing.lg),
-                                );
-                              } catch (_) {
-                                Get.snackbar(
-                                  'Gagal',
-                                  'Gagal memperbarui nama',
-                                  snackPosition: SnackPosition.BOTTOM,
-                                  backgroundColor: AppColors.sosEmergency,
-                                  colorText: Colors.white,
-                                  margin: const EdgeInsets.all(AppSpacing.lg),
-                                );
-                              }
-                            },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isDarkSheet
-                            ? AppColors.darkPrimaryContainer
-                            : AppColors.espressoDark,
-                        foregroundColor: isDarkSheet
-                            ? AppColors.goldLight
-                            : Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                  // Title
+                  Text(
+                    dialogCtx.tr('editNameTitle').isEmpty
+                        ? 'Ubah Nama Lengkap'
+                        : dialogCtx.tr('editNameTitle'),
+                    textAlign: TextAlign.center,
+                    style: AppTypography.titleLarge.copyWith(
+                      color: headingClr,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Nama ini akan ditampilkan pada profil, dashboard, dan pantauan rombongan.',
+                    textAlign: TextAlign.center,
+                    style: AppTypography.caption.copyWith(
+                      color: bodyClr,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Text Field with validation
+                  Obx(
+                    () => TextField(
+                      controller: nameCtrl,
+                      autofocus: true,
+                      keyboardType: TextInputType.name,
+                      textCapitalization: TextCapitalization.words,
+                      maxLength: 50,
+                      style: AppTypography.bodyLarge.copyWith(
+                        color: headingClr,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      decoration: InputDecoration(
+                        counterText: '',
+                        labelText: dialogCtx.tr('name').isEmpty
+                            ? 'Nama Lengkap'
+                            : dialogCtx.tr('name'),
+                        labelStyle: TextStyle(color: bodyClr),
+                        errorText: inputError.value,
+                        filled: true,
+                        fillColor: isDarkDialog
+                            ? AppColors.darkSurfaceContainer
+                            : AppColors.canvasCream,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.lg,
+                          vertical: AppSpacing.md,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide(color: borderClr),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide(color: borderClr),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: const BorderSide(
+                            color: AppColors.goldPrimary,
+                            width: 1.8,
+                          ),
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.person_rounded,
+                          color: AppColors.goldPrimary,
+                          size: 20,
+                        ),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.clear_rounded, size: 18),
+                          onPressed: () => nameCtrl.clear(),
                         ),
                       ),
-                      child: saving
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.5,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text(
-                              'Simpan Perubahan',
-                              style: TextStyle(fontWeight: FontWeight.w800),
-                            ),
+                      onChanged: (_) {
+                        if (inputError.value != null) inputError.value = null;
+                      },
                     ),
-                  );
-                }),
-              ],
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+
+                  // Action Buttons: Batal & Simpan
+                  Obx(() {
+                    final saving = controller.isSavingName.value;
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 48,
+                            child: OutlinedButton(
+                              onPressed: saving
+                                  ? null
+                                  : () => Navigator.of(dialogCtx).pop(),
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: borderClr),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.pill),
+                                ),
+                              ),
+                              child: Text(
+                                dialogCtx.tr('cancel').isEmpty
+                                    ? 'Batal'
+                                    : dialogCtx.tr('cancel'),
+                                style: TextStyle(
+                                  color: isDarkDialog
+                                      ? AppColors.darkTextBody
+                                      : AppColors.espressoDark,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: SizedBox(
+                            height: 48,
+                            child: ElevatedButton(
+                              onPressed: saving
+                                  ? null
+                                  : () async {
+                                      final input = nameCtrl.text.trim();
+                                      if (input.isEmpty) {
+                                        inputError.value =
+                                            'Nama tidak boleh kosong';
+                                        return;
+                                      }
+                                      inputError.value = null;
+
+                                      try {
+                                        await controller.updateDisplayName(input);
+                                        if (dialogCtx.mounted && Navigator.of(dialogCtx).canPop()) {
+                                          Navigator.of(dialogCtx).pop();
+                                        }
+                                        if (!context.mounted) return;
+                                        AppAlert.success(
+                                          context,
+                                          title: 'Berhasil',
+                                          message:
+                                              'Nama berhasil diperbarui menjadi "$input"',
+                                        );
+                                      } catch (_) {
+                                        if (!context.mounted) return;
+                                        AppAlert.error(
+                                          context,
+                                          title: 'Gagal',
+                                          message:
+                                              'Gagal memperbarui nama. Silakan coba lagi.',
+                                        );
+                                      }
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: isDarkDialog
+                                    ? AppColors.darkPrimaryContainer
+                                    : AppColors.espressoDark,
+                                foregroundColor: isDarkDialog
+                                    ? AppColors.goldLight
+                                    : Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.pill),
+                                ),
+                              ),
+                              child: saving
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Simpan',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
+                ],
+              ),
             ),
           ),
         ),
@@ -1244,63 +1330,47 @@ class _LogoutButton extends StatelessWidget {
         child: OutlinedButton.icon(
           onPressed: () {
             final isDarkDialog = AppColors.isDark(context);
-            showDialog(
+            AwesomeDialog(
               context: context,
-              builder: (dialogContext) => AlertDialog(
-                backgroundColor: isDarkDialog
-                    ? AppColors.darkSurface
-                    : AppColors.surfaceWhite,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                title: Text(
-                  label,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: isDarkDialog
-                        ? AppColors.darkTextHeading
-                        : AppColors.textHeading,
-                  ),
-                ),
-                content: Text(
-                  'Apakah Anda yakin ingin keluar? Anda perlu login kembali untuk mengakses data room rombongan.',
-                  style: TextStyle(
-                    color: isDarkDialog
-                        ? AppColors.darkTextBody
-                        : AppColors.textBody,
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Get.back(),
-                    child: Text(
-                      dialogContext.tr('cancel').isEmpty
-                          ? 'Batal'
-                          : dialogContext.tr('cancel'),
-                      style: TextStyle(
-                        color: isDarkDialog
-                            ? AppColors.darkTextBody
-                            : AppColors.espressoDark,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.sosEmergency,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                      ),
-                    ),
-                    onPressed: () async {
-                      await Get.find<AppStartupController>().signOut();
-                    },
-                    child: const Text('Keluar'),
-                  ),
-                ],
+              dialogType: DialogType.warning,
+              animType: AnimType.scale,
+              headerAnimationLoop: false,
+              dialogBackgroundColor: isDarkDialog
+                  ? AppColors.darkSurface
+                  : AppColors.surfaceWhite,
+              borderSide: BorderSide(
+                color: AppColors.sosEmergency.withValues(alpha: 0.35),
+                width: 1.2,
               ),
-            );
+              buttonsBorderRadius: BorderRadius.circular(AppRadius.md),
+              title: label,
+              titleTextStyle: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 18,
+                color: isDarkDialog
+                    ? AppColors.darkTextHeading
+                    : AppColors.espressoDark,
+              ),
+              desc:
+                  'Apakah Anda yakin ingin keluar? Anda perlu login kembali untuk mengakses data room rombongan.',
+              descTextStyle: TextStyle(
+                fontSize: 13.5,
+                height: 1.45,
+                color: isDarkDialog
+                    ? AppColors.darkTextBody
+                    : AppColors.textBody,
+              ),
+              btnCancelText: 'Batal',
+              btnCancelColor: isDarkDialog
+                  ? AppColors.darkSurfaceContainerHigh
+                  : AppColors.canvasCreamSubtle,
+              btnCancelOnPress: () {},
+              btnOkText: 'Ya, Keluar',
+              btnOkColor: AppColors.sosEmergency,
+              btnOkOnPress: () async {
+                await Get.find<AppStartupController>().signOut();
+              },
+            ).show();
           },
           style: OutlinedButton.styleFrom(
             side: BorderSide(

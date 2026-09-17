@@ -43,34 +43,40 @@ class RoleAndRoomGuard extends GetMiddleware {
         ? 'admin'
         : (state.role == UserRole.pendamping ? 'pendamping' : 'jamaah');
 
-    // 2. Role-based access control
+    // 2. Check active room using in-memory state or local persistent cache fallback
+    final currentRoomId = (state.activeRoomId.value != null && state.activeRoomId.value!.trim().isNotEmpty)
+        ? state.activeRoomId.value!.trim()
+        : (state.cachedRoomId != null && state.cachedRoomId!.trim().isNotEmpty
+            ? state.cachedRoomId!.trim()
+            : null);
+    final hasActiveRoom = currentRoomId != null && currentRoomId.isNotEmpty;
+
+    // Self-healing: if cached room ID exists but reactive RxnString was temporarily null, restore it
+    if (state.activeRoomId.value == null && hasActiveRoom) {
+      state.activeRoomId.value = currentRoomId;
+    }
+
+    // 3. Role-based access control
     if (allowedRoles != null && !allowedRoles!.contains(roleStr)) {
       if (state.role == UserRole.admin) {
         return const RouteSettings(name: AppRoutes.adminDashboard);
       } else if (state.role == UserRole.pendamping) {
         return RouteSettings(
-          name: (state.activeRoomId.value == null || state.activeRoomId.value!.isEmpty)
-              ? AppRoutes.joinRoom
-              : AppRoutes.dashboardPendamping,
+          name: !hasActiveRoom ? AppRoutes.joinRoom : AppRoutes.dashboardPendamping,
         );
       } else {
         return RouteSettings(
-          name: (state.activeRoomId.value == null || state.activeRoomId.value!.isEmpty)
-              ? AppRoutes.joinRoom
-              : AppRoutes.dashboardJamaah,
+          name: !hasActiveRoom ? AppRoutes.joinRoom : AppRoutes.dashboardJamaah,
         );
       }
     }
 
-    // 3. Mandatory active room check
-    final hasActiveRoom = state.activeRoomId.value != null &&
-        state.activeRoomId.value!.trim().isNotEmpty;
-
+    // 4. Mandatory active room check
     if (requiresActiveRoom && !hasActiveRoom) {
       return const RouteSettings(name: AppRoutes.joinRoom);
     }
 
-    // 4. If user already has an active room and navigates to Join Room, send to dashboard
+    // 5. If user already has an active room and navigates to Join Room, send to dashboard
     if (redirectIfHasRoom && hasActiveRoom) {
       if (state.role == UserRole.pendamping) {
         return const RouteSettings(name: AppRoutes.dashboardPendamping);

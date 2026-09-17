@@ -1,8 +1,12 @@
+// ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'package:awesome_dialog/awesome_dialog.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/state/app_startup_controller.dart';
+import '../../../core/state/hajicare_controller.dart';
 
 class LoginController extends GetxController {
   final selectedRole = 'jamaah'.obs;
@@ -109,14 +113,64 @@ class LoginController extends GetxController {
 
       final destination = await startup.resolveUserRoleDestination(uid);
 
-      // ============================================================
-      // 4. Navigasi adalah operasi terakhir.
-      // Setelah ini LoginController boleh dihancurkan.
-      // ============================================================
+      if (isClosed) return;
+
+      // Pastikan data user & room di HajiCareController tersinkron sebelum evaluasi guard
+      if (Get.isRegistered<HajiCareController>()) {
+        final hajicare = Get.find<HajiCareController>();
+        await hajicare.syncUserData(uid);
+      }
 
       if (isClosed) return;
 
-      Get.offAllNamed(destination);
+      // ============================================================
+      // 4. Tampilkan AwesomeDialog saat berhasil login
+      // ============================================================
+
+      if (Get.context != null) {
+        final ctx = Get.context!;
+        final isDark = AppColors.isDark(ctx);
+        bool hasNavigated = false;
+        void navigate() {
+          if (!hasNavigated) {
+            hasNavigated = true;
+            Get.offAllNamed(destination);
+          }
+        }
+
+        AwesomeDialog(
+          context: ctx,
+          dialogType: DialogType.success,
+          animType: AnimType.scale,
+          headerAnimationLoop: false,
+          dialogBackgroundColor:
+              isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+          borderSide: BorderSide(
+            color: AppColors.statusSafe.withValues(alpha: 0.35),
+            width: 1.5,
+          ),
+          buttonsBorderRadius: BorderRadius.circular(12),
+          title: 'Berhasil Masuk',
+          desc: 'Selamat datang kembali di HajiCare! Menyiapkan dashboard...',
+          titleTextStyle: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+            color: isDark ? AppColors.darkTextHeading : AppColors.espressoDark,
+          ),
+          descTextStyle: TextStyle(
+            fontSize: 13.5,
+            color: isDark ? AppColors.darkTextBody : AppColors.textBody,
+            height: 1.4,
+          ),
+          btnOkText: 'Lanjut',
+          btnOkColor: AppColors.statusSafe,
+          btnOkOnPress: navigate,
+          autoHide: const Duration(milliseconds: 1500),
+          onDismissCallback: (_) => navigate(),
+        ).show();
+      } else {
+        Get.offAllNamed(destination);
+      }
     } on FirebaseAuthException catch (e) {
       if (isClosed) return;
 

@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/jamaah_data.dart';
 import '../services/location_service.dart';
 import '../../features/room/models/room_model.dart';
@@ -15,6 +16,9 @@ export '../../features/room/models/room_model.dart';
 export '../../features/room/models/room_member_model.dart';
 
 class HajiCareController extends GetxController {
+  static const String keyActiveRoomId = 'hajicare_active_room_id';
+  static const String keyUserRole = 'hajicare_user_role';
+
   final _role = UserRole.jamaah.obs;
   UserRole get role => _role.value;
 
@@ -25,6 +29,9 @@ class HajiCareController extends GetxController {
   final activeRoom = Rxn<RoomModel>();
   final activeRoomMembers = <RoomMemberModel>[].obs;
   String? get currentUid => FirebaseAuth.instance.currentUser?.uid;
+
+  String? _cachedRoomId;
+  String? get cachedRoomId => _cachedRoomId ?? activeRoomId.value;
 
   final pendampingName = 'Pendamping Anda'.obs;
   final pendampingLocation = Rxn<GeoPoint>();
@@ -54,7 +61,114 @@ class HajiCareController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _loadCachedUserData();
     _initAuthListener();
+  }
+
+  Future<void> _loadCachedUserData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedRoomId = prefs.getString(keyActiveRoomId);
+      final savedRole = prefs.getString(keyUserRole);
+
+      if (savedRoomId != null && savedRoomId.trim().isNotEmpty) {
+        _cachedRoomId = savedRoomId.trim();
+        if (activeRoomId.value == null || activeRoomId.value!.isEmpty) {
+          activeRoomId.value = _cachedRoomId;
+        }
+      }
+
+      if (savedRole != null && savedRole.trim().isNotEmpty) {
+        final r = savedRole.trim().toLowerCase();
+        if (r == 'admin') {
+          _role.value = UserRole.admin;
+        } else if (r == 'pendamping') {
+          _role.value = UserRole.pendamping;
+        } else {
+          _role.value = UserRole.jamaah;
+        }
+      }
+    } catch (e) {
+      debugPrint('[HajiCareController] Error loading cached room/role: $e');
+    }
+  }
+
+  /// Immediately applies user role and active room to reactive state
+  /// and updates SharedPreferences cache.
+  Future<void> applyUserData({
+    required String roleStr,
+    String? roomId,
+    String? name,
+  }) async {
+    final normalizedRole = roleStr.trim().toLowerCase();
+    if (normalizedRole == 'admin') {
+      _role.value = UserRole.admin;
+    } else if (normalizedRole == 'pendamping') {
+      _role.value = UserRole.pendamping;
+    } else {
+      _role.value = UserRole.jamaah;
+    }
+
+    final trimmedRoomId = (roomId != null && roomId.trim().isNotEmpty) ? roomId.trim() : null;
+    _cachedRoomId = trimmedRoomId;
+    activeRoomId.value = trimmedRoomId;
+
+    if (name != null && name.trim().isNotEmpty && _role.value == UserRole.pendamping) {
+      pendampingName.value = name.trim();
+    }
+
+    // Persist to SharedPreferences
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(keyUserRole, normalizedRole);
+      if (trimmedRoomId != null) {
+        await prefs.setString(keyActiveRoomId, trimmedRoomId);
+      } else {
+        await prefs.remove(keyActiveRoomId);
+      }
+    } catch (e) {
+      debugPrint('[HajiCareController] Error saving user data to cache: $e');
+    }
+
+    // If roomId is valid and user is logged in, start room listeners immediately
+    final uid = currentUid;
+    if (uid != null && trimmedRoomId != null) {
+      _listenToActiveRoom(trimmedRoomId, uid);
+    } else if (trimmedRoomId == null) {
+      _clearRoomListeners();
+    }
+  }
+
+  /// Explicitly syncs user doc from Firestore, updates in-memory state, and saves to cache.
+  /// Called during login/bootstrap to ensure state is ready before navigation.
+  Future<void> syncUserData(String uid, {Map<String, dynamic>? preloadedData}) async {
+    try {
+      Map<String, dynamic>? data = preloadedData;
+      if (data == null) {
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .get()
+            .timeout(const Duration(seconds: 4));
+        if (doc.exists) {
+          data = doc.data();
+        }
+      }
+
+      if (data != null) {
+        final roleStr = (data['role'] as String?)?.toLowerCase() ?? 'jamaah';
+        final roomId = data['activeRoomId'] as String?;
+        final rawName = data['name'] as String? ?? data['displayName'] as String?;
+
+        await applyUserData(
+          roleStr: roleStr,
+          roomId: roomId,
+          name: rawName,
+        );
+      }
+    } catch (e) {
+      debugPrint('[HajiCareController] Error in syncUserData: $e');
+    }
   }
 
   void _initAuthListener() {
@@ -86,6 +200,11 @@ class HajiCareController extends GetxController {
     activeRoomMembers.clear();
     activeRoomId.value = null;
     activeRoom.value = null;
+    _cachedRoomId = null;
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.remove(keyActiveRoomId);
+      prefs.remove(keyUserRole);
+    }).catchError((_) {});
     myCurrentPosition.value = null;
     isMyGpsActive.value = false;
     calculatedDistance.value = null;
@@ -115,11 +234,26 @@ class HajiCareController extends GetxController {
           _role.value = UserRole.jamaah;
         }
 
-        final currentRoomId = data['activeRoomId'] as String?;
-        if (currentRoomId != activeRoomId.value) {
-          activeRoomId.value = currentRoomId;
-          if (currentRoomId != null && currentRoomId.isNotEmpty) {
-            _listenToActiveRoom(currentRoomId, uid);
+        final currentRoomId = (data['activeRoomId'] as String?)?.trim();
+        final effectiveRoomId = (currentRoomId != null && currentRoomId.isNotEmpty) ? currentRoomId : null;
+        _cachedRoomId = effectiveRoomId;
+
+        // Persist snapshot update to SharedPreferences
+        SharedPreferences.getInstance().then((prefs) {
+          prefs.setString(keyUserRole, roleStr);
+          if (effectiveRoomId != null) {
+            prefs.setString(keyActiveRoomId, effectiveRoomId);
+          } else {
+            prefs.remove(keyActiveRoomId);
+          }
+        }).catchError((e) {
+          debugPrint('[HajiCareController] Error persisting snapshot to cache: $e');
+        });
+
+        if (effectiveRoomId != activeRoomId.value) {
+          activeRoomId.value = effectiveRoomId;
+          if (effectiveRoomId != null && effectiveRoomId.isNotEmpty) {
+            _listenToActiveRoom(effectiveRoomId, uid);
           } else {
             _clearRoomListeners();
           }
@@ -499,6 +633,13 @@ class HajiCareController extends GetxController {
       _clearRoomListeners();
       activeRoomId.value = null;
       activeRoom.value = null;
+      _cachedRoomId = null;
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove(keyActiveRoomId);
+      } catch (e) {
+        debugPrint('[HajiCareController] Error removing cached roomId: $e');
+      }
       return true;
     } catch (e) {
       debugPrint('[HajiCareController] Error leaving room: $e');
@@ -624,6 +765,12 @@ class HajiCareController extends GetxController {
 
   void setRole(UserRole newRole) {
     _role.value = newRole;
+    final rStr = newRole == UserRole.admin
+        ? 'admin'
+        : (newRole == UserRole.pendamping ? 'pendamping' : 'jamaah');
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setString(keyUserRole, rStr);
+    }).catchError((_) {});
   }
 
   /// Re-triggers GPS location tracking (e.g. after user enables GPS from settings).

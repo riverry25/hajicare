@@ -5,11 +5,12 @@ allprojects {
     }
 }
 
-// Fix: Enforce consistent JVM target for all subprojects (including tflite_flutter, flutter_tts, etc.)
+// Fix: Enforce consistent compileSdk (36) and JVM target (17) for all subprojects (including vibration, tflite_flutter, flutter_tts, etc.)
 subprojects {
     afterEvaluate {
         // Fix via Android extension (more reliable than task-level override)
         extensions.findByType<com.android.build.gradle.BaseExtension>()?.apply {
+            compileSdkVersion(36)
             compileOptions {
                 sourceCompatibility = JavaVersion.VERSION_17
                 targetCompatibility = JavaVersion.VERSION_17

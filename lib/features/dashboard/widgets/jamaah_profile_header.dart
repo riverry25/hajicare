@@ -14,10 +14,7 @@ import '../../../../core/widgets/app_status_badge.dart';
 class JamaahProfileHeader extends StatelessWidget {
   final HajiCareState state;
 
-  const JamaahProfileHeader({
-    super.key,
-    required this.state,
-  });
+  const JamaahProfileHeader({super.key, required this.state});
 
   void _showTextSizeSheet(BuildContext context) {
     final settings = Get.find<AppSettingsController>();
@@ -48,7 +45,9 @@ class JamaahProfileHeader extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkOutline : AppColors.outlineVariant,
+                    color: isDark
+                        ? AppColors.darkOutline
+                        : AppColors.outlineVariant,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                 ),
@@ -80,8 +79,12 @@ class JamaahProfileHeader extends StatelessWidget {
                         border: Border(
                           bottom: BorderSide(
                             color: isDark
-                                ? AppColors.darkOutlineVariant.withValues(alpha: 0.3)
-                                : AppColors.outlineVariant.withValues(alpha: 0.3),
+                                ? AppColors.darkOutlineVariant.withValues(
+                                    alpha: 0.3,
+                                  )
+                                : AppColors.outlineVariant.withValues(
+                                    alpha: 0.3,
+                                  ),
                           ),
                         ),
                       ),
@@ -95,7 +98,9 @@ class JamaahProfileHeader extends StatelessWidget {
                                     ? Icons.radio_button_checked
                                     : Icons.radio_button_off,
                                 color: isSelected
-                                    ? (isDark ? AppColors.accentGoldStar : AppColors.espressoDark)
+                                    ? (isDark
+                                          ? AppColors.accentGoldStar
+                                          : AppColors.espressoDark)
                                     : AppColors.outline,
                                 size: 20,
                               ),
@@ -104,7 +109,9 @@ class JamaahProfileHeader extends StatelessWidget {
                                 scale.label,
                                 style: AppTypography.bodyMedium.copyWith(
                                   color: headingColor,
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
                                 ),
                               ),
                             ],
@@ -112,7 +119,9 @@ class JamaahProfileHeader extends StatelessWidget {
                           Text(
                             '${(scale.factor * 100).toStringAsFixed(0)}%',
                             style: AppTypography.captionSmall.copyWith(
-                              color: isDark ? AppColors.darkTextBody : AppColors.textBody,
+                              color: isDark
+                                  ? AppColors.darkTextBody
+                                  : AppColors.textBody,
                             ),
                           ),
                         ],
@@ -200,9 +209,7 @@ class JamaahProfileHeader extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         '$kloterText • $maktabText',
-                        style: AppTypography.caption.copyWith(
-                          color: bodyColor,
-                        ),
+                        style: AppTypography.caption.copyWith(color: bodyColor),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -274,4 +281,3 @@ class JamaahProfileHeader extends StatelessWidget {
     });
   }
 }
-

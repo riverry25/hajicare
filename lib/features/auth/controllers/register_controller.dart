@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/state/app_startup_controller.dart';
+import '../../../core/state/hajicare_controller.dart';
 
 class RegisterController extends GetxController {
   final obscurePassword = true.obs;
@@ -66,6 +67,16 @@ class RegisterController extends GetxController {
       // Persist onboarding status & Remember Me setting
       final startup = Get.find<AppStartupController>();
       await startup.handleSuccessfulLogin(rememberMe: true);
+
+      // Pre-set user role in HajiCareController
+      if (Get.isRegistered<HajiCareController>()) {
+        final hajicare = Get.find<HajiCareController>();
+        await hajicare.applyUserData(
+          roleStr: selectedRole.value,
+          roomId: null,
+          name: fullNameController.text.trim(),
+        );
+      }
 
       // Both newly registered Pendamping and Jamaah must join a room first
       Get.offAllNamed(AppRoutes.joinRoom);

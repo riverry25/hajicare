@@ -105,7 +105,10 @@ class DashboardJamaahScreen extends StatelessWidget {
                 onTap: () => Get.toNamed(AppRoutes.modalSos),
                 borderRadius: BorderRadius.circular(AppRadius.pill),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: isDark
                         ? AppColors.darkPrimaryContainer
@@ -151,7 +154,7 @@ class DashboardJamaahScreen extends StatelessWidget {
           if (jamaah.separatedMode) _buildSeparatedBanner(context, isDark),
           JamaahProfileHeader(state: state),
           const SizedBox(height: AppSpacing.md),
-          const ActiveRoomCard(isPendamping: false),
+          const JamaahPrayerCard(),
           const SizedBox(height: AppSpacing.lg),
           JamaahDistanceCard(
             jamaah: jamaah,
@@ -161,7 +164,7 @@ class DashboardJamaahScreen extends StatelessWidget {
           const SizedBox(height: AppSpacing.lg),
           JamaahSosBanner(state: state),
           const SizedBox(height: AppSpacing.lg),
-          const JamaahPrayerCard(),
+          const ActiveRoomCard(isPendamping: false),
           const SizedBox(height: AppSpacing.lg),
           const JamaahServiceGrid(),
           const SizedBox(height: AppSpacing.lg),
@@ -201,7 +204,11 @@ class DashboardJamaahScreen extends StatelessWidget {
               color: AppColors.sosEmergency,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.warning_rounded, color: Colors.white, size: 20),
+            child: const Icon(
+              Icons.warning_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
@@ -243,9 +250,7 @@ class DashboardJamaahScreen extends StatelessWidget {
             : AppColors.surfaceContainer,
         borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
-          color: isDark
-              ? AppColors.darkCardBorder
-              : AppColors.lightCardBorder,
+          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
         ),
       ),
       child: Row(
