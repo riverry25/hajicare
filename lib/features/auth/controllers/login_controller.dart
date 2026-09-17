@@ -152,8 +152,9 @@ class LoginController extends GetxController {
           dialogType: DialogType.success,
           animType: AnimType.scale,
           headerAnimationLoop: false,
-          dialogBackgroundColor:
-              isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+          dialogBackgroundColor: isDark
+              ? AppColors.darkSurface
+              : AppColors.surfaceWhite,
           borderSide: BorderSide(
             color: AppColors.statusSafe.withValues(alpha: 0.35),
             width: 1.5,
