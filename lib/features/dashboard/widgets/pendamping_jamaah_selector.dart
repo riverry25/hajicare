@@ -5,6 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../room/widgets/jamaah_detail_sheet.dart';
 
 class PendampingJamaahSelector extends StatelessWidget {
   final HajiCareState state;
@@ -127,6 +128,19 @@ class PendampingJamaahSelector extends StatelessWidget {
     );
   }
 
+  void _openJamaahDetail(BuildContext context, JamaahData jamaah) {
+    final roomId = state.activeRoomId.value ?? '';
+    final roomName = state.activeRoom.value?.name ?? 'Room Pemantauan';
+    final roomCode = state.activeRoom.value?.code ?? '';
+    JamaahDetailSheet.show(
+      context,
+      jamaah: jamaah,
+      roomId: roomId,
+      roomName: roomName,
+      roomCode: roomCode,
+    );
+  }
+
   Widget _buildJamaahPill({
     required BuildContext context,
     required JamaahData jamaah,
@@ -143,6 +157,7 @@ class PendampingJamaahSelector extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
+      onLongPress: () => _openJamaahDetail(context, jamaah),
       borderRadius: BorderRadius.circular(AppRadius.pill),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -303,6 +318,19 @@ class PendampingJamaahSelector extends StatelessWidget {
                   ],
                 ),
               ],
+            ),
+            const SizedBox(width: 4),
+            InkWell(
+              onTap: () => _openJamaahDetail(context, jamaah),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Icon(
+                  Icons.info_outline_rounded,
+                  size: 16,
+                  color: isActive ? headingColor : bodyColor.withValues(alpha: 0.6),
+                ),
+              ),
             ),
           ],
         ),

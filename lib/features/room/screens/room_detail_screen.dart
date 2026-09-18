@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -10,6 +11,7 @@ import '../../../core/widgets/app_card.dart';
 import '../controllers/admin_room_controller.dart';
 import '../models/room_member_model.dart';
 import '../models/room_model.dart';
+import '../services/room_service.dart';
 
 class RoomDetailScreen extends StatelessWidget {
   const RoomDetailScreen({super.key});
@@ -207,6 +209,7 @@ class RoomDetailScreen extends StatelessWidget {
               itemBuilder: (context, index) {
                 final member = members[index];
                 return _MemberTile(
+                  room: room,
                   member: member,
                   cardBg: cardBg,
                   headingColor: headingColor,
@@ -222,17 +225,63 @@ class RoomDetailScreen extends StatelessWidget {
 }
 
 class _MemberTile extends StatelessWidget {
+  final RoomModel room;
   final RoomMemberModel member;
   final Color cardBg;
   final Color headingColor;
   final Color bodyColor;
 
   const _MemberTile({
+    required this.room,
     required this.member,
     required this.cardBg,
     required this.headingColor,
     required this.bodyColor,
   });
+
+  void _handleRemoveJamaah(BuildContext context) {
+    AppAlert.confirm(
+      context,
+      title: 'Keluarkan Jamaah?',
+      message: 'Jamaah ini akan dikeluarkan dari room dan fitur yang membutuhkan room akan dinonaktifkan.',
+      confirmText: 'Keluarkan',
+      cancelText: 'Batal',
+      isDestructive: true,
+      onConfirm: () async {
+        try {
+          final user = FirebaseAuth.instance.currentUser;
+          final actorUid = user?.uid ?? 'admin';
+          final actorName = user?.displayName?.trim().isNotEmpty == true
+              ? user!.displayName!
+              : 'Admin Pusat';
+
+          await RoomService().removeJamaahFromRoom(
+            roomId: room.id,
+            jamaahUid: member.uid,
+            actorUid: actorUid,
+            actorRole: 'admin',
+            actorName: actorName,
+          );
+
+          if (context.mounted) {
+            AppAlert.success(
+              context,
+              title: 'Jamaah Dikeluarkan',
+              message: '${member.name} berhasil dikeluarkan dari room.',
+            );
+          }
+        } catch (e) {
+          if (context.mounted) {
+            AppAlert.error(
+              context,
+              title: 'Gagal Mengeluarkan Jamaah',
+              message: e.toString().replaceAll('Exception: ', ''),
+            );
+          }
+        }
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -279,19 +328,33 @@ class _MemberTile extends StatelessWidget {
               : 'Baru saja bergabung',
           style: AppTypography.captionSmall.copyWith(color: bodyColor),
         ),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: badgeBg,
-            borderRadius: BorderRadius.circular(AppRadius.pill),
-          ),
-          child: Text(
-            roleLabel,
-            style: AppTypography.captionSmall.copyWith(
-              color: badgeTextColor,
-              fontWeight: FontWeight.bold,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: badgeBg,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+              ),
+              child: Text(
+                roleLabel,
+                style: AppTypography.captionSmall.copyWith(
+                  color: badgeTextColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-          ),
+            if (member.isJamaah) ...[
+              const SizedBox(width: 4),
+              IconButton(
+                icon: const Icon(Icons.person_remove_rounded, size: 20),
+                color: AppColors.error,
+                tooltip: 'Keluarkan dari Room',
+                onPressed: () => _handleRemoveJamaah(context),
+              ),
+            ],
+          ],
         ),
       ),
     );

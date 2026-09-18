@@ -17,6 +17,8 @@ import '../../profile/screens/profile_screen.dart';
 import '../controllers/admin_room_controller.dart';
 import '../models/activity_model.dart';
 import '../models/room_model.dart';
+import '../../notification/widgets/notification_composer_dialog.dart';
+import '../../notification/controllers/notification_controller.dart';
 
 /// Shell screen for Admin HajiCare.
 /// Follows the exact same navigation architecture as [DashboardJamaahScreen]
@@ -86,6 +88,12 @@ class _AdminDashboardHome extends StatelessWidget {
         subtitle: 'Command Center',
         icon: Icons.shield_rounded,
         actions: [
+          IconButton(
+            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+            icon: Icon(Icons.campaign_outlined, color: headingColor),
+            tooltip: 'Kirim Notifikasi / Siaran',
+            onPressed: () => NotificationComposerDialog.show(context),
+          ),
           Stack(
             alignment: Alignment.center,
             children: [
@@ -95,6 +103,41 @@ class _AdminDashboardHome extends StatelessWidget {
                 tooltip: 'Notifikasi',
                 onPressed: () => Get.toNamed(AppRoutes.notification),
               ),
+              Obx(() {
+                if (!Get.isRegistered<NotificationController>()) return const SizedBox.shrink();
+                final notifCtrl = Get.find<NotificationController>();
+                final totalUnread = notifCtrl.unreadCount.value;
+                if (totalUnread <= 0) return const SizedBox.shrink();
+
+                return Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: AppColors.sosEmergency,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isDark ? AppColors.darkScaffold : AppColors.canvasCream,
+                        width: 1.5,
+                      ),
+                    ),
+                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                    child: Center(
+                      child: Text(
+                        totalUnread > 9 ? '9+' : '$totalUnread',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          height: 1.0,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                );
+              }),
               Obx(() {
                 if (controller.activeSosCount.value > 0) {
                   return Positioned(
@@ -823,6 +866,39 @@ class _AdminDashboardHome extends StatelessWidget {
                     Get.toNamed(AppRoutes.notification);
                   }
                 },
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: AppSpacing.sm),
+
+        // Row 3: Broadcast & Geofence
+        Row(
+          children: [
+            Expanded(
+              child: _QuickActionButton(
+                label: 'Kirim Notifikasi',
+                subtitle: 'Siaran Admin multi-scope',
+                icon: Icons.campaign_rounded,
+                color: const Color(0xFFD97706),
+                cardBg: cardBg,
+                headingColor: headingColor,
+                isDark: isDark,
+                onTap: () => NotificationComposerDialog.show(context),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: _QuickActionButton(
+                label: 'Perimeter / Geofence',
+                subtitle: 'Radius aman jamaah',
+                icon: Icons.radar_rounded,
+                color: const Color(0xFF00897B),
+                cardBg: cardBg,
+                headingColor: headingColor,
+                isDark: isDark,
+                onTap: () => dashboardCtrl.changeTab(1),
               ),
             ),
           ],
@@ -2023,6 +2099,8 @@ class _AdminDashboardHome extends StatelessWidget {
         return 'Room Diaktifkan';
       case ActivityType.roomDeactivated:
         return 'Room Dinonaktifkan';
+      case ActivityType.roomUpdated:
+        return 'Room Diperbarui';
       case ActivityType.memberJoined:
         return 'Anggota Masuk';
       case ActivityType.memberLeft:

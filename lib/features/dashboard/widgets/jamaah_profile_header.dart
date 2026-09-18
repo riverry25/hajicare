@@ -146,12 +146,18 @@ class JamaahProfileHeader extends StatelessWidget {
     return Obx(() {
       final jamaah = state.self;
       final userName = jamaah.name;
-      final kloterText = jamaah.kloter != null && jamaah.kloter!.isNotEmpty
-          ? '${context.tr('kloterLabelShort')} ${jamaah.kloter}'
-          : '${context.tr('kloterLabelShort')} 14 JKS';
-      final maktabText = jamaah.maktab != null && jamaah.maktab!.isNotEmpty
-          ? '${context.tr('maktabLabelShort')} ${jamaah.maktab}'
-          : '${context.tr('maktabLabelShort')} 48, Mina';
+      final effectiveKloter = (jamaah.kloter != null && jamaah.kloter!.isNotEmpty)
+          ? jamaah.kloter
+          : state.activeRoom.value?.kloter;
+      final effectiveMaktab = (jamaah.maktab != null && jamaah.maktab!.isNotEmpty)
+          ? jamaah.maktab
+          : state.activeRoom.value?.maktab;
+      final kloterText = effectiveKloter != null && effectiveKloter.isNotEmpty
+          ? '${context.tr('kloterLabelShort')} $effectiveKloter'
+          : '';
+      final maktabText = effectiveMaktab != null && effectiveMaktab.isNotEmpty
+          ? '${context.tr('maktabLabelShort')} $effectiveMaktab'
+          : '';
 
       return AppCard(
         padding: const EdgeInsets.all(AppSpacing.lg),
@@ -207,12 +213,27 @@ class JamaahProfileHeader extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 2),
-                      Text(
-                        '$kloterText • $maktabText',
-                        style: AppTypography.caption.copyWith(color: bodyColor),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      if (kloterText.isNotEmpty && maktabText.isNotEmpty)
+                        Text(
+                          '$kloterText • $maktabText',
+                          style: AppTypography.caption.copyWith(color: bodyColor),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        )
+                      else if (kloterText.isNotEmpty || maktabText.isNotEmpty)
+                        Text(
+                          kloterText.isNotEmpty ? kloterText : maktabText,
+                          style: AppTypography.caption.copyWith(color: bodyColor),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        )
+                      else if (state.activeRoom.value != null && state.activeRoom.value!.name.isNotEmpty)
+                        Text(
+                          state.activeRoom.value!.name,
+                          style: AppTypography.caption.copyWith(color: bodyColor),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                     ],
                   ),
                 ),

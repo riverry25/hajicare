@@ -23,6 +23,8 @@ import '../widgets/pendamping_jamaah_selector.dart';
 import '../widgets/pendamping_radar_card.dart';
 import '../widgets/pendamping_sos_banner.dart';
 import '../../room/widgets/active_room_card.dart';
+import '../../notification/controllers/notification_controller.dart';
+import '../../notification/widgets/notification_composer_dialog.dart';
 
 class DashboardPendampingScreen extends StatelessWidget {
   const DashboardPendampingScreen({super.key});
@@ -79,6 +81,14 @@ class DashboardPendampingScreen extends StatelessWidget {
         subtitle: context.tr('modePendampingSubtitle'),
         icon: Icons.mosque_rounded,
         actions: [
+          IconButton(
+            icon: Icon(
+              Icons.campaign_outlined,
+              color: headingColor,
+            ),
+            tooltip: 'Kirim Notifikasi Room',
+            onPressed: () => NotificationComposerDialog.show(context),
+          ),
           Stack(
             alignment: Alignment.center,
             children: [
@@ -90,6 +100,41 @@ class DashboardPendampingScreen extends StatelessWidget {
                 tooltip: context.tr('notificationTooltip'),
                 onPressed: () => Get.toNamed(AppRoutes.notification),
               ),
+              Obx(() {
+                if (!Get.isRegistered<NotificationController>()) return const SizedBox.shrink();
+                final notifCtrl = Get.find<NotificationController>();
+                final totalUnread = notifCtrl.unreadCount.value + notifCtrl.pendingInvitations.length;
+                if (totalUnread <= 0) return const SizedBox.shrink();
+
+                return Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: AppColors.sosEmergency,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isDark ? AppColors.darkScaffold : AppColors.canvasCream,
+                        width: 1.5,
+                      ),
+                    ),
+                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                    child: Center(
+                      child: Text(
+                        totalUnread > 9 ? '9+' : '$totalUnread',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          height: 1.0,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                );
+              }),
               if (state.anySosActive)
                 Positioned(
                   top: 12,

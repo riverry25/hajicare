@@ -14,7 +14,6 @@ import '../../../core/state/app_startup_controller.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/locales/app_localizations.dart';
 import '../../../core/services/app_alert_service.dart';
-import 'package:awesome_dialog/awesome_dialog.dart';
 
 class ProfileScreen extends StatelessWidget {
   final bool showBottomNav;
@@ -225,6 +224,9 @@ class ProfileScreen extends StatelessWidget {
     final isDark = AppColors.isDark(context);
     final cardBg = AppColors.cardBgColor(context);
     final headingColor = AppColors.textHeadingColor(context);
+    final bodyColor = AppColors.textBodyColor(context);
+    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+    final profileCtrl = Get.find<ProfileController>();
 
     showModalBottomSheet(
       context: context,
@@ -233,130 +235,381 @@ class ProfileScreen extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.cardPadding),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 44,
-                  height: 5,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: AppColors.cardBorderColor(context),
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
+      builder: (_) => Obx(() {
+        final hasData = profileCtrl.hasMedicalData;
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.cardPadding),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 44,
+                    height: 5,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: AppColors.cardBorderColor(context),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
                   ),
                 ),
-              ),
-              Row(
-                children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: AppColors.sosEmergency.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.medical_information_rounded,
+                        color: AppColors.sosEmergency,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Data Medis & Riwayat Jamaah',
+                            style: AppTypography.titleMedium.copyWith(
+                              color: headingColor,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Digunakan saat penanganan darurat di Posko PPIH',
+                            style: AppTypography.captionSmall.copyWith(
+                              color: isDark
+                                  ? AppColors.darkTextBody
+                                  : AppColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+
+                if (!hasData) ...[
                   Container(
-                    width: 42,
-                    height: 42,
+                    padding: const EdgeInsets.all(AppSpacing.lg),
                     decoration: BoxDecoration(
-                      color: AppColors.sosEmergency.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
+                      color: isDark
+                          ? AppColors.darkSurfaceContainer
+                          : AppColors.canvasCream,
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(color: AppColors.cardBorderColor(context)),
                     ),
-                    child: const Icon(
-                      Icons.medical_information_rounded,
-                      color: AppColors.sosEmergency,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Icon(Icons.health_and_safety_outlined, size: 44, color: bodyColor.withValues(alpha: 0.4)),
+                        const SizedBox(height: 10),
                         Text(
-                          'Data Medis & Riwayat Jamaah',
-                          style: AppTypography.titleMedium.copyWith(
+                          'Data Medis Masih Kosong',
+                          style: AppTypography.titleSmall.copyWith(
                             color: headingColor,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 6),
                         Text(
-                          'Digunakan saat penanganan darurat di Posko PPIH',
-                          style: AppTypography.captionSmall.copyWith(
-                            color: isDark
-                                ? AppColors.darkTextBody
-                                : AppColors.textMuted,
-                          ),
+                          'Anda belum mengisi data medis pribadi. Lengkapi golongan darah, riwayat alergi, kondisi khusus, dan kontak darurat untuk kesiapsiagaan.',
+                          textAlign: TextAlign.center,
+                          style: AppTypography.captionSmall.copyWith(color: bodyColor, height: 1.4),
                         ),
                       ],
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
+                        elevation: 0,
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        _showEditMedicalDialog(context, profileCtrl);
+                      },
+                      icon: const Icon(Icons.edit_note_rounded, size: 20),
+                      label: const Text('Isi Data Medis Sekarang', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ] else ...[
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.darkSurfaceContainer
+                          : AppColors.canvasCream,
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(color: AppColors.cardBorderColor(context)),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildMedRow(
+                          context,
+                          'Golongan Darah',
+                          profileCtrl.bloodType.value.isNotEmpty ? profileCtrl.bloodType.value : '-',
+                        ),
+                        const Divider(height: 16),
+                        _buildMedRow(
+                          context,
+                          'Riwayat Alergi',
+                          profileCtrl.allergies.value.isNotEmpty ? profileCtrl.allergies.value : '-',
+                        ),
+                        const Divider(height: 16),
+                        _buildMedRow(
+                          context,
+                          'Kondisi Khusus',
+                          profileCtrl.conditions.value.isNotEmpty ? profileCtrl.conditions.value : '-',
+                        ),
+                        const Divider(height: 16),
+                        _buildMedRow(
+                          context,
+                          'Kontak Darurat',
+                          profileCtrl.emergencyContact.value.isNotEmpty ? profileCtrl.emergencyContact.value : '-',
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: primaryColor,
+                            side: BorderSide(color: primaryColor, width: 1.5),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
+                            minimumSize: const Size(0, 48),
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            _showEditMedicalDialog(context, profileCtrl);
+                          },
+                          icon: const Icon(Icons.edit_rounded, size: 18),
+                          label: const Text('Ubah Data', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isDark ? AppColors.darkPrimaryContainer : AppColors.espressoDark,
+                            foregroundColor: isDark ? AppColors.goldLight : Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
+                            minimumSize: const Size(0, 48),
+                          ),
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('Tutup', style: TextStyle(fontWeight: FontWeight.w700)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  void _showEditMedicalDialog(BuildContext context, ProfileController profileCtrl) {
+    final isDark = AppColors.isDark(context);
+    final cardBg = AppColors.cardBgColor(context);
+    final headingColor = AppColors.textHeadingColor(context);
+    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+
+    final bloodTypeCtrl = TextEditingController(text: profileCtrl.bloodType.value);
+    final allergiesCtrl = TextEditingController(text: profileCtrl.allergies.value);
+    final conditionsCtrl = TextEditingController(text: profileCtrl.conditions.value);
+    final emergencyContactCtrl = TextEditingController(text: profileCtrl.emergencyContact.value);
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) {
+        return Dialog(
+          backgroundColor: cardBg,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 440),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppSpacing.cardPadding),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.sosEmergency.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                        ),
+                        child: const Icon(Icons.medical_services_rounded, color: AppColors.sosEmergency, size: 22),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Kelola Data Medis',
+                              style: AppTypography.titleMedium.copyWith(
+                                color: headingColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'Informasi kesehatan pribadi Jamaah',
+                              style: AppTypography.captionSmall.copyWith(
+                                color: AppColors.textBodyColor(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded),
+                        onPressed: () => Navigator.of(dialogCtx).pop(),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 24),
+
+                  // Golongan Darah
+                  Text('Golongan Darah', style: AppTypography.labelMedium.copyWith(color: headingColor, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: bloodTypeCtrl,
+                    style: TextStyle(color: headingColor),
+                    decoration: InputDecoration(
+                      hintText: 'Contoh: O Rhesus (+), A (+), B (+)',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+                      prefixIcon: const Icon(Icons.bloodtype_rounded, size: 20),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Riwayat Alergi
+                  Text('Riwayat Alergi Obat / Makanan', style: AppTypography.labelMedium.copyWith(color: headingColor, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: allergiesCtrl,
+                    style: TextStyle(color: headingColor),
+                    decoration: InputDecoration(
+                      hintText: 'Contoh: Alergi penisilin, atau tidak ada',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+                      prefixIcon: const Icon(Icons.warning_amber_rounded, size: 20),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Kondisi Khusus
+                  Text('Kondisi Khusus / Riwayat Penyakit', style: AppTypography.labelMedium.copyWith(color: headingColor, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: conditionsCtrl,
+                    style: TextStyle(color: headingColor),
+                    decoration: InputDecoration(
+                      hintText: 'Contoh: Hipertensi, Diabetes, Asma, dsb.',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+                      prefixIcon: const Icon(Icons.healing_rounded, size: 20),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Kontak Darurat
+                  Text('Nomor Kontak Darurat (Keluarga)', style: AppTypography.labelMedium.copyWith(color: headingColor, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: emergencyContactCtrl,
+                    keyboardType: TextInputType.phone,
+                    style: TextStyle(color: headingColor),
+                    decoration: InputDecoration(
+                      hintText: 'Contoh: 0812-3456-7890 (Anak / Pasangan)',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+                      prefixIcon: const Icon(Icons.phone_in_talk_rounded, size: 20),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Actions
+                  Obx(() {
+                    final saving = profileCtrl.isSavingMedical.value;
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: saving ? null : () => Navigator.of(dialogCtx).pop(),
+                            child: const Text('Batal'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryColor,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                            ),
+                            onPressed: saving
+                                ? null
+                                : () async {
+                                    await profileCtrl.updateMedicalData(
+                                      bloodTypeVal: bloodTypeCtrl.text,
+                                      allergiesVal: allergiesCtrl.text,
+                                      conditionsVal: conditionsCtrl.text,
+                                      emergencyContactVal: emergencyContactCtrl.text,
+                                    );
+                                    if (dialogCtx.mounted) {
+                                      Navigator.of(dialogCtx).pop();
+                                    }
+                                    if (context.mounted) {
+                                      AppAlert.success(context, message: 'Data medis berhasil diperbarui.');
+                                    }
+                                  },
+                            icon: saving
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.save_rounded, size: 18),
+                            label: Text(saving ? 'Menyimpan...' : 'Simpan Data Medis'),
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
                 ],
               ),
-              const SizedBox(height: 18),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkSurfaceContainer
-                      : AppColors.canvasCream,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(color: AppColors.cardBorderColor(context)),
-                ),
-                child: Column(
-                  children: [
-                    _buildMedRow(
-                      context,
-                      'Golongan Darah',
-                      'O Rhesus (+) Positif',
-                    ),
-                    const Divider(height: 16),
-                    _buildMedRow(
-                      context,
-                      'Riwayat Alergi',
-                      'Tidak ada alergi obat',
-                    ),
-                    const Divider(height: 16),
-                    _buildMedRow(
-                      context,
-                      'Kondisi Khusus',
-                      'Hipertensi Ringan (Terkontrol)',
-                    ),
-                    const Divider(height: 16),
-                    _buildMedRow(
-                      context,
-                      'Kontak Darurat',
-                      '0812-3456-7890 (Keluarga)',
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isDark
-                        ? AppColors.darkPrimaryContainer
-                        : AppColors.espressoDark,
-                    foregroundColor: isDark
-                        ? AppColors.goldLight
-                        : Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                    ),
-                  ),
-                  onPressed: () => Get.back(),
-                  child: const Text(
-                    'Tutup',
-                    style: TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -398,8 +651,13 @@ class ProfileScreen extends StatelessWidget {
     final isDark = AppColors.isDark(context);
     final cardBg = AppColors.cardBgColor(context);
     final headingColor = AppColors.textHeadingColor(context);
-    final roomName = state?.activeRoom.value?.name ?? 'Maktab 48 Mina';
-    final pendamping = state?.pendampingName.value ?? 'Ustadz Ahmad & Tim PPIH';
+    final bodyColor = AppColors.textBodyColor(context);
+    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+
+    final hasRoom = state?.activeRoomId.value != null && state!.activeRoomId.value!.trim().isNotEmpty;
+    final roomName = hasRoom ? (state.activeRoom.value?.name ?? 'Room Pemantauan') : '-';
+    final roomCode = hasRoom ? (state.activeRoom.value?.code ?? '-') : '-';
+    final pendamping = hasRoom ? (state.pendampingName.value.isNotEmpty ? state.pendampingName.value : 'Pendamping Room') : '-';
 
     showModalBottomSheet(
       context: context,
@@ -455,7 +713,9 @@ class ProfileScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Terhubung ke pengawasan rombongan Anda',
+                          hasRoom
+                              ? 'Terhubung ke pengawasan rombongan Anda'
+                              : 'Anda belum terhubung ke room rombongan manapun',
                           style: AppTypography.captionSmall.copyWith(
                             color: isDark
                                 ? AppColors.darkTextBody
@@ -468,52 +728,103 @@ class ProfileScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 18),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkSurfaceContainer
-                      : AppColors.canvasCream,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(color: AppColors.cardBorderColor(context)),
-                ),
-                child: Column(
-                  children: [
-                    _buildMedRow(context, 'Room Pemantauan', roomName),
-                    const Divider(height: 16),
-                    _buildMedRow(context, 'Ketua Rombongan', pendamping),
-                    const Divider(height: 16),
-                    _buildMedRow(
-                      context,
-                      'Status Sambungan',
-                      'Terkoneksi Realtime',
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isDark
-                        ? AppColors.darkPrimaryContainer
-                        : AppColors.espressoDark,
-                    foregroundColor: isDark
-                        ? AppColors.goldLight
-                        : Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                    ),
+
+              if (!hasRoom) ...[
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.darkSurfaceContainer
+                        : AppColors.canvasCream,
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    border: Border.all(color: AppColors.cardBorderColor(context)),
                   ),
-                  onPressed: () => Get.back(),
-                  child: const Text(
-                    'Selesai',
-                    style: TextStyle(fontWeight: FontWeight.w700),
+                  child: Column(
+                    children: [
+                      Icon(Icons.meeting_room_outlined, size: 48, color: bodyColor.withValues(alpha: 0.4)),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Belum Ada Room Terhubung',
+                        style: AppTypography.titleSmall.copyWith(color: headingColor, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Anda belum memiliki room aktif. Gabung ke room untuk mengaktifkan koordinasi dengan ketua rombongan & monitoring jarak realtime.',
+                        textAlign: TextAlign.center,
+                        style: AppTypography.captionSmall.copyWith(color: bodyColor, height: 1.4),
+                      ),
+                    ],
                   ),
                 ),
-              ),
+                const SizedBox(height: 18),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: isDark ? AppColors.espressoDark : Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
+                      elevation: 0,
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Get.toNamed(AppRoutes.joinRoom);
+                    },
+                    icon: const Icon(Icons.login_rounded, size: 18),
+                    label: const Text('Gabung Room Sekarang', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ] else ...[
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.darkSurfaceContainer
+                        : AppColors.canvasCream,
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    border: Border.all(color: AppColors.cardBorderColor(context)),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildMedRow(context, 'Room Pemantauan', roomName),
+                      const Divider(height: 16),
+                      _buildMedRow(context, 'Kode Room', roomCode),
+                      const Divider(height: 16),
+                      _buildMedRow(context, 'Ketua Rombongan', pendamping),
+                      const Divider(height: 16),
+                      _buildMedRow(
+                        context,
+                        'Status Sambungan',
+                        'Terkoneksi Realtime',
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isDark
+                          ? AppColors.darkPrimaryContainer
+                          : AppColors.espressoDark,
+                      foregroundColor: isDark
+                          ? AppColors.goldLight
+                          : Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text(
+                      'Selesai',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -1064,8 +1375,9 @@ class _EditNameButton extends StatelessWidget {
                               style: OutlinedButton.styleFrom(
                                 side: BorderSide(color: borderClr),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(AppRadius.pill),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.pill,
+                                  ),
                                 ),
                               ),
                               child: Text(
@@ -1099,8 +1411,11 @@ class _EditNameButton extends StatelessWidget {
                                       inputError.value = null;
 
                                       try {
-                                        await controller.updateDisplayName(input);
-                                        if (dialogCtx.mounted && Navigator.of(dialogCtx).canPop()) {
+                                        await controller.updateDisplayName(
+                                          input,
+                                        );
+                                        if (dialogCtx.mounted &&
+                                            Navigator.of(dialogCtx).canPop()) {
                                           Navigator.of(dialogCtx).pop();
                                         }
                                         if (!context.mounted) return;
@@ -1128,8 +1443,9 @@ class _EditNameButton extends StatelessWidget {
                                     ? AppColors.goldLight
                                     : Colors.white,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(AppRadius.pill),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.pill,
+                                  ),
                                 ),
                               ),
                               child: saving
@@ -1329,48 +1645,19 @@ class _LogoutButton extends StatelessWidget {
         height: 52,
         child: OutlinedButton.icon(
           onPressed: () {
-            final isDarkDialog = AppColors.isDark(context);
-            AwesomeDialog(
+            AppDialog.confirm(
               context: context,
-              dialogType: DialogType.warning,
-              animType: AnimType.scale,
-              headerAnimationLoop: false,
-              dialogBackgroundColor: isDarkDialog
-                  ? AppColors.darkSurface
-                  : AppColors.surfaceWhite,
-              borderSide: BorderSide(
-                color: AppColors.sosEmergency.withValues(alpha: 0.35),
-                width: 1.2,
-              ),
-              buttonsBorderRadius: BorderRadius.circular(AppRadius.md),
               title: label,
-              titleTextStyle: TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 18,
-                color: isDarkDialog
-                    ? AppColors.darkTextHeading
-                    : AppColors.espressoDark,
-              ),
-              desc:
+              message:
                   'Apakah Anda yakin ingin keluar? Anda perlu login kembali untuk mengakses data room rombongan.',
-              descTextStyle: TextStyle(
-                fontSize: 13.5,
-                height: 1.45,
-                color: isDarkDialog
-                    ? AppColors.darkTextBody
-                    : AppColors.textBody,
-              ),
-              btnCancelText: 'Batal',
-              btnCancelColor: isDarkDialog
-                  ? AppColors.darkSurfaceContainerHigh
-                  : AppColors.canvasCreamSubtle,
-              btnCancelOnPress: () {},
-              btnOkText: 'Ya, Keluar',
-              btnOkColor: AppColors.sosEmergency,
-              btnOkOnPress: () async {
+              confirmText: 'Ya, Keluar',
+              cancelText: 'Batal',
+              confirmColor: AppColors.sosEmergency,
+              isDestructive: true,
+              onConfirm: () async {
                 await Get.find<AppStartupController>().signOut();
               },
-            ).show();
+            );
           },
           style: OutlinedButton.styleFrom(
             side: BorderSide(

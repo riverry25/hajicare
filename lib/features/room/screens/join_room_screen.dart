@@ -7,6 +7,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_card.dart';
 import '../controllers/join_room_controller.dart';
+import '../widgets/qr_scanner_dialog.dart';
 
 class JoinRoomScreen extends StatelessWidget {
   const JoinRoomScreen({super.key});
@@ -313,6 +314,54 @@ class JoinRoomScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // QR Code Scanner Action Button
+        SizedBox(
+          height: 52,
+          child: OutlinedButton.icon(
+            onPressed: controller.isLoading.value
+                ? null
+                : () async {
+                    final scannedCode = await QrScannerDialog.show(context);
+                    if (scannedCode != null && scannedCode.isNotEmpty) {
+                      controller.joinRoom(scannedCode);
+                    }
+                  },
+            icon: const Icon(Icons.qr_code_scanner_rounded, size: 22),
+            label: const Text(
+              'Scan QR Code Pendamping',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: primaryColor,
+              side: BorderSide(color: primaryColor, width: 1.5),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+
+        // Divider with "ATAU KODE MANUAL"
+        Row(
+          children: [
+            Expanded(child: Divider(color: isDark ? AppColors.darkOutlineVariant : AppColors.surfaceVariant)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                'ATAU KODE MANUAL',
+                style: AppTypography.captionSmall.copyWith(
+                  color: AppColors.textSecondaryColor(context),
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ),
+            Expanded(child: Divider(color: isDark ? AppColors.darkOutlineVariant : AppColors.surfaceVariant)),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+
         Text(
           'Kode Room (6 Karakter)',
           style: AppTypography.labelMedium.copyWith(color: headingColor, fontWeight: FontWeight.w700),

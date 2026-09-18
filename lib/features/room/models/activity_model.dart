@@ -6,6 +6,7 @@ enum ActivityType {
   roomCreated,
   roomActivated,
   roomDeactivated,
+  roomUpdated,
   memberJoined,
   memberLeft,
   sosActive,
@@ -50,6 +51,9 @@ class ActivityModel {
         break;
       case 'room_deactivated':
         type = ActivityType.roomDeactivated;
+        break;
+      case 'room_updated':
+        type = ActivityType.roomUpdated;
         break;
       case 'member_joined':
         type = ActivityType.memberJoined;
@@ -99,6 +103,9 @@ class ActivityModel {
       case ActivityType.roomDeactivated:
         rawType = 'room_deactivated';
         break;
+      case ActivityType.roomUpdated:
+        rawType = 'room_updated';
+        break;
       case ActivityType.memberJoined:
         rawType = 'member_joined';
         break;
@@ -134,6 +141,8 @@ class ActivityModel {
         return Icons.check_circle_rounded;
       case ActivityType.roomDeactivated:
         return Icons.pause_circle_filled_rounded;
+      case ActivityType.roomUpdated:
+        return Icons.edit_note_rounded;
       case ActivityType.memberJoined:
         return role?.toLowerCase() == 'pendamping'
             ? Icons.health_and_safety_rounded
@@ -155,6 +164,8 @@ class ActivityModel {
         return AppColors.statusSafe;
       case ActivityType.roomDeactivated:
         return AppColors.textSecondary;
+      case ActivityType.roomUpdated:
+        return AppColors.primaryGold;
       case ActivityType.memberJoined:
         return role?.toLowerCase() == 'pendamping'
             ? AppColors.primaryGold

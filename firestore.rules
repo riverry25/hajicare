@@ -47,10 +47,10 @@ service cloud.firestore {
           isUser(uid) &&
           request.resource.data.role == resource.data.role
         ) ||
-        // Allow pendamping to assign activeRoomId to a jamaah when adding them to the room
+        // Allow pendamping to assign/unassign activeRoomId and reset sosActive for a jamaah
         (
           isPendamping() &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['activeRoomId'])
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['activeRoomId', 'sosActive'])
         )
       );
 
@@ -72,12 +72,29 @@ service cloud.firestore {
         )
       );
 
-      // Admin can update anything, Pendamping of the room can update settings like safeRadius
+      // Admin can update anything, Pendamping can only update room if they are the creator
+      // and cannot modify ownership/identity fields (createdBy, createdByRole, pendampingId, code, createdAt)
       allow update: if isAuthenticated() && (
         isAdmin() ||
-        isPendamping()
+        (
+          isPendamping() &&
+          request.auth.uid == resource.data.createdBy &&
+          request.resource.data.createdBy == resource.data.createdBy &&
+          request.resource.data.createdByRole == resource.data.createdByRole &&
+          request.resource.data.pendampingId == resource.data.pendampingId &&
+          request.resource.data.code == resource.data.code &&
+          request.resource.data.createdAt == resource.data.createdAt
+        )
       );
-      allow delete: if isAdmin();
+
+      // Admin or the Pendamping creator can delete room
+      allow delete: if isAuthenticated() && (
+        isAdmin() ||
+        (
+          isPendamping() &&
+          request.auth.uid == resource.data.createdBy
+        )
+      );
 
       // ── ROOM MEMBERS SUBCOLLECTION ──────────────────────────────────────────
       match /members/{memberUid} {
@@ -86,18 +103,21 @@ service cloud.firestore {
 
         // Membership creation:
         // 1. Admin
-        // 2. Self-join: authenticated user adding themselves to an active room
+        // 2. Self-join: authenticated user adding themselves to an active, existing room
         // 3. Pendamping of this room adding an unassigned jamaah
         allow create: if isAuthenticated() && (
           isAdmin() ||
           (
             isUser(memberUid) &&
+            exists(/databases/$(database)/documents/rooms/$(roomId)) &&
             get(/databases/$(database)/documents/rooms/$(roomId)).data.isActive == true &&
             request.resource.data.role in ['pendamping', 'jamaah']
           ) ||
           (
             isPendamping() &&
             isMemberOfRoom(roomId) &&
+            exists(/databases/$(database)/documents/rooms/$(roomId)) &&
+            get(/databases/$(database)/documents/rooms/$(roomId)).data.isActive == true &&
             request.resource.data.role == 'jamaah'
           )
         );
@@ -111,7 +131,22 @@ service cloud.firestore {
             request.resource.data.diff(resource.data).affectedKeys().hasOnly(['currentLocation', 'locationUpdatedAt'])
           )
         );
-        allow delete: if isAdmin() || isUser(memberUid);
+
+        // Member deletion:
+        // 1. Admin
+        // 2. Self-leave (user leaving their own room)
+        // 3. Pendamping of this room removing a member
+        allow delete: if isAuthenticated() && (
+          isAdmin() ||
+          isUser(memberUid) ||
+          (
+            isPendamping() &&
+            (
+              get(/databases/$(database)/documents/rooms/$(roomId)).data.pendampingId == request.auth.uid ||
+              exists(/databases/$(database)/documents/rooms/$(roomId)/members/$(request.auth.uid))
+            )
+          )
+        );
       }
     }
 
@@ -121,15 +156,48 @@ service cloud.firestore {
       // Pendamping or Admin can send invitation
       allow create: if isAuthenticated() && (isAdmin() || isPendamping());
       // Recipient can update status (accept/reject), or creator/admin
-      allow update: if isAuthenticated();
+      // When accepting, target room must exist and be active
+      allow update: if isAuthenticated() && (
+        request.resource.data.status != 'accepted' || (
+          exists(/databases/$(database)/documents/rooms/$(resource.data.roomId)) &&
+          get(/databases/$(database)/documents/rooms/$(resource.data.roomId)).data.isActive == true
+        )
+      );
       allow delete: if isAdmin();
     }
 
     // ── NOTIFICATIONS COLLECTION ──────────────────────────────────────────────
     match /notifications/{notificationId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated();
+      // User can read notifications addressed to them, or admin
+      allow read: if isAuthenticated() && (
+        isAdmin() ||
+        resource.data.recipientId == request.auth.uid
+      );
+
+      // Create:
+      // - Admin: can create any notification
+      // - Pendamping: can create notifications if they are sender
+      // - Authenticated users for SOS alerts or room invitations
+      allow create: if isAuthenticated() && (
+        isAdmin() ||
+        (
+          isPendamping() &&
+          request.resource.data.senderId == request.auth.uid
+        ) ||
+        (
+          request.resource.data.type in ['sos_alert', 'room_invitation', 'room_deleted', 'room_removed']
+        )
+      );
+
+      // Recipient can update isRead, or admin
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        (
+          resource.data.recipientId == request.auth.uid &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead'])
+        )
+      );
+
       allow delete: if isAdmin();
     }
 

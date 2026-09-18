@@ -11,6 +11,7 @@ import 'core/state/app_settings_controller.dart';
 import 'core/state/app_startup_controller.dart';
 import 'core/state/hajicare_controller.dart';
 import 'core/locales/app_localizations.dart';
+import 'features/notification/controllers/notification_controller.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -34,6 +35,7 @@ void main() async {
   await settings.loadSettings();
   Get.put(AppStartupController(), permanent: true);
   Get.put(HajiCareController(), permanent: true);
+  Get.put(NotificationController(), permanent: true);
 
   runApp(const HajiCareApp());
 }

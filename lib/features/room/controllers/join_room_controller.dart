@@ -141,7 +141,10 @@ class JoinRoomController extends GetxController {
   }
 
   /// Jamaah atau Pendamping: Gabung ke room menggunakan 6-digit room code
-  Future<void> joinRoom() async {
+  Future<void> joinRoom([String? explicitCode]) async {
+    if (explicitCode != null && explicitCode.trim().isNotEmpty) {
+      roomCodeController.text = explicitCode.trim().toUpperCase();
+    }
     final roomCode = roomCodeController.text.trim().toUpperCase();
 
     if (roomCode.isEmpty) {

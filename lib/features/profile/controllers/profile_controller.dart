@@ -8,14 +8,27 @@ class ProfileController extends GetxController {
   final displayName = ''.obs;
   final isSavingName = false.obs;
 
+  // ── Medical & Emergency Data ───────────────────────────────────────────────
+  final bloodType = ''.obs;
+  final allergies = ''.obs;
+  final conditions = ''.obs;
+  final emergencyContact = ''.obs;
+  final isSavingMedical = false.obs;
+
+  bool get hasMedicalData =>
+      bloodType.value.trim().isNotEmpty ||
+      allergies.value.trim().isNotEmpty ||
+      conditions.value.trim().isNotEmpty ||
+      emergencyContact.value.trim().isNotEmpty;
+
   // ── Lifecycle ──────────────────────────────────────────────────────────────
   @override
   void onInit() {
     super.onInit();
-    _loadDisplayName();
+    _loadUserData();
   }
 
-  void _loadDisplayName() {
+  void _loadUserData() async {
     User? user;
     try {
       user = FirebaseAuth.instance.currentUser;
@@ -33,6 +46,21 @@ class ProfileController extends GetxController {
       } else {
         displayName.value = 'Pengguna';
       }
+    }
+
+    try {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      if (doc.exists) {
+        final data = doc.data();
+        if (data != null) {
+          bloodType.value = (data['bloodType'] as String?) ?? '';
+          allergies.value = (data['allergies'] as String?) ?? '';
+          conditions.value = (data['conditions'] as String?) ?? '';
+          emergencyContact.value = (data['emergencyContact'] as String?) ?? '';
+        }
+      }
+    } catch (e) {
+      debugPrint('[ProfileController] Error loading medical data: $e');
     }
   }
 
@@ -89,6 +117,39 @@ class ProfileController extends GetxController {
       rethrow; // Let the UI handle the snackbar
     } finally {
       isSavingName.value = false;
+    }
+  }
+
+  // ── Update medical data ───────────────────────────────────────────────────
+  Future<void> updateMedicalData({
+    required String bloodTypeVal,
+    required String allergiesVal,
+    required String conditionsVal,
+    required String emergencyContactVal,
+  }) async {
+    isSavingMedical.value = true;
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw Exception('User not authenticated');
+
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'bloodType': bloodTypeVal.trim(),
+        'allergies': allergiesVal.trim(),
+        'conditions': conditionsVal.trim(),
+        'emergencyContact': emergencyContactVal.trim(),
+      }, SetOptions(merge: true));
+
+      bloodType.value = bloodTypeVal.trim();
+      allergies.value = allergiesVal.trim();
+      conditions.value = conditionsVal.trim();
+      emergencyContact.value = emergencyContactVal.trim();
+
+      debugPrint('[ProfileController] medical data updated successfully');
+    } catch (e) {
+      debugPrint('[ProfileController] updateMedicalData error: $e');
+      rethrow;
+    } finally {
+      isSavingMedical.value = false;
     }
   }
 }

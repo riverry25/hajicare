@@ -36,9 +36,29 @@ class HajiCareController extends GetxController {
   String? get cachedRoomId => _cachedRoomId ?? activeRoomId.value;
 
   final pendampingName = 'Pendamping Anda'.obs;
+  final pendampingKloter = RxnString();
+  final pendampingMaktab = RxnString();
   final pendampingLocation = Rxn<GeoPoint>();
   final pendampingLocationUpdatedAt = Rxn<DateTime>();
   final isPendampingGpsActive = false.obs;
+
+  /// Kloter aktif: memprioritaskan data dari activeRoom jika ada, fallback ke data user pendamping
+  String? get effectiveKloter {
+    final roomKloter = activeRoom.value?.kloter?.trim();
+    if (roomKloter != null && roomKloter.isNotEmpty) return roomKloter;
+    final userKloter = pendampingKloter.value?.trim();
+    if (userKloter != null && userKloter.isNotEmpty) return userKloter;
+    return null;
+  }
+
+  /// Maktab aktif: memprioritaskan data dari activeRoom jika ada, fallback ke data user pendamping
+  String? get effectiveMaktab {
+    final roomMaktab = activeRoom.value?.maktab?.trim();
+    if (roomMaktab != null && roomMaktab.isNotEmpty) return roomMaktab;
+    final userMaktab = pendampingMaktab.value?.trim();
+    if (userMaktab != null && userMaktab.isNotEmpty) return userMaktab;
+    return null;
+  }
 
   // Real GPS & Realtime Distance State
   final LocationService _locationService = LocationService();
@@ -218,6 +238,8 @@ class HajiCareController extends GetxController {
     calculatedDistance.value = null;
     pendampingLocation.value = null;
     pendampingLocationUpdatedAt.value = null;
+    pendampingKloter.value = null;
+    pendampingMaktab.value = null;
     isPendampingGpsActive.value = false;
     _self = null;
   }
@@ -249,6 +271,11 @@ class HajiCareController extends GetxController {
         final currentRoomId = (data['activeRoomId'] as String?)?.trim();
         final effectiveRoomId = (currentRoomId != null && currentRoomId.isNotEmpty) ? currentRoomId : null;
         _cachedRoomId = effectiveRoomId;
+
+        final userKloter = (data['kloter'] as String?)?.trim();
+        final userMaktab = (data['maktab'] as String?)?.trim();
+        pendampingKloter.value = (userKloter != null && userKloter.isNotEmpty) ? userKloter : null;
+        pendampingMaktab.value = (userMaktab != null && userMaktab.isNotEmpty) ? userMaktab : null;
 
         // Persist snapshot update to SharedPreferences
         SharedPreferences.getInstance().then((prefs) {
@@ -667,6 +694,68 @@ class HajiCareController extends GetxController {
       debugPrint('[HajiCareController] Error leaving room: $e');
       return false;
     }
+  }
+
+  /// Updates current active room settings by its creator pendamping or admin.
+  Future<void> updateCurrentRoomSettings({
+    String? name,
+    String? maktab,
+    String? kloter,
+    double? safeRadius,
+  }) async {
+    final uid = currentUid;
+    final roomId = activeRoomId.value;
+    if (uid == null || roomId == null || roomId.isEmpty) {
+      throw const RoomException('Tidak ada room aktif yang dapat diedit.');
+    }
+
+    final roleStr = _role.value == UserRole.admin ? 'admin' : 'pendamping';
+
+    await _roomService.updateRoomSettings(
+      roomId: roomId,
+      currentUserId: uid,
+      userRole: roleStr,
+      name: name,
+      maktab: maktab,
+      kloter: kloter,
+      safeRadius: safeRadius,
+    );
+
+    if (safeRadius != null && safeRadius > 0) {
+      safeRadiusMeters.value = safeRadius;
+      _recalculateRealDistance();
+    }
+  }
+
+  /// Deletes current active room by its creator pendamping or admin.
+  Future<void> deleteCurrentRoom() async {
+    final uid = currentUid;
+    final roomId = activeRoomId.value;
+    if (uid == null || roomId == null || roomId.isEmpty) {
+      throw const RoomException('Tidak ada room aktif yang dapat dihapus.');
+    }
+
+    final roleStr = _role.value == UserRole.admin ? 'admin' : 'pendamping';
+    final sName = pendampingName.value.isNotEmpty
+        ? pendampingName.value
+        : (FirebaseAuth.instance.currentUser?.displayName ?? 'Pendamping');
+
+    await _roomService.deleteRoomByCreator(
+      roomId: roomId,
+      currentUserId: uid,
+      senderName: sName,
+      userRole: roleStr,
+    );
+
+    // Instant local state reset
+    _clearRoomListeners();
+    activeRoomId.value = null;
+    activeRoom.value = null;
+    _cachedRoomId = null;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(keyActiveRoomId);
+    } catch (_) {}
   }
 
   // ── SOS SYSTEM (TRUE FIRESTORE & REALTIME) ──────────────────────────────────

@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:awesome_dialog/awesome_dialog.dart';
+import '../../../core/utils/app_dialog.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/state/app_startup_controller.dart';
 import '../../../core/state/hajicare_controller.dart';
@@ -133,53 +133,26 @@ class LoginController extends GetxController {
       if (isClosed) return;
 
       // ============================================================
-      // 4. Tampilkan AwesomeDialog saat berhasil login
+      // 4. Tampilkan feedback dialog saat berhasil login
       // ============================================================
 
-      if (Get.context != null) {
-        final ctx = Get.context!;
-        final isDark = AppColors.isDark(ctx);
-        bool hasNavigated = false;
-        void navigate() {
-          if (!hasNavigated) {
-            hasNavigated = true;
-            Get.offAllNamed(destination);
-          }
+      bool hasNavigated = false;
+      void navigate() {
+        if (!hasNavigated) {
+          hasNavigated = true;
+          Get.offAllNamed(destination);
         }
-
-        AwesomeDialog(
-          context: ctx,
-          dialogType: DialogType.success,
-          animType: AnimType.scale,
-          headerAnimationLoop: false,
-          dialogBackgroundColor:
-              isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
-          borderSide: BorderSide(
-            color: AppColors.statusSafe.withValues(alpha: 0.35),
-            width: 1.5,
-          ),
-          buttonsBorderRadius: BorderRadius.circular(12),
-          title: 'Berhasil Masuk',
-          desc: 'Selamat datang kembali di HajiCare! Menyiapkan dashboard...',
-          titleTextStyle: TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 18,
-            color: isDark ? AppColors.darkTextHeading : AppColors.espressoDark,
-          ),
-          descTextStyle: TextStyle(
-            fontSize: 13.5,
-            color: isDark ? AppColors.darkTextBody : AppColors.textBody,
-            height: 1.4,
-          ),
-          btnOkText: 'Lanjut',
-          btnOkColor: AppColors.statusSafe,
-          btnOkOnPress: navigate,
-          autoHide: const Duration(milliseconds: 1500),
-          onDismissCallback: (_) => navigate(),
-        ).show();
-      } else {
-        Get.offAllNamed(destination);
       }
+
+      AppDialog.success(
+        title: 'Berhasil Masuk',
+        message: 'Selamat datang kembali di HajiCare! Menyiapkan dashboard...',
+        okText: 'Lanjut',
+        onOk: navigate,
+        autoDismissDuration: const Duration(milliseconds: 1500),
+        onDismiss: navigate,
+      );
+
     } on FirebaseAuthException catch (e) {
       if (isClosed) return;
 
@@ -325,24 +298,22 @@ class LoginController extends GetxController {
 
       if (isClosed) return;
 
-      // Tampilkan sukses lalu navigasi.
-      if (Get.context != null) {
-        AwesomeDialog(
-          context: Get.context!,
-          dialogType: DialogType.success,
-          animType: AnimType.scale,
-          title: 'Selamat Datang!',
-          desc: 'Login Google berhasil. Mengarahkan ke dashboard...',
-          descTextStyle: const TextStyle(fontSize: 13.5, height: 1.4),
-          autoHide: const Duration(milliseconds: 1500),
-          onDismissCallback: (_) => Get.offAllNamed(destination),
-          btnOkText: 'Masuk Sekarang',
-          btnOkColor: const Color(0xFF2E7D32),
-          btnOkOnPress: () => Get.offAllNamed(destination),
-        ).show();
-      } else {
-        Get.offAllNamed(destination);
+      bool hasNavigatedGoogle = false;
+      void navigateGoogle() {
+        if (!hasNavigatedGoogle) {
+          hasNavigatedGoogle = true;
+          Get.offAllNamed(destination);
+        }
       }
+
+      AppDialog.success(
+        title: 'Selamat Datang!',
+        message: 'Login Google berhasil. Mengarahkan ke dashboard...',
+        okText: 'Masuk Sekarang',
+        onOk: navigateGoogle,
+        autoDismissDuration: const Duration(milliseconds: 1500),
+        onDismiss: navigateGoogle,
+      );
     } on FirebaseAuthException catch (e) {
       if (isClosed) return;
 
@@ -389,18 +360,12 @@ class LoginController extends GetxController {
   }
 
   void _showErrorDialog(String message) {
-    if (isClosed || Get.context == null) return;
-    AwesomeDialog(
-      context: Get.context!,
-      dialogType: DialogType.error,
-      animType: AnimType.scale,
+    if (isClosed) return;
+    AppDialog.error(
       title: 'Gagal Masuk',
-      desc: message,
-      descTextStyle: const TextStyle(fontSize: 13.5, height: 1.45),
-      btnOkText: 'Coba Lagi',
-      btnOkColor: const Color(0xFFB71C1C),
-      btnOkOnPress: () {},
-    ).show();
+      message: message,
+      okText: 'Coba Lagi',
+    );
   }
 
   Future<String?> _promptRoleSelection(BuildContext context) async {

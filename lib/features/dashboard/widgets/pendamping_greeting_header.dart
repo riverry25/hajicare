@@ -25,6 +25,21 @@ class PendampingGreetingHeader extends StatelessWidget {
       final pName = state.pendampingName.value.trim();
       final shortName = pName.isNotEmpty ? pName.split(' ')[0] : 'Pendamping';
 
+      final kloter = state.effectiveKloter;
+      final maktab = state.effectiveMaktab;
+      final room = state.activeRoom.value;
+
+      String groupInfo = '';
+      if (kloter != null && kloter.isNotEmpty && maktab != null && maktab.isNotEmpty) {
+        groupInfo = '${context.tr('kloterLabelShort')} $kloter • ${context.tr('maktabLabelShort')} $maktab';
+      } else if (kloter != null && kloter.isNotEmpty) {
+        groupInfo = '${context.tr('kloterLabelShort')} $kloter';
+      } else if (maktab != null && maktab.isNotEmpty) {
+        groupInfo = '${context.tr('maktabLabelShort')} $maktab';
+      } else if (room != null && room.name.isNotEmpty) {
+        groupInfo = room.name;
+      }
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -64,10 +79,16 @@ class PendampingGreetingHeader extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(width: AppSpacing.sm),
               Flexible(
                 child: Text(
-                  '${context.tr('kloterLabelShort')} 14 JKS • ${context.tr('maktabLabelShort')} 48',
-                  style: AppTypography.caption.copyWith(color: bodyColor),
+                  groupInfo.isNotEmpty ? groupInfo : 'Rombongan Belum Diatur',
+                  style: AppTypography.caption.copyWith(
+                    color: groupInfo.isNotEmpty
+                        ? (isDark ? AppColors.goldLight : AppColors.espressoDark)
+                        : bodyColor.withValues(alpha: 0.6),
+                    fontWeight: groupInfo.isNotEmpty ? FontWeight.w600 : FontWeight.normal,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

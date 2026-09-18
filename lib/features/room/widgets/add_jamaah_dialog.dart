@@ -64,8 +64,7 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
       if (!mounted) return;
       Navigator.of(context).pop(); // Close modal dialog
 
-      AppAlert.success(
-        context,
+      AppDialog.success(
         title: 'Undangan Terkirim',
         message: 'Undangan telah berhasil dikirim ke "$email". Jamaah akan menerima notifikasi untuk menerima atau menolak.',
       );
@@ -73,8 +72,8 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
 
-      AppAlert.error(
-        context,
+      AppDialog.error(
+        context: context,
         title: 'Gagal Mengirim Undangan',
         message: e.toString().replaceAll('Exception: ', ''),
       );

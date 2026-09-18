@@ -67,6 +67,7 @@ class AppColors {
   static const Color distanceWarning = Color(0xFFE68A2E); // High-visibility amber orange
   static const Color statusPositive = Color(0xFF2E8540); // High-contrast green
   static const Color statusWarning = distanceWarning;
+  static const Color statusCaution = distanceWarning;
   static const Color statusDanger = sosEmergency;
   static const Color statusSafe = statusPositive;
 

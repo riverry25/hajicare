@@ -10,6 +10,8 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_card.dart';
 import 'add_jamaah_dialog.dart';
+import 'edit_room_dialog.dart';
+import 'jamaah_detail_sheet.dart';
 
 class ActiveRoomCard extends StatelessWidget {
   final bool isPendamping;
@@ -33,6 +35,8 @@ class ActiveRoomCard extends StatelessWidget {
       final roomId = state.activeRoomId.value;
       final members = state.activeRoomMembers;
       final jamaahCount = isPendamping ? state.jamaahList.length : members.length;
+      final currentUid = state.currentUid;
+      final isCreator = isPendamping && room != null && (currentUid == room.createdBy || state.role == UserRole.admin);
 
       final hasRoom = roomId != null && roomId.isNotEmpty;
       final roomName = room?.name ?? (hasRoom ? 'Room Pemantauan' : 'Belum Ada Room');
@@ -63,6 +67,7 @@ class ActiveRoomCard extends StatelessWidget {
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
                               'Belum Memiliki Room',
@@ -125,54 +130,65 @@ class ActiveRoomCard extends StatelessWidget {
         } else {
           // Jamaah without Room: Locked state with CTA
           return AppCard(
+            padding: const EdgeInsets.all(AppSpacing.md),
             backgroundColor: cardBg,
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(AppSpacing.sm),
-                    decoration: BoxDecoration(
-                      color: AppColors.statusWarning.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(AppRadius.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(AppSpacing.sm),
+                      decoration: BoxDecoration(
+                        color: AppColors.statusWarning.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                      child: const Icon(Icons.lock_outline_rounded, color: AppColors.statusWarning, size: 22),
                     ),
-                    child: const Icon(Icons.lock_outline_rounded, color: AppColors.statusWarning, size: 22),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Belum Terhubung ke Room',
-                          style: AppTypography.titleSmall.copyWith(
-                            color: headingColor,
-                            fontWeight: FontWeight.bold,
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Belum Terhubung ke Room',
+                            style: AppTypography.titleSmall.copyWith(
+                              color: headingColor,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Gabung room untuk mengaktifkan monitoring pendamping dan darurat SOS.',
-                          style: AppTypography.captionSmall.copyWith(color: bodyColor),
-                        ),
-                      ],
+                          const SizedBox(height: 2),
+                          Text(
+                            'Gabung room untuk mengaktifkan monitoring pendamping dan darurat SOS.',
+                            style: AppTypography.captionSmall.copyWith(color: bodyColor, height: 1.3),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  ElevatedButton(
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
                     onPressed: () => Get.toNamed('/join_room'),
+                    icon: const Icon(Icons.login_rounded, size: 16),
+                    label: const Text('Gabung Room', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
                       foregroundColor: isDark ? AppColors.espressoDark : AppColors.surfaceWhite,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      elevation: 0,
                     ),
-                    child: const Text('Gabung Room', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           );
         }
@@ -201,6 +217,7 @@ class ActiveRoomCard extends StatelessWidget {
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           roomName,
@@ -262,27 +279,108 @@ class ActiveRoomCard extends StatelessWidget {
                       ),
                     ),
                   ],
+                  if (isCreator) ...[
+                    const SizedBox(width: 4),
+                    PopupMenuButton<String>(
+                      icon: Icon(Icons.more_vert_rounded, color: bodyColor, size: 22),
+                      tooltip: 'Pengaturan Room',
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        side: BorderSide(color: AppColors.cardBorderColor(context)),
+                      ),
+                      color: cardBg,
+                      elevation: 6,
+                      onSelected: (action) {
+                        if (action == 'edit') {
+                          EditRoomDialog.show(context, room);
+                        } else if (action == 'delete') {
+                          _showDeleteRoomConfirmation(context, state, room);
+                        }
+                      },
+                      itemBuilder: (ctx) => [
+                        PopupMenuItem(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              Icon(Icons.edit_note_rounded, size: 20, color: headingColor),
+                              const SizedBox(width: 10),
+                              Text(
+                                'Edit Room',
+                                style: TextStyle(color: headingColor, fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuDivider(height: 8),
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete_forever_rounded, size: 20, color: AppColors.sosEmergency),
+                              SizedBox(width: 10),
+                              Text(
+                                'Hapus Room',
+                                style: TextStyle(color: AppColors.sosEmergency, fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
 
-              // Action button for Pendamping: "Undang Jamaah ke Room"
+              // Action buttons for Pendamping: "Daftar Jamaah" & "Undang Jamaah"
               if (isPendamping && roomId.isNotEmpty) ...[
                 const Divider(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () => AddJamaahDialog.show(context, roomId),
-                    icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
-                    label: const Text('Undang Jamaah ke Room'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: primaryColor,
-                      side: BorderSide(color: primaryColor.withValues(alpha: 0.5)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _showMemberListSheet(
+                          context,
+                          state: state,
+                          roomId: roomId,
+                          roomName: roomName,
+                          roomCode: roomCode,
+                        ),
+                        icon: const Icon(Icons.people_alt_rounded, size: 16),
+                        label: const Text(
+                          'Daftar Jamaah',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: primaryColor,
+                          side: BorderSide(color: primaryColor.withValues(alpha: 0.5)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                        ),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => AddJamaahDialog.show(context, roomId),
+                        icon: const Icon(Icons.person_add_alt_1_rounded, size: 16),
+                        label: const Text(
+                          'Undang Jamaah',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          foregroundColor: isDark ? AppColors.espressoDark : Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          elevation: 0,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
 
@@ -353,6 +451,7 @@ class ActiveRoomCard extends StatelessWidget {
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
                                 roomName,
@@ -473,6 +572,329 @@ class ActiveRoomCard extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  void _showMemberListSheet(
+    BuildContext context, {
+    required HajiCareController state,
+    required String roomId,
+    required String roomName,
+    required String roomCode,
+  }) {
+    final isDark = AppColors.isDark(context);
+    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
+    final headingColor = isDark ? AppColors.darkTextHeading : AppColors.espressoDark;
+    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Obx(() {
+          final jamaahList = state.jamaahList;
+          return Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(ctx).size.height * 0.75,
+            ),
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+            ),
+            padding: EdgeInsets.only(
+              top: AppSpacing.md,
+              left: AppSpacing.lg,
+              right: AppSpacing.lg,
+              bottom: MediaQuery.of(ctx).padding.bottom + AppSpacing.md,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.darkOutlineVariant : AppColors.surfaceVariant,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Daftar Jamaah di Room',
+                          style: AppTypography.titleMedium.copyWith(
+                            color: headingColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          '${jamaahList.length} Jamaah terdaftar • Ketuk untuk detail / kelola',
+                          style: AppTypography.captionSmall.copyWith(color: bodyColor),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      color: bodyColor,
+                      onPressed: () => Navigator.of(ctx).pop(),
+                    ),
+                  ],
+                ),
+                const Divider(height: 16),
+                if (jamaahList.isEmpty)
+                  Expanded(
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.people_outline_rounded, size: 48, color: bodyColor.withValues(alpha: 0.4)),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Belum ada jamaah di room ini',
+                            style: AppTypography.bodyMedium.copyWith(color: bodyColor),
+                          ),
+                          const SizedBox(height: 12),
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.of(ctx).pop();
+                              AddJamaahDialog.show(context, roomId);
+                            },
+                            icon: const Icon(Icons.person_add_alt_1_rounded, size: 16),
+                            label: const Text('Undang Jamaah Sekarang'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: ListView.separated(
+                      itemCount: jamaahList.length,
+                      separatorBuilder: (_, _) => const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final j = jamaahList[index];
+                        final initial = j.name.trim().isNotEmpty ? j.name.trim()[0].toUpperCase() : 'J';
+                        return ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                          leading: CircleAvatar(
+                            backgroundColor: j.tier.color.withValues(alpha: 0.15),
+                            child: Text(
+                              initial,
+                              style: TextStyle(color: j.tier.color, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          title: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  j.name,
+                                  style: AppTypography.bodyMedium.copyWith(
+                                    color: headingColor,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (j.sosActive) ...[
+                                const SizedBox(width: 4),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.sosEmergency,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Text(
+                                    'SOS',
+                                    style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          subtitle: Row(
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: j.tier.color,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                '${j.tier.label} • ${j.distance.toInt()}m',
+                                style: AppTypography.captionSmall.copyWith(color: bodyColor),
+                              ),
+                            ],
+                          ),
+                          trailing: Icon(Icons.chevron_right_rounded, color: bodyColor),
+                          onTap: () {
+                            Navigator.of(ctx).pop();
+                            JamaahDetailSheet.show(
+                              context,
+                              jamaah: j,
+                              roomId: roomId,
+                              roomName: roomName,
+                              roomCode: roomCode,
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          );
+        });
+      },
+    );
+  }
+
+  void _showDeleteRoomConfirmation(
+    BuildContext context,
+    HajiCareController state,
+    RoomModel room,
+  ) {
+    final headingColor = AppColors.textHeadingColor(context);
+    final bodyColor = AppColors.textBodyColor(context);
+
+    bool isDeleting = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          return AlertDialog(
+            backgroundColor: AppColors.cardBgColor(context),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sheet),
+              side: BorderSide(color: AppColors.cardBorderColor(context)),
+            ),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.sosEmergency.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: const Icon(
+                    Icons.warning_amber_rounded,
+                    color: AppColors.sosEmergency,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Hapus Room?',
+                    style: AppTypography.titleMedium.copyWith(
+                      color: headingColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Apakah Anda yakin ingin menghapus Room "${room.name}" (${room.code})?',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: headingColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Semua Jamaah di dalam Room akan dikeluarkan dan akses mereka ke fitur Room akan dihentikan.',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: bodyColor,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: isDeleting ? null : () => Navigator.of(dialogCtx).pop(),
+                child: Text(
+                  'Batal',
+                  style: TextStyle(
+                    color: bodyColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.sosEmergency,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  elevation: 0,
+                ),
+                onPressed: isDeleting
+                    ? null
+                    : () async {
+                        setDialogState(() => isDeleting = true);
+                        try {
+                          await state.deleteCurrentRoom();
+                          if (dialogCtx.mounted) {
+                            Navigator.of(dialogCtx).pop();
+                          }
+                          if (context.mounted) {
+                            AppAlert.success(
+                              context,
+                              title: 'Room Dihapus',
+                              message: 'Room "${room.name}" telah berhasil dihapus.',
+                            );
+                          }
+                        } catch (e) {
+                          if (dialogCtx.mounted) {
+                            setDialogState(() => isDeleting = false);
+                          }
+                          if (context.mounted) {
+                            AppAlert.error(
+                              context,
+                              title: 'Gagal Menghapus',
+                              message: e.toString().replaceFirst('Exception: ', ''),
+                            );
+                          }
+                        }
+                      },
+                icon: isDeleting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.delete_forever_rounded, size: 18),
+                label: Text(
+                  isDeleting ? 'Menghapus...' : 'Hapus Room',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }

@@ -21,6 +21,7 @@ import '../widgets/jamaah_profile_header.dart';
 import '../widgets/jamaah_service_grid.dart';
 import '../widgets/jamaah_sos_banner.dart';
 import '../../room/widgets/active_room_card.dart';
+import '../../notification/controllers/notification_controller.dart';
 
 class DashboardJamaahScreen extends StatelessWidget {
   const DashboardJamaahScreen({super.key});
@@ -78,6 +79,41 @@ class DashboardJamaahScreen extends StatelessWidget {
                 tooltip: context.tr('notificationTooltip'),
                 onPressed: () => Get.toNamed(AppRoutes.notification),
               ),
+              Obx(() {
+                if (!Get.isRegistered<NotificationController>()) return const SizedBox.shrink();
+                final notifCtrl = Get.find<NotificationController>();
+                final totalUnread = notifCtrl.unreadCount.value + notifCtrl.pendingInvitations.length;
+                if (totalUnread <= 0) return const SizedBox.shrink();
+
+                return Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: AppColors.sosEmergency,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isDark ? AppColors.darkScaffold : AppColors.canvasCream,
+                        width: 1.5,
+                      ),
+                    ),
+                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                    child: Center(
+                      child: Text(
+                        totalUnread > 9 ? '9+' : '$totalUnread',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          height: 1.0,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                );
+              }),
               if (jamaah.separatedMode)
                 Positioned(
                   top: 12,
