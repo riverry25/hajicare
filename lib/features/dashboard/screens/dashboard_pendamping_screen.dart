@@ -37,12 +37,9 @@ class DashboardPendampingScreen extends StatelessWidget {
     return Obx(() {
       final selectedJamaah =
           (state.jamaahList.isNotEmpty &&
-                  state.jamaahList.length >
-                      dashboardCtrl.selectedJamaahIndex.value)
-              ? state.jamaahList[dashboardCtrl.selectedJamaahIndex.value]
-              : (state.jamaahList.isNotEmpty
-                  ? state.jamaahList.first
-                  : state.self);
+              state.jamaahList.length > dashboardCtrl.selectedJamaahIndex.value)
+          ? state.jamaahList[dashboardCtrl.selectedJamaahIndex.value]
+          : (state.jamaahList.isNotEmpty ? state.jamaahList.first : state.self);
 
       return Scaffold(
         backgroundColor: AppColors.scaffoldColor(context),
@@ -82,10 +79,7 @@ class DashboardPendampingScreen extends StatelessWidget {
         icon: Icons.mosque_rounded,
         actions: [
           IconButton(
-            icon: Icon(
-              Icons.campaign_outlined,
-              color: headingColor,
-            ),
+            icon: Icon(Icons.campaign_outlined, color: headingColor),
             tooltip: 'Kirim Notifikasi Room',
             onPressed: () => NotificationComposerDialog.show(context),
           ),
@@ -93,17 +87,17 @@ class DashboardPendampingScreen extends StatelessWidget {
             alignment: Alignment.center,
             children: [
               IconButton(
-                icon: Icon(
-                  Icons.notifications_outlined,
-                  color: headingColor,
-                ),
+                icon: Icon(Icons.notifications_outlined, color: headingColor),
                 tooltip: context.tr('notificationTooltip'),
                 onPressed: () => Get.toNamed(AppRoutes.notification),
               ),
               Obx(() {
-                if (!Get.isRegistered<NotificationController>()) return const SizedBox.shrink();
+                if (!Get.isRegistered<NotificationController>())
+                  return const SizedBox.shrink();
                 final notifCtrl = Get.find<NotificationController>();
-                final totalUnread = notifCtrl.unreadCount.value + notifCtrl.pendingInvitations.length;
+                final totalUnread =
+                    notifCtrl.unreadCount.value +
+                    notifCtrl.pendingInvitations.length;
                 if (totalUnread <= 0) return const SizedBox.shrink();
 
                 return Positioned(
@@ -115,11 +109,16 @@ class DashboardPendampingScreen extends StatelessWidget {
                       color: AppColors.sosEmergency,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: isDark ? AppColors.darkScaffold : AppColors.canvasCream,
+                        color: isDark
+                            ? AppColors.darkScaffold
+                            : AppColors.canvasCream,
                         width: 1.5,
                       ),
                     ),
-                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
                     child: Center(
                       child: Text(
                         totalUnread > 9 ? '9+' : '$totalUnread',
@@ -146,7 +145,9 @@ class DashboardPendampingScreen extends StatelessWidget {
                       color: AppColors.sosEmergency,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: isDark ? AppColors.darkScaffold : AppColors.canvasCream,
+                        color: isDark
+                            ? AppColors.darkScaffold
+                            : AppColors.canvasCream,
                         width: 2,
                       ),
                     ),
@@ -163,7 +164,9 @@ class DashboardPendampingScreen extends StatelessWidget {
                 color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isDark ? AppColors.darkOutlineVariant : AppColors.goldLight,
+                  color: isDark
+                      ? AppColors.darkOutlineVariant
+                      : AppColors.goldLight,
                   width: 1.5,
                 ),
               ),
@@ -188,8 +191,10 @@ class DashboardPendampingScreen extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           const ActiveRoomCard(isPendamping: true),
           const SizedBox(height: AppSpacing.lg),
-          if (state.activeRoomId.value != null && state.jamaahList.isNotEmpty) ...[
-            if (state.anyJamaahSeparated) _buildSeparatedBanner(context, state, isDark),
+          if (state.activeRoomId.value != null &&
+              state.jamaahList.isNotEmpty) ...[
+            if (state.anyJamaahSeparated)
+              _buildSeparatedBanner(context, state, isDark),
             PendampingJamaahSelector(
               state: state,
               selectedIndex: dashboardCtrl.selectedJamaahIndex.value,
@@ -211,7 +216,8 @@ class DashboardPendampingScreen extends StatelessWidget {
                 AppAlert.confirm(
                   context,
                   title: 'Akhiri Darurat SOS',
-                  message: 'Apakah situasi darurat jamaah sudah teratasi? Sinyal SOS akan dinonaktifkan.',
+                  message:
+                      'Apakah situasi darurat jamaah sudah teratasi? Sinyal SOS akan dinonaktifkan.',
                   confirmText: 'Ya, Akhiri SOS',
                   cancelText: 'Batal',
                   onConfirm: () async {
@@ -238,12 +244,18 @@ class DashboardPendampingScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSeparatedBanner(BuildContext context, HajiCareController state, bool isDark) {
+  Widget _buildSeparatedBanner(
+    BuildContext context,
+    HajiCareController state,
+    bool isDark,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.lg),
       padding: const EdgeInsets.all(AppSpacing.cardPadding),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurfaceContainer : AppColors.errorContainer,
+        color: isDark
+            ? AppColors.darkSurfaceContainer
+            : AppColors.errorContainer,
         borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
           color: AppColors.sosEmergency.withValues(alpha: 0.5),
@@ -258,7 +270,11 @@ class DashboardPendampingScreen extends StatelessWidget {
               color: AppColors.sosEmergency,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.warning_rounded, color: Colors.white, size: 20),
+            child: const Icon(
+              Icons.warning_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
@@ -292,14 +308,16 @@ class DashboardPendampingScreen extends StatelessWidget {
     LatLng mapCenter = myPos != null
         ? LatLng(myPos.latitude, myPos.longitude)
         : (pendGeo != null
-            ? LatLng(pendGeo.latitude, pendGeo.longitude)
-            : const LatLng(21.3891, 39.8579)); // Mina fallback
+              ? LatLng(pendGeo.latitude, pendGeo.longitude)
+              : const LatLng(21.3891, 39.8579)); // Mina fallback
 
     final LatLng? targetJamaahLatLng = jamaahGeo != null
         ? LatLng(jamaahGeo.latitude, jamaahGeo.longitude)
         : null;
 
-    final LatLng? selfLatLng = myPos != null ? LatLng(myPos.latitude, myPos.longitude) : null;
+    final LatLng? selfLatLng = myPos != null
+        ? LatLng(myPos.latitude, myPos.longitude)
+        : null;
 
     final hasPositions = selfLatLng != null && targetJamaahLatLng != null;
 
@@ -315,7 +333,9 @@ class DashboardPendampingScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkPrimaryContainer : AppColors.canvasCream,
+                      color: isDark
+                          ? AppColors.darkPrimaryContainer
+                          : AppColors.canvasCream,
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     child: const Icon(
@@ -335,12 +355,16 @@ class DashboardPendampingScreen extends StatelessWidget {
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 3,
+                ),
                 decoration: BoxDecoration(
-                  color: (state.isMyGpsActive.value
-                          ? AppColors.statusSafe
-                          : AppColors.error)
-                      .withValues(alpha: 0.15),
+                  color:
+                      (state.isMyGpsActive.value
+                              ? AppColors.statusSafe
+                              : AppColors.error)
+                          .withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
                 child: Row(
@@ -389,8 +413,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                   children: [
                     fmap.TileLayer(
                       urlTemplate:
-                          'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-                      subdomains: const ['a', 'b', 'c', 'd'],
+                          'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=cb1_3juo_1_5f067ded7575ce8152ef26fc',
                       userAgentPackageName: 'com.example.hajicare',
                     ),
                     if (selfLatLng != null && targetJamaahLatLng != null)
@@ -446,7 +469,9 @@ class DashboardPendampingScreen extends StatelessWidget {
                   Icon(
                     Icons.open_in_full,
                     size: 15,
-                    color: isDark ? AppColors.darkPrimary : AppColors.espressoDark,
+                    color: isDark
+                        ? AppColors.darkPrimary
+                        : AppColors.espressoDark,
                   ),
                   const SizedBox(width: 6),
                   Flexible(
@@ -497,7 +522,11 @@ class DashboardPendampingScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureGrid(BuildContext context, DashboardController dashboardCtrl, bool isDark) {
+  Widget _buildFeatureGrid(
+    BuildContext context,
+    DashboardController dashboardCtrl,
+    bool isDark,
+  ) {
     final headingColor = AppColors.textHeadingColor(context);
     final bodyColor = AppColors.textBodyColor(context);
     final textScale = Get.isRegistered<AppSettingsController>()
@@ -592,7 +621,9 @@ class DashboardPendampingScreen extends StatelessWidget {
                         ),
                         child: Icon(
                           item['icon'] as IconData,
-                          color: isDark ? AppColors.goldLight : AppColors.espressoDark,
+                          color: isDark
+                              ? AppColors.goldLight
+                              : AppColors.espressoDark,
                           size: 24,
                         ),
                       ),
