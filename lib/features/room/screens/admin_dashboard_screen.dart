@@ -1,4 +1,4 @@
-﻿import 'dart:math' as math;
+import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -118,8 +118,9 @@ class _AdminDashboardHome extends StatelessWidget {
                   'assets/icon.jpeg',
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => CircleAvatar(
-                    backgroundColor:
-                        isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+                    backgroundColor: isDark
+                        ? AppColors.darkSurface
+                        : AppColors.surfaceWhite,
                     child: Icon(Icons.person, color: headingColor, size: 20),
                   ),
                 ),
@@ -152,110 +153,91 @@ class _AdminDashboardHome extends StatelessWidget {
           ],
         ),
         actions: [
-          // Broadcast Button (Circular button)
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isDark
-                    ? AppColors.darkCardBorder
-                    : Colors.black.withValues(alpha: 0.06),
-              ),
-            ),
+          // Broadcast Button
+          SizedBox(
+            width: 36,
+            height: 36,
             child: IconButton(
               padding: EdgeInsets.zero,
-              icon: Icon(Icons.campaign_outlined, color: headingColor, size: 20),
+              constraints: const BoxConstraints(),
+              icon: Icon(
+                Icons.campaign_outlined,
+                color: headingColor,
+                size: 21,
+              ),
               tooltip: 'Kirim Notifikasi / Siaran',
               onPressed: () => NotificationComposerDialog.show(context),
             ),
           ),
-          const SizedBox(width: 8),
 
-          // Notification with Coral Badge Dot (Circular button)
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.darkCardBorder
-                        : Colors.black.withValues(alpha: 0.06),
-                  ),
-                ),
-                child: IconButton(
+          const SizedBox(width: 4),
+
+          // Notification with Badge Dot tightly hugging the bell
+          SizedBox(
+            width: 36,
+            height: 36,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                IconButton(
                   padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
                   icon: Icon(
                     Icons.notifications_outlined,
                     color: headingColor,
-                    size: 20,
+                    size: 21,
                   ),
                   tooltip: 'Notifikasi',
                   onPressed: () => Get.toNamed(AppRoutes.notification),
                 ),
-              ),
-              Obx(() {
-                final notifCtrl = Get.isRegistered<NotificationController>()
-                    ? Get.find<NotificationController>()
-                    : null;
-                final totalUnread = notifCtrl?.unreadCount.value ?? 0;
-                final hasSos = controller.activeSosCount.value > 0;
+                Obx(() {
+                  final notifCtrl = Get.isRegistered<NotificationController>()
+                      ? Get.find<NotificationController>()
+                      : null;
+                  final totalUnread = notifCtrl?.unreadCount.value ?? 0;
+                  final hasSos = controller.activeSosCount.value > 0;
 
-                if (totalUnread <= 0 && !hasSos) {
-                  return const SizedBox.shrink();
-                }
+                  if (totalUnread <= 0 && !hasSos) {
+                    return const SizedBox.shrink();
+                  }
 
-                return Positioned(
-                  top: -2,
-                  right: -2,
-                  child: Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: hasSos
-                          ? AppColors.sosEmergency
-                          : AppColors.sosEmergency.withValues(alpha: 0.55),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: scaffoldBg, width: 2),
+                  return Positioned(
+                    top: 5,
+                    right: 6,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: AppColors.sosEmergency,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: scaffoldBg, width: 1.5),
+                      ),
                     ),
-                  ),
-                );
-              }),
-            ],
-          ),
-          const SizedBox(width: 8),
-
-          // Logout Button (Circular button)
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isDark
-                    ? AppColors.darkCardBorder
-                    : Colors.black.withValues(alpha: 0.06),
-              ),
+                  );
+                }),
+              ],
             ),
+          ),
+
+          const SizedBox(width: 4),
+
+          // Logout Button
+          SizedBox(
+            width: 36,
+            height: 36,
             child: IconButton(
               padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
               icon: const Icon(
                 Icons.logout_rounded,
                 color: AppColors.error,
-                size: 18,
+                size: 20,
               ),
               tooltip: 'Keluar Admin',
               onPressed: () => controller.promptSignOut(context),
             ),
           ),
+
           const SizedBox(width: AppSpacing.screenEdgeGutter),
         ],
       ),
@@ -365,22 +347,16 @@ class _AdminDashboardHome extends StatelessWidget {
     final hasSos = activeSos > 0;
 
     final safePercentage = totalJamaah > 0
-        ? (((totalJamaah - activeSos) / totalJamaah) * 100).clamp(0, 100).round()
+        ? (((totalJamaah - activeSos) / totalJamaah) * 100)
+              .clamp(0, 100)
+              .round()
         : 100;
 
     // Signature HajiCare Hero Gradient (matches dashboard_jamaah_screen)
     final heroGradient = LinearGradient(
       colors: isDark
-          ? const [
-              Color(0xFF1B120B),
-              Color(0xFF281A11),
-              Color(0xFF332115),
-            ]
-          : const [
-              Color(0xFF26170E),
-              Color(0xFF382317),
-              Color(0xFF4A3020),
-            ],
+          ? const [Color(0xFF1B120B), Color(0xFF281A11), Color(0xFF332115)]
+          : const [Color(0xFF26170E), Color(0xFF382317), Color(0xFF4A3020)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     );
@@ -417,7 +393,10 @@ class _AdminDashboardHome extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -426,11 +405,15 @@ class _AdminDashboardHome extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        hasSos ? Icons.warning_amber_rounded : Icons.shield_rounded,
+                        hasSos
+                            ? Icons.warning_amber_rounded
+                            : Icons.shield_rounded,
                         size: 14,
                         color: hasSos
                             ? AppColors.sosEmergency
-                            : (isDark ? AppColors.goldLight : AppColors.primaryGold),
+                            : (isDark
+                                  ? AppColors.goldLight
+                                  : AppColors.primaryGold),
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -440,7 +423,9 @@ class _AdminDashboardHome extends StatelessWidget {
                         style: AppTypography.captionSmall.copyWith(
                           color: hasSos
                               ? const Color(0xFFFF8080)
-                              : (isDark ? AppColors.goldLight : const Color(0xFFFBF4ED)),
+                              : (isDark
+                                    ? AppColors.goldLight
+                                    : const Color(0xFFFBF4ED)),
                           fontWeight: FontWeight.w800,
                           fontSize: 10.5,
                           letterSpacing: 0.3,
@@ -495,7 +480,10 @@ class _AdminDashboardHome extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -539,7 +527,9 @@ class _AdminDashboardHome extends StatelessWidget {
                     painter: _HeroGaugePainter(
                       progress: gaugeProgress,
                       trackColor: Colors.white.withValues(alpha: 0.14),
-                      progressColor: isDark ? AppColors.goldLight : AppColors.primaryGold,
+                      progressColor: isDark
+                          ? AppColors.goldLight
+                          : AppColors.primaryGold,
                       dotColor: isDark ? Colors.white : AppColors.goldLight,
                     ),
                     child: SizedBox(
@@ -854,6 +844,7 @@ class _AdminDashboardHome extends StatelessWidget {
   }
 
   // �f¢â�,�â�?s¬�f¢â�,�â�?s¬ 3. Operational Status & 4-Metric Breakdown (Reference: Breakfast Card) �f¢â�,�â�?s¬
+  // ── 3. Operational Status Cards (Reference: 4-Card Staggered Bento Grid) ──
   Widget _buildStatusBreakdownCard(
     BuildContext context,
     bool isDark,
@@ -867,209 +858,421 @@ class _AdminDashboardHome extends StatelessWidget {
     final activeSos = controller.activeSosCount.value;
     final hasSos = activeSos > 0;
 
-    final cardBg = isDark ? AppColors.darkSurfaceContainer : AppColors.emeraldLight;
+    final cardBg = isDark
+        ? AppColors.darkSurfaceContainer
+        : AppColors.surfaceWhite;
     final borderColor = isDark
         ? AppColors.darkCardBorder
-        : AppColors.emeraldIslamic.withValues(alpha: 0.20);
-    final textColor = isDark ? AppColors.darkTextHeading : AppColors.emeraldDark;
-    final subtextColor = isDark ? AppColors.darkTextBody : AppColors.emeraldIslamic;
+        : AppColors.lightCardBorder;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Top Header: Section Title + SOS Warning + Create Room Action (+)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.darkSurfaceContainerHigh
+                        : AppColors.canvasCreamSubtle,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.dashboard_customize_rounded,
+                    size: 16,
+                    color: headingColor,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Status & Koordinasi',
+                      style: AppTypography.titleSmall.copyWith(
+                        color: headingColor,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14.5,
+                      ),
+                    ),
+                    Text(
+                      hasSos
+                          ? '$activeSos SOS Memerlukan Tindakan Segera'
+                          : 'Kondisi Seluruh Room Aman & Normal',
+                      style: AppTypography.captionSmall.copyWith(
+                        color: hasSos
+                            ? AppColors.sosEmergency
+                            : bodyColor.withValues(alpha: 0.7),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            InkWell(
+              onTap: () => _showCreateRoomSheet(context, controller),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.darkSurfaceContainer
+                      : AppColors.surfaceWhite,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.darkCardBorder
+                        : AppColors.lightCardBorder,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(Icons.add_rounded, size: 20, color: headingColor),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+
+        // 4 Staggered Bento Cards matching reference layout
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Left Column: Jamaah (Tall) & Room (Short)
+            Expanded(
+              child: Column(
+                children: [
+                  _buildMetricBentoCard(
+                    context: context,
+                    title: 'Jamaah',
+                    value: '$totalJamaah',
+                    subtitle: 'Data Jamaah',
+                    icon: Icons.groups_rounded,
+                    height: 156,
+                    isDark: isDark,
+                    cardBg: cardBg,
+                    borderColor: borderColor,
+                    headingColor: headingColor,
+                    bodyColor: bodyColor,
+                    circleBg: isDark
+                        ? AppColors.emeraldIslamic.withValues(alpha: 0.22)
+                        : AppColors.emeraldLight,
+                    iconColor: AppColors.emeraldIslamic,
+                    accentColor: AppColors.emeraldIslamic,
+                    onTap: () => _showAllJamaahSheet(
+                      context,
+                      controller,
+                      isDark,
+                      cardBg,
+                      headingColor,
+                      bodyColor,
+                      primaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildMetricBentoCard(
+                    context: context,
+                    title: 'Room',
+                    value: '$activeRooms',
+                    subtitle: 'Room Aktif',
+                    icon: Icons.meeting_room_rounded,
+                    height: 120,
+                    isDark: isDark,
+                    cardBg: cardBg,
+                    borderColor: borderColor,
+                    headingColor: headingColor,
+                    bodyColor: bodyColor,
+                    circleBg: isDark
+                        ? AppColors.darkSurfaceContainerHighest
+                        : AppColors.canvasCreamSubtle,
+                    iconColor: isDark
+                        ? AppColors.goldLight
+                        : AppColors.secondary,
+                    accentColor: AppColors.secondary,
+                    onTap: () => _showActiveRoomsSheet(
+                      context,
+                      controller,
+                      isDark,
+                      cardBg,
+                      headingColor,
+                      bodyColor,
+                      primaryColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // Right Column: Petugas (Short) & Pusat Alert / SOS (Tall)
+            Expanded(
+              child: Column(
+                children: [
+                  _buildMetricBentoCard(
+                    context: context,
+                    title: 'Petugas',
+                    value: '$totalPendamping',
+                    subtitle: 'Siaga Maktab',
+                    icon: Icons.badge_rounded,
+                    height: 120,
+                    isDark: isDark,
+                    cardBg: cardBg,
+                    borderColor: borderColor,
+                    headingColor: headingColor,
+                    bodyColor: bodyColor,
+                    circleBg: isDark
+                        ? AppColors.tanMedium.withValues(alpha: 0.22)
+                        : AppColors.secondaryContainer.withValues(alpha: 0.45),
+                    iconColor: isDark
+                        ? AppColors.tanLight
+                        : AppColors.espressoDark,
+                    accentColor: AppColors.tanMedium,
+                    onTap: () => _showAllPendampingSheet(
+                      context,
+                      controller,
+                      isDark,
+                      cardBg,
+                      headingColor,
+                      bodyColor,
+                      primaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildMetricBentoCard(
+                    context: context,
+                    title: 'Pusat Alert',
+                    value: '$activeSos',
+                    subtitle: hasSos ? '$activeSos Perlu Aksi' : 'Kondisi Aman',
+                    icon: hasSos
+                        ? Icons.warning_amber_rounded
+                        : Icons.health_and_safety_rounded,
+                    height: 156,
+                    isDark: isDark,
+                    cardBg: hasSos
+                        ? (isDark
+                              ? const Color(0xFF381418)
+                              : AppColors.errorContainer.withValues(
+                                  alpha: 0.35,
+                                ))
+                        : cardBg,
+                    borderColor: hasSos
+                        ? AppColors.sosEmergency.withValues(alpha: 0.5)
+                        : borderColor,
+                    headingColor: hasSos
+                        ? AppColors.sosEmergency
+                        : headingColor,
+                    bodyColor: hasSos ? AppColors.sosEmergency : bodyColor,
+                    circleBg: hasSos
+                        ? AppColors.sosEmergency.withValues(alpha: 0.2)
+                        : (isDark
+                              ? AppColors.statusSafe.withValues(alpha: 0.15)
+                              : AppColors.emeraldLight),
+                    iconColor: hasSos
+                        ? AppColors.sosEmergency
+                        : AppColors.statusSafe,
+                    accentColor: hasSos
+                        ? AppColors.sosEmergency
+                        : AppColors.statusSafe,
+                    isAlert: hasSos,
+                    onTap: () => _showAlertCenterSheet(
+                      context,
+                      controller,
+                      dashboardCtrl,
+                      isDark,
+                      cardBg,
+                      headingColor,
+                      bodyColor,
+                      primaryColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMetricBentoCard({
+    required BuildContext context,
+    required String title,
+    required String value,
+    required String subtitle,
+    required IconData icon,
+    required double height,
+    required bool isDark,
+    required Color cardBg,
+    required Color borderColor,
+    required Color headingColor,
+    required Color bodyColor,
+    required Color circleBg,
+    required Color iconColor,
+    required Color accentColor,
+    required VoidCallback onTap,
+    bool isAlert = false,
+  }) {
+    final isTall = height > 130;
 
     return Container(
+      height: height,
+      width: double.infinity,
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: borderColor, width: 1.2),
+        border: Border.all(color: borderColor, width: isAlert ? 1.4 : 1.0),
         boxShadow: [
           BoxShadow(
-            color: (isDark ? Colors.black : AppColors.emeraldDark).withValues(
-              alpha: isDark ? 0.3 : 0.06,
-            ),
-            blurRadius: 14,
+            color:
+                (isAlert
+                        ? AppColors.sosEmergency
+                        : (isDark ? Colors.black : AppColors.espressoDark))
+                    .withValues(alpha: isDark ? 0.28 : (isAlert ? 0.12 : 0.04)),
+            blurRadius: isAlert ? 12 : 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Top Row: Title + Status + Action (+) in circle
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: isDark ? 0.16 : 0.7),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.mosque_rounded,
-                      size: 16,
-                      color: textColor,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Status & Koordinasi',
-                        style: AppTypography.titleSmall.copyWith(
-                          color: textColor,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14.5,
-                        ),
-                      ),
-                      Text(
-                        hasSos
-                            ? '$activeSos SOS Memerlukan Tindakan'
-                            : 'Kondisi Seluruh Room Normal',
-                        style: AppTypography.captionSmall.copyWith(
-                          color: hasSos ? AppColors.sosEmergency : subtextColor,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              InkWell(
-                onTap: () => _showCreateRoomSheet(context, controller),
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-                child: Container(
-                  width: 32,
-                  height: 32,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(24),
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onTap();
+          },
+          borderRadius: BorderRadius.circular(24),
+          splashColor: (isAlert ? AppColors.sosEmergency : accentColor)
+              .withValues(alpha: 0.12),
+          highlightColor: (isAlert ? AppColors.sosEmergency : accentColor)
+              .withValues(alpha: 0.06),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: isTall ? 12 : 10,
+              vertical: isTall ? 12 : 10,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Circular Icon (Reference: circle icon badge)
+                Container(
+                  width: isTall ? 44 : 36,
+                  height: isTall ? 44 : 36,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: isDark ? 0.2 : 0.8),
+                    color: circleBg,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
+                        color: (isDark ? Colors.black : iconColor).withValues(
+                          alpha: isDark ? 0.2 : 0.08,
+                        ),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                  child: Icon(Icons.add_rounded, size: 20, color: textColor),
+                  child: Icon(icon, size: isTall ? 22 : 18, color: iconColor),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md + 2),
+                SizedBox(height: isTall ? 8 : 5),
 
-          // 4-Column Metric Breakdown (Reference: Proteins, Fats, Carbs, RDC)
-          Row(
-            children: [
-              _buildBreakdownColumn('Room', '$activeRooms', textColor, subtextColor),
-              _buildBreakdownColumn('Jamaah', '$totalJamaah', textColor, subtextColor),
-              _buildBreakdownColumn('Petugas', '$totalPendamping', textColor, subtextColor),
-              _buildBreakdownColumn(
-                'SOS',
-                '$activeSos',
-                hasSos ? AppColors.sosEmergency : textColor,
-                subtextColor,
-                isAlert: hasSos,
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-
-          // Bottom Row: Dropdown pill + Action button
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              InkWell(
-                onTap: () => _showActiveRoomsSheet(
-                  context,
-                  controller,
-                  isDark,
-                  isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
-                  isDark ? AppColors.darkTextHeading : AppColors.espressoDark,
-                  isDark ? AppColors.darkTextBody : AppColors.textBody,
-                  isDark ? AppColors.darkPrimary : AppColors.primaryGold,
-                ),
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: isDark ? 0.16 : 0.65),
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                // Metric Number / Count
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: isTall ? 22 : 18,
+                    fontWeight: FontWeight.w900,
+                    color: isAlert ? AppColors.sosEmergency : headingColor,
+                    letterSpacing: -0.5,
+                    height: 1.1,
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        hasSos ? 'Pusat Alert v' : 'Room Pantau v',
-                        style: AppTypography.captionSmall.copyWith(
-                          color: textColor,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 11.5,
+                ),
+                const SizedBox(height: 2),
+
+                // Title Label
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: AppTypography.captionSmall.copyWith(
+                    color: isAlert ? AppColors.sosEmergency : headingColor,
+                    fontWeight: FontWeight.w800,
+                    fontSize: isTall ? 12.5 : 11.5,
+                  ),
+                ),
+
+                // Subtitle / Pill Badge
+                if (isTall) ...[
+                  const SizedBox(height: 5),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 2.5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: (isAlert ? AppColors.sosEmergency : accentColor)
+                          .withValues(alpha: isDark ? 0.18 : 0.08),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.captionSmall.copyWith(
+                              color: isAlert
+                                  ? AppColors.sosEmergency
+                                  : accentColor,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 9.5,
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        size: 15,
-                        color: textColor,
-                      ),
-                    ],
+                        const SizedBox(width: 3),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 7.5,
+                          color: isAlert ? AppColors.sosEmergency : accentColor,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ),
-              InkWell(
-                onTap: () => dashboardCtrl.changeTab(1),
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: isDark ? 0.16 : 0.65),
-                    shape: BoxShape.circle,
+                ] else ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: AppTypography.captionSmall.copyWith(
+                      color: bodyColor.withValues(alpha: 0.65),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 9.5,
+                    ),
                   ),
-                  child: Icon(Icons.radar_rounded, size: 16, color: textColor),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBreakdownColumn(
-    String label,
-    String value,
-    Color textColor,
-    Color subtextColor, {
-    bool isAlert = false,
-  }) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: AppTypography.captionSmall.copyWith(
-              color: subtextColor,
-              fontWeight: FontWeight.w600,
-              fontSize: 11,
+                ],
+              ],
             ),
           ),
-          const SizedBox(height: 3),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 19,
-              fontWeight: FontWeight.w900,
-              color: textColor,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -1105,8 +1308,12 @@ class _AdminDashboardHome extends StatelessWidget {
                 subtitle: 'Grup/Kloter baru',
                 icon: Icons.add_business_rounded,
                 color: isDark ? AppColors.tanLight : AppColors.secondary,
-                cardBg: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceContainerLow,
-                headingColor: isDark ? AppColors.darkTextHeading : AppColors.primaryContainer,
+                cardBg: isDark
+                    ? AppColors.darkSurfaceContainer
+                    : AppColors.surfaceContainerLow,
+                headingColor: isDark
+                    ? AppColors.darkTextHeading
+                    : AppColors.primaryContainer,
                 isDark: isDark,
                 onTap: () => _showCreateRoomSheet(context, controller),
               ),
@@ -1146,13 +1353,21 @@ class _AdminDashboardHome extends StatelessWidget {
             Expanded(
               child: _QuickActionButton(
                 label: 'Pusat Alert',
-                subtitle: activeSos > 0 ? '$activeSos SOS aktif' : 'Pusat notifikasi',
+                subtitle: activeSos > 0
+                    ? '$activeSos SOS aktif'
+                    : 'Pusat notifikasi',
                 icon: Icons.notification_important_rounded,
-                color: activeSos > 0 ? AppColors.sosEmergency : AppColors.statusSafe,
+                color: activeSos > 0
+                    ? AppColors.sosEmergency
+                    : AppColors.statusSafe,
                 cardBg: activeSos > 0
-                    ? (isDark ? AppColors.darkSurface : AppColors.errorContainer)
+                    ? (isDark
+                          ? AppColors.darkSurface
+                          : AppColors.errorContainer)
                     : cardBg,
-                headingColor: activeSos > 0 ? AppColors.sosEmergency : headingColor,
+                headingColor: activeSos > 0
+                    ? AppColors.sosEmergency
+                    : headingColor,
                 isDark: isDark,
                 onTap: () {
                   if (activeSos > 0) {
@@ -1252,13 +1467,17 @@ class _AdminDashboardHome extends StatelessWidget {
                   child: Icon(
                     Icons.explore_rounded,
                     size: 18,
-                    color: isDark ? const Color(0xFFFEE685) : const Color(0xFF6B4D00),
+                    color: isDark
+                        ? const Color(0xFFFEE685)
+                        : const Color(0xFF6B4D00),
                   ),
                 ),
                 Text(
                   'Pantau Peta Operasional  >>>',
                   style: AppTypography.titleSmall.copyWith(
-                    color: isDark ? const Color(0xFFFEE685) : const Color(0xFF6B4D00),
+                    color: isDark
+                        ? const Color(0xFFFEE685)
+                        : const Color(0xFF6B4D00),
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.2,
                     fontSize: 13.5,
@@ -1267,7 +1486,9 @@ class _AdminDashboardHome extends StatelessWidget {
                 Icon(
                   Icons.arrow_forward_rounded,
                   size: 18,
-                  color: isDark ? const Color(0xFFFEE685) : const Color(0xFF6B4D00),
+                  color: isDark
+                      ? const Color(0xFFFEE685)
+                      : const Color(0xFF6B4D00),
                 ),
               ],
             ),
@@ -1279,8 +1500,18 @@ class _AdminDashboardHome extends StatelessWidget {
 
   String _getMonthName(int month) {
     const months = [
-      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
     ];
     return (month >= 1 && month <= 12) ? months[month - 1] : '';
   }
@@ -2183,13 +2414,15 @@ class _AdminDashboardHome extends StatelessWidget {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              Obx(() => Text(
-                                    '${controller.paginatedActivities.length} aktivitas termuat (batch 10/halaman)',
-                                    style: AppTypography.captionSmall.copyWith(
-                                      color: bodyColor.withValues(alpha: 0.7),
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  )),
+                              Obx(
+                                () => Text(
+                                  '${controller.paginatedActivities.length} aktivitas termuat (batch 10/halaman)',
+                                  style: AppTypography.captionSmall.copyWith(
+                                    color: bodyColor.withValues(alpha: 0.7),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                           IconButton(
@@ -2257,7 +2490,9 @@ class _AdminDashboardHome extends StatelessWidget {
                               isDark,
                               () {
                                 setModalState(() => activeFilter = 'Semua');
-                                controller.loadInitialActivities(filter: 'Semua');
+                                controller.loadInitialActivities(
+                                  filter: 'Semua',
+                                );
                               },
                             ),
                             const SizedBox(width: 6),
@@ -2269,7 +2504,9 @@ class _AdminDashboardHome extends StatelessWidget {
                               isDark,
                               () {
                                 setModalState(() => activeFilter = 'Darurat');
-                                controller.loadInitialActivities(filter: 'Darurat');
+                                controller.loadInitialActivities(
+                                  filter: 'Darurat',
+                                );
                               },
                             ),
                             const SizedBox(width: 6),
@@ -2281,7 +2518,9 @@ class _AdminDashboardHome extends StatelessWidget {
                               isDark,
                               () {
                                 setModalState(() => activeFilter = 'Kamar');
-                                controller.loadInitialActivities(filter: 'Kamar');
+                                controller.loadInitialActivities(
+                                  filter: 'Kamar',
+                                );
                               },
                             ),
                             const SizedBox(width: 6),
@@ -2293,7 +2532,9 @@ class _AdminDashboardHome extends StatelessWidget {
                               isDark,
                               () {
                                 setModalState(() => activeFilter = 'Anggota');
-                                controller.loadInitialActivities(filter: 'Anggota');
+                                controller.loadInitialActivities(
+                                  filter: 'Anggota',
+                                );
                               },
                             ),
                           ],
@@ -2317,8 +2558,9 @@ class _AdminDashboardHome extends StatelessWidget {
                                   const SizedBox(height: AppSpacing.md),
                                   Text(
                                     'Memuat 10 riwayat terbaru...',
-                                    style: AppTypography.captionSmall
-                                        .copyWith(color: bodyColor),
+                                    style: AppTypography.captionSmall.copyWith(
+                                      color: bodyColor,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -2329,11 +2571,22 @@ class _AdminDashboardHome extends StatelessWidget {
                           final filtered = activities.where((a) {
                             if (searchQuery.trim().isNotEmpty) {
                               final q = searchQuery.toLowerCase().trim();
-                              final matchTitle = a.title.toLowerCase().contains(q);
-                              final matchDesc = a.description.toLowerCase().contains(q);
-                              final matchRoom = a.roomName?.toLowerCase().contains(q) ?? false;
-                              final matchUser = a.userName?.toLowerCase().contains(q) ?? false;
-                              if (!matchTitle && !matchDesc && !matchRoom && !matchUser) {
+                              final matchTitle = a.title.toLowerCase().contains(
+                                q,
+                              );
+                              final matchDesc = a.description
+                                  .toLowerCase()
+                                  .contains(q);
+                              final matchRoom =
+                                  a.roomName?.toLowerCase().contains(q) ??
+                                  false;
+                              final matchUser =
+                                  a.userName?.toLowerCase().contains(q) ??
+                                  false;
+                              if (!matchTitle &&
+                                  !matchDesc &&
+                                  !matchRoom &&
+                                  !matchUser) {
                                 return false;
                               }
                             }
@@ -2362,8 +2615,9 @@ class _AdminDashboardHome extends StatelessWidget {
                                   Text(
                                     'Belum ada data aktivitas atau coba ubah kata kunci pencarian.',
                                     textAlign: TextAlign.center,
-                                    style: AppTypography.captionSmall
-                                        .copyWith(color: bodyColor),
+                                    style: AppTypography.captionSmall.copyWith(
+                                      color: bodyColor,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -2372,7 +2626,8 @@ class _AdminDashboardHome extends StatelessWidget {
 
                           // List items count + 1 for footer / load more
                           final hasMore = controller.hasMoreActivities.value;
-                          final isLoadingMore = controller.isActivitiesPageLoadingMore.value;
+                          final isLoadingMore =
+                              controller.isActivitiesPageLoadingMore.value;
                           final totalItems = filtered.length + 1;
 
                           return ListView.separated(
@@ -2400,10 +2655,13 @@ class _AdminDashboardHome extends StatelessWidget {
                               if (idx == filtered.length) {
                                 if (isLoadingMore) {
                                   return Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
                                     child: Center(
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           SizedBox(
                                             width: 18,
@@ -2427,13 +2685,17 @@ class _AdminDashboardHome extends StatelessWidget {
 
                                 if (hasMore) {
                                   return Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                    ),
                                     child: Center(
                                       child: OutlinedButton.icon(
                                         style: OutlinedButton.styleFrom(
                                           foregroundColor: primaryColor,
                                           side: BorderSide(
-                                            color: primaryColor.withValues(alpha: 0.4),
+                                            color: primaryColor.withValues(
+                                              alpha: 0.4,
+                                            ),
                                           ),
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(
@@ -2445,7 +2707,10 @@ class _AdminDashboardHome extends StatelessWidget {
                                             vertical: 8,
                                           ),
                                         ),
-                                        icon: const Icon(Icons.expand_more_rounded, size: 18),
+                                        icon: const Icon(
+                                          Icons.expand_more_rounded,
+                                          size: 18,
+                                        ),
                                         label: const Text(
                                           'Muat 10 Riwayat Berikutnya',
                                           style: TextStyle(
@@ -2453,21 +2718,27 @@ class _AdminDashboardHome extends StatelessWidget {
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                        onPressed: () => controller.loadMoreActivities(),
+                                        onPressed: () =>
+                                            controller.loadMoreActivities(),
                                       ),
                                     ),
                                   );
                                 }
 
                                 return Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
                                   child: Center(
                                     child: Text(
                                       '--- Semua riwayat telah ditampilkan ---',
-                                      style: AppTypography.captionSmall.copyWith(
-                                        color: bodyColor.withValues(alpha: 0.5),
-                                        fontSize: 11,
-                                      ),
+                                      style: AppTypography.captionSmall
+                                          .copyWith(
+                                            color: bodyColor.withValues(
+                                              alpha: 0.5,
+                                            ),
+                                            fontSize: 11,
+                                          ),
                                     ),
                                   ),
                                 );
@@ -2829,12 +3100,14 @@ class _AdminDashboardHome extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: (isDark
-                                        ? AppColors.darkPrimary
-                                        : AppColors.accentGoldStar)
-                                    .withValues(alpha: 0.15),
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.sm),
+                                color:
+                                    (isDark
+                                            ? AppColors.darkPrimary
+                                            : AppColors.accentGoldStar)
+                                        .withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
                               ),
                               child: Icon(
                                 Icons.meeting_room_rounded,
@@ -2890,8 +3163,9 @@ class _AdminDashboardHome extends StatelessWidget {
                                   const SizedBox(height: AppSpacing.sm),
                                   Text(
                                     'Tidak ada room aktif saat ini.',
-                                    style: AppTypography.bodySmall
-                                        .copyWith(color: bodyColor),
+                                    style: AppTypography.bodySmall.copyWith(
+                                      color: bodyColor,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -2903,16 +3177,18 @@ class _AdminDashboardHome extends StatelessWidget {
                                   const SizedBox(height: AppSpacing.sm),
                               itemBuilder: (context, idx) {
                                 final room = activeRooms[idx];
-                                final jCount =
-                                    controller.getRoomJamaahCount(room.id);
-                                final pCount =
-                                    controller.getRoomPendampingCount(room.id);
+                                final jCount = controller.getRoomJamaahCount(
+                                  room.id,
+                                );
+                                final pCount = controller
+                                    .getRoomPendampingCount(room.id);
 
                                 return Container(
                                   decoration: BoxDecoration(
                                     color: cardBg,
-                                    borderRadius:
-                                        BorderRadius.circular(AppRadius.card),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.card,
+                                    ),
                                     border: Border.all(
                                       color: isDark
                                           ? AppColors.darkCardBorder
@@ -2922,10 +3198,12 @@ class _AdminDashboardHome extends StatelessWidget {
                                     boxShadow: [
                                       BoxShadow(
                                         color: isDark
-                                            ? Colors.black
-                                                .withValues(alpha: 0.15)
-                                            : AppColors.primary
-                                                .withValues(alpha: 0.03),
+                                            ? Colors.black.withValues(
+                                                alpha: 0.15,
+                                              )
+                                            : AppColors.primary.withValues(
+                                                alpha: 0.03,
+                                              ),
                                         blurRadius: 6,
                                         offset: const Offset(0, 2),
                                       ),
@@ -2937,18 +3215,21 @@ class _AdminDashboardHome extends StatelessWidget {
                                       onTap: () {
                                         Navigator.pop(ctx);
                                         controller.selectedRoom.value = room;
-                                        controller
-                                            .subscribeToRoomMembers(room.id);
+                                        controller.subscribeToRoomMembers(
+                                          room.id,
+                                        );
                                         Get.toNamed(
                                           AppRoutes.roomDetail,
                                           arguments: room,
                                         );
                                       },
-                                      borderRadius:
-                                          BorderRadius.circular(AppRadius.card),
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.card,
+                                      ),
                                       child: Padding(
-                                        padding:
-                                            const EdgeInsets.all(AppSpacing.md),
+                                        padding: const EdgeInsets.all(
+                                          AppSpacing.md,
+                                        ),
                                         child: Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
@@ -2968,38 +3249,39 @@ class _AdminDashboardHome extends StatelessWidget {
                                                     style: AppTypography
                                                         .titleSmall
                                                         .copyWith(
-                                                      color: headingColor,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 14.5,
-                                                    ),
+                                                          color: headingColor,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 14.5,
+                                                        ),
                                                     maxLines: 1,
                                                     overflow:
                                                         TextOverflow.ellipsis,
                                                   ),
                                                 ),
                                                 Container(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 2.5,
-                                                  ),
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 2.5,
+                                                      ),
                                                   decoration: BoxDecoration(
                                                     color: AppColors.statusSafe
                                                         .withValues(
-                                                      alpha:
-                                                          isDark ? 0.2 : 0.12,
-                                                    ),
+                                                          alpha: isDark
+                                                              ? 0.2
+                                                              : 0.12,
+                                                        ),
                                                     borderRadius:
                                                         BorderRadius.circular(
-                                                      AppRadius.pill,
-                                                    ),
+                                                          AppRadius.pill,
+                                                        ),
                                                     border: Border.all(
                                                       color: AppColors
                                                           .statusSafe
                                                           .withValues(
-                                                        alpha: 0.3,
-                                                      ),
+                                                            alpha: 0.3,
+                                                          ),
                                                     ),
                                                   ),
                                                   child: Row(
@@ -3011,11 +3293,11 @@ class _AdminDashboardHome extends StatelessWidget {
                                                         height: 5,
                                                         decoration:
                                                             const BoxDecoration(
-                                                          color: AppColors
-                                                              .statusSafe,
-                                                          shape:
-                                                              BoxShape.circle,
-                                                        ),
+                                                              color: AppColors
+                                                                  .statusSafe,
+                                                              shape: BoxShape
+                                                                  .circle,
+                                                            ),
                                                       ),
                                                       const SizedBox(width: 4),
                                                       Text(
@@ -3023,12 +3305,13 @@ class _AdminDashboardHome extends StatelessWidget {
                                                         style: AppTypography
                                                             .captionSmall
                                                             .copyWith(
-                                                          color: AppColors
-                                                              .statusSafe,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontSize: 10,
-                                                        ),
+                                                              color: AppColors
+                                                                  .statusSafe,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              fontSize: 10,
+                                                            ),
                                                       ),
                                                     ],
                                                   ),
@@ -3042,10 +3325,11 @@ class _AdminDashboardHome extends StatelessWidget {
                                               '$jCount Jamaah - $pCount Pendamping',
                                               style: AppTypography.bodySmall
                                                   .copyWith(
-                                                color: bodyColor
-                                                    .withValues(alpha: 0.85),
-                                                fontSize: 12,
-                                              ),
+                                                    color: bodyColor.withValues(
+                                                      alpha: 0.85,
+                                                    ),
+                                                    fontSize: 12,
+                                                  ),
                                             ),
                                             const SizedBox(height: 8),
 
@@ -3060,11 +3344,11 @@ class _AdminDashboardHome extends StatelessWidget {
                                                   style: AppTypography
                                                       .captionSmall
                                                       .copyWith(
-                                                    color: headingColor,
-                                                    fontWeight:
-                                                        FontWeight.w600,
-                                                    letterSpacing: 0.5,
-                                                  ),
+                                                        color: headingColor,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        letterSpacing: 0.5,
+                                                      ),
                                                 ),
                                                 Icon(
                                                   Icons
@@ -3133,7 +3417,8 @@ class _AdminDashboardHome extends StatelessWidget {
                     final name = (j['name'] ?? j['displayName'] ?? '')
                         .toString()
                         .toLowerCase();
-                    final room = controller.rooms
+                    final room =
+                        controller.rooms
                             .firstWhereOrNull((r) => r.id == j['activeRoomId'])
                             ?.name
                             .toLowerCase() ??
@@ -3143,8 +3428,9 @@ class _AdminDashboardHome extends StatelessWidget {
                   }).toList();
 
                   return Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                    ),
                     child: Column(
                       children: [
                         const SizedBox(height: AppSpacing.md),
@@ -3168,10 +3454,12 @@ class _AdminDashboardHome extends StatelessWidget {
                                 Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: AppColors.statusSafe
-                                        .withValues(alpha: 0.15),
-                                    borderRadius:
-                                        BorderRadius.circular(AppRadius.sm),
+                                    color: AppColors.statusSafe.withValues(
+                                      alpha: 0.15,
+                                    ),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.sm,
+                                    ),
                                   ),
                                   child: const Icon(
                                     Icons.groups_rounded,
@@ -3181,8 +3469,7 @@ class _AdminDashboardHome extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 10),
                                 Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       'TOTAL JAMAAH',
@@ -3194,10 +3481,12 @@ class _AdminDashboardHome extends StatelessWidget {
                                     ),
                                     Text(
                                       '${filtered.length} dari ${allJamaah.length} jamaah terdaftar',
-                                      style:
-                                          AppTypography.captionSmall.copyWith(
-                                        color: bodyColor.withValues(alpha: 0.7),
-                                      ),
+                                      style: AppTypography.captionSmall
+                                          .copyWith(
+                                            color: bodyColor.withValues(
+                                              alpha: 0.7,
+                                            ),
+                                          ),
                                     ),
                                   ],
                                 ),
@@ -3235,8 +3524,7 @@ class _AdminDashboardHome extends StatelessWidget {
                               vertical: 10,
                             ),
                             border: OutlineInputBorder(
-                              borderRadius:
-                                  BorderRadius.circular(AppRadius.md),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
                               borderSide: BorderSide(
                                 color: isDark
                                     ? AppColors.darkCardBorder
@@ -3244,8 +3532,7 @@ class _AdminDashboardHome extends StatelessWidget {
                               ),
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius:
-                                  BorderRadius.circular(AppRadius.md),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
                               borderSide: BorderSide(
                                 color: isDark
                                     ? AppColors.darkCardBorder
@@ -3262,22 +3549,21 @@ class _AdminDashboardHome extends StatelessWidget {
                           child: filtered.isEmpty
                               ? Center(
                                   child: Column(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.center,
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Icon(
                                         Icons.person_search_rounded,
                                         size: 48,
-                                        color:
-                                            bodyColor.withValues(alpha: 0.4),
+                                        color: bodyColor.withValues(alpha: 0.4),
                                       ),
                                       const SizedBox(height: AppSpacing.sm),
                                       Text(
                                         searchQuery.isEmpty
                                             ? 'Belum ada data jamaah terdaftar.'
                                             : 'Tidak ada jamaah yang cocok dengan "$searchQuery".',
-                                        style: AppTypography.bodySmall
-                                            .copyWith(color: bodyColor),
+                                        style: AppTypography.bodySmall.copyWith(
+                                          color: bodyColor,
+                                        ),
                                         textAlign: TextAlign.center,
                                       ),
                                     ],
@@ -3290,23 +3576,24 @@ class _AdminDashboardHome extends StatelessWidget {
                                       const SizedBox(height: AppSpacing.sm),
                                   itemBuilder: (context, idx) {
                                     final j = filtered[idx];
-                                    final name = (j['name'] ??
-                                            j['displayName'] ??
-                                            'Jamaah')
-                                        .toString();
+                                    final name =
+                                        (j['name'] ??
+                                                j['displayName'] ??
+                                                'Jamaah')
+                                            .toString();
                                     final room = controller.rooms
                                         .firstWhereOrNull(
-                                            (r) => r.id == j['activeRoomId']);
-                                    final roomName = room?.name ??
-                                        'Belum terdaftar di room';
+                                          (r) => r.id == j['activeRoomId'],
+                                        );
+                                    final roomName =
+                                        room?.name ?? 'Belum terdaftar di room';
                                     final isSos = j['sosActive'] == true;
                                     final isGps = j['isGpsActive'] == true;
                                     final locUpdatedAt =
                                         j['locationUpdatedAt'] is Timestamp
-                                            ? (j['locationUpdatedAt']
-                                                    as Timestamp)
-                                                .toDate()
-                                            : null;
+                                        ? (j['locationUpdatedAt'] as Timestamp)
+                                              .toDate()
+                                        : null;
 
                                     // Determine status dot & text
                                     final Color dotColor;
@@ -3316,14 +3603,16 @@ class _AdminDashboardHome extends StatelessWidget {
                                       dotColor = AppColors.sosEmergency;
                                       statusLabel = '* SOS Aktif';
                                     } else if (locUpdatedAt != null) {
-                                      final diff = DateTime.now()
-                                          .difference(locUpdatedAt);
+                                      final diff = DateTime.now().difference(
+                                        locUpdatedAt,
+                                      );
                                       if (diff.inMinutes <= 5 || isGps) {
                                         dotColor = AppColors.statusSafe;
                                         statusLabel = '* Online';
                                       } else {
                                         dotColor = const Color(
-                                            0xFFF57C00); // Amber (stale location)
+                                          0xFFF57C00,
+                                        ); // Amber (stale location)
                                         statusLabel =
                                             'Lokasi terakhir ${_formatMinutesAgo(diff)}';
                                       }
@@ -3331,31 +3620,36 @@ class _AdminDashboardHome extends StatelessWidget {
                                       dotColor = AppColors.statusSafe;
                                       statusLabel = '* Online';
                                     } else {
-                                      dotColor =
-                                          bodyColor.withValues(alpha: 0.5);
+                                      dotColor = bodyColor.withValues(
+                                        alpha: 0.5,
+                                      );
                                       statusLabel = 'Offline';
                                     }
 
                                     return Container(
                                       decoration: BoxDecoration(
                                         color: cardBg,
-                                        borderRadius:
-                                            BorderRadius.circular(AppRadius.card),
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadius.card,
+                                        ),
                                         border: Border.all(
                                           color: isSos
                                               ? AppColors.sosEmergency
-                                                  .withValues(alpha: 0.6)
+                                                    .withValues(alpha: 0.6)
                                               : (isDark
-                                                  ? AppColors.darkCardBorder
-                                                  : AppColors.lightCardBorder),
+                                                    ? AppColors.darkCardBorder
+                                                    : AppColors
+                                                          .lightCardBorder),
                                         ),
                                         boxShadow: [
                                           BoxShadow(
                                             color: isDark
-                                                ? Colors.black
-                                                    .withValues(alpha: 0.15)
-                                                : AppColors.primary
-                                                    .withValues(alpha: 0.03),
+                                                ? Colors.black.withValues(
+                                                    alpha: 0.15,
+                                                  )
+                                                : AppColors.primary.withValues(
+                                                    alpha: 0.03,
+                                                  ),
                                             blurRadius: 6,
                                             offset: const Offset(0, 2),
                                           ),
@@ -3369,9 +3663,9 @@ class _AdminDashboardHome extends StatelessWidget {
                                               Navigator.pop(ctx);
                                               controller.selectedRoom.value =
                                                   room;
-                                              controller
-                                                  .subscribeToRoomMembers(
-                                                      room.id);
+                                              controller.subscribeToRoomMembers(
+                                                room.id,
+                                              );
                                               Get.toNamed(
                                                 AppRoutes.roomDetail,
                                                 arguments: room,
@@ -3385,11 +3679,11 @@ class _AdminDashboardHome extends StatelessWidget {
                                               );
                                             }
                                           },
-                                          borderRadius:
-                                              BorderRadius.circular(AppRadius.card),
+                                          borderRadius: BorderRadius.circular(
+                                            AppRadius.card,
+                                          ),
                                           child: Padding(
-                                            padding:
-                                                const EdgeInsets.symmetric(
+                                            padding: const EdgeInsets.symmetric(
                                               horizontal: AppSpacing.md,
                                               vertical: 12,
                                             ),
@@ -3422,43 +3716,45 @@ class _AdminDashboardHome extends StatelessWidget {
                                                         style: AppTypography
                                                             .titleSmall
                                                             .copyWith(
-                                                          color: headingColor,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontSize: 14,
-                                                        ),
+                                                              color:
+                                                                  headingColor,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              fontSize: 14,
+                                                            ),
                                                         maxLines: 1,
                                                         overflow: TextOverflow
                                                             .ellipsis,
                                                       ),
-                                                      const SizedBox(
-                                                          height: 2),
+                                                      const SizedBox(height: 2),
                                                       Text(
                                                         roomName,
                                                         style: AppTypography
                                                             .captionSmall
                                                             .copyWith(
-                                                          color: bodyColor
-                                                              .withValues(
-                                                                  alpha: 0.8),
-                                                          fontSize: 11.5,
-                                                        ),
+                                                              color: bodyColor
+                                                                  .withValues(
+                                                                    alpha: 0.8,
+                                                                  ),
+                                                              fontSize: 11.5,
+                                                            ),
                                                         maxLines: 1,
                                                         overflow: TextOverflow
                                                             .ellipsis,
                                                       ),
-                                                      const SizedBox(
-                                                          height: 3),
+                                                      const SizedBox(height: 3),
                                                       Text(
                                                         statusLabel,
                                                         style: AppTypography
                                                             .captionSmall
                                                             .copyWith(
-                                                          color: dotColor,
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                          fontSize: 10.5,
-                                                        ),
+                                                              color: dotColor,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                              fontSize: 10.5,
+                                                            ),
                                                       ),
                                                     ],
                                                   ),
@@ -3548,17 +3844,20 @@ class _AdminDashboardHome extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: AppColors.secondary.withValues(alpha: 0.15),
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.sm),
+                                color: AppColors.secondary.withValues(
+                                  alpha: 0.15,
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
                               ),
                               child: const Icon(
                                 Icons.health_and_safety_rounded,
                                 color: AppColors.secondary,
-                                 size: 20,
-                               ),
-                             ),
-                             const SizedBox(width: 10),
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -3604,8 +3903,9 @@ class _AdminDashboardHome extends StatelessWidget {
                                   const SizedBox(height: AppSpacing.sm),
                                   Text(
                                     'Belum ada petugas pendamping terdaftar.',
-                                    style: AppTypography.bodySmall
-                                        .copyWith(color: bodyColor),
+                                    style: AppTypography.bodySmall.copyWith(
+                                      color: bodyColor,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -3617,22 +3917,26 @@ class _AdminDashboardHome extends StatelessWidget {
                                   const SizedBox(height: AppSpacing.sm),
                               itemBuilder: (context, idx) {
                                 final p = allPendamping[idx];
-                                final name = (p['name'] ??
-                                        p['displayName'] ??
-                                        'Pendamping')
-                                    .toString();
+                                final name =
+                                    (p['name'] ??
+                                            p['displayName'] ??
+                                            'Pendamping')
+                                        .toString();
                                 final activeRoomId =
                                     p['activeRoomId'] as String?;
-                                final room = activeRoomId != null &&
+                                final room =
+                                    activeRoomId != null &&
                                         activeRoomId.isNotEmpty
                                     ? controller.rooms.firstWhereOrNull(
-                                        (r) => r.id == activeRoomId)
+                                        (r) => r.id == activeRoomId,
+                                      )
                                     : null;
                                 final roomName =
                                     room?.name ?? 'Belum mengelola room';
                                 final jamaahCount = activeRoomId != null
-                                    ? controller
-                                        .getRoomJamaahCount(activeRoomId)
+                                    ? controller.getRoomJamaahCount(
+                                        activeRoomId,
+                                      )
                                     : null;
                                 final isOnline =
                                     p['isGpsActive'] == true || room != null;
@@ -3640,8 +3944,9 @@ class _AdminDashboardHome extends StatelessWidget {
                                 return Container(
                                   decoration: BoxDecoration(
                                     color: cardBg,
-                                    borderRadius:
-                                        BorderRadius.circular(AppRadius.card),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.card,
+                                    ),
                                     border: Border.all(
                                       color: isDark
                                           ? AppColors.darkCardBorder
@@ -3650,10 +3955,12 @@ class _AdminDashboardHome extends StatelessWidget {
                                     boxShadow: [
                                       BoxShadow(
                                         color: isDark
-                                            ? Colors.black
-                                                .withValues(alpha: 0.15)
-                                            : AppColors.primary
-                                                .withValues(alpha: 0.03),
+                                            ? Colors.black.withValues(
+                                                alpha: 0.15,
+                                              )
+                                            : AppColors.primary.withValues(
+                                                alpha: 0.03,
+                                              ),
                                         blurRadius: 6,
                                         offset: const Offset(0, 2),
                                       ),
@@ -3665,11 +3972,10 @@ class _AdminDashboardHome extends StatelessWidget {
                                       onTap: () {
                                         if (room != null) {
                                           Navigator.pop(ctx);
-                                          controller.selectedRoom.value =
-                                              room;
-                                          controller
-                                              .subscribeToRoomMembers(
-                                                  room.id);
+                                          controller.selectedRoom.value = room;
+                                          controller.subscribeToRoomMembers(
+                                            room.id,
+                                          );
                                           Get.toNamed(
                                             AppRoutes.roomDetail,
                                             arguments: room,
@@ -3683,11 +3989,13 @@ class _AdminDashboardHome extends StatelessWidget {
                                           );
                                         }
                                       },
-                                      borderRadius:
-                                          BorderRadius.circular(AppRadius.card),
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.card,
+                                      ),
                                       child: Padding(
-                                        padding:
-                                            const EdgeInsets.all(AppSpacing.md),
+                                        padding: const EdgeInsets.all(
+                                          AppSpacing.md,
+                                        ),
                                         child: Row(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.center,
@@ -3699,12 +4007,14 @@ class _AdminDashboardHome extends StatelessWidget {
                                               decoration: BoxDecoration(
                                                 color: AppColors.secondary
                                                     .withValues(
-                                                  alpha: isDark ? 0.22 : 0.12,
-                                                ),
+                                                      alpha: isDark
+                                                          ? 0.22
+                                                          : 0.12,
+                                                    ),
                                                 borderRadius:
                                                     BorderRadius.circular(
-                                                  AppRadius.md,
-                                                ),
+                                                      AppRadius.md,
+                                                    ),
                                               ),
                                               child: const Icon(
                                                 Icons.shield_rounded,
@@ -3731,11 +4041,13 @@ class _AdminDashboardHome extends StatelessWidget {
                                                           style: AppTypography
                                                               .titleSmall
                                                               .copyWith(
-                                                            color: headingColor,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                            fontSize: 14,
-                                                          ),
+                                                                color:
+                                                                    headingColor,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                fontSize: 14,
+                                                              ),
                                                           maxLines: 1,
                                                           overflow: TextOverflow
                                                               .ellipsis,
@@ -3743,37 +4055,38 @@ class _AdminDashboardHome extends StatelessWidget {
                                                       ),
                                                       Container(
                                                         padding:
-                                                            const EdgeInsets
-                                                                .symmetric(
-                                                          horizontal: 7,
-                                                          vertical: 2,
-                                                        ),
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          color: (isOnline
-                                                                  ? AppColors
-                                                                      .statusSafe
-                                                                  : AppColors
-                                                                      .textSecondary)
-                                                              .withValues(
-                                                            alpha: isDark
-                                                                ? 0.2
-                                                                : 0.12,
-                                                          ),
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(
-                                                            AppRadius.pill,
-                                                          ),
-                                                          border: Border.all(
-                                                            color: (isOnline
-                                                                    ? AppColors
-                                                                        .statusSafe
-                                                                    : AppColors
-                                                                        .textSecondary)
-                                                                .withValues(
-                                                              alpha: 0.3,
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 7,
+                                                              vertical: 2,
                                                             ),
+                                                        decoration: BoxDecoration(
+                                                          color:
+                                                              (isOnline
+                                                                      ? AppColors
+                                                                            .statusSafe
+                                                                      : AppColors
+                                                                            .textSecondary)
+                                                                  .withValues(
+                                                                    alpha:
+                                                                        isDark
+                                                                        ? 0.2
+                                                                        : 0.12,
+                                                                  ),
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                AppRadius.pill,
+                                                              ),
+                                                          border: Border.all(
+                                                            color:
+                                                                (isOnline
+                                                                        ? AppColors
+                                                                              .statusSafe
+                                                                        : AppColors
+                                                                              .textSecondary)
+                                                                    .withValues(
+                                                                      alpha:
+                                                                          0.3,
+                                                                    ),
                                                           ),
                                                         ),
                                                         child: Row(
@@ -3783,19 +4096,19 @@ class _AdminDashboardHome extends StatelessWidget {
                                                             Container(
                                                               width: 5,
                                                               height: 5,
-                                                              decoration:
-                                                                  BoxDecoration(
+                                                              decoration: BoxDecoration(
                                                                 color: isOnline
                                                                     ? AppColors
-                                                                        .statusSafe
+                                                                          .statusSafe
                                                                     : AppColors
-                                                                        .textSecondary,
+                                                                          .textSecondary,
                                                                 shape: BoxShape
                                                                     .circle,
                                                               ),
                                                             ),
                                                             const SizedBox(
-                                                                width: 4),
+                                                              width: 4,
+                                                            ),
                                                             Text(
                                                               isOnline
                                                                   ? 'Aktif'
@@ -3803,16 +4116,18 @@ class _AdminDashboardHome extends StatelessWidget {
                                                               style: AppTypography
                                                                   .captionSmall
                                                                   .copyWith(
-                                                                color: isOnline
-                                                                    ? AppColors
-                                                                        .statusSafe
-                                                                    : AppColors
-                                                                        .textSecondary,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                                fontSize: 10,
-                                                              ),
+                                                                    color:
+                                                                        isOnline
+                                                                        ? AppColors
+                                                                              .statusSafe
+                                                                        : AppColors
+                                                                              .textSecondary,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold,
+                                                                    fontSize:
+                                                                        10,
+                                                                  ),
                                                             ),
                                                           ],
                                                         ),
@@ -3825,14 +4140,15 @@ class _AdminDashboardHome extends StatelessWidget {
                                                     style: AppTypography
                                                         .captionSmall
                                                         .copyWith(
-                                                      color: bodyColor
-                                                          .withValues(
-                                                              alpha: 0.8),
-                                                      fontSize: 11.5,
-                                                    ),
+                                                          color: bodyColor
+                                                              .withValues(
+                                                                alpha: 0.8,
+                                                              ),
+                                                          fontSize: 11.5,
+                                                        ),
                                                     maxLines: 1,
-                                                    overflow: TextOverflow
-                                                        .ellipsis,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
                                                   ),
                                                   if (jamaahCount != null) ...[
                                                     const SizedBox(height: 4),
@@ -3841,11 +4157,11 @@ class _AdminDashboardHome extends StatelessWidget {
                                                       style: AppTypography
                                                           .captionSmall
                                                           .copyWith(
-                                                        color: primaryColor,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                        fontSize: 11,
-                                                      ),
+                                                            color: primaryColor,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            fontSize: 11,
+                                                          ),
                                                     ),
                                                   ],
                                                 ],
@@ -3856,8 +4172,9 @@ class _AdminDashboardHome extends StatelessWidget {
                                             Icon(
                                               Icons.arrow_forward_ios_rounded,
                                               size: 11,
-                                              color: headingColor
-                                                  .withValues(alpha: 0.35),
+                                              color: headingColor.withValues(
+                                                alpha: 0.35,
+                                              ),
                                             ),
                                           ],
                                         ),
@@ -3939,12 +4256,14 @@ class _AdminDashboardHome extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: (hasActiveAlerts
-                                        ? AppColors.sosEmergency
-                                        : AppColors.statusSafe)
-                                    .withValues(alpha: 0.15),
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.sm),
+                                color:
+                                    (hasActiveAlerts
+                                            ? AppColors.sosEmergency
+                                            : AppColors.statusSafe)
+                                        .withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
                               ),
                               child: Icon(
                                 hasActiveAlerts
@@ -4003,8 +4322,9 @@ class _AdminDashboardHome extends StatelessWidget {
                               ),
                               decoration: BoxDecoration(
                                 color: cardBg,
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.card),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.card,
+                                ),
                                 border: Border.all(
                                   color: isDark
                                       ? AppColors.darkCardBorder
@@ -4017,8 +4337,9 @@ class _AdminDashboardHome extends StatelessWidget {
                                     width: 56,
                                     height: 56,
                                     decoration: BoxDecoration(
-                                      color: AppColors.statusSafe
-                                          .withValues(alpha: 0.12),
+                                      color: AppColors.statusSafe.withValues(
+                                        alpha: 0.12,
+                                      ),
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Center(
@@ -4066,29 +4387,37 @@ class _AdminDashboardHome extends StatelessWidget {
                             ...activeSosList.map((sos) {
                               final userName = sos['userName'] ?? 'Jamaah';
                               final roomName = sos['roomName'] ?? 'Room';
-                              final timestamp = (sos['timestamp'] ??
-                                  sos['createdAt']) as Timestamp?;
+                              final timestamp =
+                                  (sos['timestamp'] ?? sos['createdAt'])
+                                      as Timestamp?;
                               final timeAgo = timestamp != null
-                                  ? _formatMinutesAgo(DateTime.now()
-                                      .difference(timestamp.toDate()))
+                                  ? _formatMinutesAgo(
+                                      DateTime.now().difference(
+                                        timestamp.toDate(),
+                                      ),
+                                    )
                                   : 'Baru saja';
 
                               return Container(
                                 margin: const EdgeInsets.only(
-                                    bottom: AppSpacing.sm),
+                                  bottom: AppSpacing.sm,
+                                ),
                                 decoration: BoxDecoration(
                                   color: cardBg,
-                                  borderRadius:
-                                      BorderRadius.circular(AppRadius.card),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.card,
+                                  ),
                                   border: Border.all(
-                                    color: AppColors.sosEmergency
-                                        .withValues(alpha: 0.6),
+                                    color: AppColors.sosEmergency.withValues(
+                                      alpha: 0.6,
+                                    ),
                                     width: 1.2,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.sosEmergency
-                                          .withValues(alpha: 0.08),
+                                      color: AppColors.sosEmergency.withValues(
+                                        alpha: 0.08,
+                                      ),
                                       blurRadius: 8,
                                       offset: const Offset(0, 2),
                                     ),
@@ -4114,15 +4443,18 @@ class _AdminDashboardHome extends StatelessWidget {
                                                   .withValues(alpha: 0.12),
                                               borderRadius:
                                                   BorderRadius.circular(
-                                                AppRadius.pill,
-                                              ),
+                                                    AppRadius.pill,
+                                                  ),
                                             ),
                                             child: const Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                Text('�f°�.¸�.¡�,¨',
-                                                    style:
-                                                        TextStyle(fontSize: 12)),
+                                                Text(
+                                                  '�f°�.¸�.¡�,¨',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
                                                 SizedBox(width: 4),
                                                 Text(
                                                   'SOS',
@@ -4140,29 +4472,30 @@ class _AdminDashboardHome extends StatelessWidget {
                                             timeAgo,
                                             style: AppTypography.captionSmall
                                                 .copyWith(
-                                              color: bodyColor
-                                                  .withValues(alpha: 0.65),
-                                              fontSize: 11,
-                                            ),
+                                                  color: bodyColor.withValues(
+                                                    alpha: 0.65,
+                                                  ),
+                                                  fontSize: 11,
+                                                ),
                                           ),
                                         ],
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
                                         userName,
-                                        style:
-                                            AppTypography.titleSmall.copyWith(
-                                          color: headingColor,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15,
-                                        ),
+                                        style: AppTypography.titleSmall
+                                            .copyWith(
+                                              color: headingColor,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 15,
+                                            ),
                                       ),
                                       Text(
                                         roomName,
-                                        style:
-                                            AppTypography.bodySmall.copyWith(
-                                          color: bodyColor
-                                              .withValues(alpha: 0.75),
+                                        style: AppTypography.bodySmall.copyWith(
+                                          color: bodyColor.withValues(
+                                            alpha: 0.75,
+                                          ),
                                         ),
                                       ),
                                       const SizedBox(height: 12),
@@ -4171,11 +4504,13 @@ class _AdminDashboardHome extends StatelessWidget {
                                           Navigator.pop(ctx);
                                           dashboardCtrl.changeTab(1);
                                         },
-                                        borderRadius:
-                                            BorderRadius.circular(AppRadius.sm),
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadius.sm,
+                                        ),
                                         child: Padding(
                                           padding: const EdgeInsets.symmetric(
-                                              vertical: 4),
+                                            vertical: 4,
+                                          ),
                                           child: Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.spaceBetween,
@@ -4185,11 +4520,12 @@ class _AdminDashboardHome extends StatelessWidget {
                                                 style: AppTypography
                                                     .captionSmall
                                                     .copyWith(
-                                                  color:
-                                                      AppColors.sosEmergency,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 12.5,
-                                                ),
+                                                      color: AppColors
+                                                          .sosEmergency,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 12.5,
+                                                    ),
                                               ),
                                               const Icon(
                                                 Icons.arrow_forward_ios_rounded,
@@ -4220,42 +4556,46 @@ class _AdminDashboardHome extends StatelessWidget {
                             ),
                             const SizedBox(height: AppSpacing.xs + 2),
                             ...attentionList.map((j) {
-                              final name = (j['name'] ??
-                                      j['displayName'] ??
-                                      'Jamaah')
-                                  .toString();
+                              final name =
+                                  (j['name'] ?? j['displayName'] ?? 'Jamaah')
+                                      .toString();
                               final room = controller.rooms.firstWhereOrNull(
-                                  (r) => r.id == j['activeRoomId']);
+                                (r) => r.id == j['activeRoomId'],
+                              );
                               final roomName = room?.name ?? 'Room';
                               final timestamp =
                                   j['locationUpdatedAt'] is Timestamp
-                                      ? (j['locationUpdatedAt'] as Timestamp)
-                                          .toDate()
-                                      : null;
+                                  ? (j['locationUpdatedAt'] as Timestamp)
+                                        .toDate()
+                                  : null;
                               final timeAgo = timestamp != null
-                                  ? _formatMinutesAgo(DateTime.now()
-                                      .difference(timestamp))
+                                  ? _formatMinutesAgo(
+                                      DateTime.now().difference(timestamp),
+                                    )
                                   : 'Belum update';
 
                               return Container(
                                 margin: const EdgeInsets.only(
-                                    bottom: AppSpacing.sm),
+                                  bottom: AppSpacing.sm,
+                                ),
                                 decoration: BoxDecoration(
                                   color: cardBg,
-                                  borderRadius:
-                                      BorderRadius.circular(AppRadius.card),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.card,
+                                  ),
                                   border: Border.all(
-                                    color: AppColors.distanceWarning
-                                        .withValues(alpha: 0.45),
+                                    color: AppColors.distanceWarning.withValues(
+                                      alpha: 0.45,
+                                    ),
                                     width: 1.0,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
                                       color: isDark
-                                          ? Colors.black
-                                              .withValues(alpha: 0.15)
-                                          : AppColors.primary
-                                              .withValues(alpha: 0.03),
+                                          ? Colors.black.withValues(alpha: 0.15)
+                                          : AppColors.primary.withValues(
+                                              alpha: 0.03,
+                                            ),
                                       blurRadius: 6,
                                       offset: const Offset(0, 2),
                                     ),
@@ -4268,8 +4608,9 @@ class _AdminDashboardHome extends StatelessWidget {
                                       if (room != null) {
                                         Navigator.pop(ctx);
                                         controller.selectedRoom.value = room;
-                                        controller
-                                            .subscribeToRoomMembers(room.id);
+                                        controller.subscribeToRoomMembers(
+                                          room.id,
+                                        );
                                         Get.toNamed(
                                           AppRoutes.roomDetail,
                                           arguments: room,
@@ -4279,11 +4620,13 @@ class _AdminDashboardHome extends StatelessWidget {
                                         dashboardCtrl.changeTab(1);
                                       }
                                     },
-                                    borderRadius:
-                                        BorderRadius.circular(AppRadius.card),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.card,
+                                    ),
                                     child: Padding(
-                                      padding:
-                                          const EdgeInsets.all(AppSpacing.md),
+                                      padding: const EdgeInsets.all(
+                                        AppSpacing.md,
+                                      ),
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
@@ -4294,20 +4637,24 @@ class _AdminDashboardHome extends StatelessWidget {
                                             children: [
                                               Row(
                                                 children: [
-                                                  const Text('�f°�.¸â�,��"�,',
-                                                      style: TextStyle(
-                                                          fontSize: 12)),
+                                                  const Text(
+                                                    '�f°�.¸â�,��"�,',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
                                                   const SizedBox(width: 4),
                                                   Text(
                                                     'Lokasi Tidak Diperbarui',
                                                     style: AppTypography
                                                         .captionSmall
                                                         .copyWith(
-                                                      color: AppColors.distanceWarning,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 11.5,
-                                                    ),
+                                                          color: AppColors
+                                                              .distanceWarning,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 11.5,
+                                                        ),
                                                   ),
                                                 ],
                                               ),
@@ -4316,10 +4663,12 @@ class _AdminDashboardHome extends StatelessWidget {
                                                 style: AppTypography
                                                     .captionSmall
                                                     .copyWith(
-                                                  color: bodyColor
-                                                      .withValues(alpha: 0.65),
-                                                  fontSize: 11,
-                                                ),
+                                                      color: bodyColor
+                                                          .withValues(
+                                                            alpha: 0.65,
+                                                          ),
+                                                      fontSize: 11,
+                                                    ),
                                               ),
                                             ],
                                           ),
@@ -4338,11 +4687,11 @@ class _AdminDashboardHome extends StatelessWidget {
                                                       style: AppTypography
                                                           .titleSmall
                                                           .copyWith(
-                                                        color: headingColor,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontSize: 14,
-                                                      ),
+                                                            color: headingColor,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            fontSize: 14,
+                                                          ),
                                                       maxLines: 1,
                                                       overflow:
                                                           TextOverflow.ellipsis,
@@ -4352,10 +4701,11 @@ class _AdminDashboardHome extends StatelessWidget {
                                                       style: AppTypography
                                                           .captionSmall
                                                           .copyWith(
-                                                        color: bodyColor
-                                                            .withValues(
-                                                                alpha: 0.75),
-                                                      ),
+                                                            color: bodyColor
+                                                                .withValues(
+                                                                  alpha: 0.75,
+                                                                ),
+                                                          ),
                                                       maxLines: 1,
                                                       overflow:
                                                           TextOverflow.ellipsis,
@@ -4366,8 +4716,9 @@ class _AdminDashboardHome extends StatelessWidget {
                                               Icon(
                                                 Icons.arrow_forward_ios_rounded,
                                                 size: 11,
-                                                color: headingColor
-                                                    .withValues(alpha: 0.35),
+                                                color: headingColor.withValues(
+                                                  alpha: 0.35,
+                                                ),
                                               ),
                                             ],
                                           ),
@@ -4397,8 +4748,9 @@ class _AdminDashboardHome extends StatelessWidget {
                               padding: const EdgeInsets.all(AppSpacing.md),
                               decoration: BoxDecoration(
                                 color: cardBg,
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.card),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.card,
+                                ),
                                 border: Border.all(
                                   color: isDark
                                       ? AppColors.darkCardBorder
@@ -4408,16 +4760,21 @@ class _AdminDashboardHome extends StatelessWidget {
                               child: Column(
                                 children: resolvedList.map((res) {
                                   final name = res['userName'] ?? 'Jamaah';
-                                  final resTime = (res['resolvedAt'] ??
-                                      res['timestamp']) as Timestamp?;
+                                  final resTime =
+                                      (res['resolvedAt'] ?? res['timestamp'])
+                                          as Timestamp?;
                                   final timeAgo = resTime != null
-                                      ? _formatMinutesAgo(DateTime.now()
-                                          .difference(resTime.toDate()))
+                                      ? _formatMinutesAgo(
+                                          DateTime.now().difference(
+                                            resTime.toDate(),
+                                          ),
+                                        )
                                       : 'Selesai';
 
                                   return Padding(
-                                    padding:
-                                        const EdgeInsets.symmetric(vertical: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 4,
+                                    ),
                                     child: Row(
                                       children: [
                                         const Icon(
@@ -4431,9 +4788,9 @@ class _AdminDashboardHome extends StatelessWidget {
                                             'SOS selesai ($name)',
                                             style: AppTypography.captionSmall
                                                 .copyWith(
-                                              color: headingColor,
-                                              fontSize: 11.5,
-                                            ),
+                                                  color: headingColor,
+                                                  fontSize: 11.5,
+                                                ),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                           ),
@@ -4442,10 +4799,11 @@ class _AdminDashboardHome extends StatelessWidget {
                                           timeAgo,
                                           style: AppTypography.captionSmall
                                               .copyWith(
-                                            color: bodyColor
-                                                .withValues(alpha: 0.65),
-                                            fontSize: 10.5,
-                                          ),
+                                                color: bodyColor.withValues(
+                                                  alpha: 0.65,
+                                                ),
+                                                fontSize: 10.5,
+                                              ),
                                         ),
                                       ],
                                     ),
@@ -4476,10 +4834,6 @@ class _AdminDashboardHome extends StatelessWidget {
   }
 }
 
-// �f¢â�,�â�?s¬�f¢â�,�â�?s¬ Supporting Widgets �f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬
-
-
-// �f¢â�,�â�?s¬�f¢â�,�â�?s¬ Quick Action Button �f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬
 class _QuickActionButton extends StatelessWidget {
   final String label;
   final String subtitle;
@@ -4511,10 +4865,7 @@ class _QuickActionButton extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: effectiveBorder,
-          width: 1.0,
-        ),
+        border: Border.all(color: effectiveBorder, width: 1.0),
         boxShadow: [
           BoxShadow(
             color: isDark
@@ -4621,241 +4972,481 @@ class _RoomPantauCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasSos = sosCount > 0;
+
+    final effectiveCardBg = hasSos
+        ? (isDark
+              ? const Color(0xFF381418)
+              : AppColors.errorContainer.withValues(alpha: 0.35))
+        : cardBg;
+
     final borderColor = hasSos
-        ? AppColors.sosEmergency
+        ? AppColors.sosEmergency.withValues(alpha: 0.65)
         : (isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder);
+
+    final textColor = hasSos ? AppColors.sosEmergency : headingColor;
+
+    final subtextColor = hasSos
+        ? AppColors.sosEmergency
+        : bodyColor.withValues(alpha: 0.75);
+
+    final actionIconColor = hasSos
+        ? AppColors.sosEmergency
+        : (isDark ? AppColors.darkPrimary : AppColors.espressoDark);
 
     return Container(
       decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(
-          color: hasSos ? AppColors.sosEmergency.withValues(alpha: 0.65) : borderColor,
-          width: hasSos ? 1.2 : 1.0,
-        ),
+        color: effectiveCardBg,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: borderColor, width: hasSos ? 1.4 : 1.0),
         boxShadow: [
           BoxShadow(
-            color: hasSos
-                ? AppColors.sosEmergency.withValues(alpha: 0.08)
-                : (isDark
-                      ? Colors.black.withValues(alpha: 0.18)
-                      : AppColors.primary.withValues(alpha: 0.03)),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color:
+                (hasSos
+                        ? AppColors.sosEmergency
+                        : (isDark ? Colors.black : AppColors.espressoDark))
+                    .withValues(alpha: isDark ? 0.30 : (hasSos ? 0.12 : 0.04)),
+            blurRadius: hasSos ? 16 : 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
+      clipBehavior: Clip.antiAlias,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadius.card),
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Top: Room Name + Status
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          borderRadius: BorderRadius.circular(28),
+          child: Stack(
+            children: [
+              // ── 3D Concentric Rings Effect (Top-Right) ──
+              Positioned(
+                top: -36,
+                right: -36,
+                child: Stack(
+                  alignment: Alignment.center,
                   children: [
-                    Expanded(
-                      child: Text(
-                        room.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.titleSmall.copyWith(
-                          color: headingColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
+                    // Outer Ring 4
+                    Container(
+                      width: 190,
+                      height: 190,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color:
+                            (hasSos
+                                    ? AppColors.sosEmergency
+                                    : (isDark
+                                          ? AppColors.goldLight
+                                          : AppColors.espressoDark))
+                                .withValues(alpha: isDark ? 0.05 : 0.05),
                       ),
                     ),
-
-                    const SizedBox(width: 8),
-
+                    // Ring 3
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
+                      width: 146,
+                      height: 146,
                       decoration: BoxDecoration(
+                        shape: BoxShape.circle,
                         color:
-                            (room.isActive
-                                    ? AppColors.statusSafe
-                                    : AppColors.textSecondary)
-                                .withValues(alpha: isDark ? 0.2 : 0.12),
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                        border: Border.all(
-                          color:
-                              (room.isActive
-                                      ? AppColors.statusSafe
-                                      : AppColors.textSecondary)
-                                  .withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: room.isActive
-                                  ? AppColors.statusSafe
-                                  : AppColors.textSecondary,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            room.isActive ? 'Aktif' : 'Nonaktif',
-                            style: AppTypography.captionSmall.copyWith(
-                              color: room.isActive
-                                  ? AppColors.statusSafe
-                                  : AppColors.textSecondary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 10.5,
-                            ),
+                            (hasSos
+                                    ? AppColors.sosEmergency
+                                    : (isDark
+                                          ? AppColors.goldLight
+                                          : AppColors.espressoDark))
+                                .withValues(alpha: isDark ? 0.08 : 0.09),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                (isDark
+                                        ? Colors.black
+                                        : (hasSos
+                                              ? AppColors.sosEmergency
+                                              : AppColors.espressoDark))
+                                    .withValues(alpha: isDark ? 0.12 : 0.04),
+                            blurRadius: 8,
+                            spreadRadius: 1,
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ),
-
-                const SizedBox(height: AppSpacing.sm),
-
-                // Metrics
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  children: [
-                    _BadgeCount(
-                      icon: Icons.groups_rounded,
-                      label: '$jamaahCount Jamaah',
-                      color: AppColors.statusSafe,
-                      isDark: isDark,
-                    ),
-
-                    _BadgeCount(
-                      icon: Icons.health_and_safety_rounded,
-                      label: '$pendampingCount Pendamping',
-                      color: AppColors.secondary,
-                      isDark: isDark,
-                    ),
-
-                    if (hasSos)
-                      _BadgeCount(
-                        icon: Icons.warning_amber_rounded,
-                        label: '$sosCount SOS',
-                        color: AppColors.sosEmergency,
-                        isDark: isDark,
-                      ),
-                  ],
-                ),
-
-                const SizedBox(height: AppSpacing.sm + 4),
-
-                // Divider subtle
-                Divider(
-                  height: 1,
-                  thickness: 0.8,
-                  color: isDark
-                      ? AppColors.darkCardBorder
-                      : AppColors.canvasCreamSubtle,
-                ),
-
-                const SizedBox(height: AppSpacing.sm),
-
-                // Bottom Row: Room Code + Copy + Action
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Flexible(
-                      child: InkWell(
-                        onTap: () {
-                          Clipboard.setData(ClipboardData(text: room.code));
-                          AppAlert.info(
-                            context,
-                            title: 'Kode Disalin',
-                            message:
-                                'Kode room "${room.code}" berhasil disalin ke clipboard.',
-                          );
-                        },
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 2,
-                            horizontal: 2,
+                    // Ring 2
+                    Container(
+                      width: 108,
+                      height: 108,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color:
+                            (hasSos
+                                    ? AppColors.sosEmergency
+                                    : (isDark
+                                          ? AppColors.goldLight
+                                          : AppColors.espressoDark))
+                                .withValues(alpha: isDark ? 0.12 : 0.14),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                (isDark
+                                        ? Colors.black
+                                        : (hasSos
+                                              ? AppColors.sosEmergency
+                                              : AppColors.espressoDark))
+                                    .withValues(alpha: isDark ? 0.15 : 0.06),
+                            blurRadius: 6,
+                            spreadRadius: 1,
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                        ],
+                      ),
+                    ),
+                    // Ring 1 (Inner core ring)
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color:
+                            (hasSos
+                                    ? AppColors.sosEmergency
+                                    : (isDark
+                                          ? AppColors.goldLight
+                                          : AppColors.espressoDark))
+                                .withValues(alpha: isDark ? 0.18 : 0.20),
+                      ),
+                    ),
+                    // Center Core 3D Badge (Espresso Theme)
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: hasSos
+                            ? AppColors.sosEmergency
+                            : (isDark
+                                  ? AppColors.espressoMedium
+                                  : AppColors.espressoDark),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                (hasSos
+                                        ? AppColors.sosEmergency
+                                        : AppColors.espressoDark)
+                                    .withValues(alpha: isDark ? 0.40 : 0.28),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Icon(
+                          hasSos
+                              ? Icons.warning_amber_rounded
+                              : (room.isActive
+                                    ? Icons.door_sliding_rounded
+                                    : Icons.lock_outline_rounded),
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Glossy Curved Specular Highlight (Top-Left) ──
+              Positioned(
+                top: -50,
+                left: -50,
+                child: Container(
+                  width: 200,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        (isDark ? Colors.white : AppColors.canvasCreamSubtle)
+                            .withValues(alpha: isDark ? 0.06 : 0.35),
+                        Colors.white.withValues(alpha: 0.0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // ── Main Card Content ──
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Top: Room Name & Status Tag
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Kode: ',
-                                style: AppTypography.captionSmall.copyWith(
-                                  color: bodyColor,
+                                room.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                  color: textColor,
+                                  letterSpacing: -0.3,
                                 ),
                               ),
-                              Flexible(
-                                child: Text(
-                                  room.code,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AppTypography.labelLarge.copyWith(
-                                    color: primaryColor,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 1.2,
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2.5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          (room.isActive
+                                                  ? AppColors.statusSafe
+                                                  : AppColors.textSecondary)
+                                              .withValues(
+                                                alpha: isDark ? 0.18 : 0.10,
+                                              ),
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.pill,
+                                      ),
+                                      border: Border.all(
+                                        color:
+                                            (room.isActive
+                                                    ? AppColors.statusSafe
+                                                    : AppColors.textSecondary)
+                                                .withValues(alpha: 0.25),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          width: 6,
+                                          height: 6,
+                                          decoration: BoxDecoration(
+                                            color: room.isActive
+                                                ? (hasSos
+                                                      ? AppColors.sosEmergency
+                                                      : AppColors.statusSafe)
+                                                : AppColors.textSecondary,
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          room.isActive
+                                              ? (hasSos ? 'SOS Aktif' : 'Aktif')
+                                              : 'Nonaktif',
+                                          style: TextStyle(
+                                            color: room.isActive
+                                                ? (hasSos
+                                                      ? AppColors.sosEmergency
+                                                      : AppColors.statusSafe)
+                                                : bodyColor,
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 10.5,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Icon(
-                                Icons.copy_rounded,
-                                size: 13,
-                                color: primaryColor.withValues(alpha: 0.7),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Kode: ${room.code}',
+                                    style: TextStyle(
+                                      color: subtextColor,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 11,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
                         ),
-                      ),
+                        // Margin for top-right 3D badge
+                        const SizedBox(width: 54),
+                      ],
                     ),
 
-                    const SizedBox(width: 8),
+                    const SizedBox(height: 14),
 
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
+                    // Middle: Room Summary & Stats Pill Row
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
                       children: [
-                        IconButton(
-                          icon: Icon(
-                            Icons.qr_code_2_rounded,
-                            size: 18,
-                            color: primaryColor,
-                          ),
-                          tooltip: 'Lihat QR Code',
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                          onPressed: () => RoomQrDialog.show(context, room: room),
+                        _BentoChip(
+                          icon: Icons.groups_rounded,
+                          label: '$jamaahCount Jamaah',
+                          isDark: isDark,
+                          textColor: headingColor,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Pantau Ruangan',
-                          style: AppTypography.captionSmall.copyWith(
-                            color: primaryColor,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        _BentoChip(
+                          icon: Icons.shield_rounded,
+                          label: '$pendampingCount Pendamping',
+                          isDark: isDark,
+                          textColor: headingColor,
                         ),
-                        const SizedBox(width: 4),
-                        Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 11,
-                          color: primaryColor,
+                        if (hasSos)
+                          _BentoChip(
+                            icon: Icons.warning_amber_rounded,
+                            label: '$sosCount SOS',
+                            isDark: isDark,
+                            textColor: AppColors.sosEmergency,
+                            backgroundColor: AppColors.sosEmergency.withValues(
+                              alpha: 0.15,
+                            ),
+                          ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    // Bottom: 3 Circular Action Buttons + Right-aligned Action
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // 3 Circular Action Buttons (Reference: Circular white social/action buttons)
+                        Row(
+                          children: [
+                            _CircleActionButton(
+                              icon: Icons.copy_rounded,
+                              tooltip: 'Salin Kode (${room.code})',
+                              isDark: isDark,
+                              iconColor: actionIconColor,
+                              onTap: () {
+                                Clipboard.setData(
+                                  ClipboardData(text: room.code),
+                                );
+                                AppAlert.info(
+                                  context,
+                                  title: 'Kode Disalin',
+                                  message:
+                                      'Kode room "${room.code}" berhasil disalin ke clipboard.',
+                                );
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                            _CircleActionButton(
+                              icon: Icons.qr_code_2_rounded,
+                              tooltip: 'Lihat QR Code',
+                              isDark: isDark,
+                              iconColor: actionIconColor,
+                              onTap: () =>
+                                  RoomQrDialog.show(context, room: room),
+                            ),
+                            const SizedBox(width: 8),
+                            _CircleActionButton(
+                              icon: Icons.radar_rounded,
+                              tooltip: 'Pantau Radar',
+                              isDark: isDark,
+                              iconColor: actionIconColor,
+                              onTap: onTap,
+                            ),
+                          ],
+                        ),
+
+                        // Right Action (Reference: "View more v" style)
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: onTap,
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 4,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Pantau Ruangan',
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w900,
+                                      color: primaryColor,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Icon(
+                                    Icons.arrow_forward_ios_rounded,
+                                    size: 11,
+                                    color: primaryColor,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ],
                 ),
-              ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CircleActionButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final bool isDark;
+  final Color iconColor;
+  final VoidCallback onTap;
+
+  const _CircleActionButton({
+    required this.icon,
+    required this.tooltip,
+    required this.isDark,
+    required this.iconColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withValues(alpha: 0.18) : Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.10),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          shape: const CircleBorder(),
+          child: InkWell(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              onTap();
+            },
+            customBorder: const CircleBorder(),
+            child: Center(
+              child: Icon(
+                icon,
+                size: 18,
+                color: isDark ? Colors.white : iconColor,
+              ),
             ),
           ),
         ),
@@ -4864,17 +5455,19 @@ class _RoomPantauCard extends StatelessWidget {
   }
 }
 
-class _BadgeCount extends StatelessWidget {
+class _BentoChip extends StatelessWidget {
   final IconData icon;
   final String label;
-  final Color color;
   final bool isDark;
+  final Color textColor;
+  final Color? backgroundColor;
 
-  const _BadgeCount({
+  const _BentoChip({
     required this.icon,
     required this.label,
-    required this.color,
     required this.isDark,
+    required this.textColor,
+    this.backgroundColor,
   });
 
   @override
@@ -4882,23 +5475,22 @@ class _BadgeCount extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: isDark ? 0.16 : 0.10),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(
-          color: color.withValues(alpha: isDark ? 0.35 : 0.22),
-        ),
+        color:
+            backgroundColor ??
+            Colors.white.withValues(alpha: isDark ? 0.18 : 0.55),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: color),
+          Icon(icon, size: 13, color: textColor),
           const SizedBox(width: 4),
           Text(
             label,
-            style: AppTypography.captionSmall.copyWith(
-              color: color,
-              fontWeight: FontWeight.bold,
+            style: TextStyle(
               fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: textColor,
             ),
           ),
         ],
@@ -5349,4 +5941,3 @@ class _MiniSparklinePainter extends CustomPainter {
     return oldDelegate.color != color;
   }
 }
-
