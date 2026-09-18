@@ -279,18 +279,26 @@ class LoginController extends GetxController {
       );
 
       if (!userDoc.exists) {
+        String chosenRole = selectedRole.value;
+        if (Get.context != null) {
+          final selected = await _promptRoleSelection(Get.context!);
+          if (selected != null) {
+            chosenRole = selected;
+          }
+        }
+
         final displayName = user.displayName ?? 'Pengguna Google';
 
         final userPayload = <String, dynamic>{
           'name': displayName,
           'email': user.email ?? '',
           'photoUrl': user.photoURL,
-          'role': selectedRole.value,
+          'role': chosenRole,
           'activeRoomId': null,
           'createdAt': FieldValue.serverTimestamp(),
         };
 
-        if (selectedRole.value == 'jamaah') {
+        if (chosenRole == 'jamaah') {
           userPayload['distance'] = 20.0;
           userPayload['separatedMode'] = false;
           userPayload['sosActive'] = false;
@@ -302,10 +310,15 @@ class LoginController extends GetxController {
 
       // Simpan remember me.
       final startup = Get.find<AppStartupController>();
-
       await startup.handleSuccessfulLogin(rememberMe: shouldRemember);
 
       if (isClosed) return;
+
+      // Sync state to HajiCareController
+      if (Get.isRegistered<HajiCareController>()) {
+        final hajicare = Get.find<HajiCareController>();
+        await hajicare.syncUserData(uid);
+      }
 
       // Tentukan dashboard.
       final destination = await startup.resolveUserRoleDestination(uid);
@@ -388,6 +401,163 @@ class LoginController extends GetxController {
       btnOkColor: const Color(0xFFB71C1C),
       btnOkOnPress: () {},
     ).show();
+  }
+
+  Future<String?> _promptRoleSelection(BuildContext context) async {
+    return showModalBottomSheet<String>(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final isDark = AppColors.isDark(ctx);
+        final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
+        final headingColor = isDark ? AppColors.darkTextHeading : AppColors.espressoDark;
+        final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
+        final primaryColor = isDark ? AppColors.goldLight : AppColors.goldPrimary;
+
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Pilih Peran Anda',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: headingColor,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Peran ini akan disimpan permanen ke akun Anda dan tidak dapat diubah.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: bodyColor,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Role Option: Jamaah
+              InkWell(
+                onTap: () => Navigator.of(ctx).pop('jamaah'),
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: primaryColor.withValues(alpha: 0.5), width: 1.5),
+                    borderRadius: BorderRadius.circular(16),
+                    color: primaryColor.withValues(alpha: 0.08),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.person_rounded, color: primaryColor, size: 24),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Jamaah Haji / Umrah',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: headingColor,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Akses panduan ibadah, peta, jadwal sholat & monitoring pendamping',
+                              style: TextStyle(fontSize: 12, color: bodyColor),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.arrow_forward_ios_rounded, size: 16, color: primaryColor),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Role Option: Pendamping
+              InkWell(
+                onTap: () => Navigator.of(ctx).pop('pendamping'),
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppColors.statusSafe.withValues(alpha: 0.5), width: 1.5),
+                    borderRadius: BorderRadius.circular(16),
+                    color: AppColors.statusSafe.withValues(alpha: 0.08),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.statusSafe.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.health_and_safety_rounded, color: AppColors.statusSafe, size: 24),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Pendamping / Muthawif',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: headingColor,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Kelola room, undang jamaah & pantau pergerakan radar realtime',
+                              style: TextStyle(fontSize: 12, color: bodyColor),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppColors.statusSafe),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override

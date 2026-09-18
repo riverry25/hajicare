@@ -143,43 +143,47 @@ class DashboardPendampingScreen extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           const ActiveRoomCard(isPendamping: true),
           const SizedBox(height: AppSpacing.lg),
-          if (state.anyJamaahSeparated) _buildSeparatedBanner(context, state, isDark),
-          PendampingJamaahSelector(
-            state: state,
-            selectedIndex: dashboardCtrl.selectedJamaahIndex.value,
-            onSelected: (idx) {
-              dashboardCtrl.selectJamaah(idx);
-            },
-          ),
-          const SizedBox(height: AppSpacing.lg),
+          if (state.activeRoomId.value != null && state.jamaahList.isNotEmpty) ...[
+            if (state.anyJamaahSeparated) _buildSeparatedBanner(context, state, isDark),
+            PendampingJamaahSelector(
+              state: state,
+              selectedIndex: dashboardCtrl.selectedJamaahIndex.value,
+              onSelected: (idx) {
+                dashboardCtrl.selectJamaah(idx);
+              },
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
           PendampingRadarCard(
             jamaah: selectedJamaah,
             onTrackMap: () => dashboardCtrl.changeTab(1),
           ),
           const SizedBox(height: AppSpacing.lg),
-          PendampingSosBanner(
-            state: state,
-            onDismissSos: (jamaahId) async {
-              AppAlert.confirm(
-                context,
-                title: 'Akhiri Darurat SOS',
-                message: 'Apakah situasi darurat jamaah sudah teratasi? Sinyal SOS akan dinonaktifkan.',
-                confirmText: 'Ya, Akhiri SOS',
-                cancelText: 'Batal',
-                onConfirm: () async {
-                  await state.dismissSos(jamaahId);
-                  if (context.mounted) {
-                    AppAlert.success(
-                      context,
-                      title: 'SOS Diakhiri',
-                      message: 'Sinyal darurat berhasil dinonaktifkan.',
-                    );
-                  }
-                },
-              );
-            },
-          ),
-          const SizedBox(height: AppSpacing.lg),
+          if (state.activeRoomId.value != null) ...[
+            PendampingSosBanner(
+              state: state,
+              onDismissSos: (jamaahId) async {
+                AppAlert.confirm(
+                  context,
+                  title: 'Akhiri Darurat SOS',
+                  message: 'Apakah situasi darurat jamaah sudah teratasi? Sinyal SOS akan dinonaktifkan.',
+                  confirmText: 'Ya, Akhiri SOS',
+                  cancelText: 'Batal',
+                  onConfirm: () async {
+                    await state.dismissSos(jamaahId);
+                    if (context.mounted) {
+                      AppAlert.success(
+                        context,
+                        title: 'SOS Diakhiri',
+                        message: 'Sinyal darurat berhasil dinonaktifkan.',
+                      );
+                    }
+                  },
+                );
+              },
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
           _buildMapCard(context, state, dashboardCtrl, selectedJamaah, isDark),
           const SizedBox(height: AppSpacing.lg),
           _buildFeatureGrid(context, dashboardCtrl, isDark),

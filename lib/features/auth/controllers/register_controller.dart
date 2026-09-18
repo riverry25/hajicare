@@ -78,8 +78,12 @@ class RegisterController extends GetxController {
         );
       }
 
-      // Both newly registered Pendamping and Jamaah must join a room first
-      Get.offAllNamed(AppRoutes.joinRoom);
+      // Navigate directly to respective role dashboard (basic features available without room)
+      if (selectedRole.value == 'pendamping') {
+        Get.offAllNamed(AppRoutes.dashboardPendamping);
+      } else {
+        Get.offAllNamed(AppRoutes.dashboardJamaah);
+      }
     } on FirebaseAuthException catch (e) {
       debugPrint('=== ERROR AUTH ===: ${e.code} - ${e.message}');
       errorMessage.value = e.message ?? e.code;

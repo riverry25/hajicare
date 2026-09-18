@@ -7,6 +7,11 @@ class RoomModel {
   final String name;
   final String code;
   final String createdBy;
+  final String? createdByRole;
+  final String? pendampingId;
+  final String? maktab;
+  final String? kloter;
+  final double safeRadius;
   final DateTime? createdAt;
   final bool isActive;
   final int memberCount;
@@ -16,6 +21,11 @@ class RoomModel {
     required this.name,
     required this.code,
     required this.createdBy,
+    this.createdByRole,
+    this.pendampingId,
+    this.maktab,
+    this.kloter,
+    this.safeRadius = 200.0,
     this.createdAt,
     this.isActive = true,
     this.memberCount = 0,
@@ -31,11 +41,22 @@ class RoomModel {
       createdAt = rawTimestamp;
     }
 
+    final rawRadius = data['safeRadius'];
+    double safeRadius = 200.0;
+    if (rawRadius is num) {
+      safeRadius = rawRadius.toDouble();
+    }
+
     return RoomModel(
       id: doc.id,
       name: (data['name'] as String?)?.trim() ?? '',
       code: (data['code'] as String?)?.trim().toUpperCase() ?? '',
       createdBy: (data['createdBy'] as String?) ?? '',
+      createdByRole: data['createdByRole'] as String?,
+      pendampingId: data['pendampingId'] as String?,
+      maktab: data['maktab'] as String?,
+      kloter: data['kloter'] as String?,
+      safeRadius: safeRadius,
       createdAt: createdAt,
       isActive: (data['isActive'] as bool?) ?? true,
       memberCount: memberCount > 0 ? memberCount : ((data['memberCount'] as num?)?.toInt() ?? 0),
@@ -47,6 +68,11 @@ class RoomModel {
       'name': name.trim(),
       'code': code.trim().toUpperCase(),
       'createdBy': createdBy,
+      if (createdByRole != null) 'createdByRole': createdByRole,
+      if (pendampingId != null) 'pendampingId': pendampingId,
+      if (maktab != null) 'maktab': maktab,
+      if (kloter != null) 'kloter': kloter,
+      'safeRadius': safeRadius,
       'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
       'isActive': isActive,
     };
@@ -57,6 +83,11 @@ class RoomModel {
     String? name,
     String? code,
     String? createdBy,
+    String? createdByRole,
+    String? pendampingId,
+    String? maktab,
+    String? kloter,
+    double? safeRadius,
     DateTime? createdAt,
     bool? isActive,
     int? memberCount,
@@ -66,6 +97,11 @@ class RoomModel {
       name: name ?? this.name,
       code: code ?? this.code,
       createdBy: createdBy ?? this.createdBy,
+      createdByRole: createdByRole ?? this.createdByRole,
+      pendampingId: pendampingId ?? this.pendampingId,
+      maktab: maktab ?? this.maktab,
+      kloter: kloter ?? this.kloter,
+      safeRadius: safeRadius ?? this.safeRadius,
       createdAt: createdAt ?? this.createdAt,
       isActive: isActive ?? this.isActive,
       memberCount: memberCount ?? this.memberCount,

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/locales/app_translations.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -102,7 +103,17 @@ class DashboardJamaahScreen extends StatelessWidget {
             padding: const EdgeInsets.only(right: AppSpacing.screenEdgeGutter),
             child: Center(
               child: InkWell(
-                onTap: () => Get.toNamed(AppRoutes.modalSos),
+                onTap: () {
+                  if (state.activeRoomId.value == null || state.activeRoomId.value!.isEmpty) {
+                    AppAlert.warning(
+                      context,
+                      title: 'Room Diperlukan',
+                      message: 'Silakan bergabung ke room terlebih dahulu sebelum dapat menggunakan fitur darurat SOS.',
+                    );
+                  } else {
+                    Get.toNamed(AppRoutes.modalSos);
+                  }
+                },
                 borderRadius: BorderRadius.circular(AppRadius.pill),
                 child: Container(
                   padding: const EdgeInsets.symmetric(

@@ -62,13 +62,21 @@ service cloud.firestore {
       // Any authenticated user can read room metadata for validation / join
       allow read: if isAuthenticated();
 
-      // Only admin can create, update, or delete rooms
-      allow create: if isAdmin() &&
-                    request.resource.data.name is string &&
-                    request.resource.data.code is string &&
-                    request.resource.data.isActive is bool;
+      // Admin or Pendamping can create room
+      allow create: if isAuthenticated() && (
+        isAdmin() ||
+        (
+          isPendamping() &&
+          request.resource.data.name is string &&
+          request.resource.data.code is string
+        )
+      );
 
-      allow update: if isAdmin();
+      // Admin can update anything, Pendamping of the room can update settings like safeRadius
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        isPendamping()
+      );
       allow delete: if isAdmin();
 
       // ── ROOM MEMBERS SUBCOLLECTION ──────────────────────────────────────────
@@ -107,11 +115,31 @@ service cloud.firestore {
       }
     }
 
+    // ── INVITATIONS COLLECTION ────────────────────────────────────────────────
+    match /invitations/{invitationId} {
+      allow read: if isAuthenticated();
+      // Pendamping or Admin can send invitation
+      allow create: if isAuthenticated() && (isAdmin() || isPendamping());
+      // Recipient can update status (accept/reject), or creator/admin
+      allow update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    // ── NOTIFICATIONS COLLECTION ──────────────────────────────────────────────
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
     // ── SOS EVENTS ───────────────────────────────────────────────────────────
     match /sos_events/{eventId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
-      allow update, delete: if isAdmin();
+      // Admin and Pendamping can update SOS status (direspons, selesai, eskalasi)
+      allow update: if isAuthenticated();
+      allow delete: if isAdmin();
     }
 
     // ── LEGACY PAIRINGS (Graceful transition) ─────────────────────────────────

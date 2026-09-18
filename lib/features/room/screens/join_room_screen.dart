@@ -23,12 +23,38 @@ class JoinRoomScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: scaffoldBg,
+      appBar: AppBar(
+        backgroundColor: scaffoldBg,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: headingColor, size: 20),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Get.back();
+            } else {
+              controller.selectedMode.value == 0
+                  ? Get.offAllNamed('/dashboard_pendamping')
+                  : (controller.isPendamping
+                      ? Get.offAllNamed('/dashboard_pendamping')
+                      : Get.offAllNamed('/dashboard_jamaah'));
+            }
+          },
+        ),
+        title: Text(
+          controller.isPendamping ? 'Room Pemantauan' : 'Gabung ke Room',
+          style: AppTypography.titleMedium.copyWith(
+            color: headingColor,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.screenEdgeGutter,
-              vertical: AppSpacing.xl,
+              vertical: AppSpacing.md,
             ),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 480),
@@ -36,11 +62,11 @@ class JoinRoomScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // 1. Icon & Header
+                  // Top Hero Icon
                   Center(
                     child: Container(
-                      width: 88,
-                      height: 88,
+                      width: 80,
+                      height: 80,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
@@ -55,283 +81,114 @@ class JoinRoomScreen extends StatelessWidget {
                           color: primaryColor.withValues(alpha: 0.35),
                           width: 2,
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: primaryColor.withValues(alpha: 0.1),
-                            blurRadius: 16,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
                       ),
                       child: Center(
                         child: Icon(
                           Icons.meeting_room_rounded,
-                          size: 42,
+                          size: 38,
                           color: primaryColor,
                         ),
                       ),
                     ),
                   ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  // Header Title & Subtitle
+                  Obx(() {
+                    final isCreating = controller.isPendamping && controller.selectedMode.value == 0;
+                    return Column(
+                      children: [
+                        Text(
+                          isCreating ? 'Buat Room Baru' : 'Gabung ke Room',
+                          textAlign: TextAlign.center,
+                          style: AppTypography.headlineMedium.copyWith(
+                            color: headingColor,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          isCreating
+                              ? 'Buat room pemantauan untuk jamaah Anda. Kode unik dan QR Code akan dibuat otomatis oleh sistem.'
+                              : 'Masukkan 6 digit kode room yang diberikan oleh ketua rombongan atau muthawif Anda.',
+                          textAlign: TextAlign.center,
+                          style: AppTypography.bodySmall.copyWith(
+                            color: bodyColor,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
                   const SizedBox(height: AppSpacing.lg),
 
-                  Text(
-                    'Gabung ke Room',
-                    textAlign: TextAlign.center,
-                    style: AppTypography.displaySmall.copyWith(
-                      color: headingColor,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.5,
+                  // Mode Switcher for Pendamping
+                  if (controller.isPendamping) ...[
+                    Obx(
+                      () => Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.darkSurface : AppColors.canvasCream,
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          border: Border.all(
+                            color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: _ModeTabButton(
+                                label: 'Buat Room',
+                                icon: Icons.add_business_rounded,
+                                isSelected: controller.selectedMode.value == 0,
+                                primaryColor: primaryColor,
+                                headingColor: headingColor,
+                                isDark: isDark,
+                                onTap: () => controller.selectedMode.value = 0,
+                              ),
+                            ),
+                            Expanded(
+                              child: _ModeTabButton(
+                                label: 'Gabung Room',
+                                icon: Icons.login_rounded,
+                                isSelected: controller.selectedMode.value == 1,
+                                primaryColor: primaryColor,
+                                headingColor: headingColor,
+                                isDark: isDark,
+                                onTap: () => controller.selectedMode.value = 1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
 
-                  Text(
-                    'Masukkan nama kelompok dan 6 digit kode room yang diberikan oleh ketua rombongan atau petugas maktab.',
-                    textAlign: TextAlign.center,
-                    style: AppTypography.bodySmall.copyWith(
-                      color: bodyColor,
-                      height: 1.45,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-
-                  // 2. Input Form Card
+                  // Main Form Card
                   AppCard(
                     backgroundColor: cardBg,
                     child: Padding(
-                      padding: const EdgeInsets.all(AppSpacing.xl),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Field: Nama Room
-                          Row(
-                            children: [
-                              Icon(Icons.apartment_rounded, size: 18, color: primaryColor),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Nama Room / Kelompok',
-                                style: AppTypography.labelMedium.copyWith(
-                                  color: headingColor,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: AppSpacing.xs),
-                          TextField(
-                            controller: controller.roomNameController,
-                            style: AppTypography.bodyMedium.copyWith(color: headingColor),
-                            decoration: InputDecoration(
-                              hintText: 'Contoh: Maktab 48 Kloter 12',
-                              hintStyle: AppTypography.bodyMedium.copyWith(
-                                color: AppColors.textSecondaryColor(context),
-                              ),
-                              prefixIcon: Icon(
-                                Icons.group_work_outlined,
-                                color: AppColors.textSecondaryColor(context),
-                                size: 20,
-                              ),
-                              filled: true,
-                              fillColor: isDark
-                                  ? AppColors.darkPrimaryContainer.withValues(alpha: 0.25)
-                                  : AppColors.canvasCream.withValues(alpha: 0.5),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 16,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.md),
-                                borderSide: BorderSide(color: AppColors.cardBorderColor(context)),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.md),
-                                borderSide: BorderSide(color: AppColors.cardBorderColor(context)),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.md),
-                                borderSide: BorderSide(color: primaryColor, width: 2),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.lg),
-
-                          // Field: Kode Room PIN (Besar, Tebal, Mudah Diketik)
-                          Row(
-                            children: [
-                              Icon(Icons.pin_rounded, size: 18, color: primaryColor),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Kode Room (6 Karakter PIN)',
-                                style: AppTypography.labelMedium.copyWith(
-                                  color: headingColor,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: AppSpacing.xs),
-                          TextField(
-                            controller: controller.roomCodeController,
-                            textAlign: TextAlign.center,
-                            textCapitalization: TextCapitalization.characters,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
-                              LengthLimitingTextInputFormatter(8),
-                            ],
-                            style: TextStyle(
-                              letterSpacing: 6.0,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 22,
-                              color: headingColor,
-                              fontFamily: 'monospace',
-                            ),
-                            decoration: InputDecoration(
-                              hintText: 'M48X7K',
-                              hintStyle: TextStyle(
-                                letterSpacing: 6.0,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 20,
-                                color: AppColors.textSecondaryColor(context).withValues(alpha: 0.5),
-                              ),
-                              prefixIcon: Icon(
-                                Icons.key_rounded,
-                                color: AppColors.textSecondaryColor(context),
-                                size: 20,
-                              ),
-                              helperText: 'Kombinasi huruf kapital & angka tanpa spasi',
-                              helperStyle: AppTypography.captionSmall.copyWith(
-                                color: AppColors.textSecondaryColor(context),
-                              ),
-                              filled: true,
-                              fillColor: isDark
-                                  ? AppColors.darkPrimaryContainer.withValues(alpha: 0.35)
-                                  : AppColors.goldPrimary.withValues(alpha: 0.05),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 16,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.md),
-                                borderSide: BorderSide(
-                                  color: primaryColor.withValues(alpha: 0.3),
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.md),
-                                borderSide: BorderSide(
-                                  color: isDark
-                                      ? AppColors.darkBorder
-                                      : AppColors.goldPrimary.withValues(alpha: 0.3),
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.md),
-                                borderSide: BorderSide(color: primaryColor, width: 2),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.lg),
-
-                          // Error Message Display
-                          Obx(() {
-                            final err = controller.errorMessage.value;
-                            if (err == null) return const SizedBox.shrink();
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: AppSpacing.md),
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: AppColors.errorContainer,
-                                borderRadius: BorderRadius.circular(AppRadius.md),
-                                border: Border.all(
-                                  color: AppColors.error.withValues(alpha: 0.3),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 20),
-                                  const SizedBox(width: AppSpacing.sm),
-                                  Expanded(
-                                    child: Text(
-                                      err,
-                                      style: AppTypography.captionSmall.copyWith(
-                                        color: AppColors.error,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }),
-
-                          // Submit Button: Standard 54px height
-                          Obx(() {
-                            final loading = controller.isLoading.value;
-                            return SizedBox(
-                              height: 54,
-                              child: ElevatedButton(
-                                onPressed: loading ? null : controller.joinRoom,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: primaryColor,
-                                  foregroundColor: Colors.white,
-                                  elevation: 2,
-                                  shadowColor: primaryColor.withValues(alpha: 0.4),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                                  ),
-                                ),
-                                child: loading
-                                    ? const SizedBox(
-                                        height: 24,
-                                        width: 24,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2.5,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(Colors.white),
-                                        ),
-                                      )
-                                    : Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          const Icon(Icons.login_rounded, size: 20, color: Colors.white),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            'Gabung Room',
-                                            style: AppTypography.button.copyWith(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.w800,
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                              ),
-                            );
-                          }),
-                        ],
-                      ),
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      child: Obx(() {
+                        if (controller.isPendamping && controller.selectedMode.value == 0) {
+                          return _buildCreateRoomForm(context, controller, primaryColor, headingColor, isDark);
+                        } else {
+                          return _buildJoinRoomForm(context, controller, primaryColor, headingColor, isDark);
+                        }
+                      }),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
 
-                  // 3. Switch Account / Sign Out option
+                  // Bottom Info & Switch Account
                   Center(
                     child: TextButton.icon(
-                      onPressed: controller.switchAccount,
-                      icon: Icon(
-                        Icons.logout_rounded,
-                        size: 18,
-                        color: AppColors.textSecondaryColor(context),
-                      ),
+                      onPressed: () => controller.switchAccount(),
+                      icon: Icon(Icons.logout_rounded, size: 16, color: bodyColor),
                       label: Text(
                         'Keluar / Ganti Akun',
-                        style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.textSecondaryColor(context),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        style: AppTypography.bodySmall.copyWith(color: bodyColor),
                       ),
                     ),
                   ),
@@ -341,6 +198,251 @@ class JoinRoomScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCreateRoomForm(
+    BuildContext context,
+    JoinRoomController controller,
+    Color primaryColor,
+    Color headingColor,
+    bool isDark,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Room Name Field
+        Text(
+          'Nama Room / Rombongan *',
+          style: AppTypography.labelMedium.copyWith(color: headingColor, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        TextField(
+          controller: controller.createRoomNameController,
+          style: AppTypography.bodyMedium.copyWith(color: headingColor),
+          decoration: InputDecoration(
+            hintText: 'Contoh: Rombongan Maktab 48',
+            hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondaryColor(context)),
+            prefixIcon: Icon(Icons.groups_rounded, color: primaryColor, size: 20),
+            filled: true,
+            fillColor: isDark ? AppColors.darkPrimaryContainer.withValues(alpha: 0.25) : AppColors.canvasCream.withValues(alpha: 0.5),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+
+        // Maktab Field
+        Text(
+          'Nomor Maktab (Opsional)',
+          style: AppTypography.labelMedium.copyWith(color: headingColor, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        TextField(
+          controller: controller.createMaktabController,
+          style: AppTypography.bodyMedium.copyWith(color: headingColor),
+          decoration: InputDecoration(
+            hintText: 'Contoh: Maktab 48',
+            prefixIcon: Icon(Icons.hotel_rounded, color: primaryColor, size: 20),
+            filled: true,
+            fillColor: isDark ? AppColors.darkPrimaryContainer.withValues(alpha: 0.25) : AppColors.canvasCream.withValues(alpha: 0.5),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+
+        // Kloter Field
+        Text(
+          'Nomor Kloter (Opsional)',
+          style: AppTypography.labelMedium.copyWith(color: headingColor, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        TextField(
+          controller: controller.createKloterController,
+          style: AppTypography.bodyMedium.copyWith(color: headingColor),
+          decoration: InputDecoration(
+            hintText: 'Contoh: SOC-12',
+            prefixIcon: Icon(Icons.flight_takeoff_rounded, color: primaryColor, size: 20),
+            filled: true,
+            fillColor: isDark ? AppColors.darkPrimaryContainer.withValues(alpha: 0.25) : AppColors.canvasCream.withValues(alpha: 0.5),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+
+        // Submit Button
+        Obx(
+          () => SizedBox(
+            height: 52,
+            child: ElevatedButton.icon(
+              onPressed: controller.isLoading.value ? null : () => controller.createRoom(),
+              icon: controller.isLoading.value
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(Icons.add_circle_outline_rounded, size: 20),
+              label: Text(
+                controller.isLoading.value ? 'Membuat Room...' : 'Buat Room Sekarang',
+                style: AppTypography.labelLarge.copyWith(
+                  color: isDark ? AppColors.espressoDark : AppColors.surfaceWhite,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildJoinRoomForm(
+    BuildContext context,
+    JoinRoomController controller,
+    Color primaryColor,
+    Color headingColor,
+    bool isDark,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Kode Room (6 Karakter)',
+          style: AppTypography.labelMedium.copyWith(color: headingColor, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        TextField(
+          controller: controller.roomCodeController,
+          maxLength: 8,
+          textCapitalization: TextCapitalization.characters,
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
+            UpperCaseTextFormatter(),
+          ],
+          textAlign: TextAlign.center,
+          style: AppTypography.headlineMedium.copyWith(
+            color: primaryColor,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 8,
+          ),
+          decoration: InputDecoration(
+            counterText: '',
+            hintText: 'KODE6',
+            hintStyle: AppTypography.headlineMedium.copyWith(
+              color: AppColors.textSecondaryColor(context).withValues(alpha: 0.4),
+              letterSpacing: 8,
+            ),
+            filled: true,
+            fillColor: isDark ? AppColors.darkPrimaryContainer.withValues(alpha: 0.25) : AppColors.canvasCream.withValues(alpha: 0.5),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+
+        // Submit Button
+        Obx(
+          () => SizedBox(
+            height: 52,
+            child: ElevatedButton.icon(
+              onPressed: controller.isLoading.value ? null : () => controller.joinRoom(),
+              icon: controller.isLoading.value
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(Icons.arrow_forward_rounded, size: 20),
+              label: Text(
+                controller.isLoading.value ? 'Memproses...' : 'Gabung ke Room',
+                style: AppTypography.labelLarge.copyWith(
+                  color: isDark ? AppColors.espressoDark : AppColors.surfaceWhite,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ModeTabButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool isSelected;
+  final Color primaryColor;
+  final Color headingColor;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _ModeTabButton({
+    required this.label,
+    required this.icon,
+    required this.isSelected,
+    required this.primaryColor,
+    required this.headingColor,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? (isDark ? primaryColor : AppColors.espressoDark) : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: isSelected
+                  ? (isDark ? AppColors.espressoDark : Colors.white)
+                  : AppColors.textSecondaryColor(context),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: isSelected
+                    ? (isDark ? AppColors.espressoDark : Colors.white)
+                    : AppColors.textSecondaryColor(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class UpperCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    return TextEditingValue(
+      text: newValue.text.toUpperCase(),
+      selection: newValue.selection,
     );
   }
 }

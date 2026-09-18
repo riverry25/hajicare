@@ -44,16 +44,21 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
     if (!_formKey.currentState!.validate()) return;
     if (_isSubmitting) return;
 
-    final currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final user = FirebaseAuth.instance.currentUser;
+    final currentUid = user?.uid ?? '';
+    final currentName = (user?.displayName != null && user!.displayName!.trim().isNotEmpty)
+        ? user.displayName!.trim()
+        : 'Pendamping';
     final email = _emailCtrl.text.trim();
 
     setState(() => _isSubmitting = true);
 
     try {
-      await _roomService.addJamaahByEmail(
+      await _roomService.inviteJamaahByEmail(
         roomId: widget.roomId,
         email: email,
         currentPendampingUid: currentUid,
+        currentPendampingName: currentName,
       );
 
       if (!mounted) return;
@@ -61,8 +66,8 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
 
       AppAlert.success(
         context,
-        title: 'Berhasil Ditambahkan',
-        message: 'Jamaah dengan email "$email" telah berhasil ditambahkan ke dalam room pemantauan.',
+        title: 'Undangan Terkirim',
+        message: 'Undangan telah berhasil dikirim ke "$email". Jamaah akan menerima notifikasi untuk menerima atau menolak.',
       );
     } catch (e) {
       if (!mounted) return;
@@ -70,7 +75,7 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
 
       AppAlert.error(
         context,
-        title: 'Gagal Menambahkan',
+        title: 'Gagal Mengirim Undangan',
         message: e.toString().replaceAll('Exception: ', ''),
       );
     }
@@ -125,14 +130,14 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Tambah Jamaah',
+                            'Undang Jamaah',
                             style: AppTypography.titleMedium.copyWith(
                               color: headingColor,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           Text(
-                            'Masukkan email akun jamaah',
+                            'Kirim undangan ke email jamaah',
                             style: AppTypography.captionSmall.copyWith(
                               color: bodyColor,
                             ),
@@ -152,7 +157,7 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
 
                 // Informative Hint Text
                 Text(
-                  'Jamaah yang ditambahkan harus sudah memiliki akun di HajiCare dan belum terdaftar di room lain.',
+                  'Undangan akan dikirimkan ke akun Jamaah. Jamaah harus sudah memiliki akun di HajiCare dan dapat menerima atau menolak undangan ini.',
                   style: AppTypography.bodySmall.copyWith(
                     color: bodyColor,
                     height: 1.35,
@@ -253,7 +258,7 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
                                 ),
                               )
                             : const Text(
-                                'Tambahkan Jamaah',
+                                'Kirim Undangan',
                                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                               ),
                       ),

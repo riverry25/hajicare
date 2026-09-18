@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:get/get.dart';
 import '../../../../core/locales/app_translations.dart';
-import '../../../../core/models/jamaah_data.dart';
+import '../../../../core/routes/app_routes.dart';
+import '../../../../core/state/hajicare_controller.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -44,7 +46,7 @@ class JamaahDistanceCard extends StatelessWidget {
   }
 
   String _formatTimestamp(DateTime? dt) {
-    if (dt == null) return 'Menunggu sinyal...';
+    if (dt == null) return 'Menunggu lokasi...';
     final diff = DateTime.now().difference(dt);
     if (diff.inSeconds < 30) return 'Baru saja';
     if (diff.inMinutes < 60) return '${diff.inMinutes} mnt lalu';
@@ -71,6 +73,82 @@ class JamaahDistanceCard extends StatelessWidget {
     final isDark = AppColors.isDark(context);
     final headingColor = AppColors.textHeadingColor(context);
     final bodyColor = AppColors.textBodyColor(context);
+
+    // Check if user has active room
+    final controller = Get.isRegistered<HajiCareController>() ? Get.find<HajiCareController>() : null;
+    final hasActiveRoom = controller?.activeRoomId.value != null && controller!.activeRoomId.value!.isNotEmpty;
+
+    if (!hasActiveRoom) {
+      return AppCard(
+        padding: const EdgeInsets.all(AppSpacing.cardPadding),
+        borderColor: isDark ? AppColors.darkCardBorder : AppColors.goldLight.withValues(alpha: 0.5),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.darkPrimaryContainer : AppColors.canvasCream,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.lock_outline_rounded,
+                    color: isDark ? AppColors.goldLight : AppColors.goldDark,
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Radar & Jarak Rombongan',
+                        style: AppTypography.titleMedium.copyWith(
+                          color: headingColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'Fitur pemantauan jarak real-time dengan pendamping memerlukan koneksi room aktif.',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: bodyColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            SizedBox(
+              width: double.infinity,
+              height: 46,
+              child: ElevatedButton.icon(
+                onPressed: () => Get.toNamed(AppRoutes.joinRoom),
+                icon: const Icon(Icons.meeting_room_outlined, size: 20),
+                label: const Text(
+                  'Gabung Room untuk Mengaktifkan',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isDark ? AppColors.darkPrimary : AppColors.primaryGold,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  elevation: 0,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     // 1. STATE: GPS is completely inactive on this device
     if (!jamaah.isGpsActive) {
@@ -361,7 +439,7 @@ class JamaahDistanceCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'Batas aman rombongan: 200 meter',
+                        'Batas aman rombongan: ${controller.safeRadiusMeters.value.toInt()} meter',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.caption.copyWith(color: bodyColor),
@@ -388,7 +466,7 @@ class JamaahDistanceCard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.pill),
             child: LinearProgressIndicator(
-              value: (jamaah.distance / 200).clamp(0.0, 1.0),
+              value: (jamaah.distance / controller.safeRadiusMeters.value).clamp(0.0, 1.0),
               backgroundColor: isDark
                   ? AppColors.darkSurfaceContainerHighest
                   : AppColors.canvasCreamSubtle,

@@ -9,11 +9,13 @@ import '../models/jamaah_data.dart';
 import '../services/location_service.dart';
 import '../../features/room/models/room_model.dart';
 import '../../features/room/models/room_member_model.dart';
+import '../../features/room/models/room_invitation_model.dart';
 import '../../features/room/services/room_service.dart';
 
 export '../models/jamaah_data.dart';
 export '../../features/room/models/room_model.dart';
 export '../../features/room/models/room_member_model.dart';
+export '../../features/room/models/room_invitation_model.dart';
 
 class HajiCareController extends GetxController {
   static const String keyActiveRoomId = 'hajicare_active_room_id';
@@ -48,6 +50,10 @@ class HajiCareController extends GetxController {
   StreamSubscription<Position>? _gpsStreamSub;
   DateTime? _lastLocationBroadcastTime;
   Position? _lastBroadcastPosition;
+
+  // Invitations State
+  final pendingInvitations = <RoomInvitationModel>[].obs;
+  StreamSubscription? _invitationsSub;
 
   JamaahData? _self;
 
@@ -192,11 +198,13 @@ class HajiCareController extends GetxController {
     _roomDocSub?.cancel();
     _roomMembersSub?.cancel();
     _pendampingDocSub?.cancel();
+    _invitationsSub?.cancel();
     for (var sub in _jamaahSubs.values) {
       sub.cancel();
     }
     _jamaahSubs.clear();
     jamaahList.clear();
+    pendingInvitations.clear();
     activeRoomMembers.clear();
     activeRoomId.value = null;
     activeRoom.value = null;
@@ -216,6 +224,10 @@ class HajiCareController extends GetxController {
 
   Future<void> _loadUserData(String uid) async {
     _userDocSub?.cancel();
+    _invitationsSub?.cancel();
+    _invitationsSub = _roomService.getPendingInvitationsStream(uid).listen((invs) {
+      pendingInvitations.value = invs;
+    });
     try {
       _userDocSub = FirebaseFirestore.instance
           .collection('users')
@@ -308,7 +320,9 @@ class HajiCareController extends GetxController {
         .snapshots()
         .listen((doc) {
       if (doc.exists) {
-        activeRoom.value = RoomModel.fromFirestore(doc);
+        final r = RoomModel.fromFirestore(doc);
+        activeRoom.value = r;
+        safeRadiusMeters.value = r.safeRadius;
       }
     });
 
@@ -604,9 +618,17 @@ class HajiCareController extends GetxController {
     }
   }
 
-  void setSafeRadius(double radius) {
+  Future<void> setSafeRadius(double radius) async {
     safeRadiusMeters.value = radius;
     _recalculateRealDistance();
+    final roomId = activeRoomId.value;
+    if (roomId != null && roomId.isNotEmpty) {
+      try {
+        await _roomService.updateSafeRadius(roomId: roomId, radius: radius);
+      } catch (e) {
+        debugPrint('[HajiCareController] Error updating safe radius in Firestore: $e');
+      }
+    }
   }
 
   /// Leaves the current active room for this user.
@@ -650,24 +672,32 @@ class HajiCareController extends GetxController {
   // ── SOS SYSTEM (TRUE FIRESTORE & REALTIME) ──────────────────────────────────
 
   /// Triggers a real SOS event with current location to Firestore.
+  /// Enforces that Jamaah must have an active room.
   Future<bool> triggerSos() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return false;
 
+    final roomId = activeRoomId.value;
+    if (roomId == null || roomId.isEmpty) {
+      debugPrint('[HajiCareController] Cannot trigger SOS: user has no active room.');
+      return false;
+    }
+
     try {
       final myPos = myCurrentPosition.value;
-      final roomId = activeRoomId.value;
       final roomName = activeRoom.value?.name ?? '';
       final userName = _self?.name ?? user.displayName ?? 'Jamaah';
 
-      // 1. Create real SOS event document
+      // 1. Create real SOS event document with status 'baru'
       await FirebaseFirestore.instance.collection('sos_events').add({
         'userId': user.uid,
+        'jamaahId': user.uid,
         'userName': userName,
         'roomId': roomId,
         'roomName': roomName,
         'timestamp': FieldValue.serverTimestamp(),
-        'status': 'active',
+        'createdAt': FieldValue.serverTimestamp(),
+        'status': 'baru',
         if (myPos != null) 'location': GeoPoint(myPos.latitude, myPos.longitude),
       });
 
@@ -678,7 +708,7 @@ class HajiCareController extends GetxController {
       }, SetOptions(merge: true));
 
       // 3. Update room member doc
-      if (roomId != null && roomId.isNotEmpty) {
+      if (roomId.isNotEmpty) {
         await FirebaseFirestore.instance
             .collection('rooms')
             .doc(roomId)

@@ -201,14 +201,12 @@ class AppStartupController extends GetxController {
           return AppRoutes.adminDashboard;
         }
 
-        final hasRoom = effectiveRoomId != null && effectiveRoomId.isNotEmpty;
-
         if (role == 'pendamping') {
-          return hasRoom ? AppRoutes.dashboardPendamping : AppRoutes.joinRoom;
+          return AppRoutes.dashboardPendamping;
         }
 
         // Default role: jamaah
-        return hasRoom ? AppRoutes.dashboardJamaah : AppRoutes.joinRoom;
+        return AppRoutes.dashboardJamaah;
       }
     } catch (e) {
       debugPrint('[AppStartupController] Firestore role check skipped/timed out: $e');
@@ -233,11 +231,10 @@ class AppStartupController extends GetxController {
         return AppRoutes.adminDashboard;
       }
 
-      final hasRoom = effectiveCachedRoom != null && effectiveCachedRoom.isNotEmpty;
       if (cachedRole == 'pendamping') {
-        return hasRoom ? AppRoutes.dashboardPendamping : AppRoutes.joinRoom;
+        return AppRoutes.dashboardPendamping;
       }
-      return hasRoom ? AppRoutes.dashboardJamaah : AppRoutes.joinRoom;
+      return AppRoutes.dashboardJamaah;
     } catch (e) {
       debugPrint('[AppStartupController] Error reading cache fallback: $e');
     }

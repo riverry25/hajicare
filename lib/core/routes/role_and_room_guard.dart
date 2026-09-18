@@ -61,22 +61,18 @@ class RoleAndRoomGuard extends GetMiddleware {
       if (state.role == UserRole.admin) {
         return const RouteSettings(name: AppRoutes.adminDashboard);
       } else if (state.role == UserRole.pendamping) {
-        return RouteSettings(
-          name: !hasActiveRoom ? AppRoutes.joinRoom : AppRoutes.dashboardPendamping,
-        );
+        return const RouteSettings(name: AppRoutes.dashboardPendamping);
       } else {
-        return RouteSettings(
-          name: !hasActiveRoom ? AppRoutes.joinRoom : AppRoutes.dashboardJamaah,
-        );
+        return const RouteSettings(name: AppRoutes.dashboardJamaah);
       }
     }
 
-    // 4. Mandatory active room check
+    // 4. Mandatory active room check (only enforced if explicitly requested by room-only sub-pages)
     if (requiresActiveRoom && !hasActiveRoom) {
       return const RouteSettings(name: AppRoutes.joinRoom);
     }
 
-    // 5. If user already has an active room and navigates to Join Room, send to dashboard
+    // 5. If user already has an active room and navigates to Join Room, send to dashboard (1-room-per-user constraint)
     if (redirectIfHasRoom && hasActiveRoom) {
       if (state.role == UserRole.pendamping) {
         return const RouteSettings(name: AppRoutes.dashboardPendamping);

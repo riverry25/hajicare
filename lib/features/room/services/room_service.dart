@@ -5,6 +5,8 @@ import '../../../core/models/jamaah_data.dart';
 import '../models/activity_model.dart';
 import '../models/room_model.dart';
 import '../models/room_member_model.dart';
+import '../models/room_invitation_model.dart';
+import '../../notification/models/notification_model.dart';
 
 /// Exceptions for granular join room error handling
 class RoomException implements Exception {
@@ -103,6 +105,79 @@ class RoomService {
       roomId: room.id,
       roomName: room.name,
       userId: adminUid,
+    );
+
+    return room;
+  }
+
+  /// Creates a new room by a Pendamping with auto-generated unique code,
+  /// sets pendamping as owner, sets membership, and updates user activeRoomId.
+  Future<RoomModel> createRoomByPendamping({
+    required String name,
+    required String pendampingUid,
+    required String pendampingName,
+    String? maktab,
+    String? kloter,
+  }) async {
+    final trimmedName = name.trim();
+    if (trimmedName.isEmpty) {
+      throw const RoomException('Nama room tidak boleh kosong');
+    }
+
+    // Constraint: 1 active room per user
+    final userDoc = await _firestore.collection('users').doc(pendampingUid).get();
+    final currentActiveRoom = userDoc.data()?['activeRoomId'] as String?;
+    if (currentActiveRoom != null && currentActiveRoom.trim().isNotEmpty) {
+      throw const RoomException('Anda sudah memiliki Room aktif. Tidak dapat membuat room kedua.');
+    }
+
+    final code = await generateUniqueRoomCode();
+    final docRef = _firestore.collection('rooms').doc();
+
+    final room = RoomModel(
+      id: docRef.id,
+      name: trimmedName,
+      code: code,
+      createdBy: pendampingUid,
+      createdByRole: 'pendamping',
+      pendampingId: pendampingUid,
+      maktab: maktab?.trim(),
+      kloter: kloter?.trim(),
+      safeRadius: 200.0,
+      createdAt: DateTime.now(),
+      isActive: true,
+      memberCount: 1,
+    );
+
+    final batch = _firestore.batch();
+    batch.set(docRef, room.toFirestore());
+
+    // Add pendamping to members subcollection
+    final memberRef = docRef.collection('members').doc(pendampingUid);
+    batch.set(memberRef, {
+      'uid': pendampingUid,
+      'name': pendampingName.trim(),
+      'role': 'pendamping',
+      'joinedAt': FieldValue.serverTimestamp(),
+    });
+
+    // Update user activeRoomId
+    batch.update(_firestore.collection('users').doc(pendampingUid), {
+      'activeRoomId': docRef.id,
+    });
+
+    await batch.commit();
+    debugPrint('[RoomService] Pendamping created room: ${room.name} (${room.code}) id: ${room.id}');
+
+    await logActivity(
+      type: ActivityType.roomCreated,
+      title: 'Room Dibuat oleh Pendamping',
+      description: 'Pendamping $pendampingName membuat room "${room.name}" (${room.code}).',
+      roomId: room.id,
+      roomName: room.name,
+      userId: pendampingUid,
+      userName: pendampingName,
+      role: 'pendamping',
     );
 
     return room;
@@ -230,22 +305,29 @@ class RoomService {
 
   // ── Join Room (Pendamping & Jamaah) ─────────────────────────────────────────
 
-  /// Validates and joins a user into a room via atomic batch write.
-  Future<RoomModel> joinRoom({
-    required String roomName,
+  /// Joins a room using only its 6-character unique code.
+  /// Enforces:
+  /// 1. User cannot join if they already have an active room (1-room-per-user).
+  /// 2. If user is Pendamping, room cannot already have an active pendamping.
+  Future<RoomModel> joinRoomByCode({
     required String roomCode,
     required String uid,
     required String userName,
     required String role,
   }) async {
     final normalizedCode = roomCode.trim().toUpperCase();
-    final normalizedName = roomName.trim();
-
-    if (normalizedCode.isEmpty || normalizedName.isEmpty) {
-      throw const RoomException('Nama room dan Kode room wajib diisi');
+    if (normalizedCode.isEmpty) {
+      throw const RoomException('Kode room wajib diisi');
     }
 
-    // 1. Query by room code
+    // 1. Verify user doesn't already have an active room
+    final userDoc = await _firestore.collection('users').doc(uid).get();
+    final existingRoomId = userDoc.data()?['activeRoomId'] as String?;
+    if (existingRoomId != null && existingRoomId.trim().isNotEmpty) {
+      throw const RoomException('Anda sudah terdaftar dalam room lain. Setiap pengguna hanya boleh memiliki 1 room aktif.');
+    }
+
+    // 2. Query by room code
     final querySnap = await _firestore
         .collection('rooms')
         .where('code', isEqualTo: normalizedCode)
@@ -253,7 +335,7 @@ class RoomService {
         .get();
 
     if (querySnap.docs.isEmpty) {
-      throw const RoomNotFoundException('Kode room tidak ditemukan. Silakan periksa kembali.');
+      throw const RoomNotFoundException('Kode room tidak ditemukan. Silakan periksa kembali kode Anda.');
     }
 
     final roomDoc = querySnap.docs.first;
@@ -261,47 +343,57 @@ class RoomService {
     final realName = (roomData['name'] as String?)?.trim() ?? '';
     final isActive = (roomData['isActive'] as bool?) ?? true;
 
-    // 2. Validate room name (case-insensitive)
-    if (realName.toLowerCase() != normalizedName.toLowerCase()) {
-      throw const InvalidRoomNameException(
-        'Nama room tidak cocok dengan kode yang dimasukkan.',
-      );
-    }
-
-    // 3. Validate active status
     if (!isActive) {
-      throw const RoomInactiveException(
-        'Room ini sedang nonaktif dan tidak dapat menerima anggota baru.',
-      );
+      throw const RoomInactiveException('Room ini sedang nonaktif dan tidak dapat menerima anggota baru.');
     }
 
     final roomId = roomDoc.id;
+    final normalizedRole = role.trim().toLowerCase();
+
+    // 3. For Pendamping: verify room does not already have an active pendamping
+    if (normalizedRole == 'pendamping') {
+      final existingPendampingId = roomData['pendampingId'] as String?;
+      if (existingPendampingId != null && existingPendampingId.isNotEmpty && existingPendampingId != uid) {
+        throw const RoomException('Room ini sudah memiliki Pendamping aktif. Tidak dapat bergabung sebagai pendamping kedua.');
+      }
+      final membersSnap = await _firestore
+          .collection('rooms')
+          .doc(roomId)
+          .collection('members')
+          .where('role', isEqualTo: 'pendamping')
+          .limit(1)
+          .get();
+      if (membersSnap.docs.isNotEmpty && membersSnap.docs.first.id != uid) {
+        throw const RoomException('Room ini sudah memiliki Pendamping aktif.');
+      }
+    }
+
     final memberRef = _firestore
         .collection('rooms')
         .doc(roomId)
         .collection('members')
         .doc(uid);
-
     final userRef = _firestore.collection('users').doc(uid);
 
-    // 4. Atomic WriteBatch: set membership + update user.activeRoomId
     final batch = _firestore.batch();
-
-    final memberPayload = {
+    batch.set(memberRef, {
       'uid': uid,
       'name': userName.trim(),
-      'role': role.trim().toLowerCase(),
+      'role': normalizedRole,
       'joinedAt': FieldValue.serverTimestamp(),
-    };
+    }, SetOptions(merge: true));
 
-    batch.set(memberRef, memberPayload, SetOptions(merge: true));
     batch.update(userRef, {'activeRoomId': roomId});
 
-    await batch.commit();
-    debugPrint('[RoomService] User $uid successfully joined room $roomId');
+    if (normalizedRole == 'pendamping') {
+      batch.update(_firestore.collection('rooms').doc(roomId), {
+        'pendampingId': uid,
+      });
+    }
 
-    // Log Activity
-    final isPendamping = role.trim().toLowerCase() == 'pendamping';
+    await batch.commit();
+
+    final isPendamping = normalizedRole == 'pendamping';
     await logActivity(
       type: ActivityType.memberJoined,
       title: isPendamping ? 'Pendamping Bergabung' : 'Jamaah Bergabung',
@@ -314,6 +406,22 @@ class RoomService {
     );
 
     return RoomModel.fromFirestore(roomDoc);
+  }
+
+  /// Validates and joins a user into a room via atomic batch write (backwards compatible).
+  Future<RoomModel> joinRoom({
+    String? roomName,
+    required String roomCode,
+    required String uid,
+    required String userName,
+    required String role,
+  }) async {
+    return joinRoomByCode(
+      roomCode: roomCode,
+      uid: uid,
+      userName: userName,
+      role: role,
+    );
   }
 
   // ── Keluar Room (Leave Room) ───────────────────────────────────────────────
@@ -414,11 +522,13 @@ class RoomService {
     );
   }
 
-  /// Allows a Pendamping of an active room to add a Jamaah by their registered email.
-  Future<void> addJamaahByEmail({
+  /// Sends an invitation to a Jamaah by registered email.
+  /// Generates a pending invitation in `invitations` and creates a notification in `notifications`.
+  Future<RoomInvitationModel> inviteJamaahByEmail({
     required String roomId,
     required String email,
     required String currentPendampingUid,
+    required String currentPendampingName,
   }) async {
     final normalizedEmail = email.trim().toLowerCase();
     if (normalizedEmail.isEmpty || !normalizedEmail.contains('@')) {
@@ -432,6 +542,7 @@ class RoomService {
     }
     final roomData = roomDoc.data()!;
     final roomName = (roomData['name'] as String?)?.trim() ?? 'Room';
+    final roomCode = (roomData['code'] as String?)?.trim().toUpperCase() ?? '';
     final isActive = (roomData['isActive'] as bool?) ?? true;
     if (!isActive) {
       throw const RoomException('Room ini sedang nonaktif dan tidak dapat menerima anggota baru.');
@@ -445,7 +556,7 @@ class RoomService {
         .get();
 
     if (querySnap.docs.isEmpty) {
-      throw RoomException('Email "$normalizedEmail" tidak ditemukan terdaftar di sistem HajiCare.');
+      throw RoomException('Email "$normalizedEmail" belum terdaftar di sistem HajiCare.');
     }
 
     final targetDoc = querySnap.docs.first;
@@ -454,7 +565,7 @@ class RoomService {
 
     // 3. Validation: Pendamping adding self
     if (targetUid == currentPendampingUid) {
-      throw const RoomException('Anda tidak dapat menambahkan diri sendiri sebagai Jamaah.');
+      throw const RoomException('Anda tidak dapat mengundang diri sendiri sebagai Jamaah.');
     }
 
     // 4. Validation: User role must be jamaah
@@ -481,47 +592,253 @@ class RoomService {
       throw const RoomException('Jamaah ini sudah terdaftar di room lain.');
     }
 
-    final rawName = data['name'] as String? ?? data['displayName'] as String? ?? normalizedEmail.split('@').first;
-    final jamaahName = rawName.trim().isNotEmpty ? rawName.trim() : 'Jamaah';
+    // 7. Validation: Check for existing pending invitation
+    final pendingInvSnap = await _firestore
+        .collection('invitations')
+        .where('roomId', isEqualTo: roomId)
+        .where('toUserId', isEqualTo: targetUid)
+        .where('status', isEqualTo: 'pending')
+        .limit(1)
+        .get();
 
-    // 7. Atomic batch write: add to members & update activeRoomId
+    if (pendingInvSnap.docs.isNotEmpty) {
+      throw const RoomException('Undangan sudah pernah dikirimkan ke Jamaah ini dan sedang menunggu respons.');
+    }
+
+    final invDocRef = _firestore.collection('invitations').doc();
+    final invitation = RoomInvitationModel(
+      id: invDocRef.id,
+      roomId: roomId,
+      roomName: roomName,
+      roomCode: roomCode,
+      fromUserId: currentPendampingUid,
+      fromUserName: currentPendampingName,
+      toUserId: targetUid,
+      toUserEmail: normalizedEmail,
+      status: InvitationStatus.pending,
+      createdAt: DateTime.now(),
+    );
+
+    final notifDocRef = _firestore.collection('notifications').doc();
+    final notif = AppNotificationModel(
+      id: notifDocRef.id,
+      recipientId: targetUid,
+      type: 'room_invitation',
+      title: 'Undangan Masuk Room',
+      message: '$currentPendampingName mengundang Anda bergabung ke "$roomName" ($roomCode).',
+      relatedId: invDocRef.id,
+      isRead: false,
+      createdAt: DateTime.now(),
+      metadata: {
+        'roomId': roomId,
+        'roomName': roomName,
+        'roomCode': roomCode,
+        'pendampingName': currentPendampingName,
+      },
+    );
+
     final batch = _firestore.batch();
+    batch.set(invDocRef, invitation.toFirestore());
+    batch.set(notifDocRef, notif.toFirestore());
+    await batch.commit();
+
+    debugPrint('[RoomService] Invitation sent to $normalizedEmail for room $roomId');
+
+    await logActivity(
+      type: ActivityType.memberJoined,
+      title: 'Undangan Room Dikirim',
+      description: 'Undangan dikirim ke $normalizedEmail untuk bergabung ke "$roomName".',
+      roomId: roomId,
+      roomName: roomName,
+      userId: targetUid,
+      userName: currentPendampingName,
+      role: 'pendamping',
+    );
+
+    return invitation;
+  }
+
+  /// Backward compatible wrapper for legacy calls.
+  Future<void> addJamaahByEmail({
+    required String roomId,
+    required String email,
+    required String currentPendampingUid,
+    String? currentPendampingName,
+  }) async {
+    await inviteJamaahByEmail(
+      roomId: roomId,
+      email: email,
+      currentPendampingUid: currentPendampingUid,
+      currentPendampingName: currentPendampingName ?? 'Pendamping',
+    );
+  }
+
+  /// Accepts an invitation: updates invitation status, adds member, sets user activeRoomId.
+  Future<String> acceptInvitation({
+    required String invitationId,
+    required String uid,
+    required String userName,
+  }) async {
+    final invDoc = await _firestore.collection('invitations').doc(invitationId).get();
+    if (!invDoc.exists) {
+      throw const RoomException('Undangan tidak ditemukan.');
+    }
+    final invData = invDoc.data()!;
+    final status = (invData['status'] as String?)?.toLowerCase();
+    if (status != 'pending') {
+      throw RoomException('Undangan ini sudah tidak aktif ($status).');
+    }
+    if (invData['toUserId'] != uid) {
+      throw const RoomException('Undangan ini bukan ditujukan untuk akun Anda.');
+    }
+
+    final roomId = invData['roomId'] as String;
+    final roomName = invData['roomName'] as String? ?? 'Room';
+
+    // Verify user doesn't already have an active room
+    final userDoc = await _firestore.collection('users').doc(uid).get();
+    final currentRoom = userDoc.data()?['activeRoomId'] as String?;
+    if (currentRoom != null && currentRoom.isNotEmpty) {
+      throw const RoomException('Anda sudah memiliki Room aktif. Setiap jamaah hanya boleh memiliki 1 room.');
+    }
+
+    final batch = _firestore.batch();
+
+    // 1. Update invitation status
+    batch.update(invDoc.reference, {
+      'status': 'accepted',
+      'respondedAt': FieldValue.serverTimestamp(),
+    });
+
+    // 2. Add to room members
     final memberRef = _firestore
         .collection('rooms')
         .doc(roomId)
         .collection('members')
-        .doc(targetUid);
-    final userRef = _firestore.collection('users').doc(targetUid);
-
+        .doc(uid);
     batch.set(memberRef, {
-      'uid': targetUid,
-      'name': jamaahName,
+      'uid': uid,
+      'name': userName,
       'role': 'jamaah',
       'joinedAt': FieldValue.serverTimestamp(),
-    });
+    }, SetOptions(merge: true));
 
+    // 3. Update user doc
+    final userRef = _firestore.collection('users').doc(uid);
     batch.update(userRef, {'activeRoomId': roomId});
 
-    await batch.commit();
-    debugPrint('[RoomService] Jamaah $targetUid ($normalizedEmail) added to room $roomId');
+    // 4. Mark notifications as read
+    final notifs = await _firestore
+        .collection('notifications')
+        .where('recipientId', isEqualTo: uid)
+        .where('relatedId', isEqualTo: invitationId)
+        .get();
+    for (final doc in notifs.docs) {
+      batch.update(doc.reference, {'isRead': true});
+    }
 
-    // 8. Log activity
+    await batch.commit();
+
     await logActivity(
       type: ActivityType.memberJoined,
-      title: 'Jamaah Ditambahkan',
-      description: '$jamaahName ($normalizedEmail) ditambahkan ke room "$roomName" oleh pendamping.',
+      title: 'Undangan Diterima',
+      description: '$userName menerima undangan dan bergabung ke room "$roomName".',
       roomId: roomId,
       roomName: roomName,
-      userId: targetUid,
-      userName: jamaahName,
+      userId: uid,
+      userName: userName,
       role: 'jamaah',
     );
+
+    return roomId;
   }
 
-  /// Resolves an active SOS event in Firestore
+  /// Rejects an invitation and marks notification as read.
+  Future<void> rejectInvitation({
+    required String invitationId,
+    required String uid,
+  }) async {
+    final invDoc = await _firestore.collection('invitations').doc(invitationId).get();
+    if (!invDoc.exists) return;
+
+    final batch = _firestore.batch();
+    batch.update(invDoc.reference, {
+      'status': 'rejected',
+      'respondedAt': FieldValue.serverTimestamp(),
+    });
+
+    final notifs = await _firestore
+        .collection('notifications')
+        .where('recipientId', isEqualTo: uid)
+        .where('relatedId', isEqualTo: invitationId)
+        .get();
+    for (final doc in notifs.docs) {
+      batch.update(doc.reference, {'isRead': true});
+    }
+
+    await batch.commit();
+  }
+
+  /// Updates safe radius in `rooms/{roomId}` document.
+  Future<void> updateSafeRadius({
+    required String roomId,
+    required double radius,
+  }) async {
+    if (radius <= 0 || radius > 10000) {
+      throw const RoomException('Radius harus berupa angka positif hingga maksimal 10.000 meter.');
+    }
+    await _firestore.collection('rooms').doc(roomId).update({
+      'safeRadius': radius,
+    });
+  }
+
+  /// Streams pending invitations for a specific user.
+  Stream<List<RoomInvitationModel>> getPendingInvitationsStream(String uid) {
+    return _firestore
+        .collection('invitations')
+        .where('toUserId', isEqualTo: uid)
+        .where('status', isEqualTo: 'pending')
+        .snapshots()
+        .map((snap) => snap.docs.map((d) => RoomInvitationModel.fromFirestore(d)).toList());
+  }
+
+  /// Streams notifications for a user, sorted newest first.
+  Stream<List<AppNotificationModel>> getUserNotificationsStream(String uid) {
+    return _firestore
+        .collection('notifications')
+        .where('recipientId', isEqualTo: uid)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs.map((d) => AppNotificationModel.fromFirestore(d)).toList());
+  }
+
+  /// Marks a notification as read.
+  Future<void> markNotificationRead(String notificationId) async {
+    await _firestore.collection('notifications').doc(notificationId).update({
+      'isRead': true,
+    });
+  }
+
+  /// Responds to an SOS event as Pendamping.
+  Future<void> respondToSos({
+    required String eventId,
+    required String pendampingUid,
+    required String pendampingName,
+  }) async {
+    await _firestore.collection('sos_events').doc(eventId).update({
+      'status': 'direspons',
+      'respondedBy': pendampingUid,
+      'respondedByName': pendampingName,
+      'respondedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Resolves an active SOS event in Firestore with status 'selesai'.
   Future<void> resolveSos({
     required String userId,
     String? roomId,
+    String? eventId,
+    String? resolvedByUid,
   }) async {
     final batch = _firestore.batch();
     batch.update(_firestore.collection('users').doc(userId), {'sosActive': false});
@@ -535,18 +852,36 @@ class RoomService {
       batch.set(memberRef, {'sosActive': false}, SetOptions(merge: true));
     }
 
-    // Also update active sos_events for this user
-    final activeSosQuery = await _firestore
-        .collection('sos_events')
-        .where('userId', isEqualTo: userId)
-        .where('status', isEqualTo: 'active')
-        .get();
+    final updateData = <String, dynamic>{
+      'status': 'selesai',
+      'resolvedAt': FieldValue.serverTimestamp(),
+    };
+    if (resolvedByUid != null) {
+      updateData['resolvedBy'] = resolvedByUid;
+    }
 
-    for (final doc in activeSosQuery.docs) {
-      batch.update(doc.reference, {
-        'status': 'resolved',
-        'resolvedAt': FieldValue.serverTimestamp(),
-      });
+    if (eventId != null && eventId.isNotEmpty) {
+      batch.update(_firestore.collection('sos_events').doc(eventId), updateData);
+    } else {
+      final activeSosQuery = await _firestore
+          .collection('sos_events')
+          .where('userId', isEqualTo: userId)
+          .where('status', isEqualTo: 'active')
+          .get();
+
+      for (final doc in activeSosQuery.docs) {
+        batch.update(doc.reference, updateData);
+      }
+
+      final baruSosQuery = await _firestore
+          .collection('sos_events')
+          .where('userId', isEqualTo: userId)
+          .where('status', isEqualTo: 'baru')
+          .get();
+
+      for (final doc in baruSosQuery.docs) {
+        batch.update(doc.reference, updateData);
+      }
     }
 
     await batch.commit();

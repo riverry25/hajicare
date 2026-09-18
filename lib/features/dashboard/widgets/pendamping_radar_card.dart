@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../../core/locales/app_translations.dart';
+import '../../../../core/routes/app_routes.dart';
 import '../../../../core/services/app_alert_service.dart';
 import '../../../../core/state/hajicare_controller.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -243,7 +244,7 @@ class PendampingRadarCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     final text = customCtrl.text.trim();
                     if (text.isEmpty) {
                       customError.value = 'Masukkan angka radius terlebih dahulu.';
@@ -258,13 +259,15 @@ class PendampingRadarCard extends StatelessWidget {
                       customError.value = 'Radius maksimum adalah 5000 meter.';
                       return;
                     }
-                    state?.setSafeRadius(parsed.toDouble());
+                    await state?.setSafeRadius(parsed.toDouble());
                     Get.back();
-                    AppAlert.success(
-                      context,
-                      title: 'Radius Diperbarui',
-                      message: 'Batas aman berhasil diatur menjadi $parsed meter.',
-                    );
+                    if (context.mounted) {
+                      AppAlert.success(
+                        context,
+                        title: 'Radius Diperbarui',
+                        message: 'Batas aman berhasil diatur menjadi $parsed meter dan tersinkron ke semua anggota room.',
+                      );
+                    }
                   },
                   child: Text(
                     'Terapkan Radius',
@@ -291,7 +294,81 @@ class PendampingRadarCard extends StatelessWidget {
     final bodyColor = AppColors.textBodyColor(context);
 
     return Obx(() {
-      final safeRadius = state?.safeRadiusMeters.value ?? 200.0;
+      final hasActiveRoom = state?.activeRoomId.value != null && state!.activeRoomId.value!.isNotEmpty;
+
+      if (!hasActiveRoom) {
+        return AppCard(
+          padding: const EdgeInsets.all(AppSpacing.cardPadding),
+          borderColor: isDark ? AppColors.darkCardBorder : AppColors.goldLight.withValues(alpha: 0.5),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.darkPrimaryContainer : AppColors.canvasCream,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.lock_outline_rounded,
+                      color: isDark ? AppColors.goldLight : AppColors.goldDark,
+                      size: 26,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Radar Pemantauan Jamaah',
+                          style: AppTypography.titleMedium.copyWith(
+                            color: headingColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          'Fitur pemantauan jarak real-time, batas radius aman, dan tracking jamaah memerlukan Room aktif.',
+                          style: AppTypography.bodySmall.copyWith(
+                            color: bodyColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: ElevatedButton.icon(
+                  onPressed: () => Get.toNamed(AppRoutes.joinRoom),
+                  icon: const Icon(Icons.meeting_room_outlined, size: 20),
+                  label: const Text(
+                    'Buat / Gabung Room untuk Mengaktifkan',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isDark ? AppColors.darkPrimary : AppColors.primaryGold,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    elevation: 0,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      final safeRadius = state.safeRadiusMeters.value;
       // GPS signal is only considered valid if we have a real coordinate AND isGpsActive flag.
       // Distance alone is NOT a reliable indicator — it can be huge when using default coords.
       final hasSignal = jamaah.currentLocation != null && jamaah.isGpsActive;

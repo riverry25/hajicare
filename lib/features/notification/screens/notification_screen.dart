@@ -1,12 +1,103 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../core/services/app_alert_service.dart';
+import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_typography.dart';
-import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../room/services/room_service.dart';
+import '../models/notification_model.dart';
 
-class NotificationScreen extends StatelessWidget {
+class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
+
+  @override
+  State<NotificationScreen> createState() => _NotificationScreenState();
+}
+
+class _NotificationScreenState extends State<NotificationScreen> {
+  final RoomService _roomService = RoomService();
+  final Set<String> _processingInvitations = {};
+
+  Future<void> _handleAcceptInvitation(RoomInvitationModel invitation) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final userName = (user.displayName != null && user.displayName!.trim().isNotEmpty)
+        ? user.displayName!.trim()
+        : 'Jamaah';
+
+    setState(() => _processingInvitations.add(invitation.id));
+
+    try {
+      final roomId = await _roomService.acceptInvitation(
+        invitationId: invitation.id,
+        uid: user.uid,
+        userName: userName,
+      );
+
+      if (Get.isRegistered<HajiCareController>()) {
+        final ctrl = Get.find<HajiCareController>();
+        await ctrl.applyUserData(
+          roleStr: 'jamaah',
+          roomId: roomId,
+          name: userName,
+        );
+      }
+
+      if (!mounted) return;
+      AppAlert.success(
+        context,
+        title: 'Undangan Diterima!',
+        message: 'Anda telah berhasil bergabung ke dalam room "${invitation.roomName}".',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      AppAlert.error(
+        context,
+        title: 'Gagal Menerima Undangan',
+        message: e.toString().replaceAll('Exception: ', ''),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _processingInvitations.remove(invitation.id));
+      }
+    }
+  }
+
+  Future<void> _handleRejectInvitation(RoomInvitationModel invitation) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    setState(() => _processingInvitations.add(invitation.id));
+
+    try {
+      await _roomService.rejectInvitation(
+        invitationId: invitation.id,
+        uid: user.uid,
+      );
+
+      if (!mounted) return;
+      AppAlert.info(
+        context,
+        title: 'Undangan Ditolak',
+        message: 'Anda menolak undangan untuk bergabung ke room "${invitation.roomName}".',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      AppAlert.error(
+        context,
+        title: 'Gagal Menolak Undangan',
+        message: e.toString().replaceAll('Exception: ', ''),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _processingInvitations.remove(invitation.id));
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +158,7 @@ class NotificationScreen extends StatelessWidget {
         ),
         body: TabBarView(
           children: [
-            _buildNotificationList(context),
+            _buildNotificationTab(context),
             _buildFaqList(context),
           ],
         ),
@@ -75,11 +166,95 @@ class NotificationScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildNotificationList(BuildContext context) {
+  Widget _buildNotificationTab(BuildContext context) {
+    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (currentUid == null) {
+      return _buildStaticNotificationList(context);
+    }
+
+    return StreamBuilder<List<RoomInvitationModel>>(
+      stream: _roomService.getPendingInvitationsStream(currentUid),
+      builder: (context, invSnap) {
+        final invitations = invSnap.data ?? [];
+
+        return StreamBuilder<List<AppNotificationModel>>(
+          stream: _roomService.getUserNotificationsStream(currentUid),
+          builder: (context, notifSnap) {
+            final realNotifs = notifSnap.data ?? [];
+
+            return ListView(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.lg),
+              children: [
+                // 1. Pending Room Invitations Section
+                if (invitations.isNotEmpty) ...[
+                  _buildSectionHeader(
+                    context,
+                    'UNDANGAN ROOM MASUK (${invitations.length})',
+                    Icons.mark_email_unread_rounded,
+                    color: AppColors.goldDark,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  ...invitations.map((inv) => _buildInvitationCard(context, inv)),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
+
+                // 2. Real Firestore Notifications Section
+                if (realNotifs.isNotEmpty) ...[
+                  _buildSectionHeader(context, 'NOTIFIKASI TERKINI', Icons.notifications_active_rounded),
+                  const SizedBox(height: AppSpacing.sm),
+                  ...realNotifs.map((n) => _buildFirestoreNotificationCard(context, n)),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
+
+                // 3. Fallback / General Announcements
+                _buildSectionHeader(context, 'PENGUMUMAN & CUACA', Icons.today_rounded),
+                const SizedBox(height: AppSpacing.sm),
+                _buildNotificationCard(
+                  context: context,
+                  category: 'PERINGATAN CUACA',
+                  icon: Icons.wb_sunny_rounded,
+                  iconColor: const Color(0xFFE65100),
+                  title: 'Himbauan Gelombang Panas Makkah',
+                  message:
+                      'Suhu di sekitar Masjidil Haram mencapai 45°C. Jamaah diimbau memperbanyak minum air zamzam, memakai payung, dan menghindari paparan langsung.',
+                  time: 'Hari ini',
+                  isUnread: false,
+                ),
+                _buildNotificationCard(
+                  context: context,
+                  category: 'JADWAL KLOTER',
+                  icon: Icons.directions_bus_rounded,
+                  iconColor: AppColors.goldDark,
+                  title: 'Jadwal Bus Shalawat Rute Syisyah',
+                  message:
+                      'Bus Shalawat rute nomor 3 (Syisyah - Terminal Syib Amir) beroperasi normal dengan interval tiap 10 menit.',
+                  time: 'Hari ini',
+                  isUnread: false,
+                ),
+                _buildNotificationCard(
+                  context: context,
+                  category: 'PANDUAN IBADAH',
+                  icon: Icons.menu_book_rounded,
+                  iconColor: const Color(0xFF0D7C66),
+                  title: 'Materi Manasik Tambahan Siap Dibaca',
+                  message:
+                      'Doa-doa tawaf dan sa\'i serta tips menjaga stamina selama di Mina telah ditambahkan ke panduan.',
+                  time: 'Kemarin',
+                  isUnread: false,
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildStaticNotificationList(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.lg),
       children: [
-        // Section: Hari ini
         _buildSectionHeader(context, 'HARI INI', Icons.today_rounded),
         const SizedBox(height: AppSpacing.sm),
         _buildNotificationCard(
@@ -91,60 +266,196 @@ class NotificationScreen extends StatelessWidget {
           message:
               'Suhu di sekitar Masjidil Haram mencapai 45°C. Jamaah diimbau memperbanyak minum air zamzam, memakai payung, dan menghindari paparan langsung.',
           time: '10:00 AM',
-          isUnread: true,
-        ),
-        _buildNotificationCard(
-          context: context,
-          category: 'JADWAL KLOTER',
-          icon: Icons.directions_bus_rounded,
-          iconColor: AppColors.goldDark,
-          title: 'Jadwal Bus Shalawat Rute Syisyah',
-          message:
-              'Bus Shalawat rute nomor 3 (Syisyah - Terminal Syib Amir) beroperasi normal dengan interval tiap 10 menit.',
-          time: '08:30 AM',
-          isUnread: false,
-        ),
-
-        const SizedBox(height: AppSpacing.lg),
-
-        // Section: Kemarin
-        _buildSectionHeader(context, 'KEMARIN', Icons.history_rounded),
-        const SizedBox(height: AppSpacing.sm),
-        _buildNotificationCard(
-          context: context,
-          category: 'STATUS SISTEM',
-          icon: Icons.check_circle_rounded,
-          iconColor: AppColors.statusPositive,
-          title: 'Gelang Pintar Terhubung',
-          message:
-              'Perangkat gelang pemantau Anda berhasil disinkronkan dengan aplikasi Pendamping Room Maktab 48.',
-          time: 'Kemarin, 14:20',
-          isUnread: false,
-        ),
-        _buildNotificationCard(
-          context: context,
-          category: 'PANDUAN IBADAH',
-          icon: Icons.menu_book_rounded,
-          iconColor: const Color(0xFF0D7C66),
-          title: 'Materi Manasik Tambahan Siap Dibaca',
-          message:
-              'Doa-doa tawaf dan sa\'i serta tips menjaga stamina selama di Mina telah ditambahkan ke panduan.',
-          time: 'Kemarin, 09:15',
           isUnread: false,
         ),
       ],
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title, IconData icon) {
+  Widget _buildInvitationCard(BuildContext context, RoomInvitationModel inv) {
+    final isDark = AppColors.isDark(context);
+    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
+    final headingColor = AppColors.textHeadingColor(context);
+    final bodyColor = AppColors.textBodyColor(context);
+    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+    final isProcessing = _processingInvitations.contains(inv.id);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.md),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: primaryColor.withValues(alpha: 0.6),
+          width: 2.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: primaryColor.withValues(alpha: 0.12),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: primaryColor.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.group_add_rounded, color: primaryColor, size: 24),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                        child: Text(
+                          'UNDANGAN ROOM BARU',
+                          style: AppTypography.captionSmall.copyWith(
+                            color: primaryColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        inv.roomName,
+                        style: AppTypography.titleMedium.copyWith(
+                          color: headingColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Pendamping "${inv.fromUserName}" mengundang Anda untuk bergabung ke dalam room pemantauan jamaah.',
+              style: AppTypography.bodySmall.copyWith(
+                color: bodyColor,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+              child: Text(
+                'Kode Room: ${inv.roomCode}',
+                style: AppTypography.captionSmall.copyWith(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.0,
+                  color: headingColor,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+
+            // Action Buttons (Terima & Tolak)
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                      side: BorderSide(color: AppColors.error.withValues(alpha: 0.4)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                      minimumSize: const Size(0, 42),
+                    ),
+                    onPressed: isProcessing ? null : () => _handleRejectInvitation(inv),
+                    child: const Text('Tolak', style: TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                      minimumSize: const Size(0, 42),
+                      elevation: 0,
+                    ),
+                    onPressed: isProcessing ? null : () => _handleAcceptInvitation(inv),
+                    child: isProcessing
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          )
+                        : const Text('Terima Undangan', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFirestoreNotificationCard(BuildContext context, AppNotificationModel notif) {
+    IconData icon = Icons.notifications_rounded;
+    Color iconColor = AppColors.goldPrimary;
+
+    if (notif.type == 'sos_alert') {
+      icon = Icons.emergency_rounded;
+      iconColor = AppColors.error;
+    } else if (notif.type == 'room_invitation') {
+      icon = Icons.mail_outline_rounded;
+      iconColor = AppColors.goldDark;
+    }
+
+    return _buildNotificationCard(
+      context: context,
+      category: notif.type.replaceAll('_', ' ').toUpperCase(),
+      icon: icon,
+      iconColor: iconColor,
+      title: notif.title,
+      message: notif.message,
+      time: notif.createdAt != null
+          ? '${notif.createdAt!.hour.toString().padLeft(2, '0')}:${notif.createdAt!.minute.toString().padLeft(2, '0')}'
+          : 'Baru saja',
+      isUnread: !notif.isRead,
+    );
+  }
+
+  Widget _buildSectionHeader(BuildContext context, String title, IconData icon, {Color? color}) {
+    final effectiveColor = color ?? AppColors.textSecondaryColor(context);
     return Row(
       children: [
-        Icon(icon, size: 14, color: AppColors.textSecondaryColor(context)),
+        Icon(icon, size: 14, color: effectiveColor),
         const SizedBox(width: 6),
         Text(
           title,
           style: AppTypography.labelPill.copyWith(
-            color: AppColors.textSecondaryColor(context),
+            color: effectiveColor,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.2,
           ),
@@ -290,7 +601,7 @@ class NotificationScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 6),
 
-                            // Message body (friendly for seniors)
+                            // Message body
                             Text(
                               message,
                               style: AppTypography.bodySmall.copyWith(
@@ -319,7 +630,6 @@ class NotificationScreen extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.lg),
       children: [
-        // Friendly Elderly-Oriented Banner
         Container(
           padding: const EdgeInsets.all(AppSpacing.md),
           margin: const EdgeInsets.only(bottom: AppSpacing.lg),
@@ -380,10 +690,17 @@ class NotificationScreen extends StatelessWidget {
         // FAQ Items
         _buildFaqItem(
           context: context,
+          icon: Icons.meeting_room_rounded,
+          question: 'Bagaimana cara bergabung ke Room Pemantauan?',
+          answer:
+              'Jamaah dapat bergabung dengan dua cara: (1) Meminta pendamping untuk mengirimkan undangan via email lalu menerima undangan di tab Notifikasi ini, atau (2) Meminta 6 digit kode room dari pendamping lalu memasukkannya melalui menu "Gabung Room".',
+        ),
+        _buildFaqItem(
+          context: context,
           icon: Icons.emergency_rounded,
           question: 'Bagaimana cara menggunakan tombol SOS darurat?',
           answer:
-              'Tekan dan tahan tombol SOS berwarna merah di dashboard selama 3 detik. Aplikasi akan mengirimkan sinyal bahaya dan koordinat GPS akurat Anda secara real-time ke smartphone pendamping dan posko maktab.',
+              'Pastikan Anda telah bergabung ke dalam Room. Tekan dan tahan tombol SOS berwarna merah di dashboard selama 3 detik. Aplikasi akan mengirimkan sinyal bahaya dan koordinat GPS akurat Anda secara real-time ke smartphone pendamping.',
         ),
         _buildFaqItem(
           context: context,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -27,6 +28,23 @@ class _ModalSosScreenState extends State<ModalSosScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1800),
     )..repeat();
+
+    final state = Get.isRegistered<HajiCareController>() ? Get.find<HajiCareController>() : null;
+    final hasRoom = state?.activeRoomId.value != null && state!.activeRoomId.value!.isNotEmpty;
+
+    if (!hasRoom) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        AppAlert.warning(
+          context,
+          title: 'Room Diperlukan',
+          message: 'Anda belum terhubung ke Room manapun. Fitur SOS darurat hanya dapat dikirimkan kepada Pendamping dalam room aktif Anda.',
+        );
+        Get.back();
+      });
+      return;
+    }
+
     _startCountdown();
   }
 

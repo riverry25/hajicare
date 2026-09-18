@@ -114,7 +114,7 @@ class AppRoutes {
           middlewares: [
             RoleAndRoomGuard(
               allowedRoles: ['jamaah'],
-              requiresActiveRoom: true,
+              requiresActiveRoom: false,
             ),
           ],
         ),
@@ -125,7 +125,7 @@ class AppRoutes {
           middlewares: [
             RoleAndRoomGuard(
               allowedRoles: ['jamaah'],
-              requiresActiveRoom: true,
+              requiresActiveRoom: false,
             ),
           ],
         ),
@@ -136,7 +136,7 @@ class AppRoutes {
           middlewares: [
             RoleAndRoomGuard(
               allowedRoles: ['pendamping'],
-              requiresActiveRoom: true,
+              requiresActiveRoom: false,
             ),
           ],
         ),
