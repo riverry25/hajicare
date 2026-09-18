@@ -135,6 +135,34 @@ class JamaahServiceGrid extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Get.back();
+                  Get.toNamed(AppRoutes.smartbandLdr);
+                },
+                icon: const Icon(Icons.sensors_rounded, color: AppColors.accentGoldStar),
+                label: Text(
+                  'Uji Koneksi & Sensor LDR',
+                  style: AppTypography.button.copyWith(
+                    color: isDark ? AppColors.darkTextHeading : AppColors.espressoDark,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(
+                    color: isDark ? AppColors.darkOutlineVariant : AppColors.outlineVariant,
+                    width: 1.2,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
           ],
         ),
       ),

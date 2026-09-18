@@ -35,7 +35,11 @@ dependencies:
   awesome_dialog: 3.3.0
   http: ^1.6.0
   google_sign_in: ^6.2.2
+<<<<<<< HEAD
   qr_flutter: ^4.1.0
+=======
+  flutter_blue_plus: ^2.3.12
+>>>>>>> d062f30 (fix intensitas cahaya)
 
 dev_dependencies:
   flutter_test:
