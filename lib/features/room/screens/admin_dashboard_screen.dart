@@ -276,33 +276,12 @@ class _AdminDashboardHome extends StatelessWidget {
               _buildHeroProgressCard(context, isDark),
               const SizedBox(height: AppSpacing.md),
 
-              // 2. Dual KPI Metrics (White Bento Cards: Total Jamaah & Petugas)
-              _buildDualKpiCards(
-                context,
-                isDark,
-                cardBg,
-                headingColor,
-                bodyColor,
-                primaryColor,
-              ),
-              const SizedBox(height: AppSpacing.md),
-
               // 3. Operational Status & 4-Metric Breakdown (Pastel Sage-Mint Green)
               _buildStatusBreakdownCard(
                 context,
                 isDark,
                 headingColor,
                 bodyColor,
-                primaryColor,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-
-              // 4. Quick Actions (Aksi Cepat)
-              _buildQuickActions(
-                context,
-                isDark,
-                cardBg,
-                headingColor,
                 primaryColor,
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -330,7 +309,14 @@ class _AdminDashboardHome extends StatelessWidget {
               const SizedBox(height: AppSpacing.lg),
 
               // 7. Bottom Action Pill Button (Reference: Calorie count >>>)
-              _buildBottomActionPill(context, isDark),
+              // 7. Aksi Cepat - PALING BAWAH
+              _buildQuickActions(
+                context,
+                isDark,
+                cardBg,
+                headingColor,
+                primaryColor,
+              ),
               const SizedBox(height: AppSpacing.md),
             ],
           ),
@@ -571,277 +557,6 @@ class _AdminDashboardHome extends StatelessWidget {
   }
 
   // �f¢â�,�â�?s¬�f¢â�,�â�?s¬ 2. Dual KPI Metrics (Reference: Current Weight & Today's Calories) �f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬
-  Widget _buildDualKpiCards(
-    BuildContext context,
-    bool isDark,
-    Color cardBg,
-    Color headingColor,
-    Color bodyColor,
-    Color primaryColor,
-  ) {
-    final totalJamaah = controller.totalJamaah.value;
-    final totalPendamping = controller.totalPendamping.value;
-
-    return Row(
-      children: [
-        // Left Card: Total Jamaah (Reference: Current Weight 78.5 kg)
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              color: cardBg,
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(
-                color: isDark
-                    ? AppColors.darkCardBorder
-                    : Colors.black.withValues(alpha: 0.05),
-                width: 1.0,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => _showAllJamaahSheet(
-                  context,
-                  controller,
-                  isDark,
-                  cardBg,
-                  headingColor,
-                  bodyColor,
-                  primaryColor,
-                ),
-                borderRadius: BorderRadius.circular(22),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Total Jamaah',
-                            style: AppTypography.captionSmall.copyWith(
-                              color: bodyColor.withValues(alpha: 0.8),
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(5),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.08)
-                                  : AppColors.canvasCreamSubtle,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.groups_rounded,
-                              size: 14,
-                              color: AppColors.statusSafe,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
-                        children: [
-                          Text(
-                            '$totalJamaah',
-                            style: AppTypography.displayLarge.copyWith(
-                              color: headingColor,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 26,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Jamaah',
-                            style: AppTypography.captionSmall.copyWith(
-                              color: bodyColor.withValues(alpha: 0.7),
-                              fontWeight: FontWeight.w600,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.check_circle_rounded,
-                            size: 12,
-                            color: AppColors.statusSafe,
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              'Terdaftar aktif',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppTypography.captionSmall.copyWith(
-                                color: bodyColor.withValues(alpha: 0.75),
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm + 2),
-
-        // Right Card: Petugas / Pendamping (Reference: Today's Calories with sparkline)
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              color: cardBg,
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(
-                color: isDark
-                    ? AppColors.darkCardBorder
-                    : Colors.black.withValues(alpha: 0.05),
-                width: 1.0,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => _showAllPendampingSheet(
-                  context,
-                  controller,
-                  isDark,
-                  cardBg,
-                  headingColor,
-                  bodyColor,
-                  primaryColor,
-                ),
-                borderRadius: BorderRadius.circular(22),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Petugas Aktif',
-                            style: AppTypography.captionSmall.copyWith(
-                              color: bodyColor.withValues(alpha: 0.8),
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(5),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.08)
-                                  : AppColors.canvasCreamSubtle,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.health_and_safety_rounded,
-                              size: 14,
-                              color: AppColors.secondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
-                        children: [
-                          Text(
-                            '$totalPendamping',
-                            style: AppTypography.displayLarge.copyWith(
-                              color: headingColor,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 26,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Petugas',
-                            style: AppTypography.captionSmall.copyWith(
-                              color: bodyColor.withValues(alpha: 0.7),
-                              fontWeight: FontWeight.w600,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.secondary,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    'Siaga maktab',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: AppTypography.captionSmall.copyWith(
-                                      color: bodyColor.withValues(alpha: 0.75),
-                                      fontSize: 10.5,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          CustomPaint(
-                            size: const Size(28, 12),
-                            painter: _MiniSparklinePainter(
-                              color: AppColors.secondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 
   // �f¢â�,�â�?s¬�f¢â�,�â�?s¬ 3. Operational Status & 4-Metric Breakdown (Reference: Breakfast Card) �f¢â�,�â�?s¬
   // ── 3. Operational Status Cards (Reference: 4-Card Staggered Bento Grid) ──
