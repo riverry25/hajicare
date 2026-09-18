@@ -23,7 +23,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
       backgroundColor: scaffoldBg,
       appBar: const HajiCareHeader(
         title: 'Gelang Pintar Haji',
-        subtitle: 'Prototype BLE • Sensor LDR',
+        subtitle: 'Prototype BLE • Sensor LDR & Flame',
         icon: Icons.watch_rounded,
         showBackButton: true,
       ),
@@ -36,9 +36,12 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              _buildEmergencyBanner(context, ctrl),
               _buildConnectionCard(context, ctrl),
               const SizedBox(height: AppSpacing.gapCards),
               _buildLdrMainCard(context, ctrl),
+              const SizedBox(height: AppSpacing.gapCards),
+              _buildFlameMainCard(context, ctrl),
               const SizedBox(height: AppSpacing.gapCards),
               _buildRealtimeIndicator(context, ctrl),
               const SizedBox(height: AppSpacing.gapCards),
@@ -51,6 +54,64 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
         ),
       ),
     );
+  }
+
+  // ── 0. Emergency Visual Banner (Saat FIRE) ──────────────────────────────────
+  Widget _buildEmergencyBanner(
+      BuildContext context, SmartbandLdrController ctrl) {
+    return Obx(() {
+      final isConnected = ctrl.isConnected;
+      final isFire = ctrl.flameDetected.value;
+
+      if (!isConnected || !isFire) {
+        return const SizedBox.shrink();
+      }
+
+      return Container(
+        margin: const EdgeInsets.only(bottom: AppSpacing.gapCards),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.sosEmergency.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(
+            color: AppColors.sosEmergency.withValues(alpha: 0.5),
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.warning_amber_rounded,
+              color: AppColors.sosEmergency,
+              size: 26,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '⚠️ Peringatan Bahaya Api',
+                    style: AppTypography.titleSmall.copyWith(
+                      color: AppColors.sosEmergency,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Sensor mendeteksi indikasi api! Segera periksa dan amankan area sekitar.',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textHeadingColor(context),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   // ── 1. Connection Card ──────────────────────────────────────────────────────
@@ -179,6 +240,24 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                       color: bodyColor.withValues(alpha: 0.8),
                     ),
                   ),
+                  if (state == SmartbandConnectionState.connected) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        _buildSensorBadge(
+                          context,
+                          'LDR',
+                          ctrl.receivingData.value,
+                        ),
+                        const SizedBox(width: 8),
+                        _buildSensorBadge(
+                          context,
+                          'Flame',
+                          ctrl.flameReceivingData.value,
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -186,6 +265,37 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
         ),
       );
     });
+  }
+
+  Widget _buildSensorBadge(BuildContext context, String label, bool isActive) {
+    final color = isActive ? AppColors.statusSafe : AppColors.textCaption;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppRadius.xs),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isActive ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
+            size: 11,
+            color: color,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: AppTypography.captionSmall.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // ── 2. LDR Main Card ────────────────────────────────────────────────────────
@@ -301,47 +411,163 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
     });
   }
 
-  // ── 3. Realtime Indicator ───────────────────────────────────────────────────
-  Widget _buildRealtimeIndicator(BuildContext context, SmartbandLdrController ctrl) {
+  // ── 3. Flame Main Card ──────────────────────────────────────────────────────
+  Widget _buildFlameMainCard(
+      BuildContext context, SmartbandLdrController ctrl) {
+    final isDark = AppColors.isDark(context);
+    final headingColor = AppColors.textHeadingColor(context);
     final bodyColor = AppColors.textBodyColor(context);
 
     return Obx(() {
-      final isReceiving = ctrl.receivingData.value;
-      final timeStr = ctrl.relativeTimeStr.value;
+      final isConnected = ctrl.isConnected;
+      final hasFlameData = ctrl.flameReceivingData.value;
+      final isFire = ctrl.flameDetected.value;
 
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: isReceiving
-              ? AppColors.statusSafe.withValues(alpha: 0.08)
-              : AppColors.canvasCreamSubtle.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(
-            color: isReceiving
-                ? AppColors.statusSafe.withValues(alpha: 0.25)
-                : AppColors.outlineVariant.withValues(alpha: 0.3),
-          ),
+      Color cardBorderColor;
+      Color iconBgColor;
+      Color iconColor;
+      IconData iconData;
+      String statusTitle;
+      String statusSubtitle;
+      Color statusColor;
+      String badgeText;
+      Color badgeColor;
+
+      if (!isConnected) {
+        // Status Belum Terhubung
+        cardBorderColor = Colors.transparent;
+        iconBgColor = isDark
+            ? AppColors.darkSurfaceContainerHighest
+            : AppColors.canvasCreamSubtle;
+        iconColor = AppColors.textCaption;
+        iconData = Icons.local_fire_department_outlined;
+        statusTitle = 'Belum tersedia';
+        statusSubtitle = 'Hubungkan HajiCare Watch untuk membaca sensor.';
+        statusColor = AppColors.textCaption;
+        badgeText = '● Belum Terhubung';
+        badgeColor = AppColors.textCaption;
+      } else if (!hasFlameData) {
+        // Connected tapi belum ada data
+        cardBorderColor = AppColors.primaryGold.withValues(alpha: 0.3);
+        iconBgColor = AppColors.primaryGold.withValues(alpha: 0.12);
+        iconColor = AppColors.primaryGold;
+        iconData = Icons.hourglass_top_rounded;
+        statusTitle = 'Menunggu data...';
+        statusSubtitle = 'Membaca transmisi sensor api dari gelang.';
+        statusColor = AppColors.textCaption;
+        badgeText = '● Menunggu data sensor';
+        badgeColor = AppColors.primaryGold;
+      } else if (isFire) {
+        // Kondisi FIRE
+        cardBorderColor = AppColors.sosEmergency.withValues(alpha: 0.7);
+        iconBgColor = AppColors.sosEmergency.withValues(alpha: 0.15);
+        iconColor = AppColors.sosEmergency;
+        iconData = Icons.warning_rounded;
+        statusTitle = 'API TERDETEKSI';
+        statusSubtitle = 'Periksa kondisi sekitar Anda!';
+        statusColor = AppColors.sosEmergency;
+        badgeText = '● ALERT AKTIF';
+        badgeColor = AppColors.sosEmergency;
+      } else {
+        // Kondisi SAFE
+        cardBorderColor = AppColors.statusSafe.withValues(alpha: 0.4);
+        iconBgColor = AppColors.statusSafe.withValues(alpha: 0.15);
+        iconColor = AppColors.statusSafe;
+        iconData = Icons.local_fire_department_rounded;
+        statusTitle = 'AMAN';
+        statusSubtitle = 'Tidak ada indikasi api';
+        statusColor = AppColors.statusSafe;
+        badgeText = '● Sensor Aktif';
+        badgeColor = AppColors.statusSafe;
+      }
+
+      return AppCard(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.cardPadding,
+          vertical: AppSpacing.xl,
         ),
-        child: Row(
+        borderColor: isConnected ? cardBorderColor : null,
+        child: Column(
           children: [
-            if (isReceiving)
-              const AnimatedPingDot(size: 8, color: AppColors.statusSafe)
-            else
-              Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.textCaption,
+            // Card Title Header
+            Row(
+              children: [
+                const Icon(
+                  Icons.local_fire_department_rounded,
+                  color: AppColors.sosEmergency,
+                  size: 20,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Sensor Api',
+                  style: AppTypography.titleMedium.copyWith(
+                    color: headingColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+
+            // Main Icon
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: iconBgColor,
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Icon(
+                  iconData,
+                  color: iconColor,
+                  size: 38,
                 ),
               ),
-            const SizedBox(width: 10),
-            Expanded(
+            ),
+            const SizedBox(height: AppSpacing.md),
+
+            // Large Status Text
+            Text(
+              statusTitle,
+              textAlign: TextAlign.center,
+              style: AppTypography.displayMedium.copyWith(
+                color: isConnected && hasFlameData ? statusColor : headingColor,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 4),
+
+            // Subtext Description
+            Text(
+              statusSubtitle,
+              textAlign: TextAlign.center,
+              style: AppTypography.bodySmall.copyWith(
+                color: bodyColor.withValues(alpha: 0.8),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+
+            // Status Badge
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: badgeColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                border: Border.all(
+                  color: badgeColor.withValues(alpha: 0.4),
+                  width: 1,
+                ),
+              ),
               child: Text(
-                isReceiving ? '● Data realtime: $timeStr' : 'Menunggu data sensor...',
-                style: AppTypography.bodySmall.copyWith(
-                  color: isReceiving ? AppColors.statusSafe : bodyColor,
-                  fontWeight: isReceiving ? FontWeight.w600 : FontWeight.normal,
+                badgeText,
+                style: AppTypography.caption.copyWith(
+                  color: badgeColor,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.3,
                 ),
               ),
             ),
@@ -351,7 +577,129 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
     });
   }
 
-  // ── 4. Raw Data Diagnostic Card ─────────────────────────────────────────────
+  // ── 4. Realtime Indicators (LDR & Flame) ─────────────────────────────────────
+  Widget _buildRealtimeIndicator(
+      BuildContext context, SmartbandLdrController ctrl) {
+    final bodyColor = AppColors.textBodyColor(context);
+
+    return Obx(() {
+      final isReceivingLdr = ctrl.receivingData.value;
+      final ldrTimeStr = ctrl.relativeTimeStr.value;
+      final isReceivingFlame = ctrl.flameReceivingData.value;
+      final flameTimeStr = ctrl.flameRelativeTimeStr.value;
+
+      return Column(
+        children: [
+          // LDR Realtime Stream Indicator
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: isReceivingLdr
+                  ? AppColors.statusSafe.withValues(alpha: 0.08)
+                  : AppColors.canvasCreamSubtle.withValues(alpha: 0.4),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(
+                color: isReceivingLdr
+                    ? AppColors.statusSafe.withValues(alpha: 0.25)
+                    : AppColors.outlineVariant.withValues(alpha: 0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                if (isReceivingLdr)
+                  const AnimatedPingDot(size: 8, color: AppColors.statusSafe)
+                else
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.textCaption,
+                    ),
+                  ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    isReceivingLdr
+                        ? '● LDR realtime: $ldrTimeStr'
+                        : 'LDR: Menunggu data sensor...',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: isReceivingLdr ? AppColors.statusSafe : bodyColor,
+                      fontWeight:
+                          isReceivingLdr ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 6),
+
+          // Flame Realtime Stream Indicator
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: isReceivingFlame
+                  ? (ctrl.flameDetected.value
+                      ? AppColors.sosEmergency.withValues(alpha: 0.08)
+                      : AppColors.statusSafe.withValues(alpha: 0.08))
+                  : AppColors.canvasCreamSubtle.withValues(alpha: 0.4),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(
+                color: isReceivingFlame
+                    ? (ctrl.flameDetected.value
+                        ? AppColors.sosEmergency.withValues(alpha: 0.3)
+                        : AppColors.statusSafe.withValues(alpha: 0.25))
+                    : AppColors.outlineVariant.withValues(alpha: 0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                if (isReceivingFlame)
+                  AnimatedPingDot(
+                    size: 8,
+                    color: ctrl.flameDetected.value
+                        ? AppColors.sosEmergency
+                        : AppColors.statusSafe,
+                  )
+                else
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.textCaption,
+                    ),
+                  ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    isReceivingFlame
+                        ? (ctrl.flameDetected.value
+                            ? '● Flame ALERT: $flameTimeStr'
+                            : '● Flame sensor aktif: $flameTimeStr')
+                        : 'Flame: Menunggu data sensor...',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: isReceivingFlame
+                          ? (ctrl.flameDetected.value
+                              ? AppColors.sosEmergency
+                              : AppColors.statusSafe)
+                          : bodyColor,
+                      fontWeight: isReceivingFlame
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    });
+  }
+
+  // ── 5. Raw Data Diagnostic Card ─────────────────────────────────────────────
   Widget _buildRawDataCard(BuildContext context, SmartbandLdrController ctrl) {
     final headingColor = AppColors.textHeadingColor(context);
     final bodyColor = AppColors.textBodyColor(context);
@@ -359,8 +707,11 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
     return Obx(() {
       final isConnected = ctrl.isConnected;
       final adcValue = ctrl.rawDataString.value;
-      final serviceStatus = ctrl.serviceDiscovered.value ? 'Connected' : 'Waiting';
-      final charStatus = ctrl.characteristicDiscovered.value ? 'Connected' : 'Waiting';
+      final flameRaw = ctrl.flameRawData.value.isEmpty
+          ? '-'
+          : ctrl.flameRawData.value.toUpperCase();
+      final isFlameActive = ctrl.flameReceivingData.value;
+      final isLdrActive = ctrl.receivingData.value;
 
       return AppCard(
         padding: const EdgeInsets.all(AppSpacing.cardPadding),
@@ -378,7 +729,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
               ),
             ),
             subtitle: Text(
-              'Detail teknis BLE & status peripheral',
+              'Detail teknis BLE & status sensor prototype',
               style: AppTypography.caption.copyWith(
                 color: bodyColor.withValues(alpha: 0.75),
               ),
@@ -386,7 +737,6 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
             children: [
               const Divider(height: 16),
               _buildDebugRow(context, 'Device Name', ctrl.deviceName.value),
-              _buildDebugRow(context, 'LDR ADC (Raw)', adcValue),
               _buildDebugRow(
                 context,
                 'BLE Status',
@@ -395,17 +745,43 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
               ),
               _buildDebugRow(
                 context,
+                'LDR Status',
+                isLdrActive ? 'Receiving' : 'Waiting',
+                isSuccess: isLdrActive,
+              ),
+              _buildDebugRow(context, 'LDR ADC (Raw)', adcValue),
+              _buildDebugRow(
+                context,
+                'Flame Status',
+                isFlameActive ? 'Receiving' : 'Waiting',
+                isSuccess: isFlameActive,
+              ),
+              _buildDebugRow(
+                context,
+                'Flame Raw',
+                flameRaw,
+                isSuccess: isFlameActive ? (flameRaw == 'SAFE') : null,
+              ),
+              _buildDebugRow(
+                context,
                 'Service UUID',
-                serviceStatus,
+                ctrl.serviceDiscovered.value ? 'Connected' : 'Waiting',
                 isSuccess: ctrl.serviceDiscovered.value,
                 hint: BleService.serviceUuid,
               ),
               _buildDebugRow(
                 context,
-                'Characteristic UUID',
-                charStatus,
+                'LDR Char UUID',
+                ctrl.characteristicDiscovered.value ? 'Connected' : 'Waiting',
                 isSuccess: ctrl.characteristicDiscovered.value,
                 hint: BleService.ldrCharacteristicUuid,
+              ),
+              _buildDebugRow(
+                context,
+                'Flame Char UUID',
+                ctrl.characteristicDiscovered.value ? 'Connected' : 'Waiting',
+                isSuccess: ctrl.characteristicDiscovered.value,
+                hint: BleService.flameCharacteristicUuid,
               ),
             ],
           ),

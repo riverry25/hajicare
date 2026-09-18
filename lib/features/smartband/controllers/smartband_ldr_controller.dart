@@ -9,7 +9,7 @@ enum SmartbandConnectionState { disconnected, scanning, connecting, connected }
 class SmartbandLdrController extends GetxController {
   final BleService _bleService = BleService();
 
-  // Observable state
+  // Observable state - LDR
   final ldrValue = 0.obs;
   final rawDataString = '-'.obs;
   final connectionState = SmartbandConnectionState.disconnected.obs;
@@ -20,9 +20,19 @@ class SmartbandLdrController extends GetxController {
   final characteristicDiscovered = false.obs;
   final deviceName = 'HajiCare Watch'.obs;
 
-  // Relative time updater ticker
+  // Observable state - Flame Sensor
+  final flameDetected = false.obs;
+  final flameRawData = ''.obs;
+  final flameReceivingData = false.obs;
+  final flameLastUpdated = Rxn<DateTime>();
+
+  // Flag untuk mendeteksi transisi perubahan status SAFE -> FIRE
+  bool _previousFlameAlertTriggered = false;
+
+  // Relative time updater tickers
   Timer? _tickerTimer;
   final relativeTimeStr = ''.obs;
+  final flameRelativeTimeStr = ''.obs;
 
   // Convenient getters
   bool get isConnected =>
@@ -125,6 +135,29 @@ class SmartbandLdrController extends GetxController {
       _updateRelativeTime();
     };
 
+    _bleService.onFlameDataReceived = (isFire, rawStr) {
+      flameDetected.value = isFire;
+      flameRawData.value = rawStr;
+      flameReceivingData.value = true;
+      flameLastUpdated.value = DateTime.now();
+      _updateFlameRelativeTime();
+
+      // Trigger alert dialog HANYA ketika transisi dari SAFE -> FIRE
+      if (isFire && !_previousFlameAlertTriggered) {
+        _previousFlameAlertTriggered = true;
+        AppAlert.warning(
+          Get.context,
+          title: '⚠️ Peringatan Api!',
+          message:
+              'Sensor mendeteksi indikasi api di sekitar Anda! Harap waspada dan segera periksa kondisi sekitar.',
+          okText: 'Mengerti',
+        );
+      } else if (!isFire && _previousFlameAlertTriggered) {
+        // Reset trigger flag saat status kembali normal (SAFE)
+        _previousFlameAlertTriggered = false;
+      }
+    };
+
     _bleService.onConnectionChanged = (connected) {
       if (connected) {
         connectionState.value = SmartbandConnectionState.connected;
@@ -135,6 +168,8 @@ class SmartbandLdrController extends GetxController {
         connectionState.value = SmartbandConnectionState.disconnected;
         statusMessage.value = 'BLE Sync Tidak Aktif';
         receivingData.value = false;
+        flameReceivingData.value = false;
+        _previousFlameAlertTriggered = false;
         serviceDiscovered.value = false;
         characteristicDiscovered.value = false;
       }
@@ -148,6 +183,7 @@ class SmartbandLdrController extends GetxController {
   void _startRelativeTimeTicker() {
     _tickerTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       _updateRelativeTime();
+      _updateFlameRelativeTime();
     });
   }
 
@@ -166,6 +202,24 @@ class SmartbandLdrController extends GetxController {
     } else {
       final minutes = diff.inMinutes;
       relativeTimeStr.value = 'Diperbarui $minutes menit lalu';
+    }
+  }
+
+  void _updateFlameRelativeTime() {
+    final updated = flameLastUpdated.value;
+    if (updated == null) {
+      flameRelativeTimeStr.value = 'Menunggu data sensor...';
+      return;
+    }
+
+    final diff = DateTime.now().difference(updated);
+    if (diff.inSeconds <= 1) {
+      flameRelativeTimeStr.value = 'Diperbarui baru saja';
+    } else if (diff.inSeconds < 60) {
+      flameRelativeTimeStr.value = 'Diperbarui ${diff.inSeconds} detik lalu';
+    } else {
+      final minutes = diff.inMinutes;
+      flameRelativeTimeStr.value = 'Diperbarui $minutes menit lalu';
     }
   }
 
@@ -190,6 +244,7 @@ class SmartbandLdrController extends GetxController {
       connectionState.value = SmartbandConnectionState.scanning;
       statusMessage.value = 'Mencari HajiCare Watch...';
       receivingData.value = false;
+      flameReceivingData.value = false;
 
       // 3. Scan for target device
       final device = await _bleService.scanForDevice(
@@ -209,6 +264,7 @@ class SmartbandLdrController extends GetxController {
       connectionState.value = SmartbandConnectionState.disconnected;
       statusMessage.value = 'Gagal terhubung';
       receivingData.value = false;
+      flameReceivingData.value = false;
 
       final message = e is BleException ? e.message : e.toString();
       AppAlert.error(Get.context, title: 'Gagal Terhubung', message: message);
@@ -221,6 +277,8 @@ class SmartbandLdrController extends GetxController {
     connectionState.value = SmartbandConnectionState.disconnected;
     statusMessage.value = 'Terputus';
     receivingData.value = false;
+    flameReceivingData.value = false;
+    _previousFlameAlertTriggered = false;
   }
 
   @override

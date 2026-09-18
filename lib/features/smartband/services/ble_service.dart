@@ -19,17 +19,23 @@ class BleException implements Exception {
 class BleService {
   static const String targetDeviceName = 'HajiCare Watch';
   static const String serviceUuid = '12345678-1234-1234-1234-1234567890ab';
-  static const String ldrCharacteristicUuid = '12345678-1234-1234-1234-1234567890ac';
+  static const String ldrCharacteristicUuid =
+      '12345678-1234-1234-1234-1234567890ac';
+  static const String flameCharacteristicUuid =
+      '12345678-1234-1234-1234-1234567890ad';
 
   BluetoothDevice? _connectedDevice;
   BluetoothCharacteristic? _ldrCharacteristic;
+  BluetoothCharacteristic? _flameCharacteristic;
 
   StreamSubscription<List<ScanResult>>? _scanSubscription;
   StreamSubscription<BluetoothConnectionState>? _connectionSubscription;
   StreamSubscription<List<int>>? _valueSubscription;
+  StreamSubscription<List<int>>? _flameSubscription;
 
   // Callbacks for notifying controller of events
   void Function(int ldrValue, String rawString)? onDataReceived;
+  void Function(bool flameDetected, String rawString)? onFlameDataReceived;
   void Function(bool isConnected)? onConnectionChanged;
   void Function(String message)? onStatusLog;
 
@@ -136,15 +142,19 @@ class BleService {
       onStatusLog?.call('Menghubungkan ke ${device.platformName}...');
 
       await device.connect(
-        license: License.free,
+        license: License.nonprofit,
         autoConnect: false,
         timeout: const Duration(seconds: 15),
       );
 
       _connectedDevice = device;
 
-      // Listen for connection state changes (e.g. unexpected disconnection)
+      // ==========================================
+      // CONNECTION STATE
+      // ==========================================
+
       await _connectionSubscription?.cancel();
+
       _connectionSubscription = device.connectionState.listen((state) {
         if (state == BluetoothConnectionState.disconnected) {
           onStatusLog?.call('Perangkat terputus.');
@@ -154,13 +164,19 @@ class BleService {
         }
       });
 
+      // ==========================================
+      // DISCOVER SERVICES
+      // ==========================================
+
       onStatusLog?.call('Mencari BLE Service...');
+
       final services = await device.discoverServices();
 
-      // Look for the target service UUID
       BluetoothService? targetService;
+
       for (final service in services) {
-        if (service.uuid.toString().toLowerCase() == serviceUuid.toLowerCase()) {
+        if (service.uuid.toString().toLowerCase() ==
+            serviceUuid.toLowerCase()) {
           targetService = service;
           break;
         }
@@ -168,47 +184,105 @@ class BleService {
 
       if (targetService == null) {
         await disconnect();
+
         throw const BleException(
           'BLE Service tidak ditemukan pada perangkat.',
           code: 'SERVICE_NOT_FOUND',
         );
       }
 
-      onStatusLog?.call('Mencari Characteristic LDR...');
+      // ==========================================
+      // FIND LDR + FLAME CHARACTERISTIC
+      // ==========================================
+
       BluetoothCharacteristic? ldrChar;
+      BluetoothCharacteristic? flameChar;
+
       for (final characteristic in targetService.characteristics) {
-        if (characteristic.uuid.toString().toLowerCase() ==
-            ldrCharacteristicUuid.toLowerCase()) {
+        final uuid = characteristic.uuid.toString().toLowerCase();
+
+        if (uuid == ldrCharacteristicUuid.toLowerCase()) {
           ldrChar = characteristic;
-          break;
+        }
+
+        if (uuid == flameCharacteristicUuid.toLowerCase()) {
+          flameChar = characteristic;
         }
       }
 
+      // ==========================================
+      // VALIDATE LDR
+      // ==========================================
+
       if (ldrChar == null) {
         await disconnect();
+
         throw const BleException(
           'LDR sensor characteristic tidak ditemukan.',
-          code: 'CHARACTERISTIC_NOT_FOUND',
+          code: 'LDR_CHARACTERISTIC_NOT_FOUND',
+        );
+      }
+
+      // ==========================================
+      // VALIDATE FLAME
+      // ==========================================
+
+      if (flameChar == null) {
+        await disconnect();
+
+        throw const BleException(
+          'Flame sensor characteristic tidak ditemukan.',
+          code: 'FLAME_CHARACTERISTIC_NOT_FOUND',
         );
       }
 
       _ldrCharacteristic = ldrChar;
+      _flameCharacteristic = flameChar;
 
-      // Enable notifications and listen to incoming LDR stream
-      onStatusLog?.call('Mengaktifkan notifikasi data sensor...');
-      await ldrChar.setNotifyValue(true);
+      // ==========================================
+      // LDR NOTIFICATION
+      // ==========================================
+
+      onStatusLog?.call('Mengaktifkan LDR notification...');
 
       await _valueSubscription?.cancel();
+
       _valueSubscription = ldrChar.onValueReceived.listen((bytes) {
         _processReceivedData(bytes);
       });
 
+      device.cancelWhenDisconnected(_valueSubscription!);
+
+      await ldrChar.setNotifyValue(true);
+
+      // ==========================================
+      // FLAME NOTIFICATION
+      // ==========================================
+
+      onStatusLog?.call('Mengaktifkan Flame notification...');
+
+      await _flameSubscription?.cancel();
+
+      _flameSubscription = flameChar.onValueReceived.listen((bytes) {
+        _processFlameData(bytes);
+      });
+
+      device.cancelWhenDisconnected(_flameSubscription!);
+
+      await flameChar.setNotifyValue(true);
+
+      // ==========================================
+      // SUCCESS
+      // ==========================================
+
       onConnectionChanged?.call(true);
+
       onStatusLog?.call('Terhubung & Sync BLE Aktif');
     } catch (e) {
       if (e is BleException) {
         rethrow;
       }
+
       throw BleException(
         'Gagal terhubung: Tidak dapat menghubungkan ke HajiCare Watch ($e)',
         code: 'CONNECTION_FAILED',
@@ -230,17 +304,43 @@ class BleService {
     }
   }
 
+  void _processFlameData(List<int> bytes) {
+    if (bytes.isEmpty) return;
+
+    try {
+      final rawString = utf8.decode(bytes).trim();
+
+      final flameDetected = rawString.toUpperCase() == 'FIRE';
+
+      debugPrint('FLAME BLE: $rawString');
+
+      onFlameDataReceived?.call(flameDetected, rawString);
+    } catch (e) {
+      debugPrint('Error decoding Flame BLE data: $e');
+    }
+  }
+
   /// Disconnect cleanly from the currently connected device.
   Future<void> disconnect() async {
     try {
       await _valueSubscription?.cancel();
       _valueSubscription = null;
 
+      await _flameSubscription?.cancel();
+      _flameSubscription = null;
+
       if (_ldrCharacteristic != null) {
         try {
           await _ldrCharacteristic?.setNotifyValue(false);
         } catch (_) {}
         _ldrCharacteristic = null;
+      }
+      if (_flameCharacteristic != null) {
+        try {
+          await _flameCharacteristic?.setNotifyValue(false);
+        } catch (_) {}
+
+        _flameCharacteristic = null;
       }
 
       if (_connectedDevice != null) {
@@ -256,11 +356,19 @@ class BleService {
 
   void _handleDisconnection() {
     _connectedDevice = null;
+
     _ldrCharacteristic = null;
+    _flameCharacteristic = null;
+
     _valueSubscription?.cancel();
     _valueSubscription = null;
+
+    _flameSubscription?.cancel();
+    _flameSubscription = null;
+
     _connectionSubscription?.cancel();
     _connectionSubscription = null;
+
     onConnectionChanged?.call(false);
   }
 
