@@ -23,6 +23,12 @@ class HajiCareHeader extends StatelessWidget implements PreferredSizeWidget {
   /// Icon displayed in the circular emblem next to the title.
   final IconData? icon;
 
+  /// Optional image asset path for the circular emblem. Defaults to 'assets/icon.jpeg'.
+  final String? imageAsset;
+
+  /// Whether to use the app image logo instead of a vector icon. Defaults to true when icon is null or Icons.mosque_rounded.
+  final bool? useAppLogo;
+
   /// Optional custom leading widget. If specified, overrides [showBackButton].
   final Widget? leading;
 
@@ -52,6 +58,8 @@ class HajiCareHeader extends StatelessWidget implements PreferredSizeWidget {
     required this.title,
     this.subtitle,
     this.icon,
+    this.imageAsset,
+    this.useAppLogo,
     this.leading,
     this.showBackButton = false,
     this.onBack,
@@ -92,6 +100,7 @@ class HajiCareHeader extends StatelessWidget implements PreferredSizeWidget {
     }
 
     final hasLeading = effectiveLeading != null;
+    final showLogoImage = (useAppLogo ?? (icon == null || icon == Icons.mosque_rounded || icon == Icons.mosque)) && !hasLeading;
 
     return AppBar(
       backgroundColor: scaffoldBg,
@@ -105,7 +114,40 @@ class HajiCareHeader extends StatelessWidget implements PreferredSizeWidget {
           titleWidget ??
           Row(
             children: [
-              if (icon != null) ...[
+              if (showLogoImage) ...[
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.darkPrimaryContainer
+                        : AppColors.primaryContainer,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.goldPrimary.withValues(alpha: 0.5),
+                      width: 1.2,
+                    ),
+                  ),
+                  child: ClipOval(
+                    child: Image.asset(
+                      imageAsset ?? 'assets/icon.jpeg',
+                      width: 36,
+                      height: 36,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Icon(
+                          icon ?? Icons.mosque_rounded,
+                          color: isDark
+                              ? AppColors.goldLight
+                              : AppColors.accentGoldStar,
+                          size: 19,
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+              ] else if (icon != null) ...[
                 Container(
                   width: 36,
                   height: 36,

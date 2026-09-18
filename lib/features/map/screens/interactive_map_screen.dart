@@ -1,7 +1,8 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart' as fmap;
 import 'package:get/get.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:latlong2/latlong.dart' hide Path;
 import '../../../core/constants/app_constants.dart';
 import '../../../core/models/filter_chip_item.dart';
 import '../../../core/routes/app_routes.dart';
@@ -46,6 +47,8 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
     FilterChipItem(label: 'Pendamping', icon: Icons.shield_rounded),
     FilterChipItem(label: 'Posko Medis', icon: Icons.medical_services_rounded),
     FilterChipItem(label: 'Toilet & Wudhu', icon: Icons.wc_rounded),
+    FilterChipItem(label: 'Maktab', icon: Icons.holiday_village_rounded),
+    FilterChipItem(label: 'Pos Pantau', icon: Icons.flag_rounded),
   ];
 
   @override
@@ -1059,13 +1062,18 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
 
   List<fmap.Marker> _buildPoiMarkers(MapController mapCtrl) {
     final isDark = AppColors.isDark(context);
+    final userPos = mapCtrl.currentUserLocation.value ?? MapController.defaultMinaBase;
+
     return mapCtrl.filteredPois.map((poi) {
       final isSelected = mapCtrl.selectedPoi.value?.id == poi.id;
+      final distMeters = mapCtrl.calculateDistanceMeters(userPos, poi.coordinate);
+      final distText = MapController.formatDistance(distMeters);
 
       return fmap.Marker(
         point: poi.coordinate,
-        width: 100,
-        height: 62,
+        width: 130,
+        height: 82,
+        alignment: Alignment.topCenter,
         child: RepaintBoundary(
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
@@ -1080,68 +1088,154 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: isSelected ? 38 : 32,
-                  height: isSelected ? 38 : 32,
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? poi.color
-                        : (isDark
-                              ? AppColors.darkSurface
-                              : AppColors.surfaceWhite),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected ? Colors.white : poi.color,
-                      width: 2.0,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: poi.color.withValues(alpha: 0.35),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
+                // ── GOOGLE MAPS FLOATING PIN WITH POINTER ──
+                Stack(
+                  alignment: Alignment.center,
+                  clipBehavior: Clip.none,
+                  children: [
+                    // Pulsing Halo Glow when Selected
+                    if (isSelected)
+                      AnimatedBuilder(
+                        animation: _pulseController,
+                        builder: (context, child) {
+                          return Container(
+                            width: 44 + (_pulseController.value * 12),
+                            height: 44 + (_pulseController.value * 12),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: poi.color.withValues(
+                                alpha: 0.40 - (_pulseController.value * 0.25),
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Icon(
-                      poi.icon,
-                      color: isSelected ? Colors.white : poi.color,
-                      size: isSelected ? 20 : 17,
+
+                    // Pin Marker Shape (Circle + Pointer)
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Circular Pin Head
+                        Container(
+                          width: isSelected ? 40 : 34,
+                          height: isSelected ? 40 : 34,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Color.lerp(poi.color, Colors.white, 0.18)!,
+                                poi.color,
+                              ],
+                            ),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white,
+                              width: isSelected ? 2.5 : 2.0,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: poi.color.withValues(alpha: isSelected ? 0.55 : 0.35),
+                                blurRadius: isSelected ? 12 : 8,
+                                spreadRadius: isSelected ? 1 : 0,
+                                offset: const Offset(0, 3),
+                              ),
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.15),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Icon(
+                              poi.icon,
+                              color: Colors.white,
+                              size: isSelected ? 21 : 18,
+                            ),
+                          ),
+                        ),
+
+                        // Downward Pointer Triangle
+                        Transform.translate(
+                          offset: const Offset(0, -2.5),
+                          child: CustomPaint(
+                            size: const Size(10, 6),
+                            painter: _TrianglePointerPainter(
+                              color: poi.color,
+                              borderColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
+                  ],
                 ),
-                const SizedBox(height: 3),
+
+                const SizedBox(height: 2),
+
+                // ── FLOATING CALLOUT LABEL PILL ──
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 1.5,
+                    horizontal: 7,
+                    vertical: 2.5,
                   ),
                   decoration: BoxDecoration(
                     color: isDark
-                        ? AppColors.darkSurface.withValues(alpha: 0.92)
-                        : AppColors.espressoDark.withValues(alpha: 0.88),
-                    border: isDark
-                        ? Border.all(
-                            color: AppColors.darkBorderSubtle,
-                            width: 1,
-                          )
-                        : null,
+                        ? AppColors.darkSurface.withValues(alpha: 0.95)
+                        : Colors.white.withValues(alpha: 0.96),
                     borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(
+                      color: isSelected
+                          ? poi.color
+                          : (isDark
+                              ? Colors.white.withValues(alpha: 0.15)
+                              : Colors.black.withValues(alpha: 0.08)),
+                      width: isSelected ? 1.5 : 0.8,
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.15),
-                        blurRadius: 4,
+                        color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.12),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                  child: Text(
-                    poi.name.split(' ').take(2).join(' '),
-                    maxLines: 1,
-                    style: TextStyle(
-                      color: isDark ? AppColors.darkTextHeading : Colors.white,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 5,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: poi.color,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          poi.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: isDark ? Colors.white : AppColors.espressoDark,
+                            fontSize: 9.5,
+                            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        '· $distText',
+                        style: TextStyle(
+                          color: isSelected ? poi.color : (isDark ? Colors.white60 : AppColors.textMuted),
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -1170,3 +1264,41 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
     );
   }
 }
+
+class _TrianglePointerPainter extends CustomPainter {
+  final Color color;
+  final Color borderColor;
+
+  const _TrianglePointerPainter({
+    required this.color,
+    required this.borderColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final fillPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    final borderPaint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final path = ui.Path()
+      ..moveTo(0, 0)
+      ..lineTo(size.width, 0)
+      ..lineTo(size.width / 2, size.height)
+      ..close();
+
+    canvas.drawPath(path, fillPaint);
+    canvas.drawPath(path, borderPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _TrianglePointerPainter oldDelegate) =>
+      oldDelegate.color != color || oldDelegate.borderColor != borderColor;
+}
+

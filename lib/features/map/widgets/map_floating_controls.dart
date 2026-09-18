@@ -107,13 +107,6 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                                 : AppColors.goldLight.withValues(alpha: 0.35)),
                       width: 1.2,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.espressoDark.withValues(alpha: 0.12),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
                   ),
                   child: Stack(
                     alignment: Alignment.center,
@@ -148,7 +141,7 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
             // ── Collapsible Floating Controls Group ───────────────────────────
             SizeTransition(
               sizeFactor: _expandAnimation,
-              axisAlignment: -1.0,
+              alignment: Alignment.topCenter,
               child: FadeTransition(
                 opacity: _expandAnimation,
                 child: Padding(
@@ -235,112 +228,110 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                       const SizedBox(height: AppSpacing.sm),
 
                       // 3. Zoom Controls Group (In / Out)
-                        if (widget.onZoomInTap != null ||
-                            widget.onZoomOutTap != null) ...[
-                          Container(
-                            decoration: BoxDecoration(
+                      if (widget.onZoomInTap != null ||
+                          widget.onZoomOutTap != null) ...[
+                        Container(
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? AppColors.darkSurface
+                                : AppColors.surfaceWhite,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
                               color: isDark
-                                  ? AppColors.darkSurface
-                                  : AppColors.surfaceWhite,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: isDark
-                                    ? Colors.white.withValues(alpha: 0.12)
-                                    : AppColors.goldLight.withValues(
-                                        alpha: 0.35,
-                                      ),
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.espressoDark.withValues(
-                                    alpha: 0.10,
-                                  ),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
+                                  ? Colors.white.withValues(alpha: 0.12)
+                                  : AppColors.goldLight.withValues(alpha: 0.35),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.espressoDark.withValues(
+                                  alpha: 0.10,
                                 ),
-                              ],
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (widget.onZoomInTap != null)
-                                  _buildMicroButton(
-                                    context: context,
-                                    icon: Icons.add_rounded,
-                                    tooltip: 'Perbesar Peta',
-                                    onTap: widget.onZoomInTap,
-                                    isTop: true,
-                                  ),
-                                if (widget.onZoomInTap != null &&
-                                    widget.onZoomOutTap != null)
-                                  Divider(
-                                    height: 1,
-                                    thickness: 1,
-                                    color: isDark
-                                        ? Colors.white.withValues(alpha: 0.08)
-                                        : AppColors.goldLight.withValues(
-                                            alpha: 0.25,
-                                          ),
-                                  ),
-                                if (widget.onZoomOutTap != null)
-                                  _buildMicroButton(
-                                    context: context,
-                                    icon: Icons.remove_rounded,
-                                    tooltip: 'Perkecil Peta',
-                                    onTap: widget.onZoomOutTap,
-                                    isBottom: true,
-                                  ),
-                              ],
-                            ),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: AppSpacing.sm),
-                        ],
-
-                        // 4. Focus All Room Members
-                        _buildControlButton(
-                          context: context,
-                          icon: Icons.groups_rounded,
-                          color: isDark ? Colors.white : AppColors.espressoDark,
-                          bgColor: isDark
-                              ? AppColors.darkSurface
-                              : AppColors.surfaceWhite,
-                          tooltip: 'Fokus ke Semua Anggota',
-                          onTap: widget.onFitAllTap,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (widget.onZoomInTap != null)
+                                _buildMicroButton(
+                                  context: context,
+                                  icon: Icons.add_rounded,
+                                  tooltip: 'Perbesar Peta',
+                                  onTap: widget.onZoomInTap,
+                                  isTop: true,
+                                ),
+                              if (widget.onZoomInTap != null &&
+                                  widget.onZoomOutTap != null)
+                                Divider(
+                                  height: 1,
+                                  thickness: 1,
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.08)
+                                      : AppColors.goldLight.withValues(
+                                          alpha: 0.25,
+                                        ),
+                                ),
+                              if (widget.onZoomOutTap != null)
+                                _buildMicroButton(
+                                  context: context,
+                                  icon: Icons.remove_rounded,
+                                  tooltip: 'Perkecil Peta',
+                                  onTap: widget.onZoomOutTap,
+                                  isBottom: true,
+                                ),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: AppSpacing.sm),
-
-                        // 5. Map Tile Layer Switch (Voyager / OSM)
-                        _buildControlButton(
-                          context: context,
-                          icon: Icons.layers_rounded,
-                          color: AppColors.tanMedium,
-                          bgColor: isDark
-                              ? AppColors.darkSurface
-                              : AppColors.surfaceWhite,
-                          tooltip: 'Ganti Tampilan Peta',
-                          onTap: widget.onLayersTap,
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-
-                        // 6. Smart Band Paging
-                        _buildControlButton(
-                          context: context,
-                          icon: Icons.ring_volume_rounded,
-                          color: AppColors.espressoDark,
-                          bgColor: AppColors.secondaryContainer.withValues(
-                            alpha: 0.85,
-                          ),
-                          borderColor: AppColors.goldPrimary.withValues(
-                            alpha: 0.5,
-                          ),
-                          tooltip: 'Panggil Gelang Jamaah',
-                          onTap: widget.onBandTap,
-                        ),
                       ],
-                    ),
+
+                      // 4. Focus All Room Members
+                      _buildControlButton(
+                        context: context,
+                        icon: Icons.groups_rounded,
+                        color: isDark ? Colors.white : AppColors.espressoDark,
+                        bgColor: isDark
+                            ? AppColors.darkSurface
+                            : AppColors.surfaceWhite,
+                        tooltip: 'Fokus ke Semua Anggota',
+                        onTap: widget.onFitAllTap,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+
+                      // 5. Map Tile Layer Switch (Voyager / OSM)
+                      _buildControlButton(
+                        context: context,
+                        icon: Icons.layers_rounded,
+                        color: AppColors.tanMedium,
+                        bgColor: isDark
+                            ? AppColors.darkSurface
+                            : AppColors.surfaceWhite,
+                        tooltip: 'Ganti Tampilan Peta',
+                        onTap: widget.onLayersTap,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+
+                      // 6. Smart Band Paging
+                      _buildControlButton(
+                        context: context,
+                        icon: Icons.ring_volume_rounded,
+                        color: AppColors.espressoDark,
+                        bgColor: AppColors.secondaryContainer.withValues(
+                          alpha: 0.85,
+                        ),
+                        borderColor: AppColors.goldPrimary.withValues(
+                          alpha: 0.5,
+                        ),
+                        tooltip: 'Panggil Gelang Jamaah',
+                        onTap: widget.onBandTap,
+                      ),
+                    ],
                   ),
                 ),
               ),
+            ),
           ],
         ),
       ),

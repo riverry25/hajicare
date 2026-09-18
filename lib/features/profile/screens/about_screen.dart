@@ -136,14 +136,11 @@ class _AppIdentitySection extends StatelessWidget {
             width: 88,
             height: 88,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDark
-                    ? [AppColors.darkPrimaryContainer, AppColors.darkSurfaceContainerHigh]
-                    : [AppColors.primaryContainer, AppColors.espressoDark],
-              ),
               borderRadius: BorderRadius.circular(AppRadius.xl),
+              border: Border.all(
+                color: AppColors.goldPrimary.withValues(alpha: 0.6),
+                width: 2.0,
+              ),
               boxShadow: [
                 BoxShadow(
                   color: AppColors.espressoDark.withValues(alpha: 0.20),
@@ -152,10 +149,20 @@ class _AppIdentitySection extends StatelessWidget {
                 ),
               ],
             ),
-            child: const Icon(
-              Icons.mosque_rounded,
-              color: AppColors.goldLight,
-              size: 48,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.xl - 2),
+              child: Image.asset(
+                'assets/icon.jpeg',
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: AppColors.espressoDark,
+                  child: const Icon(
+                    Icons.mosque_rounded,
+                    color: AppColors.goldLight,
+                    size: 48,
+                  ),
+                ),
+              ),
             ),
           ),
           const SizedBox(height: AppSpacing.lg),

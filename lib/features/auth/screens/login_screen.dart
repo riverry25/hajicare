@@ -44,7 +44,7 @@ class LoginScreen extends StatelessWidget {
                       color: AppColors.espressoDark,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: AppColors.goldPrimary.withValues(alpha: 0.35),
+                        color: AppColors.goldPrimary.withValues(alpha: 0.5),
                         width: 1.5,
                       ),
                       boxShadow: [
@@ -55,10 +55,16 @@ class LoginScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.mosque_rounded,
-                      color: AppColors.goldPrimary,
-                      size: 24,
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/icon.jpeg',
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => const Icon(
+                          Icons.mosque_rounded,
+                          color: AppColors.goldPrimary,
+                          size: 24,
+                        ),
+                      ),
                     ),
                   ),
 

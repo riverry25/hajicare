@@ -747,55 +747,62 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      decoration: BoxDecoration(
+      child: Material(
         color: AppColors.cardBgColor(context),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.cardBorderColor(context)),
-      ),
-      child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 4),
-          leading: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.goldPrimary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-            child: Icon(icon, color: AppColors.goldDark, size: 20),
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          side: BorderSide(color: AppColors.cardBorderColor(context)),
+        ),
+        child: Theme(
+          data: Theme.of(context).copyWith(
+            dividerColor: Colors.transparent,
+            splashColor: AppColors.goldPrimary.withValues(alpha: 0.1),
+            highlightColor: AppColors.goldPrimary.withValues(alpha: 0.05),
           ),
-          title: Text(
-            question,
-            style: AppTypography.titleSm.copyWith(
-              color: headingColor,
-              fontWeight: FontWeight.w700,
-              fontSize: 15,
-            ),
-          ),
-          iconColor: AppColors.goldPrimary,
-          collapsedIconColor: AppColors.textSecondaryColor(context),
-          childrenPadding: const EdgeInsets.only(
-            left: AppSpacing.md,
-            right: AppSpacing.md,
-            bottom: AppSpacing.md,
-          ),
-          children: [
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
+          child: ExpansionTile(
+            tilePadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 4),
+            leading: Container(
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.goldPrimary.withValues(alpha: 0.05),
+                color: AppColors.goldPrimary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
-              child: Text(
-                answer,
-                style: AppTypography.bodySmall.copyWith(
-                  color: bodyColor,
-                  fontSize: 14,
-                  height: 1.5,
-                ),
+              child: Icon(icon, color: AppColors.goldDark, size: 20),
+            ),
+            title: Text(
+              question,
+              style: AppTypography.titleSm.copyWith(
+                color: headingColor,
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
               ),
             ),
-          ],
+            iconColor: AppColors.goldPrimary,
+            collapsedIconColor: AppColors.textSecondaryColor(context),
+            childrenPadding: const EdgeInsets.only(
+              left: AppSpacing.md,
+              right: AppSpacing.md,
+              bottom: AppSpacing.md,
+            ),
+            children: [
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: AppColors.goldPrimary.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Text(
+                  answer,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: bodyColor,
+                    fontSize: 14,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -42,6 +42,10 @@ class OnboardingScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: AppColors.espressoDark,
                       shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.goldPrimary.withValues(alpha: 0.5),
+                        width: 1.5,
+                      ),
                       boxShadow: [
                         BoxShadow(
                           color: AppColors.espressoDark.withValues(alpha: 0.15),
@@ -50,10 +54,16 @@ class OnboardingScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.mosque_rounded,
-                      color: AppColors.canvasCream,
-                      size: 22,
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/icon.jpeg',
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => const Icon(
+                          Icons.mosque_rounded,
+                          color: AppColors.canvasCream,
+                          size: 22,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),

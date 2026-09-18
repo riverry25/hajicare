@@ -289,7 +289,7 @@ class HajiCareController extends GetxController {
           debugPrint('[HajiCareController] Error persisting snapshot to cache: $e');
         });
 
-        if (effectiveRoomId != activeRoomId.value) {
+        if (effectiveRoomId != activeRoomId.value || _roomDocSub == null) {
           activeRoomId.value = effectiveRoomId;
           if (effectiveRoomId != null && effectiveRoomId.isNotEmpty) {
             _listenToActiveRoom(effectiveRoomId, uid);
@@ -350,7 +350,15 @@ class HajiCareController extends GetxController {
         final r = RoomModel.fromFirestore(doc);
         activeRoom.value = r;
         safeRadiusMeters.value = r.safeRadius;
+        if (r.maktab != null && r.maktab!.isNotEmpty) {
+          pendampingMaktab.value = r.maktab;
+        }
+        if (r.kloter != null && r.kloter!.isNotEmpty) {
+          pendampingKloter.value = r.kloter;
+        }
       }
+    }, onError: (e) {
+      debugPrint('[HajiCareController] Error in _roomDocSub: $e');
     });
 
     _roomMembersSub?.cancel();
@@ -720,6 +728,23 @@ class HajiCareController extends GetxController {
       kloter: kloter,
       safeRadius: safeRadius,
     );
+
+    // Optimistically update local activeRoom reactive state immediately
+    if (activeRoom.value != null) {
+      activeRoom.value = activeRoom.value!.copyWith(
+        name: name,
+        maktab: maktab,
+        kloter: kloter,
+        safeRadius: safeRadius,
+      );
+    }
+
+    if (maktab != null) {
+      pendampingMaktab.value = maktab.trim().isNotEmpty ? maktab.trim() : null;
+    }
+    if (kloter != null) {
+      pendampingKloter.value = kloter.trim().isNotEmpty ? kloter.trim() : null;
+    }
 
     if (safeRadius != null && safeRadius > 0) {
       safeRadiusMeters.value = safeRadius;

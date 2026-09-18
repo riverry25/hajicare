@@ -18,6 +18,7 @@ import '../../profile/screens/profile_screen.dart';
 import '../controllers/admin_room_controller.dart';
 import '../models/activity_model.dart';
 import '../models/room_model.dart';
+import '../widgets/room_qr_dialog.dart';
 import '../../notification/widgets/notification_composer_dialog.dart';
 import '../../notification/controllers/notification_controller.dart';
 
@@ -1201,7 +1202,6 @@ class _AdminDashboardHome extends StatelessWidget {
               label: const Icon(Icons.arrow_forward_ios_rounded, size: 11),
               onPressed: () => _showAllActivitiesSheet(
                 context,
-                sortedActivities,
                 controller,
                 isDark,
                 headingColor,
@@ -1724,10 +1724,9 @@ class _AdminDashboardHome extends StatelessWidget {
     );
   }
 
-  // ── Show All Activities Bottom Sheet ──────────────────────────────────────
+  // ── Show All Activities Bottom Sheet (Paginated 10/page) ───────────────────
   void _showAllActivitiesSheet(
     BuildContext context,
-    List<ActivityModel> activities,
     AdminRoomController controller,
     bool isDark,
     Color headingColor,
@@ -1737,6 +1736,9 @@ class _AdminDashboardHome extends StatelessWidget {
     HapticFeedback.lightImpact();
     String activeFilter = 'Semua';
     String searchQuery = '';
+
+    // Load initial 10 activities on open
+    controller.loadInitialActivities(filter: 'Semua');
 
     showModalBottomSheet(
       context: context,
@@ -1750,43 +1752,24 @@ class _AdminDashboardHome extends StatelessWidget {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            final filtered = activities.where((a) {
-              if (activeFilter == 'Darurat' &&
-                  a.type != ActivityType.sosActive) {
-                return false;
-              }
-              if (activeFilter == 'Kamar' &&
-                  a.type != ActivityType.roomCreated &&
-                  a.type != ActivityType.roomActivated &&
-                  a.type != ActivityType.roomDeactivated) {
-                return false;
-              }
-              if (activeFilter == 'Anggota' &&
-                  a.type != ActivityType.memberJoined &&
-                  a.type != ActivityType.memberLeft) {
-                return false;
-              }
-              if (searchQuery.trim().isNotEmpty) {
-                final q = searchQuery.toLowerCase().trim();
-                final matchTitle = a.title.toLowerCase().contains(q);
-                final matchDesc = a.description.toLowerCase().contains(q);
-                final matchRoom =
-                    a.roomName?.toLowerCase().contains(q) ?? false;
-                final matchUser =
-                    a.userName?.toLowerCase().contains(q) ?? false;
-                if (!matchTitle && !matchDesc && !matchRoom && !matchUser) {
-                  return false;
-                }
-              }
-              return true;
-            }).toList();
-
             return DraggableScrollableSheet(
               initialChildSize: 0.85,
               maxChildSize: 0.95,
               minChildSize: 0.5,
               expand: false,
               builder: (context, scrollController) {
+                // Attach auto-pagination scroll listener
+                scrollController.addListener(() {
+                  if (scrollController.hasClients &&
+                      scrollController.position.pixels >=
+                          scrollController.position.maxScrollExtent - 120) {
+                    if (controller.hasMoreActivities.value &&
+                        !controller.isActivitiesPageLoadingMore.value) {
+                      controller.loadMoreActivities();
+                    }
+                  }
+                });
+
                 return Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.lg,
@@ -1819,13 +1802,13 @@ class _AdminDashboardHome extends StatelessWidget {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              Text(
-                                '${filtered.length} dari ${activities.length} aktivitas tercatat',
-                                style: AppTypography.captionSmall.copyWith(
-                                  color: bodyColor.withValues(alpha: 0.7),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
+                              Obx(() => Text(
+                                    '${controller.paginatedActivities.length} aktivitas termuat (batch 10/halaman)',
+                                    style: AppTypography.captionSmall.copyWith(
+                                      color: bodyColor.withValues(alpha: 0.7),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  )),
                             ],
                           ),
                           IconButton(
@@ -1891,7 +1874,10 @@ class _AdminDashboardHome extends StatelessWidget {
                               primaryColor,
                               headingColor,
                               isDark,
-                              () => setModalState(() => activeFilter = 'Semua'),
+                              () {
+                                setModalState(() => activeFilter = 'Semua');
+                                controller.loadInitialActivities(filter: 'Semua');
+                              },
                             ),
                             const SizedBox(width: 6),
                             _buildModalFilterChip(
@@ -1900,8 +1886,10 @@ class _AdminDashboardHome extends StatelessWidget {
                               AppColors.sosEmergency,
                               headingColor,
                               isDark,
-                              () =>
-                                  setModalState(() => activeFilter = 'Darurat'),
+                              () {
+                                setModalState(() => activeFilter = 'Darurat');
+                                controller.loadInitialActivities(filter: 'Darurat');
+                              },
                             ),
                             const SizedBox(width: 6),
                             _buildModalFilterChip(
@@ -1910,7 +1898,10 @@ class _AdminDashboardHome extends StatelessWidget {
                               primaryColor,
                               headingColor,
                               isDark,
-                              () => setModalState(() => activeFilter = 'Kamar'),
+                              () {
+                                setModalState(() => activeFilter = 'Kamar');
+                                controller.loadInitialActivities(filter: 'Kamar');
+                              },
                             ),
                             const SizedBox(width: 6),
                             _buildModalFilterChip(
@@ -1919,81 +1910,210 @@ class _AdminDashboardHome extends StatelessWidget {
                               AppColors.statusSafe,
                               headingColor,
                               isDark,
-                              () =>
-                                  setModalState(() => activeFilter = 'Anggota'),
+                              () {
+                                setModalState(() => activeFilter = 'Anggota');
+                                controller.loadInitialActivities(filter: 'Anggota');
+                              },
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(height: AppSpacing.sm),
 
-                      // Activities List
+                      // Paginated Activities List
                       Expanded(
-                        child: filtered.isEmpty
-                            ? Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.search_off_rounded,
-                                      size: 44,
-                                      color: bodyColor.withValues(alpha: 0.35),
+                        child: Obx(() {
+                          if (controller.isActivitiesPageLoading.value &&
+                              controller.paginatedActivities.isEmpty) {
+                            return Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  CircularProgressIndicator(
+                                    color: primaryColor,
+                                    strokeWidth: 2.5,
+                                  ),
+                                  const SizedBox(height: AppSpacing.md),
+                                  Text(
+                                    'Memuat 10 riwayat terbaru...',
+                                    style: AppTypography.captionSmall
+                                        .copyWith(color: bodyColor),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+
+                          final activities = controller.paginatedActivities;
+                          final filtered = activities.where((a) {
+                            if (searchQuery.trim().isNotEmpty) {
+                              final q = searchQuery.toLowerCase().trim();
+                              final matchTitle = a.title.toLowerCase().contains(q);
+                              final matchDesc = a.description.toLowerCase().contains(q);
+                              final matchRoom = a.roomName?.toLowerCase().contains(q) ?? false;
+                              final matchUser = a.userName?.toLowerCase().contains(q) ?? false;
+                              if (!matchTitle && !matchDesc && !matchRoom && !matchUser) {
+                                return false;
+                              }
+                            }
+                            return true;
+                          }).toList();
+
+                          if (filtered.isEmpty) {
+                            return Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.search_off_rounded,
+                                    size: 44,
+                                    color: bodyColor.withValues(alpha: 0.35),
+                                  ),
+                                  const SizedBox(height: AppSpacing.sm),
+                                  Text(
+                                    'Tidak Ada Aktivitas Sesuai Filter',
+                                    style: AppTypography.titleSmall.copyWith(
+                                      color: headingColor,
+                                      fontWeight: FontWeight.bold,
                                     ),
-                                    const SizedBox(height: AppSpacing.sm),
-                                    Text(
-                                      'Tidak Ada Aktivitas Sesuai Filter',
-                                      style: AppTypography.titleSmall.copyWith(
-                                        color: headingColor,
-                                        fontWeight: FontWeight.bold,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Belum ada data aktivitas atau coba ubah kata kunci pencarian.',
+                                    textAlign: TextAlign.center,
+                                    style: AppTypography.captionSmall
+                                        .copyWith(color: bodyColor),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+
+                          // List items count + 1 for footer / load more
+                          final hasMore = controller.hasMoreActivities.value;
+                          final isLoadingMore = controller.isActivitiesPageLoadingMore.value;
+                          final totalItems = filtered.length + 1;
+
+                          return ListView.separated(
+                            controller: scrollController,
+                            padding: const EdgeInsets.only(
+                              bottom: AppSpacing.xl,
+                            ),
+                            itemCount: totalItems,
+                            separatorBuilder: (context, index) {
+                              if (index >= filtered.length - 1) {
+                                return const SizedBox(height: AppSpacing.sm);
+                              }
+                              return Divider(
+                                height: 1,
+                                thickness: 0.8,
+                                indent: 58,
+                                endIndent: AppSpacing.md,
+                                color: isDark
+                                    ? AppColors.darkCardBorder
+                                    : AppColors.canvasCreamSubtle,
+                              );
+                            },
+                            itemBuilder: (context, idx) {
+                              // Footer element
+                              if (idx == filtered.length) {
+                                if (isLoadingMore) {
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    child: Center(
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: primaryColor,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Text(
+                                            'Memuat 10 riwayat berikutnya...',
+                                            style: AppTypography.captionSmall
+                                                .copyWith(color: bodyColor),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Coba ubah kata kunci pencarian atau kategori filter.',
-                                      textAlign: TextAlign.center,
-                                      style: AppTypography.captionSmall
-                                          .copyWith(color: bodyColor),
+                                  );
+                                }
+
+                                if (hasMore) {
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    child: Center(
+                                      child: OutlinedButton.icon(
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: primaryColor,
+                                          side: BorderSide(
+                                            color: primaryColor.withValues(alpha: 0.4),
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              AppRadius.pill,
+                                            ),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 8,
+                                          ),
+                                        ),
+                                        icon: const Icon(Icons.expand_more_rounded, size: 18),
+                                        label: const Text(
+                                          'Muat 10 Riwayat Berikutnya',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        onPressed: () => controller.loadMoreActivities(),
+                                      ),
                                     ),
-                                  ],
-                                ),
-                              )
-                            : ListView.separated(
-                                controller: scrollController,
-                                padding: const EdgeInsets.only(
-                                  bottom: AppSpacing.xl,
-                                ),
-                                itemCount: filtered.length,
-                                separatorBuilder: (context, index) => Divider(
-                                  height: 1,
-                                  thickness: 0.8,
-                                  indent: 58,
-                                  endIndent: AppSpacing.md,
-                                  color: isDark
-                                      ? AppColors.darkCardBorder
-                                      : AppColors.canvasCreamSubtle,
-                                ),
-                                itemBuilder: (context, idx) {
-                                  final act = filtered[idx];
-                                  return _ActivityFeedTile(
-                                    activity: act,
-                                    headingColor: headingColor,
-                                    bodyColor: bodyColor,
-                                    isDark: isDark,
-                                    onTap: () {
-                                      Navigator.pop(ctx);
-                                      _showActivityDetailSheet(
-                                        context,
-                                        act,
-                                        controller,
-                                        isDark,
-                                        headingColor,
-                                        bodyColor,
-                                        primaryColor,
-                                      );
-                                    },
+                                  );
+                                }
+
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  child: Center(
+                                    child: Text(
+                                      '— Semua riwayat telah ditampilkan —',
+                                      style: AppTypography.captionSmall.copyWith(
+                                        color: bodyColor.withValues(alpha: 0.5),
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              final act = filtered[idx];
+                              return _ActivityFeedTile(
+                                activity: act,
+                                headingColor: headingColor,
+                                bodyColor: bodyColor,
+                                isDark: isDark,
+                                onTap: () {
+                                  Navigator.pop(ctx);
+                                  _showActivityDetailSheet(
+                                    context,
+                                    act,
+                                    controller,
+                                    isDark,
+                                    headingColor,
+                                    bodyColor,
+                                    primaryColor,
                                   );
                                 },
-                              ),
+                              );
+                            },
+                          );
+                        }),
                       ),
                     ],
                   ),
@@ -4459,6 +4579,18 @@ class _RoomPantauCard extends StatelessWidget {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        IconButton(
+                          icon: Icon(
+                            Icons.qr_code_2_rounded,
+                            size: 18,
+                            color: primaryColor,
+                          ),
+                          tooltip: 'Lihat QR Code',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                          onPressed: () => RoomQrDialog.show(context, room: room),
+                        ),
+                        const SizedBox(width: 4),
                         Text(
                           'Pantau Ruangan',
                           style: AppTypography.captionSmall.copyWith(

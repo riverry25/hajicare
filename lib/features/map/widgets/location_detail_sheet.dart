@@ -258,26 +258,110 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                   ),
                 ),
 
+                // ── CATEGORY BADGE & STATUS ROW ──
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: poi.color.withValues(alpha: isDark ? 0.22 : 0.12),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        border: Border.all(
+                          color: poi.color.withValues(alpha: isDark ? 0.5 : 0.35),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(poi.icon, size: 13, color: poi.color),
+                          const SizedBox(width: 5),
+                          Text(
+                            poi.category.label,
+                            style: AppTypography.captionSmall.copyWith(
+                              color: poi.color,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 10.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppColors.darkSurfaceContainer
+                            : AppColors.canvasCream,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        border: Border.all(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.1)
+                              : AppColors.espressoDark.withValues(alpha: 0.1),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: AppColors.statusSafe,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            poi.statusLabel,
+                            style: TextStyle(
+                              color: isDark ? Colors.white70 : AppColors.espressoDark,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Category Icon Box
                     Container(
-                      width: 60,
-                      height: 60,
+                      width: 54,
+                      height: 54,
                       decoration: BoxDecoration(
-                        color: poi.color.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: poi.color.withValues(alpha: 0.4),
-                          width: 1.5,
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color.lerp(poi.color, Colors.white, 0.15)!,
+                            poi.color,
+                          ],
                         ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: poi.color.withValues(alpha: 0.35),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                       ),
-                      child: Icon(poi.icon, color: poi.color, size: 28),
+                      child: Center(
+                        child: Icon(poi.icon, color: Colors.white, size: 26),
+                      ),
                     ),
                     const SizedBox(width: AppSpacing.md),
 
-                    // Title and details
+                    // Title, distance, subtitle
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -287,48 +371,26 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                             style: AppTypography.titleMedium.copyWith(
                               color: AppColors.textHeadingColor(context),
                               fontWeight: FontWeight.w800,
+                              fontSize: 16,
                             ),
                           ),
                           const SizedBox(height: 4),
+                          // Walk time estimation & distance
                           Row(
                             children: [
                               const Icon(
-                                Icons.near_me_rounded,
-                                size: 13,
-                                color: AppColors.tanMedium,
+                                Icons.directions_walk_rounded,
+                                size: 14,
+                                color: AppColors.goldPrimary,
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '$formattedDistance dari posisi Anda',
+                                distanceMeters != null
+                                    ? '~${math.max(1, (distanceMeters! / 70).ceil())} mnt jalan kaki · $formattedDistance'
+                                    : formattedDistance,
                                 style: AppTypography.captionSmall.copyWith(
-                                  color: AppColors.textBodyColor(context),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 3),
-                          Row(
-                            children: [
-                              Icon(
-                                poi.isAccessible
-                                    ? Icons.accessible_rounded
-                                    : Icons.stairs_rounded,
-                                size: 13,
-                                color: poi.isAccessible
-                                    ? AppColors.statusPositive
-                                    : AppColors.tanMedium,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                poi.isAccessible
-                                    ? 'Akses Kursi Roda Tersedia'
-                                    : 'Jalur Bertangga',
-                                style: AppTypography.captionSmall.copyWith(
-                                  color: poi.isAccessible
-                                      ? AppColors.statusPositive
-                                      : AppColors.textMuted,
-                                  fontWeight: FontWeight.w500,
+                                  color: isDark ? AppColors.goldPrimary : AppColors.espressoDark,
+                                  fontWeight: FontWeight.w800,
                                 ),
                               ),
                             ],
@@ -341,37 +403,10 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                                 color: isDark
                                     ? AppColors.darkTextBody
                                     : AppColors.textMuted,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: poi.color.withValues(
-                                alpha: isDark ? 0.2 : 0.12,
-                              ),
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
-                              ),
-                              border: Border.all(
-                                color: poi.color.withValues(
-                                  alpha: isDark ? 0.45 : 0.3,
-                                ),
-                              ),
-                            ),
-                            child: Text(
-                              poi.statusLabel,
-                              style: AppTypography.captionSmall.copyWith(
-                                color: poi.color,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 10,
-                              ),
-                            ),
-                          ),
                         ],
                       ),
                     ),
@@ -384,10 +419,46 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                             ? AppColors.darkTextBody
                             : AppColors.tanMedium,
                         splashRadius: 20,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                         onPressed: () => _dismissWithAnimation(),
                       ),
                   ],
                 ),
+
+                // Tags chips (e.g. Ramah Lansia, Air Dingin, Bebas Biaya)
+                if (poi.tags.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: poi.tags.map((tag) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? AppColors.darkSurfaceContainer
+                              : AppColors.canvasCream,
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : AppColors.espressoDark.withValues(alpha: 0.08),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          tag,
+                          style: TextStyle(
+                            color: isDark ? Colors.white70 : AppColors.textBody,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
 
                 const SizedBox(height: 20),
 

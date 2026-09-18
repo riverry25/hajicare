@@ -366,19 +366,19 @@ class _SplashScreenState extends State<SplashScreen>
 
   Widget _buildLogo() {
     return SizedBox(
-      width: 148,
-      height: 148,
+      width: 156,
+      height: 156,
       child: Stack(
         alignment: Alignment.center,
         children: [
           // Outer delicate golden ring
           Container(
-            width: 148,
-            height: 148,
+            width: 156,
+            height: 156,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: AppColors.goldPrimary.withValues(alpha: 0.2),
+                color: AppColors.goldPrimary.withValues(alpha: 0.25),
                 width: 1,
               ),
             ),
@@ -386,68 +386,50 @@ class _SplashScreenState extends State<SplashScreen>
 
           // Middle golden ring
           Container(
-            width: 126,
-            height: 126,
+            width: 134,
+            height: 134,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: AppColors.goldPrimary.withValues(alpha: 0.35),
-                width: 1,
+                color: AppColors.goldPrimary.withValues(alpha: 0.4),
+                width: 1.5,
               ),
             ),
           ),
 
-          // Main Emblem
+          // Main Emblem with icon.jpeg
           Container(
-            width: 104,
-            height: 104,
+            width: 112,
+            height: 112,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [AppColors.primaryContainer, AppColors.espressoDark],
-              ),
               border: Border.all(
-                color: AppColors.goldPrimary.withValues(alpha: 0.8),
-                width: 2.0,
+                color: AppColors.goldPrimary.withValues(alpha: 0.9),
+                width: 2.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.goldPrimary.withValues(alpha: 0.15),
-                  blurRadius: 24,
+                  color: AppColors.goldPrimary.withValues(alpha: 0.25),
+                  blurRadius: 28,
                   spreadRadius: 4,
                 ),
               ],
             ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  width: 78,
-                  height: 78,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.goldPrimary.withValues(alpha: 0.2),
+            child: ClipOval(
+              child: Image.asset(
+                'assets/icon.jpeg',
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: AppColors.espressoDark,
+                    child: const Icon(
+                      Icons.mosque_rounded,
+                      size: 48,
+                      color: AppColors.goldPrimary,
                     ),
-                  ),
-                ),
-                const Icon(
-                  Icons.shield_rounded,
-                  size: 44,
-                  color: AppColors.goldPrimary,
-                ),
-                const Positioned(
-                  top: 18,
-                  right: 22,
-                  child: Icon(
-                    Icons.star_rounded,
-                    size: 10,
-                    color: AppColors.accentGoldStar,
-                  ),
-                ),
-              ],
+                  );
+                },
+              ),
             ),
           ),
         ],

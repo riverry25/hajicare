@@ -152,11 +152,17 @@ class JamaahProfileHeader extends StatelessWidget {
       final effectiveMaktab = (jamaah.maktab != null && jamaah.maktab!.isNotEmpty)
           ? jamaah.maktab
           : state.activeRoom.value?.maktab;
-      final kloterText = effectiveKloter != null && effectiveKloter.isNotEmpty
-          ? '${context.tr('kloterLabelShort')} $effectiveKloter'
+      final kloterLabel = context.tr('kloterLabelShort');
+      final maktabLabel = context.tr('maktabLabelShort');
+      final kloterText = (effectiveKloter != null && effectiveKloter.trim().isNotEmpty)
+          ? (effectiveKloter.trim().toLowerCase().startsWith('kloter')
+              ? effectiveKloter.trim()
+              : '$kloterLabel ${effectiveKloter.trim()}')
           : '';
-      final maktabText = effectiveMaktab != null && effectiveMaktab.isNotEmpty
-          ? '${context.tr('maktabLabelShort')} $effectiveMaktab'
+      final maktabText = (effectiveMaktab != null && effectiveMaktab.trim().isNotEmpty)
+          ? (effectiveMaktab.trim().toLowerCase().startsWith('maktab')
+              ? effectiveMaktab.trim()
+              : '$maktabLabel ${effectiveMaktab.trim()}')
           : '';
 
       return AppCard(

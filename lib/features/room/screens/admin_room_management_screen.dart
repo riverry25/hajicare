@@ -11,6 +11,7 @@ import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/hajicare_header.dart';
 import '../controllers/admin_room_controller.dart';
 import '../models/room_model.dart';
+import '../widgets/room_qr_dialog.dart';
 
 class AdminRoomManagementScreen extends StatefulWidget {
   const AdminRoomManagementScreen({super.key});
@@ -1292,6 +1293,18 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                   },
                 ),
                 _ActionItemTile(
+                  icon: Icons.qr_code_2_rounded,
+                  title: 'Lihat QR Code Room',
+                  subtitle: 'Tampilkan QR Code untuk dipindai jamaah/pendamping',
+                  color: primaryColor,
+                  headingColor: headingColor,
+                  bodyColor: bodyColor,
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    RoomQrDialog.show(context, room: room);
+                  },
+                ),
+                _ActionItemTile(
                   icon: Icons.copy_rounded,
                   title: 'Salin Kode Undangan (${room.code})',
                   subtitle: 'Bagikan kode ke jamaah agar dapat bergabung',
@@ -1683,6 +1696,29 @@ class _RoomManagementCard extends StatelessWidget {
                         ),
                       ),
                       const Spacer(),
+                      InkWell(
+                        onTap: () => RoomQrDialog.show(context, room: room),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.qr_code_2_rounded, size: 13, color: primaryColor),
+                              const SizedBox(width: 3),
+                              Text(
+                                'QR',
+                                style: AppTypography.captionSmall.copyWith(
+                                  color: primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
                       InkWell(
                         onTap: () {
                           HapticFeedback.lightImpact();

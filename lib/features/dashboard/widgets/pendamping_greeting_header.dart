@@ -25,17 +25,32 @@ class PendampingGreetingHeader extends StatelessWidget {
       final pName = state.pendampingName.value.trim();
       final shortName = pName.isNotEmpty ? pName.split(' ')[0] : 'Pendamping';
 
-      final kloter = state.effectiveKloter;
-      final maktab = state.effectiveMaktab;
+      final rawKloter = state.effectiveKloter?.trim();
+      final rawMaktab = state.effectiveMaktab?.trim();
       final room = state.activeRoom.value;
 
+      final kloterLabel = context.tr('kloterLabelShort');
+      final maktabLabel = context.tr('maktabLabelShort');
+
+      final kloter = (rawKloter != null && rawKloter.isNotEmpty)
+          ? (rawKloter.toLowerCase().startsWith('kloter')
+              ? rawKloter
+              : '$kloterLabel $rawKloter')
+          : null;
+
+      final maktab = (rawMaktab != null && rawMaktab.isNotEmpty)
+          ? (rawMaktab.toLowerCase().startsWith('maktab')
+              ? rawMaktab
+              : '$maktabLabel $rawMaktab')
+          : null;
+
       String groupInfo = '';
-      if (kloter != null && kloter.isNotEmpty && maktab != null && maktab.isNotEmpty) {
-        groupInfo = '${context.tr('kloterLabelShort')} $kloter • ${context.tr('maktabLabelShort')} $maktab';
-      } else if (kloter != null && kloter.isNotEmpty) {
-        groupInfo = '${context.tr('kloterLabelShort')} $kloter';
-      } else if (maktab != null && maktab.isNotEmpty) {
-        groupInfo = '${context.tr('maktabLabelShort')} $maktab';
+      if (kloter != null && maktab != null) {
+        groupInfo = '$kloter • $maktab';
+      } else if (kloter != null) {
+        groupInfo = kloter;
+      } else if (maktab != null) {
+        groupInfo = maktab;
       } else if (room != null && room.name.isNotEmpty) {
         groupInfo = room.name;
       }

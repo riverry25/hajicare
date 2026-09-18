@@ -38,14 +38,30 @@ dependencies:
   qr_flutter: ^4.1.0
   flutter_blue_plus: ^2.3.12
   mobile_scanner: ^7.4.2
+  speech_to_text: ^7.5.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: false
+  image_path: "assets/icon.jpeg"
+  min_sdk_android: 21
+  adaptive_icon_background: "#1E1A16"
+  adaptive_icon_foreground: "assets/icon.jpeg"
+  web:
+    generate: true
+    image_path: "assets/icon.jpeg"
+    background_color: "#1E1A16"
+    theme_color: "#D4AF37"
 
 flutter:
   uses-material-design: true
   assets:
+    - assets/icon.jpeg
     - assets/models/best_float16.tflite
     - assets/models/labels.txt

@@ -5,6 +5,7 @@ import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/animated_ping_dot.dart';
+import 'map_voice_search_sheet.dart';
 
 class MapTopHeader extends StatefulWidget {
   final List<FilterChipItem> filters;
@@ -346,34 +347,38 @@ class _MapTopHeaderState extends State<MapTopHeader> {
   // ===========================================================================
 
   Widget _buildSearchBar(BuildContext context, bool isDark) {
+    final headingColor = isDark ? AppColors.darkTextHeading : AppColors.espressoDark;
+    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+
     return Container(
-      height: 38,
+      height: 44,
       decoration: BoxDecoration(
         color: isDark
-            ? AppColors.darkSurfaceContainer.withValues(alpha: 0.85)
+            ? AppColors.darkSurfaceContainer.withValues(alpha: 0.92)
             : AppColors.surfaceWhite,
         borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(
           color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : AppColors.goldLight.withValues(alpha: 0.35),
-          width: 1,
+              ? Colors.white.withValues(alpha: 0.12)
+              : AppColors.goldLight.withValues(alpha: 0.40),
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.03),
-            blurRadius: 8,
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+            blurRadius: 10,
             offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const SizedBox(width: 12),
           Icon(
             Icons.search_rounded,
-            color: isDark ? AppColors.goldPrimary : AppColors.espressoDark,
-            size: 18,
+            color: isDark ? primaryColor : headingColor,
+            size: 20,
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -381,58 +386,64 @@ class _MapTopHeaderState extends State<MapTopHeader> {
               controller: _effectiveSearchCtrl,
               onChanged: widget.onSearchChanged,
               style: AppTypography.bodySmall.copyWith(
-                color: isDark ? Colors.white : AppColors.espressoDark,
-                fontSize: 12,
+                color: headingColor,
+                fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
               decoration: InputDecoration(
-                hintText: 'Cari lokasi...',
+                hintText: 'Cari lokasi, posko, maktab...',
                 hintStyle: AppTypography.bodySmall.copyWith(
                   color: isDark
                       ? Colors.white.withValues(alpha: 0.45)
                       : AppColors.textMuted,
-                  fontSize: 12,
+                  fontSize: 13,
                 ),
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                disabledBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                focusedErrorBorder: InputBorder.none,
+                filled: false,
                 isDense: true,
-                contentPadding: EdgeInsets.zero,
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
               ),
             ),
           ),
           if (_hasSearchText)
             IconButton(
-              icon: const Icon(Icons.close_rounded, size: 16),
+              icon: const Icon(Icons.close_rounded, size: 18),
               color: isDark ? Colors.white70 : AppColors.textMuted,
-              splashRadius: 16,
+              splashRadius: 18,
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+              tooltip: 'Hapus Pencarian',
               onPressed: () {
                 _effectiveSearchCtrl.clear();
                 widget.onClearSearch?.call();
                 widget.onSearchChanged?.call('');
               },
-            )
-          else
-            IconButton(
-              icon: Icon(
-                Icons.mic_none_rounded,
-                size: 17,
-                color: isDark ? AppColors.goldPrimary : AppColors.tanMedium,
-              ),
-              splashRadius: 16,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-              tooltip: 'Pencarian Suara',
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Pencarian suara segera tersedia.'),
-                    duration: Duration(seconds: 1),
-                  ),
-                );
-              },
             ),
-          const SizedBox(width: 4),
+          // Google Maps Voice Search Button
+          IconButton(
+            icon: Icon(
+              Icons.mic_rounded,
+              size: 20,
+              color: primaryColor,
+            ),
+            splashRadius: 18,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            tooltip: 'Pencarian Suara',
+            onPressed: () async {
+              final voiceQuery = await MapVoiceSearchSheet.show(context);
+              if (voiceQuery != null && voiceQuery.trim().isNotEmpty) {
+                _effectiveSearchCtrl.text = voiceQuery.trim();
+                widget.onSearchChanged?.call(voiceQuery.trim());
+              }
+            },
+          ),
+          const SizedBox(width: 6),
         ],
       ),
     );

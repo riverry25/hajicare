@@ -44,12 +44,14 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.room.name);
-    _maktabController = TextEditingController(text: widget.room.maktab ?? '');
-    _kloterController = TextEditingController(text: widget.room.kloter ?? '');
+    final state = Get.isRegistered<HajiCareController>() ? Get.find<HajiCareController>() : null;
+    final currentRoom = state?.activeRoom.value ?? widget.room;
+    _nameController = TextEditingController(text: currentRoom.name);
+    _maktabController = TextEditingController(text: currentRoom.maktab ?? '');
+    _kloterController = TextEditingController(text: currentRoom.kloter ?? '');
     _radiusController = TextEditingController(
-      text: widget.room.safeRadius > 0
-          ? widget.room.safeRadius.toStringAsFixed(0)
+      text: currentRoom.safeRadius > 0
+          ? currentRoom.safeRadius.toStringAsFixed(0)
           : '200',
     );
   }
