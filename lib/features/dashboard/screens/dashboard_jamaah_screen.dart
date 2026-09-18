@@ -19,6 +19,7 @@ import '../../room/widgets/active_room_card.dart';
 import '../../communication/widgets/communication_gesture_dialog.dart';
 import '../../smartband/controllers/smartband_ldr_controller.dart';
 import '../controllers/dashboard_controller.dart';
+import '../widgets/rotating_sync_button.dart';
 
 class DashboardJamaahScreen extends StatelessWidget {
   const DashboardJamaahScreen({super.key});
@@ -294,45 +295,24 @@ class DashboardJamaahScreen extends StatelessWidget {
                 ),
               ),
 
-              // Sync / Refresh Location Circular Button
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.25),
-                    width: 1.2,
-                  ),
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  shape: const CircleBorder(),
-                  child: InkWell(
-                    customBorder: const CircleBorder(),
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      state.refreshLocation();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(context.tr('locationRefreshed') != 'locationRefreshed'
+              // Sync / Refresh Location Circular Button with spinning animation
+              RotatingSyncButton(
+                onSync: () async {
+                  await state.refreshLocation();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          context.tr('locationRefreshed') != 'locationRefreshed'
                               ? context.tr('locationRefreshed')
-                              : 'Lokasi GPS berhasil diperbarui'),
-                          duration: const Duration(seconds: 2),
-                          behavior: SnackBarBehavior.floating,
+                              : 'Lokasi GPS berhasil diperbarui',
                         ),
-                      );
-                    },
-                    child: const Center(
-                      child: Icon(
-                        Icons.sync_rounded,
-                        color: Colors.white,
-                        size: 22,
+                        duration: const Duration(seconds: 2),
+                        behavior: SnackBarBehavior.floating,
                       ),
-                    ),
-                  ),
-                ),
+                    );
+                  }
+                },
               ),
             ],
           ),
