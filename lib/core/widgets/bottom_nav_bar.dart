@@ -97,9 +97,9 @@ class HajiCareBottomNavBar extends StatelessWidget {
                     ),
                     cornerRadius: 30.0,
                     buttonRadius: 30.0,
-                    buttonCenterY: 8.0,
-                    notchMargin: 8.0,
-                    shoulderWidth: 14.0,
+                    buttonCenterY: 10.0,
+                    notchMargin: 10.0,
+                    shoulderWidth: 20.0,
                   ),
                   child: Container(
                     constraints: const BoxConstraints(minHeight: 64),
@@ -156,7 +156,10 @@ class HajiCareBottomNavBar extends StatelessWidget {
               ),
 
               // Elevated Center Mic / Voice Translator Button nestled in the Scoop
-              Positioned(top: 0, child: _buildCenterMicButton(context, isDark)),
+              Positioned(
+                top: -6,
+                child: _buildCenterMicButton(context, isDark),
+              ),
             ],
           ),
         ),
@@ -176,8 +179,8 @@ class HajiCareBottomNavBar extends StatelessWidget {
       child: Tooltip(
         message: 'Penerjemah Suara (Voice Translator)',
         child: Container(
-          width: 60,
-          height: 60,
+          width: 65,
+          height: 65,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: surfaceColor,
