@@ -88,7 +88,7 @@ class _AdminDashboardHome extends StatelessWidget {
       appBar: HajiCareHeader(
         title: 'HajiCare',
         subtitle: 'Command Center',
-        icon: Icons.shield_rounded,
+        imageAsset: 'assets/icon.jpeg',
         actions: [
           IconButton(
             constraints: const BoxConstraints(minWidth: 44, minHeight: 44),

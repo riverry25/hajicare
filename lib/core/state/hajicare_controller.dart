@@ -75,6 +75,11 @@ class HajiCareController extends GetxController {
   final pendingInvitations = <RoomInvitationModel>[].obs;
   StreamSubscription? _invitationsSub;
 
+  // Realtime SOS Events from Firestore
+  final activeSosEvents = <Map<String, dynamic>>[].obs;
+  final activeSosCount = 0.obs;
+  StreamSubscription? _sosEventsSub;
+
   JamaahData? _self;
 
   StreamSubscription? _authSub;
@@ -219,12 +224,15 @@ class HajiCareController extends GetxController {
     _roomMembersSub?.cancel();
     _pendampingDocSub?.cancel();
     _invitationsSub?.cancel();
+    _sosEventsSub?.cancel();
     for (var sub in _jamaahSubs.values) {
       sub.cancel();
     }
     _jamaahSubs.clear();
     jamaahList.clear();
     pendingInvitations.clear();
+    activeSosEvents.clear();
+    activeSosCount.value = 0;
     activeRoomMembers.clear();
     activeRoomId.value = null;
     activeRoom.value = null;
@@ -247,8 +255,33 @@ class HajiCareController extends GetxController {
   Future<void> _loadUserData(String uid) async {
     _userDocSub?.cancel();
     _invitationsSub?.cancel();
+    _sosEventsSub?.cancel();
+
     _invitationsSub = _roomService.getPendingInvitationsStream(uid).listen((invs) {
       pendingInvitations.value = invs;
+    });
+
+    _sosEventsSub = _roomService.getActiveSosEventsStream().listen((sosList) {
+      activeSosEvents.value = sosList;
+      activeSosCount.value = sosList.length;
+
+      // Update matching jamaah in list if needed
+      for (final j in jamaahList) {
+        final hasActiveSos = sosList.any((s) => s['userId'] == j.id || s['jamaahId'] == j.id);
+        if (j.sosActive != hasActiveSos) {
+          j.sosActive = hasActiveSos;
+          j.refresh();
+        }
+      }
+      if (_self != null) {
+        final hasSelfSos = sosList.any((s) => s['userId'] == uid || s['jamaahId'] == uid);
+        if (_self!.sosActive != hasSelfSos) {
+          _self!.sosActive = hasSelfSos;
+          _self!.refresh();
+        }
+      }
+    }, onError: (e) {
+      debugPrint('[HajiCareController] Error listening to active SOS events: $e');
     });
     try {
       _userDocSub = FirebaseFirestore.instance
@@ -791,18 +824,13 @@ class HajiCareController extends GetxController {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return false;
 
-    final roomId = activeRoomId.value;
-    if (roomId == null || roomId.isEmpty) {
-      debugPrint('[HajiCareController] Cannot trigger SOS: user has no active room.');
-      return false;
-    }
-
     try {
       final myPos = myCurrentPosition.value;
-      final roomName = activeRoom.value?.name ?? '';
+      final roomId = activeRoomId.value;
+      final roomName = activeRoom.value?.name ?? (roomId != null ? 'Room $roomId' : 'Darurat Terbuka');
       final userName = _self?.name ?? user.displayName ?? 'Jamaah';
 
-      // 1. Create real SOS event document with status 'baru'
+      // 1. Create real SOS event document with status 'active'
       await FirebaseFirestore.instance.collection('sos_events').add({
         'userId': user.uid,
         'jamaahId': user.uid,
@@ -811,7 +839,7 @@ class HajiCareController extends GetxController {
         'roomName': roomName,
         'timestamp': FieldValue.serverTimestamp(),
         'createdAt': FieldValue.serverTimestamp(),
-        'status': 'baru',
+        'status': 'active',
         if (myPos != null) 'location': GeoPoint(myPos.latitude, myPos.longitude),
       });
 
@@ -821,8 +849,8 @@ class HajiCareController extends GetxController {
         'sosTime': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      // 3. Update room member doc
-      if (roomId.isNotEmpty) {
+      // 3. Update room member doc if in a room
+      if (roomId != null && roomId.isNotEmpty) {
         await FirebaseFirestore.instance
             .collection('rooms')
             .doc(roomId)
@@ -844,9 +872,14 @@ class HajiCareController extends GetxController {
   }
 
   /// Resolves an active SOS event in Firestore.
-  Future<bool> dismissSos(String id) async {
+  Future<bool> dismissSos(String id, {String? eventId}) async {
     try {
-      await _roomService.resolveSos(userId: id, roomId: activeRoomId.value);
+      await _roomService.resolveSos(
+        userId: id,
+        roomId: activeRoomId.value,
+        eventId: eventId,
+        resolvedByUid: currentUid,
+      );
       final index = jamaahList.indexWhere((j) => j.id == id);
       if (index >= 0) {
         jamaahList[index].sosActive = false;
@@ -887,7 +920,7 @@ class HajiCareController extends GetxController {
     );
   }
 
-  bool get anySosActive => jamaahList.any((j) => j.sosActive);
+  bool get anySosActive => activeSosCount.value > 0 || jamaahList.any((j) => j.sosActive);
 
   bool get anyJamaahSeparated => jamaahList.any((j) => j.separatedMode);
 

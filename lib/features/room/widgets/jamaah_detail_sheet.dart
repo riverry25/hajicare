@@ -321,9 +321,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                           textBaseline: TextBaseline.alphabetic,
                           children: [
                             Text(
-                              widget.jamaah.distance >= 1000
-                                  ? (widget.jamaah.distance / 1000).toStringAsFixed(1)
-                                  : widget.jamaah.distance.toInt().toString(),
+                              widget.jamaah.distanceValue,
                               style: AppTypography.headlineMedium.copyWith(
                                 color: tierColor,
                                 fontWeight: FontWeight.w900,
@@ -331,7 +329,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              widget.jamaah.distance >= 1000 ? 'km' : 'meter',
+                              widget.jamaah.distanceUnit,
                               style: AppTypography.bodySmall.copyWith(
                                 color: bodyColor,
                                 fontWeight: FontWeight.bold,

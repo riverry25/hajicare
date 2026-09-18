@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../../../core/models/filter_chip_item.dart';
+import '../../../../core/state/hajicare_controller.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -297,6 +299,13 @@ class _MapTopHeaderState extends State<MapTopHeader> {
   }
 
   Widget _buildSosButton() {
+    int activeCount = 0;
+    if (Get.isRegistered<HajiCareController>()) {
+      activeCount = Get.find<HajiCareController>().activeSosCount.value;
+    }
+
+    final hasActiveSos = activeCount > 0;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -305,14 +314,17 @@ class _MapTopHeaderState extends State<MapTopHeader> {
         child: Ink(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFE53935), Color(0xFFC62828)],
+            gradient: LinearGradient(
+              colors: hasActiveSos
+                  ? const [Color(0xFFFF1744), Color(0xFFD50000)]
+                  : const [Color(0xFFE53935), Color(0xFFC62828)],
             ),
             borderRadius: BorderRadius.circular(AppRadius.pill),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFE53935).withValues(alpha: 0.38),
-                blurRadius: 8,
+                color: (hasActiveSos ? const Color(0xFFFF1744) : const Color(0xFFE53935))
+                    .withValues(alpha: hasActiveSos ? 0.65 : 0.38),
+                blurRadius: hasActiveSos ? 12 : 8,
                 offset: const Offset(0, 2),
               ),
             ],
@@ -327,7 +339,7 @@ class _MapTopHeaderState extends State<MapTopHeader> {
               ),
               const SizedBox(width: 4),
               Text(
-                'SOS',
+                hasActiveSos ? 'SOS ($activeCount)' : 'SOS',
                 style: AppTypography.captionSmall.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w900,
