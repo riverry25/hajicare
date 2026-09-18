@@ -197,212 +197,384 @@ class ActiveRoomCard extends StatelessWidget {
       // ── Connected State (Memiliki Room Aktif) ──────────────────────────────
       return AppCard(
         backgroundColor: cardBg,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header Row: Icon + Room Name + Member Count Chip
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(AppSpacing.sm),
-                    decoration: BoxDecoration(
-                      color: primaryColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                    ),
-                    child: Icon(Icons.meeting_room_rounded, color: primaryColor, size: 20),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          roomName,
-                          style: AppTypography.titleSmall.copyWith(
-                            color: headingColor,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          isPendamping
-                              ? '$jamaahCount Jamaah terpantau di room ini'
-                              : 'Pendamping: ${state.pendampingName.value}',
-                          style: AppTypography.captionSmall.copyWith(color: bodyColor),
-                        ),
-                      ],
+        borderRadius: 20,
+        borderColor: isDark
+            ? AppColors.darkOutlineVariant
+            : AppColors.goldLight.withValues(alpha: 0.35),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.3)
+                : AppColors.espressoDark.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+        padding: const EdgeInsets.all(AppSpacing.md + 2),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ── Header Row: Room Emblem + Title & Inline Code + QR/Menu Actions ──
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Room Emblem
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.darkPrimaryContainer.withValues(alpha: 0.5)
+                        : AppColors.canvasCream,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isDark
+                          ? AppColors.darkOutlineVariant
+                          : AppColors.goldLight.withValues(alpha: 0.6),
+                      width: 1.2,
                     ),
                   ),
-                  if (roomCode.isNotEmpty) ...[
-                    // QR Code icon button
-                    IconButton(
-                      icon: Icon(Icons.qr_code_rounded, size: 22, color: primaryColor),
-                      tooltip: 'Tampilkan QR Code',
-                      onPressed: () => _showQrModal(context, roomName, roomCode),
+                  child: Center(
+                    child: Icon(
+                      Icons.meeting_room_rounded,
+                      color: isDark ? AppColors.goldLight : AppColors.primaryGold,
+                      size: 22,
                     ),
-                    // Room Code pill
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: primaryColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        border: Border.all(color: primaryColor.withValues(alpha: 0.25)),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm + 4),
+                // Title & Subtitle with Inline Room Code
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        roomName,
+                        style: AppTypography.titleMedium.copyWith(
+                          color: headingColor,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                          letterSpacing: -0.2,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                      const SizedBox(height: 4),
+                      Row(
                         children: [
-                          Text(
-                            roomCode,
-                            style: AppTypography.captionSmall.copyWith(
-                              color: primaryColor,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.5,
+                          Container(
+                            width: 6.5,
+                            height: 6.5,
+                            decoration: const BoxDecoration(
+                              color: AppColors.statusSafe,
+                              shape: BoxShape.circle,
                             ),
                           ),
-                          const SizedBox(width: 4),
-                          GestureDetector(
-                            onTap: () {
-                              Clipboard.setData(ClipboardData(text: roomCode));
-                              AppAlert.info(
-                                context,
-                                title: 'Kode Disalin',
-                                message: 'Kode room $roomCode berhasil disalin ke clipboard.',
-                              );
-                            },
-                            child: Icon(Icons.copy_rounded, size: 14, color: primaryColor),
+                          const SizedBox(width: 5),
+                          Flexible(
+                            child: Text(
+                              isPendamping
+                                  ? '$jamaahCount Jamaah'
+                                  : 'Pendamping: ${state.pendampingName.value}',
+                              style: AppTypography.captionSmall.copyWith(
+                                color: bodyColor,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
+                          if (roomCode.isNotEmpty) ...[
+                            Text(
+                              ' • ',
+                              style: TextStyle(
+                                color: bodyColor.withValues(alpha: 0.4),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            InkWell(
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                Clipboard.setData(ClipboardData(text: roomCode));
+                                AppAlert.info(
+                                  context,
+                                  title: 'Kode Disalin',
+                                  message: 'Kode room $roomCode berhasil disalin ke clipboard.',
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(6),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? AppColors.darkSurfaceContainerHigh
+                                      : AppColors.canvasCream,
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: isDark
+                                        ? AppColors.darkOutlineVariant
+                                        : AppColors.goldLight.withValues(alpha: 0.6),
+                                    width: 0.8,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      roomCode,
+                                      style: TextStyle(
+                                        color: isDark
+                                            ? AppColors.goldLight
+                                            : AppColors.espressoDark,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 11,
+                                        letterSpacing: 1.0,
+                                        fontFamily: 'monospace',
+                                      ),
+                                    ),
+                                    const SizedBox(width: 3),
+                                    Icon(
+                                      Icons.copy_rounded,
+                                      size: 11,
+                                      color: isDark
+                                          ? AppColors.goldLight
+                                          : AppColors.tanMedium,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
-                    ),
-                  ],
-                  if (isCreator) ...[
-                    const SizedBox(width: 4),
-                    PopupMenuButton<String>(
-                      icon: Icon(Icons.more_vert_rounded, color: bodyColor, size: 22),
-                      tooltip: 'Pengaturan Room',
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        side: BorderSide(color: AppColors.cardBorderColor(context)),
+                    ],
+                  ),
+                ),
+                // Quick Actions: QR & Menu
+                if (roomCode.isNotEmpty) ...[
+                  InkWell(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      _showQrModal(context, roomName, roomCode);
+                    },
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppColors.darkSurfaceContainer
+                            : AppColors.canvasCream,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDark
+                              ? AppColors.darkOutlineVariant
+                              : AppColors.goldLight.withValues(alpha: 0.5),
+                          width: 1,
+                        ),
                       ),
-                      color: cardBg,
-                      elevation: 6,
-                      onSelected: (action) {
-                        if (action == 'edit') {
-                          EditRoomDialog.show(context, room);
-                        } else if (action == 'delete') {
-                          _showDeleteRoomConfirmation(context, state, room);
-                        }
-                      },
-                      itemBuilder: (ctx) => [
-                        PopupMenuItem(
-                          value: 'edit',
-                          child: Row(
-                            children: [
-                              Icon(Icons.edit_note_rounded, size: 20, color: headingColor),
-                              const SizedBox(width: 10),
-                              Text(
-                                'Edit Room',
-                                style: TextStyle(color: headingColor, fontWeight: FontWeight.w600),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const PopupMenuDivider(height: 8),
-                        const PopupMenuItem(
-                          value: 'delete',
-                          child: Row(
-                            children: [
-                              Icon(Icons.delete_forever_rounded, size: 20, color: AppColors.sosEmergency),
-                              SizedBox(width: 10),
-                              Text(
-                                'Hapus Room',
-                                style: TextStyle(color: AppColors.sosEmergency, fontWeight: FontWeight.w600),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                      child: Icon(
+                        Icons.qr_code_2_rounded,
+                        color: headingColor,
+                        size: 19,
+                      ),
                     ),
-                  ],
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                if (isCreator) ...[
+                  PopupMenuButton<String>(
+                    icon: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppColors.darkSurfaceContainer
+                            : AppColors.canvasCream,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDark
+                              ? AppColors.darkOutlineVariant
+                              : AppColors.goldLight.withValues(alpha: 0.5),
+                          width: 1,
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.more_horiz_rounded,
+                        color: headingColor,
+                        size: 19,
+                      ),
+                    ),
+                    tooltip: 'Pengaturan Room',
+                    padding: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      side: BorderSide(
+                        color: AppColors.cardBorderColor(context),
+                      ),
+                    ),
+                    color: cardBg,
+                    elevation: 6,
+                    onSelected: (action) {
+                      if (action == 'edit') {
+                        EditRoomDialog.show(context, room);
+                      } else if (action == 'delete') {
+                        _showDeleteRoomConfirmation(context, state, room);
+                      }
+                    },
+                    itemBuilder: (ctx) => [
+                      PopupMenuItem(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.edit_note_rounded,
+                              size: 20,
+                              color: headingColor,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'Edit Room',
+                              style: TextStyle(
+                                color: headingColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuDivider(height: 8),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.delete_forever_rounded,
+                              size: 20,
+                              color: AppColors.sosEmergency,
+                            ),
+                            SizedBox(width: 10),
+                            Text(
+                              'Hapus Room',
+                              style: TextStyle(
+                                color: AppColors.sosEmergency,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+
+            // ── Action Buttons (For Pendamping) ──
+            if (isPendamping && roomId.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _showMemberListSheet(
+                        context,
+                        state: state,
+                        roomId: roomId,
+                        roomName: roomName,
+                        roomCode: roomCode,
+                      ),
+                      icon: Icon(
+                        Icons.people_alt_rounded,
+                        size: 17,
+                        color: headingColor,
+                      ),
+                      label: Text(
+                        'Daftar Jamaah',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: headingColor,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                          color: isDark
+                              ? AppColors.darkOutlineVariant
+                              : AppColors.goldLight.withValues(alpha: 0.8),
+                          width: 1.2,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 11),
+                        backgroundColor: isDark
+                            ? AppColors.darkSurfaceContainer.withValues(alpha: 0.4)
+                            : AppColors.canvasCream.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => AddJamaahDialog.show(context, roomId),
+                      icon: Icon(
+                        Icons.person_add_alt_1_rounded,
+                        size: 17,
+                        color: isDark ? AppColors.espressoDark : Colors.white,
+                      ),
+                      label: Text(
+                        'Undang Jamaah',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: isDark ? AppColors.espressoDark : Colors.white,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 11),
+                        elevation: 0,
+                      ),
+                    ),
+                  ),
                 ],
               ),
+            ],
 
-              // Action buttons for Pendamping: "Daftar Jamaah" & "Undang Jamaah"
-              if (isPendamping && roomId.isNotEmpty) ...[
-                const Divider(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => _showMemberListSheet(
-                          context,
-                          state: state,
-                          roomId: roomId,
-                          roomName: roomName,
-                          roomCode: roomCode,
-                        ),
-                        icon: const Icon(Icons.people_alt_rounded, size: 16),
-                        label: const Text(
-                          'Daftar Jamaah',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: primaryColor,
-                          side: BorderSide(color: primaryColor.withValues(alpha: 0.5)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => AddJamaahDialog.show(context, roomId),
-                        icon: const Icon(Icons.person_add_alt_1_rounded, size: 16),
-                        label: const Text(
-                          'Undang Jamaah',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryColor,
-                          foregroundColor: isDark ? AppColors.espressoDark : Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          elevation: 0,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-
-              // Info note for Jamaah (Rule #7: no free direct leave button)
-              if (!isPendamping && roomId.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(Icons.check_circle_outline_rounded, size: 14, color: AppColors.statusSafe),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Monitoring aktif dengan rombongan ini.',
+            // ── Info Note for Jamaah ──
+            if (!isPendamping && roomId.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.check_circle_outline_rounded,
+                    size: 15,
+                    color: AppColors.statusSafe,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Monitoring aktif bersama pendamping secara realtime.',
                       style: AppTypography.captionSmall.copyWith(
                         color: AppColors.statusSafe,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ],
-          ),
+          ],
         ),
       );
     });

@@ -42,71 +42,96 @@ class PendampingJamaahSelector extends StatelessWidget {
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Expanded(
-              child: Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      context.tr('monitoredPilgrims'),
-                      style: AppTypography.titleMedium.copyWith(
-                        color: headingColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  context.tr('monitoredPilgrims'),
+                  style: AppTypography.titleMedium.copyWith(
+                    color: headingColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2.5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.darkPrimaryContainer
+                        : AppColors.goldLight.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(
+                      color: isDark
+                          ? AppColors.goldPrimary.withValues(alpha: 0.3)
+                          : AppColors.goldPrimary.withValues(alpha: 0.25),
+                      width: 1,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
+                  child: Text(
+                    '${jamaahList.length} Jamaah',
+                    style: AppTypography.captionSmall.copyWith(
                       color: isDark
-                          ? AppColors.darkPrimaryContainer
-                          : AppColors.canvasCream,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                          ? AppColors.goldLight
+                          : AppColors.espressoDark,
+                      fontWeight: FontWeight.w700,
                     ),
-                    child: Text(
-                      '${jamaahList.length} Jamaah',
-                      style: AppTypography.captionSmall.copyWith(
-                        color: isDark
-                            ? AppColors.goldLight
-                            : AppColors.espressoDark,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  ),
+                ),
+              ],
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 4,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.statusSafe.withValues(alpha: isDark ? 0.15 : 0.1),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                border: Border.all(
+                  color: AppColors.statusSafe.withValues(alpha: isDark ? 0.35 : 0.25),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: AppColors.statusSafe,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.statusSafe.withValues(alpha: 0.6),
+                          blurRadius: 4,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Radar Terhubung',
+                    style: AppTypography.captionSmall.copyWith(
+                      color: isDark
+                          ? const Color(0xFF81C784)
+                          : const Color(0xFF2E7D32),
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.1,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: AppSpacing.sm),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: AppColors.statusSafe,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 5),
-                Text(
-                  'Radar Terhubung',
-                  style: AppTypography.caption.copyWith(
-                    color: AppColors.statusSafe,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
           ],
         ),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: 12),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -153,7 +178,7 @@ class PendampingJamaahSelector extends StatelessWidget {
     final initial = jamaah.name.trim().isNotEmpty
         ? jamaah.name.trim()[0].toUpperCase()
         : 'J';
-    final distance = '${jamaah.distance.toInt()}${context.tr('meterUnit')}';
+    final distance = jamaah.formattedDistance;
 
     return InkWell(
       onTap: onTap,

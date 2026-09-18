@@ -55,77 +55,132 @@ class PendampingGreetingHeader extends StatelessWidget {
         groupInfo = room.name;
       }
 
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.sm,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkPrimaryContainer
-                      : AppColors.secondaryContainer,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.verified_user_rounded,
+      return Padding(
+        padding: const EdgeInsets.only(top: 4, bottom: 2),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Top Badges Row: Role Badge + Kloter/Maktab Tag ──
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Mode Badge
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4.5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.darkPrimaryContainer.withValues(alpha: 0.5)
+                        : AppColors.secondaryContainer.withValues(alpha: 0.7),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(
                       color: isDark
-                          ? AppColors.goldLight
-                          : AppColors.onSecondaryContainer,
-                      size: 14,
+                          ? AppColors.darkOutlineVariant
+                          : AppColors.goldLight.withValues(alpha: 0.5),
+                      width: 0.8,
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      context.tr('modePendampingSubtitle'),
-                      style: AppTypography.captionSmall.copyWith(
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.verified_user_rounded,
                         color: isDark
                             ? AppColors.goldLight
-                            : AppColors.onSecondaryContainer,
-                        fontWeight: FontWeight.bold,
+                            : AppColors.espressoDark,
+                        size: 13,
+                      ),
+                      const SizedBox(width: 4.5),
+                      Text(
+                        context.tr('modePendampingSubtitle'),
+                        style: TextStyle(
+                          color: isDark
+                              ? AppColors.goldLight
+                              : AppColors.espressoDark,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                // Group / Maktab Badge
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4.5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.darkSurfaceContainer
+                          : AppColors.canvasCream,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      border: Border.all(
+                        color: isDark
+                            ? AppColors.darkOutlineVariant
+                            : AppColors.goldLight.withValues(alpha: 0.4),
+                        width: 0.8,
                       ),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Flexible(
-                child: Text(
-                  groupInfo.isNotEmpty ? groupInfo : 'Rombongan Belum Diatur',
-                  style: AppTypography.caption.copyWith(
-                    color: groupInfo.isNotEmpty
-                        ? (isDark ? AppColors.goldLight : AppColors.espressoDark)
-                        : bodyColor.withValues(alpha: 0.6),
-                    fontWeight: groupInfo.isNotEmpty ? FontWeight.w600 : FontWeight.normal,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 13,
+                          color: isDark ? AppColors.goldLight : AppColors.tanMedium,
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            groupInfo.isNotEmpty ? groupInfo : 'Rombongan Belum Diatur',
+                            style: TextStyle(
+                              color: isDark
+                                  ? AppColors.goldLight
+                                  : AppColors.espressoDark,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            '${context.tr('pendampingGreeting')}, $shortName',
-            style: AppTypography.displayMedium.copyWith(
-              color: headingColor,
-              fontWeight: FontWeight.w800,
+              ],
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 2),
-          Text(
-            context.tr('pendampingSubtitleDesc'),
-            style: AppTypography.bodySmall.copyWith(color: bodyColor),
-          ),
-        ],
+            const SizedBox(height: 12),
+            // ── Greeting Title ──
+            Text(
+              '${context.tr('pendampingGreeting')}, $shortName',
+              style: AppTypography.headlineLarge.copyWith(
+                color: headingColor,
+                fontWeight: FontWeight.w800,
+                fontSize: 22,
+                letterSpacing: -0.3,
+                height: 1.25,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 5),
+            // ── Subtitle Description ──
+            Text(
+              context.tr('pendampingSubtitleDesc'),
+              style: AppTypography.bodySmall.copyWith(
+                color: bodyColor.withValues(alpha: 0.85),
+                fontSize: 13,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
       );
     });
   }

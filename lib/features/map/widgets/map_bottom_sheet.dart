@@ -825,6 +825,9 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     List<RoomMemberModel> sorted,
   ) {
     final isDark = AppColors.isDark(context);
+    final headingColor = AppColors.textHeadingColor(context);
+    final bodyColor = AppColors.textBodyColor(context);
+    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.goldPrimary;
     final mq = MediaQuery.of(context);
     const double kOverhead =
         30 + 44 + 24 + 16; // handle + header + spacing + padding
@@ -863,10 +866,9 @@ class _MapBottomSheetState extends State<MapBottomSheet>
         child: ListView.separated(
           shrinkWrap: true,
           physics: const BouncingScrollPhysics(),
-          padding: EdgeInsets.only(bottom: mq.padding.bottom + 8),
+          padding: EdgeInsets.only(top: 4, bottom: mq.padding.bottom + 8),
           itemCount: sorted.length,
-          separatorBuilder: (context, index) =>
-              const Divider(height: 1, color: AppColors.outlineVariant),
+          separatorBuilder: (context, index) => const SizedBox(height: 8),
           itemBuilder: (context, index) {
             final m = sorted[index];
             final dist = getMemberDistanceText != null
@@ -874,86 +876,276 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                 : (m.hasLocation ? 'Lokasi aktif' : 'Lokasi belum tersedia');
             final isPendamping = m.isPendamping;
             final locStatus = m.getLocationStatus();
+            final isOnline = locStatus == 'Online';
+            final initial = m.name.trim().isNotEmpty
+                ? m.name.trim()[0].toUpperCase()
+                : (isPendamping ? 'P' : 'J');
 
-            return InkWell(
-              onTap: () => onMemberTap?.call(m),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isPendamping
-                            ? AppColors.goldPrimary.withValues(alpha: 0.16)
-                            : AppColors.statusSafe.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                        border: Border.all(
-                          color: isPendamping
-                              ? AppColors.goldPrimary.withValues(alpha: 0.35)
-                              : AppColors.statusSafe.withValues(alpha: 0.3),
+            return Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  onMemberTap?.call(m);
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? (isPendamping
+                              ? AppColors.darkPrimaryContainer.withValues(alpha: 0.35)
+                              : AppColors.darkSurfaceContainer)
+                        : (isPendamping
+                              ? AppColors.primaryContainer.withValues(alpha: 0.28)
+                              : AppColors.surfaceWhite),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isPendamping
+                          ? (isDark
+                                ? AppColors.goldPrimary.withValues(alpha: 0.4)
+                                : AppColors.goldPrimary.withValues(alpha: 0.35))
+                          : (isDark
+                                ? AppColors.darkOutlineVariant
+                                : AppColors.canvasCreamSubtle),
+                      width: 1.0,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(
+                          alpha: isDark ? 0.2 : 0.03,
                         ),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
                       ),
-                      child: Text(
-                        isPendamping ? 'Pendamping' : 'Jamaah',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: isPendamping
-                              ? (isDark
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      // ── Avatar with Status Dot ──
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: isPendamping
+                                    ? (isDark
+                                          ? [
+                                              AppColors.darkPrimaryContainer,
+                                              AppColors.darkSurfaceContainerHighest,
+                                            ]
+                                          : [
+                                              AppColors.espressoDark,
+                                              AppColors.primaryContainer,
+                                            ])
+                                    : (isDark
+                                          ? [
+                                              AppColors.darkSurfaceContainerHigh,
+                                              AppColors.darkSurfaceContainer,
+                                            ]
+                                          : [
+                                              AppColors.tanLight.withValues(alpha: 0.4),
+                                              AppColors.canvasCream,
+                                            ]),
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              border: Border.all(
+                                color: isPendamping
                                     ? AppColors.goldPrimary
-                                    : AppColors.espressoDark)
-                              : AppColors.statusSafe,
+                                    : (isDark
+                                          ? AppColors.darkOutlineVariant
+                                          : AppColors.tanMedium.withValues(alpha: 0.35)),
+                                width: 1.2,
+                              ),
+                            ),
+                            alignment: Alignment.center,
+                            child: isPendamping
+                                ? Icon(
+                                    Icons.shield_rounded,
+                                    size: 19,
+                                    color: isDark ? AppColors.goldLight : Colors.white,
+                                  )
+                                : Text(
+                                    initial,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: isDark
+                                          ? AppColors.darkTextHeading
+                                          : AppColors.espressoDark,
+                                    ),
+                                  ),
+                          ),
+                          Positioned(
+                            right: -1,
+                            bottom: -1,
+                            child: Container(
+                              width: 11,
+                              height: 11,
+                              decoration: BoxDecoration(
+                                color: m.hasLocation && isOnline
+                                    ? AppColors.statusSafe
+                                    : (m.hasLocation
+                                          ? AppColors.statusWarning
+                                          : AppColors.outlineVariant),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: isDark
+                                      ? AppColors.darkSurface
+                                      : AppColors.surfaceWhite,
+                                  width: 2,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 10),
+
+                      // ── Member Name & Subtitle ──
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    m.name,
+                                    style: AppTypography.titleSmall.copyWith(
+                                      color: headingColor,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13.5,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isPendamping
+                                        ? AppColors.goldPrimary.withValues(alpha: isDark ? 0.25 : 0.15)
+                                        : AppColors.statusSafe.withValues(alpha: isDark ? 0.2 : 0.12),
+                                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                                    border: Border.all(
+                                      color: isPendamping
+                                          ? AppColors.goldPrimary.withValues(alpha: 0.4)
+                                          : AppColors.statusSafe.withValues(alpha: 0.3),
+                                      width: 0.8,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    isPendamping ? '👑 Pendamping' : 'Jamaah',
+                                    style: TextStyle(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: isPendamping
+                                          ? (isDark ? AppColors.goldLight : AppColors.espressoDark)
+                                          : AppColors.statusSafe,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 3),
+                            Row(
+                              children: [
+                                Icon(
+                                  m.hasLocation && isOnline
+                                      ? Icons.sensors_rounded
+                                      : Icons.access_time_rounded,
+                                  size: 11,
+                                  color: isOnline
+                                      ? AppColors.statusSafe
+                                      : bodyColor.withValues(alpha: 0.7),
+                                ),
+                                const SizedBox(width: 3.5),
+                                Expanded(
+                                  child: Text(
+                                    locStatus,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                      color: isOnline
+                                          ? AppColors.statusSafe
+                                          : bodyColor.withValues(alpha: 0.8),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Text(
-                        m.name,
-                        style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.textHeadingColor(context),
-                          fontWeight: FontWeight.w700,
+                      const SizedBox(width: 8),
+
+                      // ── Distance Pill & Action Chevron ──
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          dist,
-                          style: AppTypography.captionSmall.copyWith(
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? AppColors.darkSurfaceContainerHighest
+                              : AppColors.canvasCream,
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          border: Border.all(
                             color: m.hasLocation
-                                ? AppColors.goldPrimary
-                                : AppColors.textMuted,
-                            fontWeight: FontWeight.w800,
+                                ? (isDark
+                                      ? AppColors.goldPrimary.withValues(alpha: 0.3)
+                                      : AppColors.goldLight.withValues(alpha: 0.5))
+                                : (isDark
+                                      ? AppColors.darkOutlineVariant
+                                      : AppColors.lightCardBorder),
+                            width: 0.8,
                           ),
                         ),
-                        Text(
-                          locStatus,
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w600,
-                            color: locStatus == 'Online'
-                                ? AppColors.statusSafe
-                                : AppColors.textMuted,
-                          ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.near_me_rounded,
+                              size: 11,
+                              color: m.hasLocation ? primaryColor : AppColors.textMuted,
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              dist,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: m.hasLocation ? headingColor : AppColors.textMuted,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(
-                      Icons.chevron_right_rounded,
-                      size: 18,
-                      color: AppColors.tanMedium,
-                    ),
-                  ],
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        size: 18,
+                        color: isDark
+                            ? AppColors.goldLight.withValues(alpha: 0.7)
+                            : AppColors.tanMedium,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );

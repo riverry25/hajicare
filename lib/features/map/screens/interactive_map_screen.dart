@@ -1020,7 +1020,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '${jamaah.distance.round()}m',
+                        jamaah.formattedDistance,
                         style: AppTypography.captionSmall.copyWith(
                           color: jamaah.tier.color,
                           fontWeight: FontWeight.w800,

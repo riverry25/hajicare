@@ -184,4 +184,35 @@ class JamaahData {
     }
     tier = newTier;
   }
+
+  /// Formatted distance string (e.g. "120 m", "1.5 km", "14040 km")
+  String get formattedDistance {
+    if (distance.isNaN || distance.isInfinite) return '0 m';
+    if (distance >= 100000) {
+      final km = (distance / 1000).round();
+      return '$km km';
+    } else if (distance >= 1000) {
+      final km = distance / 1000;
+      final str = km >= 10 ? km.toStringAsFixed(0) : km.toStringAsFixed(1);
+      return '$str km';
+    } else {
+      return '${distance.round()} m';
+    }
+  }
+
+  /// Numeric string value for distance display
+  String get distanceValue {
+    if (distance.isNaN || distance.isInfinite) return '0';
+    if (distance >= 100000) {
+      return (distance / 1000).round().toString();
+    } else if (distance >= 1000) {
+      final km = distance / 1000;
+      return km >= 10 ? km.toStringAsFixed(0) : km.toStringAsFixed(1);
+    } else {
+      return distance.round().toString();
+    }
+  }
+
+  /// Unit string ('meter' or 'km')
+  String get distanceUnit => distance >= 1000 ? 'km' : 'meter';
 }

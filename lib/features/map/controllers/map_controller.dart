@@ -281,6 +281,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       return '${meters.round()} m';
     } else {
       final km = meters / 1000.0;
+      if (km >= 100) {
+        return '${km.round()} km';
+      }
       return '${km.toStringAsFixed(1)} km';
     }
   }

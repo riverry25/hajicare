@@ -71,70 +71,82 @@ class DashboardJamaahScreen extends StatelessWidget {
         subtitle: context.tr('dashboardSubtitle'),
         icon: Icons.mosque_rounded,
         actions: [
-          Stack(
-            alignment: Alignment.center,
+          Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton(
-                icon: Icon(Icons.notifications_outlined, color: headingColor),
-                tooltip: context.tr('notificationTooltip'),
-                onPressed: () => Get.toNamed(AppRoutes.notification),
-              ),
-              Obx(() {
-                if (!Get.isRegistered<NotificationController>()) return const SizedBox.shrink();
-                final notifCtrl = Get.find<NotificationController>();
-                final totalUnread = notifCtrl.unreadCount.value + notifCtrl.pendingInvitations.length;
-                if (totalUnread <= 0) return const SizedBox.shrink();
+              Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
+                children: [
+                  IconButton(
+                    constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                    padding: EdgeInsets.zero,
+                    icon: Icon(Icons.notifications_outlined, color: headingColor, size: 24),
+                    tooltip: context.tr('notificationTooltip'),
+                    onPressed: () => Get.toNamed(AppRoutes.notification),
+                  ),
+                  Obx(() {
+                    final notifCtrl = Get.isRegistered<NotificationController>()
+                        ? Get.find<NotificationController>()
+                        : null;
+                    final totalUnread = notifCtrl != null
+                        ? notifCtrl.unreadCount.value + notifCtrl.pendingInvitations.length
+                        : 0;
+                    final hasSeparated = jamaah.separatedMode;
 
-                return Positioned(
-                  top: 6,
-                  right: 6,
-                  child: Container(
-                    padding: const EdgeInsets.all(3),
-                    decoration: BoxDecoration(
-                      color: AppColors.sosEmergency,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isDark ? AppColors.darkScaffold : AppColors.canvasCream,
-                        width: 1.5,
-                      ),
-                    ),
-                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                    child: Center(
-                      child: Text(
-                        totalUnread > 9 ? '9+' : '$totalUnread',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                          height: 1.0,
+                    if (totalUnread <= 0 && !hasSeparated) return const SizedBox.shrink();
+
+                    if (totalUnread > 0) {
+                      return Positioned(
+                        top: 4,
+                        right: 4,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                          decoration: BoxDecoration(
+                            color: AppColors.sosEmergency,
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                            border: Border.all(
+                              color: isDark ? AppColors.darkScaffold : AppColors.canvasCream,
+                              width: 1.5,
+                            ),
+                          ),
+                          constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                          child: Center(
+                            child: Text(
+                              totalUnread > 9 ? '9+' : '$totalUnread',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                height: 1.0,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                );
-              }),
-              if (jamaah.separatedMode)
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: AppColors.sosEmergency,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isDark
-                            ? AppColors.darkScaffold
-                            : AppColors.canvasCream,
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
+                      );
+                    } else {
+                      return Positioned(
+                        top: 6,
+                        right: 6,
+                        child: Container(
+                          width: 9,
+                          height: 9,
+                          decoration: BoxDecoration(
+                            color: AppColors.sosEmergency,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isDark ? AppColors.darkScaffold : AppColors.canvasCream,
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                  }),
+                ],
+              ),
+              const SizedBox(width: 8),
           Padding(
             padding: const EdgeInsets.only(right: AppSpacing.screenEdgeGutter),
             child: Center(
@@ -190,7 +202,9 @@ class DashboardJamaahScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: ListView(
+    ],
+  ),
+  body: ListView(
         padding: const EdgeInsets.fromLTRB(
           AppSpacing.screenEdgeGutter,
           AppSpacing.sm,
