@@ -42,6 +42,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
               color: headingColor,
               fontWeight: FontWeight.w700,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           centerTitle: true,
           actions: [
@@ -66,7 +68,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 onPressed: () => NotificationComposerDialog.show(context),
               ),
           ],
-          bottom: TabBar(
+          // Tab labels are structural chrome (fixed-width tab bar).
+          // Disable text scaling so the icon+text rows never overflow.
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(kToolbarHeight - 8),
+            child: MediaQuery(
+              data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
+              child: TabBar(
             indicatorColor: AppColors.goldPrimary,
             indicatorWeight: 3,
             indicatorSize: TabBarIndicatorSize.label,
@@ -120,6 +128,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 ),
               ),
             ],
+          ),
+            ),
           ),
         ),
         body: TabBarView(

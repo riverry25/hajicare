@@ -40,31 +40,22 @@ class ProfileScreen extends StatelessWidget {
         return Scaffold(
           backgroundColor: scaffoldBg,
           extendBody: true,
-          appBar: AppBar(
-            backgroundColor: scaffoldBg,
-            elevation: 0,
-            title: Text(
-              context.tr('profileTitle').isEmpty
-                  ? 'Profil & Pengaturan'
-                  : context.tr('profileTitle'),
-              style: AppTypography.titleLarge.copyWith(
-                color: headingColor,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            centerTitle: true,
-          ),
           body: ListView(
             physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.screenEdgeGutter,
-              AppSpacing.md,
-              AppSpacing.screenEdgeGutter,
-              100,
+            padding: EdgeInsets.only(
+              top: MediaQuery.paddingOf(context).top,
+              bottom: 100,
             ),
             children: [
+              // ── Custom Page Header (replaces AppBar) ──────────────────────
+              _buildPageHeader(context, headingColor, isDark),
+
               // 1. Profile Identity Header Card
-              _ProfileHeader(
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.screenEdgeGutter,
+                ),
+                child: _ProfileHeader(
                 controller: profileCtrl,
                 state: state,
                 cardBg: cardBg,
@@ -72,10 +63,12 @@ class ProfileScreen extends StatelessWidget {
                 bodyColor: bodyColor,
                 isDark: isDark,
               ),
+              ),
               const SizedBox(height: AppSpacing.lg),
 
-              // 2. Data Jamaah & Rombongan
-              _SettingsGroup(
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenEdgeGutter),
+                child: _SettingsGroup(
                 title: context.tr('accountData').isEmpty
                     ? 'Data Jamaah & Rombongan'
                     : context.tr('accountData'),
@@ -107,10 +100,12 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ],
               ),
+              ),
               const SizedBox(height: AppSpacing.md),
 
-              // 3. Aksesibilitas
-              _SettingsGroup(
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenEdgeGutter),
+                child: _SettingsGroup(
                 title: context.tr('accessibilitySettings').isEmpty
                     ? 'Aksesibilitas'
                     : context.tr('accessibilitySettings'),
@@ -130,10 +125,12 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ],
               ),
+              ),
               const SizedBox(height: AppSpacing.md),
 
-              // 4. Preferensi & Tampilan
-              _SettingsGroup(
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenEdgeGutter),
+                child: _SettingsGroup(
                 title: context.tr('preferenceSettings').isEmpty
                     ? 'Preferensi & Tampilan'
                     : context.tr('preferenceSettings'),
@@ -165,10 +162,12 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ],
               ),
+              ),
               const SizedBox(height: AppSpacing.md),
 
-              // 5. Informasi & Bantuan
-              _SettingsGroup(
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenEdgeGutter),
+                child: _SettingsGroup(
                 title: context.tr('otherSettings').isEmpty
                     ? 'Bantuan & Informasi'
                     : context.tr('otherSettings'),
@@ -199,13 +198,16 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ],
               ),
+              ),
               const SizedBox(height: AppSpacing.xl),
 
-              // 6. Logout Button
-              _LogoutButton(
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenEdgeGutter),
+                child: _LogoutButton(
                 label: context.tr('logout').isEmpty
                     ? 'Keluar dari Akun'
                     : context.tr('logout'),
+              ),
               ),
               const SizedBox(height: AppSpacing.md),
             ],
@@ -980,6 +982,121 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
+
+  // ── Custom Page Header: title+subtitle left, Hajicare logo right ───────────
+  Widget _buildPageHeader(
+    BuildContext context,
+    Color headingColor,
+    bool isDark,
+  ) {
+    final bodyColor = AppColors.textBodyColor(context);
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    context.tr('profileTitle').isEmpty
+                        ? 'Profil & Pengaturan'
+                        : context.tr('profileTitle'),
+                    style: AppTypography.headlineMd.copyWith(
+                      color: headingColor,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Kelola akun dan preferensi Hajicare Anda',
+                    style: TextStyle(
+                      color: bodyColor,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w400,
+                      height: 1.4,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.darkSurfaceContainer
+                    : AppColors.canvasCream,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isDark
+                      ? AppColors.darkOutlineVariant.withValues(alpha: 0.5)
+                      : AppColors.canvasCreamSubtle,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.asset(
+                      'assets/icon.jpeg',
+                      width: 28,
+                      height: 28,
+                      fit: BoxFit.cover,
+                      errorBuilder: (ctx, err, stack) => Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: AppColors.espressoDark,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.mosque_rounded,
+                          color: AppColors.goldLight,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 7),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Hajicare',
+                        style: TextStyle(
+                          color: headingColor,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      Text(
+                        'Perjalanan Suci, Lebih Terjaga',
+                        style: TextStyle(
+                          color: bodyColor,
+                          fontSize: 8,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 // ── Profile Header ────────────────────────────────────────────────────────────
@@ -1005,161 +1122,256 @@ class _ProfileHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final self = state?.self;
     final porsiText = self?.porsi != null && self!.porsi!.isNotEmpty
-        ? 'Porsi: ${self.porsi}'
+        ? 'Paspor: Indonesia'
         : 'Paspor: Indonesia';
-    final maktabText = self?.maktab != null && self!.maktab!.isNotEmpty
-        ? 'Maktab ${self.maktab}'
-        : (self?.kloter != null ? '• Kloter ${self!.kloter}' : '');
+    final roleLabel = state?.role == UserRole.pendamping
+        ? 'Pendamping'
+        : 'Jamaah Haji';
 
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.xl,
-        vertical: AppSpacing.xl,
-      ),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(
-          color: AppColors.cardBorderColor(context),
-          width: 1.2,
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          border: Border.all(
+            color: AppColors.cardBorderColor(context),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.espressoDark.withValues(alpha: 0.05),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.espressoDark.withValues(alpha: 0.05),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Obx(
-            () =>
-                _InitialsAvatar(initials: controller.initials, isDark: isDark),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Obx(
-            () => Text(
-              controller.displayName.value,
-              style: AppTypography.headlineMd.copyWith(
-                color: headingColor,
-                fontWeight: FontWeight.w800,
-              ),
-              textAlign: TextAlign.center,
-              softWrap: true,
-            ),
-          ),
-          const SizedBox(height: 4),
-          if (controller.safeEmail.isNotEmpty)
-            Text(
-              controller.safeEmail,
-              style: AppTypography.bodySmall.copyWith(color: bodyColor),
-              textAlign: TextAlign.center,
-              softWrap: true,
-            ),
-          const SizedBox(height: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top row: Avatar + Name/Email + Button
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Avatar with camera badge
+                Obx(
+                  () => _InitialsAvatar(
+                    initials: controller.initials,
+                    isDark: isDark,
+                    onCameraTap: () {},
+                  ),
+                ),
+                const SizedBox(width: 12),
 
-          // Role & Identity Meta Tags
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            alignment: WrapAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkPrimaryContainer.withValues(alpha: 0.6)
-                      : AppColors.espressoDark,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                  border: Border.all(color: AppColors.goldPrimary, width: 1),
-                ),
-                child: Text(
-                  state?.role == UserRole.pendamping
-                      ? 'Pendamping'
-                      : 'Jamaah Haji',
-                  style: AppTypography.captionSmall.copyWith(
-                    color: isDark ? AppColors.goldPrimary : Colors.white,
-                    fontWeight: FontWeight.w800,
+                // Name + Email
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Obx(
+                        () => Text(
+                          controller.displayName.value,
+                          style: AppTypography.titleMedium.copyWith(
+                            color: headingColor,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      if (controller.safeEmail.isNotEmpty)
+                        Text(
+                          controller.safeEmail,
+                          style: AppTypography.bodySmall.copyWith(
+                            color: bodyColor,
+                            fontSize: 11.5,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
                   ),
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
+                const SizedBox(width: 8),
+
+                // Ubah Profil button — aligned top-right
+                _EditNameButton(controller: controller, isDark: isDark),
+              ],
+            ),
+
+            const SizedBox(height: 10),
+
+            // Bottom row: Tag chips in Wrap (never overflows)
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                _TagChip(
+                  icon: Icons.group_rounded,
+                  label: roleLabel,
+                  isDark: isDark,
+                  isPrimary: true,
                 ),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkSurfaceContainerHigh
-                      : AppColors.canvasCream,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                  border: Border.all(color: AppColors.cardBorderColor(context)),
+                _TagChip(
+                  icon: Icons.badge_rounded,
+                  label: porsiText,
+                  isDark: isDark,
+                  isPrimary: false,
                 ),
-                child: Text(
-                  '$porsiText  $maktabText',
-                  style: AppTypography.captionSmall.copyWith(
-                    color: AppColors.textHeadingColor(context),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _EditNameButton(controller: controller, isDark: isDark),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-// ── Initials Avatar ───────────────────────────────────────────────────────────
+// ── Initials Avatar with Camera Badge ────────────────────────────────────────
 
 class _InitialsAvatar extends StatelessWidget {
   final String initials;
   final bool isDark;
+  final VoidCallback? onCameraTap;
 
-  const _InitialsAvatar({required this.initials, required this.isDark});
+  const _InitialsAvatar({
+    required this.initials,
+    required this.isDark,
+    this.onCameraTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 82,
-      height: 82,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          colors: isDark
-              ? [
-                  AppColors.darkPrimaryContainer,
-                  AppColors.darkSurfaceContainerHigh,
-                ]
-              : [AppColors.espressoDark, Color(0xFF22160E)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: 68,
+          height: 68,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              colors: isDark
+                  ? [
+                      AppColors.darkPrimaryContainer,
+                      AppColors.darkSurfaceContainerHigh,
+                    ]
+                  : [AppColors.espressoDark, const Color(0xFF22160E)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            border: Border.all(color: AppColors.goldPrimary, width: 2.5),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.goldPrimary.withValues(alpha: 0.2),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          alignment: Alignment.center,
+          child: MediaQuery(
+            data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
+            child: Text(
+              initials,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 26,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1,
+              ),
+            ),
+          ),
         ),
-        border: Border.all(color: AppColors.goldPrimary, width: 2.5),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.goldPrimary.withValues(alpha: 0.25),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+        // Camera badge
+        Positioned(
+          bottom: 0,
+          right: 0,
+          child: GestureDetector(
+            onTap: onCameraTap,
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkSurfaceContainer : Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isDark ? AppColors.darkOutlineVariant : AppColors.canvasCreamSubtle,
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.12),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.camera_alt_rounded,
+                size: 13,
+                color: isDark ? AppColors.darkTextBody : AppColors.espressoDark,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Tag Chip Helper ───────────────────────────────────────────────────────────
+
+class _TagChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isDark;
+  final bool isPrimary;
+
+  const _TagChip({
+    required this.icon,
+    required this.label,
+    required this.isDark,
+    required this.isPrimary,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = isPrimary
+        ? (isDark
+            ? AppColors.darkPrimaryContainer.withValues(alpha: 0.6)
+            : AppColors.espressoDark)
+        : (isDark ? AppColors.darkSurfaceContainerHigh : AppColors.canvasCream);
+    final borderColor = isPrimary
+        ? AppColors.goldPrimary
+        : AppColors.cardBorderColor(context);
+    final textColor = isPrimary
+        ? (isDark ? AppColors.goldPrimary : Colors.white)
+        : AppColors.textHeadingColor(context);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: borderColor, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: textColor),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        initials,
-        style: AppTypography.displayMedium.copyWith(
-          color: Colors.white,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 1,
-        ),
       ),
     );
   }
@@ -1175,30 +1387,31 @@ class _EditNameButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accentColor = isDark ? AppColors.darkPrimary : AppColors.espressoDark;
+    final borderColor = isDark ? AppColors.darkOutlineVariant : AppColors.canvasCreamSubtle;
+    final textColor = isDark ? AppColors.darkTextHeading : AppColors.espressoDark;
 
     return Semantics(
       button: true,
       label: context.tr('editName'),
       child: InkWell(
         onTap: () => _showEditNameDialog(context),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.sm,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            border: Border.all(color: borderColor, width: 1.2),
+            borderRadius: BorderRadius.circular(20),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.edit_rounded, size: 14, color: accentColor),
-              const SizedBox(width: AppSpacing.xs),
+              Icon(Icons.edit_rounded, size: 13, color: textColor),
+              const SizedBox(width: 5),
               Text(
-                context.tr('editName').isEmpty
-                    ? 'Ubah Nama'
-                    : context.tr('editName'),
-                style: AppTypography.bodySmall.copyWith(
-                  color: accentColor,
+                'Ubah Profil',
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 11,
                   fontWeight: FontWeight.w700,
                 ),
               ),
