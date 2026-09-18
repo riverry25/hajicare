@@ -1110,8 +1110,8 @@ class _AdminDashboardHome extends StatelessWidget {
     final sortedActivities = List<ActivityModel>.from(controller.activities)
       ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
-    // 4. Ambil 2 pertama
-    final previewActivities = sortedActivities.take(2).toList();
+    // 4. Ambil 3-4 aktivitas terbaru untuk preview card yang padat dan presisi
+    final previewActivities = sortedActivities.take(3).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1168,9 +1168,9 @@ class _AdminDashboardHome extends StatelessWidget {
                             const SizedBox(width: 5),
                             Expanded(
                               child: Text(
-                                previewActivities.isEmpty
+                                sortedActivities.isEmpty
                                     ? 'Realtime • Pemantauan aktif'
-                                    : 'Realtime • ${previewActivities.length} aktivitas',
+                                    : 'Realtime • ${sortedActivities.length} aktivitas',
                                 style: AppTypography.captionSmall.copyWith(
                                   color: bodyColor.withValues(alpha: 0.75),
                                   fontWeight: FontWeight.w600,
@@ -1213,7 +1213,7 @@ class _AdminDashboardHome extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.sm + 2),
 
-        // Body: Empty State or Activity Cards List (maksimal 2 aktivitas)
+        // Body: Empty State or Activity Cards List
         if (previewActivities.isEmpty)
           AppCard(
             backgroundColor: cardBg,
@@ -1309,37 +1309,81 @@ class _AdminDashboardHome extends StatelessWidget {
           AppCard(
             backgroundColor: cardBg,
             padding: EdgeInsets.zero,
-            child: ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: previewActivities.length,
-              separatorBuilder: (context, index) => Divider(
-                height: 1,
-                thickness: 0.8,
-                indent: 58,
-                endIndent: AppSpacing.md,
-                color: isDark
-                    ? AppColors.darkCardBorder
-                    : AppColors.canvasCreamSubtle,
-              ),
-              itemBuilder: (context, idx) {
-                final act = previewActivities[idx];
-                return _ActivityFeedTile(
-                  activity: act,
-                  headingColor: headingColor,
-                  bodyColor: bodyColor,
-                  isDark: isDark,
-                  onTap: () => _showActivityDetailSheet(
-                    context,
-                    act,
-                    controller,
-                    isDark,
-                    headingColor,
-                    bodyColor,
-                    primaryColor,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (int idx = 0; idx < previewActivities.length; idx++) ...[
+                  if (idx > 0)
+                    Divider(
+                      height: 1,
+                      thickness: 0.8,
+                      indent: 58,
+                      endIndent: AppSpacing.md,
+                      color: isDark
+                          ? AppColors.darkCardBorder
+                          : AppColors.canvasCreamSubtle,
+                    ),
+                  _ActivityFeedTile(
+                    activity: previewActivities[idx],
+                    headingColor: headingColor,
+                    bodyColor: bodyColor,
+                    isDark: isDark,
+                    onTap: () => _showActivityDetailSheet(
+                      context,
+                      previewActivities[idx],
+                      controller,
+                      isDark,
+                      headingColor,
+                      bodyColor,
+                      primaryColor,
+                    ),
                   ),
-                );
-              },
+                ],
+                if (sortedActivities.length > previewActivities.length) ...[
+                  Divider(
+                    height: 1,
+                    thickness: 0.8,
+                    color: isDark
+                        ? AppColors.darkCardBorder
+                        : AppColors.canvasCreamSubtle,
+                  ),
+                  InkWell(
+                    onTap: () => _showAllActivitiesSheet(
+                      context,
+                      controller,
+                      isDark,
+                      headingColor,
+                      bodyColor,
+                      primaryColor,
+                    ),
+                    borderRadius: const BorderRadius.vertical(
+                      bottom: Radius.circular(AppRadius.lg),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Lihat ${sortedActivities.length - previewActivities.length} aktivitas lainnya',
+                            style: AppTypography.captionSmall.copyWith(
+                              color: primaryColor,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            size: 10,
+                            color: primaryColor,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
       ],

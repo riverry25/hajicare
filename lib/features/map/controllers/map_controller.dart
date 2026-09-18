@@ -364,7 +364,13 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
         return;
       }
 
-      final firstPosition = await Geolocator.getCurrentPosition(
+      Position? firstPosition;
+      if (Get.isRegistered<HajiCareController>()) {
+        final state = Get.find<HajiCareController>();
+        firstPosition = state.myCurrentPosition.value;
+      }
+
+      firstPosition ??= await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
           timeLimit: Duration(seconds: 10),

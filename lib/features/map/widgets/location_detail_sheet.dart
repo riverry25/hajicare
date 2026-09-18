@@ -1,9 +1,10 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
+import 'dart:math' as math;
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/distance_formatter.dart';
 import '../models/map_poi.dart';
 
 /// Bottom sheet displaying dynamic information and action controls for a selected Point of Interest.
@@ -181,9 +182,7 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
   @override
   Widget build(BuildContext context) {
     final formattedDistance = distanceMeters != null
-        ? (distanceMeters! >= 1000
-              ? '${(distanceMeters! / 1000).toStringAsFixed(1)} km'
-              : '${distanceMeters!.round()} m')
+        ? DistanceFormatter.format(distanceMeters)
         : 'Dekat';
 
     final isDark = AppColors.isDark(context);

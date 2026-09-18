@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/locales/app_translations.dart';
 import '../../../core/routes/app_routes.dart';
-import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -31,33 +30,32 @@ class DashboardJamaahScreen extends StatelessWidget {
     final dashboardCtrl = Get.find<DashboardController>();
     final state = Get.find<HajiCareController>();
 
-    return Obx(() {
-      final jamaah = state.self;
-
-      return Scaffold(
-        backgroundColor: AppColors.scaffoldColor(context),
-        extendBody: true,
-        body: IndexedStack(
+    return Scaffold(
+      backgroundColor: AppColors.scaffoldColor(context),
+      extendBody: true,
+      body: Obx(
+        () => IndexedStack(
           index: dashboardCtrl.currentIndex.value,
           children: [
-            _buildJamaahHome(context, state, jamaah, dashboardCtrl),
+            _buildJamaahHome(context, state, dashboardCtrl),
             const InteractiveMapScreen(showBottomNav: false),
             const PrayerTimesScreen(showBottomNav: false),
             const ProfileScreen(showBottomNav: false),
           ],
         ),
-        bottomNavigationBar: HajiCareBottomNavBar(
+      ),
+      bottomNavigationBar: Obx(
+        () => HajiCareBottomNavBar(
           currentIndex: dashboardCtrl.currentIndex.value,
           onTap: dashboardCtrl.changeTab,
         ),
-      );
-    });
+      ),
+    );
   }
 
   Widget _buildJamaahHome(
     BuildContext context,
     HajiCareController state,
-    JamaahData jamaah,
     DashboardController dashboardCtrl,
   ) {
     final isDark = AppColors.isDark(context);
@@ -92,7 +90,7 @@ class DashboardJamaahScreen extends StatelessWidget {
                     final totalUnread = notifCtrl != null
                         ? notifCtrl.unreadCount.value + notifCtrl.pendingInvitations.length
                         : 0;
-                    final hasSeparated = jamaah.separatedMode;
+                    final hasSeparated = state.self.separatedMode;
 
                     if (totalUnread <= 0 && !hasSeparated) return const SizedBox.shrink();
 
@@ -149,49 +147,39 @@ class DashboardJamaahScreen extends StatelessWidget {
               const SizedBox(width: 8),
           Padding(
             padding: const EdgeInsets.only(right: AppSpacing.screenEdgeGutter),
-            child: Center(
+            child: Material(
+              color: Colors.transparent,
               child: InkWell(
-                onTap: () {
-                  if ((state.activeRoomId.value ?? '').isEmpty) {
-                    AppAlert.warning(
-                      context,
-                      title: 'Room Diperlukan',
-                      message: 'Silakan bergabung ke room terlebih dahulu sebelum dapat menggunakan fitur darurat SOS.',
-                    );
-                  } else {
-                    Get.toNamed(AppRoutes.modalSos);
-                  }
-                },
                 borderRadius: BorderRadius.circular(AppRadius.pill),
+                onTap: () => Get.toNamed(AppRoutes.modalSos),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
-                    vertical: 6,
+                    vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkPrimaryContainer
-                        : AppColors.errorContainer,
+                    color: AppColors.sosEmergency.withValues(alpha: isDark ? 0.18 : 0.12),
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                     border: Border.all(
-                      color: AppColors.sosEmergency.withValues(alpha: 0.4),
-                      width: 1,
+                      color: AppColors.sosEmergency.withValues(alpha: isDark ? 0.45 : 0.35),
+                      width: 1.2,
                     ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(
-                        Icons.sos_rounded,
+                        Icons.emergency_rounded,
                         color: AppColors.sosEmergency,
-                        size: 18,
+                        size: 16,
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 5),
                       Text(
                         'SOS',
                         style: AppTypography.captionSmall.copyWith(
                           color: AppColors.sosEmergency,
                           fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ],
@@ -204,35 +192,38 @@ class DashboardJamaahScreen extends StatelessWidget {
       ),
     ],
   ),
-  body: ListView(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.screenEdgeGutter,
-          AppSpacing.sm,
-          AppSpacing.screenEdgeGutter,
-          100,
-        ),
-        children: [
-          if (jamaah.separatedMode) _buildSeparatedBanner(context, isDark),
-          JamaahProfileHeader(state: state),
-          const SizedBox(height: AppSpacing.md),
-          const JamaahPrayerCard(),
-          const SizedBox(height: AppSpacing.lg),
-          JamaahDistanceCard(
-            jamaah: jamaah,
-            onViewMap: () => dashboardCtrl.changeTab(1),
-            onRefreshGps: () => state.refreshLocation(),
+      body: Obx(() {
+        final jamaah = state.self;
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.screenEdgeGutter,
+            AppSpacing.sm,
+            AppSpacing.screenEdgeGutter,
+            100,
           ),
-          const SizedBox(height: AppSpacing.lg),
-          JamaahSosBanner(state: state),
-          const SizedBox(height: AppSpacing.lg),
-          const ActiveRoomCard(isPendamping: false),
-          const SizedBox(height: AppSpacing.lg),
-          const JamaahServiceGrid(),
-          const SizedBox(height: AppSpacing.lg),
-          _buildTipsBanner(context, isDark, headingColor),
-          const SizedBox(height: AppConstants.space3xl),
-        ],
-      ),
+          children: [
+            if (jamaah.separatedMode) _buildSeparatedBanner(context, isDark),
+            JamaahProfileHeader(state: state),
+            const SizedBox(height: AppSpacing.md),
+            const JamaahPrayerCard(),
+            const SizedBox(height: AppSpacing.lg),
+            JamaahDistanceCard(
+              jamaah: jamaah,
+              onViewMap: () => dashboardCtrl.changeTab(1),
+              onRefreshGps: () => state.refreshLocation(),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            JamaahSosBanner(state: state),
+            const SizedBox(height: AppSpacing.lg),
+            const ActiveRoomCard(isPendamping: false),
+            const SizedBox(height: AppSpacing.lg),
+            const JamaahServiceGrid(),
+            const SizedBox(height: AppSpacing.lg),
+            _buildTipsBanner(context, isDark, headingColor),
+            const SizedBox(height: AppConstants.space3xl),
+          ],
+        );
+      }),
     );
   }
 
