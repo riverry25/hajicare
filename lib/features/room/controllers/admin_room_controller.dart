@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -25,6 +26,8 @@ class AdminRoomController extends GetxController {
   final totalPendamping = 0.obs;
   final activeSosCount = 0.obs;
   final activeSosList = <Map<String, dynamic>>[].obs;
+  final resolvedSosList = <Map<String, dynamic>>[].obs;
+  final allUsers = <Map<String, dynamic>>[].obs;
   final activities = <ActivityModel>[].obs;
   final roomBreakdowns = <String, Map<String, int>>{}.obs;
 
@@ -37,6 +40,8 @@ class AdminRoomController extends GetxController {
   StreamSubscription? _membersSub;
   StreamSubscription? _activitiesSub;
   StreamSubscription? _sosSub;
+  StreamSubscription? _resolvedSosSub;
+  StreamSubscription? _usersSub;
   StreamSubscription? _countsSub;
   StreamSubscription? _breakdownSub;
 
@@ -76,16 +81,40 @@ class AdminRoomController extends GetxController {
       debugPrint('[AdminRoomController] Error fetching SOS events: $e');
     });
 
-    // 4. Global Member Counts Stream
+    // 4. Resolved SOS Events Stream (for history)
+    _resolvedSosSub?.cancel();
+    _resolvedSosSub = _roomService.getResolvedSosEventsStream().listen((resList) {
+      resolvedSosList.value = resList;
+    }, onError: (e) {
+      debugPrint('[AdminRoomController] Error fetching resolved SOS: $e');
+    });
+
+    // 5. All Users Stream (realtime jamaah & pendamping data)
+    _usersSub?.cancel();
+    _usersSub = _roomService.getAllUsersStream().listen((userList) {
+      allUsers.value = userList;
+      totalJamaah.value = userList
+          .where((u) => (u['role'] as String?)?.toLowerCase() == 'jamaah')
+          .length;
+      totalPendamping.value = userList
+          .where((u) => (u['role'] as String?)?.toLowerCase() == 'pendamping')
+          .length;
+    }, onError: (e) {
+      debugPrint('[AdminRoomController] Error fetching all users: $e');
+    });
+
+    // 6. Global Member Counts Stream (fallback)
     _countsSub?.cancel();
     _countsSub = _roomService.getGlobalMemberCountsStream().listen((counts) {
-      totalJamaah.value = counts['jamaah'] ?? 0;
-      totalPendamping.value = counts['pendamping'] ?? 0;
+      if (allUsers.isEmpty) {
+        totalJamaah.value = counts['jamaah'] ?? 0;
+        totalPendamping.value = counts['pendamping'] ?? 0;
+      }
     }, onError: (e) {
       debugPrint('[AdminRoomController] Error fetching member counts: $e');
     });
 
-    // 5. Per-Room Member & SOS Breakdown Stream
+    // 7. Per-Room Member & SOS Breakdown Stream
     _breakdownSub?.cancel();
     _breakdownSub = _roomService.getAllRoomMemberBreakdownStream().listen((data) {
       roomBreakdowns.value = data;
@@ -106,6 +135,34 @@ class AdminRoomController extends GetxController {
   // ── Computed Getters ────────────────────────────────────────────────────────
   int get activeRoomsCount => rooms.where((r) => r.isActive).length;
   int get inactiveRoomsCount => rooms.where((r) => !r.isActive).length;
+
+  List<RoomModel> get activeRooms => rooms.where((r) => r.isActive).toList();
+
+  List<Map<String, dynamic>> get allJamaah => allUsers
+      .where((u) => (u['role'] as String?)?.toLowerCase() == 'jamaah')
+      .toList();
+
+  List<Map<String, dynamic>> get allPendamping => allUsers
+      .where((u) => (u['role'] as String?)?.toLowerCase() == 'pendamping')
+      .toList();
+
+  List<Map<String, dynamic>> get attentionJamaahList {
+    final now = DateTime.now();
+    return allJamaah.where((u) {
+      final hasRoom = u['activeRoomId'] != null &&
+          (u['activeRoomId'] as String).trim().isNotEmpty;
+      final isSos = u['sosActive'] == true;
+      if (!hasRoom || isSos) return false;
+
+      final locTimestamp = u['locationUpdatedAt'];
+      if (locTimestamp == null) return true;
+      if (locTimestamp is Timestamp) {
+        final diff = now.difference(locTimestamp.toDate());
+        return diff.inMinutes > 15 || u['isGpsActive'] == false;
+      }
+      return u['isGpsActive'] == false;
+    }).toList();
+  }
 
   int getRoomJamaahCount(String roomId) => roomBreakdowns[roomId]?['jamaah'] ?? 0;
   int getRoomPendampingCount(String roomId) => roomBreakdowns[roomId]?['pendamping'] ?? 0;
@@ -300,6 +357,8 @@ class AdminRoomController extends GetxController {
     _membersSub?.cancel();
     _activitiesSub?.cancel();
     _sosSub?.cancel();
+    _resolvedSosSub?.cancel();
+    _usersSub?.cancel();
     _countsSub?.cancel();
     _breakdownSub?.cancel();
     super.onClose();

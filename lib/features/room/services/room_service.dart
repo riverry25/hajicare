@@ -1336,9 +1336,46 @@ class RoomService {
   Stream<List<Map<String, dynamic>>> getActiveSosEventsStream() {
     return _firestore
         .collection('sos_events')
-        .where('status', isEqualTo: 'active')
+        .where('status', whereIn: ['active', 'baru', 'direspons'])
         .snapshots()
-        .map((snap) => snap.docs.map((d) => {'id': d.id, ...d.data()}).toList());
+        .map((snap) {
+          final list = snap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
+          list.sort((a, b) {
+            final tA = (a['timestamp'] ?? a['createdAt']) as Timestamp?;
+            final tB = (b['timestamp'] ?? b['createdAt']) as Timestamp?;
+            final dateA = tA?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0);
+            final dateB = tB?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0);
+            return dateB.compareTo(dateA);
+          });
+          return list;
+        });
+  }
+
+  /// Streams resolved SOS events for recent history in Alert Center.
+  Stream<List<Map<String, dynamic>>> getResolvedSosEventsStream({int limit = 5}) {
+    return _firestore
+        .collection('sos_events')
+        .where('status', isEqualTo: 'selesai')
+        .limit(limit)
+        .snapshots()
+        .map((snap) {
+          final list = snap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
+          list.sort((a, b) {
+            final tA = (a['resolvedAt'] ?? a['timestamp'] ?? a['createdAt']) as Timestamp?;
+            final tB = (b['resolvedAt'] ?? b['timestamp'] ?? b['createdAt']) as Timestamp?;
+            final dateA = tA?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0);
+            final dateB = tB?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0);
+            return dateB.compareTo(dateA);
+          });
+          return list;
+        });
+  }
+
+  /// Streams all user accounts for command center tracking.
+  Stream<List<Map<String, dynamic>>> getAllUsersStream() {
+    return _firestore.collection('users').snapshots().map((snap) {
+      return snap.docs.map((d) => {'uid': d.id, ...d.data()}).toList();
+    });
   }
 
   /// Streams global member breakdown (total jamaah and pendamping).

@@ -152,7 +152,6 @@ class LoginController extends GetxController {
         autoDismissDuration: const Duration(milliseconds: 1500),
         onDismiss: navigate,
       );
-
     } on FirebaseAuthException catch (e) {
       if (isClosed) return;
 
@@ -377,9 +376,13 @@ class LoginController extends GetxController {
       builder: (ctx) {
         final isDark = AppColors.isDark(ctx);
         final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-        final headingColor = isDark ? AppColors.darkTextHeading : AppColors.espressoDark;
+        final headingColor = isDark
+            ? AppColors.darkTextHeading
+            : AppColors.espressoDark;
         final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-        final primaryColor = isDark ? AppColors.goldLight : AppColors.goldPrimary;
+        final primaryColor = isDark
+            ? AppColors.goldLight
+            : AppColors.goldPrimary;
 
         return Container(
           padding: const EdgeInsets.all(24),
@@ -415,11 +418,7 @@ class LoginController extends GetxController {
               Text(
                 'Peran ini akan disimpan permanen ke akun Anda dan tidak dapat diubah.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: bodyColor,
-                  height: 1.4,
-                ),
+                style: TextStyle(fontSize: 13, color: bodyColor, height: 1.4),
               ),
               const SizedBox(height: 20),
               // Role Option: Jamaah
@@ -429,7 +428,10 @@ class LoginController extends GetxController {
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    border: Border.all(color: primaryColor.withValues(alpha: 0.5), width: 1.5),
+                    border: Border.all(
+                      color: primaryColor.withValues(alpha: 0.5),
+                      width: 1.5,
+                    ),
                     borderRadius: BorderRadius.circular(16),
                     color: primaryColor.withValues(alpha: 0.08),
                   ),
@@ -441,7 +443,11 @@ class LoginController extends GetxController {
                           color: primaryColor.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.person_rounded, color: primaryColor, size: 24),
+                        child: Icon(
+                          Icons.person_rounded,
+                          color: primaryColor,
+                          size: 24,
+                        ),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -464,7 +470,11 @@ class LoginController extends GetxController {
                           ],
                         ),
                       ),
-                      Icon(Icons.arrow_forward_ios_rounded, size: 16, color: primaryColor),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 16,
+                        color: primaryColor,
+                      ),
                     ],
                   ),
                 ),
@@ -477,7 +487,10 @@ class LoginController extends GetxController {
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.statusSafe.withValues(alpha: 0.5), width: 1.5),
+                    border: Border.all(
+                      color: AppColors.statusSafe.withValues(alpha: 0.5),
+                      width: 1.5,
+                    ),
                     borderRadius: BorderRadius.circular(16),
                     color: AppColors.statusSafe.withValues(alpha: 0.08),
                   ),
@@ -489,7 +502,11 @@ class LoginController extends GetxController {
                           color: AppColors.statusSafe.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.health_and_safety_rounded, color: AppColors.statusSafe, size: 24),
+                        child: const Icon(
+                          Icons.health_and_safety_rounded,
+                          color: AppColors.statusSafe,
+                          size: 24,
+                        ),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -512,7 +529,11 @@ class LoginController extends GetxController {
                           ],
                         ),
                       ),
-                      const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppColors.statusSafe),
+                      const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 16,
+                        color: AppColors.statusSafe,
+                      ),
                     ],
                   ),
                 ),

@@ -27,6 +27,8 @@ import '../../features/room/screens/join_room_screen.dart';
 import '../../features/room/screens/admin_dashboard_screen.dart';
 import '../../features/room/screens/admin_room_management_screen.dart';
 import '../../features/room/screens/room_detail_screen.dart';
+import '../../features/smartband/screens/smartband_ldr_page.dart';
+import '../../features/smartband/bindings/smartband_ldr_binding.dart';
 import 'role_and_room_guard.dart';
 
 class AppRoutes {
@@ -55,6 +57,7 @@ class AppRoutes {
   static const String notification = '/notification';
   static const String helpCenter = '/help';
   static const String about = '/about';
+  static const String smartbandLdr = '/smartband_ldr';
 
   static List<GetPage> get pages => [
         GetPage(name: splash, page: () => const SplashScreen()),
@@ -177,5 +180,10 @@ class AppRoutes {
         GetPage(name: notification, page: () => const NotificationScreen()),
         GetPage(name: helpCenter, page: () => const HelpCenterScreen()),
         GetPage(name: about, page: () => const AboutScreen()),
+        GetPage(
+          name: smartbandLdr,
+          page: () => const SmartbandLdrPage(),
+          binding: SmartbandLdrBinding(),
+        ),
       ];
 }
