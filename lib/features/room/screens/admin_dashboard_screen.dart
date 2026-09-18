@@ -1,3 +1,4 @@
+﻿import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,7 +11,6 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
-import '../../../core/widgets/hajicare_header.dart';
 import '../../dashboard/controllers/dashboard_controller.dart';
 import '../../map/screens/interactive_map_screen.dart';
 import '../../prayer/screens/prayer_times_screen.dart';
@@ -85,94 +85,178 @@ class _AdminDashboardHome extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: scaffoldBg,
-      appBar: HajiCareHeader(
-        title: 'HajiCare',
-        subtitle: 'Command Center',
-        imageAsset: 'assets/icon.jpeg',
+      appBar: AppBar(
+        backgroundColor: scaffoldBg,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        toolbarHeight: 68,
+        titleSpacing: AppSpacing.screenEdgeGutter,
+        title: Row(
+          children: [
+            // Circular Avatar (Reference: circle photo on the left)
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isDark
+                      ? AppColors.darkCardBorder
+                      : AppColors.goldLight.withValues(alpha: 0.5),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/icon.jpeg',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => CircleAvatar(
+                    backgroundColor:
+                        isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+                    child: Icon(Icons.person, color: headingColor, size: 20),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm + 2),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Hello, Admin!',
+                  style: AppTypography.titleMedium.copyWith(
+                    color: headingColor,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'HajiCare Command Center',
+                  style: AppTypography.captionSmall.copyWith(
+                    color: bodyColor.withValues(alpha: 0.75),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
         actions: [
-          IconButton(
-            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-            icon: Icon(Icons.campaign_outlined, color: headingColor),
-            tooltip: 'Kirim Notifikasi / Siaran',
-            onPressed: () => NotificationComposerDialog.show(context),
+          // Broadcast Button (Circular button)
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isDark
+                    ? AppColors.darkCardBorder
+                    : Colors.black.withValues(alpha: 0.06),
+              ),
+            ),
+            child: IconButton(
+              padding: EdgeInsets.zero,
+              icon: Icon(Icons.campaign_outlined, color: headingColor, size: 20),
+              tooltip: 'Kirim Notifikasi / Siaran',
+              onPressed: () => NotificationComposerDialog.show(context),
+            ),
           ),
+          const SizedBox(width: 8),
+
+          // Notification with Coral Badge Dot (Circular button)
           Stack(
-            alignment: Alignment.center,
+            clipBehavior: Clip.none,
             children: [
-              IconButton(
-                constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-                icon: Icon(Icons.notifications_outlined, color: headingColor),
-                tooltip: 'Notifikasi',
-                onPressed: () => Get.toNamed(AppRoutes.notification),
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.darkCardBorder
+                        : Colors.black.withValues(alpha: 0.06),
+                  ),
+                ),
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  icon: Icon(
+                    Icons.notifications_outlined,
+                    color: headingColor,
+                    size: 20,
+                  ),
+                  tooltip: 'Notifikasi',
+                  onPressed: () => Get.toNamed(AppRoutes.notification),
+                ),
               ),
               Obx(() {
-                if (!Get.isRegistered<NotificationController>()) return const SizedBox.shrink();
-                final notifCtrl = Get.find<NotificationController>();
-                final totalUnread = notifCtrl.unreadCount.value;
-                if (totalUnread <= 0) return const SizedBox.shrink();
+                final notifCtrl = Get.isRegistered<NotificationController>()
+                    ? Get.find<NotificationController>()
+                    : null;
+                final totalUnread = notifCtrl?.unreadCount.value ?? 0;
+                final hasSos = controller.activeSosCount.value > 0;
+
+                if (totalUnread <= 0 && !hasSos) {
+                  return const SizedBox.shrink();
+                }
 
                 return Positioned(
-                  top: 6,
-                  right: 6,
+                  top: -2,
+                  right: -2,
                   child: Container(
-                    padding: const EdgeInsets.all(3),
+                    width: 10,
+                    height: 10,
                     decoration: BoxDecoration(
-                      color: AppColors.sosEmergency,
+                      color: hasSos
+                          ? AppColors.sosEmergency
+                          : AppColors.sosEmergency.withValues(alpha: 0.55),
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isDark ? AppColors.darkScaffold : AppColors.canvasCream,
-                        width: 1.5,
-                      ),
-                    ),
-                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                    child: Center(
-                      child: Text(
-                        totalUnread > 9 ? '9+' : '$totalUnread',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                          height: 1.0,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
+                      border: Border.all(color: scaffoldBg, width: 2),
                     ),
                   ),
                 );
               }),
-              Obx(() {
-                if (controller.activeSosCount.value > 0) {
-                  return Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: AppColors.sosEmergency,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isDark
-                              ? AppColors.darkScaffold
-                              : AppColors.canvasCream,
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                  );
-                }
-                return const SizedBox.shrink();
-              }),
             ],
           ),
-          IconButton(
-            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-            icon: const Icon(Icons.logout_rounded),
-            color: AppColors.error,
-            tooltip: 'Keluar Admin',
-            onPressed: () => controller.promptSignOut(context),
+          const SizedBox(width: 8),
+
+          // Logout Button (Circular button)
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isDark
+                    ? AppColors.darkCardBorder
+                    : Colors.black.withValues(alpha: 0.06),
+              ),
+            ),
+            child: IconButton(
+              padding: EdgeInsets.zero,
+              icon: const Icon(
+                Icons.logout_rounded,
+                color: AppColors.error,
+                size: 18,
+              ),
+              tooltip: 'Keluar Admin',
+              onPressed: () => controller.promptSignOut(context),
+            ),
           ),
-          const SizedBox(width: AppSpacing.xs),
+          const SizedBox(width: AppSpacing.screenEdgeGutter),
         ],
       ),
       body: Obx(() {
@@ -206,22 +290,12 @@ class _AdminDashboardHome extends StatelessWidget {
               100, // Inset for floating HajiCareBottomNavBar
             ),
             children: [
-              // 1. Welcome Card (Command Center Header Hero)
-              _buildWelcomeCard(context, isDark),
+              // 1. Hero Featured Progress Bento Card (Pastel Sky-Cyan)
+              _buildHeroProgressCard(context, isDark),
               const SizedBox(height: AppSpacing.md),
 
-              // 2. Alert / System Status Banner
-              _buildStatusPantauanCard(
-                context,
-                isDark,
-                headingColor,
-                bodyColor,
-                primaryColor,
-              ),
-              const SizedBox(height: AppSpacing.md),
-
-              // 3. Overview KPI
-              _buildKpiOverview(
+              // 2. Dual KPI Metrics (White Bento Cards: Total Jamaah & Petugas)
+              _buildDualKpiCards(
                 context,
                 isDark,
                 cardBg,
@@ -229,9 +303,29 @@ class _AdminDashboardHome extends StatelessWidget {
                 bodyColor,
                 primaryColor,
               ),
+              const SizedBox(height: AppSpacing.md),
+
+              // 3. Operational Status & 4-Metric Breakdown (Pastel Sage-Mint Green)
+              _buildStatusBreakdownCard(
+                context,
+                isDark,
+                headingColor,
+                bodyColor,
+                primaryColor,
+              ),
               const SizedBox(height: AppSpacing.lg),
 
-              // 4. Room Pantau
+              // 4. Quick Actions (Aksi Cepat)
+              _buildQuickActions(
+                context,
+                isDark,
+                cardBg,
+                headingColor,
+                primaryColor,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+
+              // 5. Room Pantau Section
               _buildRoomPantauSection(
                 context,
                 isDark,
@@ -242,7 +336,7 @@ class _AdminDashboardHome extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.lg),
 
-              // 5. Aktivitas Terbaru
+              // 6. Aktivitas Terbaru
               _buildRecentActivitiesSection(
                 context,
                 isDark,
@@ -253,14 +347,8 @@ class _AdminDashboardHome extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.lg),
 
-              // 6. Quick Actions (Aksi Cepat)
-              _buildQuickActions(
-                context,
-                isDark,
-                cardBg,
-                headingColor,
-                primaryColor,
-              ),
+              // 7. Bottom Action Pill Button (Reference: Calorie count >>>)
+              _buildBottomActionPill(context, isDark),
               const SizedBox(height: AppSpacing.md),
             ],
           ),
@@ -269,144 +357,114 @@ class _AdminDashboardHome extends StatelessWidget {
     );
   }
 
-  // ── 1. Welcome Banner Card ──────────────────────────────────────────────────
-  Widget _buildWelcomeCard(BuildContext context, bool isDark) {
+  // �f¢â�,�â�?s¬�f¢â�,�â�?s¬ 1. Hero Progress Bento Card (HajiCare Deep Espresso & Gold) �f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬
+  Widget _buildHeroProgressCard(BuildContext context, bool isDark) {
+    final activeSos = controller.activeSosCount.value;
+    final totalJamaah = controller.totalJamaah.value;
+    final activeRooms = controller.activeRoomsCount;
+    final hasSos = activeSos > 0;
+
+    final safePercentage = totalJamaah > 0
+        ? (((totalJamaah - activeSos) / totalJamaah) * 100).clamp(0, 100).round()
+        : 100;
+
+    // Signature HajiCare Hero Gradient (matches dashboard_jamaah_screen)
+    final heroGradient = LinearGradient(
+      colors: isDark
+          ? const [
+              Color(0xFF1B120B),
+              Color(0xFF281A11),
+              Color(0xFF332115),
+            ]
+          : const [
+              Color(0xFF26170E),
+              Color(0xFF382317),
+              Color(0xFF4A3020),
+            ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+
+    final borderColor = isDark
+        ? AppColors.darkCardBorder
+        : AppColors.primaryGold.withValues(alpha: 0.35);
+    final textColor = isDark ? AppColors.darkTextHeading : Colors.white;
+    final subtextColor = isDark ? AppColors.goldLight : const Color(0xFFF5D6B8);
+    final gaugeProgress = activeRooms > 0
+        ? (activeRooms / math.max(activeRooms, 10)).clamp(0.15, 1.0)
+        : 0.25;
+
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [AppColors.darkSurfaceContainerHigh, AppColors.darkSurface]
-              : [AppColors.primary, AppColors.primaryContainer],
-        ),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: isDark
-              ? AppColors.darkCardBorder
-              : AppColors.goldLight.withValues(alpha: 0.28),
-        ),
+        gradient: heroGradient,
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: borderColor, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: (isDark ? Colors.black : AppColors.espressoDark).withValues(
-              alpha: 0.20,
-            ),
+            color: Colors.black.withValues(alpha: isDark ? 0.40 : 0.16),
             blurRadius: 18,
-            offset: const Offset(0, 8),
+            offset: const Offset(0, 6),
           ),
         ],
       ),
-      child: Stack(
-        clipBehavior: Clip.antiAlias,
-        children: [
-          // Ambient decorative circles
-          Positioned(
-            right: -25,
-            top: -35,
-            child: Container(
-              width: 140,
-              height: 140,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.primaryGold.withValues(
-                  alpha: isDark ? 0.08 : 0.12,
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            right: 45,
-            bottom: -40,
-            child: Container(
-              width: 85,
-              height: 85,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.goldLight.withValues(
-                  alpha: isDark ? 0.05 : 0.08,
-                ),
-              ),
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top: Pill Status + Live Sync
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Portal Administrator Pill
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(AppRadius.pill),
-                    border: Border.all(
-                      color: AppColors.accentGoldStar.withValues(alpha: 0.35),
-                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
-                        Icons.shield_rounded,
-                        size: 13,
-                        color: AppColors.accentGoldStar,
+                      Icon(
+                        hasSos ? Icons.warning_amber_rounded : Icons.shield_rounded,
+                        size: 14,
+                        color: hasSos
+                            ? AppColors.sosEmergency
+                            : (isDark ? AppColors.goldLight : AppColors.primaryGold),
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        'COMMAND CENTER OPERASIONAL',
+                        hasSos
+                            ? '$activeSos SOS PERLU TINDAKAN'
+                            : 'Command Center Aman',
                         style: AppTypography.captionSmall.copyWith(
-                          color: AppColors.goldLight,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.8,
-                          fontSize: 10,
+                          color: hasSos
+                              ? const Color(0xFFFF8080)
+                              : (isDark ? AppColors.goldLight : const Color(0xFFFBF4ED)),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 10.5,
+                          letterSpacing: 0.3,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: AppSpacing.sm + 4),
-
-                // Main Dashboard Title
-                Text(
-                  'Admin Dashboard',
-                  style: AppTypography.titleLarge.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 4),
-
-                // Subtitle
-                Text(
-                  'Assalamu\'alaikum, Admin. Pantau seluruh keselamatan jamaah dan koordinasi petugas secara realtime.',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: Colors.white.withValues(alpha: 0.86),
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-
-                // Live Sync Status
                 Row(
                   children: [
                     Container(
-                      width: 8,
-                      height: 8,
+                      width: 7,
+                      height: 7,
                       decoration: const BoxDecoration(
-                        color: Color(0xFF4CAF50),
+                        color: AppColors.statusSafe,
                         shape: BoxShape.circle,
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 5),
                     Text(
-                      'Live Cloud Sync Terhubung',
+                      'Live Sync',
                       style: AppTypography.captionSmall.copyWith(
-                        color: const Color(0xFF81C784),
-                        fontWeight: FontWeight.w600,
+                        color: subtextColor,
+                        fontWeight: FontWeight.w700,
                         fontSize: 11,
                       ),
                     ),
@@ -414,213 +472,105 @@ class _AdminDashboardHome extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
+            const SizedBox(height: AppSpacing.md + 4),
 
-  // ── 2. Command Center / Status Pantauan Card ───────────────────────────────
-  Widget _buildStatusPantauanCard(
-    BuildContext context,
-    bool isDark,
-    Color headingColor,
-    Color bodyColor,
-    Color primaryColor,
-  ) {
-    final sosCount = controller.activeSosCount.value;
-    final hasSos = sosCount > 0;
-
-    final jamaahCount = controller.totalJamaah.value;
-    final pendampingCount = controller.totalPendamping.value;
-    final activeRooms = controller.activeRoomsCount;
-
-    final bgColor = hasSos
-        ? (isDark ? const Color(0xFF381418) : const Color(0xFFFFF1F1))
-        : (isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite);
-
-    final borderColor = hasSos
-        ? AppColors.sosEmergency
-        : (isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: hasSos ? borderColor.withValues(alpha: 0.6) : borderColor,
-          width: hasSos ? 1.5 : 1.0,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: hasSos
-                ? AppColors.sosEmergency.withValues(alpha: 0.12)
-                : (isDark
-                      ? Colors.black.withValues(alpha: 0.2)
-                      : AppColors.primary.withValues(alpha: 0.04)),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Status Header
+            // Middle: Left (Big % + Date Pill) & Right (Circular Arc Gauge)
             Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color:
-                          (hasSos
-                                  ? AppColors.sosEmergency
-                                  : AppColors.statusSafe)
-                              .withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      border: Border.all(
-                        color:
-                            (hasSos
-                                    ? AppColors.sosEmergency
-                                    : AppColors.statusSafe)
-                                .withValues(alpha: 0.3),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$safePercentage%',
+                      style: TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 42,
+                        fontWeight: FontWeight.w900,
+                        height: 1.0,
+                        color: textColor,
+                        letterSpacing: -1.2,
                       ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          hasSos
-                              ? Icons.warning_amber_rounded
-                              : Icons.check_circle_outline_rounded,
-                          color: hasSos
-                              ? AppColors.sosEmergency
-                              : AppColors.statusSafe,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            hasSos
-                                ? '$sosCount SOS MEMERLUKAN TINDAKAN'
-                                : 'Sistem Operasional Aman',
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTypography.labelLarge.copyWith(
-                              color: hasSos
-                                  ? AppColors.sosEmergency
-                                  : AppColors.statusSafe,
-                              fontWeight: FontWeight.bold,
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '${DateTime.now().day} ${_getMonthName(DateTime.now().month)}',
+                            style: AppTypography.captionSmall.copyWith(
+                              color: textColor,
+                              fontWeight: FontWeight.w700,
                               fontSize: 11.5,
-                              letterSpacing: 0.2,
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            size: 15,
+                            color: subtextColor,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-
-                if (hasSos) ...[
-                  const SizedBox(width: 8),
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () => dashboardCtrl.changeTab(1),
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      child: Container(
-                        constraints: const BoxConstraints(
-                          minWidth: 44,
-                          minHeight: 34,
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.sosEmergency,
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.sosEmergency.withValues(
-                                alpha: 0.35,
-                              ),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: const Row(
+                // Circular Gauge
+                InkWell(
+                  onTap: () => _showActiveRoomsSheet(
+                    context,
+                    controller,
+                    isDark,
+                    isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+                    isDark ? AppColors.darkTextHeading : AppColors.espressoDark,
+                    isDark ? AppColors.darkTextBody : AppColors.textBody,
+                    isDark ? AppColors.darkPrimary : AppColors.primaryGold,
+                  ),
+                  borderRadius: BorderRadius.circular(50),
+                  child: CustomPaint(
+                    size: const Size(92, 92),
+                    painter: _HeroGaugePainter(
+                      progress: gaugeProgress,
+                      trackColor: Colors.white.withValues(alpha: 0.14),
+                      progressColor: isDark ? AppColors.goldLight : AppColors.primaryGold,
+                      dotColor: isDark ? Colors.white : AppColors.goldLight,
+                    ),
+                    child: SizedBox(
+                      width: 92,
+                      height: 92,
+                      child: Center(
+                        child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'Peta SOS',
+                              '$activeRooms',
                               style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                                color: textColor,
+                                height: 1.1,
                               ),
                             ),
-                            SizedBox(width: 4),
-                            Icon(
-                              Icons.arrow_forward_rounded,
-                              color: Colors.white,
-                              size: 14,
+                            Text(
+                              'Room Aktif',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: subtextColor,
+                              ),
                             ),
                           ],
                         ),
                       ),
                     ),
                   ),
-                ],
-              ],
-            ),
-
-            const SizedBox(height: AppSpacing.sm + 2),
-
-            // Description
-            Text(
-              hasSos
-                  ? 'Terdeteksi sinyal darurat aktif dari jamaah. Mohon prioritaskan penanganan atau koordinasi pendamping.'
-                  : 'Seluruh room terpantau normal. Jamaah dan pendamping terhubung dalam pengawasan Command Center.',
-              style: AppTypography.bodySmall.copyWith(
-                color: headingColor,
-                height: 1.4,
-              ),
-            ),
-
-            const SizedBox(height: AppSpacing.sm + 4),
-
-            // Summary metrics
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: [
-                _buildMiniBadge(
-                  icon: Icons.groups_rounded,
-                  label: '$jamaahCount Jamaah',
-                  color: const Color(0xFF2E7D32),
-                  isDark: isDark,
-                ),
-                _buildMiniBadge(
-                  icon: Icons.health_and_safety_rounded,
-                  label: '$pendampingCount Pendamping',
-                  color: const Color(0xFF1976D2),
-                  isDark: isDark,
-                ),
-                _buildMiniBadge(
-                  icon: Icons.meeting_room_rounded,
-                  label: '$activeRooms Room Aktif',
-                  color: isDark
-                      ? AppColors.darkPrimary
-                      : AppColors.accentGoldStar,
-                  isDark: isDark,
                 ),
               ],
             ),
@@ -630,39 +580,8 @@ class _AdminDashboardHome extends StatelessWidget {
     );
   }
 
-  Widget _buildMiniBadge({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required bool isDark,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: isDark ? 0.16 : 0.09),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: color.withValues(alpha: isDark ? 0.35 : 0.2)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13, color: color),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: AppTypography.captionSmall.copyWith(
-              color: color,
-              fontWeight: FontWeight.bold,
-              fontSize: 11,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── 3. Overview KPI Grid ────────────────────────────────────────────────────
-  Widget _buildKpiOverview(
+  // �f¢â�,�â�?s¬�f¢â�,�â�?s¬ 2. Dual KPI Metrics (Reference: Current Weight & Today's Calories) �f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬
+  Widget _buildDualKpiCards(
     BuildContext context,
     bool isDark,
     Color cardBg,
@@ -670,76 +589,34 @@ class _AdminDashboardHome extends StatelessWidget {
     Color bodyColor,
     Color primaryColor,
   ) {
-    final activeRooms = controller.activeRoomsCount;
-    final totalRooms = controller.rooms.length;
     final totalJamaah = controller.totalJamaah.value;
     final totalPendamping = controller.totalPendamping.value;
-    final activeSos = controller.activeSosCount.value;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Overview Operasional',
-              style: AppTypography.titleMedium.copyWith(
-                color: headingColor,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              'Realtime metrics',
-              style: AppTypography.captionSmall.copyWith(
-                color: bodyColor.withValues(alpha: 0.7),
-                fontSize: 11,
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: AppSpacing.sm),
-
-        // Row 1
-        Row(
-          children: [
-            Expanded(
-              child: _KpiMetricCard(
-                title: 'Room Aktif',
-                value: '$activeRooms',
-                subtitle: 'dari $totalRooms room',
-                icon: Icons.meeting_room_rounded,
+        // Left Card: Total Jamaah (Reference: Current Weight 78.5 kg)
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
                 color: isDark
-                    ? AppColors.darkPrimary
-                    : AppColors.accentGoldStar,
-                cardBg: cardBg,
-                headingColor: headingColor,
-                bodyColor: bodyColor,
-                isDark: isDark,
-                onTap: () => _showActiveRoomsSheet(
-                  context,
-                  controller,
-                  isDark,
-                  cardBg,
-                  headingColor,
-                  bodyColor,
-                  primaryColor,
-                ),
+                    ? AppColors.darkCardBorder
+                    : Colors.black.withValues(alpha: 0.05),
+                width: 1.0,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: _KpiMetricCard(
-                title: 'Total Jamaah',
-                value: '$totalJamaah',
-                subtitle: 'terdaftar di sistem',
-                icon: Icons.groups_rounded,
-                color: const Color(0xFF2E7D32),
-                cardBg: cardBg,
-                headingColor: headingColor,
-                bodyColor: bodyColor,
-                isDark: isDark,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
                 onTap: () => _showAllJamaahSheet(
                   context,
                   controller,
@@ -749,27 +626,118 @@ class _AdminDashboardHome extends StatelessWidget {
                   bodyColor,
                   primaryColor,
                 ),
+                borderRadius: BorderRadius.circular(22),
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Total Jamaah',
+                            style: AppTypography.captionSmall.copyWith(
+                              color: bodyColor.withValues(alpha: 0.8),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(5),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.08)
+                                  : AppColors.canvasCreamSubtle,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.groups_rounded,
+                              size: 14,
+                              color: AppColors.statusSafe,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            '$totalJamaah',
+                            style: AppTypography.displayLarge.copyWith(
+                              color: headingColor,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 26,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Jamaah',
+                            style: AppTypography.captionSmall.copyWith(
+                              color: bodyColor.withValues(alpha: 0.7),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.check_circle_rounded,
+                            size: 12,
+                            color: AppColors.statusSafe,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              'Terdaftar aktif',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.captionSmall.copyWith(
+                                color: bodyColor.withValues(alpha: 0.75),
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ],
+          ),
         ),
+        const SizedBox(width: AppSpacing.sm + 2),
 
-        const SizedBox(height: AppSpacing.sm),
-
-        // Row 2
-        Row(
-          children: [
-            Expanded(
-              child: _KpiMetricCard(
-                title: 'Pendamping',
-                value: '$totalPendamping',
-                subtitle: 'petugas aktif',
-                icon: Icons.health_and_safety_rounded,
-                color: const Color(0xFF1976D2),
-                cardBg: cardBg,
-                headingColor: headingColor,
-                bodyColor: bodyColor,
-                isDark: isDark,
+        // Right Card: Petugas / Pendamping (Reference: Today's Calories with sparkline)
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: isDark
+                    ? AppColors.darkCardBorder
+                    : Colors.black.withValues(alpha: 0.05),
+                width: 1.0,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
                 onTap: () => _showAllPendampingSheet(
                   context,
                   controller,
@@ -779,44 +747,334 @@ class _AdminDashboardHome extends StatelessWidget {
                   bodyColor,
                   primaryColor,
                 ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: _KpiMetricCard(
-                title: 'Alert Aktif',
-                value: '$activeSos',
-                subtitle: activeSos > 0 ? 'Perlu tindakan!' : 'Kondisi aman',
-                icon: activeSos > 0
-                    ? Icons.warning_amber_rounded
-                    : Icons.verified_user_rounded,
-                color: activeSos > 0
-                    ? AppColors.sosEmergency
-                    : AppColors.statusSafe,
-                isHighlighted: activeSos > 0,
-                cardBg: cardBg,
-                headingColor: headingColor,
-                bodyColor: bodyColor,
-                isDark: isDark,
-                onTap: () => _showAlertCenterSheet(
-                  context,
-                  controller,
-                  dashboardCtrl,
-                  isDark,
-                  cardBg,
-                  headingColor,
-                  bodyColor,
-                  primaryColor,
+                borderRadius: BorderRadius.circular(22),
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Petugas Aktif',
+                            style: AppTypography.captionSmall.copyWith(
+                              color: bodyColor.withValues(alpha: 0.8),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(5),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.08)
+                                  : AppColors.canvasCreamSubtle,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.health_and_safety_rounded,
+                              size: 14,
+                              color: AppColors.secondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            '$totalPendamping',
+                            style: AppTypography.displayLarge.copyWith(
+                              color: headingColor,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 26,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Petugas',
+                            style: AppTypography.captionSmall.copyWith(
+                              color: bodyColor.withValues(alpha: 0.7),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.secondary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    'Siaga maktab',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTypography.captionSmall.copyWith(
+                                      color: bodyColor.withValues(alpha: 0.75),
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          CustomPaint(
+                            size: const Size(28, 12),
+                            painter: _MiniSparklinePainter(
+                              color: AppColors.secondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ],
+          ),
         ),
       ],
     );
   }
 
-  // ── 4. Quick Actions ───────────────────────────────────────────────────────
+  // �f¢â�,�â�?s¬�f¢â�,�â�?s¬ 3. Operational Status & 4-Metric Breakdown (Reference: Breakfast Card) �f¢â�,�â�?s¬
+  Widget _buildStatusBreakdownCard(
+    BuildContext context,
+    bool isDark,
+    Color headingColor,
+    Color bodyColor,
+    Color primaryColor,
+  ) {
+    final activeRooms = controller.activeRoomsCount;
+    final totalJamaah = controller.totalJamaah.value;
+    final totalPendamping = controller.totalPendamping.value;
+    final activeSos = controller.activeSosCount.value;
+    final hasSos = activeSos > 0;
+
+    final cardBg = isDark ? AppColors.darkSurfaceContainer : AppColors.emeraldLight;
+    final borderColor = isDark
+        ? AppColors.darkCardBorder
+        : AppColors.emeraldIslamic.withValues(alpha: 0.20);
+    final textColor = isDark ? AppColors.darkTextHeading : AppColors.emeraldDark;
+    final subtextColor = isDark ? AppColors.darkTextBody : AppColors.emeraldIslamic;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: borderColor, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: (isDark ? Colors.black : AppColors.emeraldDark).withValues(
+              alpha: isDark ? 0.3 : 0.06,
+            ),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top Row: Title + Status + Action (+) in circle
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: isDark ? 0.16 : 0.7),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.mosque_rounded,
+                      size: 16,
+                      color: textColor,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Status & Koordinasi',
+                        style: AppTypography.titleSmall.copyWith(
+                          color: textColor,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14.5,
+                        ),
+                      ),
+                      Text(
+                        hasSos
+                            ? '$activeSos SOS Memerlukan Tindakan'
+                            : 'Kondisi Seluruh Room Normal',
+                        style: AppTypography.captionSmall.copyWith(
+                          color: hasSos ? AppColors.sosEmergency : subtextColor,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              InkWell(
+                onTap: () => _showCreateRoomSheet(context, controller),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: isDark ? 0.2 : 0.8),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(Icons.add_rounded, size: 20, color: textColor),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md + 2),
+
+          // 4-Column Metric Breakdown (Reference: Proteins, Fats, Carbs, RDC)
+          Row(
+            children: [
+              _buildBreakdownColumn('Room', '$activeRooms', textColor, subtextColor),
+              _buildBreakdownColumn('Jamaah', '$totalJamaah', textColor, subtextColor),
+              _buildBreakdownColumn('Petugas', '$totalPendamping', textColor, subtextColor),
+              _buildBreakdownColumn(
+                'SOS',
+                '$activeSos',
+                hasSos ? AppColors.sosEmergency : textColor,
+                subtextColor,
+                isAlert: hasSos,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+
+          // Bottom Row: Dropdown pill + Action button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              InkWell(
+                onTap: () => _showActiveRoomsSheet(
+                  context,
+                  controller,
+                  isDark,
+                  isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+                  isDark ? AppColors.darkTextHeading : AppColors.espressoDark,
+                  isDark ? AppColors.darkTextBody : AppColors.textBody,
+                  isDark ? AppColors.darkPrimary : AppColors.primaryGold,
+                ),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: isDark ? 0.16 : 0.65),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        hasSos ? 'Pusat Alert v' : 'Room Pantau v',
+                        style: AppTypography.captionSmall.copyWith(
+                          color: textColor,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 11.5,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: 15,
+                        color: textColor,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              InkWell(
+                onTap: () => dashboardCtrl.changeTab(1),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: isDark ? 0.16 : 0.65),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.radar_rounded, size: 16, color: textColor),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBreakdownColumn(
+    String label,
+    String value,
+    Color textColor,
+    Color subtextColor, {
+    bool isAlert = false,
+  }) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: AppTypography.captionSmall.copyWith(
+              color: subtextColor,
+              fontWeight: FontWeight.w600,
+              fontSize: 11,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 19,
+              fontWeight: FontWeight.w900,
+              color: textColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // �f¢â�,�â�?s¬�f¢â�,�â�?s¬ 4. Quick Actions (Reference: Taco & Donut 2-Column Cards) �f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬
   Widget _buildQuickActions(
     BuildContext context,
     bool isDark,
@@ -824,6 +1082,8 @@ class _AdminDashboardHome extends StatelessWidget {
     Color headingColor,
     Color primaryColor,
   ) {
+    final activeSos = controller.activeSosCount.value;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -834,10 +1094,9 @@ class _AdminDashboardHome extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-
         const SizedBox(height: AppSpacing.sm),
 
-        // Row 1
+        // 2x3 Bento Grid of Quick Actions
         Row(
           children: [
             Expanded(
@@ -845,10 +1104,9 @@ class _AdminDashboardHome extends StatelessWidget {
                 label: 'Buat Room',
                 subtitle: 'Grup/Kloter baru',
                 icon: Icons.add_business_rounded,
-                color: primaryColor,
-                isPrimary: true,
-                cardBg: cardBg,
-                headingColor: headingColor,
+                color: isDark ? AppColors.tanLight : AppColors.secondary,
+                cardBg: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceContainerLow,
+                headingColor: isDark ? AppColors.darkTextHeading : AppColors.primaryContainer,
                 isDark: isDark,
                 onTap: () => _showCreateRoomSheet(context, controller),
               ),
@@ -859,7 +1117,7 @@ class _AdminDashboardHome extends StatelessWidget {
                 label: 'Kelola Jamaah',
                 subtitle: 'Daftar semua room',
                 icon: Icons.manage_accounts_rounded,
-                color: const Color(0xFF2E7D32),
+                color: AppColors.statusSafe,
                 cardBg: cardBg,
                 headingColor: headingColor,
                 isDark: isDark,
@@ -868,10 +1126,8 @@ class _AdminDashboardHome extends StatelessWidget {
             ),
           ],
         ),
-
         const SizedBox(height: AppSpacing.sm),
 
-        // Row 2
         Row(
           children: [
             Expanded(
@@ -879,7 +1135,7 @@ class _AdminDashboardHome extends StatelessWidget {
                 label: 'Pantau Map',
                 subtitle: 'Lokasi & perimeter',
                 icon: Icons.map_rounded,
-                color: const Color(0xFF1976D2),
+                color: AppColors.secondary,
                 cardBg: cardBg,
                 headingColor: headingColor,
                 isDark: isDark,
@@ -889,20 +1145,27 @@ class _AdminDashboardHome extends StatelessWidget {
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: _QuickActionButton(
-                label: 'Lihat Alert',
-                subtitle: controller.activeSosCount.value > 0
-                    ? '${controller.activeSosCount.value} SOS aktif'
-                    : 'Pusat notifikasi',
+                label: 'Pusat Alert',
+                subtitle: activeSos > 0 ? '$activeSos SOS aktif' : 'Pusat notifikasi',
                 icon: Icons.notification_important_rounded,
-                color: controller.activeSosCount.value > 0
-                    ? AppColors.sosEmergency
-                    : AppColors.statusSafe,
-                cardBg: cardBg,
-                headingColor: headingColor,
+                color: activeSos > 0 ? AppColors.sosEmergency : AppColors.statusSafe,
+                cardBg: activeSos > 0
+                    ? (isDark ? AppColors.darkSurface : AppColors.errorContainer)
+                    : cardBg,
+                headingColor: activeSos > 0 ? AppColors.sosEmergency : headingColor,
                 isDark: isDark,
                 onTap: () {
-                  if (controller.activeSosCount.value > 0) {
-                    dashboardCtrl.changeTab(1);
+                  if (activeSos > 0) {
+                    _showAlertCenterSheet(
+                      context,
+                      controller,
+                      dashboardCtrl,
+                      isDark,
+                      cardBg,
+                      headingColor,
+                      isDark ? AppColors.darkTextBody : AppColors.textBody,
+                      primaryColor,
+                    );
                   } else {
                     Get.toNamed(AppRoutes.notification);
                   }
@@ -911,18 +1174,16 @@ class _AdminDashboardHome extends StatelessWidget {
             ),
           ],
         ),
-
         const SizedBox(height: AppSpacing.sm),
 
-        // Row 3: Broadcast & Geofence
         Row(
           children: [
             Expanded(
               child: _QuickActionButton(
-                label: 'Kirim Notifikasi',
-                subtitle: 'Siaran Admin multi-scope',
+                label: 'Kirim Siaran',
+                subtitle: 'Notifikasi broadcast',
                 icon: Icons.campaign_rounded,
-                color: const Color(0xFFD97706),
+                color: AppColors.distanceWarning,
                 cardBg: cardBg,
                 headingColor: headingColor,
                 isDark: isDark,
@@ -932,10 +1193,10 @@ class _AdminDashboardHome extends StatelessWidget {
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: _QuickActionButton(
-                label: 'Perimeter / Geofence',
+                label: 'Perimeter Radar',
                 subtitle: 'Radius aman jamaah',
                 icon: Icons.radar_rounded,
-                color: const Color(0xFF00897B),
+                color: AppColors.emeraldIslamic,
                 cardBg: cardBg,
                 headingColor: headingColor,
                 isDark: isDark,
@@ -948,7 +1209,83 @@ class _AdminDashboardHome extends StatelessWidget {
     );
   }
 
-  // ── 5. Room Pantau Section ─────────────────────────────────────────────────
+  // -- Bottom Action Pill Button --
+  Widget _buildBottomActionPill(BuildContext context, bool isDark) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF332B14) : const Color(0xFFFFF3C7),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(
+          color: isDark ? const Color(0xFF4D401C) : const Color(0xFFFEE685),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (isDark ? Colors.black : const Color(0xFFD4A857)).withValues(
+              alpha: isDark ? 0.3 : 0.15,
+            ),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => dashboardCtrl.changeTab(1),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.white.withValues(alpha: 0.7),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.explore_rounded,
+                    size: 18,
+                    color: isDark ? const Color(0xFFFEE685) : const Color(0xFF6B4D00),
+                  ),
+                ),
+                Text(
+                  'Pantau Peta Operasional  >>>',
+                  style: AppTypography.titleSmall.copyWith(
+                    color: isDark ? const Color(0xFFFEE685) : const Color(0xFF6B4D00),
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.2,
+                    fontSize: 13.5,
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 18,
+                  color: isDark ? const Color(0xFFFEE685) : const Color(0xFF6B4D00),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getMonthName(int month) {
+    const months = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    return (month >= 1 && month <= 12) ? months[month - 1] : '';
+  }
+
+  // �f¢â�,�â�?s¬�f¢â�,�â�?s¬ 5. Room Pantau Section �f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬
   Widget _buildRoomPantauSection(
     BuildContext context,
     bool isDark,
@@ -1096,7 +1433,7 @@ class _AdminDashboardHome extends StatelessWidget {
     );
   }
 
-  // ── 6. Aktivitas Terbaru ───────────────────────────────────────────────────
+  // �f¢â�,�â�?s¬�f¢â�,�â�?s¬ 6. Aktivitas Terbaru �f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬
   Widget _buildRecentActivitiesSection(
     BuildContext context,
     bool isDark,
@@ -1169,8 +1506,8 @@ class _AdminDashboardHome extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 sortedActivities.isEmpty
-                                    ? 'Realtime • Pemantauan aktif'
-                                    : 'Realtime • ${sortedActivities.length} aktivitas',
+                                    ? 'Realtime - Pemantauan aktif'
+                                    : 'Realtime - ${sortedActivities.length} aktivitas',
                                 style: AppTypography.captionSmall.copyWith(
                                   color: bodyColor.withValues(alpha: 0.75),
                                   fontWeight: FontWeight.w600,
@@ -1390,7 +1727,7 @@ class _AdminDashboardHome extends StatelessWidget {
     );
   }
 
-  // ── Activity Detail Bottom Sheet ──────────────────────────────────────────
+  // �f¢â�,�â�?s¬�f¢â�,�â�?s¬ Activity Detail Bottom Sheet �f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬
   void _showActivityDetailSheet(
     BuildContext context,
     ActivityModel act,
@@ -1768,7 +2105,7 @@ class _AdminDashboardHome extends StatelessWidget {
     );
   }
 
-  // ── Show All Activities Bottom Sheet (Paginated 10/page) ───────────────────
+  // �f¢â�,�â�?s¬�f¢â�,�â�?s¬ Show All Activities Bottom Sheet (Paginated 10/page) �f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬
   void _showAllActivitiesSheet(
     BuildContext context,
     AdminRoomController controller,
@@ -2126,7 +2463,7 @@ class _AdminDashboardHome extends StatelessWidget {
                                   padding: const EdgeInsets.symmetric(vertical: 16),
                                   child: Center(
                                     child: Text(
-                                      '— Semua riwayat telah ditampilkan —',
+                                      '--- Semua riwayat telah ditampilkan ---',
                                       style: AppTypography.captionSmall.copyWith(
                                         color: bodyColor.withValues(alpha: 0.5),
                                         fontSize: 11,
@@ -2258,7 +2595,7 @@ class _AdminDashboardHome extends StatelessWidget {
     return '$day $month $year, $hour:$minute WIB';
   }
 
-  // ── Create Room Modal Bottom Sheet ─────────────────────────────────────────
+  // �f¢â�,�â�?s¬�f¢â�,�â�?s¬ Create Room Modal Bottom Sheet �f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬
   void _showCreateRoomSheet(
     BuildContext context,
     AdminRoomController controller,
@@ -2438,7 +2775,7 @@ class _AdminDashboardHome extends StatelessWidget {
     );
   }
 
-  // ── 1. Active Rooms Bottom Sheet ───────────────────────────────────────────
+  // �f¢â�,�â�?s¬�f¢â�,�â�?s¬ 1. Active Rooms Bottom Sheet �f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬
   void _showActiveRoomsSheet(
     BuildContext context,
     AdminRoomController controller,
@@ -2702,7 +3039,7 @@ class _AdminDashboardHome extends StatelessWidget {
 
                                             // Middle: Count
                                             Text(
-                                              '$jCount Jamaah • $pCount Pendamping',
+                                              '$jCount Jamaah - $pCount Pendamping',
                                               style: AppTypography.bodySmall
                                                   .copyWith(
                                                 color: bodyColor
@@ -2758,7 +3095,7 @@ class _AdminDashboardHome extends StatelessWidget {
     );
   }
 
-  // ── 2. Total Jamaah Bottom Sheet ───────────────────────────────────────────
+  // �f¢â�,�â�?s¬�f¢â�,�â�?s¬ 2. Total Jamaah Bottom Sheet �f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬
   void _showAllJamaahSheet(
     BuildContext context,
     AdminRoomController controller,
@@ -2831,14 +3168,14 @@ class _AdminDashboardHome extends StatelessWidget {
                                 Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF2E7D32)
+                                    color: AppColors.statusSafe
                                         .withValues(alpha: 0.15),
                                     borderRadius:
                                         BorderRadius.circular(AppRadius.sm),
                                   ),
                                   child: const Icon(
                                     Icons.groups_rounded,
-                                    color: Color(0xFF2E7D32),
+                                    color: AppColors.statusSafe,
                                     size: 20,
                                   ),
                                 ),
@@ -2977,22 +3314,22 @@ class _AdminDashboardHome extends StatelessWidget {
 
                                     if (isSos) {
                                       dotColor = AppColors.sosEmergency;
-                                      statusLabel = '● SOS Aktif';
+                                      statusLabel = '* SOS Aktif';
                                     } else if (locUpdatedAt != null) {
                                       final diff = DateTime.now()
                                           .difference(locUpdatedAt);
                                       if (diff.inMinutes <= 5 || isGps) {
                                         dotColor = AppColors.statusSafe;
-                                        statusLabel = '● Online';
+                                        statusLabel = '* Online';
                                       } else {
                                         dotColor = const Color(
-                                            0xFFF57C00); // Amber
+                                            0xFFF57C00); // Amber (stale location)
                                         statusLabel =
                                             'Lokasi terakhir ${_formatMinutesAgo(diff)}';
                                       }
                                     } else if (isGps) {
                                       dotColor = AppColors.statusSafe;
-                                      statusLabel = '● Online';
+                                      statusLabel = '* Online';
                                     } else {
                                       dotColor =
                                           bodyColor.withValues(alpha: 0.5);
@@ -3156,7 +3493,7 @@ class _AdminDashboardHome extends StatelessWidget {
     );
   }
 
-  // ── 3. Pendamping Bottom Sheet ─────────────────────────────────────────────
+  // �f¢â�,�â�?s¬�f¢â�,�â�?s¬ 3. Pendamping Bottom Sheet �f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬
   void _showAllPendampingSheet(
     BuildContext context,
     AdminRoomController controller,
@@ -3211,18 +3548,17 @@ class _AdminDashboardHome extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF1976D2)
-                                    .withValues(alpha: 0.15),
+                                color: AppColors.secondary.withValues(alpha: 0.15),
                                 borderRadius:
                                     BorderRadius.circular(AppRadius.sm),
                               ),
                               child: const Icon(
                                 Icons.health_and_safety_rounded,
-                                color: Color(0xFF1976D2),
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
+                                color: AppColors.secondary,
+                                 size: 20,
+                               ),
+                             ),
+                             const SizedBox(width: 10),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -3361,7 +3697,7 @@ class _AdminDashboardHome extends StatelessWidget {
                                               width: 40,
                                               height: 40,
                                               decoration: BoxDecoration(
-                                                color: const Color(0xFF1976D2)
+                                                color: AppColors.secondary
                                                     .withValues(
                                                   alpha: isDark ? 0.22 : 0.12,
                                                 ),
@@ -3372,7 +3708,7 @@ class _AdminDashboardHome extends StatelessWidget {
                                               ),
                                               child: const Icon(
                                                 Icons.shield_rounded,
-                                                color: Color(0xFF1976D2),
+                                                color: AppColors.secondary,
                                                 size: 20,
                                               ),
                                             ),
@@ -3543,7 +3879,7 @@ class _AdminDashboardHome extends StatelessWidget {
     );
   }
 
-  // ── 4. Alert Center Bottom Sheet ───────────────────────────────────────────
+  // �f¢â�,�â�?s¬�f¢â�,�â�?s¬ 4. Alert Center Bottom Sheet �f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬
   void _showAlertCenterSheet(
     BuildContext context,
     AdminRoomController controller,
@@ -3784,7 +4120,7 @@ class _AdminDashboardHome extends StatelessWidget {
                                             child: const Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                Text('🚨',
+                                                Text('�f°�.¸�.¡�,¨',
                                                     style:
                                                         TextStyle(fontSize: 12)),
                                                 SizedBox(width: 4),
@@ -3877,7 +4213,7 @@ class _AdminDashboardHome extends StatelessWidget {
                             Text(
                               'PERLU PERHATIAN',
                               style: AppTypography.captionSmall.copyWith(
-                                color: const Color(0xFFF57C00),
+                                color: AppColors.distanceWarning,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 0.6,
                               ),
@@ -3909,7 +4245,7 @@ class _AdminDashboardHome extends StatelessWidget {
                                   borderRadius:
                                       BorderRadius.circular(AppRadius.card),
                                   border: Border.all(
-                                    color: const Color(0xFFF57C00)
+                                    color: AppColors.distanceWarning
                                         .withValues(alpha: 0.45),
                                     width: 1.0,
                                   ),
@@ -3958,7 +4294,7 @@ class _AdminDashboardHome extends StatelessWidget {
                                             children: [
                                               Row(
                                                 children: [
-                                                  const Text('📍',
+                                                  const Text('�f°�.¸â�,��"�,',
                                                       style: TextStyle(
                                                           fontSize: 12)),
                                                   const SizedBox(width: 4),
@@ -3967,8 +4303,7 @@ class _AdminDashboardHome extends StatelessWidget {
                                                     style: AppTypography
                                                         .captionSmall
                                                         .copyWith(
-                                                      color: const Color(
-                                                          0xFFF57C00),
+                                                      color: AppColors.distanceWarning,
                                                       fontWeight:
                                                           FontWeight.bold,
                                                       fontSize: 11.5,
@@ -4141,140 +4476,10 @@ class _AdminDashboardHome extends StatelessWidget {
   }
 }
 
-// ── Supporting Widgets ────────────────────────────────────────────────────────
+// �f¢â�,�â�?s¬�f¢â�,�â�?s¬ Supporting Widgets �f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬
 
-// ── KPI Metric Card ─────────────────────────────────────────────────────────
-class _KpiMetricCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final String subtitle;
-  final IconData icon;
-  final Color color;
-  final bool isHighlighted;
-  final Color cardBg;
-  final Color headingColor;
-  final Color bodyColor;
-  final bool isDark;
-  final VoidCallback? onTap;
 
-  const _KpiMetricCard({
-    required this.title,
-    required this.value,
-    required this.subtitle,
-    required this.icon,
-    required this.color,
-    this.isHighlighted = false,
-    required this.cardBg,
-    required this.headingColor,
-    required this.bodyColor,
-    required this.isDark,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final effectiveBg = isHighlighted
-        ? color.withValues(alpha: isDark ? 0.18 : 0.10)
-        : cardBg;
-
-    final borderColor = isHighlighted
-        ? color.withValues(alpha: 0.6)
-        : (isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: effectiveBg,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(
-          color: borderColor,
-          width: isHighlighted ? 1.4 : 1.0,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isHighlighted
-                ? color.withValues(alpha: 0.15)
-                : (isDark
-                      ? Colors.black.withValues(alpha: 0.18)
-                      : AppColors.primary.withValues(alpha: 0.03)),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadius.card),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.md,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.captionSmall.copyWith(
-                          color: bodyColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: isDark ? 0.22 : 0.12),
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                      ),
-                      child: Icon(icon, color: color, size: 16),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 6),
-
-                Text(
-                  value,
-                  style: AppTypography.displayLarge.copyWith(
-                    color: isHighlighted ? color : headingColor,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 26,
-                    height: 1.1,
-                  ),
-                ),
-
-                const SizedBox(height: 4),
-
-                Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.captionSmall.copyWith(
-                    color: isHighlighted
-                        ? color
-                        : bodyColor.withValues(alpha: 0.75),
-                    fontSize: 10.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ── Quick Action Button ───────────────────────────────────────────────────────
+// �f¢â�,�â�?s¬�f¢â�,�â�?s¬ Quick Action Button �f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬
 class _QuickActionButton extends StatelessWidget {
   final String label;
   final String subtitle;
@@ -4282,7 +4487,6 @@ class _QuickActionButton extends StatelessWidget {
   final Color color;
   final Color cardBg;
   final Color headingColor;
-  final bool isPrimary;
   final bool isDark;
   final VoidCallback onTap;
 
@@ -4293,7 +4497,6 @@ class _QuickActionButton extends StatelessWidget {
     required this.color,
     required this.cardBg,
     required this.headingColor,
-    this.isPrimary = false,
     required this.isDark,
     required this.onTap,
   });
@@ -4307,7 +4510,7 @@ class _QuickActionButton extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(AppRadius.card),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: effectiveBorder,
           width: 1.0,
@@ -4326,7 +4529,7 @@ class _QuickActionButton extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadius.card),
+          borderRadius: BorderRadius.circular(20),
           child: Container(
             constraints: const BoxConstraints(minHeight: 64),
             padding: const EdgeInsets.symmetric(
@@ -4340,7 +4543,7 @@ class _QuickActionButton extends StatelessWidget {
                   height: 38,
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: isDark ? 0.20 : 0.10),
-                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    shape: BoxShape.circle,
                   ),
                   child: Icon(icon, color: color, size: 20),
                 ),
@@ -4389,7 +4592,7 @@ class _QuickActionButton extends StatelessWidget {
   }
 }
 
-// ── Room Pantau Card ─────────────────────────────────────────────────────────
+// �f¢â�,�â�?s¬�f¢â�,�â�?s¬ Room Pantau Card �f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬�f¢â�,�â�?s¬
 class _RoomPantauCard extends StatelessWidget {
   final RoomModel room;
   final int jamaahCount;
@@ -4531,14 +4734,14 @@ class _RoomPantauCard extends StatelessWidget {
                     _BadgeCount(
                       icon: Icons.groups_rounded,
                       label: '$jamaahCount Jamaah',
-                      color: const Color(0xFF2E7D32),
+                      color: AppColors.statusSafe,
                       isDark: isDark,
                     ),
 
                     _BadgeCount(
                       icon: Icons.health_and_safety_rounded,
                       label: '$pendampingCount Pendamping',
-                      color: const Color(0xFF1976D2),
+                      color: AppColors.secondary,
                       isDark: isDark,
                     ),
 
@@ -5019,3 +5222,131 @@ class _ActivityFeedTile extends StatelessWidget {
     );
   }
 }
+
+/// Circular gauge painter for the Hero Progress Card (reference: Calorie circular arc)
+class _HeroGaugePainter extends CustomPainter {
+  final double progress;
+  final Color trackColor;
+  final Color progressColor;
+  final Color dotColor;
+
+  const _HeroGaugePainter({
+    required this.progress,
+    required this.trackColor,
+    required this.progressColor,
+    required this.dotColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    const strokeWidth = 7.0;
+    final radius = (size.width - strokeWidth) / 2;
+
+    // Track arc
+    final trackPaint = Paint()
+      ..color = trackColor
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    const startAngle = -math.pi / 2;
+    const sweepTotal = 2 * math.pi * 0.85; // 85% arc for open meter aesthetic
+
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      startAngle,
+      sweepTotal,
+      false,
+      trackPaint,
+    );
+
+    // Progress arc
+    final activeSweep = sweepTotal * progress.clamp(0.0, 1.0);
+    final progressPaint = Paint()
+      ..color = progressColor
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      startAngle,
+      activeSweep,
+      false,
+      progressPaint,
+    );
+
+    // End indicator dot
+    final endAngle = startAngle + activeSweep;
+    final dotX = center.dx + radius * math.cos(endAngle);
+    final dotY = center.dy + radius * math.sin(endAngle);
+
+    final dotPaint = Paint()
+      ..color = dotColor
+      ..style = PaintingStyle.fill;
+
+    canvas.drawCircle(Offset(dotX, dotY), 4.5, dotPaint);
+
+    final dotBorderPaint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawCircle(Offset(dotX, dotY), 4.5, dotBorderPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _HeroGaugePainter oldDelegate) {
+    return oldDelegate.progress != progress ||
+        oldDelegate.trackColor != trackColor ||
+        oldDelegate.progressColor != progressColor ||
+        oldDelegate.dotColor != dotColor;
+  }
+}
+
+/// Mini sparkline wave painter for the Petugas KPI card (reference: green wave in reference)
+class _MiniSparklinePainter extends CustomPainter {
+  final Color color;
+
+  const _MiniSparklinePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.8
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final path = Path();
+    path.moveTo(0, size.height * 0.7);
+    path.quadraticBezierTo(
+      size.width * 0.28,
+      0,
+      size.width * 0.55,
+      size.height * 0.55,
+    );
+    path.quadraticBezierTo(
+      size.width * 0.8,
+      size.height * 1.0,
+      size.width,
+      size.height * 0.2,
+    );
+
+    canvas.drawPath(path, paint);
+
+    // Accent dot at peak
+    final dotPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(size.width, size.height * 0.2), 2.2, dotPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _MiniSparklinePainter oldDelegate) {
+    return oldDelegate.color != color;
+  }
+}
+
