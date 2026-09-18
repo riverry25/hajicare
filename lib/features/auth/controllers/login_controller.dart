@@ -76,7 +76,7 @@ class LoginController extends GetxController {
     final shouldRemember = rememberMe.value;
 
     if (email.isEmpty || password.isEmpty) {
-      errorMessage.value = 'Harap isi email dan password';
+      errorMessage.value = 'Harap isi email dan kata sandi terlebih dahulu.';
       _showErrorSnackbar(errorMessage.value!);
       return;
     }
@@ -155,13 +155,13 @@ class LoginController extends GetxController {
     } on FirebaseAuthException catch (e) {
       if (isClosed) return;
 
-      errorMessage.value = e.message ?? e.code;
+      errorMessage.value = _friendlyAuthError(e.code, e.message);
 
-      _showErrorSnackbar('Error Auth: ${errorMessage.value}');
+      _showErrorSnackbar(errorMessage.value!);
     } catch (e) {
       if (isClosed) return;
 
-      errorMessage.value = 'Terjadi kesalahan: $e';
+      errorMessage.value = 'Terjadi kesalahan saat masuk. Silakan coba beberapa saat lagi.';
 
       _showErrorSnackbar(errorMessage.value!);
     } finally {
@@ -316,7 +316,7 @@ class LoginController extends GetxController {
     } on FirebaseAuthException catch (e) {
       if (isClosed) return;
 
-      errorMessage.value = _friendlyAuthError(e.code);
+      errorMessage.value = _friendlyAuthError(e.code, e.message);
 
       _showErrorDialog(errorMessage.value!);
     } catch (e) {
@@ -328,7 +328,11 @@ class LoginController extends GetxController {
         return;
       }
 
-      errorMessage.value = 'Gagal masuk dengan Google: $e';
+      if (errorStr.contains('network') || errorStr.contains('socket') || errorStr.contains('connection')) {
+        errorMessage.value = 'Gagal masuk dengan Google. Periksa koneksi internet Anda.';
+      } else {
+        errorMessage.value = 'Gagal masuk dengan Google. Silakan coba lagi.';
+      }
 
       _showErrorDialog(errorMessage.value!);
     } finally {
@@ -340,21 +344,38 @@ class LoginController extends GetxController {
   }
 
   /// Maps Firebase error codes to user-friendly Indonesian messages.
-  String _friendlyAuthError(String code) {
+  String _friendlyAuthError(String code, [String? message]) {
+    final lowerMessage = message?.toLowerCase() ?? '';
+    if (code == 'invalid-credential' ||
+        code == 'wrong-password' ||
+        lowerMessage.contains('credential is incorrect') ||
+        lowerMessage.contains('malformed or has expired') ||
+        lowerMessage.contains('invalid password') ||
+        lowerMessage.contains('wrong password')) {
+      return 'Email atau kata sandi yang Anda masukkan salah.';
+    }
     switch (code) {
       case 'user-not-found':
         return 'Akun dengan email ini tidak ditemukan.';
-      case 'wrong-password':
-      case 'invalid-credential':
-        return 'Email atau password yang Anda masukkan salah.';
+      case 'invalid-email':
+        return 'Format email tidak valid. Pastikan penulisan email sudah benar.';
       case 'user-disabled':
-        return 'Akun ini telah dinonaktifkan. Hubungi administrator.';
+        return 'Akun ini telah dinonaktifkan. Silakan hubungi administrator.';
       case 'too-many-requests':
-        return 'Terlalu banyak percobaan. Coba beberapa saat lagi.';
+        return 'Terlalu banyak percobaan masuk yang gagal. Silakan coba beberapa saat lagi.';
       case 'network-request-failed':
         return 'Tidak ada koneksi internet. Periksa jaringan Anda.';
+      case 'operation-not-allowed':
+        return 'Metode masuk ini sedang dinonaktifkan.';
+      case 'channel-error':
+        return 'Harap isi semua kolom email dan kata sandi.';
+      case 'account-exists-with-different-credential':
+        return 'Akun sudah terdaftar dengan metode masuk yang berbeda.';
       default:
-        return 'Gagal masuk. Periksa kembali email dan password Anda.';
+        if (lowerMessage.contains('network') || lowerMessage.contains('connection')) {
+          return 'Gagal terhubung ke server. Periksa koneksi internet Anda.';
+        }
+        return 'Gagal masuk. Periksa kembali email dan kata sandi Anda.';
     }
   }
 

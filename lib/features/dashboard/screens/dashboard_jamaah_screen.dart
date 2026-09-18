@@ -140,7 +140,7 @@ class DashboardJamaahScreen extends StatelessWidget {
             child: Center(
               child: InkWell(
                 onTap: () {
-                  if (state.activeRoomId.value == null || state.activeRoomId.value!.isEmpty) {
+                  if ((state.activeRoomId.value ?? '').isEmpty) {
                     AppAlert.warning(
                       context,
                       title: 'Room Diperlukan',

@@ -76,7 +76,7 @@ class JamaahDistanceCard extends StatelessWidget {
 
     // Check if user has active room
     final controller = Get.isRegistered<HajiCareController>() ? Get.find<HajiCareController>() : null;
-    final hasActiveRoom = controller?.activeRoomId.value != null && controller!.activeRoomId.value!.isNotEmpty;
+    final hasActiveRoom = (controller?.activeRoomId.value ?? '').isNotEmpty;
 
     if (!hasActiveRoom) {
       return AppCard(
@@ -439,7 +439,7 @@ class JamaahDistanceCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'Batas aman rombongan: ${controller.safeRadiusMeters.value.toInt()} meter',
+                        'Batas aman rombongan: ${(controller?.safeRadiusMeters.value ?? 200.0).toInt()} meter',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.caption.copyWith(color: bodyColor),
@@ -466,7 +466,7 @@ class JamaahDistanceCard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.pill),
             child: LinearProgressIndicator(
-              value: (jamaah.distance / controller.safeRadiusMeters.value).clamp(0.0, 1.0),
+              value: (jamaah.distance / (controller?.safeRadiusMeters.value ?? 200.0)).clamp(0.0, 1.0),
               backgroundColor: isDark
                   ? AppColors.darkSurfaceContainerHighest
                   : AppColors.canvasCreamSubtle,
