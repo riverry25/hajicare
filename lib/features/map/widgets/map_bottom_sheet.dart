@@ -564,14 +564,12 @@ class _MapBottomSheetState extends State<MapBottomSheet>
       return ElevatedButton.icon(
         onPressed: onRetryRoute,
         icon: const Icon(Icons.refresh_rounded, size: 18),
-        label: Flexible(
-          child: Text(
-            'Rute tidak ditemukan · Coba Lagi',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTypography.labelLarge.copyWith(
-              color: AppColors.surfaceWhite,
-            ),
+        label: Text(
+          'Rute tidak ditemukan · Coba Lagi',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTypography.labelLarge.copyWith(
+            color: AppColors.surfaceWhite,
           ),
         ),
         style: ElevatedButton.styleFrom(
@@ -591,15 +589,13 @@ class _MapBottomSheetState extends State<MapBottomSheet>
         size: 20,
         color: isDark ? AppColors.espressoDark : AppColors.goldPrimary,
       ),
-      label: Flexible(
-        child: Text(
-          'Arahkan Rute ke ${member.name.split(' ').first}',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: AppTypography.labelLarge.copyWith(
-            color: isDark ? AppColors.espressoDark : Colors.white,
-            fontWeight: FontWeight.w800,
-          ),
+      label: Text(
+        'Arahkan Rute ke ${member.name.split(' ').first}',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: AppTypography.labelLarge.copyWith(
+          color: isDark ? AppColors.espressoDark : Colors.white,
+          fontWeight: FontWeight.w800,
         ),
       ),
       style: ElevatedButton.styleFrom(
