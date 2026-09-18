@@ -81,11 +81,11 @@ class DashboardJamaahScreen extends StatelessWidget {
     );
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF1B120B) : const Color(0xFF26170E),
+      backgroundColor: isDark
+          ? const Color(0xFF1B120B)
+          : const Color(0xFF26170E),
       body: Container(
-        decoration: BoxDecoration(
-          gradient: heroGradient,
-        ),
+        decoration: BoxDecoration(gradient: heroGradient),
         child: Obx(() {
           final jamaah = state.self;
 
@@ -135,18 +135,21 @@ class DashboardJamaahScreen extends StatelessWidget {
     final displayName = jamaah.name.trim().isNotEmpty
         ? jamaah.name.trim()
         : (jamaah.shortLabel.isNotEmpty ? jamaah.shortLabel : 'Jamaah Haji');
-    final initialLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : 'J';
+    final initialLetter = displayName.isNotEmpty
+        ? displayName[0].toUpperCase()
+        : 'J';
 
     // Firebase Porsi number directly from users collection
-    final porsiNumber = (jamaah.porsi != null && jamaah.porsi!.trim().isNotEmpty)
+    final porsiNumber =
+        (jamaah.porsi != null && jamaah.porsi!.trim().isNotEmpty)
         ? jamaah.porsi!.trim()
         : '1300948201';
 
     // Distance formatting (Promoted to Hero Display)
     final distanceDisplay = jamaah.distance > 0
         ? (jamaah.distance < 1000
-            ? '${jamaah.distance.round()} m'
-            : '${(jamaah.distance / 1000).toStringAsFixed(1)} km')
+              ? '${jamaah.distance.round()} m'
+              : '${(jamaah.distance / 1000).toStringAsFixed(1)} km')
         : '20 m';
 
     // Next prayer time display with timezone suffix stripped to avoid overflow
@@ -328,18 +331,12 @@ class DashboardJamaahScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildMetricColumn(
-                value: porsiNumber,
-                label: 'Nomor Porsi',
-              ),
+              _buildMetricColumn(value: porsiNumber, label: 'Nomor Porsi'),
               _buildMetricColumn(
                 value: '$prayerName $cleanPrayerTime',
                 label: 'Jadwal Salat',
               ),
-              _buildMetricColumn(
-                value: gpsDisplay,
-                label: 'Status Lokasi',
-              ),
+              _buildMetricColumn(value: gpsDisplay, label: 'Status Lokasi'),
             ],
           ),
 
@@ -484,7 +481,8 @@ class DashboardJamaahScreen extends StatelessWidget {
               ? Get.find<NotificationController>()
               : null;
           final totalUnread = notifCtrl != null
-              ? notifCtrl.unreadCount.value + notifCtrl.pendingInvitations.length
+              ? notifCtrl.unreadCount.value +
+                    notifCtrl.pendingInvitations.length
               : 0;
           final hasSeparated = state.self.separatedMode;
 
@@ -497,16 +495,18 @@ class DashboardJamaahScreen extends StatelessWidget {
               width: 10,
               height: 10,
               decoration: BoxDecoration(
-                color: hasSeparated ? AppColors.sosEmergency : const Color(0xFF00E5FF),
+                color: hasSeparated
+                    ? AppColors.sosEmergency
+                    : const Color(0xFF00E5FF),
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: const Color(0xFF2E1C12),
-                  width: 1.5,
-                ),
+                border: Border.all(color: const Color(0xFF2E1C12), width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: (hasSeparated ? AppColors.sosEmergency : const Color(0xFF00E5FF))
-                        .withValues(alpha: 0.6),
+                    color:
+                        (hasSeparated
+                                ? AppColors.sosEmergency
+                                : const Color(0xFF00E5FF))
+                            .withValues(alpha: 0.6),
                     blurRadius: 6,
                     spreadRadius: 1,
                   ),
@@ -579,42 +579,62 @@ class DashboardJamaahScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Quick Service Categories (Row of 4 Horizontal Items) ─
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildCategoryItem(
-                context: context,
-                label: 'Komunikasi Cepat',
-                icon: Icons.record_voice_over_rounded,
-                bgColor: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream,
-                iconColor: isDark ? AppColors.goldLight : AppColors.espressoDark,
-                onTap: () => CommunicationGestureDialog.show(context),
-              ),
-              _buildCategoryItem(
-                context: context,
-                label: 'Smart Band',
-                icon: Icons.watch_rounded,
-                bgColor: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream,
-                iconColor: isDark ? AppColors.goldLight : AppColors.espressoDark,
-                onTap: () => _showSmartBandDialog(context),
-              ),
-              _buildCategoryItem(
-                context: context,
-                label: 'Panduan Doa',
-                icon: Icons.menu_book_rounded,
-                bgColor: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream,
-                iconColor: isDark ? AppColors.goldLight : AppColors.espressoDark,
-                onTap: () => _showDoaSheet(context),
-              ),
-              _buildCategoryItem(
-                context: context,
-                label: 'Pos Medis',
-                icon: Icons.local_hospital_rounded,
-                bgColor: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream,
-                iconColor: isDark ? AppColors.goldLight : AppColors.espressoDark,
-                onTap: () => _showMedicalSheet(context),
-              ),
-            ],
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildCategoryItem(
+                  context: context,
+                  label: 'Komunikasi Cepat',
+                  icon: Icons.record_voice_over_rounded,
+                  bgColor: isDark
+                      ? AppColors.darkSurfaceContainer
+                      : AppColors.canvasCream,
+                  iconColor: isDark
+                      ? AppColors.goldLight
+                      : AppColors.espressoDark,
+                  onTap: () => CommunicationGestureDialog.show(context),
+                ),
+                _buildCategoryItem(
+                  context: context,
+                  label: 'Smart Band',
+                  icon: Icons.watch_rounded,
+                  bgColor: isDark
+                      ? AppColors.darkSurfaceContainer
+                      : AppColors.canvasCream,
+                  iconColor: isDark
+                      ? AppColors.goldLight
+                      : AppColors.espressoDark,
+                  onTap: () => _showSmartBandDialog(context),
+                ),
+                _buildCategoryItem(
+                  context: context,
+                  label: 'Panduan Doa',
+                  icon: Icons.menu_book_rounded,
+                  bgColor: isDark
+                      ? AppColors.darkSurfaceContainer
+                      : AppColors.canvasCream,
+                  iconColor: isDark
+                      ? AppColors.goldLight
+                      : AppColors.espressoDark,
+                  onTap: () => _showDoaSheet(context),
+                ),
+                _buildCategoryItem(
+                  context: context,
+                  label: 'Pos Medis',
+                  icon: Icons.local_hospital_rounded,
+                  bgColor: isDark
+                      ? AppColors.darkSurfaceContainer
+                      : AppColors.canvasCream,
+                  iconColor: isDark
+                      ? AppColors.goldLight
+                      : AppColors.espressoDark,
+                  onTap: () => _showMedicalSheet(context),
+                ),
+              ],
+            ),
           ),
 
           const SizedBox(height: 28),
@@ -638,7 +658,10 @@ class DashboardJamaahScreen extends StatelessWidget {
             actionText: 'Kelola',
             onAction: () {
               if (state.activeRoomId.value != null) {
-                Get.toNamed(AppRoutes.roomDetail);
+                Get.toNamed(
+                  AppRoutes.roomDetail,
+                  arguments: state.activeRoom.value,
+                );
               } else {
                 Get.toNamed(AppRoutes.joinRoom);
               }
@@ -685,8 +708,10 @@ class DashboardJamaahScreen extends StatelessWidget {
       },
       borderRadius: BorderRadius.circular(18),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
               width: 58,
@@ -710,31 +735,24 @@ class DashboardJamaahScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Center(
-                child: Icon(
-                  icon,
-                  color: iconColor,
-                  size: 26,
-                ),
-              ),
+              child: Center(child: Icon(icon, color: iconColor, size: 26)),
             ),
             const SizedBox(height: 7),
-            SizedBox(
-              width: 72,
-              height: 28,
-              child: Center(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    color: textHeading,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    height: 1.2,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+            Container(
+              width: 76,
+              constraints: const BoxConstraints(minHeight: 34),
+              alignment: Alignment.topCenter,
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: textHeading,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  height: 1.22,
                 ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.visible,
               ),
             ),
           ],
@@ -852,7 +870,9 @@ class DashboardJamaahScreen extends StatelessWidget {
     }
 
     // Normal safe connection state
-    final cardBg = isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite;
+    final cardBg = isDark
+        ? AppColors.darkSurfaceContainer
+        : AppColors.surfaceWhite;
     final headingColor = AppColors.textHeadingColor(context);
 
     return Container(
@@ -936,7 +956,9 @@ class DashboardJamaahScreen extends StatelessWidget {
     bool isDark,
     Color headingColor,
   ) {
-    final cardBg = isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite;
+    final cardBg = isDark
+        ? AppColors.darkSurfaceContainer
+        : AppColors.surfaceWhite;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1021,9 +1043,7 @@ class DashboardJamaahScreen extends StatelessWidget {
             return SizedBox(
               width: dashWidth,
               height: 1.2,
-              child: DecoratedBox(
-                decoration: BoxDecoration(color: color),
-              ),
+              child: DecoratedBox(decoration: BoxDecoration(color: color)),
             );
           }),
         );
@@ -1040,15 +1060,20 @@ class DashboardJamaahScreen extends StatelessWidget {
     final doas = [
       {
         'title': 'Bacaan Talbiyah',
-        'arabic': 'لَبَّيْكَ اللَّهُمَّ لَبَّيْكَ، لَبَّيْكَ لاَ شَرِيكَ لَكَ لَبَّيْكَ',
-        'latin': 'Labbaikallaahumma labbaik, labbaika laa syariika laka labbaik...',
+        'arabic':
+            'لَبَّيْكَ اللَّهُمَّ لَبَّيْكَ، لَبَّيْكَ لاَ شَرِيكَ لَكَ لَبَّيْكَ',
+        'latin':
+            'Labbaikallaahumma labbaik, labbaika laa syariika laka labbaik...',
         'arti': 'Aku penuhi panggilan-Mu ya Allah, aku penuhi panggilan-Mu...',
       },
       {
         'title': 'Doa Tawaf (Antara Rukun Yamani & Hajar Aswad)',
-        'arabic': 'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ',
-        'latin': 'Rabbanaa aatinaa fid dunyaa hasanah wa fil aakhirati hasanah wa qinaa \'adzaaban naar',
-        'arti': 'Ya Tuhan kami, berilah kami kebaikan di dunia dan kebaikan di akhirat dan lindungilah kami dari azab neraka.',
+        'arabic':
+            'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ',
+        'latin':
+            'Rabbanaa aatinaa fid dunyaa hasanah wa fil aakhirati hasanah wa qinaa \'adzaaban naar',
+        'arti':
+            'Ya Tuhan kami, berilah kami kebaikan di dunia dan kebaikan di akhirat dan lindungilah kami dari azab neraka.',
       },
       {
         'title': 'Doa Masuk Masjidil Haram',
@@ -1066,7 +1091,9 @@ class DashboardJamaahScreen extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadius.sheet),
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1077,7 +1104,9 @@ class DashboardJamaahScreen extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkOutlineVariant : AppColors.outlineVariant,
+                  color: isDark
+                      ? AppColors.darkOutlineVariant
+                      : AppColors.outlineVariant,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
               ),
@@ -1103,7 +1132,9 @@ class DashboardJamaahScreen extends StatelessWidget {
                       Text(
                         item['title']!,
                         style: AppTypography.titleMedium.copyWith(
-                          color: isDark ? AppColors.goldLight : AppColors.espressoDark,
+                          color: isDark
+                              ? AppColors.goldLight
+                              : AppColors.espressoDark,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -1155,7 +1186,9 @@ class DashboardJamaahScreen extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.cardPadding),
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadius.sheet),
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1166,7 +1199,9 @@ class DashboardJamaahScreen extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkOutlineVariant : AppColors.outlineVariant,
+                  color: isDark
+                      ? AppColors.darkOutlineVariant
+                      : AppColors.outlineVariant,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
               ),
@@ -1202,7 +1237,9 @@ class DashboardJamaahScreen extends StatelessWidget {
                       Text(
                         'Bantuan Medis Darurat & Maktab',
                         style: AppTypography.caption.copyWith(
-                          color: isDark ? AppColors.darkTextBody : AppColors.textBody,
+                          color: isDark
+                              ? AppColors.darkTextBody
+                              : AppColors.textBody,
                         ),
                       ),
                     ],
@@ -1227,7 +1264,10 @@ class DashboardJamaahScreen extends StatelessWidget {
               contentPadding: EdgeInsets.zero,
               leading: const CircleAvatar(
                 backgroundColor: Color(0xFFE8F5E9),
-                child: Icon(Icons.medical_services_rounded, color: Color(0xFF15803D)),
+                child: Icon(
+                  Icons.medical_services_rounded,
+                  color: Color(0xFF15803D),
+                ),
               ),
               title: const Text(
                 'Klinik Kesehatan Haji Indonesia (KKHI)',
@@ -1285,7 +1325,9 @@ class DashboardJamaahScreen extends StatelessWidget {
             topLeft: Radius.circular(24),
             bottomLeft: Radius.circular(24),
             bottomRight: Radius.circular(24),
-            topRight: Radius.circular(52), // Signature modern curved top-right corner
+            topRight: Radius.circular(
+              52,
+            ), // Signature modern curved top-right corner
           ),
         ),
         child: Padding(
@@ -1297,8 +1339,13 @@ class DashboardJamaahScreen extends StatelessWidget {
             final lightStatus = ldrCtrl.lightStatus;
 
             // Safe fallback readings if not yet connected to physical hardware
-            final displayLdr = isConnected && ldrVal > 0 ? ldrVal : (ldrVal > 0 ? ldrVal : 820);
-            final displayBrightnessPct = ((4095 - displayLdr) / 4095.0).clamp(0.1, 1.0);
+            final displayLdr = isConnected && ldrVal > 0
+                ? ldrVal
+                : (ldrVal > 0 ? ldrVal : 820);
+            final displayBrightnessPct = ((4095 - displayLdr) / 4095.0).clamp(
+              0.1,
+              1.0,
+            );
             final displayStatus = lightStatus != '-' ? lightStatus : 'Terang';
 
             return Column(
@@ -1322,7 +1369,9 @@ class DashboardJamaahScreen extends StatelessWidget {
                                 width: 3.5,
                                 height: 36,
                                 decoration: BoxDecoration(
-                                  color: isDark ? AppColors.goldLight : AppColors.primaryGold,
+                                  color: isDark
+                                      ? AppColors.goldLight
+                                      : AppColors.primaryGold,
                                   borderRadius: BorderRadius.circular(2),
                                 ),
                               ),
@@ -1346,7 +1395,9 @@ class DashboardJamaahScreen extends StatelessWidget {
                                       children: [
                                         Icon(
                                           Icons.wb_sunny_rounded,
-                                          color: isDark ? AppColors.goldLight : AppColors.primaryGold,
+                                          color: isDark
+                                              ? AppColors.goldLight
+                                              : AppColors.primaryGold,
                                           size: 16,
                                         ),
                                         const SizedBox(width: 5),
@@ -1363,22 +1414,39 @@ class DashboardJamaahScreen extends StatelessWidget {
                                         Text(
                                           'Lux',
                                           style: TextStyle(
-                                            color: isDark ? Colors.white54 : const Color(0xFF94A3B8),
+                                            color: isDark
+                                                ? Colors.white54
+                                                : const Color(0xFF94A3B8),
                                             fontSize: 11,
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
                                         const SizedBox(width: 6),
                                         Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 5,
+                                            vertical: 1.5,
+                                          ),
                                           decoration: BoxDecoration(
-                                            color: (isDark ? AppColors.goldLight : AppColors.primaryGold).withValues(alpha: isDark ? 0.25 : 0.14),
-                                            borderRadius: BorderRadius.circular(4),
+                                            color:
+                                                (isDark
+                                                        ? AppColors.goldLight
+                                                        : AppColors.primaryGold)
+                                                    .withValues(
+                                                      alpha: isDark
+                                                          ? 0.25
+                                                          : 0.14,
+                                                    ),
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
                                           ),
                                           child: Text(
                                             displayStatus,
                                             style: TextStyle(
-                                              color: isDark ? AppColors.goldLight : AppColors.goldDark,
+                                              color: isDark
+                                                  ? AppColors.goldLight
+                                                  : AppColors.goldDark,
                                               fontSize: 10,
                                               fontWeight: FontWeight.w700,
                                             ),
@@ -1404,7 +1472,9 @@ class DashboardJamaahScreen extends StatelessWidget {
                                 decoration: BoxDecoration(
                                   color: isFlame
                                       ? AppColors.sosEmergency
-                                      : (isDark ? AppColors.darkSecondary : AppColors.tanMedium),
+                                      : (isDark
+                                            ? AppColors.darkSecondary
+                                            : AppColors.tanMedium),
                                   borderRadius: BorderRadius.circular(2),
                                 ),
                               ),
@@ -1430,7 +1500,9 @@ class DashboardJamaahScreen extends StatelessWidget {
                                           Icons.local_fire_department_rounded,
                                           color: isFlame
                                               ? AppColors.sosEmergency
-                                              : (isDark ? AppColors.darkSecondary : AppColors.tanMedium),
+                                              : (isDark
+                                                    ? AppColors.darkSecondary
+                                                    : AppColors.tanMedium),
                                           size: 16,
                                         ),
                                         const SizedBox(width: 5),
@@ -1447,11 +1519,23 @@ class DashboardJamaahScreen extends StatelessWidget {
                                         ),
                                         const SizedBox(width: 6),
                                         Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 5,
+                                            vertical: 1.5,
+                                          ),
                                           decoration: BoxDecoration(
-                                            color: (isFlame ? AppColors.sosEmergency : AppColors.statusSafe)
-                                                .withValues(alpha: isDark ? 0.25 : 0.12),
-                                            borderRadius: BorderRadius.circular(4),
+                                            color:
+                                                (isFlame
+                                                        ? AppColors.sosEmergency
+                                                        : AppColors.statusSafe)
+                                                    .withValues(
+                                                      alpha: isDark
+                                                          ? 0.25
+                                                          : 0.12,
+                                                    ),
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
                                           ),
                                           child: Text(
                                             isFlame ? 'Evakuasi' : 'Aman',
@@ -1550,7 +1634,9 @@ class DashboardJamaahScreen extends StatelessWidget {
                         title: 'Detak Jantung',
                         valueText: '76 bpm',
                         progress: 0.65,
-                        barColor: isDark ? AppColors.goldLight : AppColors.primaryGold,
+                        barColor: isDark
+                            ? AppColors.goldLight
+                            : AppColors.primaryGold,
                         isDark: isDark,
                         headingColor: headingColor,
                       ),
@@ -1564,7 +1650,9 @@ class DashboardJamaahScreen extends StatelessWidget {
                         title: 'Suhu Badan',
                         valueText: '36.6 °C',
                         progress: 0.72,
-                        barColor: isDark ? AppColors.darkSecondary : AppColors.tanMedium,
+                        barColor: isDark
+                            ? AppColors.darkSecondary
+                            : AppColors.tanMedium,
                         isDark: isDark,
                         headingColor: headingColor,
                       ),
@@ -1578,7 +1666,9 @@ class DashboardJamaahScreen extends StatelessWidget {
                         title: 'Baterai Band',
                         valueText: '88% BLE',
                         progress: 0.88,
-                        barColor: isDark ? AppColors.darkPrimary : AppColors.espressoDark,
+                        barColor: isDark
+                            ? AppColors.darkPrimary
+                            : AppColors.espressoDark,
                         isDark: isDark,
                         headingColor: headingColor,
                       ),
@@ -1600,7 +1690,10 @@ class DashboardJamaahScreen extends StatelessWidget {
                         icon: const Icon(Icons.tune_rounded, size: 16),
                         label: const Text(
                           'Detail Sensor',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 10),
@@ -1624,7 +1717,9 @@ class DashboardJamaahScreen extends StatelessWidget {
                           HapticFeedback.lightImpact();
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Sinyal panggil terkirim! Gelang pintar bergetar.'),
+                              content: Text(
+                                'Sinyal panggil terkirim! Gelang pintar bergetar.',
+                              ),
                               duration: Duration(seconds: 2),
                               behavior: SnackBarBehavior.floating,
                             ),
@@ -1633,7 +1728,10 @@ class DashboardJamaahScreen extends StatelessWidget {
                         icon: const Icon(Icons.vibration_rounded, size: 16),
                         label: const Text(
                           'Panggil Getar',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 10),

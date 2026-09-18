@@ -581,15 +581,6 @@ class _MapTopHeaderState extends State<MapTopHeader> {
                               : const Color(0xFFDADCE0)),
                     width: isSelected ? 1.4 : 1.0,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(
-                        alpha: isDark ? 0.30 : (isSelected ? 0.08 : 0.06),
-                      ),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,

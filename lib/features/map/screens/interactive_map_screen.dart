@@ -503,7 +503,11 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
         maxZoom: 19.0,
         onPositionChanged: (camera, hasGesture) {
           if ((mapCtrl.compassRotation.value - camera.rotation).abs() > 0.05) {
-            mapCtrl.compassRotation.value = camera.rotation;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (Get.isRegistered<MapController>()) {
+                mapCtrl.compassRotation.value = camera.rotation;
+              }
+            });
           }
         },
         onTap: (tapPosition, point) {

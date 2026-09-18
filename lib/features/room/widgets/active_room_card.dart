@@ -746,7 +746,7 @@ class ActiveRoomCard extends StatelessWidget {
                     child: ElevatedButton.icon(
                       onPressed: () {
                         HapticFeedback.lightImpact();
-                        Get.toNamed(AppRoutes.roomDetail);
+                        Get.toNamed(AppRoutes.roomDetail, arguments: room);
                       },
                       icon: const Icon(Icons.meeting_room_rounded, size: 16),
                       label: const Text(

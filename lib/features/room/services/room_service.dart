@@ -201,6 +201,26 @@ class RoomService {
     return room;
   }
 
+  /// Fetches a room document by its ID once.
+  Future<RoomModel?> getRoomById(String roomId) async {
+    try {
+      final doc = await _firestore.collection('rooms').doc(roomId).get();
+      if (!doc.exists) return null;
+      return RoomModel.fromFirestore(doc);
+    } catch (e) {
+      debugPrint('[RoomService] Error getRoomById: $e');
+      return null;
+    }
+  }
+
+  /// Streams a single room document by its ID in realtime.
+  Stream<RoomModel?> getRoomStream(String roomId) {
+    return _firestore.collection('rooms').doc(roomId).snapshots().map((doc) {
+      if (!doc.exists) return null;
+      return RoomModel.fromFirestore(doc);
+    });
+  }
+
   /// Updates room settings (name, maktab, kloter, safeRadius).
   /// Validates ownership: only creator (or admin) can update.
   Future<void> updateRoomSettings({
