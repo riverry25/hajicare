@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:flutter/services.dart';
+
+import '../../features/translator/widgets/translator_sheet.dart';
 import '../locales/app_localizations.dart';
 import '../routes/app_routes.dart';
 import '../state/hajicare_controller.dart';
@@ -71,74 +74,143 @@ class HajiCareBottomNavBar extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.md,
-            AppSpacing.xs,
+            0,
             AppSpacing.md,
             AppSpacing.sm,
           ),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              // Surface navbar card.
-              // Everything outside this card is 100% transparent,
-              // so the underlying page background flows uninterrupted.
-              color: isDark
-                  ? AppColors.darkSurface
-                  : AppColors.surfaceWhite,
-              borderRadius: BorderRadius.circular(AppRadius.xl),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : AppColors.espressoDark.withValues(alpha: 0.06),
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.08),
-                  blurRadius: 20,
-                  spreadRadius: 0,
-                  offset: const Offset(0, 6),
+          child: Stack(
+            alignment: Alignment.topCenter,
+            clipBehavior: Clip.none,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    // Surface navbar card.
+                    // Everything outside this card is 100% transparent,
+                    // so the underlying page background flows uninterrupted.
+                    color: isDark
+                        ? AppColors.darkSurface
+                        : AppColors.surfaceWhite,
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : AppColors.espressoDark.withValues(alpha: 0.06),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.08),
+                        blurRadius: 20,
+                        spreadRadius: 0,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xs,
+                      vertical: AppSpacing.xs,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _buildNavItem(
+                            context: context,
+                            index: 0,
+                            icon: Icons.home_rounded,
+                            label: context.tr('navHome'),
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildNavItem(
+                            context: context,
+                            index: 1,
+                            icon: Icons.near_me_rounded,
+                            label: context.tr('navMap'),
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildNavItem(
+                            context: context,
+                            index: 2,
+                            icon: Icons.schedule_rounded,
+                            label: context.tr('navPrayer'),
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildNavItem(
+                            context: context,
+                            index: 3,
+                            icon: Icons.person_rounded,
+                            label: context.tr('navProfile'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.xs,
-                vertical: AppSpacing.xs,
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildNavItem(
-                      context: context,
-                      index: 0,
-                      icon: Icons.home_rounded,
-                      label: context.tr('navHome'),
-                    ),
-                  ),
-                  Expanded(
-                    child: _buildNavItem(
-                      context: context,
-                      index: 1,
-                      icon: Icons.near_me_rounded,
-                      label: context.tr('navMap'),
-                    ),
-                  ),
-                  Expanded(
-                    child: _buildNavItem(
-                      context: context,
-                      index: 2,
-                      icon: Icons.schedule_rounded,
-                      label: context.tr('navPrayer'),
-                    ),
-                  ),
-                  Expanded(
-                    child: _buildNavItem(
-                      context: context,
-                      index: 3,
-                      icon: Icons.person_rounded,
-                      label: context.tr('navProfile'),
-                    ),
+              Positioned(
+                top: 0,
+                child: _buildCenterMicButton(context, isDark),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCenterMicButton(BuildContext context, bool isDark) {
+    final primaryColor = isDark
+        ? Theme.of(context).colorScheme.primary
+        : AppColors.espressoDark;
+    final iconColor = isDark
+        ? AppColors.darkOnPrimary
+        : Colors.white;
+
+    return Semantics(
+      button: true,
+      label: 'Penerjemah HajiCare',
+      child: Tooltip(
+        message: 'Penerjemah HajiCare',
+        child: Material(
+          color: Colors.transparent,
+          shape: const CircleBorder(),
+          child: InkWell(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              HajiCareTranslatorSheet.show(context);
+            },
+            customBorder: const CircleBorder(),
+            child: Ink(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: primaryColor,
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.15)
+                      : AppColors.goldLight.withValues(alpha: 0.5),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.18),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
                 ],
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.mic_rounded,
+                  size: 24,
+                  color: iconColor,
+                ),
               ),
             ),
           ),
