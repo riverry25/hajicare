@@ -114,8 +114,23 @@ class RoomModel {
       other is RoomModel &&
           runtimeType == other.runtimeType &&
           id == other.id &&
-          code == other.code;
+          code == other.code &&
+          name == other.name &&
+          maktab == other.maktab &&
+          kloter == other.kloter &&
+          safeRadius == other.safeRadius &&
+          isActive == other.isActive &&
+          memberCount == other.memberCount;
 
   @override
-  int get hashCode => id.hashCode ^ code.hashCode;
+  int get hashCode => Object.hash(
+        id,
+        code,
+        name,
+        maktab,
+        kloter,
+        safeRadius,
+        isActive,
+        memberCount,
+      );
 }

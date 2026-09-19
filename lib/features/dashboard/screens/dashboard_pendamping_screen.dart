@@ -175,9 +175,10 @@ class DashboardPendampingScreen extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 2),
-                    Text('Kloter $kloterStr · Maktab $maktabStr',
+                    Text('${kloterStr.toLowerCase().startsWith('kloter') ? kloterStr : 'Kloter $kloterStr'} · ${maktabStr.toLowerCase().startsWith('maktab') ? maktabStr : 'Maktab $maktabStr'}',
                         style: const TextStyle(color: AppColors.goldLight, fontSize: 11.5, fontWeight: FontWeight.w600)),
                   ],
+
                 ),
               ),
               _notifButton(context, state),

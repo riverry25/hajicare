@@ -382,6 +382,7 @@ class HajiCareController extends GetxController {
       if (doc.exists) {
         final r = RoomModel.fromFirestore(doc);
         activeRoom.value = r;
+        activeRoom.refresh();
         safeRadiusMeters.value = r.safeRadius;
         if (r.maktab != null && r.maktab!.isNotEmpty) {
           pendampingMaktab.value = r.maktab;
@@ -770,6 +771,7 @@ class HajiCareController extends GetxController {
         kloter: kloter,
         safeRadius: safeRadius,
       );
+      activeRoom.refresh();
     }
 
     if (maktab != null) {

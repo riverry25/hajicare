@@ -13,6 +13,7 @@ import '../../../core/widgets/app_card.dart';
 import '../../dashboard/controllers/dashboard_controller.dart';
 import '../controllers/admin_room_controller.dart';
 import '../services/room_service.dart';
+import '../widgets/edit_room_dialog.dart';
 import '../widgets/room_qr_dialog.dart';
 
 class RoomDetailScreen extends StatefulWidget {
@@ -242,202 +243,19 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     return isAdmin || isCreator;
   }
 
-  void _showEditRoomSheet(BuildContext context, RoomModel room) {
+  void _showEditRoomSheet(BuildContext context, RoomModel room) async {
     HapticFeedback.lightImpact();
-    final nameCtrl = TextEditingController(text: room.name);
-    final maktabCtrl = TextEditingController(text: room.maktab ?? '');
-    final kloterCtrl = TextEditingController(text: room.kloter ?? '');
-    final isDark = AppColors.isDark(context);
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = isDark ? AppColors.darkTextHeading : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: cardBg,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 16,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: bodyColor.withValues(alpha: 0.25),
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Edit Informasi Room',
-                    style: AppTypography.titleLarge.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: headingColor,
-                      fontSize: 18,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: primaryColor.withValues(alpha: isDark ? 0.25 : 0.12),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: primaryColor.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Text(
-                      room.code,
-                      style: TextStyle(
-                        color: primaryColor,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 12,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Perbarui nama room, nomor maktab, atau nomor kloter rombongan.',
-                style: AppTypography.captionSmall.copyWith(color: bodyColor),
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: nameCtrl,
-                style: AppTypography.bodyMedium.copyWith(color: headingColor),
-                decoration: InputDecoration(
-                  labelText: 'Nama Room',
-                  prefixIcon: Icon(Icons.meeting_room_outlined, color: primaryColor, size: 20),
-                  filled: true,
-                  fillColor: isDark
-                      ? AppColors.darkScaffold.withValues(alpha: 0.6)
-                      : AppColors.canvasCream.withValues(alpha: 0.4),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: maktabCtrl,
-                      style: AppTypography.bodyMedium.copyWith(color: headingColor),
-                      decoration: InputDecoration(
-                        labelText: 'Maktab',
-                        hintText: 'Contoh: 10',
-                        prefixIcon: Icon(Icons.hotel_outlined, color: primaryColor, size: 20),
-                        filled: true,
-                        fillColor: isDark
-                            ? AppColors.darkScaffold.withValues(alpha: 0.6)
-                            : AppColors.canvasCream.withValues(alpha: 0.4),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(
-                            color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextField(
-                      controller: kloterCtrl,
-                      style: AppTypography.bodyMedium.copyWith(color: headingColor),
-                      decoration: InputDecoration(
-                        labelText: 'Kloter',
-                        hintText: 'Contoh: SOC-12',
-                        prefixIcon: Icon(Icons.flight_takeoff_rounded, color: primaryColor, size: 20),
-                        filled: true,
-                        fillColor: isDark
-                            ? AppColors.darkScaffold.withValues(alpha: 0.6)
-                            : AppColors.canvasCream.withValues(alpha: 0.4),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(
-                            color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 22),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    foregroundColor: isDark ? AppColors.darkOnPrimary : Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                    ),
-                    elevation: 0,
-                  ),
-                  onPressed: () async {
-                    final newName = nameCtrl.text.trim();
-                    if (newName.isEmpty) {
-                      AppAlert.error(context, title: 'Nama Wajib Diisi', message: 'Nama room tidak boleh kosong.');
-                      return;
-                    }
-                    Navigator.of(ctx).pop();
-                    try {
-                      final user = FirebaseAuth.instance.currentUser;
-                      final currentUid = user?.uid ?? '';
-                      final hajiCare = Get.isRegistered<HajiCareController>() ? Get.find<HajiCareController>() : null;
-                      final userRole = hajiCare?.role == UserRole.admin ? 'admin' : 'pendamping';
-
-                      await _roomService.updateRoomSettings(
-                        roomId: room.id,
-                        currentUserId: currentUid,
-                        userRole: userRole,
-                        name: newName,
-                        maktab: maktabCtrl.text.trim(),
-                        kloter: kloterCtrl.text.trim(),
-                      );
-                      if (context.mounted) {
-                        AppAlert.success(context, title: 'Berhasil Diperbarui', message: 'Informasi room berhasil disimpan.');
-                      }
-                    } catch (e) {
-                      if (context.mounted) {
-                        AppAlert.error(context, title: 'Gagal Memperbarui', message: e.toString().replaceAll('Exception: ', ''));
-                      }
-                    }
-                  },
-                  child: const Text('Simpan Perubahan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+    final updated = await EditRoomDialog.show(context, _room ?? room);
+    if (updated == true && mounted) {
+      try {
+        final fresh = await _roomService.getRoomById(room.id);
+        if (fresh != null && mounted) {
+          setState(() {
+            _room = fresh;
+          });
+        }
+      } catch (_) {}
+    }
   }
 
   void _handleDeleteRoom(BuildContext context, RoomModel room) {
@@ -1226,11 +1044,6 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
           decoration: BoxDecoration(
             color: cardBg,
             borderRadius: BorderRadius.circular(AppRadius.pill),
-            border: Border.all(
-              color: isDark
-                  ? AppColors.darkOutlineVariant
-                  : const Color(0xFFE2E8F0),
-            ),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 14),
           child: Row(
