@@ -44,8 +44,9 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) {
-    return AppTranslations.supportedLocales
-        .any((supported) => supported.languageCode == locale.languageCode);
+    return AppTranslations.supportedLocales.any(
+      (supported) => supported.languageCode == locale.languageCode,
+    );
   }
 
   @override

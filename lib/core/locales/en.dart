@@ -25,17 +25,22 @@ const Map<String, String> enTranslations = {
   'onboardingStage3': 'STEP 3 OF 3',
   'chooseLanguageTitle': 'Choose Your Language',
   'chooseLanguageSubtitle': 'App Display Language',
-  'chooseLanguageDesc': 'Select the language most comfortable for you so that ibadah and emergency communication are easier.',
+  'chooseLanguageDesc':
+      'Select the language most comfortable for you so that ibadah and emergency communication are easier.',
   'canChangeLater': 'Can be changed anytime',
   'autoAdjustHint': 'Text size & audio will be automatically adjusted',
   'safetyTitle': 'Safety Monitored',
-  'safetyDesc': 'Monitor your family\'s location in real-time with a smart distance radar and instant emergency alerts.',
+  'safetyDesc':
+      'Monitor your family\'s location in real-time with a smart distance radar and instant emergency alerts.',
   'accessibilityTitle': 'Elderly & Disability Friendly',
-  'accessibilityDesc': 'Equipped with a riyal money reader, sign language support, and a very easy-to-use SOS emergency button.',
+  'accessibilityDesc':
+      'Equipped with a riyal money reader, sign language support, and a very easy-to-use SOS emergency button.',
   'scanMoneyTitle': 'Scan Riyal Currency',
-  'scanMoneyDesc': 'Point the camera at a riyal banknote and the amount is instantly read aloud automatically via Text-to-Speech.',
+  'scanMoneyDesc':
+      'Point the camera at a riyal banknote and the amount is instantly read aloud automatically via Text-to-Speech.',
   'commGestureTitle': 'Communication & Signs',
-  'commGestureDesc': 'Convert speech to large text and quick emergency phrases (Help, Pain, Water) easily understood by locals.',
+  'commGestureDesc':
+      'Convert speech to large text and quick emergency phrases (Help, Pain, Water) easily understood by locals.',
   'ttsReady': 'Text-to-Speech is ready',
   'btnNextFeature': 'Next: Explore Features',
   'btnNextAccess': 'Next: Accessibility Features',
@@ -47,9 +52,11 @@ const Map<String, String> enTranslations = {
   'loginSubtitle': 'Choose your role to continue',
   'chooseRole': 'Choose Role',
   'roleJamaah': 'Hajj Pilgrim',
-  'roleJamaahDesc': 'For elderly / independent pilgrims with simple navigation & quick SOS button',
+  'roleJamaahDesc':
+      'For elderly / independent pilgrims with simple navigation & quick SOS button',
   'rolePendamping': 'Companion / Family',
-  'rolePendampingDesc': 'Monitor pilgrim locations, safe distance, and receive emergency alerts',
+  'rolePendampingDesc':
+      'Monitor pilgrim locations, safe distance, and receive emergency alerts',
   'phoneLabel': 'Phone Number / Passport',
   'phoneHint': 'Example: +62 812 3456 789',
   'pinLabel': 'Security PIN',
@@ -94,7 +101,8 @@ const Map<String, String> enTranslations = {
 
   // SOS Modal
   'sosActiveHeader': 'ACTIVE EMERGENCY ALERT',
-  'sosActiveBody': 'An SOS signal has been sent to the nearest officers and companions. Please remain calm at your location.',
+  'sosActiveBody':
+      'An SOS signal has been sent to the nearest officers and companions. Please remain calm at your location.',
   'cancelSos': 'Cancel Emergency Call',
   'confirmCancelSos': 'Are you sure the emergency situation has been resolved?',
   'yesImSafe': 'Yes, I\'m Safe Now',
@@ -197,29 +205,41 @@ const Map<String, String> enTranslations = {
   'catTechnicalDesc': 'Resolve problems and app issues',
   'faqTitle': 'Frequently Asked Questions',
   'faqQ1': 'How do I create an account?',
-  'faqA1': 'Open HajiCare, tap "Create Account" on the sign-in page, then fill in your details including full name, phone number, and create a security PIN.',
+  'faqA1':
+      'Open HajiCare, tap "Create Account" on the sign-in page, then fill in your details including full name, phone number, and create a security PIN.',
   'faqQ2': 'How do I update my profile?',
-  'faqA2': 'Open the Profile tab at the bottom, then select the option you want to change. Medical data and kloter information can be updated from the profile page.',
+  'faqA2':
+      'Open the Profile tab at the bottom, then select the option you want to change. Medical data and kloter information can be updated from the profile page.',
   'faqQ3': 'How do I change my profile photo?',
-  'faqA3': 'On the Profile page, tap the pencil icon on your profile photo. You can choose a photo from the gallery or take a new photo using the camera.',
+  'faqA3':
+      'On the Profile page, tap the pencil icon on your profile photo. You can choose a photo from the gallery or take a new photo using the camera.',
   'faqQ4': 'How do I sign out?',
-  'faqA4': 'Open the Profile page, scroll down, then tap the "Log Out" button. Confirm your choice in the dialog that appears.',
+  'faqA4':
+      'Open the Profile page, scroll down, then tap the "Log Out" button. Confirm your choice in the dialog that appears.',
   'faqQ5': 'How do I increase the text size?',
-  'faqA5': 'Go to Profile → Accessibility → Text Size, then select the size that suits you. Changes apply immediately across the entire app.',
+  'faqA5':
+      'Go to Profile → Accessibility → Text Size, then select the size that suits you. Changes apply immediately across the entire app.',
   'faqQ6': 'Does the text size change immediately?',
-  'faqA6': 'Yes, text size changes apply immediately throughout the entire app without needing to reload or switch language.',
+  'faqA6':
+      'Yes, text size changes apply immediately throughout the entire app without needing to reload or switch language.',
   'faqQ7': 'How do I enable dark mode?',
-  'faqA7': 'Go to Profile → Other & Preferences → Display Theme, then choose Dark Mode, Light Mode, or Automatic to follow the system setting.',
+  'faqA7':
+      'Go to Profile → Other & Preferences → Display Theme, then choose Dark Mode, Light Mode, or Automatic to follow the system setting.',
   'faqQ8': 'How do I connect a companion?',
-  'faqA8': 'The companion feature connects pilgrims and companions automatically based on kloter data. Contact your kloter administrator for further setup.',
+  'faqA8':
+      'The companion feature connects pilgrims and companions automatically based on kloter data. Contact your kloter administrator for further setup.',
   'faqQ9': 'Who can be a companion?',
-  'faqA9': 'A companion is a family member or officer registered in the HajiCare system. They can monitor the pilgrim\'s position and condition in real-time.',
+  'faqA9':
+      'A companion is a family member or officer registered in the HajiCare system. They can monitor the pilgrim\'s position and condition in real-time.',
   'faqQ10': 'What does HajiCare do?',
-  'faqA10': 'HajiCare is a Hajj pilgrimage companion app that helps monitor pilgrim safety, connect with companions, provide prayer schedules, and offer accessibility features for the elderly and those with disabilities.',
+  'faqA10':
+      'HajiCare is a Hajj pilgrimage companion app that helps monitor pilgrim safety, connect with companions, provide prayer schedules, and offer accessibility features for the elderly and those with disabilities.',
   'faqQ11': 'Is my data safe?',
-  'faqA11': 'Yes, your data is secured using Firebase Authentication and stored on protected servers. We do not share personal data with third parties.',
+  'faqA11':
+      'Yes, your data is secured using Firebase Authentication and stored on protected servers. We do not share personal data with third parties.',
   'faqQ12': 'What if the app has a problem?',
-  'faqA12': 'Try closing and reopening the app. Make sure your internet connection is stable. If the problem persists, contact the HajiCare support team via the available contact.',
+  'faqA12':
+      'Try closing and reopening the app. Make sure your internet connection is stable. If the problem persists, contact the HajiCare support team via the available contact.',
   'contactSupportTitle': 'Still need help?',
   'contactSupportSubtitle': 'Contact the HajiCare team',
   'contactEmail': 'Send Email',
@@ -229,24 +249,29 @@ const Map<String, String> enTranslations = {
   // About App
   'aboutTitle': 'About HajiCare',
   'aboutSubtitle': 'A safe, connected, and inclusive Hajj companion.',
-  'aboutDescription': 'HajiCare is here to accompany your Hajj pilgrimage with technology that is friendly, safe, and easy to use. We are committed to ensuring that every pilgrim, especially the elderly and those with disabilities, can perform their worship comfortably and safely.',
+  'aboutDescription':
+      'HajiCare is here to accompany your Hajj pilgrimage with technology that is friendly, safe, and easy to use. We are committed to ensuring that every pilgrim, especially the elderly and those with disabilities, can perform their worship comfortably and safely.',
   'featuresTitle': 'Key Features',
   'featureCompanion': 'Pilgrim Companion',
-  'featureCompanionDesc': 'Connect with companions and monitor location in real-time',
+  'featureCompanionDesc':
+      'Connect with companions and monitor location in real-time',
   'featureInfo': 'Information & Guidance',
   'featureInfoDesc': 'Prayer schedules, Qibla direction, and worship guidance',
   'featureAccessibility': 'Accessibility Features',
   'featureAccessibilityDesc': 'Adjustable text size and easy-to-read interface',
   'featureLanguage': 'Language Settings',
-  'featureLanguageDesc': 'Available in Indonesian, Javanese, Sundanese, and English',
+  'featureLanguageDesc':
+      'Available in Indonesian, Javanese, Sundanese, and English',
   'featureDarkMode': 'Dark Mode',
   'featureDarkModeDesc': 'Comfortable display in all lighting conditions',
   'featureProfile': 'Personal Profile',
   'featureProfileDesc': 'Manage personal, medical, and preference data',
   'accessibilitySectionTitle': 'Accessibility',
-  'accessibilitySectionDesc': 'HajiCare is specially designed to ensure all pilgrims can use the app easily, including the elderly and those with disabilities. Available features include adjustable text size, dark mode for eye comfort, clear and intuitive navigation, and a readable interface.',
+  'accessibilitySectionDesc':
+      'HajiCare is specially designed to ensure all pilgrims can use the app easily, including the elderly and those with disabilities. Available features include adjustable text size, dark mode for eye comfort, clear and intuitive navigation, and a readable interface.',
   'privacySectionTitle': 'Privacy & Security',
-  'privacySectionDesc': 'Your personal data and location are protected using industry-standard encryption through Firebase. We only collect data necessary to ensure your safety and comfort during worship.',
+  'privacySectionDesc':
+      'Your personal data and location are protected using industry-standard encryption through Firebase. We only collect data necessary to ensure your safety and comfort during worship.',
   'legalSectionTitle': 'Legal Information',
   'privacyPolicy': 'Privacy Policy',
   'termsOfService': 'Terms of Service',
@@ -308,7 +333,8 @@ const Map<String, String> enTranslations = {
 
   // Jamaah SOS & Banners
   'sosConfirmTitle': 'Send SOS Emergency?',
-  'sosConfirmMessage': 'Are you sure you want to send an emergency alert to companion and officers?',
+  'sosConfirmMessage':
+      'Are you sure you want to send an emergency alert to companion and officers?',
   'sosSendButton': 'Send SOS',
   'sosSentTo': 'SOS sent to',
   'sosButtonTitle': 'EMERGENCY SOS BUTTON',
@@ -318,13 +344,16 @@ const Map<String, String> enTranslations = {
   'sosAnd': ' and ',
   'sosFamilyCompanion': 'Family Companion.',
   'sos24HoursResponse': '24-Hour Quick Response • Grand Mosque Special Sector',
-  'separatedWarning': 'Possible separation from companion! Stay calm where you are.',
+  'separatedWarning':
+      'Possible separation from companion! Stay calm where you are.',
   'officerAdviceTitle': 'SECTOR OFFICER NOTICE',
-  'officerAdviceBody': 'Stay together with your group heading to jamarat. Ensure water bottles are filled and keep wearing your identity wristband.',
+  'officerAdviceBody':
+      'Stay together with your group heading to jamarat. Ensure water bottles are filled and keep wearing your identity wristband.',
 
   // Pendamping Dashboard
   'pendampingGreeting': 'Assalamu’alaikum',
-  'pendampingSubtitleDesc': 'Monitor safety and movement of your pilgrims in real-time.',
+  'pendampingSubtitleDesc':
+      'Monitor safety and movement of your pilgrims in real-time.',
   'monitoredPilgrims': 'Monitored Pilgrims',
   'syncSmartBand': 'Sync Smart Band',
   'realtimePosition': 'Real-Time Field Position',
@@ -348,7 +377,8 @@ const Map<String, String> enTranslations = {
   'endSos': 'End SOS',
   'sosStatusStandby': 'Emergency & SOS Status: Ready',
   'sosStandbyBadge': 'READY',
-  'sosStandbyDesc': 'Vibration and alarm sound automatically triggers if band button is pressed or pilgrim distance exceeds 200m.',
+  'sosStandbyDesc':
+      'Vibration and alarm sound automatically triggers if band button is pressed or pilgrim distance exceeds 200m.',
   'testAlarmSignal': 'Test Alarm Signal',
   'responseCenter': 'Response Center',
   'separatedAlertDetail': 'is outside safe radius (Too far).',

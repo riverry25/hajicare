@@ -110,7 +110,9 @@ class MapSearchDropdown extends StatelessWidget {
           Text(
             'Mencari lokasi...',
             style: AppTypography.bodySmall.copyWith(
-              color: isDark ? AppColors.darkTextHeading : AppColors.espressoDark,
+              color: isDark
+                  ? AppColors.darkTextHeading
+                  : AppColors.espressoDark,
               fontWeight: FontWeight.w600,
             ),
           ),

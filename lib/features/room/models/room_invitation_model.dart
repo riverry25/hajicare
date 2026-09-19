@@ -55,12 +55,12 @@ class RoomInvitationModel {
 
   factory RoomInvitationModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>? ?? {};
-    
+
     DateTime? createdAt;
     if (data['createdAt'] is Timestamp) {
       createdAt = (data['createdAt'] as Timestamp).toDate();
     }
-    
+
     DateTime? respondedAt;
     if (data['respondedAt'] is Timestamp) {
       respondedAt = (data['respondedAt'] as Timestamp).toDate();
@@ -98,7 +98,9 @@ class RoomInvitationModel {
       'toUserId': toUserId,
       'toUserEmail': toUserEmail,
       'status': status.value,
-      'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
+      'createdAt': createdAt != null
+          ? Timestamp.fromDate(createdAt!)
+          : FieldValue.serverTimestamp(),
       if (respondedAt != null) 'respondedAt': Timestamp.fromDate(respondedAt!),
       if (expiredAt != null) 'expiredAt': Timestamp.fromDate(expiredAt!),
       if (expiredReason != null) 'expiredReason': expiredReason,

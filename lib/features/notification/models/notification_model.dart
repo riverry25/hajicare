@@ -3,7 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class AppNotificationModel {
   final String id;
   final String recipientId;
-  final String type; // 'room_invitation', 'room_removed', 'announcement', 'system', 'sos_alert'
+  final String
+  type; // 'room_invitation', 'room_removed', 'announcement', 'system', 'sos_alert'
   final String title;
   final String message;
   final String? relatedId; // e.g. invitationId, roomId, or sosEventId
@@ -89,7 +90,9 @@ class AppNotificationModel {
       if (targetMaktab != null) 'targetMaktab': targetMaktab,
       if (targetKloter != null) 'targetKloter': targetKloter,
       'isRead': isRead,
-      'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
+      'createdAt': createdAt != null
+          ? Timestamp.fromDate(createdAt!)
+          : FieldValue.serverTimestamp(),
       if (metadata != null) 'metadata': metadata,
     };
   }

@@ -90,7 +90,9 @@ class RoomMemberModel {
       'uid': uid,
       'name': name.trim(),
       'role': role.trim().toLowerCase(),
-      'joinedAt': joinedAt != null ? Timestamp.fromDate(joinedAt!) : FieldValue.serverTimestamp(),
+      'joinedAt': joinedAt != null
+          ? Timestamp.fromDate(joinedAt!)
+          : FieldValue.serverTimestamp(),
     };
     if (currentLocation != null) {
       map['currentLocation'] = currentLocation;

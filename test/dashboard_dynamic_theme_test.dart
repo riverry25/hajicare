@@ -118,10 +118,16 @@ void main() {
       test('Language ${entry.key} contains all dashboard keys', () {
         final dict = entry.value;
         for (final key in requiredKeys) {
-          expect(dict.containsKey(key), isTrue,
-              reason: 'Missing key "$key" in ${entry.key}');
-          expect(dict[key], isNotEmpty,
-              reason: 'Empty translation for key "$key" in ${entry.key}');
+          expect(
+            dict.containsKey(key),
+            isTrue,
+            reason: 'Missing key "$key" in ${entry.key}',
+          );
+          expect(
+            dict[key],
+            isNotEmpty,
+            reason: 'Empty translation for key "$key" in ${entry.key}',
+          );
         }
       });
     }
@@ -154,8 +160,9 @@ void main() {
       );
     }
 
-    testWidgets('Renders DashboardJamaah in Light Mode without error',
-        (tester) async {
+    testWidgets('Renders DashboardJamaah in Light Mode without error', (
+      tester,
+    ) async {
       Get.put(AppSettingsController(), permanent: true);
       Get.put(HajiCareController(), permanent: true);
       DashboardBinding().dependencies();
@@ -167,8 +174,9 @@ void main() {
       expect(Get.isRegistered<PrayerTimesController>(), isTrue);
     });
 
-    testWidgets('Renders DashboardJamaah in Dark Mode without error',
-        (tester) async {
+    testWidgets('Renders DashboardJamaah in Dark Mode without error', (
+      tester,
+    ) async {
       Get.put(AppSettingsController(), permanent: true);
       Get.put(HajiCareController(), permanent: true);
       DashboardBinding().dependencies();
@@ -179,20 +187,21 @@ void main() {
       expect(find.byType(DashboardJamaahScreen), findsOneWidget);
     });
 
-    testWidgets('Renders DashboardJamaah with Large Text Scale (1.5x) cleanly',
-        (tester) async {
-      Get.put(AppSettingsController(), permanent: true);
-      Get.put(HajiCareController(), permanent: true);
-      DashboardBinding().dependencies();
+    testWidgets(
+      'Renders DashboardJamaah with Large Text Scale (1.5x) cleanly',
+      (tester) async {
+        Get.put(AppSettingsController(), permanent: true);
+        Get.put(HajiCareController(), permanent: true);
+        DashboardBinding().dependencies();
 
-      await tester.pumpWidget(buildTestWidget(
-        themeMode: ThemeMode.light,
-        textScaleFactor: 1.5,
-      ));
-      await tester.pump();
+        await tester.pumpWidget(
+          buildTestWidget(themeMode: ThemeMode.light, textScaleFactor: 1.5),
+        );
+        await tester.pump();
 
-      expect(find.byType(DashboardJamaahScreen), findsOneWidget);
-    });
+        expect(find.byType(DashboardJamaahScreen), findsOneWidget);
+      },
+    );
   });
 
   group('Dashboard Pendamping Dynamic Theme & Text Scaling Tests', () {
@@ -222,8 +231,9 @@ void main() {
       );
     }
 
-    testWidgets('Renders DashboardPendamping in Light Mode without error',
-        (tester) async {
+    testWidgets('Renders DashboardPendamping in Light Mode without error', (
+      tester,
+    ) async {
       Get.put(AppSettingsController(), permanent: true);
       Get.put(HajiCareController(), permanent: true);
       DashboardBinding().dependencies();
@@ -234,8 +244,9 @@ void main() {
       expect(find.byType(DashboardPendampingScreen), findsOneWidget);
     });
 
-    testWidgets('Renders DashboardPendamping in Dark Mode without error',
-        (tester) async {
+    testWidgets('Renders DashboardPendamping in Dark Mode without error', (
+      tester,
+    ) async {
       Get.put(AppSettingsController(), permanent: true);
       Get.put(HajiCareController(), permanent: true);
       DashboardBinding().dependencies();
@@ -247,19 +258,19 @@ void main() {
     });
 
     testWidgets(
-        'Renders DashboardPendamping with Large Text Scale (1.5x) cleanly',
-        (tester) async {
-      Get.put(AppSettingsController(), permanent: true);
-      Get.put(HajiCareController(), permanent: true);
-      DashboardBinding().dependencies();
+      'Renders DashboardPendamping with Large Text Scale (1.5x) cleanly',
+      (tester) async {
+        Get.put(AppSettingsController(), permanent: true);
+        Get.put(HajiCareController(), permanent: true);
+        DashboardBinding().dependencies();
 
-      await tester.pumpWidget(buildTestWidget(
-        themeMode: ThemeMode.light,
-        textScaleFactor: 1.5,
-      ));
-      await tester.pump();
+        await tester.pumpWidget(
+          buildTestWidget(themeMode: ThemeMode.light, textScaleFactor: 1.5),
+        );
+        await tester.pump();
 
-      expect(find.byType(DashboardPendampingScreen), findsOneWidget);
-    });
+        expect(find.byType(DashboardPendampingScreen), findsOneWidget);
+      },
+    );
   });
 }

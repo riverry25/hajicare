@@ -15,7 +15,8 @@ class AppDurations {
 
   /// Returns Duration.zero if the platform or user has requested reduced motion
   static Duration adaptive(BuildContext context, Duration baseDuration) {
-    final disableAnimations = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    final disableAnimations =
+        MediaQuery.maybeDisableAnimationsOf(context) ?? false;
     if (disableAnimations) {
       return Duration.zero;
     }

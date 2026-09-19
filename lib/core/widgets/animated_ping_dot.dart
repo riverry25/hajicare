@@ -43,12 +43,14 @@ class _AnimatedPingDotState extends State<AnimatedPingDot>
       duration: const Duration(milliseconds: 1800),
     )..repeat();
 
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.8).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
-    _opacityAnimation = Tween<double>(begin: 0.6, end: 0.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.8,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    _opacityAnimation = Tween<double>(
+      begin: 0.6,
+      end: 0.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
   }
 
   @override

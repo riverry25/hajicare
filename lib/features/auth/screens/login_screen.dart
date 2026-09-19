@@ -59,11 +59,12 @@ class LoginScreen extends StatelessWidget {
                       child: Image.asset(
                         'assets/icon.jpeg',
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => const Icon(
-                          Icons.mosque_rounded,
-                          color: AppColors.goldPrimary,
-                          size: 24,
-                        ),
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(
+                              Icons.mosque_rounded,
+                              color: AppColors.goldPrimary,
+                              size: 24,
+                            ),
                       ),
                     ),
                   ),
@@ -564,7 +565,9 @@ class LoginScreen extends StatelessWidget {
                               color: AppColors.cardBorderColor(context),
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.pill),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
                             ),
                           ),
                           child: controller.isGoogleLoading.value

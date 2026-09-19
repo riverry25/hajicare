@@ -25,9 +25,11 @@ class AppTranslations extends Translations {
 
   @override
   Map<String, Map<String, String>> get keys => translationKeys;
-  
+
   static String translate(String key, String langCode) {
-    return translationKeys[langCode]?[key] ?? translationKeys[fallbackLocale.languageCode]?[key] ?? key;
+    return translationKeys[langCode]?[key] ??
+        translationKeys[fallbackLocale.languageCode]?[key] ??
+        key;
   }
 }
 

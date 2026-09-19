@@ -51,10 +51,12 @@ class NotificationComposerDialog extends StatefulWidget {
   }
 
   @override
-  State<NotificationComposerDialog> createState() => _NotificationComposerDialogState();
+  State<NotificationComposerDialog> createState() =>
+      _NotificationComposerDialogState();
 }
 
-class _NotificationComposerDialogState extends State<NotificationComposerDialog> {
+class _NotificationComposerDialogState
+    extends State<NotificationComposerDialog> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _messageController = TextEditingController();
@@ -93,7 +95,8 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
     }
 
     _selectedRoomId = widget.initialRoomId ?? controller.activeRoomId.value;
-    _selectedRoomName = widget.initialRoomName ?? controller.activeRoom.value?.name;
+    _selectedRoomName =
+        widget.initialRoomName ?? controller.activeRoom.value?.name;
 
     // Listen to updates for live preview
     _titleController.addListener(() => setState(() {}));
@@ -143,8 +146,12 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
         targetRoomId: (_selectedScope == 'room' || _selectedScope == 'user')
             ? _selectedRoomId
             : null,
-        targetMaktab: _selectedScope == 'maktab' ? _maktabController.text.trim() : null,
-        targetKloter: _selectedScope == 'kloter' ? _kloterController.text.trim() : null,
+        targetMaktab: _selectedScope == 'maktab'
+            ? _maktabController.text.trim()
+            : null,
+        targetKloter: _selectedScope == 'kloter'
+            ? _kloterController.text.trim()
+            : null,
       );
 
       if (!mounted) return;
@@ -152,7 +159,8 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
 
       AppDialog.success(
         title: 'Notifikasi Terkirim',
-        message: 'Pesan berhasil disiarkan kepada $recipientCount jamaah / penerima.',
+        message:
+            'Pesan berhasil disiarkan kepada $recipientCount jamaah / penerima.',
       );
     } catch (e) {
       if (!mounted) return;
@@ -177,7 +185,9 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
 
     return Dialog(
       backgroundColor: cardBg,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+      ),
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 520, maxHeight: 720),
@@ -189,7 +199,9 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
-                    color: isDark ? AppColors.darkOutlineVariant : AppColors.surfaceVariant,
+                    color: isDark
+                        ? AppColors.darkOutlineVariant
+                        : AppColors.surfaceVariant,
                   ),
                 ),
               ),
@@ -201,7 +213,11 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
                       color: primaryColor.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
-                    child: Icon(Icons.campaign_rounded, color: primaryColor, size: 22),
+                    child: Icon(
+                      Icons.campaign_rounded,
+                      color: primaryColor,
+                      size: 22,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -216,8 +232,12 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
                           ),
                         ),
                         Text(
-                          isAdmin ? 'Kirim siaran resmi Admin' : 'Kirim pesan ke Jamaah Room',
-                          style: AppTypography.captionSmall.copyWith(color: bodyColor),
+                          isAdmin
+                              ? 'Kirim siaran resmi Admin'
+                              : 'Kirim pesan ke Jamaah Room',
+                          style: AppTypography.captionSmall.copyWith(
+                            color: bodyColor,
+                          ),
                         ),
                       ],
                     ),
@@ -225,7 +245,9 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
                   IconButton(
                     icon: const Icon(Icons.close_rounded),
                     color: bodyColor,
-                    onPressed: _isSending ? null : () => Navigator.of(context).pop(),
+                    onPressed: _isSending
+                        ? null
+                        : () => Navigator.of(context).pop(),
                   ),
                 ],
               ),
@@ -253,7 +275,14 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
                       const SizedBox(height: AppSpacing.md),
 
                       // Dynamic Scope Inputs
-                      _buildDynamicScopeInput(isAdmin, controller, isDark, primaryColor, headingColor, bodyColor),
+                      _buildDynamicScopeInput(
+                        isAdmin,
+                        controller,
+                        isDark,
+                        primaryColor,
+                        headingColor,
+                        bodyColor,
+                      ),
                       const SizedBox(height: AppSpacing.md),
 
                       // Notification Type
@@ -275,10 +304,14 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
                         decoration: InputDecoration(
                           labelText: 'Judul Notifikasi *',
                           hintText: 'Contoh: Kumpul di Lobi Hotel Pukul 14.00',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                          ),
                           prefixIcon: const Icon(Icons.title_rounded, size: 20),
                         ),
-                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Judul wajib diisi' : null,
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Judul wajib diisi'
+                            : null,
                       ),
                       const SizedBox(height: AppSpacing.md),
 
@@ -290,11 +323,16 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
                         style: TextStyle(color: headingColor),
                         decoration: InputDecoration(
                           labelText: 'Isi Pesan *',
-                          hintText: 'Tuliskan informasi lengkap yang perlu diketahui oleh jamaah...',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+                          hintText:
+                              'Tuliskan informasi lengkap yang perlu diketahui oleh jamaah...',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                          ),
                           alignLabelWithHint: true,
                         ),
-                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Pesan wajib diisi' : null,
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Pesan wajib diisi'
+                            : null,
                       ),
                       const SizedBox(height: AppSpacing.md),
 
@@ -307,7 +345,13 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
                         ),
                       ),
                       const SizedBox(height: 8),
-                      _buildLivePreviewCard(context, isDark, primaryColor, headingColor, bodyColor),
+                      _buildLivePreviewCard(
+                        context,
+                        isDark,
+                        primaryColor,
+                        headingColor,
+                        bodyColor,
+                      ),
                     ],
                   ),
                 ),
@@ -320,7 +364,9 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
               decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(
-                    color: isDark ? AppColors.darkOutlineVariant : AppColors.surfaceVariant,
+                    color: isDark
+                        ? AppColors.darkOutlineVariant
+                        : AppColors.surfaceVariant,
                   ),
                 ),
               ),
@@ -331,9 +377,13 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
                       style: OutlinedButton.styleFrom(
                         foregroundColor: bodyColor,
                         minimumSize: const Size(0, 44),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                        ),
                       ),
-                      onPressed: _isSending ? null : () => Navigator.of(context).pop(),
+                      onPressed: _isSending
+                          ? null
+                          : () => Navigator.of(context).pop(),
                       child: const Text('Batal'),
                     ),
                   ),
@@ -346,14 +396,19 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
                         foregroundColor: Colors.white,
                         minimumSize: const Size(0, 44),
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                        ),
                       ),
                       onPressed: _isSending ? null : _handleSend,
                       icon: _isSending
                           ? const SizedBox(
                               width: 18,
                               height: 18,
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
                             )
                           : const Icon(Icons.send_rounded, size: 18),
                       label: Text(
@@ -374,15 +429,39 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
   Widget _buildScopeChips(bool isAdmin, Color primaryColor, bool isDark) {
     final availableScopes = isAdmin
         ? [
-            {'key': 'global', 'label': 'Global (Semua)', 'icon': Icons.public_rounded},
-            {'key': 'maktab', 'label': 'Maktab', 'icon': Icons.apartment_rounded},
+            {
+              'key': 'global',
+              'label': 'Global (Semua)',
+              'icon': Icons.public_rounded,
+            },
+            {
+              'key': 'maktab',
+              'label': 'Maktab',
+              'icon': Icons.apartment_rounded,
+            },
             {'key': 'kloter', 'label': 'Kloter', 'icon': Icons.groups_rounded},
-            {'key': 'room', 'label': 'Room', 'icon': Icons.meeting_room_outlined},
-            {'key': 'user', 'label': 'User Tertentu', 'icon': Icons.person_rounded},
+            {
+              'key': 'room',
+              'label': 'Room',
+              'icon': Icons.meeting_room_outlined,
+            },
+            {
+              'key': 'user',
+              'label': 'User Tertentu',
+              'icon': Icons.person_rounded,
+            },
           ]
         : [
-            {'key': 'room', 'label': 'Semua di Room', 'icon': Icons.meeting_room_outlined},
-            {'key': 'user', 'label': 'Jamaah Tertentu', 'icon': Icons.person_rounded},
+            {
+              'key': 'room',
+              'label': 'Semua di Room',
+              'icon': Icons.meeting_room_outlined,
+            },
+            {
+              'key': 'user',
+              'label': 'Jamaah Tertentu',
+              'icon': Icons.person_rounded,
+            },
           ];
 
     return Wrap(
@@ -397,7 +476,9 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
               Icon(
                 scope['icon'] as IconData,
                 size: 15,
-                color: isSelected ? Colors.white : (isDark ? AppColors.darkTextBody : AppColors.textBody),
+                color: isSelected
+                    ? Colors.white
+                    : (isDark ? AppColors.darkTextBody : AppColors.textBody),
               ),
               const SizedBox(width: 6),
               Text(
@@ -405,14 +486,18 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected ? Colors.white : (isDark ? AppColors.darkTextBody : AppColors.textBody),
+                  color: isSelected
+                      ? Colors.white
+                      : (isDark ? AppColors.darkTextBody : AppColors.textBody),
                 ),
               ),
             ],
           ),
           selected: isSelected,
           selectedColor: primaryColor,
-          backgroundColor: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceVariant,
+          backgroundColor: isDark
+              ? AppColors.darkSurfaceContainer
+              : AppColors.surfaceVariant,
           onSelected: (selected) {
             if (selected) {
               setState(() => _selectedScope = scope['key'] as String);
@@ -426,7 +511,11 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
   Widget _buildTypeChips(Color primaryColor, bool isDark) {
     final types = [
       {'key': 'announcement', 'label': 'Pengumuman', 'color': primaryColor},
-      {'key': 'urgent', 'label': 'Penting / Mendesak', 'color': AppColors.statusCaution},
+      {
+        'key': 'urgent',
+        'label': 'Penting / Mendesak',
+        'color': AppColors.statusCaution,
+      },
       {'key': 'info', 'label': 'Informasi', 'color': AppColors.statusSafe},
     ];
 
@@ -442,12 +531,16 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
             style: TextStyle(
               fontSize: 12,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              color: isSelected ? Colors.white : (isDark ? AppColors.darkTextBody : AppColors.textBody),
+              color: isSelected
+                  ? Colors.white
+                  : (isDark ? AppColors.darkTextBody : AppColors.textBody),
             ),
           ),
           selected: isSelected,
           selectedColor: color,
-          backgroundColor: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceVariant,
+          backgroundColor: isDark
+              ? AppColors.darkSurfaceContainer
+              : AppColors.surfaceVariant,
           onSelected: (selected) {
             if (selected) {
               setState(() => _selectedType = t['key'] as String);
@@ -473,16 +566,24 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
           decoration: BoxDecoration(
             color: AppColors.statusSafe.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(color: AppColors.statusSafe.withValues(alpha: 0.3)),
+            border: Border.all(
+              color: AppColors.statusSafe.withValues(alpha: 0.3),
+            ),
           ),
           child: Row(
             children: [
-              const Icon(Icons.info_outline_rounded, color: AppColors.statusSafe, size: 20),
+              const Icon(
+                Icons.info_outline_rounded,
+                color: AppColors.statusSafe,
+                size: 20,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   'Notifikasi ini akan disiarkan ke SELURUH jamaah yang terdaftar dalam sistem.',
-                  style: AppTypography.captionSmall.copyWith(color: headingColor),
+                  style: AppTypography.captionSmall.copyWith(
+                    color: headingColor,
+                  ),
                 ),
               ),
             ],
@@ -496,10 +597,13 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
           decoration: InputDecoration(
             labelText: 'Nomor / Nama Maktab *',
             hintText: 'Contoh: Maktab 112 atau Mina 4',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
             prefixIcon: const Icon(Icons.apartment_rounded, size: 20),
           ),
-          validator: (v) => (_selectedScope == 'maktab' && (v == null || v.trim().isEmpty))
+          validator: (v) =>
+              (_selectedScope == 'maktab' && (v == null || v.trim().isEmpty))
               ? 'Maktab wajib diisi'
               : null,
         );
@@ -511,10 +615,13 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
           decoration: InputDecoration(
             labelText: 'Kode / Nama Kloter *',
             hintText: 'Contoh: JKG-01, SOC-12',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
             prefixIcon: const Icon(Icons.groups_rounded, size: 20),
           ),
-          validator: (v) => (_selectedScope == 'kloter' && (v == null || v.trim().isEmpty))
+          validator: (v) =>
+              (_selectedScope == 'kloter' && (v == null || v.trim().isEmpty))
               ? 'Kloter wajib diisi'
               : null,
         );
@@ -522,11 +629,16 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
       case 'room':
         if (!isAdmin) {
           // Pendamping is locked to active room
-          final rName = _selectedRoomName ?? controller.activeRoom.value?.name ?? 'Room Anda';
+          final rName =
+              _selectedRoomName ??
+              controller.activeRoom.value?.name ??
+              'Room Anda';
           return Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream,
+              color: isDark
+                  ? AppColors.darkSurfaceContainer
+                  : AppColors.canvasCream,
               borderRadius: BorderRadius.circular(AppRadius.md),
               border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
             ),
@@ -547,7 +659,9 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
                       ),
                       Text(
                         'Notifikasi dikirim ke seluruh jamaah di dalam room ini.',
-                        style: AppTypography.captionSmall.copyWith(color: bodyColor),
+                        style: AppTypography.captionSmall.copyWith(
+                          color: bodyColor,
+                        ),
                       ),
                     ],
                   ),
@@ -562,11 +676,17 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
             builder: (context, snapshot) {
               final rooms = snapshot.data?.docs ?? [];
               return DropdownButtonFormField<String>(
-                initialValue: rooms.any((d) => d.id == _selectedRoomId) ? _selectedRoomId : null,
-                dropdownColor: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite,
+                initialValue: rooms.any((d) => d.id == _selectedRoomId)
+                    ? _selectedRoomId
+                    : null,
+                dropdownColor: isDark
+                    ? AppColors.darkSurfaceContainer
+                    : AppColors.surfaceWhite,
                 decoration: InputDecoration(
                   labelText: 'Pilih Room Target *',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
                   prefixIcon: const Icon(Icons.meeting_room_rounded, size: 20),
                 ),
                 items: rooms.map((doc) {
@@ -575,7 +695,10 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
                   final code = data['code'] ?? '';
                   return DropdownMenuItem<String>(
                     value: doc.id,
-                    child: Text('$name ($code)', style: TextStyle(color: headingColor)),
+                    child: Text(
+                      '$name ($code)',
+                      style: TextStyle(color: headingColor),
+                    ),
                   );
                 }).toList(),
                 onChanged: (val) {
@@ -585,7 +708,8 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
                     _selectedRoomName = match?.data()['name'] as String?;
                   });
                 },
-                validator: (v) => (_selectedScope == 'room' && (v == null || v.isEmpty))
+                validator: (v) =>
+                    (_selectedScope == 'room' && (v == null || v.isEmpty))
                     ? 'Room target wajib dipilih'
                     : null,
               );
@@ -597,12 +721,15 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
         if (!isAdmin) {
           // Pendamping picks from current room's Jamaah
           final members = controller.jamaahList;
-          if (_selectedTargetUserId != null && _selectedTargetUserName != null) {
+          if (_selectedTargetUserId != null &&
+              _selectedTargetUserName != null) {
             // Already pre-targeted from detail sheet
             return Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream,
+                color: isDark
+                    ? AppColors.darkSurfaceContainer
+                    : AppColors.canvasCream,
                 borderRadius: BorderRadius.circular(AppRadius.md),
                 border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
               ),
@@ -612,8 +739,14 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
                     radius: 14,
                     backgroundColor: primaryColor,
                     child: Text(
-                      _selectedTargetUserName!.isNotEmpty ? _selectedTargetUserName![0].toUpperCase() : 'J',
-                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                      _selectedTargetUserName!.isNotEmpty
+                          ? _selectedTargetUserName![0].toUpperCase()
+                          : 'J',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -630,7 +763,9 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
                         ),
                         Text(
                           'Penerima Tunggal (Jamaah di Room)',
-                          style: AppTypography.captionSmall.copyWith(color: bodyColor),
+                          style: AppTypography.captionSmall.copyWith(
+                            color: bodyColor,
+                          ),
                         ),
                       ],
                     ),
@@ -650,11 +785,17 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
           }
 
           return DropdownButtonFormField<String>(
-            initialValue: members.any((j) => j.id == _selectedTargetUserId) ? _selectedTargetUserId : null,
-            dropdownColor: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite,
+            initialValue: members.any((j) => j.id == _selectedTargetUserId)
+                ? _selectedTargetUserId
+                : null,
+            dropdownColor: isDark
+                ? AppColors.darkSurfaceContainer
+                : AppColors.surfaceWhite,
             decoration: InputDecoration(
               labelText: 'Pilih Jamaah Target *',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
               prefixIcon: const Icon(Icons.person_outline_rounded, size: 20),
             ),
             items: members.map((j) {
@@ -670,7 +811,8 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
                 _selectedTargetUserName = match?.name;
               });
             },
-            validator: (v) => (_selectedScope == 'user' && (v == null || v.isEmpty))
+            validator: (v) =>
+                (_selectedScope == 'user' && (v == null || v.isEmpty))
                 ? 'Jamaah target wajib dipilih'
                 : null,
           );
@@ -682,10 +824,13 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
             decoration: InputDecoration(
               labelText: 'UID Jamaah / User *',
               hintText: 'Masukkan User UID target',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
               prefixIcon: const Icon(Icons.person_rounded, size: 20),
             ),
-            validator: (v) => (_selectedScope == 'user' && (v == null || v.trim().isEmpty))
+            validator: (v) =>
+                (_selectedScope == 'user' && (v == null || v.trim().isEmpty))
                 ? 'Target User ID wajib diisi'
                 : null,
           );
@@ -716,10 +861,12 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
       badgeColor = primaryColor;
     } else if (_selectedScope == 'maktab') {
       badgeColor = AppColors.statusCaution;
-      scopeLabel = 'MAKTAB ${_maktabController.text.trim().isNotEmpty ? _maktabController.text.trim() : ""}';
+      scopeLabel =
+          'MAKTAB ${_maktabController.text.trim().isNotEmpty ? _maktabController.text.trim() : ""}';
     } else if (_selectedScope == 'kloter') {
       badgeColor = AppColors.statusCaution;
-      scopeLabel = 'KLOTER ${_kloterController.text.trim().isNotEmpty ? _kloterController.text.trim() : ""}';
+      scopeLabel =
+          'KLOTER ${_kloterController.text.trim().isNotEmpty ? _kloterController.text.trim() : ""}';
     } else if (_selectedScope == 'room') {
       badgeColor = primaryColor;
       scopeLabel = 'ROOM';
@@ -734,7 +881,9 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
         color: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
-          color: isDark ? AppColors.darkOutlineVariant : AppColors.surfaceVariant,
+          color: isDark
+              ? AppColors.darkOutlineVariant
+              : AppColors.surfaceVariant,
         ),
       ),
       child: Column(
@@ -761,7 +910,10 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
               const Spacer(),
               Text(
                 'Baru saja',
-                style: AppTypography.captionSmall.copyWith(color: bodyColor, fontSize: 11),
+                style: AppTypography.captionSmall.copyWith(
+                  color: bodyColor,
+                  fontSize: 11,
+                ),
               ),
             ],
           ),
@@ -776,7 +928,10 @@ class _NotificationComposerDialogState extends State<NotificationComposerDialog>
           const SizedBox(height: 4),
           Text(
             messageText,
-            style: AppTypography.bodySmall.copyWith(color: bodyColor, height: 1.3),
+            style: AppTypography.bodySmall.copyWith(
+              color: bodyColor,
+              height: 1.3,
+            ),
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
           ),

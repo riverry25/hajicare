@@ -44,11 +44,13 @@ class RoleAndRoomGuard extends GetMiddleware {
         : (state.role == UserRole.pendamping ? 'pendamping' : 'jamaah');
 
     // 2. Check active room using in-memory state or local persistent cache fallback
-    final currentRoomId = (state.activeRoomId.value != null && state.activeRoomId.value!.trim().isNotEmpty)
+    final currentRoomId =
+        (state.activeRoomId.value != null &&
+            state.activeRoomId.value!.trim().isNotEmpty)
         ? state.activeRoomId.value!.trim()
         : (state.cachedRoomId != null && state.cachedRoomId!.trim().isNotEmpty
-            ? state.cachedRoomId!.trim()
-            : null);
+              ? state.cachedRoomId!.trim()
+              : null);
     final hasActiveRoom = currentRoomId != null && currentRoomId.isNotEmpty;
 
     // Self-healing: if cached room ID exists but reactive RxnString was temporarily null, restore it.

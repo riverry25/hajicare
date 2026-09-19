@@ -58,7 +58,9 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
 
   // ── 0. Emergency Visual Banner (Saat FIRE) ──────────────────────────────────
   Widget _buildEmergencyBanner(
-      BuildContext context, SmartbandLdrController ctrl) {
+    BuildContext context,
+    SmartbandLdrController ctrl,
+  ) {
     return Obx(() {
       final isConnected = ctrl.isConnected;
       final isFire = ctrl.flameDetected.value;
@@ -115,7 +117,10 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
   }
 
   // ── 1. Connection Card ──────────────────────────────────────────────────────
-  Widget _buildConnectionCard(BuildContext context, SmartbandLdrController ctrl) {
+  Widget _buildConnectionCard(
+    BuildContext context,
+    SmartbandLdrController ctrl,
+  ) {
     final isDark = AppColors.isDark(context);
     final headingColor = AppColors.textHeadingColor(context);
     final bodyColor = AppColors.textBodyColor(context);
@@ -178,7 +183,9 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
               : AppColors.primaryGold;
           iconData = Icons.bluetooth_disabled_rounded;
           titleText = 'Gelang Pintar Haji';
-          subtitleText = isExplicitDisconnected ? 'Terputus' : 'Belum terhubung';
+          subtitleText = isExplicitDisconnected
+              ? 'Terputus'
+              : 'Belum terhubung';
           noteText = isExplicitDisconnected
               ? 'BLE Sync Tidak Aktif'
               : 'Menunggu koneksi BLE';
@@ -280,7 +287,9 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            isActive ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
+            isActive
+                ? Icons.check_circle_rounded
+                : Icons.radio_button_unchecked,
             size: 11,
             color: color,
           ),
@@ -336,11 +345,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                 color: iconBgColor,
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                statusIcon,
-                color: iconColor,
-                size: 28,
-              ),
+              child: Icon(statusIcon, color: iconColor, size: 28),
             ),
             const SizedBox(height: AppSpacing.sm),
 
@@ -360,7 +365,9 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
               child: Text(
                 displayPercent,
                 style: AppTypography.heroNumberLarge.copyWith(
-                  color: isConnected ? headingColor : bodyColor.withValues(alpha: 0.4),
+                  color: isConnected
+                      ? headingColor
+                      : bodyColor.withValues(alpha: 0.4),
                   letterSpacing: -1.0,
                 ),
               ),
@@ -413,7 +420,9 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
 
   // ── 3. Flame Main Card ──────────────────────────────────────────────────────
   Widget _buildFlameMainCard(
-      BuildContext context, SmartbandLdrController ctrl) {
+    BuildContext context,
+    SmartbandLdrController ctrl,
+  ) {
     final isDark = AppColors.isDark(context);
     final headingColor = AppColors.textHeadingColor(context);
     final bodyColor = AppColors.textBodyColor(context);
@@ -518,13 +527,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                 color: iconBgColor,
                 shape: BoxShape.circle,
               ),
-              child: Center(
-                child: Icon(
-                  iconData,
-                  color: iconColor,
-                  size: 38,
-                ),
-              ),
+              child: Center(child: Icon(iconData, color: iconColor, size: 38)),
             ),
             const SizedBox(height: AppSpacing.md),
 
@@ -579,7 +582,9 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
 
   // ── 4. Realtime Indicators (LDR & Flame) ─────────────────────────────────────
   Widget _buildRealtimeIndicator(
-      BuildContext context, SmartbandLdrController ctrl) {
+    BuildContext context,
+    SmartbandLdrController ctrl,
+  ) {
     final bodyColor = AppColors.textBodyColor(context);
 
     return Obx(() {
@@ -625,8 +630,9 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                         : 'LDR: Menunggu data sensor...',
                     style: AppTypography.bodySmall.copyWith(
                       color: isReceivingLdr ? AppColors.statusSafe : bodyColor,
-                      fontWeight:
-                          isReceivingLdr ? FontWeight.w600 : FontWeight.normal,
+                      fontWeight: isReceivingLdr
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                     ),
                   ),
                 ),
@@ -641,15 +647,15 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
             decoration: BoxDecoration(
               color: isReceivingFlame
                   ? (ctrl.flameDetected.value
-                      ? AppColors.sosEmergency.withValues(alpha: 0.08)
-                      : AppColors.statusSafe.withValues(alpha: 0.08))
+                        ? AppColors.sosEmergency.withValues(alpha: 0.08)
+                        : AppColors.statusSafe.withValues(alpha: 0.08))
                   : AppColors.canvasCreamSubtle.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(AppRadius.md),
               border: Border.all(
                 color: isReceivingFlame
                     ? (ctrl.flameDetected.value
-                        ? AppColors.sosEmergency.withValues(alpha: 0.3)
-                        : AppColors.statusSafe.withValues(alpha: 0.25))
+                          ? AppColors.sosEmergency.withValues(alpha: 0.3)
+                          : AppColors.statusSafe.withValues(alpha: 0.25))
                     : AppColors.outlineVariant.withValues(alpha: 0.3),
               ),
             ),
@@ -676,14 +682,14 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
                   child: Text(
                     isReceivingFlame
                         ? (ctrl.flameDetected.value
-                            ? '● Flame ALERT: $flameTimeStr'
-                            : '● Flame sensor aktif: $flameTimeStr')
+                              ? '● Flame ALERT: $flameTimeStr'
+                              : '● Flame sensor aktif: $flameTimeStr')
                         : 'Flame: Menunggu data sensor...',
                     style: AppTypography.bodySmall.copyWith(
                       color: isReceivingFlame
                           ? (ctrl.flameDetected.value
-                              ? AppColors.sosEmergency
-                              : AppColors.statusSafe)
+                                ? AppColors.sosEmergency
+                                : AppColors.statusSafe)
                           : bodyColor,
                       fontWeight: isReceivingFlame
                           ? FontWeight.w600
@@ -898,7 +904,9 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primaryContainer,
             foregroundColor: AppColors.surfaceWhite,
-            disabledBackgroundColor: AppColors.primaryContainer.withValues(alpha: 0.6),
+            disabledBackgroundColor: AppColors.primaryContainer.withValues(
+              alpha: 0.6,
+            ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.pill),
             ),

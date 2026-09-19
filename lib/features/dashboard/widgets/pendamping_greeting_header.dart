@@ -10,10 +10,7 @@ import '../../../../core/theme/app_typography.dart';
 class PendampingGreetingHeader extends StatelessWidget {
   final HajiCareState state;
 
-  const PendampingGreetingHeader({
-    super.key,
-    required this.state,
-  });
+  const PendampingGreetingHeader({super.key, required this.state});
 
   @override
   Widget build(BuildContext context) {
@@ -34,14 +31,14 @@ class PendampingGreetingHeader extends StatelessWidget {
 
       final kloter = (rawKloter != null && rawKloter.isNotEmpty)
           ? (rawKloter.toLowerCase().startsWith('kloter')
-              ? rawKloter
-              : '$kloterLabel $rawKloter')
+                ? rawKloter
+                : '$kloterLabel $rawKloter')
           : null;
 
       final maktab = (rawMaktab != null && rawMaktab.isNotEmpty)
           ? (rawMaktab.toLowerCase().startsWith('maktab')
-              ? rawMaktab
-              : '$maktabLabel $rawMaktab')
+                ? rawMaktab
+                : '$maktabLabel $rawMaktab')
           : null;
 
       String groupInfo = '';
@@ -132,12 +129,16 @@ class PendampingGreetingHeader extends StatelessWidget {
                         Icon(
                           Icons.location_on_outlined,
                           size: 13,
-                          color: isDark ? AppColors.goldLight : AppColors.tanMedium,
+                          color: isDark
+                              ? AppColors.goldLight
+                              : AppColors.tanMedium,
                         ),
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
-                            groupInfo.isNotEmpty ? groupInfo : 'Rombongan Belum Diatur',
+                            groupInfo.isNotEmpty
+                                ? groupInfo
+                                : 'Rombongan Belum Diatur',
                             style: TextStyle(
                               color: isDark
                                   ? AppColors.goldLight
@@ -185,4 +186,3 @@ class PendampingGreetingHeader extends StatelessWidget {
     });
   }
 }
-

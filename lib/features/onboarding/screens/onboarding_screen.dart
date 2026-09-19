@@ -58,11 +58,12 @@ class OnboardingScreen extends StatelessWidget {
                       child: Image.asset(
                         'assets/icon.jpeg',
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => const Icon(
-                          Icons.mosque_rounded,
-                          color: AppColors.canvasCream,
-                          size: 22,
-                        ),
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(
+                              Icons.mosque_rounded,
+                              color: AppColors.canvasCream,
+                              size: 22,
+                            ),
                       ),
                     ),
                   ),

@@ -38,7 +38,11 @@ class PillButton extends StatelessWidget {
         Text(
           label,
           style: AppTypography.labelLarge.copyWith(
-            color: textColor ?? (isOutline ? (color ?? AppColors.primaryContainer) : AppColors.surfaceWhite),
+            color:
+                textColor ??
+                (isOutline
+                    ? (color ?? AppColors.primaryContainer)
+                    : AppColors.surfaceWhite),
           ),
         ),
       ],
@@ -48,10 +52,7 @@ class PillButton extends StatelessWidget {
       return OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          side: BorderSide(
-            color: color ?? AppColors.goldLight,
-            width: 1.5,
-          ),
+          side: BorderSide(color: color ?? AppColors.goldLight, width: 1.5),
           foregroundColor: textColor ?? AppColors.primaryContainer,
           minimumSize: Size(
             isFullWidth ? double.infinity : AppSizes.touchTargetMin,
@@ -84,4 +85,3 @@ class PillButton extends StatelessWidget {
     );
   }
 }
-

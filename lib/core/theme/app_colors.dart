@@ -23,7 +23,8 @@ class AppColors {
   static const Color tertiaryContainer = Color(0xFF4B350D);
   static const Color goldLight = Color(0xFFD4B896); // Soft warm gold
   static const Color accentGoldStar = Color(0xFFD4A857); // Glowing star gold
-  static const Color primaryGold = accentGoldStar; // Alias for backward compatibility
+  static const Color primaryGold =
+      accentGoldStar; // Alias for backward compatibility
   static const Color goldPrimary = Color(0xFFCFA043); // Rich metallic gold
   static const Color goldDark = Color(0xFF9E7422); // Deep rich gold
   static const Color goldMuted = Color(0xFFCBB698);
@@ -38,7 +39,9 @@ class AppColors {
   static const Color background = Color(0xFFFFF9F5);
   static const Color surface = Color(0xFFFFF9F5);
   static const Color surfaceWhite = Color(0xFFFFFFFF);
-  static const Color canvasCream = Color(0xFFF2ECE1); // Signature warm parchment
+  static const Color canvasCream = Color(
+    0xFFF2ECE1,
+  ); // Signature warm parchment
   static const Color canvasCreamSubtle = Color(0xFFEAE2D4);
   static const Color surfaceBright = Color(0xFFFFFBFF);
   static const Color surfaceContainerLow = Color(0xFFFFF2E6);
@@ -49,8 +52,12 @@ class AppColors {
   static const Color surfaceDim = Color(0xFFE8D4BE);
 
   // ── Texts & Outlines (High Contrast WCAG AAA friendly for Elderly) ──────────
-  static const Color textHeading = Color(0xFF22160E); // Deep espresso for maximum readability
-  static const Color textBody = Color(0xFF57483B); // Solid contrast against cream/white
+  static const Color textHeading = Color(
+    0xFF22160E,
+  ); // Deep espresso for maximum readability
+  static const Color textBody = Color(
+    0xFF57483B,
+  ); // Solid contrast against cream/white
   static const Color textSecondary = textBody; // Alias
   static const Color textMuted = Color(0xFF7D6E62);
   static const Color textCaption = Color(0xFF8E7E73);
@@ -64,7 +71,9 @@ class AppColors {
 
   // ── Status, SOS, & Alerts ──────────────────────────────────────────────────
   static const Color sosEmergency = Color(0xFFE02B39); // Vibrant emergency red
-  static const Color distanceWarning = Color(0xFFE68A2E); // High-visibility amber orange
+  static const Color distanceWarning = Color(
+    0xFFE68A2E,
+  ); // High-visibility amber orange
   static const Color statusPositive = Color(0xFF2E8540); // High-contrast green
   static const Color statusWarning = distanceWarning;
   static const Color statusCaution = distanceWarning;

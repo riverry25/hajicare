@@ -49,7 +49,9 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
     final hc = Get.isRegistered<HajiCareController>()
         ? Get.find<HajiCareController>()
         : null;
-    final r = (hc?.activeRoom.value != null && hc!.activeRoom.value!.id == widget.room.id)
+    final r =
+        (hc?.activeRoom.value != null &&
+            hc!.activeRoom.value!.id == widget.room.id)
         ? hc.activeRoom.value!
         : widget.room;
 
@@ -114,7 +116,8 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
 
       // 2. Synchronously update HajiCareController reactive state across all pages
       if (hc != null) {
-        final isCurrentRoom = (hc.activeRoomId.value == widget.room.id) ||
+        final isCurrentRoom =
+            (hc.activeRoomId.value == widget.room.id) ||
             (hc.activeRoom.value?.id == widget.room.id);
         if (isCurrentRoom) {
           final updatedRoom = (hc.activeRoom.value ?? widget.room).copyWith(
@@ -189,10 +192,16 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
   @override
   Widget build(BuildContext context) {
     final isDarkDialog = AppColors.isDark(context);
-    final dialogBg = isDarkDialog ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingClr = isDarkDialog ? AppColors.darkTextHeading : AppColors.espressoDark;
+    final dialogBg = isDarkDialog
+        ? AppColors.darkSurface
+        : AppColors.surfaceWhite;
+    final headingClr = isDarkDialog
+        ? AppColors.darkTextHeading
+        : AppColors.espressoDark;
     final bodyClr = isDarkDialog ? AppColors.darkTextBody : AppColors.textBody;
-    final borderClr = isDarkDialog ? AppColors.darkOutlineVariant : AppColors.cardBorderColor(context);
+    final borderClr = isDarkDialog
+        ? AppColors.darkOutlineVariant
+        : AppColors.cardBorderColor(context);
 
     // Borderless text field decoration as requested
     InputDecoration inputDec({
@@ -205,7 +214,10 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
         labelText: label,
         labelStyle: TextStyle(color: bodyClr, fontSize: 13),
         hintText: hint,
-        hintStyle: TextStyle(color: bodyClr.withValues(alpha: 0.4), fontSize: 13),
+        hintStyle: TextStyle(
+          color: bodyClr.withValues(alpha: 0.4),
+          fontSize: 13,
+        ),
         suffixText: suffix,
         suffixStyle: TextStyle(
           color: bodyClr.withValues(alpha: 0.7),
@@ -238,11 +250,17 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          borderSide: const BorderSide(color: AppColors.sosEmergency, width: 1.2),
+          borderSide: const BorderSide(
+            color: AppColors.sosEmergency,
+            width: 1.2,
+          ),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          borderSide: const BorderSide(color: AppColors.sosEmergency, width: 1.5),
+          borderSide: const BorderSide(
+            color: AppColors.sosEmergency,
+            width: 1.5,
+          ),
         ),
         prefixIcon: prefixIcon,
       );
@@ -325,10 +343,15 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
                   // Room Code Badge
                   Center(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: isDarkDialog
-                            ? AppColors.darkPrimaryContainer.withValues(alpha: 0.5)
+                            ? AppColors.darkPrimaryContainer.withValues(
+                                alpha: 0.5,
+                              )
                             : AppColors.canvasCream,
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                         border: Border.all(
@@ -338,7 +361,11 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.lock_outline_rounded, size: 12, color: bodyClr),
+                          Icon(
+                            Icons.lock_outline_rounded,
+                            size: 12,
+                            color: bodyClr,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             'Kode Room: ',
@@ -384,7 +411,9 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
                       ),
                     ),
                     onChanged: (_) {
-                      if (_inputError != null) setState(() => _inputError = null);
+                      if (_inputError != null) {
+                        setState(() => _inputError = null);
+                      }
                     },
                   ),
                   const SizedBox(height: 14),
@@ -440,7 +469,9 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
                   TextFormField(
                     controller: _radiusCtrl,
                     enabled: !_isSaving,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
                     ],
@@ -459,7 +490,9 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
                       ),
                     ),
                     onChanged: (_) {
-                      if (_inputError != null) setState(() => _inputError = null);
+                      if (_inputError != null) {
+                        setState(() => _inputError = null);
+                      }
                     },
                   ),
 
@@ -467,7 +500,10 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
                   if (_inputError != null) ...[
                     const SizedBox(height: 12),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.sosEmergency.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
@@ -507,11 +543,15 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
                         child: SizedBox(
                           height: 48,
                           child: OutlinedButton(
-                            onPressed: _isSaving ? null : () => Navigator.of(context).pop(false),
+                            onPressed: _isSaving
+                                ? null
+                                : () => Navigator.of(context).pop(false),
                             style: OutlinedButton.styleFrom(
                               side: BorderSide(color: borderClr),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.pill),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.pill,
+                                ),
                               ),
                             ),
                             child: Text(
@@ -545,7 +585,9 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
                                   ? AppColors.goldLight
                                   : Colors.white,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.pill),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.pill,
+                                ),
                               ),
                             ),
                             child: _isSaving

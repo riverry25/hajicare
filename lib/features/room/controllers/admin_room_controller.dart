@@ -64,80 +64,106 @@ class AdminRoomController extends GetxController {
 
     // 1. Rooms Stream
     _roomsSub?.cancel();
-    _roomsSub = _roomService.getRoomsStream().listen((roomList) {
-      rooms.value = roomList;
-      isLoading.value = false;
-    }, onError: (e) {
-      debugPrint('[AdminRoomController] Error fetching rooms: $e');
-      isLoading.value = false;
-    });
+    _roomsSub = _roomService.getRoomsStream().listen(
+      (roomList) {
+        rooms.value = roomList;
+        isLoading.value = false;
+      },
+      onError: (e) {
+        debugPrint('[AdminRoomController] Error fetching rooms: $e');
+        isLoading.value = false;
+      },
+    );
 
     // 2. Activities Stream
     _activitiesSub?.cancel();
-    _activitiesSub = _roomService.getRecentActivitiesStream().listen((actList) {
-      activities.value = actList;
-    }, onError: (e) {
-      debugPrint('[AdminRoomController] Error fetching activities: $e');
-    });
+    _activitiesSub = _roomService.getRecentActivitiesStream().listen(
+      (actList) {
+        activities.value = actList;
+      },
+      onError: (e) {
+        debugPrint('[AdminRoomController] Error fetching activities: $e');
+      },
+    );
 
     // 3. Active SOS Events Stream
     _sosSub?.cancel();
-    _sosSub = _roomService.getActiveSosEventsStream().listen((sosList) {
-      activeSosList.value = sosList;
-      activeSosCount.value = sosList.length;
-    }, onError: (e) {
-      debugPrint('[AdminRoomController] Error fetching SOS events: $e');
-    });
+    _sosSub = _roomService.getActiveSosEventsStream().listen(
+      (sosList) {
+        activeSosList.value = sosList;
+        activeSosCount.value = sosList.length;
+      },
+      onError: (e) {
+        debugPrint('[AdminRoomController] Error fetching SOS events: $e');
+      },
+    );
 
     // 4. Resolved SOS Events Stream (for history)
     _resolvedSosSub?.cancel();
-    _resolvedSosSub = _roomService.getResolvedSosEventsStream().listen((resList) {
-      resolvedSosList.value = resList;
-    }, onError: (e) {
-      debugPrint('[AdminRoomController] Error fetching resolved SOS: $e');
-    });
+    _resolvedSosSub = _roomService.getResolvedSosEventsStream().listen(
+      (resList) {
+        resolvedSosList.value = resList;
+      },
+      onError: (e) {
+        debugPrint('[AdminRoomController] Error fetching resolved SOS: $e');
+      },
+    );
 
     // 5. All Users Stream (realtime jamaah & pendamping data)
     _usersSub?.cancel();
-    _usersSub = _roomService.getAllUsersStream().listen((userList) {
-      allUsers.value = userList;
-      totalJamaah.value = userList
-          .where((u) => (u['role'] as String?)?.toLowerCase() == 'jamaah')
-          .length;
-      totalPendamping.value = userList
-          .where((u) => (u['role'] as String?)?.toLowerCase() == 'pendamping')
-          .length;
-    }, onError: (e) {
-      debugPrint('[AdminRoomController] Error fetching all users: $e');
-    });
+    _usersSub = _roomService.getAllUsersStream().listen(
+      (userList) {
+        allUsers.value = userList;
+        totalJamaah.value = userList
+            .where((u) => (u['role'] as String?)?.toLowerCase() == 'jamaah')
+            .length;
+        totalPendamping.value = userList
+            .where((u) => (u['role'] as String?)?.toLowerCase() == 'pendamping')
+            .length;
+      },
+      onError: (e) {
+        debugPrint('[AdminRoomController] Error fetching all users: $e');
+      },
+    );
 
     // 6. Global Member Counts Stream (fallback)
     _countsSub?.cancel();
-    _countsSub = _roomService.getGlobalMemberCountsStream().listen((counts) {
-      if (allUsers.isEmpty) {
-        totalJamaah.value = counts['jamaah'] ?? 0;
-        totalPendamping.value = counts['pendamping'] ?? 0;
-      }
-    }, onError: (e) {
-      debugPrint('[AdminRoomController] Error fetching member counts: $e');
-    });
+    _countsSub = _roomService.getGlobalMemberCountsStream().listen(
+      (counts) {
+        if (allUsers.isEmpty) {
+          totalJamaah.value = counts['jamaah'] ?? 0;
+          totalPendamping.value = counts['pendamping'] ?? 0;
+        }
+      },
+      onError: (e) {
+        debugPrint('[AdminRoomController] Error fetching member counts: $e');
+      },
+    );
 
     // 7. Per-Room Member & SOS Breakdown Stream
     _breakdownSub?.cancel();
-    _breakdownSub = _roomService.getAllRoomMemberBreakdownStream().listen((data) {
-      roomBreakdowns.value = data;
-    }, onError: (e) {
-      debugPrint('[AdminRoomController] Error fetching breakdowns: $e');
-    });
+    _breakdownSub = _roomService.getAllRoomMemberBreakdownStream().listen(
+      (data) {
+        roomBreakdowns.value = data;
+      },
+      onError: (e) {
+        debugPrint('[AdminRoomController] Error fetching breakdowns: $e');
+      },
+    );
   }
 
   void subscribeToRoomMembers(String roomId) {
     _membersSub?.cancel();
-    _membersSub = _roomService.getRoomMembersStream(roomId).listen((members) {
-      roomMembers.value = members;
-    }, onError: (e) {
-      debugPrint('[AdminRoomController] Error fetching room members: $e');
-    });
+    _membersSub = _roomService
+        .getRoomMembersStream(roomId)
+        .listen(
+          (members) {
+            roomMembers.value = members;
+          },
+          onError: (e) {
+            debugPrint('[AdminRoomController] Error fetching room members: $e');
+          },
+        );
   }
 
   // ── Computed Getters ────────────────────────────────────────────────────────
@@ -157,7 +183,8 @@ class AdminRoomController extends GetxController {
   List<Map<String, dynamic>> get attentionJamaahList {
     final now = DateTime.now();
     return allJamaah.where((u) {
-      final hasRoom = u['activeRoomId'] != null &&
+      final hasRoom =
+          u['activeRoomId'] != null &&
           (u['activeRoomId'] as String).trim().isNotEmpty;
       final isSos = u['sosActive'] == true;
       if (!hasRoom || isSos) return false;
@@ -172,8 +199,10 @@ class AdminRoomController extends GetxController {
     }).toList();
   }
 
-  int getRoomJamaahCount(String roomId) => roomBreakdowns[roomId]?['jamaah'] ?? 0;
-  int getRoomPendampingCount(String roomId) => roomBreakdowns[roomId]?['pendamping'] ?? 0;
+  int getRoomJamaahCount(String roomId) =>
+      roomBreakdowns[roomId]?['jamaah'] ?? 0;
+  int getRoomPendampingCount(String roomId) =>
+      roomBreakdowns[roomId]?['pendamping'] ?? 0;
   int getRoomSosCount(String roomId) => roomBreakdowns[roomId]?['sos'] ?? 0;
 
   List<RoomModel> get recentActiveRooms {
@@ -227,11 +256,13 @@ class AdminRoomController extends GetxController {
     final filter = statusFilter.value;
 
     return rooms.where((room) {
-      final matchesSearch = query.isEmpty ||
+      final matchesSearch =
+          query.isEmpty ||
           room.name.toLowerCase().contains(query) ||
           room.code.toLowerCase().contains(query);
 
-      final matchesFilter = filter == 'all' ||
+      final matchesFilter =
+          filter == 'all' ||
           (filter == 'active' && room.isActive) ||
           (filter == 'inactive' && !room.isActive);
 
@@ -266,7 +297,8 @@ class AdminRoomController extends GetxController {
         AppAlert.success(
           context,
           title: 'Room Berhasil Dibuat',
-          message: 'Room "${newRoom.name}" berhasil dibuat dengan kode ${newRoom.code}.',
+          message:
+              'Room "${newRoom.name}" berhasil dibuat dengan kode ${newRoom.code}.',
         );
       }
     } catch (e) {
@@ -282,7 +314,11 @@ class AdminRoomController extends GetxController {
     }
   }
 
-  Future<void> updateRoomName(BuildContext context, String roomId, String newName) async {
+  Future<void> updateRoomName(
+    BuildContext context,
+    String roomId,
+    String newName,
+  ) async {
     final trimmed = newName.trim();
     if (trimmed.isEmpty) {
       AppAlert.warning(
@@ -318,7 +354,8 @@ class AdminRoomController extends GetxController {
       AppAlert.confirm(
         context,
         title: 'Nonaktifkan Room?',
-        message: 'Room "${room.name}" akan dinonaktifkan sementara. Anggota tidak dapat check-in selama nonaktif.',
+        message:
+            'Room "${room.name}" akan dinonaktifkan sementara. Anggota tidak dapat check-in selama nonaktif.',
         confirmText: 'Nonaktifkan',
         cancelText: 'Batal',
         isDestructive: true,
@@ -329,7 +366,11 @@ class AdminRoomController extends GetxController {
     }
   }
 
-  Future<void> _executeToggleRoomStatus(BuildContext context, String roomId, bool currentStatus) async {
+  Future<void> _executeToggleRoomStatus(
+    BuildContext context,
+    String roomId,
+    bool currentStatus,
+  ) async {
     try {
       await _roomService.toggleRoomStatus(roomId, currentStatus);
       final label = !currentStatus ? 'diaktifkan' : 'dinonaktifkan';
@@ -355,7 +396,8 @@ class AdminRoomController extends GetxController {
     AppAlert.confirm(
       context,
       title: 'Hapus room?',
-      message: 'Semua anggota akan kehilangan akses ke room "${room.name}". Tindakan ini tidak dapat dibatalkan.',
+      message:
+          'Semua anggota akan kehilangan akses ke room "${room.name}". Tindakan ini tidak dapat dibatalkan.',
       confirmText: 'Hapus',
       cancelText: 'Batal',
       isDestructive: true,

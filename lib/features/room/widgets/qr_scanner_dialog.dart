@@ -100,12 +100,19 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
             children: [
               // Header
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream,
+                  color: isDark
+                      ? AppColors.darkSurfaceContainer
+                      : AppColors.canvasCream,
                   border: Border(
                     bottom: BorderSide(
-                      color: isDark ? AppColors.darkOutlineVariant : AppColors.surfaceVariant,
+                      color: isDark
+                          ? AppColors.darkOutlineVariant
+                          : AppColors.surfaceVariant,
                     ),
                   ),
                 ),
@@ -117,7 +124,11 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
                         color: primaryColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
-                      child: Icon(Icons.qr_code_scanner_rounded, color: primaryColor, size: 20),
+                      child: Icon(
+                        Icons.qr_code_scanner_rounded,
+                        color: primaryColor,
+                        size: 20,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -164,7 +175,11 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.videocam_off_rounded, size: 48, color: AppColors.error),
+                                const Icon(
+                                  Icons.videocam_off_rounded,
+                                  size: 48,
+                                  color: AppColors.error,
+                                ),
                                 const SizedBox(height: 12),
                                 Text(
                                   'Kamera Tidak Tersedia',
@@ -213,8 +228,14 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
                               height: 24,
                               decoration: BoxDecoration(
                                 border: Border(
-                                  top: BorderSide(color: primaryColor, width: 4),
-                                  left: BorderSide(color: primaryColor, width: 4),
+                                  top: BorderSide(
+                                    color: primaryColor,
+                                    width: 4,
+                                  ),
+                                  left: BorderSide(
+                                    color: primaryColor,
+                                    width: 4,
+                                  ),
                                 ),
                               ),
                             ),
@@ -227,8 +248,14 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
                               height: 24,
                               decoration: BoxDecoration(
                                 border: Border(
-                                  top: BorderSide(color: primaryColor, width: 4),
-                                  right: BorderSide(color: primaryColor, width: 4),
+                                  top: BorderSide(
+                                    color: primaryColor,
+                                    width: 4,
+                                  ),
+                                  right: BorderSide(
+                                    color: primaryColor,
+                                    width: 4,
+                                  ),
                                 ),
                               ),
                             ),
@@ -241,8 +268,14 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
                               height: 24,
                               decoration: BoxDecoration(
                                 border: Border(
-                                  bottom: BorderSide(color: primaryColor, width: 4),
-                                  left: BorderSide(color: primaryColor, width: 4),
+                                  bottom: BorderSide(
+                                    color: primaryColor,
+                                    width: 4,
+                                  ),
+                                  left: BorderSide(
+                                    color: primaryColor,
+                                    width: 4,
+                                  ),
                                 ),
                               ),
                             ),
@@ -255,8 +288,14 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
                               height: 24,
                               decoration: BoxDecoration(
                                 border: Border(
-                                  bottom: BorderSide(color: primaryColor, width: 4),
-                                  right: BorderSide(color: primaryColor, width: 4),
+                                  bottom: BorderSide(
+                                    color: primaryColor,
+                                    width: 4,
+                                  ),
+                                  right: BorderSide(
+                                    color: primaryColor,
+                                    width: 4,
+                                  ),
                                 ),
                               ),
                             ),
@@ -269,7 +308,10 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
                     Positioned(
                       bottom: 16,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.65),
                           borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -279,8 +321,12 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
                           children: [
                             IconButton(
                               icon: Icon(
-                                _isTorchOn ? Icons.flash_on_rounded : Icons.flash_off_rounded,
-                                color: _isTorchOn ? AppColors.accentGoldStar : Colors.white,
+                                _isTorchOn
+                                    ? Icons.flash_on_rounded
+                                    : Icons.flash_off_rounded,
+                                color: _isTorchOn
+                                    ? AppColors.accentGoldStar
+                                    : Colors.white,
                               ),
                               onPressed: () async {
                                 await _scannerController.toggleTorch();
@@ -290,8 +336,12 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
                             ),
                             const SizedBox(width: 8),
                             IconButton(
-                              icon: const Icon(Icons.flip_camera_ios_rounded, color: Colors.white),
-                              onPressed: () => _scannerController.switchCamera(),
+                              icon: const Icon(
+                                Icons.flip_camera_ios_rounded,
+                                color: Colors.white,
+                              ),
+                              onPressed: () =>
+                                  _scannerController.switchCamera(),
                               tooltip: 'Ganti Kamera',
                             ),
                           ],
@@ -306,11 +356,17 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream,
+                  color: isDark
+                      ? AppColors.darkSurfaceContainer
+                      : AppColors.canvasCream,
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outline_rounded, size: 18, color: primaryColor),
+                    Icon(
+                      Icons.info_outline_rounded,
+                      size: 18,
+                      color: primaryColor,
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(

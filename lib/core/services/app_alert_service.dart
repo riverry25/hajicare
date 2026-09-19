@@ -113,4 +113,3 @@ class AppAlert {
     AppDialog.dismissLoading(context);
   }
 }
-

@@ -100,7 +100,12 @@ class HajiCareHeader extends StatelessWidget implements PreferredSizeWidget {
     }
 
     final hasLeading = effectiveLeading != null;
-    final showLogoImage = (useAppLogo ?? (icon == null || icon == Icons.mosque_rounded || icon == Icons.mosque)) && !hasLeading;
+    final showLogoImage =
+        (useAppLogo ??
+            (icon == null ||
+                icon == Icons.mosque_rounded ||
+                icon == Icons.mosque)) &&
+        !hasLeading;
 
     return AppBar(
       backgroundColor: scaffoldBg,

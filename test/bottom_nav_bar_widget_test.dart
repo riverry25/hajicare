@@ -18,7 +18,9 @@ void main() {
   });
 
   group('HajiCareBottomNavBar Widget Tests', () {
-    testWidgets('Renders all 4 navigation tabs and center mic action', (tester) async {
+    testWidgets('Renders all 4 navigation tabs and center mic action', (
+      tester,
+    ) async {
       int? tappedIndex;
 
       await tester.pumpWidget(

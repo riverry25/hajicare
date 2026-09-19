@@ -26,7 +26,9 @@ void main() {
   });
 
   group('InteractiveMapScreen Widget Rendering Tests', () {
-    testWidgets('Renders InteractiveMapScreen in Light Mode without error', (tester) async {
+    testWidgets('Renders InteractiveMapScreen in Light Mode without error', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -59,7 +61,9 @@ void main() {
       expect(find.text('SOS'), findsOneWidget);
     });
 
-    testWidgets('Renders InteractiveMapScreen in Dark Mode without error', (tester) async {
+    testWidgets('Renders InteractiveMapScreen in Dark Mode without error', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -92,51 +96,59 @@ void main() {
       expect(find.text('SOS'), findsOneWidget);
     });
 
-    testWidgets('Renders PolylineLayer with activeRoute on InteractiveMapScreen', (tester) async {
-      tester.view.physicalSize = const Size(1080, 2400);
-      tester.view.devicePixelRatio = 2.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+    testWidgets(
+      'Renders PolylineLayer with activeRoute on InteractiveMapScreen',
+      (tester) async {
+        tester.view.physicalSize = const Size(1080, 2400);
+        tester.view.devicePixelRatio = 2.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
 
-      Get.put(AppSettingsController(), permanent: true);
-      Get.put(HajiCareController(), permanent: true);
-      MapBinding().dependencies();
+        Get.put(AppSettingsController(), permanent: true);
+        Get.put(HajiCareController(), permanent: true);
+        MapBinding().dependencies();
 
-      await tester.pumpWidget(
-        GetMaterialApp(
-          theme: AppTheme.lightTheme,
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('id'),
-          home: const InteractiveMapScreen(),
-        ),
-      );
+        await tester.pumpWidget(
+          GetMaterialApp(
+            theme: AppTheme.lightTheme,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('id'),
+            home: const InteractiveMapScreen(),
+          ),
+        );
 
-      await tester.pump();
+        await tester.pump();
 
-      final mapCtrl = Get.find<MapController>();
-      expect(mapCtrl.activeRoute.isEmpty, isTrue);
+        final mapCtrl = Get.find<MapController>();
+        expect(mapCtrl.activeRoute.isEmpty, isTrue);
 
-      // Simulate activeRoute assigned with walking coordinates
-      mapCtrl.activeRoute.assignAll([
-        const LatLng(21.4135, 39.8930),
-        const LatLng(21.4140, 39.8935),
-        const LatLng(21.4145, 39.8942),
-      ]);
+        // Simulate activeRoute assigned with walking coordinates
+        mapCtrl.activeRoute.assignAll([
+          const LatLng(21.4135, 39.8930),
+          const LatLng(21.4140, 39.8935),
+          const LatLng(21.4145, 39.8942),
+        ]);
 
-      await tester.pump();
+        await tester.pump();
 
-      final polylineLayerFinder = find.byType(fmap.PolylineLayer);
-      expect(polylineLayerFinder, findsOneWidget);
-      final polylineLayer = tester.widget<fmap.PolylineLayer>(polylineLayerFinder);
-      expect(polylineLayer.polylines.isNotEmpty, isTrue);
-      expect(polylineLayer.polylines.first.points.length, equals(3));
-      expect(polylineLayer.polylines.first.strokeWidth, equals(8.0));
-      expect(polylineLayer.polylines.first.color, equals(const Color(0xFF173B78)));
-    });
+        final polylineLayerFinder = find.byType(fmap.PolylineLayer);
+        expect(polylineLayerFinder, findsOneWidget);
+        final polylineLayer = tester.widget<fmap.PolylineLayer>(
+          polylineLayerFinder,
+        );
+        expect(polylineLayer.polylines.isNotEmpty, isTrue);
+        expect(polylineLayer.polylines.first.points.length, equals(3));
+        expect(polylineLayer.polylines.first.strokeWidth, equals(8.0));
+        expect(
+          polylineLayer.polylines.first.color,
+          equals(const Color(0xFF173B78)),
+        );
+      },
+    );
   });
 }

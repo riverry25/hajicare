@@ -41,7 +41,10 @@ class PendampingSosBanner extends StatelessWidget {
       sosName = (firstSos['userName'] as String?)?.trim().isNotEmpty == true
           ? (firstSos['userName'] as String).trim()
           : 'Jamaah';
-      sosUserId = firstSos['userId'] as String? ?? firstSos['jamaahId'] as String? ?? '';
+      sosUserId =
+          firstSos['userId'] as String? ??
+          firstSos['jamaahId'] as String? ??
+          '';
       sosEventId = firstSos['id'] as String?;
       final rName = (firstSos['roomName'] as String?)?.trim();
       if (rName != null && rName.isNotEmpty) {
@@ -104,10 +107,15 @@ class PendampingSosBanner extends StatelessWidget {
                         if (roomInfo != null) ...[
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.25),
-                              borderRadius: BorderRadius.circular(AppRadius.pill),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
                             ),
                             child: Text(
                               roomInfo,
@@ -141,7 +149,10 @@ class PendampingSosBanner extends StatelessWidget {
                   height: 44,
                   child: ElevatedButton.icon(
                     onPressed: () => Get.toNamed(AppRoutes.modalSos),
-                    icon: const Icon(Icons.location_searching_rounded, size: 18),
+                    icon: const Icon(
+                      Icons.location_searching_rounded,
+                      size: 18,
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: AppColors.sosEmergency,
@@ -152,7 +163,10 @@ class PendampingSosBanner extends StatelessWidget {
                     ),
                     label: const Text(
                       'Tinjau Darurat',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                 ),
@@ -249,7 +263,9 @@ class PendampingSosBanner extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: isDark
                             ? AppColors.darkPrimaryContainer
-                            : AppColors.secondaryContainer.withValues(alpha: 0.6),
+                            : AppColors.secondaryContainer.withValues(
+                                alpha: 0.6,
+                              ),
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
                       child: Text(
@@ -267,9 +283,7 @@ class PendampingSosBanner extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   context.tr('sosStandbyDesc'),
-                  style: AppTypography.bodySmall.copyWith(
-                    color: bodyColor,
-                  ),
+                  style: AppTypography.bodySmall.copyWith(color: bodyColor),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 Wrap(
@@ -279,7 +293,9 @@ class PendampingSosBanner extends StatelessWidget {
                     _buildSmallBtn(
                       icon: Icons.volume_up_rounded,
                       label: context.tr('testAlarmSignal'),
-                      bg: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream,
+                      bg: isDark
+                          ? AppColors.darkSurfaceContainer
+                          : AppColors.canvasCream,
                       fg: isDark ? AppColors.goldLight : AppColors.espressoDark,
                       outline: false,
                     ),
@@ -289,7 +305,9 @@ class PendampingSosBanner extends StatelessWidget {
                       bg: Colors.transparent,
                       fg: AppColors.sosEmergency,
                       outline: true,
-                      borderColor: AppColors.sosEmergency.withValues(alpha: 0.4),
+                      borderColor: AppColors.sosEmergency.withValues(
+                        alpha: 0.4,
+                      ),
                     ),
                   ],
                 ),
@@ -317,7 +335,9 @@ class PendampingSosBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: outline ? Border.all(color: borderColor ?? fg, width: 1.2) : null,
+        border: outline
+            ? Border.all(color: borderColor ?? fg, width: 1.2)
+            : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

@@ -9,6 +9,7 @@ class RoomModel {
   final String createdBy;
   final String? createdByRole;
   final String? pendampingId;
+  final List<String> pendampingIds;
   final String? maktab;
   final String? kloter;
   final double safeRadius;
@@ -23,6 +24,7 @@ class RoomModel {
     required this.createdBy,
     this.createdByRole,
     this.pendampingId,
+    this.pendampingIds = const [],
     this.maktab,
     this.kloter,
     this.safeRadius = 200.0,
@@ -47,6 +49,17 @@ class RoomModel {
       safeRadius = rawRadius.toDouble();
     }
 
+    final rawPendampingIds = data['pendampingIds'];
+    List<String> pendampingIds = [];
+    if (rawPendampingIds is List) {
+      pendampingIds = rawPendampingIds.map((e) => e.toString()).toList();
+    } else {
+      final pId = data['pendampingId'] as String?;
+      if (pId != null && pId.isNotEmpty) {
+        pendampingIds = [pId];
+      }
+    }
+
     return RoomModel(
       id: doc.id,
       name: (data['name'] as String?)?.trim() ?? '',
@@ -54,12 +67,15 @@ class RoomModel {
       createdBy: (data['createdBy'] as String?) ?? '',
       createdByRole: data['createdByRole'] as String?,
       pendampingId: data['pendampingId'] as String?,
+      pendampingIds: pendampingIds,
       maktab: data['maktab'] as String?,
       kloter: data['kloter'] as String?,
       safeRadius: safeRadius,
       createdAt: createdAt,
       isActive: (data['isActive'] as bool?) ?? true,
-      memberCount: memberCount > 0 ? memberCount : ((data['memberCount'] as num?)?.toInt() ?? 0),
+      memberCount: memberCount > 0
+          ? memberCount
+          : ((data['memberCount'] as num?)?.toInt() ?? 0),
     );
   }
 
@@ -70,10 +86,13 @@ class RoomModel {
       'createdBy': createdBy,
       if (createdByRole != null) 'createdByRole': createdByRole,
       if (pendampingId != null) 'pendampingId': pendampingId,
+      if (pendampingIds.isNotEmpty) 'pendampingIds': pendampingIds,
       if (maktab != null) 'maktab': maktab,
       if (kloter != null) 'kloter': kloter,
       'safeRadius': safeRadius,
-      'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
+      'createdAt': createdAt != null
+          ? Timestamp.fromDate(createdAt!)
+          : FieldValue.serverTimestamp(),
       'isActive': isActive,
     };
   }
@@ -85,6 +104,7 @@ class RoomModel {
     String? createdBy,
     String? createdByRole,
     String? pendampingId,
+    List<String>? pendampingIds,
     String? maktab,
     String? kloter,
     double? safeRadius,
@@ -99,6 +119,7 @@ class RoomModel {
       createdBy: createdBy ?? this.createdBy,
       createdByRole: createdByRole ?? this.createdByRole,
       pendampingId: pendampingId ?? this.pendampingId,
+      pendampingIds: pendampingIds ?? this.pendampingIds,
       maktab: maktab ?? this.maktab,
       kloter: kloter ?? this.kloter,
       safeRadius: safeRadius ?? this.safeRadius,
@@ -124,13 +145,13 @@ class RoomModel {
 
   @override
   int get hashCode => Object.hash(
-        id,
-        code,
-        name,
-        maktab,
-        kloter,
-        safeRadius,
-        isActive,
-        memberCount,
-      );
+    id,
+    code,
+    name,
+    maktab,
+    kloter,
+    safeRadius,
+    isActive,
+    memberCount,
+  );
 }

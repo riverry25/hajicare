@@ -28,7 +28,11 @@ class JoinRoomScreen extends StatelessWidget {
         backgroundColor: scaffoldBg,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: headingColor, size: 20),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: headingColor,
+            size: 20,
+          ),
           onPressed: () {
             if (Navigator.of(context).canPop()) {
               Get.back();
@@ -36,8 +40,8 @@ class JoinRoomScreen extends StatelessWidget {
               controller.selectedMode.value == 0
                   ? Get.offAllNamed('/dashboard_pendamping')
                   : (controller.isPendamping
-                      ? Get.offAllNamed('/dashboard_pendamping')
-                      : Get.offAllNamed('/dashboard_jamaah'));
+                        ? Get.offAllNamed('/dashboard_pendamping')
+                        : Get.offAllNamed('/dashboard_jamaah'));
             }
           },
         ),
@@ -96,7 +100,9 @@ class JoinRoomScreen extends StatelessWidget {
 
                   // Header Title & Subtitle
                   Obx(() {
-                    final isCreating = controller.isPendamping && controller.selectedMode.value == 0;
+                    final isCreating =
+                        controller.isPendamping &&
+                        controller.selectedMode.value == 0;
                     return Column(
                       children: [
                         Text(
@@ -129,10 +135,14 @@ class JoinRoomScreen extends StatelessWidget {
                       () => Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: isDark ? AppColors.darkSurface : AppColors.canvasCream,
+                          color: isDark
+                              ? AppColors.darkSurface
+                              : AppColors.canvasCream,
                           borderRadius: BorderRadius.circular(AppRadius.pill),
                           border: Border.all(
-                            color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
+                            color: isDark
+                                ? AppColors.darkCardBorder
+                                : AppColors.lightCardBorder,
                           ),
                         ),
                         child: Row(
@@ -172,10 +182,23 @@ class JoinRoomScreen extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.all(AppSpacing.lg),
                       child: Obx(() {
-                        if (controller.isPendamping && controller.selectedMode.value == 0) {
-                          return _buildCreateRoomForm(context, controller, primaryColor, headingColor, isDark);
+                        if (controller.isPendamping &&
+                            controller.selectedMode.value == 0) {
+                          return _buildCreateRoomForm(
+                            context,
+                            controller,
+                            primaryColor,
+                            headingColor,
+                            isDark,
+                          );
                         } else {
-                          return _buildJoinRoomForm(context, controller, primaryColor, headingColor, isDark);
+                          return _buildJoinRoomForm(
+                            context,
+                            controller,
+                            primaryColor,
+                            headingColor,
+                            isDark,
+                          );
                         }
                       }),
                     ),
@@ -186,10 +209,16 @@ class JoinRoomScreen extends StatelessWidget {
                   Center(
                     child: TextButton.icon(
                       onPressed: () => controller.switchAccount(),
-                      icon: Icon(Icons.logout_rounded, size: 16, color: bodyColor),
+                      icon: Icon(
+                        Icons.logout_rounded,
+                        size: 16,
+                        color: bodyColor,
+                      ),
                       label: Text(
                         'Keluar / Ganti Akun',
-                        style: AppTypography.bodySmall.copyWith(color: bodyColor),
+                        style: AppTypography.bodySmall.copyWith(
+                          color: bodyColor,
+                        ),
                       ),
                     ),
                   ),
@@ -215,7 +244,10 @@ class JoinRoomScreen extends StatelessWidget {
         // Room Name Field
         Text(
           'Nama Room / Rombongan *',
-          style: AppTypography.labelMedium.copyWith(color: headingColor, fontWeight: FontWeight.w700),
+          style: AppTypography.labelMedium.copyWith(
+            color: headingColor,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         const SizedBox(height: AppSpacing.xs),
         TextField(
@@ -223,12 +255,25 @@ class JoinRoomScreen extends StatelessWidget {
           style: AppTypography.bodyMedium.copyWith(color: headingColor),
           decoration: InputDecoration(
             hintText: 'Contoh: Rombongan Maktab 48',
-            hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondaryColor(context)),
-            prefixIcon: Icon(Icons.groups_rounded, color: primaryColor, size: 20),
+            hintStyle: AppTypography.bodyMedium.copyWith(
+              color: AppColors.textSecondaryColor(context),
+            ),
+            prefixIcon: Icon(
+              Icons.groups_rounded,
+              color: primaryColor,
+              size: 20,
+            ),
             filled: true,
-            fillColor: isDark ? AppColors.darkPrimaryContainer.withValues(alpha: 0.25) : AppColors.canvasCream.withValues(alpha: 0.5),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+            fillColor: isDark
+                ? AppColors.darkPrimaryContainer.withValues(alpha: 0.25)
+                : AppColors.canvasCream.withValues(alpha: 0.5),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
           ),
         ),
         const SizedBox(height: AppSpacing.md),
@@ -236,7 +281,10 @@ class JoinRoomScreen extends StatelessWidget {
         // Maktab Field
         Text(
           'Nomor Maktab (Opsional)',
-          style: AppTypography.labelMedium.copyWith(color: headingColor, fontWeight: FontWeight.w700),
+          style: AppTypography.labelMedium.copyWith(
+            color: headingColor,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         const SizedBox(height: AppSpacing.xs),
         TextField(
@@ -244,11 +292,22 @@ class JoinRoomScreen extends StatelessWidget {
           style: AppTypography.bodyMedium.copyWith(color: headingColor),
           decoration: InputDecoration(
             hintText: 'Contoh: Maktab 48',
-            prefixIcon: Icon(Icons.hotel_rounded, color: primaryColor, size: 20),
+            prefixIcon: Icon(
+              Icons.hotel_rounded,
+              color: primaryColor,
+              size: 20,
+            ),
             filled: true,
-            fillColor: isDark ? AppColors.darkPrimaryContainer.withValues(alpha: 0.25) : AppColors.canvasCream.withValues(alpha: 0.5),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+            fillColor: isDark
+                ? AppColors.darkPrimaryContainer.withValues(alpha: 0.25)
+                : AppColors.canvasCream.withValues(alpha: 0.5),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
           ),
         ),
         const SizedBox(height: AppSpacing.md),
@@ -256,7 +315,10 @@ class JoinRoomScreen extends StatelessWidget {
         // Kloter Field
         Text(
           'Nomor Kloter (Opsional)',
-          style: AppTypography.labelMedium.copyWith(color: headingColor, fontWeight: FontWeight.w700),
+          style: AppTypography.labelMedium.copyWith(
+            color: headingColor,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         const SizedBox(height: AppSpacing.xs),
         TextField(
@@ -264,11 +326,22 @@ class JoinRoomScreen extends StatelessWidget {
           style: AppTypography.bodyMedium.copyWith(color: headingColor),
           decoration: InputDecoration(
             hintText: 'Contoh: SOC-12',
-            prefixIcon: Icon(Icons.flight_takeoff_rounded, color: primaryColor, size: 20),
+            prefixIcon: Icon(
+              Icons.flight_takeoff_rounded,
+              color: primaryColor,
+              size: 20,
+            ),
             filled: true,
-            fillColor: isDark ? AppColors.darkPrimaryContainer.withValues(alpha: 0.25) : AppColors.canvasCream.withValues(alpha: 0.5),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+            fillColor: isDark
+                ? AppColors.darkPrimaryContainer.withValues(alpha: 0.25)
+                : AppColors.canvasCream.withValues(alpha: 0.5),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
           ),
         ),
         const SizedBox(height: AppSpacing.lg),
@@ -278,24 +351,35 @@ class JoinRoomScreen extends StatelessWidget {
           () => SizedBox(
             height: 52,
             child: ElevatedButton.icon(
-              onPressed: controller.isLoading.value ? null : () => controller.createRoom(),
+              onPressed: controller.isLoading.value
+                  ? null
+                  : () => controller.createRoom(),
               icon: controller.isLoading.value
                   ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   : const Icon(Icons.add_circle_outline_rounded, size: 20),
               label: Text(
-                controller.isLoading.value ? 'Membuat Room...' : 'Buat Room Sekarang',
+                controller.isLoading.value
+                    ? 'Membuat Room...'
+                    : 'Buat Room Sekarang',
                 style: AppTypography.labelLarge.copyWith(
-                  color: isDark ? AppColors.espressoDark : AppColors.surfaceWhite,
+                  color: isDark
+                      ? AppColors.espressoDark
+                      : AppColors.surfaceWhite,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryColor,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
               ),
             ),
           ),
@@ -345,7 +429,13 @@ class JoinRoomScreen extends StatelessWidget {
         // Divider with "ATAU KODE MANUAL"
         Row(
           children: [
-            Expanded(child: Divider(color: isDark ? AppColors.darkOutlineVariant : AppColors.surfaceVariant)),
+            Expanded(
+              child: Divider(
+                color: isDark
+                    ? AppColors.darkOutlineVariant
+                    : AppColors.surfaceVariant,
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Text(
@@ -357,14 +447,23 @@ class JoinRoomScreen extends StatelessWidget {
                 ),
               ),
             ),
-            Expanded(child: Divider(color: isDark ? AppColors.darkOutlineVariant : AppColors.surfaceVariant)),
+            Expanded(
+              child: Divider(
+                color: isDark
+                    ? AppColors.darkOutlineVariant
+                    : AppColors.surfaceVariant,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: AppSpacing.md),
 
         Text(
           'Kode Room (6 Karakter)',
-          style: AppTypography.labelMedium.copyWith(color: headingColor, fontWeight: FontWeight.w700),
+          style: AppTypography.labelMedium.copyWith(
+            color: headingColor,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         const SizedBox(height: AppSpacing.xs),
         TextField(
@@ -385,13 +484,22 @@ class JoinRoomScreen extends StatelessWidget {
             counterText: '',
             hintText: 'KODE6',
             hintStyle: AppTypography.headlineMedium.copyWith(
-              color: AppColors.textSecondaryColor(context).withValues(alpha: 0.4),
+              color: AppColors.textSecondaryColor(
+                context,
+              ).withValues(alpha: 0.4),
               letterSpacing: 8,
             ),
             filled: true,
-            fillColor: isDark ? AppColors.darkPrimaryContainer.withValues(alpha: 0.25) : AppColors.canvasCream.withValues(alpha: 0.5),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+            fillColor: isDark
+                ? AppColors.darkPrimaryContainer.withValues(alpha: 0.25)
+                : AppColors.canvasCream.withValues(alpha: 0.5),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 18,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
           ),
         ),
         const SizedBox(height: AppSpacing.lg),
@@ -401,24 +509,33 @@ class JoinRoomScreen extends StatelessWidget {
           () => SizedBox(
             height: 52,
             child: ElevatedButton.icon(
-              onPressed: controller.isLoading.value ? null : () => controller.joinRoom(),
+              onPressed: controller.isLoading.value
+                  ? null
+                  : () => controller.joinRoom(),
               icon: controller.isLoading.value
                   ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   : const Icon(Icons.arrow_forward_rounded, size: 20),
               label: Text(
                 controller.isLoading.value ? 'Memproses...' : 'Gabung ke Room',
                 style: AppTypography.labelLarge.copyWith(
-                  color: isDark ? AppColors.espressoDark : AppColors.surfaceWhite,
+                  color: isDark
+                      ? AppColors.espressoDark
+                      : AppColors.surfaceWhite,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryColor,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
               ),
             ),
           ),
@@ -455,7 +572,9 @@ class _ModeTabButton extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? (isDark ? primaryColor : AppColors.espressoDark) : Colors.transparent,
+          color: isSelected
+              ? (isDark ? primaryColor : AppColors.espressoDark)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(AppRadius.pill),
         ),
         child: Row(
@@ -488,7 +607,10 @@ class _ModeTabButton extends StatelessWidget {
 
 class UpperCaseTextFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
     return TextEditingValue(
       text: newValue.text.toUpperCase(),
       selection: newValue.selection,

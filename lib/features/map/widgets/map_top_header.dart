@@ -48,7 +48,8 @@ class MapTopHeader extends StatefulWidget {
 class _MapTopHeaderState extends State<MapTopHeader> {
   TextEditingController? _internalSearchCtrl;
   TextEditingController get _effectiveSearchCtrl =>
-      widget.searchController ?? (_internalSearchCtrl ??= TextEditingController());
+      widget.searchController ??
+      (_internalSearchCtrl ??= TextEditingController());
   bool _hasSearchText = false;
 
   void _onSearchTextChanged() {
@@ -97,17 +98,15 @@ class _MapTopHeaderState extends State<MapTopHeader> {
       right: 0,
       child: RepaintBoundary(
         child: Container(
-          padding: EdgeInsets.only(
-            top: topSafeArea + 6,
-            bottom: 8,
-          ),
+          padding: EdgeInsets.only(top: topSafeArea + 6, bottom: 8),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                (isDark ? Colors.black : Colors.white)
-                    .withValues(alpha: isDark ? 0.35 : 0.20),
+                (isDark ? Colors.black : Colors.white).withValues(
+                  alpha: isDark ? 0.35 : 0.20,
+                ),
                 Colors.transparent,
               ],
               stops: const [0.0, 1.0],
@@ -234,9 +233,7 @@ class _MapTopHeaderState extends State<MapTopHeader> {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(
-                  alpha: isDark ? 0.30 : 0.08,
-                ),
+                color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.08),
                 blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
@@ -267,7 +264,9 @@ class _MapTopHeaderState extends State<MapTopHeader> {
                       TextSpan(
                         text: ' • $summaryText',
                         style: TextStyle(
-                          color: isDark ? Colors.white70 : const Color(0xFF5F6368),
+                          color: isDark
+                              ? Colors.white70
+                              : const Color(0xFF5F6368),
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
                         ),
@@ -315,8 +314,11 @@ class _MapTopHeaderState extends State<MapTopHeader> {
             borderRadius: BorderRadius.circular(AppRadius.pill),
             boxShadow: [
               BoxShadow(
-                color: (hasActiveSos ? const Color(0xFFFF1744) : const Color(0xFFE53935))
-                    .withValues(alpha: hasActiveSos ? 0.65 : 0.38),
+                color:
+                    (hasActiveSos
+                            ? const Color(0xFFFF1744)
+                            : const Color(0xFFE53935))
+                        .withValues(alpha: hasActiveSos ? 0.65 : 0.38),
                 blurRadius: hasActiveSos ? 12 : 8,
                 offset: const Offset(0, 2),
               ),
@@ -361,7 +363,9 @@ class _MapTopHeaderState extends State<MapTopHeader> {
         photoUrl = user.photoURL;
       }
     } catch (_) {}
-    final initialLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : 'H';
+    final initialLetter = displayName.isNotEmpty
+        ? displayName[0].toUpperCase()
+        : 'H';
 
     return Container(
       height: 50,
@@ -487,10 +491,7 @@ class _MapTopHeaderState extends State<MapTopHeader> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                border: Border.all(
-                  color: Colors.white,
-                  width: 1.5,
-                ),
+                border: Border.all(color: Colors.white, width: 1.5),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.15),
@@ -566,7 +567,9 @@ class _MapTopHeaderState extends State<MapTopHeader> {
                   color: isSelected
                       ? (isDark
                             ? const Color(0xFF1E3A5F)
-                            : const Color(0xFFE8F0FE)) // Google Maps active soft blue pill
+                            : const Color(
+                                0xFFE8F0FE,
+                              )) // Google Maps active soft blue pill
                       : (isDark
                             ? AppColors.darkSurface
                             : Colors.white), // Floating pure white pill
@@ -604,9 +607,7 @@ class _MapTopHeaderState extends State<MapTopHeader> {
                             ? (isDark
                                   ? const Color(0xFF8AB4F8)
                                   : const Color(0xFF1A73E8))
-                            : (isDark
-                                  ? Colors.white
-                                  : const Color(0xFF3C4043)),
+                            : (isDark ? Colors.white : const Color(0xFF3C4043)),
                         fontWeight: isSelected
                             ? FontWeight.w700
                             : FontWeight.w500,

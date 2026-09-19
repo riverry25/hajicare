@@ -13,10 +13,7 @@ import 'package:vibration/vibration.dart';
 class JamaahSosBanner extends StatelessWidget {
   final HajiCareState state;
 
-  const JamaahSosBanner({
-    super.key,
-    required this.state,
-  });
+  const JamaahSosBanner({super.key, required this.state});
 
   void _handleSosTrigger(BuildContext context) {
     AppAlert.confirm(
@@ -52,7 +49,9 @@ class JamaahSosBanner extends StatelessWidget {
     final bodyColor = AppColors.textBodyColor(context);
     final headingColor = AppColors.textHeadingColor(context);
 
-    final hasActiveRoom = state.activeRoomId.value != null && state.activeRoomId.value!.isNotEmpty;
+    final hasActiveRoom =
+        state.activeRoomId.value != null &&
+        state.activeRoomId.value!.isNotEmpty;
 
     if (!hasActiveRoom) {
       return Container(
@@ -60,7 +59,9 @@ class JamaahSosBanner extends StatelessWidget {
           color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
           borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(
-            color: isDark ? AppColors.darkCardBorder : AppColors.goldLight.withValues(alpha: 0.5),
+            color: isDark
+                ? AppColors.darkCardBorder
+                : AppColors.goldLight.withValues(alpha: 0.5),
             width: 1.5,
           ),
         ),
@@ -74,7 +75,9 @@ class JamaahSosBanner extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkPrimaryContainer : AppColors.canvasCream,
+                    color: isDark
+                        ? AppColors.darkPrimaryContainer
+                        : AppColors.canvasCream,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -119,7 +122,9 @@ class JamaahSosBanner extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isDark ? AppColors.darkPrimary : AppColors.primaryGold,
+                  backgroundColor: isDark
+                      ? AppColors.darkPrimary
+                      : AppColors.primaryGold,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -143,7 +148,9 @@ class JamaahSosBanner extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.sosEmergency.withValues(alpha: isDark ? 0.08 : 0.08),
+            color: AppColors.sosEmergency.withValues(
+              alpha: isDark ? 0.08 : 0.08,
+            ),
             blurRadius: 18,
             offset: const Offset(0, 4),
           ),
@@ -165,10 +172,7 @@ class JamaahSosBanner extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFFE53935),
-                      Color(0xFFD32F2F),
-                    ],
+                    colors: [Color(0xFFE53935), Color(0xFFD32F2F)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),

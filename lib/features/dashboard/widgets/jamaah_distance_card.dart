@@ -75,13 +75,17 @@ class JamaahDistanceCard extends StatelessWidget {
     final bodyColor = AppColors.textBodyColor(context);
 
     // Check if user has active room
-    final controller = Get.isRegistered<HajiCareController>() ? Get.find<HajiCareController>() : null;
+    final controller = Get.isRegistered<HajiCareController>()
+        ? Get.find<HajiCareController>()
+        : null;
     final hasActiveRoom = (controller?.activeRoomId.value ?? '').isNotEmpty;
 
     if (!hasActiveRoom) {
       return AppCard(
         padding: const EdgeInsets.all(AppSpacing.cardPadding),
-        borderColor: isDark ? AppColors.darkCardBorder : AppColors.goldLight.withValues(alpha: 0.5),
+        borderColor: isDark
+            ? AppColors.darkCardBorder
+            : AppColors.goldLight.withValues(alpha: 0.5),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -91,7 +95,9 @@ class JamaahDistanceCard extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkPrimaryContainer : AppColors.canvasCream,
+                    color: isDark
+                        ? AppColors.darkPrimaryContainer
+                        : AppColors.canvasCream,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -136,7 +142,9 @@ class JamaahDistanceCard extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isDark ? AppColors.darkPrimary : AppColors.primaryGold,
+                  backgroundColor: isDark
+                      ? AppColors.darkPrimary
+                      : AppColors.primaryGold,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -466,7 +474,10 @@ class JamaahDistanceCard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.pill),
             child: LinearProgressIndicator(
-              value: (jamaah.distance / (controller?.safeRadiusMeters.value ?? 200.0)).clamp(0.0, 1.0),
+              value:
+                  (jamaah.distance /
+                          (controller?.safeRadiusMeters.value ?? 200.0))
+                      .clamp(0.0, 1.0),
               backgroundColor: isDark
                   ? AppColors.darkSurfaceContainerHighest
                   : AppColors.canvasCreamSubtle,

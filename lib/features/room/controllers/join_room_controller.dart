@@ -50,11 +50,13 @@ class JoinRoomController extends GetxController {
     if (!Get.isRegistered<HajiCareController>()) return;
     final state = Get.find<HajiCareController>();
 
-    final existingRoom = (state.activeRoomId.value != null && state.activeRoomId.value!.trim().isNotEmpty)
+    final existingRoom =
+        (state.activeRoomId.value != null &&
+            state.activeRoomId.value!.trim().isNotEmpty)
         ? state.activeRoomId.value!.trim()
         : (state.cachedRoomId != null && state.cachedRoomId!.trim().isNotEmpty
-            ? state.cachedRoomId!.trim()
-            : null);
+              ? state.cachedRoomId!.trim()
+              : null);
 
     if (existingRoom != null && existingRoom.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -72,9 +74,13 @@ class JoinRoomController extends GetxController {
 
   void _navigateToDashboard() {
     if (isClosed) return;
-    final state = Get.isRegistered<HajiCareController>() ? Get.find<HajiCareController>() : null;
+    final state = Get.isRegistered<HajiCareController>()
+        ? Get.find<HajiCareController>()
+        : null;
     final isP = state?.role == UserRole.pendamping;
-    Get.offAllNamed(isP ? AppRoutes.dashboardPendamping : AppRoutes.dashboardJamaah);
+    Get.offAllNamed(
+      isP ? AppRoutes.dashboardPendamping : AppRoutes.dashboardJamaah,
+    );
   }
 
   /// Pendamping: Buat Room baru dengan auto-generated unique code
@@ -99,8 +105,8 @@ class JoinRoomController extends GetxController {
     final userName = currentUser.displayName?.trim().isNotEmpty == true
         ? currentUser.displayName!.trim()
         : (currentUser.email?.trim().isNotEmpty == true
-            ? currentUser.email!.split('@').first
-            : 'Pendamping');
+              ? currentUser.email!.split('@').first
+              : 'Pendamping');
 
     isLoading.value = true;
     errorMessage.value = null;
@@ -115,10 +121,7 @@ class JoinRoomController extends GetxController {
       );
 
       // Reactively apply to state
-      await state.applyUserData(
-        roleStr: 'pendamping',
-        roomId: room.id,
-      );
+      await state.applyUserData(roleStr: 'pendamping', roomId: room.id);
       state.activeRoom.value = room;
 
       isLoading.value = false;
@@ -164,8 +167,8 @@ class JoinRoomController extends GetxController {
     final userName = currentUser.displayName?.trim().isNotEmpty == true
         ? currentUser.displayName!.trim()
         : (currentUser.email?.trim().isNotEmpty == true
-            ? currentUser.email!.split('@').first
-            : 'Pengguna');
+              ? currentUser.email!.split('@').first
+              : 'Pengguna');
 
     isLoading.value = true;
     errorMessage.value = null;
@@ -178,10 +181,7 @@ class JoinRoomController extends GetxController {
         role: roleStr,
       );
 
-      await state.applyUserData(
-        roleStr: roleStr,
-        roomId: joinedRoom.id,
-      );
+      await state.applyUserData(roleStr: roleStr, roomId: joinedRoom.id);
       state.activeRoom.value = joinedRoom;
 
       isLoading.value = false;
@@ -190,7 +190,8 @@ class JoinRoomController extends GetxController {
         AppAlert.success(
           Get.context,
           title: 'Berhasil Bergabung!',
-          message: 'Anda telah bergabung ke room "${joinedRoom.name}". Fitur monitoring kini aktif.',
+          message:
+              'Anda telah bergabung ke room "${joinedRoom.name}". Fitur monitoring kini aktif.',
         );
       }
 
@@ -206,10 +207,15 @@ class JoinRoomController extends GetxController {
     }
   }
 
-  Future<void> _showRoomCreatedDialog(BuildContext context, RoomModel room) async {
+  Future<void> _showRoomCreatedDialog(
+    BuildContext context,
+    RoomModel room,
+  ) async {
     final isDark = AppColors.isDark(context);
     final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = isDark ? AppColors.darkTextHeading : AppColors.espressoDark;
+    final headingColor = isDark
+        ? AppColors.darkTextHeading
+        : AppColors.espressoDark;
     final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
     final primaryColor = isDark ? AppColors.goldLight : AppColors.goldPrimary;
 
@@ -222,10 +228,15 @@ class JoinRoomController extends GetxController {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
             side: BorderSide(
-              color: isDark ? Colors.white.withValues(alpha: 0.1) : AppColors.goldLight.withValues(alpha: 0.3),
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : AppColors.goldLight.withValues(alpha: 0.3),
             ),
           ),
-          insetPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.lg),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.lg,
+          ),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 380),
             child: Padding(
@@ -243,13 +254,20 @@ class JoinRoomController extends GetxController {
                             color: AppColors.statusSafe.withValues(alpha: 0.15),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.check_circle_rounded, color: AppColors.statusSafe, size: 24),
+                          child: const Icon(
+                            Icons.check_circle_rounded,
+                            color: AppColors.statusSafe,
+                            size: 24,
+                          ),
                         ),
                         const SizedBox(width: AppSpacing.sm),
                         Expanded(
                           child: Text(
                             'Room Berhasil Dibuat!',
-                            style: AppTypography.titleMedium.copyWith(color: headingColor, fontWeight: FontWeight.bold),
+                            style: AppTypography.titleMedium.copyWith(
+                              color: headingColor,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],
@@ -267,7 +285,9 @@ class JoinRoomController extends GetxController {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(AppRadius.md),
-                        border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
+                        border: Border.all(
+                          color: primaryColor.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: SizedBox(
                         width: 160,
@@ -283,11 +303,16 @@ class JoinRoomController extends GetxController {
                     const SizedBox(height: AppSpacing.md),
                     // Room Code Badge
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: primaryColor.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(AppRadius.pill),
-                        border: Border.all(color: primaryColor.withValues(alpha: 0.4)),
+                        border: Border.all(
+                          color: primaryColor.withValues(alpha: 0.4),
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -306,7 +331,9 @@ class JoinRoomController extends GetxController {
                     const SizedBox(height: AppSpacing.xs),
                     Text(
                       'Nama: ${room.name}',
-                      style: AppTypography.captionSmall.copyWith(color: bodyColor),
+                      style: AppTypography.captionSmall.copyWith(
+                        color: bodyColor,
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     SizedBox(
@@ -316,11 +343,18 @@ class JoinRoomController extends GetxController {
                         onPressed: () => Navigator.of(ctx).pop(),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primaryColor,
-                          foregroundColor: isDark ? AppColors.espressoDark : AppColors.surfaceWhite,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
+                          foregroundColor: isDark
+                              ? AppColors.espressoDark
+                              : AppColors.surfaceWhite,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                          ),
                           elevation: 0,
                         ),
-                        child: const Text('Buka Dashboard Monitoring', style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: const Text(
+                          'Buka Dashboard Monitoring',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ),
                   ],
@@ -344,11 +378,7 @@ class JoinRoomController extends GetxController {
 
   void _showErrorAlert(String msg) {
     if (Get.context != null) {
-      AppAlert.error(
-        Get.context!,
-        title: 'Perhatian',
-        message: msg,
-      );
+      AppAlert.error(Get.context!, title: 'Perhatian', message: msg);
     }
   }
 

@@ -17,8 +17,6 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
-
-
   @override
   Widget build(BuildContext context) {
     final scaffoldBg = AppColors.scaffoldColor(context);
@@ -33,7 +31,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
           elevation: 0,
           scrolledUnderElevation: 1,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: headingColor, size: 20),
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: headingColor,
+              size: 20,
+            ),
             onPressed: () => Get.back(),
           ),
           title: Text(
@@ -48,13 +50,21 @@ class _NotificationScreenState extends State<NotificationScreen> {
           centerTitle: true,
           actions: [
             Obx(() {
-              if (!Get.isRegistered<NotificationController>()) return const SizedBox.shrink();
-              final unread = Get.find<NotificationController>().unreadCount.value;
+              if (!Get.isRegistered<NotificationController>()) {
+                return const SizedBox.shrink();
+              }
+              final unread =
+                  Get.find<NotificationController>().unreadCount.value;
               if (unread > 0) {
                 return IconButton(
-                  icon: const Icon(Icons.done_all_rounded, color: AppColors.goldDark, size: 22),
+                  icon: const Icon(
+                    Icons.done_all_rounded,
+                    color: AppColors.goldDark,
+                    size: 22,
+                  ),
                   tooltip: 'Tandai Semua Dibaca',
-                  onPressed: () => Get.find<NotificationController>().markAllAsRead(),
+                  onPressed: () =>
+                      Get.find<NotificationController>().markAllAsRead(),
                 );
               }
               return const SizedBox.shrink();
@@ -63,7 +73,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 (Get.find<HajiCareController>().role == UserRole.admin ||
                     Get.find<HajiCareController>().role == UserRole.pendamping))
               IconButton(
-                icon: const Icon(Icons.campaign_rounded, color: AppColors.goldDark),
+                icon: const Icon(
+                  Icons.campaign_rounded,
+                  color: AppColors.goldDark,
+                ),
                 tooltip: 'Buat Notifikasi',
                 onPressed: () => NotificationComposerDialog.show(context),
               ),
@@ -73,70 +86,86 @@ class _NotificationScreenState extends State<NotificationScreen> {
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(kToolbarHeight - 8),
             child: MediaQuery(
-              data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: TextScaler.noScaling),
               child: TabBar(
-            indicatorColor: AppColors.goldPrimary,
-            indicatorWeight: 3,
-            indicatorSize: TabBarIndicatorSize.label,
-            labelColor: headingColor,
-            unselectedLabelColor: AppColors.textSecondaryColor(context),
-            labelStyle: AppTypography.titleSm.copyWith(fontWeight: FontWeight.bold),
-            unselectedLabelStyle: AppTypography.titleSm.copyWith(fontWeight: FontWeight.w500),
-            tabs: [
-              Tab(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.notifications_active_outlined, size: 18),
-                    const SizedBox(width: 8),
-                    const Text('Notifikasi'),
-                    Obx(() {
-                      if (!Get.isRegistered<NotificationController>()) return const SizedBox.shrink();
-                      final count = Get.find<NotificationController>().unreadCount.value +
-                          Get.find<NotificationController>().pendingInvitations.length;
-                      if (count > 0) {
-                        return Container(
-                          margin: const EdgeInsets.only(left: 6),
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.sosEmergency,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            '$count',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    }),
-                  ],
+                indicatorColor: AppColors.goldPrimary,
+                indicatorWeight: 3,
+                indicatorSize: TabBarIndicatorSize.label,
+                labelColor: headingColor,
+                unselectedLabelColor: AppColors.textSecondaryColor(context),
+                labelStyle: AppTypography.titleSm.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
-              ),
-              const Tab(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.help_outline_rounded, size: 18),
-                    SizedBox(width: 8),
-                    Text('FAQ & Bantuan'),
-                  ],
+                unselectedLabelStyle: AppTypography.titleSm.copyWith(
+                  fontWeight: FontWeight.w500,
                 ),
+                tabs: [
+                  Tab(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.notifications_active_outlined,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text('Notifikasi'),
+                        Obx(() {
+                          if (!Get.isRegistered<NotificationController>()) {
+                            return const SizedBox.shrink();
+                          }
+                          final count =
+                              Get.find<NotificationController>()
+                                  .unreadCount
+                                  .value +
+                              Get.find<NotificationController>()
+                                  .pendingInvitations
+                                  .length;
+                          if (count > 0) {
+                            return Container(
+                              margin: const EdgeInsets.only(left: 6),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.sosEmergency,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '$count',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        }),
+                      ],
+                    ),
+                  ),
+                  const Tab(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.help_outline_rounded, size: 18),
+                        SizedBox(width: 8),
+                        Text('FAQ & Bantuan'),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
             ),
           ),
         ),
         body: TabBarView(
-          children: [
-            _buildNotificationTab(context),
-            _buildFaqList(context),
-          ],
+          children: [_buildNotificationTab(context), _buildFaqList(context)],
         ),
       ),
     );
@@ -151,14 +180,19 @@ class _NotificationScreenState extends State<NotificationScreen> {
       final invitations = controller.pendingInvitations;
       final realNotifs = controller.notifications;
 
-      if (controller.isLoading.value && realNotifs.isEmpty && invitations.isEmpty) {
+      if (controller.isLoading.value &&
+          realNotifs.isEmpty &&
+          invitations.isEmpty) {
         return const Center(
           child: CircularProgressIndicator(color: AppColors.goldPrimary),
         );
       }
 
       return ListView(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.lg),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.lg,
+        ),
         children: [
           // 1. Pending Room Invitations Section
           if (invitations.isNotEmpty) ...[
@@ -175,14 +209,24 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
           // 2. Real Firestore Notifications Section
           if (realNotifs.isNotEmpty) ...[
-            _buildSectionHeader(context, 'NOTIFIKASI TERKINI', Icons.notifications_active_rounded),
+            _buildSectionHeader(
+              context,
+              'NOTIFIKASI TERKINI',
+              Icons.notifications_active_rounded,
+            ),
             const SizedBox(height: AppSpacing.sm),
-            ...realNotifs.map((n) => _buildFirestoreNotificationCard(context, n)),
+            ...realNotifs.map(
+              (n) => _buildFirestoreNotificationCard(context, n),
+            ),
             const SizedBox(height: AppSpacing.lg),
           ],
 
           // 3. Fallback / General Announcements
-          _buildSectionHeader(context, 'PENGUMUMAN & CUACA', Icons.today_rounded),
+          _buildSectionHeader(
+            context,
+            'PENGUMUMAN & CUACA',
+            Icons.today_rounded,
+          ),
           const SizedBox(height: AppSpacing.sm),
           _buildNotificationCard(
             context: context,
@@ -221,7 +265,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
       );
     });
   }
-
 
   Widget _buildInvitationCard(BuildContext context, RoomInvitationModel inv) {
     final controller = Get.isRegistered<NotificationController>()
@@ -265,7 +308,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     color: primaryColor.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.group_add_rounded, color: primaryColor, size: 24),
+                  child: Icon(
+                    Icons.group_add_rounded,
+                    color: primaryColor,
+                    size: 24,
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
@@ -273,7 +320,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: primaryColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -312,7 +362,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream,
+                color: isDark
+                    ? AppColors.darkSurfaceContainer
+                    : AppColors.canvasCream,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: Text(
@@ -333,14 +385,24 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.error,
-                      side: BorderSide(color: AppColors.error.withValues(alpha: 0.4)),
+                      side: BorderSide(
+                        color: AppColors.error.withValues(alpha: 0.4),
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
                       minimumSize: const Size(0, 42),
                     ),
-                    onPressed: isProcessing ? null : () => controller.rejectInvitation(context: context, invitation: inv),
-                    child: const Text('Tolak', style: TextStyle(fontWeight: FontWeight.w600)),
+                    onPressed: isProcessing
+                        ? null
+                        : () => controller.rejectInvitation(
+                            context: context,
+                            invitation: inv,
+                          ),
+                    child: const Text(
+                      'Tolak',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
@@ -356,14 +418,25 @@ class _NotificationScreenState extends State<NotificationScreen> {
                       minimumSize: const Size(0, 42),
                       elevation: 0,
                     ),
-                    onPressed: isProcessing ? null : () => controller.acceptInvitation(context: context, invitation: inv),
+                    onPressed: isProcessing
+                        ? null
+                        : () => controller.acceptInvitation(
+                            context: context,
+                            invitation: inv,
+                          ),
                     child: isProcessing
                         ? const SizedBox(
                             width: 18,
                             height: 18,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
                           )
-                        : const Text('Terima Undangan', style: TextStyle(fontWeight: FontWeight.bold)),
+                        : const Text(
+                            'Terima Undangan',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                   ),
                 ),
               ],
@@ -374,7 +447,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
     );
   }
 
-  Widget _buildFirestoreNotificationCard(BuildContext context, AppNotificationModel notif) {
+  Widget _buildFirestoreNotificationCard(
+    BuildContext context,
+    AppNotificationModel notif,
+  ) {
     IconData icon = Icons.notifications_rounded;
     Color iconColor = AppColors.goldPrimary;
     String category = notif.type.replaceAll('_', ' ').toUpperCase();
@@ -419,7 +495,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title, IconData icon, {Color? color}) {
+  Widget _buildSectionHeader(
+    BuildContext context,
+    String title,
+    IconData icon, {
+    Color? color,
+  }) {
     final effectiveColor = color ?? AppColors.textSecondaryColor(context);
     return Row(
       children: [
@@ -472,138 +553,159 @@ class _NotificationScreenState extends State<NotificationScreen> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.04),
+                  color: isDark
+                      ? Colors.black26
+                      : Colors.black.withValues(alpha: 0.04),
                   blurRadius: 10,
                   offset: const Offset(0, 3),
                 ),
               ],
             ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Unread Accent Bar
-              Container(
-                width: 5,
-                color: isUnread ? AppColors.goldPrimary : Colors.transparent,
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Circular Icon Avatar
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: iconColor.withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: iconColor.withValues(alpha: 0.25),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Center(
-                          child: Icon(icon, color: iconColor, size: 22),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-
-                      // Content
-                      Expanded(
-                        child: Column(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Unread Accent Bar
+                    Container(
+                      width: 5,
+                      color: isUnread
+                          ? AppColors.goldPrimary
+                          : Colors.transparent,
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Header Row: Category Badge + Time Badge
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: iconColor.withValues(alpha: 0.08),
-                                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                                  ),
-                                  child: Text(
-                                    category,
-                                    style: AppTypography.captionSmall.copyWith(
-                                      color: iconColor,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 10,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
+                            // Circular Icon Avatar
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: iconColor.withValues(alpha: 0.12),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: iconColor.withValues(alpha: 0.25),
+                                  width: 1.5,
                                 ),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.access_time_rounded,
-                                      size: 12,
-                                      color: AppColors.textSecondaryColor(context),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      time,
-                                      style: AppTypography.captionSmall.copyWith(
-                                        color: AppColors.textSecondaryColor(context),
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    if (isUnread) ...[
-                                      const SizedBox(width: 6),
-                                      Container(
-                                        width: 7,
-                                        height: 7,
-                                        decoration: const BoxDecoration(
-                                          color: AppColors.goldPrimary,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-
-                            // Title
-                            Text(
-                              title,
-                              style: AppTypography.titleSm.copyWith(
-                                color: headingColor,
-                                fontWeight: isUnread ? FontWeight.w800 : FontWeight.w700,
-                                fontSize: 15,
+                              ),
+                              child: Center(
+                                child: Icon(icon, color: iconColor, size: 22),
                               ),
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(width: AppSpacing.md),
 
-                            // Message body
-                            Text(
-                              message,
-                              style: AppTypography.bodySmall.copyWith(
-                                color: bodyColor,
-                                height: 1.45,
+                            // Content
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Header Row: Category Badge + Time Badge
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 3,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: iconColor.withValues(
+                                            alpha: 0.08,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            AppRadius.pill,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          category,
+                                          style: AppTypography.captionSmall
+                                              .copyWith(
+                                                color: iconColor,
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 10,
+                                                letterSpacing: 0.5,
+                                              ),
+                                        ),
+                                      ),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.access_time_rounded,
+                                            size: 12,
+                                            color: AppColors.textSecondaryColor(
+                                              context,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            time,
+                                            style: AppTypography.captionSmall
+                                                .copyWith(
+                                                  color:
+                                                      AppColors.textSecondaryColor(
+                                                        context,
+                                                      ),
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                          ),
+                                          if (isUnread) ...[
+                                            const SizedBox(width: 6),
+                                            Container(
+                                              width: 7,
+                                              height: 7,
+                                              decoration: const BoxDecoration(
+                                                color: AppColors.goldPrimary,
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+
+                                  // Title
+                                  Text(
+                                    title,
+                                    style: AppTypography.titleSm.copyWith(
+                                      color: headingColor,
+                                      fontWeight: isUnread
+                                          ? FontWeight.w800
+                                          : FontWeight.w700,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+
+                                  // Message body
+                                  Text(
+                                    message,
+                                    style: AppTypography.bodySmall.copyWith(
+                                      color: bodyColor,
+                                      height: 1.45,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),
-    ),
-  ),
-),
-);
+    );
   }
 
   Widget _buildFaqList(BuildContext context) {
@@ -611,7 +713,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
     final bodyColor = AppColors.textBodyColor(context);
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.lg),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.lg,
+      ),
       children: [
         Container(
           padding: const EdgeInsets.all(AppSpacing.md),
@@ -626,7 +731,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: AppColors.goldLight.withValues(alpha: 0.4)),
+            border: Border.all(
+              color: AppColors.goldLight.withValues(alpha: 0.4),
+            ),
           ),
           child: Row(
             children: [
@@ -728,7 +835,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.phone_in_talk_rounded, color: AppColors.error, size: 16),
+                const Icon(
+                  Icons.phone_in_talk_rounded,
+                  color: AppColors.error,
+                  size: 16,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'Hotline Maktab Indonesia: 800-119-999',
@@ -771,7 +882,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
             highlightColor: AppColors.goldPrimary.withValues(alpha: 0.05),
           ),
           child: ExpansionTile(
-            tilePadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 4),
+            tilePadding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: 4,
+            ),
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(

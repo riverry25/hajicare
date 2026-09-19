@@ -32,8 +32,9 @@ class TranslationService {
     Function(String status)? onStatusUpdate,
   }) async {
     try {
-      final isSourceDownloaded =
-          await _modelManager.isModelDownloaded(source.bcpCode);
+      final isSourceDownloaded = await _modelManager.isModelDownloaded(
+        source.bcpCode,
+      );
       if (!isSourceDownloaded) {
         onStatusUpdate?.call('Menyiapkan bahasa sumber (${source.name})...');
         final success = await _modelManager.downloadModel(
@@ -46,8 +47,9 @@ class TranslationService {
         }
       }
 
-      final isTargetDownloaded =
-          await _modelManager.isModelDownloaded(target.bcpCode);
+      final isTargetDownloaded = await _modelManager.isModelDownloaded(
+        target.bcpCode,
+      );
       if (!isTargetDownloaded) {
         onStatusUpdate?.call('Menyiapkan bahasa tujuan (${target.name})...');
         final success = await _modelManager.downloadModel(

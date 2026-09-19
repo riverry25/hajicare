@@ -13,11 +13,7 @@ class RoomQrDialog extends StatelessWidget {
   final RoomModel room;
   final bool isSheetMode;
 
-  const RoomQrDialog({
-    super.key,
-    required this.room,
-    this.isSheetMode = false,
-  });
+  const RoomQrDialog({super.key, required this.room, this.isSheetMode = false});
 
   /// Displays the QR Code dialog for the given [room].
   static Future<void> show(BuildContext context, {required RoomModel room}) {
@@ -30,7 +26,10 @@ class RoomQrDialog extends StatelessWidget {
   }
 
   /// Displays the QR Code bottom sheet for the given [room].
-  static Future<void> showBottomSheet(BuildContext context, {required RoomModel room}) {
+  static Future<void> showBottomSheet(
+    BuildContext context, {
+    required RoomModel room,
+  }) {
     HapticFeedback.lightImpact();
     final isDark = AppColors.isDark(context);
     final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
@@ -40,7 +39,9 @@ class RoomQrDialog extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: cardBg,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.sheet),
+        ),
       ),
       builder: (ctx) => SafeArea(
         child: SingleChildScrollView(
@@ -60,7 +61,9 @@ class RoomQrDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
     final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = isDark ? AppColors.darkTextHeading : AppColors.espressoDark;
+    final headingColor = isDark
+        ? AppColors.darkTextHeading
+        : AppColors.espressoDark;
     final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
     final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
 
@@ -91,11 +94,13 @@ class RoomQrDialog extends StatelessWidget {
               decoration: BoxDecoration(
                 color: primaryColor.withValues(alpha: isDark ? 0.22 : 0.12),
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(
-                  color: primaryColor.withValues(alpha: 0.35),
-                ),
+                border: Border.all(color: primaryColor.withValues(alpha: 0.35)),
               ),
-              child: Icon(Icons.qr_code_2_rounded, color: primaryColor, size: 24),
+              child: Icon(
+                Icons.qr_code_2_rounded,
+                color: primaryColor,
+                size: 24,
+              ),
             ),
             const SizedBox(width: AppSpacing.sm + 4),
             Expanded(
@@ -120,7 +125,9 @@ class RoomQrDialog extends StatelessWidget {
                         width: 6,
                         height: 6,
                         decoration: BoxDecoration(
-                          color: room.isActive ? AppColors.statusSafe : AppColors.textSecondary,
+                          color: room.isActive
+                              ? AppColors.statusSafe
+                              : AppColors.textSecondary,
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -128,7 +135,9 @@ class RoomQrDialog extends StatelessWidget {
                       Text(
                         room.isActive ? 'Room Aktif Dipantau' : 'Room Nonaktif',
                         style: AppTypography.captionSmall.copyWith(
-                          color: room.isActive ? AppColors.statusSafe : bodyColor.withValues(alpha: 0.7),
+                          color: room.isActive
+                              ? AppColors.statusSafe
+                              : bodyColor.withValues(alpha: 0.7),
                           fontWeight: FontWeight.w600,
                           fontSize: 11,
                         ),
@@ -150,7 +159,9 @@ class RoomQrDialog extends StatelessWidget {
 
         Divider(
           height: 1,
-          color: isDark ? AppColors.darkCardBorder : AppColors.canvasCreamSubtle,
+          color: isDark
+              ? AppColors.darkCardBorder
+              : AppColors.canvasCreamSubtle,
         ),
         const SizedBox(height: AppSpacing.md),
 
@@ -194,11 +205,15 @@ class RoomQrDialog extends StatelessWidget {
               backgroundColor: Colors.white,
               eyeStyle: QrEyeStyle(
                 eyeShape: QrEyeShape.square,
-                color: isDark ? const Color(0xFF1B1813) : const Color(0xFF2D241E),
+                color: isDark
+                    ? const Color(0xFF1B1813)
+                    : const Color(0xFF2D241E),
               ),
               dataModuleStyle: QrDataModuleStyle(
                 dataModuleShape: QrDataModuleShape.square,
-                color: isDark ? const Color(0xFF1B1813) : const Color(0xFF2D241E),
+                color: isDark
+                    ? const Color(0xFF1B1813)
+                    : const Color(0xFF2D241E),
               ),
             ),
           ),
@@ -248,7 +263,11 @@ class RoomQrDialog extends StatelessWidget {
                     color: primaryColor.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.copy_rounded, size: 14, color: primaryColor),
+                  child: Icon(
+                    Icons.copy_rounded,
+                    size: 14,
+                    color: primaryColor,
+                  ),
                 ),
               ],
             ),
@@ -284,12 +303,14 @@ class RoomQrDialog extends StatelessWidget {
                 ),
                 onPressed: () {
                   HapticFeedback.lightImpact();
-                  final shareText = "Assalamu'alaikum, bergabunglah ke rombongan '${room.name}' di aplikasi HajiCare.\n\nKode Room: ${room.code}\n\nMasukkan kode tersebut pada menu 'Gabung Room' di aplikasi HajiCare.";
+                  final shareText =
+                      "Assalamu'alaikum, bergabunglah ke rombongan '${room.name}' di aplikasi HajiCare.\n\nKode Room: ${room.code}\n\nMasukkan kode tersebut pada menu 'Gabung Room' di aplikasi HajiCare.";
                   Clipboard.setData(ClipboardData(text: shareText));
                   AppAlert.success(
                     context,
                     title: 'Teks Undangan Disalin',
-                    message: 'Format teks undangan berhasil disalin ke clipboard untuk dibagikan ke WhatsApp / grup.',
+                    message:
+                        'Format teks undangan berhasil disalin ke clipboard untuk dibagikan ke WhatsApp / grup.',
                   );
                 },
               ),
@@ -299,7 +320,9 @@ class RoomQrDialog extends StatelessWidget {
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryColor,
-                  foregroundColor: isDark ? AppColors.darkOnPrimary : Colors.white,
+                  foregroundColor: isDark
+                      ? AppColors.darkOnPrimary
+                      : Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
@@ -328,7 +351,9 @@ class RoomQrDialog extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.lg),
         side: BorderSide(
-          color: isDark ? AppColors.darkCardBorder : primaryColor.withValues(alpha: 0.25),
+          color: isDark
+              ? AppColors.darkCardBorder
+              : primaryColor.withValues(alpha: 0.25),
         ),
       ),
       insetPadding: const EdgeInsets.symmetric(
@@ -339,9 +364,7 @@ class RoomQrDialog extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 400),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
-          child: SingleChildScrollView(
-            child: content,
-          ),
+          child: SingleChildScrollView(child: content),
         ),
       ),
     );

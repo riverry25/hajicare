@@ -104,14 +104,17 @@ class HajiCareTranslatorSheet extends StatefulWidget {
       backgroundColor: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
       barrierColor: Colors.black54,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.sheet),
+        ),
       ),
       builder: (ctx) => const HajiCareTranslatorSheet(),
     );
   }
 
   @override
-  State<HajiCareTranslatorSheet> createState() => _HajiCareTranslatorSheetState();
+  State<HajiCareTranslatorSheet> createState() =>
+      _HajiCareTranslatorSheetState();
 }
 
 class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
@@ -133,11 +136,15 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
   String _statusMessage = '';
   String? _speechMessage;
 
-  _LanguageOption get _sourceLanguage =>
-      _kLanguages.firstWhere((l) => l.code == _sourceCode, orElse: () => _kLanguages[0]);
+  _LanguageOption get _sourceLanguage => _kLanguages.firstWhere(
+    (l) => l.code == _sourceCode,
+    orElse: () => _kLanguages[0],
+  );
 
-  _LanguageOption get _targetLanguage =>
-      _kLanguages.firstWhere((l) => l.code == _targetCode, orElse: () => _kLanguages[1]);
+  _LanguageOption get _targetLanguage => _kLanguages.firstWhere(
+    (l) => l.code == _targetCode,
+    orElse: () => _kLanguages[1],
+  );
 
   @override
   void initState() {
@@ -154,7 +161,8 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
       setState(() {
         _speechMessage = status == SpeechStatus.idle ? null : message;
       });
-      if (status == SpeechStatus.done && _inputController.text.trim().isNotEmpty) {
+      if (status == SpeechStatus.done &&
+          _inputController.text.trim().isNotEmpty) {
         _performTranslation();
       }
     };
@@ -320,13 +328,18 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
     }
 
     setState(() {
-      _inputController.text = (_sourceCode == 'ar') ? phrase.arText : phrase.idText;
+      _inputController.text = (_sourceCode == 'ar')
+          ? phrase.arText
+          : phrase.idText;
     });
 
     _performTranslation();
   }
 
-  void _selectLanguage({required bool isSource, required _LanguageOption option}) {
+  void _selectLanguage({
+    required bool isSource,
+    required _LanguageOption option,
+  }) {
     HapticFeedback.selectionClick();
     setState(() {
       if (isSource) {
@@ -350,14 +363,18 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
   void _showLanguageSelector({required bool isSource}) {
     HapticFeedback.lightImpact();
     final isDark = AppColors.isDark(context);
-    final headingColor = isDark ? AppColors.darkTextHeading : AppColors.textHeading;
+    final headingColor = isDark
+        ? AppColors.darkTextHeading
+        : AppColors.textHeading;
     final selectedCode = isSource ? _sourceCode : _targetCode;
 
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.sheet),
+        ),
       ),
       builder: (ctx) {
         return SafeArea(
@@ -368,7 +385,9 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenEdgeGutter),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.screenEdgeGutter,
+                  ),
                   child: Text(
                     isSource ? 'Pilih Bahasa Asal' : 'Pilih Bahasa Tujuan',
                     style: AppTypography.titleMedium.copyWith(
@@ -381,20 +400,29 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                 ..._kLanguages.map((lang) {
                   final isSelected = lang.code == selectedCode;
                   return ListTile(
-                    leading: Text(lang.flag, style: const TextStyle(fontSize: 24)),
+                    leading: Text(
+                      lang.flag,
+                      style: const TextStyle(fontSize: 24),
+                    ),
                     title: Text(
                       lang.name,
                       style: AppTypography.bodyMedium.copyWith(
                         color: isSelected
-                            ? (isDark ? AppColors.darkPrimary : AppColors.espressoDark)
+                            ? (isDark
+                                  ? AppColors.darkPrimary
+                                  : AppColors.espressoDark)
                             : headingColor,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
                       ),
                     ),
                     trailing: isSelected
                         ? Icon(
                             Icons.check_circle_rounded,
-                            color: isDark ? AppColors.darkPrimary : AppColors.espressoDark,
+                            color: isDark
+                                ? AppColors.darkPrimary
+                                : AppColors.espressoDark,
                           )
                         : null,
                     onTap: () {
@@ -414,9 +442,13 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
   @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
-    final headingColor = isDark ? AppColors.darkTextHeading : AppColors.textHeading;
+    final headingColor = isDark
+        ? AppColors.darkTextHeading
+        : AppColors.textHeading;
     final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.espressoDark;
+    final primaryColor = isDark
+        ? AppColors.darkPrimary
+        : AppColors.espressoDark;
     final isListening = _speechService.isListening;
 
     return SafeArea(
@@ -455,7 +487,11 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                       color: primaryColor.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
-                    child: Icon(Icons.translate_rounded, color: primaryColor, size: 20),
+                    child: Icon(
+                      Icons.translate_rounded,
+                      color: primaryColor,
+                      size: 20,
+                    ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
@@ -517,7 +553,12 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
               const SizedBox(height: AppSpacing.md),
 
               // ── Quick Pilgrimage Phrases ──────────────────────────────────
-              _buildQuickPhrasesSection(isDark, headingColor, bodyColor, primaryColor),
+              _buildQuickPhrasesSection(
+                isDark,
+                headingColor,
+                bodyColor,
+                primaryColor,
+              ),
             ],
           ),
         ),
@@ -526,9 +567,16 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
   }
 
   /// Modern unified language bar: [ Source Flag + Name ] [ ⇄ ] [ Target Flag + Name ]
-  Widget _buildTopLanguageBar(bool isDark, Color primaryColor, Color headingColor) {
+  Widget _buildTopLanguageBar(
+    bool isDark,
+    Color primaryColor,
+    Color headingColor,
+  ) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: 4,
+      ),
       decoration: BoxDecoration(
         color: isDark
             ? AppColors.darkSurfaceContainer
@@ -548,11 +596,17 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
               onTap: () => _showLanguageSelector(isSource: true),
               borderRadius: BorderRadius.circular(AppRadius.md),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs + 2),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: AppSpacing.xs + 2,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(_sourceLanguage.flag, style: const TextStyle(fontSize: 18)),
+                    Text(
+                      _sourceLanguage.flag,
+                      style: const TextStyle(fontSize: 18),
+                    ),
                     const SizedBox(width: AppSpacing.xs),
                     Flexible(
                       child: Text(
@@ -589,10 +643,14 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                 height: 38,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isDark ? AppColors.darkSurfaceContainerHighest : AppColors.surfaceWhite,
+                  color: isDark
+                      ? AppColors.darkSurfaceContainerHighest
+                      : AppColors.surfaceWhite,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
+                      color: Colors.black.withValues(
+                        alpha: isDark ? 0.2 : 0.06,
+                      ),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -615,11 +673,17 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
               onTap: () => _showLanguageSelector(isSource: false),
               borderRadius: BorderRadius.circular(AppRadius.md),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs + 2),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: AppSpacing.xs + 2,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(_targetLanguage.flag, style: const TextStyle(fontSize: 18)),
+                    Text(
+                      _targetLanguage.flag,
+                      style: const TextStyle(fontSize: 18),
+                    ),
                     const SizedBox(width: AppSpacing.xs),
                     Flexible(
                       child: Text(
@@ -650,7 +714,10 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
 
   Widget _buildSpeechStatusBar(bool isListening, Color bodyColor) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 6,
+      ),
       decoration: BoxDecoration(
         color: isListening
             ? AppColors.sosEmergency.withValues(alpha: 0.10)
@@ -679,7 +746,8 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
             ),
           Expanded(
             child: Text(
-              _speechMessage ?? (isListening ? 'Mendengarkan... Silakan bicara' : ''),
+              _speechMessage ??
+                  (isListening ? 'Mendengarkan... Silakan bicara' : ''),
               style: AppTypography.captionSmall.copyWith(
                 color: isListening ? AppColors.sosEmergency : bodyColor,
                 fontWeight: isListening ? FontWeight.w600 : FontWeight.w500,
@@ -700,16 +768,14 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.darkSurfaceContainer
-            : AppColors.surfaceWhite,
+        color: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: isListening
               ? AppColors.sosEmergency
               : (isDark
-                  ? AppColors.darkOutlineVariant
-                  : AppColors.espressoDark.withValues(alpha: 0.10)),
+                    ? AppColors.darkOutlineVariant
+                    : AppColors.espressoDark.withValues(alpha: 0.10)),
           width: isListening ? 1.8 : 1.0,
         ),
         boxShadow: [
@@ -762,11 +828,18 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                   onTap: _clearInput,
                   borderRadius: BorderRadius.circular(AppRadius.xs),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 4,
+                    ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.clear_rounded, size: 16, color: bodyColor.withValues(alpha: 0.6)),
+                        Icon(
+                          Icons.clear_rounded,
+                          size: 16,
+                          color: bodyColor.withValues(alpha: 0.6),
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           'Hapus',
@@ -799,7 +872,9 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                     ),
                     child: Center(
                       child: Icon(
-                        isListening ? Icons.mic_rounded : Icons.mic_none_rounded,
+                        isListening
+                            ? Icons.mic_rounded
+                            : Icons.mic_none_rounded,
                         color: isListening ? Colors.white : primaryColor,
                         size: 24,
                       ),
@@ -880,7 +955,9 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                 ? Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      _statusMessage.isNotEmpty ? _statusMessage : 'Sedang menerjemahkan…',
+                      _statusMessage.isNotEmpty
+                          ? _statusMessage
+                          : 'Sedang menerjemahkan…',
                       style: AppTypography.bodyMedium.copyWith(
                         color: bodyColor.withValues(alpha: 0.7),
                         fontStyle: FontStyle.italic,
@@ -888,10 +965,16 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                     ),
                   )
                 : Align(
-                    alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+                    alignment: isArabic
+                        ? Alignment.centerRight
+                        : Alignment.centerLeft,
                     child: Text(
-                      hasResult ? _resultText : 'Hasil terjemahan akan tampil di sini…',
-                      textDirection: (hasResult && isArabic) ? TextDirection.rtl : TextDirection.ltr,
+                      hasResult
+                          ? _resultText
+                          : 'Hasil terjemahan akan tampil di sini…',
+                      textDirection: (hasResult && isArabic)
+                          ? TextDirection.rtl
+                          : TextDirection.ltr,
                       style: (isArabic && hasResult)
                           ? AppTypography.displayMedium.copyWith(
                               color: headingColor,
@@ -899,8 +982,12 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                               height: 1.45,
                             )
                           : AppTypography.bodyLarge.copyWith(
-                              color: hasResult ? headingColor : bodyColor.withValues(alpha: 0.45),
-                              fontWeight: hasResult ? FontWeight.w600 : FontWeight.w400,
+                              color: hasResult
+                                  ? headingColor
+                                  : bodyColor.withValues(alpha: 0.45),
+                              fontWeight: hasResult
+                                  ? FontWeight.w600
+                                  : FontWeight.w400,
                               height: 1.35,
                             ),
                     ),
@@ -922,7 +1009,10 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                   tooltip: 'Salin Teks',
                   onPressed: _copyResult,
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
+                  constraints: const BoxConstraints(
+                    minWidth: 38,
+                    minHeight: 38,
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.xs),
               ],
@@ -939,13 +1029,15 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                       shape: BoxShape.circle,
                       color: hasResult
                           ? (isPlayingTts
-                              ? AppColors.sosEmergency
-                              : primaryColor.withValues(alpha: 0.12))
+                                ? AppColors.sosEmergency
+                                : primaryColor.withValues(alpha: 0.12))
                           : bodyColor.withValues(alpha: 0.06),
                     ),
                     child: Center(
                       child: Icon(
-                        isPlayingTts ? Icons.stop_circle_rounded : Icons.volume_up_rounded,
+                        isPlayingTts
+                            ? Icons.stop_circle_rounded
+                            : Icons.volume_up_rounded,
                         color: hasResult
                             ? (isPlayingTts ? Colors.white : primaryColor)
                             : bodyColor.withValues(alpha: 0.25),
@@ -974,7 +1066,11 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
       children: [
         Row(
           children: [
-            Icon(Icons.auto_awesome_rounded, size: 16, color: AppColors.accentGoldStar),
+            Icon(
+              Icons.auto_awesome_rounded,
+              size: 16,
+              color: AppColors.accentGoldStar,
+            ),
             const SizedBox(width: 6),
             Text(
               'Frasa Penting Haji & Umrah',
@@ -999,7 +1095,10 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                 onTap: () => _applyQuickPhrase(phrase),
                 borderRadius: BorderRadius.circular(AppRadius.pill),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: isDark
                         ? AppColors.darkSurfaceContainer
@@ -1034,4 +1133,3 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
     );
   }
 }
-

@@ -15,13 +15,13 @@ class RegisterController extends GetxController {
   final porsiController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-  
+
   final selectedRole = 'jamaah'.obs;
 
   void togglePasswordVisibility() {
     obscurePassword.value = !obscurePassword.value;
   }
-  
+
   void setRole(String role) {
     selectedRole.value = role;
   }
@@ -30,7 +30,9 @@ class RegisterController extends GetxController {
     isLoading.value = true;
     errorMessage.value = null;
 
-    if (emailController.text.isEmpty || passwordController.text.isEmpty || fullNameController.text.isEmpty) {
+    if (emailController.text.isEmpty ||
+        passwordController.text.isEmpty ||
+        fullNameController.text.isEmpty) {
       errorMessage.value = 'Harap isi semua kolom wajib';
       _showErrorSnackbar(errorMessage.value!);
       isLoading.value = false;
@@ -38,10 +40,11 @@ class RegisterController extends GetxController {
     }
 
     try {
-      final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text,
-      );
+      final userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: emailController.text.trim(),
+            password: passwordController.text,
+          );
 
       final uid = userCredential.user!.uid;
 
@@ -59,10 +62,16 @@ class RegisterController extends GetxController {
         userPayload['distance'] = 20.0;
         userPayload['separatedMode'] = false;
         userPayload['sosActive'] = false;
-        userPayload['shortLabel'] = fullNameController.text.trim().split(' ').first;
+        userPayload['shortLabel'] = fullNameController.text
+            .trim()
+            .split(' ')
+            .first;
       }
 
-      await FirebaseFirestore.instance.collection('users').doc(uid).set(userPayload);
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .set(userPayload);
 
       // Persist onboarding status & Remember Me setting
       final startup = Get.find<AppStartupController>();
@@ -94,7 +103,8 @@ class RegisterController extends GetxController {
       _showErrorSnackbar(errorMessage.value!);
     } catch (e, stackTrace) {
       debugPrint('=== ERROR UMUM ===: $e\n$stackTrace');
-      errorMessage.value = 'Terjadi kesalahan saat mendaftar. Silakan coba lagi.';
+      errorMessage.value =
+          'Terjadi kesalahan saat mendaftar. Silakan coba lagi.';
       _showErrorSnackbar(errorMessage.value!);
     } finally {
       isLoading.value = false;

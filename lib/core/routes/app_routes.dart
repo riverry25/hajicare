@@ -62,137 +62,128 @@ class AppRoutes {
   static const String editRoom = '/edit_room';
 
   static List<GetPage> get pages => [
-        GetPage(name: splash, page: () => const SplashScreen()),
-        GetPage(
-          name: onboarding,
-          page: () => const OnboardingScreen(),
-          binding: OnboardingBinding(),
+    GetPage(name: splash, page: () => const SplashScreen()),
+    GetPage(
+      name: onboarding,
+      page: () => const OnboardingScreen(),
+      binding: OnboardingBinding(),
+    ),
+    GetPage(
+      name: login,
+      page: () => const LoginScreen(),
+      binding: LoginBinding(),
+    ),
+    GetPage(
+      name: register,
+      page: () => const RegisterScreen(),
+      binding: RegisterBinding(),
+    ),
+    // Room Management & Join Pages
+    GetPage(
+      name: joinRoom,
+      page: () => const JoinRoomScreen(),
+      middlewares: [
+        RoleAndRoomGuard(
+          allowedRoles: ['pendamping', 'jamaah'],
+          redirectIfHasRoom: true,
         ),
-        GetPage(
-          name: login,
-          page: () => const LoginScreen(),
-          binding: LoginBinding(),
+      ],
+    ),
+    GetPage(
+      name: adminDashboard,
+      page: () => const AdminDashboardScreen(),
+      binding: DashboardBinding(),
+      middlewares: [
+        RoleAndRoomGuard(allowedRoles: ['admin']),
+      ],
+    ),
+    GetPage(
+      name: adminRooms,
+      page: () => const AdminRoomManagementScreen(),
+      middlewares: [
+        RoleAndRoomGuard(allowedRoles: ['admin']),
+      ],
+    ),
+    GetPage(
+      name: roomDetail,
+      page: () => const RoomDetailScreen(),
+      middlewares: [
+        RoleAndRoomGuard(allowedRoles: ['admin', 'pendamping', 'jamaah']),
+      ],
+    ),
+    // Role Dashboards with Active Room Protection
+    GetPage(
+      name: home,
+      page: () => const DashboardJamaahScreen(),
+      binding: DashboardBinding(),
+      middlewares: [
+        RoleAndRoomGuard(allowedRoles: ['jamaah'], requiresActiveRoom: false),
+      ],
+    ),
+    GetPage(
+      name: dashboardJamaah,
+      page: () => const DashboardJamaahScreen(),
+      binding: DashboardBinding(),
+      middlewares: [
+        RoleAndRoomGuard(allowedRoles: ['jamaah'], requiresActiveRoom: false),
+      ],
+    ),
+    GetPage(
+      name: dashboardPendamping,
+      page: () => const DashboardPendampingScreen(),
+      binding: DashboardBinding(),
+      middlewares: [
+        RoleAndRoomGuard(
+          allowedRoles: ['pendamping'],
+          requiresActiveRoom: false,
         ),
-        GetPage(
-          name: register,
-          page: () => const RegisterScreen(),
-          binding: RegisterBinding(),
-        ),
-        // Room Management & Join Pages
-        GetPage(
-          name: joinRoom,
-          page: () => const JoinRoomScreen(),
-          middlewares: [
-            RoleAndRoomGuard(
-              allowedRoles: ['pendamping', 'jamaah'],
-              redirectIfHasRoom: true,
-            ),
-          ],
-        ),
-        GetPage(
-          name: adminDashboard,
-          page: () => const AdminDashboardScreen(),
-          binding: DashboardBinding(),
-          middlewares: [
-            RoleAndRoomGuard(allowedRoles: ['admin']),
-          ],
-        ),
-        GetPage(
-          name: adminRooms,
-          page: () => const AdminRoomManagementScreen(),
-          middlewares: [
-            RoleAndRoomGuard(allowedRoles: ['admin']),
-          ],
-        ),
-        GetPage(
-          name: roomDetail,
-          page: () => const RoomDetailScreen(),
-          middlewares: [
-            RoleAndRoomGuard(allowedRoles: ['admin', 'pendamping', 'jamaah']),
-          ],
-        ),
-        // Role Dashboards with Active Room Protection
-        GetPage(
-          name: home,
-          page: () => const DashboardJamaahScreen(),
-          binding: DashboardBinding(),
-          middlewares: [
-            RoleAndRoomGuard(
-              allowedRoles: ['jamaah'],
-              requiresActiveRoom: false,
-            ),
-          ],
-        ),
-        GetPage(
-          name: dashboardJamaah,
-          page: () => const DashboardJamaahScreen(),
-          binding: DashboardBinding(),
-          middlewares: [
-            RoleAndRoomGuard(
-              allowedRoles: ['jamaah'],
-              requiresActiveRoom: false,
-            ),
-          ],
-        ),
-        GetPage(
-          name: dashboardPendamping,
-          page: () => const DashboardPendampingScreen(),
-          binding: DashboardBinding(),
-          middlewares: [
-            RoleAndRoomGuard(
-              allowedRoles: ['pendamping'],
-              requiresActiveRoom: false,
-            ),
-          ],
-        ),
-        GetPage(
-          name: interactiveMap,
-          page: () => const InteractiveMapScreen(),
-          binding: MapBinding(),
-        ),
-        GetPage(
-          name: map,
-          page: () => const InteractiveMapScreen(),
-          binding: MapBinding(),
-        ),
-        GetPage(name: modalSos, page: () => const ModalSosScreen()),
-        GetPage(name: sosModal, page: () => const ModalSosScreen()),
-        GetPage(name: distanceAlert, page: () => const DistanceAlertScreen()),
-        GetPage(
-          name: prayerTimes,
-          page: () => const PrayerTimesScreen(),
-          binding: PrayerBinding(),
-        ),
-        GetPage(
-          name: prayer,
-          page: () => const PrayerTimesScreen(),
-          binding: PrayerBinding(),
-        ),
-        GetPage(
-          name: moneyRecognition,
-          page: () => const MoneyRecognitionScreen(),
-        ),
-        GetPage(name: money, page: () => const MoneyRecognitionScreen()),
-        GetPage(
-          name: communication,
-          page: () => const CommunicationScreen(),
-          binding: CommunicationBinding(),
-        ),
-        GetPage(name: profile, page: () => const ProfileScreen()),
-        GetPage(name: notification, page: () => const NotificationScreen()),
-        GetPage(name: helpCenter, page: () => const HelpCenterScreen()),
-        GetPage(name: about, page: () => const AboutScreen()),
-        GetPage(
-          name: smartbandLdr,
-          page: () => const SmartbandLdrPage(),
-          binding: SmartbandLdrBinding(),
-        ),
-        GetPage(
-          name: editRoom,
-          page: () => const EditRoomScreen(),
-          middlewares: [
-            RoleAndRoomGuard(allowedRoles: ['pendamping']),
-          ],
-        ),
-      ];
+      ],
+    ),
+    GetPage(
+      name: interactiveMap,
+      page: () => const InteractiveMapScreen(),
+      binding: MapBinding(),
+    ),
+    GetPage(
+      name: map,
+      page: () => const InteractiveMapScreen(),
+      binding: MapBinding(),
+    ),
+    GetPage(name: modalSos, page: () => const ModalSosScreen()),
+    GetPage(name: sosModal, page: () => const ModalSosScreen()),
+    GetPage(name: distanceAlert, page: () => const DistanceAlertScreen()),
+    GetPage(
+      name: prayerTimes,
+      page: () => const PrayerTimesScreen(),
+      binding: PrayerBinding(),
+    ),
+    GetPage(
+      name: prayer,
+      page: () => const PrayerTimesScreen(),
+      binding: PrayerBinding(),
+    ),
+    GetPage(name: moneyRecognition, page: () => const MoneyRecognitionScreen()),
+    GetPage(name: money, page: () => const MoneyRecognitionScreen()),
+    GetPage(
+      name: communication,
+      page: () => const CommunicationScreen(),
+      binding: CommunicationBinding(),
+    ),
+    GetPage(name: profile, page: () => const ProfileScreen()),
+    GetPage(name: notification, page: () => const NotificationScreen()),
+    GetPage(name: helpCenter, page: () => const HelpCenterScreen()),
+    GetPage(name: about, page: () => const AboutScreen()),
+    GetPage(
+      name: smartbandLdr,
+      page: () => const SmartbandLdrPage(),
+      binding: SmartbandLdrBinding(),
+    ),
+    GetPage(
+      name: editRoom,
+      page: () => const EditRoomScreen(),
+      middlewares: [
+        RoleAndRoomGuard(allowedRoles: ['pendamping']),
+      ],
+    ),
+  ];
 }

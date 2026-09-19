@@ -23,7 +23,9 @@ class JamaahServiceGrid extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.cardPadding),
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadius.sheet),
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -34,7 +36,9 @@ class JamaahServiceGrid extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkOutlineVariant : AppColors.outlineVariant,
+                  color: isDark
+                      ? AppColors.darkOutlineVariant
+                      : AppColors.outlineVariant,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
               ),
@@ -49,7 +53,11 @@ class JamaahServiceGrid extends StatelessWidget {
                     color: AppColors.statusSafe.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.watch_rounded, color: AppColors.statusSafe, size: 28),
+                  child: const Icon(
+                    Icons.watch_rounded,
+                    color: AppColors.statusSafe,
+                    size: 28,
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
@@ -119,7 +127,8 @@ class JamaahServiceGrid extends StatelessWidget {
                   AppAlert.success(
                     context,
                     title: 'Sinkronisasi Berhasil',
-                    message: 'Data vital dan lokasi gelang pintar telah diperbarui.',
+                    message:
+                        'Data vital dan lokasi gelang pintar telah diperbarui.',
                   );
                 },
                 icon: const Icon(Icons.sync_rounded),
@@ -143,17 +152,24 @@ class JamaahServiceGrid extends StatelessWidget {
                   Get.back();
                   Get.toNamed(AppRoutes.smartbandLdr);
                 },
-                icon: const Icon(Icons.sensors_rounded, color: AppColors.accentGoldStar),
+                icon: const Icon(
+                  Icons.sensors_rounded,
+                  color: AppColors.accentGoldStar,
+                ),
                 label: Text(
                   'Uji Koneksi & Sensor LDR',
                   style: AppTypography.button.copyWith(
-                    color: isDark ? AppColors.darkTextHeading : AppColors.espressoDark,
+                    color: isDark
+                        ? AppColors.darkTextHeading
+                        : AppColors.espressoDark,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(
-                    color: isDark ? AppColors.darkOutlineVariant : AppColors.outlineVariant,
+                    color: isDark
+                        ? AppColors.darkOutlineVariant
+                        : AppColors.outlineVariant,
                     width: 1.2,
                   ),
                   shape: RoundedRectangleBorder(
@@ -182,7 +198,10 @@ class JamaahServiceGrid extends StatelessWidget {
     final bodyColor = AppColors.textBodyColor(context);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.md),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.md,
+      ),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream,
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -204,9 +223,7 @@ class JamaahServiceGrid extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             label,
-            style: AppTypography.caption.copyWith(
-              color: bodyColor,
-            ),
+            style: AppTypography.caption.copyWith(color: bodyColor),
             textAlign: TextAlign.center,
           ),
         ],
@@ -222,15 +239,20 @@ class JamaahServiceGrid extends StatelessWidget {
     final doas = [
       {
         'title': 'Bacaan Talbiyah',
-        'arabic': 'لَبَّيْكَ اللَّهُمَّ لَبَّيْكَ، لَبَّيْكَ لاَ شَرِيكَ لَكَ لَبَّيْكَ',
-        'latin': 'Labbaikallaahumma labbaik, labbaika laa syariika laka labbaik...',
+        'arabic':
+            'لَبَّيْكَ اللَّهُمَّ لَبَّيْكَ، لَبَّيْكَ لاَ شَرِيكَ لَكَ لَبَّيْكَ',
+        'latin':
+            'Labbaikallaahumma labbaik, labbaika laa syariika laka labbaik...',
         'arti': 'Aku penuhi panggilan-Mu ya Allah, aku penuhi panggilan-Mu...',
       },
       {
         'title': 'Doa Tawaf (Antara Rukun Yamani & Hajar Aswad)',
-        'arabic': 'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ',
-        'latin': 'Rabbanaa aatinaa fid dunyaa hasanah wa fil aakhirati hasanah wa qinaa \'adzaaban naar',
-        'arti': 'Ya Tuhan kami, berilah kami kebaikan di dunia dan kebaikan di akhirat dan lindungilah kami dari azab neraka.',
+        'arabic':
+            'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ',
+        'latin':
+            'Rabbanaa aatinaa fid dunyaa hasanah wa fil aakhirati hasanah wa qinaa \'adzaaban naar',
+        'arti':
+            'Ya Tuhan kami, berilah kami kebaikan di dunia dan kebaikan di akhirat dan lindungilah kami dari azab neraka.',
       },
       {
         'title': 'Doa Masuk Masjidil Haram',
@@ -243,10 +265,14 @@ class JamaahServiceGrid extends StatelessWidget {
     Get.bottomSheet(
       Container(
         padding: const EdgeInsets.all(AppSpacing.cardPadding),
-        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.75),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.75,
+        ),
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadius.sheet),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -256,7 +282,9 @@ class JamaahServiceGrid extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkOutlineVariant : AppColors.outlineVariant,
+                  color: isDark
+                      ? AppColors.darkOutlineVariant
+                      : AppColors.outlineVariant,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
               ),
@@ -264,7 +292,11 @@ class JamaahServiceGrid extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             Row(
               children: [
-                const Icon(Icons.menu_book_rounded, color: AppColors.tanMedium, size: 24),
+                const Icon(
+                  Icons.menu_book_rounded,
+                  color: AppColors.tanMedium,
+                  size: 24,
+                ),
                 const SizedBox(width: AppSpacing.sm),
                 Text(
                   'Doa & Panduan Manasik',
@@ -279,7 +311,8 @@ class JamaahServiceGrid extends StatelessWidget {
             Expanded(
               child: ListView.separated(
                 itemCount: doas.length,
-                separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
+                separatorBuilder: (_, _) =>
+                    const SizedBox(height: AppSpacing.md),
                 itemBuilder: (ctx, i) {
                   final item = doas[i];
                   return AppCard(
@@ -337,7 +370,8 @@ class JamaahServiceGrid extends StatelessWidget {
     AppAlert.info(
       context,
       title: 'Panggilan Petugas Siaga',
-      message: 'Silakan hubungi kontak darurat berikut:\n\n'
+      message:
+          'Silakan hubungi kontak darurat berikut:\n\n'
           '• Call Center Haji Kemenag: 195\n'
           '• Posko Medis: +966 50 123 4567\n'
           '• Ketua Kloter: +966 50 987 6543',
@@ -521,9 +555,7 @@ class JamaahServiceGrid extends StatelessWidget {
               const SizedBox(height: 3),
               Text(
                 subtitle,
-                style: AppTypography.caption.copyWith(
-                  color: bodyColor,
-                ),
+                style: AppTypography.caption.copyWith(color: bodyColor),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),

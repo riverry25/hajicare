@@ -5538,4 +5538,3 @@ class _HeroGaugePainter extends CustomPainter {
         oldDelegate.dotColor != dotColor;
   }
 }
-

@@ -50,7 +50,9 @@ void main() {
 
   group('MaterialLocalizations Availability Tests', () {
     for (final langCode in ['id', 'en', 'jv', 'su']) {
-      testWidgets('MaterialLocalizations is available for $langCode', (tester) async {
+      testWidgets('MaterialLocalizations is available for $langCode', (
+        tester,
+      ) async {
         final loc = Locale(langCode);
         MaterialLocalizations? foundMatLoc;
 
@@ -60,9 +62,7 @@ void main() {
             child: Builder(
               builder: (context) {
                 foundMatLoc = MaterialLocalizations.of(context);
-                return Scaffold(
-                  body: Text('Lang: $langCode'),
-                );
+                return Scaffold(body: Text('Lang: $langCode'));
               },
             ),
           ),
@@ -75,24 +75,24 @@ void main() {
 
   group('LoginScreen TextFormField Rendering Tests', () {
     for (final langCode in ['id', 'en', 'jv', 'su']) {
-      testWidgets('LoginScreen renders AppTextField without error for $langCode', (tester) async {
-        final loc = Locale(langCode);
-        final settings = Get.put(AppSettingsController(), permanent: true);
-        await settings.setLocale(loc);
-        LoginBinding().dependencies();
+      testWidgets(
+        'LoginScreen renders AppTextField without error for $langCode',
+        (tester) async {
+          final loc = Locale(langCode);
+          final settings = Get.put(AppSettingsController(), permanent: true);
+          await settings.setLocale(loc);
+          LoginBinding().dependencies();
 
-        await tester.pumpWidget(
-          _buildTestApp(
-            locale: loc,
-            child: const LoginScreen(),
-          ),
-        );
+          await tester.pumpWidget(
+            _buildTestApp(locale: loc, child: const LoginScreen()),
+          );
 
-        await tester.pump();
+          await tester.pump();
 
-        expect(find.byType(AppTextField), findsWidgets);
-        expect(find.byType(TextFormField), findsWidgets);
-      });
+          expect(find.byType(AppTextField), findsWidgets);
+          expect(find.byType(TextFormField), findsWidgets);
+        },
+      );
     }
   });
 }

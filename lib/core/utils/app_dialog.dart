@@ -6,13 +6,7 @@ import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 
 /// Semantic dialog types for AppDialog.
-enum AppDialogType {
-  success,
-  error,
-  warning,
-  info,
-  confirm,
-}
+enum AppDialogType { success, error, warning, info, confirm }
 
 /// Centralized, lifecycle-safe dialog and alert helper for HajiCare.
 /// Built with native Flutter widgets & GetX dialog engine to completely eliminate
@@ -57,7 +51,9 @@ class AppDialog {
     final ctx = resolveSafeContext(context);
     final isDark = ctx != null ? AppColors.isDark(ctx) : Get.isDarkMode;
     final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = isDark ? AppColors.darkTextHeading : AppColors.espressoDark;
+    final headingColor = isDark
+        ? AppColors.darkTextHeading
+        : AppColors.espressoDark;
     final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
 
     // Theme color and icon configuration based on dialog type
@@ -82,8 +78,12 @@ class AppDialog {
         iconData = Icons.info_rounded;
         break;
       case AppDialogType.confirm:
-        accentColor = isDestructive ? AppColors.sosEmergency : (isDark ? AppColors.goldLight : AppColors.goldPrimary);
-        iconData = isDestructive ? Icons.delete_forever_rounded : Icons.help_outline_rounded;
+        accentColor = isDestructive
+            ? AppColors.sosEmergency
+            : (isDark ? AppColors.goldLight : AppColors.goldPrimary);
+        iconData = isDestructive
+            ? Icons.delete_forever_rounded
+            : Icons.help_outline_rounded;
         break;
     }
 
@@ -113,7 +113,9 @@ class AppDialog {
                 color: cardBg,
                 borderRadius: BorderRadius.circular(AppRadius.sheet),
                 border: Border.all(
-                  color: isDark ? Colors.white.withValues(alpha: 0.12) : AppColors.goldLight.withValues(alpha: 0.35),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.12)
+                      : AppColors.goldLight.withValues(alpha: 0.35),
                   width: 1.2,
                 ),
                 boxShadow: [
@@ -137,10 +139,7 @@ class AppDialog {
                         curve: Curves.elasticOut,
                         tween: Tween(begin: 0.0, end: 1.0),
                         builder: (context, scale, child) {
-                          return Transform.scale(
-                            scale: scale,
-                            child: child,
-                          );
+                          return Transform.scale(scale: scale, child: child);
                         },
                         child: Container(
                           width: 58,
@@ -153,11 +152,7 @@ class AppDialog {
                               width: 2,
                             ),
                           ),
-                          child: Icon(
-                            iconData,
-                            color: accentColor,
-                            size: 32,
-                          ),
+                          child: Icon(iconData, color: accentColor, size: 32),
                         ),
                       ),
                       const SizedBox(height: AppSpacing.md),
@@ -193,12 +188,18 @@ class AppDialog {
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: bodyColor,
                                   side: BorderSide(
-                                    color: isDark ? AppColors.darkOutlineVariant : AppColors.surfaceVariant,
+                                    color: isDark
+                                        ? AppColors.darkOutlineVariant
+                                        : AppColors.surfaceVariant,
                                   ),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.pill,
+                                    ),
                                   ),
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
                                 ),
                                 onPressed: () {
                                   // Close dialog first
@@ -209,7 +210,10 @@ class AppDialog {
                                 },
                                 child: Text(
                                   cancelText,
-                                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13.5,
+                                  ),
                                 ),
                               ),
                             ),
@@ -221,11 +225,17 @@ class AppDialog {
                                 backgroundColor: effectiveOkColor,
                                 foregroundColor: isDestructive
                                     ? Colors.white
-                                    : (type == AppDialogType.info && !isDark ? Colors.white : Colors.white),
+                                    : (type == AppDialogType.info && !isDark
+                                          ? Colors.white
+                                          : Colors.white),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.pill,
+                                  ),
                                 ),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
                                 elevation: 0,
                               ),
                               onPressed: () {
@@ -237,7 +247,10 @@ class AppDialog {
                               },
                               child: Text(
                                 okText,
-                                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13.5,
+                                ),
                               ),
                             ),
                           ),
@@ -400,7 +413,9 @@ class AppDialog {
               color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
               borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(
-                color: isDark ? Colors.white.withValues(alpha: 0.12) : AppColors.goldLight.withValues(alpha: 0.35),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.12)
+                    : AppColors.goldLight.withValues(alpha: 0.35),
               ),
               boxShadow: [
                 BoxShadow(
@@ -427,7 +442,9 @@ class AppDialog {
                   child: Text(
                     message,
                     style: AppTypography.bodyMedium.copyWith(
-                      color: isDark ? AppColors.darkTextHeading : AppColors.espressoDark,
+                      color: isDark
+                          ? AppColors.darkTextHeading
+                          : AppColors.espressoDark,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

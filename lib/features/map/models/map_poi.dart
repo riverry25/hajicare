@@ -7,7 +7,8 @@ enum PoiCategory {
   toilet,
   wudhu,
   posPantau,
-  ibadah;
+  ibadah,
+  hotel;
 
   String get label {
     switch (this) {
@@ -23,6 +24,8 @@ enum PoiCategory {
         return 'Pos Pantau';
       case PoiCategory.ibadah:
         return 'Tempat Ibadah';
+      case PoiCategory.hotel:
+        return 'Hotel / Penginapan';
     }
   }
 
@@ -40,6 +43,8 @@ enum PoiCategory {
         return Icons.flag_rounded;
       case PoiCategory.ibadah:
         return Icons.mosque_rounded;
+      case PoiCategory.hotel:
+        return Icons.hotel_rounded;
     }
   }
 
@@ -57,6 +62,8 @@ enum PoiCategory {
         return const Color(0xFF5E35B1); // Deep Indigo
       case PoiCategory.ibadah:
         return const Color(0xFF2E7D32); // Emerald Green
+      case PoiCategory.hotel:
+        return const Color(0xFF8E24AA); // Royal Violet
     }
   }
 }
@@ -85,8 +92,6 @@ class MapPoi {
     required this.color,
     this.tags = const [],
   });
-
-
 
   /// Default curated Points of Interest around Mina Tent City (Maktab 48) & Mecca
   static const List<MapPoi> defaultMinaPois = [

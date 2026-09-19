@@ -18,7 +18,8 @@ class SpeechService {
 
   SpeechStatus _status = SpeechStatus.idle;
   SpeechStatus get status => _status;
-  bool get isListening => _speechToText.isListening || _status == SpeechStatus.listening;
+  bool get isListening =>
+      _speechToText.isListening || _status == SpeechStatus.listening;
 
   Function(SpeechStatus status, String message)? onStatusChanged;
   Function(String recognizedWords, bool isFinal)? onResult;
@@ -44,7 +45,10 @@ class SpeechService {
             onStatusChanged?.call(_status, 'Izin mikrofon ditolak.');
           } else if (errorNotification.errorMsg.contains('error_no_match')) {
             _status = SpeechStatus.done;
-            onStatusChanged?.call(_status, 'Suara tidak terdeteksi. Silakan coba lagi.');
+            onStatusChanged?.call(
+              _status,
+              'Suara tidak terdeteksi. Silakan coba lagi.',
+            );
           } else {
             _status = SpeechStatus.serviceUnavailable;
             onStatusChanged?.call(_status, 'Layanan suara tidak tersedia.');
@@ -66,7 +70,10 @@ class SpeechService {
       _isInitialized = true;
       _hasPermission = false;
       _status = SpeechStatus.serviceUnavailable;
-      onStatusChanged?.call(_status, 'Layanan suara offline atau tidak tersedia.');
+      onStatusChanged?.call(
+        _status,
+        'Layanan suara offline atau tidak tersedia.',
+      );
       return false;
     }
   }

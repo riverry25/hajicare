@@ -47,7 +47,8 @@ class _ModalSosScreenState extends State<ModalSosScreen>
     );
 
     // Auto-start countdown ONLY for Jamaah who do not already have an active SOS
-    final isOfficer = state.role == UserRole.pendamping || state.role == UserRole.admin;
+    final isOfficer =
+        state.role == UserRole.pendamping || state.role == UserRole.admin;
     final hasActiveSos = state.anySosActive;
 
     if (!isOfficer && !hasActiveSos) {
@@ -92,7 +93,8 @@ class _ModalSosScreenState extends State<ModalSosScreen>
         AppAlert.error(
           context,
           title: 'Sinyal SOS Terkirim!',
-          message: 'Posisi darurat Anda telah disiarkan ke Pendamping dan Petugas Maktab.',
+          message:
+              'Posisi darurat Anda telah disiarkan ke Pendamping dan Petugas Maktab.',
         );
       }
     }
@@ -125,8 +127,12 @@ class _ModalSosScreenState extends State<ModalSosScreen>
       lat = location.latitude;
       lng = location.longitude;
     } else if (location is Map) {
-      lat = (location['latitude'] as num?)?.toDouble() ?? (location['lat'] as num?)?.toDouble();
-      lng = (location['longitude'] as num?)?.toDouble() ?? (location['lng'] as num?)?.toDouble();
+      lat =
+          (location['latitude'] as num?)?.toDouble() ??
+          (location['lat'] as num?)?.toDouble();
+      lng =
+          (location['longitude'] as num?)?.toDouble() ??
+          (location['lng'] as num?)?.toDouble();
     }
 
     if (lat == null || lng == null) return 'Koordinat tidak tersedia';
@@ -136,7 +142,12 @@ class _ModalSosScreenState extends State<ModalSosScreen>
       return 'Lat: ${lat.toStringAsFixed(4)}, Lng: ${lng.toStringAsFixed(4)}';
     }
 
-    final meters = Geolocator.distanceBetween(myPos.latitude, myPos.longitude, lat, lng);
+    final meters = Geolocator.distanceBetween(
+      myPos.latitude,
+      myPos.longitude,
+      lat,
+      lng,
+    );
     if (meters < 1000) {
       return 'Jarak ±${meters.round()} meter dari Anda';
     }
@@ -148,9 +159,12 @@ class _ModalSosScreenState extends State<ModalSosScreen>
     final isDark = AppColors.isDark(context);
     final scaffoldBg = isDark ? AppColors.darkScaffold : AppColors.canvasCream;
     final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = isDark ? AppColors.darkTextHeading : AppColors.espressoDark;
+    final headingColor = isDark
+        ? AppColors.darkTextHeading
+        : AppColors.espressoDark;
     final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-    final isOfficer = state.role == UserRole.pendamping || state.role == UserRole.admin;
+    final isOfficer =
+        state.role == UserRole.pendamping || state.role == UserRole.admin;
 
     return Scaffold(
       backgroundColor: scaffoldBg,
@@ -171,7 +185,11 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                 color: AppColors.sosEmergency,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.emergency_rounded, color: Colors.white, size: 16),
+              child: const Icon(
+                Icons.emergency_rounded,
+                color: Colors.white,
+                size: 16,
+              ),
             ),
             const SizedBox(width: 8),
             Text(
@@ -370,16 +388,21 @@ class _ModalSosScreenState extends State<ModalSosScreen>
           const SizedBox(height: AppSpacing.sm),
 
           ...activeSosList.map((sos) {
-            final userName = (sos['userName'] as String?)?.trim().isNotEmpty == true
+            final userName =
+                (sos['userName'] as String?)?.trim().isNotEmpty == true
                 ? (sos['userName'] as String).trim()
                 : 'Jamaah Tanpa Nama';
-            final userId = sos['userId'] as String? ?? sos['jamaahId'] as String? ?? '';
+            final userId =
+                sos['userId'] as String? ?? sos['jamaahId'] as String? ?? '';
             final eventId = sos['id'] as String?;
-            final roomName = (sos['roomName'] as String?)?.trim().isNotEmpty == true
+            final roomName =
+                (sos['roomName'] as String?)?.trim().isNotEmpty == true
                 ? (sos['roomName'] as String).trim()
                 : 'Darurat Bebas / Tanpa Room';
             final status = sos['status'] as String? ?? 'active';
-            final timeStr = _formatSosTime(sos['timestamp'] ?? sos['createdAt']);
+            final timeStr = _formatSosTime(
+              sos['timestamp'] ?? sos['createdAt'],
+            );
             final distanceStr = _calculateDistanceStr(sos['location']);
 
             return Container(
@@ -402,10 +425,16 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                                 width: 40,
                                 height: 40,
                                 decoration: BoxDecoration(
-                                  color: AppColors.sosEmergency.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(AppRadius.md),
+                                  color: AppColors.sosEmergency.withValues(
+                                    alpha: 0.15,
+                                  ),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
                                   border: Border.all(
-                                    color: AppColors.sosEmergency.withValues(alpha: 0.35),
+                                    color: AppColors.sosEmergency.withValues(
+                                      alpha: 0.35,
+                                    ),
                                   ),
                                 ),
                                 child: const Icon(
@@ -431,10 +460,13 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                                     ),
                                     Text(
                                       roomName,
-                                      style: AppTypography.captionSmall.copyWith(
-                                        color: bodyColor.withValues(alpha: 0.8),
-                                        fontSize: 11,
-                                      ),
+                                      style: AppTypography.captionSmall
+                                          .copyWith(
+                                            color: bodyColor.withValues(
+                                              alpha: 0.8,
+                                            ),
+                                            fontSize: 11,
+                                          ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -445,11 +477,20 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
-                            color: AppColors.sosEmergency.withValues(alpha: 0.15),
+                            color: AppColors.sosEmergency.withValues(
+                              alpha: 0.15,
+                            ),
                             borderRadius: BorderRadius.circular(AppRadius.pill),
-                            border: Border.all(color: AppColors.sosEmergency.withValues(alpha: 0.4)),
+                            border: Border.all(
+                              color: AppColors.sosEmergency.withValues(
+                                alpha: 0.4,
+                              ),
+                            ),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -481,7 +522,11 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                     // Metadata Row: Time & Distance
                     Row(
                       children: [
-                        Icon(Icons.access_time_rounded, size: 14, color: bodyColor),
+                        Icon(
+                          Icons.access_time_rounded,
+                          size: 14,
+                          color: bodyColor,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           timeStr,
@@ -495,7 +540,11 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(Icons.near_me_rounded, size: 14, color: AppColors.sosEmergency),
+                        const Icon(
+                          Icons.near_me_rounded,
+                          size: 14,
+                          color: AppColors.sosEmergency,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           distanceStr,
@@ -518,29 +567,47 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                               backgroundColor: AppColors.sosEmergency,
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.pill),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.pill,
+                                ),
                               ),
                               padding: const EdgeInsets.symmetric(vertical: 10),
                               elevation: 0,
                             ),
-                            icon: const Icon(Icons.navigation_rounded, size: 16),
+                            icon: const Icon(
+                              Icons.navigation_rounded,
+                              size: 16,
+                            ),
                             label: const Text(
                               'Buka di Peta',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12.5,
+                              ),
                             ),
                             onPressed: () {
                               final loc = sos['location'];
                               LatLng? targetCoord;
                               if (loc is GeoPoint) {
-                                targetCoord = LatLng(loc.latitude, loc.longitude);
+                                targetCoord = LatLng(
+                                  loc.latitude,
+                                  loc.longitude,
+                                );
                               } else if (loc is Map) {
-                                final lat = (loc['latitude'] as num?)?.toDouble() ?? (loc['lat'] as num?)?.toDouble();
-                                final lng = (loc['longitude'] as num?)?.toDouble() ?? (loc['lng'] as num?)?.toDouble();
-                                if (lat != null && lng != null) targetCoord = LatLng(lat, lng);
+                                final lat =
+                                    (loc['latitude'] as num?)?.toDouble() ??
+                                    (loc['lat'] as num?)?.toDouble();
+                                final lng =
+                                    (loc['longitude'] as num?)?.toDouble() ??
+                                    (loc['lng'] as num?)?.toDouble();
+                                if (lat != null && lng != null) {
+                                  targetCoord = LatLng(lat, lng);
+                                }
                               }
 
                               Get.back(); // Close modal
-                              if (Get.isRegistered<MapController>() && targetCoord != null) {
+                              if (Get.isRegistered<MapController>() &&
+                                  targetCoord != null) {
                                 final mapCtrl = Get.find<MapController>();
                                 mapCtrl.animatedMove(targetCoord, 17.5);
                               }
@@ -553,30 +620,44 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                           child: OutlinedButton(
                             style: OutlinedButton.styleFrom(
                               foregroundColor: headingColor,
-                              side: BorderSide(color: isDark ? AppColors.darkCardBorder : AppColors.canvasCreamSubtle),
+                              side: BorderSide(
+                                color: isDark
+                                    ? AppColors.darkCardBorder
+                                    : AppColors.canvasCreamSubtle,
+                              ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.pill),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.pill,
+                                ),
                               ),
                               padding: const EdgeInsets.symmetric(vertical: 10),
                             ),
                             child: const Text(
                               'Selesai',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12.5,
+                              ),
                             ),
                             onPressed: () {
                               AppAlert.confirm(
                                 context,
                                 title: 'Selesaikan Darurat SOS?',
-                                message: 'Apakah situasi darurat untuk "$userName" sudah berhasil ditangani?',
+                                message:
+                                    'Apakah situasi darurat untuk "$userName" sudah berhasil ditangani?',
                                 confirmText: 'Ya, Selesaikan',
                                 cancelText: 'Batal',
                                 onConfirm: () async {
-                                  await state.dismissSos(userId, eventId: eventId);
+                                  await state.dismissSos(
+                                    userId,
+                                    eventId: eventId,
+                                  );
                                   if (context.mounted) {
                                     AppAlert.success(
                                       context,
                                       title: 'Status Diperbarui',
-                                      message: 'Panggilan SOS untuk "$userName" telah ditandai selesai.',
+                                      message:
+                                          'Panggilan SOS untuk "$userName" telah ditandai selesai.',
                                     );
                                   }
                                 },
@@ -599,13 +680,20 @@ class _ModalSosScreenState extends State<ModalSosScreen>
         Container(
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            color: (isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCreamSubtle)
-                .withValues(alpha: 0.5),
+            color:
+                (isDark
+                        ? AppColors.darkSurfaceContainer
+                        : AppColors.canvasCreamSubtle)
+                    .withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           child: Row(
             children: [
-              const Icon(Icons.phone_in_talk_rounded, color: AppColors.sosEmergency, size: 20),
+              const Icon(
+                Icons.phone_in_talk_rounded,
+                color: AppColors.sosEmergency,
+                size: 20,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -737,7 +825,9 @@ class _ModalSosScreenState extends State<ModalSosScreen>
           Text(
             isSosAlreadyActive
                 ? 'Sinyal Darurat Sedang Aktif!'
-                : (_isCountingDown ? 'Mengirim Sinyal SOS...' : 'Siap Mengirim Darurat SOS'),
+                : (_isCountingDown
+                      ? 'Mengirim Sinyal SOS...'
+                      : 'Siap Mengirim Darurat SOS'),
             style: AppTypography.titleLarge.copyWith(
               color: isSosAlreadyActive ? AppColors.sosEmergency : headingColor,
               fontWeight: FontWeight.bold,
@@ -749,8 +839,8 @@ class _ModalSosScreenState extends State<ModalSosScreen>
             isSosAlreadyActive
                 ? 'Koordinat GPS Anda telah disiarkan secara real-time ke Pendamping dan Petugas Maktab.'
                 : (_isCountingDown
-                    ? 'Ketuk tombol SOS untuk membatalkan sebelum hitungan mundur selesai.'
-                    : 'Gunakan saat terpisah jauh dari rombongan atau membutuhkan bantuan darurat segera.'),
+                      ? 'Ketuk tombol SOS untuk membatalkan sebelum hitungan mundur selesai.'
+                      : 'Gunakan saat terpisah jauh dari rombongan atau membutuhkan bantuan darurat segera.'),
             textAlign: TextAlign.center,
             style: AppTypography.bodySmall.copyWith(
               color: bodyColor.withValues(alpha: 0.85),
@@ -773,7 +863,10 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                   ),
                 ),
                 icon: const Icon(Icons.close_rounded),
-                label: const Text('Batalkan Pengiriman', style: TextStyle(fontWeight: FontWeight.bold)),
+                label: const Text(
+                  'Batalkan Pengiriman',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 onPressed: _cancelCountdown,
               ),
             ),
@@ -790,7 +883,10 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                   ),
                 ),
                 icon: const Icon(Icons.check_circle_rounded),
-                label: const Text('Akhiri / Batalkan Sinyal SOS', style: TextStyle(fontWeight: FontWeight.bold)),
+                label: const Text(
+                  'Akhiri / Batalkan Sinyal SOS',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 onPressed: () async {
                   final uid = state.currentUid;
                   if (uid != null) {
@@ -823,7 +919,10 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                   elevation: 2,
                 ),
                 icon: const Icon(Icons.emergency_rounded),
-                label: const Text('Kirim Sinyal SOS Sekarang', style: TextStyle(fontWeight: FontWeight.bold)),
+                label: const Text(
+                  'Kirim Sinyal SOS Sekarang',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 onPressed: _sendSos,
               ),
             ),
@@ -835,16 +934,24 @@ class _ModalSosScreenState extends State<ModalSosScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite,
+              color: isDark
+                  ? AppColors.darkSurfaceContainer
+                  : AppColors.surfaceWhite,
               borderRadius: BorderRadius.circular(AppRadius.pill),
               border: Border.all(
-                color: isDark ? AppColors.darkCardBorder : AppColors.canvasCreamSubtle,
+                color: isDark
+                    ? AppColors.darkCardBorder
+                    : AppColors.canvasCreamSubtle,
               ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.gps_fixed_rounded, size: 14, color: AppColors.statusSafe),
+                const Icon(
+                  Icons.gps_fixed_rounded,
+                  size: 14,
+                  color: AppColors.statusSafe,
+                ),
                 const SizedBox(width: 6),
                 Text(
                   state.myCurrentPosition.value != null

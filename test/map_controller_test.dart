@@ -8,6 +8,7 @@ import 'package:hajicare/features/map/controllers/map_controller.dart';
 import 'package:hajicare/features/map/models/map_poi.dart';
 import 'package:hajicare/features/map/models/map_search_result.dart';
 import 'package:hajicare/features/room/models/room_member_model.dart';
+import 'package:hajicare/features/map/services/poi_service.dart';
 import 'package:hajicare/features/map/services/route_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
@@ -31,17 +32,17 @@ void main() {
   });
 
   group('MapController Unit Tests', () {
-    test('Initializes with default Mina POIs and base location', () {
-      expect(controller.pois.isNotEmpty, isTrue);
-      expect(controller.pois.any((p) => p.name.contains('Maktab 48')), isTrue);
-      expect(controller.pois.any((p) => p.name.contains('Posko Medis')), isTrue);
-      expect(controller.pois.any((p) => p.name.contains('Toilet')), isTrue);
-      expect(controller.currentUserLocation.value, equals(MapController.defaultMinaBase));
-      expect(controller.safeRadiusMeters.value, equals(200.0));
-      expect(controller.activeTileUrl.value, contains('cartocdn'));
-    });
+    test(
+      'Initializes with null currentUserLocation until real GPS fix is acquired',
+      () {
+        expect(controller.currentUserLocation.value, isNull);
+        expect(controller.safeRadiusMeters.value, equals(200.0));
+        expect(controller.activeTileUrl.value, contains('cartocdn'));
+      },
+    );
 
     test('Filters POIs correctly based on selected category chip', () {
+      controller.pois.value = PoiService.holyLandRealPois;
       controller.selectFilter(0);
       expect(controller.filteredPois.isNotEmpty, isTrue);
 
@@ -49,7 +50,10 @@ void main() {
       expect(controller.filteredPois.length, equals(controller.pois.length));
 
       controller.selectFilter(3);
-      expect(controller.filteredPois.every((p) => p.category == PoiCategory.medis), isTrue);
+      expect(
+        controller.filteredPois.every((p) => p.category == PoiCategory.medis),
+        isTrue,
+      );
 
       controller.selectFilter(4);
       expect(
@@ -62,59 +66,64 @@ void main() {
       );
     });
 
-    test('Distance calculation between coordinates returns accurate metric distance', () {
-      const p1 = LatLng(21.4135, 39.8930); // Maktab 48
-      const p2 = LatLng(21.4145, 39.8942); // Posko Medis
-      final dist = controller.calculateDistanceMeters(p1, p2);
+    test(
+      'Distance calculation between coordinates returns accurate metric distance',
+      () {
+        const p1 = LatLng(21.4135, 39.8930); // Maktab 48
+        const p2 = LatLng(21.4145, 39.8942); // Posko Medis
+        final dist = controller.calculateDistanceMeters(p1, p2);
 
-      expect(dist, greaterThan(80.0));
-      expect(dist, lessThan(250.0));
-    });
+        expect(dist, greaterThan(80.0));
+        expect(dist, lessThan(250.0));
+      },
+    );
 
-    test('Route generator creates valid walking waypoints', () {
-      const start = LatLng(21.4135, 39.8930);
-      const dest = LatLng(21.4145, 39.8942);
+    test(
+      'Selecting a POI updates selection, clears member, and updates route async',
+      () async {
+        // Simulate real GPS location acquired
+        controller.currentUserLocation.value = const LatLng(21.4135, 39.8930);
+        controller.pois.value = PoiService.holyLandRealPois;
+        final poi = controller.pois.firstWhere(
+          (p) => p.category == PoiCategory.toilet,
+        );
 
-      final route = controller.generateWalkingWaypoints(start, dest);
-      expect(route.isNotEmpty, isTrue);
-      expect(route.first, equals(start));
-      expect(route.last, equals(dest));
-      expect(route.length, greaterThanOrEqualTo(3));
-    });
+        await controller.requestRouteToPoi(poi);
 
-    test('Selecting a POI updates selection, clears member, and updates route async', () async {
-      final poi = controller.pois.firstWhere((p) => p.category == PoiCategory.toilet);
+        expect(controller.selectedPoi.value, equals(poi));
+        expect(controller.selectedMember.value, isNull);
+        expect(controller.activeRoute.isNotEmpty, isTrue);
+        // It should match the mock output
+        expect(controller.activeRoute.last, equals(const LatLng(2.0, 2.0)));
+      },
+    );
 
-      await controller.requestRouteToPoi(poi);
+    test(
+      'Selecting a Room Member updates selection, clears POI, and updates route async',
+      () async {
+        controller.currentUserLocation.value = const LatLng(21.4135, 39.8930);
+        const member = RoomMemberModel(
+          uid: 'user_pendamping_1',
+          name: 'Budi Santoso',
+          role: 'pendamping',
+          currentLocation: GeoPoint(21.4140, 39.8935),
+        );
 
-      expect(controller.selectedPoi.value, equals(poi));
-      expect(controller.selectedMember.value, isNull);
-      expect(controller.activeRoute.isNotEmpty, isTrue);
-      // It should match the mock output
-      expect(controller.activeRoute.last, equals(const LatLng(2.0, 2.0)));
-    });
+        await controller.requestRouteToMember(member);
 
-    test('Selecting a Room Member updates selection, clears POI, and updates route async', () async {
-      const member = RoomMemberModel(
-        uid: 'user_pendamping_1',
-        name: 'Budi Santoso',
-        role: 'pendamping',
-        currentLocation: GeoPoint(21.4140, 39.8935),
-      );
+        expect(controller.selectedMember.value, equals(member));
+        expect(controller.selectedPoi.value, isNull);
+        expect(controller.activeRoute.isNotEmpty, isTrue);
+      },
+    );
 
-      await controller.requestRouteToMember(member);
-
-      expect(controller.selectedMember.value, equals(member));
-      expect(controller.selectedPoi.value, isNull);
-      expect(controller.activeRoute.isNotEmpty, isTrue);
-    });
-
-    test('clearSelection resets all selected entities and route', () {
+    test('clearSelectionAndRoute resets all selected entities and route', () {
+      controller.pois.value = PoiService.holyLandRealPois;
       final poi = controller.pois.first;
       controller.selectPoi(poi);
       expect(controller.selectedPoi.value, isNotNull);
 
-      controller.clearSelection();
+      controller.clearSelectionAndRoute();
 
       expect(controller.selectedPoi.value, isNull);
       expect(controller.selectedMember.value, isNull);
@@ -127,207 +136,265 @@ void main() {
       expect(controller.compassRotation.value, equals(0.0));
     });
 
-    test('toggleMapTileLayer switches between Voyager and OpenStreetMap tiles', () {
-      expect(controller.activeTileUrl.value, contains('cartocdn'));
-      expect(controller.activeTileUrl.value, contains(AppConstants.cartoApiKey));
+    test(
+      'toggleMapTileLayer switches between Voyager and OpenStreetMap tiles',
+      () {
+        expect(controller.activeTileUrl.value, contains('cartocdn'));
+        expect(
+          controller.activeTileUrl.value,
+          contains(AppConstants.cartoApiKey),
+        );
 
-      controller.toggleMapTileLayer();
-      expect(controller.activeTileUrl.value, contains('openstreetmap.org'));
+        controller.toggleMapTileLayer();
+        expect(controller.activeTileUrl.value, contains('openstreetmap.org'));
 
-      controller.toggleMapTileLayer();
-      expect(controller.activeTileUrl.value, contains('cartocdn'));
-      expect(controller.activeTileUrl.value, contains(AppConstants.cartoApiKey));
-    });
+        controller.toggleMapTileLayer();
+        expect(controller.activeTileUrl.value, contains('cartocdn'));
+        expect(
+          controller.activeTileUrl.value,
+          contains(AppConstants.cartoApiKey),
+        );
+      },
+    );
   });
 
   group('Room Members & Distance Formatting Requirements', () {
-    test('Formats distance correctly: <1000m -> "X m", >=1000m -> "X.X km"', () {
-      expect(MapController.formatDistance(500.0), equals('500 m'));
-      expect(MapController.formatDistance(240.4), equals('240 m'));
-      expect(MapController.formatDistance(1200.0), equals('1.2 km'));
-      expect(MapController.formatDistance(2560.0), equals('2.6 km'));
-    });
+    test(
+      'Formats distance correctly: <1000m -> "X m", >=1000m -> "X.X km"',
+      () {
+        expect(MapController.formatDistance(500.0), equals('500 m'));
+        expect(MapController.formatDistance(240.4), equals('240 m'));
+        expect(MapController.formatDistance(1200.0), equals('1.2 km'));
+        expect(MapController.formatDistance(2560.0), equals('2.6 km'));
+      },
+    );
 
-    test('RoomMemberModel parses GeoPoint correctly and handles null safely without crash', () {
-      const memberWithGps = RoomMemberModel(
-        uid: 'user_1',
-        name: 'Ahmad Dahlan',
-        role: 'jamaah',
-        currentLocation: GeoPoint(21.4138, 39.8932),
-      );
-      expect(memberWithGps.hasLocation, isTrue);
-      expect(memberWithGps.latitude, closeTo(21.4138, 0.0001));
-      expect(memberWithGps.longitude, closeTo(39.8932, 0.0001));
-
-      const memberWithoutGps = RoomMemberModel(
-        uid: 'user_2',
-        name: 'Siti Aminah',
-        role: 'jamaah',
-        currentLocation: null,
-      );
-      expect(memberWithoutGps.hasLocation, isFalse);
-      expect(memberWithoutGps.latitude, isNull);
-      expect(memberWithoutGps.longitude, isNull);
-      expect(memberWithoutGps.getLocationStatus(), equals('Lokasi belum tersedia'));
-    });
-
-    test('RoomMemberModel evaluates location status based on locationUpdatedAt', () {
-      final now = DateTime.now();
-
-      // Recent <= 30 seconds -> Online
-      final onlineMember = RoomMemberModel(
-        uid: 'u1',
-        name: 'Budi',
-        role: 'pendamping',
-        currentLocation: const GeoPoint(21.4135, 39.8930),
-        locationUpdatedAt: now.subtract(const Duration(seconds: 15)),
-      );
-      expect(onlineMember.getLocationStatus(now), equals('Online'));
-
-      // Stale between 31 and 120 seconds -> Terakhir terlihat X dtk lalu
-      final staleMember = RoomMemberModel(
-        uid: 'u2',
-        name: 'Fadli',
-        role: 'jamaah',
-        currentLocation: const GeoPoint(21.4135, 39.8930),
-        locationUpdatedAt: now.subtract(const Duration(seconds: 45)),
-      );
-      expect(staleMember.getLocationStatus(now), equals('Terakhir terlihat 45 dtk lalu'));
-
-      // Expired > 120 seconds -> Lokasi tidak diperbarui
-      final expiredMember = RoomMemberModel(
-        uid: 'u3',
-        name: 'Hasan',
-        role: 'jamaah',
-        currentLocation: const GeoPoint(21.4135, 39.8930),
-        locationUpdatedAt: now.subtract(const Duration(seconds: 180)),
-      );
-      expect(expiredMember.getLocationStatus(now), equals('Lokasi tidak diperbarui'));
-    });
-
-    test('Filters room members correctly by role: Semua, Jamaah, Pendamping', () {
-      controller.roomMembers.value = [
-        const RoomMemberModel(uid: 'p1', name: 'Budi', role: 'pendamping'),
-        const RoomMemberModel(uid: 'j1', name: 'Ahmad', role: 'jamaah'),
-        const RoomMemberModel(uid: 'j2', name: 'Fadli', role: 'jamaah'),
-      ];
-
-      expect(controller.memberCount, equals(3));
-      expect(controller.jamaahMembers.length, equals(2));
-      expect(controller.pendampingMembers.length, equals(1));
-
-      // Filter 0: Semua
-      controller.selectRoleFilter(0);
-      expect(controller.filteredMembers.length, equals(3));
-
-      // Filter 1: Jamaah
-      controller.selectRoleFilter(1);
-      expect(controller.filteredMembers.length, equals(2));
-      expect(controller.filteredMembers.every((m) => m.isJamaah), isTrue);
-
-      // Filter 2: Pendamping
-      controller.selectRoleFilter(2);
-      expect(controller.filteredMembers.length, equals(1));
-      expect(controller.filteredMembers.first.isPendamping, isTrue);
-    });
-
-    test('Nearest member calculation finds closest member with location and excludes current user', () {
-      controller.currentUserLocation.value = const LatLng(21.4135, 39.8930);
-
-      controller.roomMembers.value = [
-        const RoomMemberModel(
-          uid: 'j_far',
-          name: 'Far Jamaah',
+    test(
+      'RoomMemberModel parses GeoPoint correctly and handles null safely without crash',
+      () {
+        const memberWithGps = RoomMemberModel(
+          uid: 'user_1',
+          name: 'Ahmad Dahlan',
           role: 'jamaah',
-          currentLocation: GeoPoint(21.4190, 39.8990), // ~800m away
-        ),
-        const RoomMemberModel(
-          uid: 'p_near',
-          name: 'Near Pendamping',
-          role: 'pendamping',
-          currentLocation: GeoPoint(21.4138, 39.8933), // ~45m away
-        ),
-        const RoomMemberModel(
-          uid: 'j_no_gps',
-          name: 'No GPS Jamaah',
+          currentLocation: GeoPoint(21.4138, 39.8932),
+        );
+        expect(memberWithGps.hasLocation, isTrue);
+        expect(memberWithGps.latitude, closeTo(21.4138, 0.0001));
+        expect(memberWithGps.longitude, closeTo(39.8932, 0.0001));
+
+        const memberWithoutGps = RoomMemberModel(
+          uid: 'user_2',
+          name: 'Siti Aminah',
           role: 'jamaah',
           currentLocation: null,
-        ),
-      ];
+        );
+        expect(memberWithoutGps.hasLocation, isFalse);
+        expect(memberWithoutGps.latitude, isNull);
+        expect(memberWithoutGps.longitude, isNull);
+        expect(
+          memberWithoutGps.getLocationStatus(),
+          equals('Lokasi belum tersedia'),
+        );
+      },
+    );
 
-      expect(controller.membersWithLocation.length, equals(2));
-      final nearest = controller.nearestMember;
-      expect(nearest, isNotNull);
-      expect(nearest!.uid, equals('p_near'));
-      expect(controller.nearestMemberInfo, contains('Pendamping terdekat: Near Pendamping'));
-    });
+    test(
+      'RoomMemberModel evaluates location status based on locationUpdatedAt',
+      () {
+        final now = DateTime.now();
+
+        // Recent <= 30 seconds -> Online
+        final onlineMember = RoomMemberModel(
+          uid: 'u1',
+          name: 'Budi',
+          role: 'pendamping',
+          currentLocation: const GeoPoint(21.4135, 39.8930),
+          locationUpdatedAt: now.subtract(const Duration(seconds: 15)),
+        );
+        expect(onlineMember.getLocationStatus(now), equals('Online'));
+
+        // Stale between 31 and 120 seconds -> Terakhir terlihat X dtk lalu
+        final staleMember = RoomMemberModel(
+          uid: 'u2',
+          name: 'Fadli',
+          role: 'jamaah',
+          currentLocation: const GeoPoint(21.4135, 39.8930),
+          locationUpdatedAt: now.subtract(const Duration(seconds: 45)),
+        );
+        expect(
+          staleMember.getLocationStatus(now),
+          equals('Terakhir terlihat 45 dtk lalu'),
+        );
+
+        // Expired > 120 seconds -> Lokasi tidak diperbarui
+        final expiredMember = RoomMemberModel(
+          uid: 'u3',
+          name: 'Hasan',
+          role: 'jamaah',
+          currentLocation: const GeoPoint(21.4135, 39.8930),
+          locationUpdatedAt: now.subtract(const Duration(seconds: 180)),
+        );
+        expect(
+          expiredMember.getLocationStatus(now),
+          equals('Lokasi tidak diperbarui'),
+        );
+      },
+    );
+
+    test(
+      'Filters room members correctly by role: Semua, Jamaah, Pendamping',
+      () {
+        controller.roomMembers.value = [
+          const RoomMemberModel(uid: 'p1', name: 'Budi', role: 'pendamping'),
+          const RoomMemberModel(uid: 'j1', name: 'Ahmad', role: 'jamaah'),
+          const RoomMemberModel(uid: 'j2', name: 'Fadli', role: 'jamaah'),
+        ];
+
+        expect(controller.memberCount, equals(3));
+        expect(controller.jamaahMembers.length, equals(2));
+        expect(controller.pendampingMembers.length, equals(1));
+
+        // Filter 0: Semua
+        controller.selectRoleFilter(0);
+        expect(controller.filteredMembers.length, equals(3));
+
+        // Filter 1: Jamaah
+        controller.selectRoleFilter(1);
+        expect(controller.filteredMembers.length, equals(2));
+        expect(controller.filteredMembers.every((m) => m.isJamaah), isTrue);
+
+        // Filter 2: Pendamping
+        controller.selectRoleFilter(2);
+        expect(controller.filteredMembers.length, equals(1));
+        expect(controller.filteredMembers.first.isPendamping, isTrue);
+      },
+    );
+
+    test(
+      'Nearest member calculation finds closest member with location and excludes current user',
+      () {
+        controller.currentUserLocation.value = const LatLng(21.4135, 39.8930);
+
+        controller.roomMembers.value = [
+          const RoomMemberModel(
+            uid: 'j_far',
+            name: 'Far Jamaah',
+            role: 'jamaah',
+            currentLocation: GeoPoint(21.4190, 39.8990), // ~800m away
+          ),
+          const RoomMemberModel(
+            uid: 'p_near',
+            name: 'Near Pendamping',
+            role: 'pendamping',
+            currentLocation: GeoPoint(21.4138, 39.8933), // ~45m away
+          ),
+          const RoomMemberModel(
+            uid: 'j_no_gps',
+            name: 'No GPS Jamaah',
+            role: 'jamaah',
+            currentLocation: null,
+          ),
+        ];
+
+        expect(controller.membersWithLocation.length, equals(2));
+        final nearest = controller.nearestMember;
+        expect(nearest, isNotNull);
+        expect(nearest!.uid, equals('p_near'));
+        expect(
+          controller.nearestMemberInfo,
+          contains('Pendamping terdekat: Near Pendamping'),
+        );
+      },
+    );
   });
 
   group('Automatic Routing & Race Condition Tests', () {
-    test('pilih member -> otomatis request route ketika kedua GPS tersedia', () async {
-      const member = RoomMemberModel(
-        uid: 'u_fadli',
-        name: 'Fadli',
-        role: 'jamaah',
-        currentLocation: GeoPoint(21.4140, 39.8935),
-      );
-
-      await controller.selectMember(member);
-
-      expect(controller.selectedMember.value, equals(member));
-      expect(controller.activeRoute.isNotEmpty, isTrue);
-      expect(mockRouteService.callCount, equals(1));
+    setUp(() {
+      controller.currentUserLocation.value = const LatLng(21.4135, 39.8930);
     });
 
-    test('member tanpa GPS -> tidak request route dan error ditampilkan', () async {
-      final initialCalls = mockRouteService.callCount;
-      const memberNoGps = RoomMemberModel(
-        uid: 'u_no_gps',
-        name: 'Hasan',
-        role: 'jamaah',
-        currentLocation: null,
-      );
+    test(
+      'pilih member -> otomatis request route ketika kedua GPS tersedia',
+      () async {
+        const member = RoomMemberModel(
+          uid: 'u_fadli',
+          name: 'Fadli',
+          role: 'jamaah',
+          currentLocation: GeoPoint(21.4140, 39.8935),
+        );
 
-      await controller.selectMember(memberNoGps);
+        await controller.selectMember(member);
 
-      expect(controller.selectedMember.value, equals(memberNoGps));
-      expect(controller.activeRoute.isEmpty, isTrue);
-      expect(mockRouteService.callCount, equals(initialCalls));
-      expect(controller.routeError.value, contains('Lokasi anggota belum tersedia'));
-    });
+        expect(controller.selectedMember.value, equals(member));
+        expect(controller.activeRoute.isNotEmpty, isTrue);
+        expect(mockRouteService.callCount, equals(1));
+      },
+    );
 
-    test('current user tanpa GPS -> tidak request route dan error ditampilkan', () async {
-      controller.currentUserLocation.value = null;
-      final initialCalls = mockRouteService.callCount;
-      const member = RoomMemberModel(
-        uid: 'u_fadli',
-        name: 'Fadli',
-        role: 'jamaah',
-        currentLocation: GeoPoint(21.4140, 39.8935),
-      );
+    test(
+      'member tanpa GPS -> tidak request route dan error ditampilkan',
+      () async {
+        final initialCalls = mockRouteService.callCount;
+        const memberNoGps = RoomMemberModel(
+          uid: 'u_no_gps',
+          name: 'Hasan',
+          role: 'jamaah',
+          currentLocation: null,
+        );
 
-      await controller.selectMember(member);
+        await controller.selectMember(memberNoGps);
 
-      expect(controller.activeRoute.isEmpty, isTrue);
-      expect(mockRouteService.callCount, equals(initialCalls));
-      expect(controller.routeError.value, contains('Lokasi GPS Anda belum tersedia'));
-    });
+        expect(controller.selectedMember.value, equals(memberNoGps));
+        expect(controller.activeRoute.isEmpty, isTrue);
+        expect(mockRouteService.callCount, equals(initialCalls));
+        expect(
+          controller.routeError.value,
+          contains('Lokasi anggota belum tersedia'),
+        );
+      },
+    );
 
-    test('route success -> activeRoute terisi dengan distance dan duration', () async {
-      const member = RoomMemberModel(
-        uid: 'u_fadli',
-        name: 'Fadli',
-        role: 'jamaah',
-        currentLocation: GeoPoint(21.4140, 39.8935),
-      );
+    test(
+      'current user tanpa GPS -> tidak request route dan error ditampilkan',
+      () async {
+        controller.currentUserLocation.value = null;
+        final initialCalls = mockRouteService.callCount;
+        const member = RoomMemberModel(
+          uid: 'u_fadli',
+          name: 'Fadli',
+          role: 'jamaah',
+          currentLocation: GeoPoint(21.4140, 39.8935),
+        );
 
-      await controller.selectMember(member);
+        await controller.selectMember(member);
 
-      expect(controller.activeRoute.length, equals(3));
-      expect(controller.routeDistanceMeters.value, equals(500.0));
-      expect(controller.routeDurationSeconds.value, equals(300));
-      expect(controller.isRouteLoading.value, isFalse);
-    });
+        expect(controller.activeRoute.isEmpty, isTrue);
+        expect(mockRouteService.callCount, equals(initialCalls));
+        expect(
+          controller.routeError.value,
+          contains('Lokasi GPS Anda belum tersedia'),
+        );
+      },
+    );
+
+    test(
+      'route success -> activeRoute terisi dengan distance dan duration',
+      () async {
+        const member = RoomMemberModel(
+          uid: 'u_fadli',
+          name: 'Fadli',
+          role: 'jamaah',
+          currentLocation: GeoPoint(21.4140, 39.8935),
+        );
+
+        await controller.selectMember(member);
+
+        expect(controller.activeRoute.length, equals(3));
+        expect(controller.routeDistanceMeters.value, equals(500.0));
+        expect(controller.routeDurationSeconds.value, equals(300));
+        expect(controller.isRouteLoading.value, isFalse);
+      },
+    );
 
     test('route error -> loading false dan activeRoute dikosongkan', () async {
       mockRouteService.shouldFail = true;
@@ -345,57 +412,70 @@ void main() {
       expect(controller.routeError.value, isNotNull);
     });
 
-    test('race condition: response request lama tidak menimpa route terbaru', () async {
-      final completerA = Completer<RouteResult>();
-      final completerB = Completer<RouteResult>();
+    test(
+      'race condition: response request lama tidak menimpa route terbaru',
+      () async {
+        final completerA = Completer<RouteResult>();
+        final completerB = Completer<RouteResult>();
 
-      mockRouteService.customHandler = (origin, dest) {
-        if (dest.latitude == 21.4140) {
-          return completerA.future;
-        } else {
-          return completerB.future;
-        }
-      };
+        mockRouteService.customHandler = (origin, dest) {
+          if (dest.latitude == 21.4140) {
+            return completerA.future;
+          } else {
+            return completerB.future;
+          }
+        };
 
-      const memberA = RoomMemberModel(
-        uid: 'u_a',
-        name: 'Ahmad',
-        role: 'jamaah',
-        currentLocation: GeoPoint(21.4140, 39.8935),
-      );
-      const memberB = RoomMemberModel(
-        uid: 'u_b',
-        name: 'Budi',
-        role: 'jamaah',
-        currentLocation: GeoPoint(21.4150, 39.8945),
-      );
+        const memberA = RoomMemberModel(
+          uid: 'u_a',
+          name: 'Ahmad',
+          role: 'jamaah',
+          currentLocation: GeoPoint(21.4140, 39.8935),
+        );
+        const memberB = RoomMemberModel(
+          uid: 'u_b',
+          name: 'Budi',
+          role: 'jamaah',
+          currentLocation: GeoPoint(21.4150, 39.8945),
+        );
 
-      // Trigger selection A, lalu cepat memilih B
-      final futureA = controller.selectMember(memberA);
-      final futureB = controller.selectMember(memberB);
+        // Trigger selection A, lalu cepat memilih B
+        final futureA = controller.selectMember(memberA);
+        final futureB = controller.selectMember(memberB);
 
-      // Response B selesai lebih dulu
-      completerB.complete(const RouteResult(
-        points: [LatLng(21.4135, 39.8930), LatLng(21.4150, 39.8945)],
-        distanceMeters: 200,
-        durationSeconds: 150,
-      ));
-      await futureB;
-      expect(controller.activeRoute.last, equals(const LatLng(21.4150, 39.8945)));
-      expect(controller.routeDistanceMeters.value, equals(200));
+        // Response B selesai lebih dulu
+        completerB.complete(
+          const RouteResult(
+            points: [LatLng(21.4135, 39.8930), LatLng(21.4150, 39.8945)],
+            distanceMeters: 200,
+            durationSeconds: 150,
+          ),
+        );
+        await futureB;
+        expect(
+          controller.activeRoute.last,
+          equals(const LatLng(21.4150, 39.8945)),
+        );
+        expect(controller.routeDistanceMeters.value, equals(200));
 
-      // Response A selesai belakangan (obsolete)
-      completerA.complete(const RouteResult(
-        points: [LatLng(21.4135, 39.8930), LatLng(21.4140, 39.8935)],
-        distanceMeters: 100,
-        durationSeconds: 80,
-      ));
-      await futureA;
+        // Response A selesai belakangan (obsolete)
+        completerA.complete(
+          const RouteResult(
+            points: [LatLng(21.4135, 39.8930), LatLng(21.4140, 39.8935)],
+            distanceMeters: 100,
+            durationSeconds: 80,
+          ),
+        );
+        await futureA;
 
-      // activeRoute TIDAK boleh tertimpa oleh response A
-      expect(controller.activeRoute.last, equals(const LatLng(21.4150, 39.8945)));
-      expect(controller.routeDistanceMeters.value, equals(200));
-    });
+        // activeRoute TIDAK boleh tertimpa oleh response A
+        expect(
+          controller.activeRoute.last,
+          equals(const LatLng(21.4150, 39.8945)),
+        );
+        expect(controller.routeDistanceMeters.value, equals(200));
+      },
+    );
 
     test('GPS update tidak memanggil ORS secara otomatis', () {
       final callsBefore = mockRouteService.callCount;
@@ -430,35 +510,50 @@ void main() {
       expect(mockGeocoding.callCount, equals(0));
     });
 
-    test('Search debounce calls searchLocations only after 500ms delay', () async {
-      searchController.onSearchQueryChanged('jak');
-      searchController.onSearchQueryChanged('jaka');
-      searchController.onSearchQueryChanged('jakarta');
+    test(
+      'Search debounce calls searchLocations only after 500ms delay',
+      () async {
+        searchController.onSearchQueryChanged('jak');
+        searchController.onSearchQueryChanged('jaka');
+        searchController.onSearchQueryChanged('jakarta');
 
-      // Before debounce delay (200ms), no API call should happen
-      await Future.delayed(const Duration(milliseconds: 200));
-      expect(mockGeocoding.callCount, equals(0));
+        // Before debounce delay (200ms), no API call should happen
+        await Future.delayed(const Duration(milliseconds: 200));
+        expect(mockGeocoding.callCount, equals(0));
 
-      // After debounce delay (600ms), exactly 1 call should be made
-      await Future.delayed(const Duration(milliseconds: 400));
-      expect(mockGeocoding.callCount, equals(1));
-      expect(searchController.searchState.value, equals(MapSearchState.results));
-      expect(searchController.searchResults.length, equals(2));
-      expect(searchController.searchResults.first.name, equals('Monumen Nasional'));
-    });
+        // After debounce delay (600ms), exactly 1 call should be made
+        await Future.delayed(const Duration(milliseconds: 400));
+        expect(mockGeocoding.callCount, equals(1));
+        expect(
+          searchController.searchState.value,
+          equals(MapSearchState.results),
+        );
+        expect(searchController.searchResults.length, equals(2));
+        expect(
+          searchController.searchResults.first.name,
+          equals('Monumen Nasional'),
+        );
+      },
+    );
 
-    test('Search passes user current location as proximity bias to searchLocations', () async {
-      // Allow async onInit() GPS failure to settle before setting test coordinates
-      await Future.delayed(const Duration(milliseconds: 50));
-      searchController.currentUserLocation.value = const LatLng(-6.1754, 106.8272);
+    test(
+      'Search passes user current location as proximity bias to searchLocations',
+      () async {
+        // Allow async onInit() GPS failure to settle before setting test coordinates
+        await Future.delayed(const Duration(milliseconds: 50));
+        searchController.currentUserLocation.value = const LatLng(
+          -6.1754,
+          106.8272,
+        );
 
-      searchController.onSearchQueryChanged('masjid');
-      await Future.delayed(const Duration(milliseconds: 600));
+        searchController.onSearchQueryChanged('masjid');
+        await Future.delayed(const Duration(milliseconds: 600));
 
-      expect(mockGeocoding.callCount, equals(1));
-      expect(mockGeocoding.lastLatitude, equals(-6.1754));
-      expect(mockGeocoding.lastLongitude, equals(106.8272));
-    });
+        expect(mockGeocoding.callCount, equals(1));
+        expect(mockGeocoding.lastLatitude, equals(-6.1754));
+        expect(mockGeocoding.lastLongitude, equals(106.8272));
+      },
+    );
 
     test('Search returns empty state when no locations found', () async {
       mockGeocoding.customHandler = (q) async => [];
@@ -527,25 +622,31 @@ void main() {
       expect(searchController.searchResults.first.name, equals('Bandung'));
     });
 
-    test('Selecting search result sets location and marker without altering current location', () {
-      const result = MapSearchResult(
-        id: '1',
-        name: 'Monas',
-        address: 'Jakarta',
-        latitude: -6.1754,
-        longitude: 106.8272,
-      );
+    test(
+      'Selecting search result sets location and marker without altering current location',
+      () {
+        const result = MapSearchResult(
+          id: '1',
+          name: 'Monas',
+          address: 'Jakarta',
+          latitude: -6.1754,
+          longitude: 106.8272,
+        );
 
-      final initialUserLoc = searchController.currentUserLocation.value;
+        final initialUserLoc = searchController.currentUserLocation.value;
 
-      searchController.selectSearchResult(result);
+        searchController.selectSearchResult(result);
 
-      expect(searchController.selectedSearchResult.value, equals(result));
-      expect(searchController.searchState.value, equals(MapSearchState.idle));
-      expect(searchController.searchResults.isEmpty, isTrue);
-      // Ensure current GPS user location is NOT mutated
-      expect(searchController.currentUserLocation.value, equals(initialUserLoc));
-    });
+        expect(searchController.selectedSearchResult.value, equals(result));
+        expect(searchController.searchState.value, equals(MapSearchState.idle));
+        expect(searchController.searchResults.isEmpty, isTrue);
+        // Ensure current GPS user location is NOT mutated
+        expect(
+          searchController.currentUserLocation.value,
+          equals(initialUserLoc),
+        );
+      },
+    );
 
     test('Selecting a second search result updates existing search marker', () {
       const result1 = MapSearchResult(
@@ -564,37 +665,47 @@ void main() {
       );
 
       searchController.selectSearchResult(result1);
-      expect(searchController.selectedSearchResult.value?.name, equals('Monas'));
+      expect(
+        searchController.selectedSearchResult.value?.name,
+        equals('Monas'),
+      );
 
       searchController.selectSearchResult(result2);
-      expect(searchController.selectedSearchResult.value?.name, equals('Bandung'));
-    });
-
-    test('clearSearch clears query and dropdown without moving map or clearing other markers', () {
-      const result = MapSearchResult(
-        id: '1',
-        name: 'Monas',
-        address: 'Jakarta',
-        latitude: -6.1754,
-        longitude: 106.8272,
+      expect(
+        searchController.selectedSearchResult.value?.name,
+        equals('Bandung'),
       );
-      searchController.selectSearchResult(result);
-
-      searchController.clearSearch(clearMarker: false);
-      expect(searchController.searchState.value, equals(MapSearchState.idle));
-      expect(searchController.searchResults.isEmpty, isTrue);
-      expect(searchController.selectedSearchResult.value, isNotNull);
-
-      searchController.clearSearch(clearMarker: true);
-      expect(searchController.selectedSearchResult.value, isNull);
     });
+
+    test(
+      'clearSearch clears query and dropdown without moving map or clearing other markers',
+      () {
+        const result = MapSearchResult(
+          id: '1',
+          name: 'Monas',
+          address: 'Jakarta',
+          latitude: -6.1754,
+          longitude: 106.8272,
+        );
+        searchController.selectSearchResult(result);
+
+        searchController.clearSearch(clearMarker: false);
+        expect(searchController.searchState.value, equals(MapSearchState.idle));
+        expect(searchController.searchResults.isEmpty, isTrue);
+        expect(searchController.selectedSearchResult.value, isNotNull);
+
+        searchController.clearSearch(clearMarker: true);
+        expect(searchController.selectedSearchResult.value, isNull);
+      },
+    );
   });
 }
 
 class MockRouteService extends RouteService {
   int callCount = 0;
   bool shouldFail = false;
-  Future<RouteResult> Function(LatLng origin, LatLng destination)? customHandler;
+  Future<RouteResult> Function(LatLng origin, LatLng destination)?
+  customHandler;
 
   MockRouteService() : super(apiKey: 'dummy');
 

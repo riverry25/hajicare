@@ -244,8 +244,9 @@ class GeocodingService {
       if (lat == null || lon == null) continue;
 
       final props = feature['properties'];
-      final properties =
-          props is Map<String, dynamic> ? props : <String, dynamic>{};
+      final properties = props is Map<String, dynamic>
+          ? props
+          : <String, dynamic>{};
 
       final rawName = properties['name']?.toString().trim();
       final street = properties['street']?.toString().trim();
@@ -365,8 +366,8 @@ class GeocodingService {
       String name = (rawName != null && rawName.trim().isNotEmpty)
           ? rawName.trim()
           : (displayName.contains(',')
-              ? displayName.split(',').first.trim()
-              : displayName);
+                ? displayName.split(',').first.trim()
+                : displayName);
       if (name.isEmpty) name = query;
 
       final placeId =
@@ -416,10 +417,12 @@ class GeocodingService {
           name = p.name?.isNotEmpty == true
               ? p.name!
               : (p.locality?.isNotEmpty == true ? p.locality! : query);
-          final parts = [p.street, p.subLocality, p.locality, p.country]
-              .whereType<String>()
-              .where((s) => s.trim().isNotEmpty)
-              .toList();
+          final parts = [
+            p.street,
+            p.subLocality,
+            p.locality,
+            p.country,
+          ].whereType<String>().where((s) => s.trim().isNotEmpty).toList();
           if (parts.isNotEmpty) {
             address = parts.join(', ');
           }

@@ -23,72 +23,81 @@ void main() {
     Get.reset();
   });
 
-  group('PrayerTimesScreen and BottomNavBar Dark/Light Dynamic Theme Tests', () {
-    testWidgets('Renders PrayerTimesScreen in Light Mode without error', (tester) async {
-      Get.put(AppSettingsController(), permanent: true);
-      Get.put(HajiCareController(), permanent: true);
-      PrayerBinding().dependencies();
+  group(
+    'PrayerTimesScreen and BottomNavBar Dark/Light Dynamic Theme Tests',
+    () {
+      testWidgets('Renders PrayerTimesScreen in Light Mode without error', (
+        tester,
+      ) async {
+        Get.put(AppSettingsController(), permanent: true);
+        Get.put(HajiCareController(), permanent: true);
+        PrayerBinding().dependencies();
 
-      await tester.pumpWidget(
-        GetMaterialApp(
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: ThemeMode.light,
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-            FallbackMaterialLocalizationsDelegate(),
-            FallbackCupertinoLocalizationsDelegate(),
-            FallbackWidgetsLocalizationsDelegate(),
-          ],
-          home: const PrayerTimesScreen(showBottomNav: true),
-        ),
-      );
+        await tester.pumpWidget(
+          GetMaterialApp(
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: ThemeMode.light,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              FallbackMaterialLocalizationsDelegate(),
+              FallbackCupertinoLocalizationsDelegate(),
+              FallbackWidgetsLocalizationsDelegate(),
+            ],
+            home: const PrayerTimesScreen(showBottomNav: true),
+          ),
+        );
 
-      await tester.pump();
-      expect(find.byType(HajiCareBottomNavBar), findsOneWidget);
-      expect(find.byType(PrayerTimesScreen), findsOneWidget);
-    });
+        await tester.pump();
+        expect(find.byType(HajiCareBottomNavBar), findsOneWidget);
+        expect(find.byType(PrayerTimesScreen), findsOneWidget);
+      });
 
-    testWidgets('Renders PrayerTimesScreen in Dark Mode without error', (tester) async {
-      Get.put(AppSettingsController(), permanent: true);
-      Get.put(HajiCareController(), permanent: true);
-      PrayerBinding().dependencies();
+      testWidgets('Renders PrayerTimesScreen in Dark Mode without error', (
+        tester,
+      ) async {
+        Get.put(AppSettingsController(), permanent: true);
+        Get.put(HajiCareController(), permanent: true);
+        PrayerBinding().dependencies();
 
-      await tester.pumpWidget(
-        GetMaterialApp(
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: ThemeMode.dark,
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-            FallbackMaterialLocalizationsDelegate(),
-            FallbackCupertinoLocalizationsDelegate(),
-            FallbackWidgetsLocalizationsDelegate(),
-          ],
-          home: const PrayerTimesScreen(showBottomNav: true),
-        ),
-      );
+        await tester.pumpWidget(
+          GetMaterialApp(
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: ThemeMode.dark,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              FallbackMaterialLocalizationsDelegate(),
+              FallbackCupertinoLocalizationsDelegate(),
+              FallbackWidgetsLocalizationsDelegate(),
+            ],
+            home: const PrayerTimesScreen(showBottomNav: true),
+          ),
+        );
 
-      await tester.pump();
-      expect(find.byType(HajiCareBottomNavBar), findsOneWidget);
-      expect(find.byType(PrayerTimesScreen), findsOneWidget);
+        await tester.pump();
+        expect(find.byType(HajiCareBottomNavBar), findsOneWidget);
+        expect(find.byType(PrayerTimesScreen), findsOneWidget);
 
-      final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
-      expect(scaffold.extendBody, isTrue);
+        final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
+        expect(scaffold.extendBody, isTrue);
 
-      final material = tester.widget<Material>(
-        find.descendant(
-          of: find.byType(HajiCareBottomNavBar),
-          matching: find.byType(Material),
-        ).first,
-      );
-      expect(material.color, equals(Colors.transparent));
-    });
-  });
+        final material = tester.widget<Material>(
+          find
+              .descendant(
+                of: find.byType(HajiCareBottomNavBar),
+                matching: find.byType(Material),
+              )
+              .first,
+        );
+        expect(material.color, equals(Colors.transparent));
+      });
+    },
+  );
 }

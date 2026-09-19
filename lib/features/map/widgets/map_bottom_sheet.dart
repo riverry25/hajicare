@@ -892,10 +892,14 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                   decoration: BoxDecoration(
                     color: isDark
                         ? (isPendamping
-                              ? AppColors.darkPrimaryContainer.withValues(alpha: 0.35)
+                              ? AppColors.darkPrimaryContainer.withValues(
+                                  alpha: 0.35,
+                                )
                               : AppColors.darkSurfaceContainer)
                         : (isPendamping
-                              ? AppColors.primaryContainer.withValues(alpha: 0.28)
+                              ? AppColors.primaryContainer.withValues(
+                                  alpha: 0.28,
+                                )
                               : AppColors.surfaceWhite),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
@@ -934,7 +938,8 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                                     ? (isDark
                                           ? [
                                               AppColors.darkPrimaryContainer,
-                                              AppColors.darkSurfaceContainerHighest,
+                                              AppColors
+                                                  .darkSurfaceContainerHighest,
                                             ]
                                           : [
                                               AppColors.espressoDark,
@@ -942,11 +947,14 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                                             ])
                                     : (isDark
                                           ? [
-                                              AppColors.darkSurfaceContainerHigh,
+                                              AppColors
+                                                  .darkSurfaceContainerHigh,
                                               AppColors.darkSurfaceContainer,
                                             ]
                                           : [
-                                              AppColors.tanLight.withValues(alpha: 0.4),
+                                              AppColors.tanLight.withValues(
+                                                alpha: 0.4,
+                                              ),
                                               AppColors.canvasCream,
                                             ]),
                                 begin: Alignment.topLeft,
@@ -957,7 +965,9 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                                     ? AppColors.goldPrimary
                                     : (isDark
                                           ? AppColors.darkOutlineVariant
-                                          : AppColors.tanMedium.withValues(alpha: 0.35)),
+                                          : AppColors.tanMedium.withValues(
+                                              alpha: 0.35,
+                                            )),
                                 width: 1.2,
                               ),
                             ),
@@ -966,7 +976,9 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                                 ? Icon(
                                     Icons.shield_rounded,
                                     size: 19,
-                                    color: isDark ? AppColors.goldLight : Colors.white,
+                                    color: isDark
+                                        ? AppColors.goldLight
+                                        : Colors.white,
                                   )
                                 : Text(
                                     initial,
@@ -1033,13 +1045,23 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                                   ),
                                   decoration: BoxDecoration(
                                     color: isPendamping
-                                        ? AppColors.goldPrimary.withValues(alpha: isDark ? 0.25 : 0.15)
-                                        : AppColors.statusSafe.withValues(alpha: isDark ? 0.2 : 0.12),
-                                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                                        ? AppColors.goldPrimary.withValues(
+                                            alpha: isDark ? 0.25 : 0.15,
+                                          )
+                                        : AppColors.statusSafe.withValues(
+                                            alpha: isDark ? 0.2 : 0.12,
+                                          ),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.pill,
+                                    ),
                                     border: Border.all(
                                       color: isPendamping
-                                          ? AppColors.goldPrimary.withValues(alpha: 0.4)
-                                          : AppColors.statusSafe.withValues(alpha: 0.3),
+                                          ? AppColors.goldPrimary.withValues(
+                                              alpha: 0.4,
+                                            )
+                                          : AppColors.statusSafe.withValues(
+                                              alpha: 0.3,
+                                            ),
                                       width: 0.8,
                                     ),
                                   ),
@@ -1049,7 +1071,9 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                                       fontSize: 9.5,
                                       fontWeight: FontWeight.w800,
                                       color: isPendamping
-                                          ? (isDark ? AppColors.goldLight : AppColors.espressoDark)
+                                          ? (isDark
+                                                ? AppColors.goldLight
+                                                : AppColors.espressoDark)
                                           : AppColors.statusSafe,
                                     ),
                                   ),
@@ -1104,8 +1128,12 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                           border: Border.all(
                             color: m.hasLocation
                                 ? (isDark
-                                      ? AppColors.goldPrimary.withValues(alpha: 0.3)
-                                      : AppColors.goldLight.withValues(alpha: 0.5))
+                                      ? AppColors.goldPrimary.withValues(
+                                          alpha: 0.3,
+                                        )
+                                      : AppColors.goldLight.withValues(
+                                          alpha: 0.5,
+                                        ))
                                 : (isDark
                                       ? AppColors.darkOutlineVariant
                                       : AppColors.lightCardBorder),
@@ -1118,7 +1146,9 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                             Icon(
                               Icons.near_me_rounded,
                               size: 11,
-                              color: m.hasLocation ? primaryColor : AppColors.textMuted,
+                              color: m.hasLocation
+                                  ? primaryColor
+                                  : AppColors.textMuted,
                             ),
                             const SizedBox(width: 3),
                             Text(
@@ -1126,7 +1156,9 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w800,
-                                color: m.hasLocation ? headingColor : AppColors.textMuted,
+                                color: m.hasLocation
+                                    ? headingColor
+                                    : AppColors.textMuted,
                               ),
                             ),
                           ],

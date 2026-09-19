@@ -23,17 +23,14 @@ void main() {
                 "type": "LineString",
                 "coordinates": [
                   [39.8930, 21.4135],
-                  [39.8942, 21.4145]
-                ]
+                  [39.8942, 21.4145],
+                ],
               },
               "properties": {
-                "summary": {
-                  "distance": 150.5,
-                  "duration": 120.0
-                }
-              }
-            }
-          ]
+                "summary": {"distance": 150.5, "duration": 120.0},
+              },
+            },
+          ],
         };
         return http.Response(jsonEncode(responsePayload), 200);
       });
@@ -59,31 +56,40 @@ void main() {
             {
               "geometry": {
                 "type": "LineString",
-                "coordinates": [[1.0, 1.0], [2.0, 2.0]]
+                "coordinates": [
+                  [1.0, 1.0],
+                  [2.0, 2.0],
+                ],
               },
               "properties": {
-                "summary": {"distance": 500.0, "duration": 500.0} // Slower
-              }
+                "summary": {"distance": 500.0, "duration": 500.0}, // Slower
+              },
             },
             {
               "geometry": {
                 "type": "LineString",
-                "coordinates": [[1.0, 1.0], [3.0, 3.0]]
+                "coordinates": [
+                  [1.0, 1.0],
+                  [3.0, 3.0],
+                ],
               },
               "properties": {
-                "summary": {"distance": 450.0, "duration": 300.0} // Fastest
-              }
+                "summary": {"distance": 450.0, "duration": 300.0}, // Fastest
+              },
             },
             {
               "geometry": {
                 "type": "LineString",
-                "coordinates": [[1.0, 1.0], [4.0, 4.0]]
+                "coordinates": [
+                  [1.0, 1.0],
+                  [4.0, 4.0],
+                ],
               },
               "properties": {
-                "summary": {"distance": 480.0, "duration": 400.0} // Mid
-              }
-            }
-          ]
+                "summary": {"distance": 480.0, "duration": 400.0}, // Mid
+              },
+            },
+          ],
         };
         return http.Response(jsonEncode(responsePayload), 200);
       });
@@ -111,16 +117,19 @@ void main() {
           origin: const LatLng(1.0, 1.0),
           destination: const LatLng(2.0, 2.0),
         ),
-        throwsA(isA<RouteException>().having((e) => e.message, 'message', contains('HTTP 500'))),
+        throwsA(
+          isA<RouteException>().having(
+            (e) => e.message,
+            'message',
+            contains('HTTP 500'),
+          ),
+        ),
       );
     });
 
     test('empty routes throws RouteException', () async {
       final client = MockClient((request) async {
-        final responsePayload = {
-          "type": "FeatureCollection",
-          "features": []
-        };
+        final responsePayload = {"type": "FeatureCollection", "features": []};
         return http.Response(jsonEncode(responsePayload), 200);
       });
 
@@ -130,7 +139,13 @@ void main() {
           origin: const LatLng(1.0, 1.0),
           destination: const LatLng(2.0, 2.0),
         ),
-        throwsA(isA<RouteException>().having((e) => e.message, 'message', contains('tidak ditemukan'))),
+        throwsA(
+          isA<RouteException>().having(
+            (e) => e.message,
+            'message',
+            contains('tidak ditemukan'),
+          ),
+        ),
       );
     });
 
@@ -148,13 +163,13 @@ void main() {
                 "type": "LineString",
                 "coordinates": [
                   [39.8930, 21.4135],
-                  [39.8942, 21.4145]
-                ]
+                  [39.8942, 21.4145],
+                ],
               },
               "distance": 200.0,
-              "duration": 150
-            }
-          ]
+              "duration": 150,
+            },
+          ],
         };
         return http.Response(jsonEncode(responsePayload), 200);
       });

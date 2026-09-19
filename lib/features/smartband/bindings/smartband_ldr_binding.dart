@@ -4,8 +4,6 @@ import '../controllers/smartband_ldr_controller.dart';
 class SmartbandLdrBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<SmartbandLdrController>(
-      () => SmartbandLdrController(),
-    );
+    Get.lazyPut<SmartbandLdrController>(() => SmartbandLdrController());
   }
 }

@@ -36,7 +36,9 @@ class JamaahPrayerCard extends StatelessWidget {
 
     return Obx(() {
       final locName = prayerCtrl.locationName.value;
-      final displayCity = locName.isNotEmpty ? locName.split(',').first.trim() : '';
+      final displayCity = locName.isNotEmpty
+          ? locName.split(',').first.trim()
+          : '';
       final qiblaDeg = prayerCtrl.qiblaBearing.value;
       final nextName = prayerCtrl.nextPrayerName.value.isNotEmpty
           ? prayerCtrl.nextPrayerName.value
@@ -83,7 +85,9 @@ class JamaahPrayerCard extends StatelessWidget {
                               ? '${context.tr('prayerScheduleTitle')} • ${displayCity.toUpperCase()}'
                               : context.tr('prayerScheduleTitle'),
                           style: AppTypography.captionSmall.copyWith(
-                            color: isDark ? AppColors.darkPrimary : AppColors.espressoDark,
+                            color: isDark
+                                ? AppColors.darkPrimary
+                                : AppColors.espressoDark,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.5,
                           ),
@@ -96,7 +100,10 @@ class JamaahPrayerCard extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: isDark
                         ? AppColors.darkSurface
@@ -222,10 +229,15 @@ class JamaahPrayerCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: fardhuPrayers.isNotEmpty
                   ? fardhuPrayers.map((item) {
-                      final localizedName = _localizedPrayerName(context, item.name);
+                      final localizedName = _localizedPrayerName(
+                        context,
+                        item.name,
+                      );
                       // Extract only HH:mm (omit timezone code AST/WIB to avoid overflow in mini boxes)
                       final timeParts = item.formattedTime.trim().split(' ');
-                      final shortTime = timeParts.isNotEmpty ? timeParts.first : '--:--';
+                      final shortTime = timeParts.isNotEmpty
+                          ? timeParts.first
+                          : '--:--';
                       return _buildMiniTime(
                         context: context,
                         name: localizedName,
@@ -293,10 +305,12 @@ class JamaahPrayerCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
       decoration: BoxDecoration(
         color: isActive
-            ? (isDark ? AppColors.darkPrimaryContainer : AppColors.primaryContainer)
+            ? (isDark
+                  ? AppColors.darkPrimaryContainer
+                  : AppColors.primaryContainer)
             : (isDark
-                ? AppColors.darkSurface
-                : AppColors.surfaceWhite.withValues(alpha: 0.7)),
+                  ? AppColors.darkSurface
+                  : AppColors.surfaceWhite.withValues(alpha: 0.7)),
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: isActive
             ? Border.all(color: AppColors.accentGoldStar, width: 1.5)
@@ -332,9 +346,7 @@ class JamaahPrayerCard extends StatelessWidget {
           Text(
             time,
             style: AppTypography.captionSmall.copyWith(
-              color: isActive
-                  ? AppColors.surfaceWhite
-                  : headingColor,
+              color: isActive ? AppColors.surfaceWhite : headingColor,
               fontWeight: FontWeight.bold,
             ),
             maxLines: 1,

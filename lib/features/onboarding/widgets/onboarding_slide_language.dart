@@ -336,9 +336,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
               subtitle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppTypography.caption.copyWith(
-                color: AppColors.textBody,
-              ),
+              style: AppTypography.caption.copyWith(color: AppColors.textBody),
             ),
           ],
         ),

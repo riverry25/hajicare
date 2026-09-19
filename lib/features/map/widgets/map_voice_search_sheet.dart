@@ -23,7 +23,9 @@ class MapVoiceSearchSheet extends StatefulWidget {
       backgroundColor: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
       barrierColor: Colors.black54,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.sheet),
+        ),
       ),
       builder: (ctx) => const MapVoiceSearchSheet(),
     );
@@ -103,7 +105,8 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
           if (!mounted) return;
           setState(() {
             _isListening = false;
-            _statusMessage = errorNotification.errorMsg.contains('error_no_match')
+            _statusMessage =
+                errorNotification.errorMsg.contains('error_no_match')
                 ? 'Suara tidak terdeteksi. Coba lagi atau pilih rekomendasi.'
                 : 'Mikrofon siap. Ketuk untuk mencoba lagi.';
           });
@@ -116,7 +119,8 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
           _startListening();
         } else {
           setState(() {
-            _statusMessage = 'Izin mikrofon diperlukan atau layanan suara tidak tersedia.';
+            _statusMessage =
+                'Izin mikrofon diperlukan atau layanan suara tidak tersedia.';
           });
         }
       }
@@ -124,7 +128,8 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
       if (mounted) {
         setState(() {
           _speechEnabled = false;
-          _statusMessage = 'Layanan suara offline. Anda bisa menggunakan saran cepat di bawah.';
+          _statusMessage =
+              'Layanan suara offline. Anda bisa menggunakan saran cepat di bawah.';
         });
       }
     }
@@ -209,7 +214,9 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
   @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
-    final headingColor = isDark ? AppColors.darkTextHeading : AppColors.espressoDark;
+    final headingColor = isDark
+        ? AppColors.darkTextHeading
+        : AppColors.espressoDark;
     final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
     final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
 
@@ -270,7 +277,9 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
               _statusMessage,
               textAlign: TextAlign.center,
               style: AppTypography.bodySmall.copyWith(
-                color: _isListening ? primaryColor : bodyColor.withValues(alpha: 0.8),
+                color: _isListening
+                    ? primaryColor
+                    : bodyColor.withValues(alpha: 0.8),
                 fontWeight: _isListening ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
@@ -293,7 +302,8 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
                     AnimatedBuilder(
                       animation: _pulseAnimation,
                       builder: (context, child) {
-                        final scale = _pulseAnimation.value + (_soundLevel * 0.3);
+                        final scale =
+                            _pulseAnimation.value + (_soundLevel * 0.3);
                         return Container(
                           width: 96 * scale,
                           height: 96 * scale,
@@ -322,21 +332,18 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
                         colors: _isListening
-                            ? [
-                                AppColors.sosEmergency,
-                                const Color(0xFFE53935),
-                              ]
-                            : [
-                                primaryColor,
-                                AppColors.goldDark,
-                              ],
+                            ? [AppColors.sosEmergency, const Color(0xFFE53935)]
+                            : [primaryColor, AppColors.goldDark],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: (_isListening ? AppColors.sosEmergency : primaryColor)
-                              .withValues(alpha: 0.38),
+                          color:
+                              (_isListening
+                                      ? AppColors.sosEmergency
+                                      : primaryColor)
+                                  .withValues(alpha: 0.38),
                           blurRadius: 16,
                           offset: const Offset(0, 4),
                         ),
@@ -344,7 +351,9 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
                     ),
                     child: Center(
                       child: Icon(
-                        _isListening ? Icons.mic_rounded : Icons.mic_none_rounded,
+                        _isListening
+                            ? Icons.mic_rounded
+                            : Icons.mic_none_rounded,
                         color: Colors.white,
                         size: 34,
                       ),
@@ -368,7 +377,9 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
                 border: Border.all(
                   color: _recognizedWords.isNotEmpty
                       ? primaryColor.withValues(alpha: 0.4)
-                      : (isDark ? AppColors.darkCardBorder : AppColors.canvasCreamSubtle),
+                      : (isDark
+                            ? AppColors.darkCardBorder
+                            : AppColors.canvasCreamSubtle),
                 ),
               ),
               child: Row(
@@ -378,8 +389,8 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
                       _recognizedWords.isNotEmpty
                           ? '"$_recognizedWords"'
                           : (_isListening
-                              ? 'Katakan nama lokasi...'
-                              : 'Ketuk mic di atas atau pilih saran cepat di bawah'),
+                                ? 'Katakan nama lokasi...'
+                                : 'Ketuk mic di atas atau pilih saran cepat di bawah'),
                       textAlign: TextAlign.center,
                       style: AppTypography.bodyMedium.copyWith(
                         color: _recognizedWords.isNotEmpty
@@ -398,7 +409,10 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
                   if (_recognizedWords.isNotEmpty) ...[
                     const SizedBox(width: 8),
                     IconButton(
-                      icon: Icon(Icons.arrow_forward_rounded, color: primaryColor),
+                      icon: Icon(
+                        Icons.arrow_forward_rounded,
+                        color: primaryColor,
+                      ),
                       tooltip: 'Cari Sekarang',
                       onPressed: () => _submitRecognized(_recognizedWords),
                     ),
@@ -429,9 +443,14 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
                   onTap: () => _submitRecognized(suggestion),
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 7,
+                    ),
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite,
+                      color: isDark
+                          ? AppColors.darkSurfaceContainer
+                          : AppColors.surfaceWhite,
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                       border: Border.all(
                         color: isDark
@@ -440,7 +459,9 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.03),
+                          color: Colors.black.withValues(
+                            alpha: isDark ? 0.15 : 0.03,
+                          ),
                           blurRadius: 4,
                           offset: const Offset(0, 1),
                         ),

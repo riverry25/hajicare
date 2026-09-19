@@ -92,12 +92,14 @@ class SmartMultiPassDetector {
     );
     pass1Stopwatch.stop();
 
-    passResults.add(PassResult(
-      passIndex: 1,
-      passName: 'Original Image',
-      detections: pass1Detections,
-      executionTimeMs: pass1Stopwatch.elapsedMilliseconds,
-    ));
+    passResults.add(
+      PassResult(
+        passIndex: 1,
+        passName: 'Original Image',
+        detections: pass1Detections,
+        executionTimeMs: pass1Stopwatch.elapsedMilliseconds,
+      ),
+    );
 
     debugPrint(
       '[MoneyAI] Pass 1 (Original): ${pass1Detections.length} candidate detections (${pass1Stopwatch.elapsedMilliseconds}ms)',
@@ -127,12 +129,14 @@ class SmartMultiPassDetector {
         );
         pass2Stopwatch.stop();
 
-        passResults.add(PassResult(
-          passIndex: 2,
-          passName: 'Enhanced Image',
-          detections: pass2Detections,
-          executionTimeMs: pass2Stopwatch.elapsedMilliseconds,
-        ));
+        passResults.add(
+          PassResult(
+            passIndex: 2,
+            passName: 'Enhanced Image',
+            detections: pass2Detections,
+            executionTimeMs: pass2Stopwatch.elapsedMilliseconds,
+          ),
+        );
 
         debugPrint(
           '[MoneyAI] Pass 2 (Enhanced): ${pass2Detections.length} candidate detections (${pass2Stopwatch.elapsedMilliseconds}ms)',
@@ -157,12 +161,14 @@ class SmartMultiPassDetector {
       );
       pass3Stopwatch.stop();
 
-      passResults.add(PassResult(
-        passIndex: 3,
-        passName: 'Tiled Inference',
-        detections: tiledDetections,
-        executionTimeMs: pass3Stopwatch.elapsedMilliseconds,
-      ));
+      passResults.add(
+        PassResult(
+          passIndex: 3,
+          passName: 'Tiled Inference',
+          detections: tiledDetections,
+          executionTimeMs: pass3Stopwatch.elapsedMilliseconds,
+        ),
+      );
 
       debugPrint(
         '[MoneyAI] Pass 3 (Tiled): ${tiledDetections.length} candidate detections (${pass3Stopwatch.elapsedMilliseconds}ms)',
@@ -216,7 +222,8 @@ class SmartMultiPassDetector {
       confidenceThreshold: confidenceThreshold,
     );
 
-    final rawList = (result['detections'] as List?)
+    final rawList =
+        (result['detections'] as List?)
             ?.map((d) => YOLOResult.fromMap(d as Map))
             .toList() ??
         [];
@@ -227,16 +234,18 @@ class SmartMultiPassDetector {
       final info = RiyalCurrencyHelper.getInfo(res.className);
       if (info == null) continue;
 
-      list.add(MoneyDetection(
-        className: res.className,
-        displayName: info.displayName,
-        spokenName: info.spokenName,
-        amount: info.amount,
-        confidence: res.confidence,
-        box: res.boundingBox,
-        normalizedBox: res.normalizedBox,
-        isCoin: info.isCoin,
-      ));
+      list.add(
+        MoneyDetection(
+          className: res.className,
+          displayName: info.displayName,
+          spokenName: info.spokenName,
+          amount: info.amount,
+          confidence: res.confidence,
+          box: res.boundingBox,
+          normalizedBox: res.normalizedBox,
+          isCoin: info.isCoin,
+        ),
+      );
     }
     return list;
   }
@@ -251,12 +260,14 @@ class SmartMultiPassDetector {
     if (pass1Detections.isEmpty) return true;
 
     // Condition 2: Any detection has borderline confidence (< 0.80)
-    final hasBorderlineConfidence =
-        pass1Detections.any((d) => d.confidence < 0.80);
+    final hasBorderlineConfidence = pass1Detections.any(
+      (d) => d.confidence < 0.80,
+    );
     if (hasBorderlineConfidence) return true;
 
     // Condition 3: If single detection has very high confidence (>= 0.90), skip pass 2
-    if (pass1Detections.length == 1 && pass1Detections.first.confidence >= 0.90) {
+    if (pass1Detections.length == 1 &&
+        pass1Detections.first.confidence >= 0.90) {
       return false;
     }
 
@@ -283,8 +294,7 @@ class SmartMultiPassDetector {
 
     // Condition 2: Any detected object is small relative to frame (< 0.25 normalized size)
     final hasSmallObjects = pass1Detections.any(
-      (d) =>
-          d.normalizedBox.width < 0.25 && d.normalizedBox.height < 0.25,
+      (d) => d.normalizedBox.width < 0.25 && d.normalizedBox.height < 0.25,
     );
     if (hasSmallObjects) return true;
 
@@ -351,10 +361,14 @@ class SmartMultiPassDetector {
         final tileNorm = tiles[i];
         final int cropX = (tileNorm.left * imageW).round().clamp(0, imageW - 1);
         final int cropY = (tileNorm.top * imageH).round().clamp(0, imageH - 1);
-        final int cropW =
-            (tileNorm.width * imageW).round().clamp(1, imageW - cropX);
-        final int cropH =
-            (tileNorm.height * imageH).round().clamp(1, imageH - cropY);
+        final int cropW = (tileNorm.width * imageW).round().clamp(
+          1,
+          imageW - cropX,
+        );
+        final int cropH = (tileNorm.height * imageH).round().clamp(
+          1,
+          imageH - cropY,
+        );
 
         final cropped = img.copyCrop(
           decoded,
@@ -364,7 +378,9 @@ class SmartMultiPassDetector {
           height: cropH,
         );
 
-        final tileBytes = Uint8List.fromList(img.encodeJpg(cropped, quality: 85));
+        final tileBytes = Uint8List.fromList(
+          img.encodeJpg(cropped, quality: 85),
+        );
 
         // Inference on tile
         final Map<String, dynamic> result = await yolo.predict(
@@ -372,7 +388,8 @@ class SmartMultiPassDetector {
           confidenceThreshold: candidateThreshold,
         );
 
-        final rawList = (result['detections'] as List?)
+        final rawList =
+            (result['detections'] as List?)
                 ?.map((d) => YOLOResult.fromMap(d as Map))
                 .toList() ??
             [];
@@ -388,8 +405,8 @@ class SmartMultiPassDetector {
               .clamp(0.0, 1.0);
           final double origTop = (tileNorm.top + tNorm.top * tileNorm.height)
               .clamp(0.0, 1.0);
-          final double origRight = (tileNorm.left + tNorm.right * tileNorm.width)
-              .clamp(0.0, 1.0);
+          final double origRight =
+              (tileNorm.left + tNorm.right * tileNorm.width).clamp(0.0, 1.0);
           final double origBottom =
               (tileNorm.top + tNorm.bottom * tileNorm.height).clamp(0.0, 1.0);
 
@@ -402,21 +419,23 @@ class SmartMultiPassDetector {
             origBottom,
           );
 
-          tiledResults.add(MoneyDetection(
-            className: res.className,
-            displayName: info.displayName,
-            spokenName: info.spokenName,
-            amount: info.amount,
-            confidence: res.confidence,
-            box: Rect.fromLTRB(
-              origLeft * imageW,
-              origTop * imageH,
-              origRight * imageW,
-              origBottom * imageH,
+          tiledResults.add(
+            MoneyDetection(
+              className: res.className,
+              displayName: info.displayName,
+              spokenName: info.spokenName,
+              amount: info.amount,
+              confidence: res.confidence,
+              box: Rect.fromLTRB(
+                origLeft * imageW,
+                origTop * imageH,
+                origRight * imageW,
+                origBottom * imageH,
+              ),
+              normalizedBox: mappedNormalizedBox,
+              isCoin: info.isCoin,
             ),
-            normalizedBox: mappedNormalizedBox,
-            isCoin: info.isCoin,
-          ));
+          );
         }
       }
     } catch (e) {
@@ -512,16 +531,18 @@ class SmartMultiPassDetector {
         // Confirmed across multiple passes: boost confidence
         final boostedConfidence = math.min(1.0, item.confidence + 0.10);
         if (boostedConfidence >= finalThreshold) {
-          finalValidList.add(MoneyDetection(
-            className: item.className,
-            displayName: item.displayName,
-            spokenName: item.spokenName,
-            amount: item.amount,
-            confidence: boostedConfidence,
-            box: item.box,
-            normalizedBox: item.normalizedBox,
-            isCoin: item.isCoin,
-          ));
+          finalValidList.add(
+            MoneyDetection(
+              className: item.className,
+              displayName: item.displayName,
+              spokenName: item.spokenName,
+              amount: item.amount,
+              confidence: boostedConfidence,
+              box: item.box,
+              normalizedBox: item.normalizedBox,
+              isCoin: item.isCoin,
+            ),
+          );
         }
       }
     }

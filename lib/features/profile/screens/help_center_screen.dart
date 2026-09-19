@@ -17,7 +17,9 @@ class HelpCenterScreen extends StatelessWidget {
     final controller = Get.put(HelpCenterController());
     final isDark = AppColors.isDark(context);
     final scaffoldBg = isDark ? AppColors.darkScaffold : AppColors.canvasCream;
-    final headingColor = isDark ? AppColors.darkTextHeading : AppColors.espressoDark;
+    final headingColor = isDark
+        ? AppColors.darkTextHeading
+        : AppColors.espressoDark;
     final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
     final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
 
@@ -43,7 +45,10 @@ class HelpCenterScreen extends StatelessWidget {
           Container(
             color: scaffoldBg,
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg, AppSpacing.xs, AppSpacing.lg, AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.xs,
+              AppSpacing.lg,
+              AppSpacing.lg,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,22 +64,34 @@ class HelpCenterScreen extends StatelessWidget {
                     color: cardBg,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                     border: Border.all(
-                      color: isDark ? AppColors.darkOutlineVariant : AppColors.outlineVariant,
+                      color: isDark
+                          ? AppColors.darkOutlineVariant
+                          : AppColors.outlineVariant,
                     ),
                   ),
                   child: TextField(
                     onChanged: controller.updateSearch,
-                    style: AppTypography.bodyMedium.copyWith(color: headingColor),
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: headingColor,
+                    ),
                     decoration: InputDecoration(
                       hintText: context.tr('searchHelp'),
-                      hintStyle: AppTypography.bodyMedium.copyWith(color: bodyColor),
+                      hintStyle: AppTypography.bodyMedium.copyWith(
+                        color: bodyColor,
+                      ),
                       prefixIcon: Icon(Icons.search_rounded, color: bodyColor),
-                      suffixIcon: Obx(() => controller.searchQuery.value.isNotEmpty
-                          ? IconButton(
-                              icon: Icon(Icons.clear_rounded, color: bodyColor, size: 18),
-                              onPressed: controller.clearSearch,
-                            )
-                          : const SizedBox.shrink()),
+                      suffixIcon: Obx(
+                        () => controller.searchQuery.value.isNotEmpty
+                            ? IconButton(
+                                icon: Icon(
+                                  Icons.clear_rounded,
+                                  color: bodyColor,
+                                  size: 18,
+                                ),
+                                onPressed: controller.clearSearch,
+                              )
+                            : const SizedBox.shrink(),
+                      ),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: AppSpacing.lg,
@@ -91,7 +108,10 @@ class HelpCenterScreen extends StatelessWidget {
           Expanded(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.huge,
+                AppSpacing.lg,
+                0,
+                AppSpacing.lg,
+                AppSpacing.huge,
               ),
               children: [
                 // Categories section
@@ -120,7 +140,9 @@ class HelpCenterScreen extends StatelessWidget {
 
                 // Contact support
                 Obx(() {
-                  if (controller.searchQuery.value.isNotEmpty) return const SizedBox.shrink();
+                  if (controller.searchQuery.value.isNotEmpty) {
+                    return const SizedBox.shrink();
+                  }
                   return _ContactSupportSection(
                     cardBg: cardBg,
                     headingColor: headingColor,
@@ -157,12 +179,42 @@ class _CategoriesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final categories = [
-      (Icons.person_outline_rounded, 'catAccountProfile', 'catAccountProfileDesc', AppColors.primary),
-      (Icons.people_outline_rounded, 'catCompanion', 'catCompanionDesc', AppColors.secondary),
-      (Icons.apps_rounded, 'catFeatures', 'catFeaturesDesc', AppColors.tanMedium),
-      (Icons.accessibility_new_rounded, 'catAccessibility', 'catAccessibilityDesc', AppColors.accentGoldStar),
-      (Icons.translate_rounded, 'catLanguage', 'catLanguageDesc', AppColors.statusSafe),
-      (Icons.build_rounded, 'catTechnical', 'catTechnicalDesc', AppColors.statusDanger),
+      (
+        Icons.person_outline_rounded,
+        'catAccountProfile',
+        'catAccountProfileDesc',
+        AppColors.primary,
+      ),
+      (
+        Icons.people_outline_rounded,
+        'catCompanion',
+        'catCompanionDesc',
+        AppColors.secondary,
+      ),
+      (
+        Icons.apps_rounded,
+        'catFeatures',
+        'catFeaturesDesc',
+        AppColors.tanMedium,
+      ),
+      (
+        Icons.accessibility_new_rounded,
+        'catAccessibility',
+        'catAccessibilityDesc',
+        AppColors.accentGoldStar,
+      ),
+      (
+        Icons.translate_rounded,
+        'catLanguage',
+        'catLanguageDesc',
+        AppColors.statusSafe,
+      ),
+      (
+        Icons.build_rounded,
+        'catTechnical',
+        'catTechnicalDesc',
+        AppColors.statusDanger,
+      ),
     ];
 
     return Column(
@@ -170,7 +222,10 @@ class _CategoriesSection extends StatelessWidget {
       children: [
         const SizedBox(height: AppSpacing.md),
         Padding(
-          padding: const EdgeInsets.only(left: AppSpacing.sm, bottom: AppSpacing.sm),
+          padding: const EdgeInsets.only(
+            left: AppSpacing.sm,
+            bottom: AppSpacing.sm,
+          ),
           child: Text(
             context.tr('helpCategoriesTitle'),
             style: AppTypography.labelPill.copyWith(color: bodyColor),
@@ -181,7 +236,9 @@ class _CategoriesSection extends StatelessWidget {
             color: cardBg,
             borderRadius: BorderRadius.circular(AppConstants.radiusCard),
             border: Border.all(
-              color: isDark ? AppColors.darkOutlineVariant : AppColors.canvasCreamSubtle,
+              color: isDark
+                  ? AppColors.darkOutlineVariant
+                  : AppColors.canvasCreamSubtle,
             ),
           ),
           child: Column(
@@ -191,7 +248,9 @@ class _CategoriesSection extends StatelessWidget {
                   Divider(
                     height: 1,
                     indent: AppSpacing.xl + AppSizes.touchTargetMin,
-                    color: isDark ? AppColors.darkOutlineVariant : AppColors.canvasCreamSubtle,
+                    color: isDark
+                        ? AppColors.darkOutlineVariant
+                        : AppColors.canvasCreamSubtle,
                   ),
                 _CategoryTile(
                   icon: categories[i].$1,
@@ -356,7 +415,10 @@ class _FaqSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.only(left: AppSpacing.sm, bottom: AppSpacing.sm),
+            padding: const EdgeInsets.only(
+              left: AppSpacing.sm,
+              bottom: AppSpacing.sm,
+            ),
             child: Text(
               context.tr('faqTitle'),
               style: AppTypography.labelPill.copyWith(color: bodyColor),
@@ -367,7 +429,9 @@ class _FaqSection extends StatelessWidget {
               color: cardBg,
               borderRadius: BorderRadius.circular(AppConstants.radiusCard),
               border: Border.all(
-                color: isDark ? AppColors.darkOutlineVariant : AppColors.canvasCreamSubtle,
+                color: isDark
+                    ? AppColors.darkOutlineVariant
+                    : AppColors.canvasCreamSubtle,
               ),
             ),
             child: Column(
@@ -378,7 +442,9 @@ class _FaqSection extends StatelessWidget {
                       height: 1,
                       indent: AppSpacing.lg,
                       endIndent: AppSpacing.lg,
-                      color: isDark ? AppColors.darkOutlineVariant : AppColors.canvasCreamSubtle,
+                      color: isDark
+                          ? AppColors.darkOutlineVariant
+                          : AppColors.canvasCreamSubtle,
                     ),
                   _FaqItem(
                     index: allFaqs.indexOf(filtered[i]),
@@ -422,7 +488,9 @@ class _FaqItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() {
       final expanded = controller.isExpanded(index);
-      final activeColor = isDark ? AppColors.darkPrimary : AppColors.espressoDark;
+      final activeColor = isDark
+          ? AppColors.darkPrimary
+          : AppColors.espressoDark;
 
       return Semantics(
         button: true,
@@ -467,7 +535,9 @@ class _FaqItem extends StatelessWidget {
                     padding: const EdgeInsets.only(top: AppSpacing.sm),
                     child: Text(
                       context.tr(answerKey),
-                      style: AppTypography.bodyMedium.copyWith(color: bodyColor),
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: bodyColor,
+                      ),
                     ),
                   ),
                   crossFadeState: expanded
@@ -511,7 +581,9 @@ class _ContactSupportSection extends StatelessWidget {
         color: cardBg,
         borderRadius: BorderRadius.circular(AppConstants.radiusCard),
         border: Border.all(
-          color: isDark ? AppColors.darkOutlineVariant : AppColors.canvasCreamSubtle,
+          color: isDark
+              ? AppColors.darkOutlineVariant
+              : AppColors.canvasCreamSubtle,
         ),
       ),
       child: Column(
@@ -597,11 +669,7 @@ class _ContactButton extends StatelessWidget {
       label: label,
       child: InkWell(
         onTap: () {
-          Get.snackbar(
-            'Info',
-            ' — ',
-            snackPosition: SnackPosition.BOTTOM,
-          );
+          Get.snackbar('Info', ' — ', snackPosition: SnackPosition.BOTTOM);
         },
         borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Container(

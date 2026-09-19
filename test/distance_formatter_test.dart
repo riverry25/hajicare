@@ -10,13 +10,16 @@ void main() {
       expect(DistanceFormatter.format(999), '999 m');
     });
 
-    test('formats kilometers correctly when distance is between 1000m and 100km', () {
-      expect(DistanceFormatter.format(1000), '1 km');
-      expect(DistanceFormatter.format(1200), '1.2 km');
-      expect(DistanceFormatter.format(2450), '2.5 km');
-      expect(DistanceFormatter.format(15400), '15.4 km');
-      expect(DistanceFormatter.format(99900), '99.9 km');
-    });
+    test(
+      'formats kilometers correctly when distance is between 1000m and 100km',
+      () {
+        expect(DistanceFormatter.format(1000), '1 km');
+        expect(DistanceFormatter.format(1200), '1.2 km');
+        expect(DistanceFormatter.format(2450), '2.5 km');
+        expect(DistanceFormatter.format(15400), '15.4 km');
+        expect(DistanceFormatter.format(99900), '99.9 km');
+      },
+    );
 
     test('formats rounded kilometers when distance >= 100km', () {
       expect(DistanceFormatter.format(100000), '100 km');

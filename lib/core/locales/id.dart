@@ -25,17 +25,22 @@ const Map<String, String> idTranslations = {
   'onboardingStage3': 'TAHAP 3 DARI 3',
   'chooseLanguageTitle': 'Pilih Bahasa Kenyamanan',
   'chooseLanguageSubtitle': 'Bahasa Pengantar Aplikasi',
-  'chooseLanguageDesc': 'Pilih bahasa yang paling mudah dipahami untuk kenyamanan ibadah dan komunikasi darurat Anda.',
+  'chooseLanguageDesc':
+      'Pilih bahasa yang paling mudah dipahami untuk kenyamanan ibadah dan komunikasi darurat Anda.',
   'canChangeLater': 'Bisa diubah kapan saja',
   'autoAdjustHint': 'Ukuran teks & audio akan otomatis disesuaikan',
   'safetyTitle': 'Keselamatan Terpantau',
-  'safetyDesc': 'Pantau lokasi keluarga secara real-time dengan radar jarak pintar dan peringatan darurat instan.',
+  'safetyDesc':
+      'Pantau lokasi keluarga secara real-time dengan radar jarak pintar dan peringatan darurat instan.',
   'accessibilityTitle': 'Ramah Lansia & Disabilitas',
-  'accessibilityDesc': 'Dilengkapi pembaca uang riyal, komunikasi isyarat, dan tombol darurat SOS yang sangat mudah digunakan.',
+  'accessibilityDesc':
+      'Dilengkapi pembaca uang riyal, komunikasi isyarat, dan tombol darurat SOS yang sangat mudah digunakan.',
   'scanMoneyTitle': 'Scan Uang Riyal',
-  'scanMoneyDesc': 'Arahkan kamera ke lembaran riyal, nominal langsung dibacakan otomatis via suara (Text-to-Speech).',
+  'scanMoneyDesc':
+      'Arahkan kamera ke lembaran riyal, nominal langsung dibacakan otomatis via suara (Text-to-Speech).',
   'commGestureTitle': 'Komunikasi & Isyarat',
-  'commGestureDesc': 'Konversi bicara ke teks besar serta ungkapan darurat cepat (Tolong, Sakit, Air) yang mudah dimengerti.',
+  'commGestureDesc':
+      'Konversi bicara ke teks besar serta ungkapan darurat cepat (Tolong, Sakit, Air) yang mudah dimengerti.',
   'ttsReady': 'Text-to-Speech siap digunakan',
   'btnNextFeature': 'Lanjut ke Pengenalan Fitur',
   'btnNextAccess': 'Lanjut ke Fitur Aksesibilitas',
@@ -47,9 +52,11 @@ const Map<String, String> idTranslations = {
   'loginSubtitle': 'Pilih peran Anda untuk melanjutkan pendampingan',
   'chooseRole': 'Pilih Peran',
   'roleJamaah': 'Jamaah Haji',
-  'roleJamaahDesc': 'Untuk jamaah lansia / mandiri dengan navigasi sederhana & tombol SOS cepat',
+  'roleJamaahDesc':
+      'Untuk jamaah lansia / mandiri dengan navigasi sederhana & tombol SOS cepat',
   'rolePendamping': 'Pendamping / Keluarga',
-  'rolePendampingDesc': 'Memantau posisi jamaah, jarak aman, dan menerima peringatan darurat',
+  'rolePendampingDesc':
+      'Memantau posisi jamaah, jarak aman, dan menerima peringatan darurat',
   'phoneLabel': 'Nomor Telepon / Paspor',
   'phoneHint': 'Contoh: 08123456789',
   'pinLabel': 'PIN Keamanan',
@@ -94,7 +101,8 @@ const Map<String, String> idTranslations = {
 
   // SOS Modal
   'sosActiveHeader': 'PERINGATAN DARURAT AKTIF',
-  'sosActiveBody': 'Sinyal SOS telah dikirimkan ke petugas dan pendamping terdekat. Harap tetap tenang di lokasi Anda.',
+  'sosActiveBody':
+      'Sinyal SOS telah dikirimkan ke petugas dan pendamping terdekat. Harap tetap tenang di lokasi Anda.',
   'cancelSos': 'Batalkan Panggilan Darurat',
   'confirmCancelSos': 'Apakah Anda yakin situasi darurat sudah teratasi?',
   'yesImSafe': 'Ya, Saya Sudah Aman',
@@ -197,29 +205,41 @@ const Map<String, String> idTranslations = {
   'catTechnicalDesc': 'Atasi masalah dan gangguan aplikasi',
   'faqTitle': 'Pertanyaan Umum (FAQ)',
   'faqQ1': 'Bagaimana cara membuat akun?',
-  'faqA1': 'Buka aplikasi HajiCare, pilih "Daftar Baru" di halaman masuk, lalu isi data diri Anda termasuk nama lengkap, nomor telepon, dan buat PIN keamanan.',
+  'faqA1':
+      'Buka aplikasi HajiCare, pilih "Daftar Baru" di halaman masuk, lalu isi data diri Anda termasuk nama lengkap, nomor telepon, dan buat PIN keamanan.',
   'faqQ2': 'Bagaimana cara mengubah data profil?',
-  'faqA2': 'Buka menu Profil di bagian bawah aplikasi, lalu pilih opsi yang ingin diubah. Data medis dan informasi kloter dapat diperbarui dari halaman profil.',
+  'faqA2':
+      'Buka menu Profil di bagian bawah aplikasi, lalu pilih opsi yang ingin diubah. Data medis dan informasi kloter dapat diperbarui dari halaman profil.',
   'faqQ3': 'Bagaimana cara mengganti foto profil?',
-  'faqA3': 'Di halaman Profil, ketuk ikon pensil pada foto profil Anda. Anda dapat memilih foto dari galeri atau mengambil foto baru menggunakan kamera.',
+  'faqA3':
+      'Di halaman Profil, ketuk ikon pensil pada foto profil Anda. Anda dapat memilih foto dari galeri atau mengambil foto baru menggunakan kamera.',
   'faqQ4': 'Bagaimana cara keluar dari akun?',
-  'faqA4': 'Buka halaman Profil, gulir ke bawah, lalu ketuk tombol "Keluar". Konfirmasi pilihan Anda pada dialog yang muncul.',
+  'faqA4':
+      'Buka halaman Profil, gulir ke bawah, lalu ketuk tombol "Keluar". Konfirmasi pilihan Anda pada dialog yang muncul.',
   'faqQ5': 'Bagaimana cara memperbesar ukuran teks?',
-  'faqA5': 'Buka Profil → Aksesibilitas → Ukuran Teks, lalu pilih ukuran yang sesuai. Perubahan langsung berlaku di seluruh aplikasi.',
+  'faqA5':
+      'Buka Profil → Aksesibilitas → Ukuran Teks, lalu pilih ukuran yang sesuai. Perubahan langsung berlaku di seluruh aplikasi.',
   'faqQ6': 'Apakah ukuran teks langsung berubah?',
-  'faqA6': 'Ya, perubahan ukuran teks langsung berlaku di seluruh aplikasi tanpa perlu memuat ulang atau mengganti bahasa.',
+  'faqA6':
+      'Ya, perubahan ukuran teks langsung berlaku di seluruh aplikasi tanpa perlu memuat ulang atau mengganti bahasa.',
   'faqQ7': 'Bagaimana cara mengaktifkan mode gelap?',
-  'faqA7': 'Buka Profil → Lainnya & Preferensi → Tema Tampilan, lalu pilih Mode Gelap, Mode Terang, atau Otomatis mengikuti sistem.',
+  'faqA7':
+      'Buka Profil → Lainnya & Preferensi → Tema Tampilan, lalu pilih Mode Gelap, Mode Terang, atau Otomatis mengikuti sistem.',
   'faqQ8': 'Bagaimana cara menghubungkan pendamping?',
-  'faqA8': 'Fitur pendamping menghubungkan jamaah dan pendamping secara otomatis berdasarkan data kloter. Hubungi administrator kloter untuk pengaturan lebih lanjut.',
+  'faqA8':
+      'Fitur pendamping menghubungkan jamaah dan pendamping secara otomatis berdasarkan data kloter. Hubungi administrator kloter untuk pengaturan lebih lanjut.',
   'faqQ9': 'Siapa yang dapat menjadi pendamping?',
-  'faqA9': 'Pendamping adalah anggota keluarga atau petugas yang didaftarkan dalam sistem HajiCare. Mereka dapat memantau posisi dan kondisi jamaah secara real-time.',
+  'faqA9':
+      'Pendamping adalah anggota keluarga atau petugas yang didaftarkan dalam sistem HajiCare. Mereka dapat memantau posisi dan kondisi jamaah secara real-time.',
   'faqQ10': 'Apa fungsi HajiCare?',
-  'faqA10': 'HajiCare adalah aplikasi pendamping ibadah haji yang membantu memantau keselamatan jamaah, menghubungkan dengan pendamping, menyediakan jadwal salat, dan fitur aksesibilitas untuk lansia dan penyandang disabilitas.',
+  'faqA10':
+      'HajiCare adalah aplikasi pendamping ibadah haji yang membantu memantau keselamatan jamaah, menghubungkan dengan pendamping, menyediakan jadwal salat, dan fitur aksesibilitas untuk lansia dan penyandang disabilitas.',
   'faqQ11': 'Apakah data saya aman?',
-  'faqA11': 'Ya, data Anda diamankan menggunakan Firebase Authentication dan disimpan di server yang terproteksi. Kami tidak membagikan data pribadi kepada pihak ketiga.',
+  'faqA11':
+      'Ya, data Anda diamankan menggunakan Firebase Authentication dan disimpan di server yang terproteksi. Kami tidak membagikan data pribadi kepada pihak ketiga.',
   'faqQ12': 'Bagaimana jika aplikasi mengalami masalah?',
-  'faqA12': 'Coba tutup dan buka kembali aplikasi. Pastikan koneksi internet stabil. Jika masalah berlanjut, hubungi tim dukungan HajiCare melalui kontak yang tersedia.',
+  'faqA12':
+      'Coba tutup dan buka kembali aplikasi. Pastikan koneksi internet stabil. Jika masalah berlanjut, hubungi tim dukungan HajiCare melalui kontak yang tersedia.',
   'contactSupportTitle': 'Masih membutuhkan bantuan?',
   'contactSupportSubtitle': 'Hubungi tim HajiCare',
   'contactEmail': 'Kirim Email',
@@ -228,31 +248,39 @@ const Map<String, String> idTranslations = {
 
   // About App
   'aboutTitle': 'Tentang HajiCare',
-  'aboutSubtitle': 'Teman perjalanan ibadah yang aman, terhubung, dan inklusif.',
-  'aboutDescription': 'HajiCare hadir untuk mendampingi perjalanan ibadah haji Anda dengan teknologi yang ramah, aman, dan mudah digunakan. Kami berkomitmen untuk memastikan setiap jamaah, terutama lansia dan penyandang disabilitas, dapat menjalankan ibadah dengan nyaman dan terlindungi.',
+  'aboutSubtitle':
+      'Teman perjalanan ibadah yang aman, terhubung, dan inklusif.',
+  'aboutDescription':
+      'HajiCare hadir untuk mendampingi perjalanan ibadah haji Anda dengan teknologi yang ramah, aman, dan mudah digunakan. Kami berkomitmen untuk memastikan setiap jamaah, terutama lansia dan penyandang disabilitas, dapat menjalankan ibadah dengan nyaman dan terlindungi.',
   'featuresTitle': 'Fitur Utama',
   'featureCompanion': 'Pendamping Jamaah',
-  'featureCompanionDesc': 'Hubungkan dengan pendamping dan pantau posisi secara real-time',
+  'featureCompanionDesc':
+      'Hubungkan dengan pendamping dan pantau posisi secara real-time',
   'featureInfo': 'Informasi & Panduan',
   'featureInfoDesc': 'Jadwal salat, arah kiblat, dan panduan ibadah',
   'featureAccessibility': 'Fitur Aksesibilitas',
-  'featureAccessibilityDesc': 'Ukuran teks yang dapat disesuaikan dan antarmuka yang mudah dibaca',
+  'featureAccessibilityDesc':
+      'Ukuran teks yang dapat disesuaikan dan antarmuka yang mudah dibaca',
   'featureLanguage': 'Pengaturan Bahasa',
-  'featureLanguageDesc': 'Tersedia dalam Bahasa Indonesia, Jawa, Sunda, dan Inggris',
+  'featureLanguageDesc':
+      'Tersedia dalam Bahasa Indonesia, Jawa, Sunda, dan Inggris',
   'featureDarkMode': 'Mode Gelap',
   'featureDarkModeDesc': 'Tampilan yang nyaman di segala kondisi pencahayaan',
   'featureProfile': 'Profil Personal',
   'featureProfileDesc': 'Kelola data diri, medis, dan preferensi pribadi',
   'accessibilitySectionTitle': 'Aksesibilitas',
-  'accessibilitySectionDesc': 'HajiCare dirancang khusus untuk memastikan semua jamaah dapat menggunakan aplikasi dengan mudah, termasuk lansia dan penyandang disabilitas. Fitur yang tersedia meliputi ukuran teks yang dapat disesuaikan, mode gelap untuk kenyamanan mata, navigasi yang jelas dan intuitif, serta antarmuka yang mudah dibaca.',
+  'accessibilitySectionDesc':
+      'HajiCare dirancang khusus untuk memastikan semua jamaah dapat menggunakan aplikasi dengan mudah, termasuk lansia dan penyandang disabilitas. Fitur yang tersedia meliputi ukuran teks yang dapat disesuaikan, mode gelap untuk kenyamanan mata, navigasi yang jelas dan intuitif, serta antarmuka yang mudah dibaca.',
   'privacySectionTitle': 'Privasi & Keamanan',
-  'privacySectionDesc': 'Data pribadi dan lokasi Anda dilindungi menggunakan enkripsi standar industri melalui Firebase. Kami hanya mengumpulkan data yang diperlukan untuk memastikan keselamatan dan kenyamanan ibadah Anda.',
+  'privacySectionDesc':
+      'Data pribadi dan lokasi Anda dilindungi menggunakan enkripsi standar industri melalui Firebase. Kami hanya mengumpulkan data yang diperlukan untuk memastikan keselamatan dan kenyamanan ibadah Anda.',
   'legalSectionTitle': 'Informasi Legal',
   'privacyPolicy': 'Kebijakan Privasi',
   'termsOfService': 'Syarat Penggunaan',
   'openSourceLicenses': 'Lisensi Sumber Terbuka',
   'appFooter': 'HajiCare',
-  'appFooterSubtitle': 'Dibuat untuk perjalanan ibadah yang lebih aman dan inklusif.',
+  'appFooterSubtitle':
+      'Dibuat untuk perjalanan ibadah yang lebih aman dan inklusif.',
   'appVersionLabel': 'Versi Aplikasi',
 
   // Dashboard Dynamic & Accessibility
@@ -308,7 +336,8 @@ const Map<String, String> idTranslations = {
 
   // Jamaah SOS & Banners
   'sosConfirmTitle': 'Kirim Sinyal SOS?',
-  'sosConfirmMessage': 'Apakah Anda yakin ingin mengirim sinyal darurat ke pendamping dan petugas?',
+  'sosConfirmMessage':
+      'Apakah Anda yakin ingin mengirim sinyal darurat ke pendamping dan petugas?',
   'sosSendButton': 'Kirim SOS',
   'sosSentTo': 'SOS terkirim ke',
   'sosButtonTitle': 'TOMBOL DARURAT SOS',
@@ -318,13 +347,16 @@ const Map<String, String> idTranslations = {
   'sosAnd': ' dan ',
   'sosFamilyCompanion': 'Pendamping Keluarga.',
   'sos24HoursResponse': 'Respons Cepat 24 Jam • Sektor Khusus Masjidil Haram',
-  'separatedWarning': 'Kemungkinan terpisah dari pendamping! Tetap tenang di tempat Anda.',
+  'separatedWarning':
+      'Kemungkinan terpisah dari pendamping! Tetap tenang di tempat Anda.',
   'officerAdviceTitle': 'HIMBAUAN PETUGAS SEKTOR',
-  'officerAdviceBody': 'Tetap bersama rombongan saat menuju jamarat. Pastikan botol air minum terisi penuh dan kenakan selalu gelang identitas Anda.',
+  'officerAdviceBody':
+      'Tetap bersama rombongan saat menuju jamarat. Pastikan botol air minum terisi penuh dan kenakan selalu gelang identitas Anda.',
 
   // Pendamping Dashboard
   'pendampingGreeting': 'Assalamu’alaikum',
-  'pendampingSubtitleDesc': 'Pantau keselamatan dan pergerakan jamaah binaan Anda secara real-time.',
+  'pendampingSubtitleDesc':
+      'Pantau keselamatan dan pergerakan jamaah binaan Anda secara real-time.',
   'monitoredPilgrims': 'Jamaah Dipantau',
   'syncSmartBand': 'Sinkron Gelang Pintar',
   'realtimePosition': 'Posisi Lapangan Real-Time',
@@ -348,7 +380,8 @@ const Map<String, String> idTranslations = {
   'endSos': 'Akhiri SOS',
   'sosStatusStandby': 'Status Darurat & SOS: Siaga',
   'sosStandbyBadge': 'SIAGA',
-  'sosStandbyDesc': 'Alarm getar & nada kencang otomatis berbunyi jika tombol gelang ditekan atau jarak jamaah melebihi 200m.',
+  'sosStandbyDesc':
+      'Alarm getar & nada kencang otomatis berbunyi jika tombol gelang ditekan atau jarak jamaah melebihi 200m.',
   'testAlarmSignal': 'Uji Sinyal Alarm',
   'responseCenter': 'Pusat Tanggap',
   'separatedAlertDetail': 'berada di luar radius aman (Terlalu jauh).',

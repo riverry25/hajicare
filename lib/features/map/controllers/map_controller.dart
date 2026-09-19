@@ -15,13 +15,7 @@ import '../services/poi_service.dart';
 import '../services/route_service.dart';
 
 /// State of the location search workflow.
-enum MapSearchState {
-  idle,
-  loading,
-  results,
-  empty,
-  error,
-}
+enum MapSearchState { idle, loading, results, empty, error }
 
 /// Controller managing reactive interactive map state, camera,
 /// real geolocation with live streaming, dynamic POIs, and Room Member markers.
@@ -38,10 +32,10 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     RouteService? routeService,
     GeocodingService? geocodingService,
     PoiService? poiService,
-  })  : _injectedRoomService = roomService,
-        _routeService = routeService ?? RouteService(),
-        _geocodingService = geocodingService ?? GeocodingService(),
-        _poiService = poiService ?? PoiService();
+  }) : _injectedRoomService = roomService,
+       _routeService = routeService ?? RouteService(),
+       _geocodingService = geocodingService ?? GeocodingService(),
+       _poiService = poiService ?? PoiService();
 
   RoomService? get _roomService {
     if (_injectedRoomService != null) return _injectedRoomService;
@@ -72,9 +66,16 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   final routeDurationSeconds = Rxn<int>();
 
   static const LatLng defaultMinaBase = LatLng(21.4135, 39.8930);
-  final currentUserLocation = Rxn<LatLng>(defaultMinaBase);
+  final currentUserLocation = Rxn<LatLng>();
   final isLocationLoading = false.obs;
   final locationError = RxnString();
+
+  // Active navigation tracking
+  LatLng? _activeDestination;
+  DateTime? _lastRerouteTime;
+  static const double _deviationThresholdMeters = 50.0;
+  static const Duration _rerouteCooldown = Duration(seconds: 15);
+  LatLng? _lastPoiFetchCoord;
 
   final isLiveTracking = false.obs;
   final gpsAccuracy = 0.0.obs;
@@ -130,18 +131,33 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   @override
   void onInit() {
     super.onInit();
-    final initialPos = currentUserLocation.value ?? defaultMinaBase;
-    _refreshNearbyPois(initialPos);
     _initRoomListener();
     _autoStartGps();
   }
 
   Future<void> _refreshNearbyPois(LatLng center) async {
+    // Spatial buffer: only refresh POIs if user moved >= 500m from last query coordinate
+    if (_lastPoiFetchCoord != null) {
+      final movedDist = calculateDistanceMeters(_lastPoiFetchCoord!, center);
+      if (movedDist < 500.0 && pois.isNotEmpty) {
+        debugPrint(
+          '[POI] User within 500m buffer (${movedDist.toInt()}m), keeping current POIs',
+        );
+        return;
+      }
+    }
+
+    _lastPoiFetchCoord = center;
+    debugPrint(
+      '[POI] Refreshing nearby POIs for center: (${center.latitude}, ${center.longitude})',
+    );
     final realPois = await _poiService.fetchRealNearbyPois(
       center: center,
       roomName: activeRoomName.value.isNotEmpty ? activeRoomName.value : null,
     );
-    pois.value = realPois;
+    if (realPois.isNotEmpty || pois.isEmpty) {
+      pois.value = realPois;
+    }
   }
 
   // ── ROOM MEMBER LISTENERS ──────────────────────────────────────────────────
@@ -391,7 +407,8 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       debugPrint('[MapController] GPS init error: $e');
       locationError.value = e.toString();
       isLocationLoading.value = false;
-      currentUserLocation.value = defaultMinaBase;
+      // Do NOT set currentUserLocation to defaultMinaBase on failure:
+      // real GPS location must remain null until an actual device fix is acquired.
     }
   }
 
@@ -431,6 +448,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     gpsAccuracy.value = position.accuracy;
     _refreshNearbyPois(newCoord);
 
+    // Live navigation: evaluate route deviation if active route is engaged
+    _checkRouteDeviation(newCoord);
+
     if (publishToRoom) {
       // Dual-gate throttling: minimum 8 seconds AND 10 meters distance
       final now = DateTime.now();
@@ -465,6 +485,71 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
         });
       });
     }
+  }
+
+  /// Checks if the user has deviated > 50m from the active walking polyline.
+  /// If deviated and cooldown (15s) has passed, triggers controlled reroute.
+  void _checkRouteDeviation(LatLng userPos) {
+    if (activeRoute.isEmpty ||
+        _activeDestination == null ||
+        isRouteLoading.value) {
+      return;
+    }
+
+    final now = DateTime.now();
+    if (_lastRerouteTime != null &&
+        now.difference(_lastRerouteTime!) < _rerouteCooldown) {
+      return;
+    }
+
+    final minDistance = _distanceToPolyline(userPos, activeRoute);
+    if (minDistance > _deviationThresholdMeters) {
+      debugPrint(
+        '[ROUTE] User deviated ${minDistance.toInt()}m from route. Initiating reroute...',
+      );
+      _lastRerouteTime = now;
+      _updateRouteTo(_activeDestination!, isReroute: true);
+    }
+  }
+
+  /// Computes cross-track distance in meters from point to polyline.
+  double _distanceToPolyline(LatLng point, List<LatLng> polyline) {
+    if (polyline.isEmpty) {
+      return double.infinity;
+    }
+    if (polyline.length == 1) {
+      return calculateDistanceMeters(point, polyline.first);
+    }
+
+    double minDistance = double.infinity;
+    for (int i = 0; i < polyline.length - 1; i++) {
+      final d = _distanceToSegment(point, polyline[i], polyline[i + 1]);
+      if (d < minDistance) {
+        minDistance = d;
+      }
+    }
+    return minDistance;
+  }
+
+  /// Distance from point P to segment [A, B] in meters.
+  double _distanceToSegment(LatLng p, LatLng a, LatLng b) {
+    final l2 =
+        (b.latitude - a.latitude) * (b.latitude - a.latitude) +
+        (b.longitude - a.longitude) * (b.longitude - a.longitude);
+    if (l2 == 0) return calculateDistanceMeters(p, a);
+
+    // Projection factor t
+    final t =
+        (((p.latitude - a.latitude) * (b.latitude - a.latitude) +
+                    (p.longitude - a.longitude) * (b.longitude - a.longitude)) /
+                l2)
+            .clamp(0.0, 1.0);
+
+    final proj = LatLng(
+      a.latitude + t * (b.latitude - a.latitude),
+      a.longitude + t * (b.longitude - a.longitude),
+    );
+    return calculateDistanceMeters(p, proj);
   }
 
   void _publishLocationToRoom(double lat, double lng) {
@@ -505,7 +590,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       selectedPoi.value = null;
       openBottomSheet();
     } else {
-      // POI Category filters: 3: Posko Medis, 4: Toilet & Wudhu, 5: Maktab, 6: Pos Pantau
+      // POI Category filters: 3: Posko Medis, 4: Toilet & Wudhu, 5: Maktab, 6: Pos Pantau, 7: Hotel
       selectedRoleFilter.value = 0;
       final matchingPois = filteredPois;
       if (matchingPois.isNotEmpty) {
@@ -540,14 +625,18 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
         return pois.where((p) => p.category == PoiCategory.medis).toList();
       case 4:
         return pois
-            .where((p) =>
-                p.category == PoiCategory.toilet ||
-                p.category == PoiCategory.wudhu)
+            .where(
+              (p) =>
+                  p.category == PoiCategory.toilet ||
+                  p.category == PoiCategory.wudhu,
+            )
             .toList();
       case 5:
         return pois.where((p) => p.category == PoiCategory.maktab).toList();
       case 6:
         return pois.where((p) => p.category == PoiCategory.posPantau).toList();
+      case 7:
+        return pois.where((p) => p.category == PoiCategory.hotel).toList();
       default:
         return pois;
     }
@@ -634,6 +723,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
   void clearRoute() {
     activeRoute.clear();
+    _activeDestination = null;
     routeError.value = null;
     routeDistanceMeters.value = null;
     routeDurationSeconds.value = null;
@@ -647,20 +737,26 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
   // ── ROUTE & DISTANCE ───────────────────────────────────────────────────────
 
-  Future<void> _updateRouteTo(LatLng destination) async {
+  Future<void> _updateRouteTo(
+    LatLng destination, {
+    bool isReroute = false,
+  }) async {
     final start = currentUserLocation.value;
     if (start == null) {
-      clearRoute();
+      if (!isReroute) clearRoute();
       routeError.value = 'Lokasi GPS Anda belum tersedia';
       return;
     }
 
+    _activeDestination = destination;
     final requestId = ++_routeRequestId;
 
     isRouteLoading.value = true;
     routeError.value = null;
-    routeDistanceMeters.value = null;
-    routeDurationSeconds.value = null;
+    if (!isReroute) {
+      routeDistanceMeters.value = null;
+      routeDurationSeconds.value = null;
+    }
 
     try {
       final result = await _routeService.getWalkingRoute(
@@ -681,16 +777,18 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       activeRoute.assignAll(result.points);
       routeDistanceMeters.value = result.distanceMeters;
       routeDurationSeconds.value = result.durationSeconds;
-      _fitCameraToRoute(start, destination, result.points);
+      if (!isReroute) {
+        _fitCameraToRoute(start, destination, result.points);
+      }
     } on RouteException catch (e) {
       if (requestId != _routeRequestId) return;
       debugPrint('[ROUTE] ERROR RouteException: ${e.message}');
-      activeRoute.clear();
+      if (!isReroute) activeRoute.clear();
       routeError.value = e.message;
     } catch (e) {
       if (requestId != _routeRequestId) return;
       debugPrint('[ROUTE] ERROR unknown: $e');
-      activeRoute.clear();
+      if (!isReroute) activeRoute.clear();
       routeError.value = 'Terjadi kesalahan saat mencari rute';
     } finally {
       if (requestId == _routeRequestId) {
@@ -799,18 +897,6 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     );
   }
 
-  List<LatLng> generateWalkingWaypoints(LatLng start, LatLng end) {
-    final midLng = (start.longitude + end.longitude) / 2;
-    final midLat = (start.latitude + end.latitude) / 2;
-    return [
-      start,
-      LatLng(start.latitude, midLng),
-      LatLng(midLat, midLng),
-      LatLng(end.latitude, midLng),
-      end,
-    ];
-  }
-
   // ── CAMERA ACTIONS & FOCUS ─────────────────────────────────────────────────
 
   Future<void> moveToCurrentLocation() async {
@@ -913,7 +999,10 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (isMapAttached) {
             flutterMapController.move(
-              LatLng(latTween.evaluate(animation), lngTween.evaluate(animation)),
+              LatLng(
+                latTween.evaluate(animation),
+                lngTween.evaluate(animation),
+              ),
               zoomTween.evaluate(animation),
             );
           }

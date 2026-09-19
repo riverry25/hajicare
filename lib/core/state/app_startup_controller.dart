@@ -7,11 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../routes/app_routes.dart';
 import 'hajicare_controller.dart';
 
-enum StartupState {
-  checking,
-  authenticated,
-  unauthenticated,
-}
+enum StartupState { checking, authenticated, unauthenticated }
 
 /// Centralized controller & Single Source of Truth (SSOT) for:
 /// - App startup bootstrap & single-destination routing
@@ -109,7 +105,9 @@ class AppStartupController extends GetxController {
       debugPrint('[AppStartupController] Signing out...');
       await FirebaseAuth.instance.signOut();
     } catch (e) {
-      debugPrint('[AppStartupController] Error during FirebaseAuth.signOut: $e');
+      debugPrint(
+        '[AppStartupController] Error during FirebaseAuth.signOut: $e',
+      );
     }
 
     try {
@@ -117,10 +115,15 @@ class AppStartupController extends GetxController {
       await prefs.remove(HajiCareController.keyActiveRoomId);
       await prefs.remove(HajiCareController.keyUserRole);
       if (Get.isRegistered<HajiCareController>()) {
-        await Get.find<HajiCareController>().applyUserData(roleStr: 'jamaah', roomId: null);
+        await Get.find<HajiCareController>().applyUserData(
+          roleStr: 'jamaah',
+          roomId: null,
+        );
       }
     } catch (e) {
-      debugPrint('[AppStartupController] Error clearing prefs during signOut: $e');
+      debugPrint(
+        '[AppStartupController] Error clearing prefs during signOut: $e',
+      );
     } finally {
       startupState.value = StartupState.unauthenticated;
       Get.offAllNamed(AppRoutes.login);
@@ -150,7 +153,9 @@ class AppStartupController extends GetxController {
       final rememberMe = await isRememberMe();
       if (!rememberMe) {
         // If user logged in without Remember Me, terminate persistent session on restart
-        debugPrint('[AppStartupController] Remember Me was OFF. Ending session.');
+        debugPrint(
+          '[AppStartupController] Remember Me was OFF. Ending session.',
+        );
         await FirebaseAuth.instance.signOut();
       }
 
@@ -184,8 +189,12 @@ class AppStartupController extends GetxController {
         final data = doc.data();
         final role = (data?['role'] as String?)?.toLowerCase() ?? 'jamaah';
         final activeRoomId = (data?['activeRoomId'] as String?)?.trim();
-        final effectiveRoomId = (activeRoomId != null && activeRoomId.isNotEmpty) ? activeRoomId : null;
-        final rawName = data?['name'] as String? ?? data?['displayName'] as String?;
+        final effectiveRoomId =
+            (activeRoomId != null && activeRoomId.isNotEmpty)
+            ? activeRoomId
+            : null;
+        final rawName =
+            data?['name'] as String? ?? data?['displayName'] as String?;
 
         // Immediately sync to HajiCareController if registered
         if (Get.isRegistered<HajiCareController>()) {
@@ -209,15 +218,24 @@ class AppStartupController extends GetxController {
         return AppRoutes.dashboardJamaah;
       }
     } catch (e) {
-      debugPrint('[AppStartupController] Firestore role check skipped/timed out: $e');
+      debugPrint(
+        '[AppStartupController] Firestore role check skipped/timed out: $e',
+      );
     }
 
     // Fallback: Check local cache if Firestore is offline or timed out
     try {
       final prefs = await _getPrefs();
-      final cachedRoom = prefs.getString(HajiCareController.keyActiveRoomId)?.trim();
-      final effectiveCachedRoom = (cachedRoom != null && cachedRoom.isNotEmpty) ? cachedRoom : null;
-      final cachedRole = (prefs.getString(HajiCareController.keyUserRole) ?? 'jamaah').trim().toLowerCase();
+      final cachedRoom = prefs
+          .getString(HajiCareController.keyActiveRoomId)
+          ?.trim();
+      final effectiveCachedRoom = (cachedRoom != null && cachedRoom.isNotEmpty)
+          ? cachedRoom
+          : null;
+      final cachedRole =
+          (prefs.getString(HajiCareController.keyUserRole) ?? 'jamaah')
+              .trim()
+              .toLowerCase();
 
       if (Get.isRegistered<HajiCareController>()) {
         final hajicare = Get.find<HajiCareController>();

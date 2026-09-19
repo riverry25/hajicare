@@ -45,8 +45,8 @@ class _CommunicationGestureDialogState
     final filteredPhrases = _selectedCategory == 'Semua'
         ? controller.phrases
         : controller.phrases
-            .where((p) => p.category == _selectedCategory)
-            .toList();
+              .where((p) => p.category == _selectedCategory)
+              .toList();
 
     return Container(
       constraints: BoxConstraints(
@@ -114,7 +114,9 @@ class _CommunicationGestureDialogState
                   ),
                   child: Icon(
                     Icons.record_voice_over_rounded,
-                    color: isDark ? AppColors.goldLight : AppColors.espressoDark,
+                    color: isDark
+                        ? AppColors.goldLight
+                        : AppColors.espressoDark,
                     size: 22,
                   ),
                 ),
@@ -273,15 +275,19 @@ class _CommunicationGestureDialogState
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected
-              ? (isDark ? AppColors.darkPrimaryContainer : AppColors.espressoDark)
-              : (isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream),
+              ? (isDark
+                    ? AppColors.darkPrimaryContainer
+                    : AppColors.espressoDark)
+              : (isDark
+                    ? AppColors.darkSurfaceContainer
+                    : AppColors.canvasCream),
           borderRadius: BorderRadius.circular(AppRadius.pill),
           border: Border.all(
             color: isSelected
                 ? (isDark ? AppColors.goldLight : AppColors.espressoDark)
                 : (isDark
-                    ? AppColors.darkOutlineVariant
-                    : AppColors.goldPrimary.withValues(alpha: 0.2)),
+                      ? AppColors.darkOutlineVariant
+                      : AppColors.goldPrimary.withValues(alpha: 0.2)),
           ),
         ),
         child: Text(
@@ -306,32 +312,29 @@ class _CommunicationGestureDialogState
     required Color headingColor,
   }) {
     return Obx(() {
-      final isCurrentlyPlaying =
-          controller.activePhrase.value == phrase.arabic;
+      final isCurrentlyPlaying = controller.activePhrase.value == phrase.arabic;
 
       return Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: phrase.isUrgent
-              ? (isDark
-                  ? const Color(0xFF2E1517)
-                  : const Color(0xFFFFECEF))
+              ? (isDark ? const Color(0xFF2E1517) : const Color(0xFFFFECEF))
               : (isCurrentlyPlaying
-                  ? (isDark
-                      ? AppColors.goldPrimary.withValues(alpha: 0.18)
-                      : AppColors.goldLight.withValues(alpha: 0.25))
-                  : (isDark
-                      ? AppColors.darkSurfaceContainer
-                      : AppColors.cardBgColor(context))),
+                    ? (isDark
+                          ? AppColors.goldPrimary.withValues(alpha: 0.18)
+                          : AppColors.goldLight.withValues(alpha: 0.25))
+                    : (isDark
+                          ? AppColors.darkSurfaceContainer
+                          : AppColors.cardBgColor(context))),
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
             color: isCurrentlyPlaying
                 ? (isDark ? AppColors.goldLight : AppColors.goldPrimary)
                 : (phrase.isUrgent
-                    ? AppColors.sosEmergency.withValues(alpha: 0.45)
-                    : (isDark
-                        ? AppColors.darkOutlineVariant
-                        : AppColors.cardBorderColor(context))),
+                      ? AppColors.sosEmergency.withValues(alpha: 0.45)
+                      : (isDark
+                            ? AppColors.darkOutlineVariant
+                            : AppColors.cardBorderColor(context))),
             width: isCurrentlyPlaying ? 2 : 1,
           ),
           boxShadow: [
@@ -439,31 +442,32 @@ class _CommunicationGestureDialogState
                     color: phrase.isUrgent
                         ? AppColors.sosEmergency
                         : (isCurrentlyPlaying
-                            ? (isDark
-                                ? AppColors.goldLight
-                                : AppColors.espressoDark)
-                            : (isDark
-                                ? AppColors.darkSurface
-                                : AppColors.canvasCream)),
+                              ? (isDark
+                                    ? AppColors.goldLight
+                                    : AppColors.espressoDark)
+                              : (isDark
+                                    ? AppColors.darkSurface
+                                    : AppColors.canvasCream)),
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: isCurrentlyPlaying
                           ? (isDark
-                              ? AppColors.goldLight
-                              : AppColors.goldPrimary)
+                                ? AppColors.goldLight
+                                : AppColors.goldPrimary)
                           : (isDark
-                              ? AppColors.darkOutlineVariant
-                              : AppColors.cardBorderColor(context)),
+                                ? AppColors.darkOutlineVariant
+                                : AppColors.cardBorderColor(context)),
                       width: 1.5,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: (phrase.isUrgent
-                                ? AppColors.sosEmergency
-                                : (isDark
-                                    ? AppColors.goldLight
-                                    : AppColors.espressoDark))
-                            .withValues(alpha: 0.2),
+                        color:
+                            (phrase.isUrgent
+                                    ? AppColors.sosEmergency
+                                    : (isDark
+                                          ? AppColors.goldLight
+                                          : AppColors.espressoDark))
+                                .withValues(alpha: 0.2),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
@@ -475,11 +479,11 @@ class _CommunicationGestureDialogState
                         : Icons.volume_up_rounded,
                     color: phrase.isUrgent || isCurrentlyPlaying
                         ? (isCurrentlyPlaying && isDark
-                            ? AppColors.espressoDark
-                            : Colors.white)
+                              ? AppColors.espressoDark
+                              : Colors.white)
                         : (isDark
-                            ? AppColors.goldLight
-                            : AppColors.espressoDark),
+                              ? AppColors.goldLight
+                              : AppColors.espressoDark),
                     size: 24,
                   ),
                 ),

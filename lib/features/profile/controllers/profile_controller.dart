@@ -49,7 +49,10 @@ class ProfileController extends GetxController {
     }
 
     try {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
       if (doc.exists) {
         final data = doc.data();
         if (data != null) {
@@ -103,10 +106,9 @@ class ProfileController extends GetxController {
       await user.reload();
 
       // 2. Update Firestore with merge (safe even if doc doesn't exist)
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .set({'displayName': trimmed}, SetOptions(merge: true));
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'displayName': trimmed,
+      }, SetOptions(merge: true));
 
       // 3. Reflect in reactive state immediately
       displayName.value = trimmed;

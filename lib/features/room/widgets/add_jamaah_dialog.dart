@@ -46,7 +46,8 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
 
     final user = FirebaseAuth.instance.currentUser;
     final currentUid = user?.uid ?? '';
-    final currentName = (user?.displayName != null && user!.displayName!.trim().isNotEmpty)
+    final currentName =
+        (user?.displayName != null && user!.displayName!.trim().isNotEmpty)
         ? user.displayName!.trim()
         : 'Pendamping';
     final email = _emailCtrl.text.trim();
@@ -66,7 +67,8 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
 
       AppDialog.success(
         title: 'Undangan Terkirim',
-        message: 'Undangan telah berhasil dikirim ke "$email". Jamaah akan menerima notifikasi untuk menerima atau menolak.',
+        message:
+            'Undangan telah berhasil dikirim ke "$email". Jamaah akan menerima notifikasi untuk menerima atau menolak.',
       );
     } catch (e) {
       if (!mounted) return;
@@ -84,7 +86,9 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
     final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = isDark ? AppColors.darkTextHeading : AppColors.espressoDark;
+    final headingColor = isDark
+        ? AppColors.darkTextHeading
+        : AppColors.espressoDark;
     final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
     final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
 
@@ -93,7 +97,9 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.lg),
         side: BorderSide(
-          color: isDark ? Colors.white.withValues(alpha: 0.1) : AppColors.goldLight.withValues(alpha: 0.3),
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.1)
+              : AppColors.goldLight.withValues(alpha: 0.3),
         ),
       ),
       insetPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -181,7 +187,9 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppRadius.md),
                       borderSide: BorderSide(
-                        color: isDark ? AppColors.darkOutlineVariant : AppColors.goldLight,
+                        color: isDark
+                            ? AppColors.darkOutlineVariant
+                            : AppColors.goldLight,
                       ),
                     ),
                     enabledBorder: OutlineInputBorder(
@@ -220,12 +228,18 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
                             borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
                           side: BorderSide(
-                            color: isDark ? AppColors.darkOutlineVariant : AppColors.goldLight,
+                            color: isDark
+                                ? AppColors.darkOutlineVariant
+                                : AppColors.goldLight,
                           ),
                         ),
-                        onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
+                        onPressed: _isSubmitting
+                            ? null
+                            : () => Navigator.of(context).pop(),
                         child: Text(
-                          context.tr('cancel').isEmpty ? 'Batal' : context.tr('cancel'),
+                          context.tr('cancel').isEmpty
+                              ? 'Batal'
+                              : context.tr('cancel'),
                           style: TextStyle(
                             color: isDark ? Colors.white70 : AppColors.textBody,
                             fontWeight: FontWeight.w600,
@@ -258,7 +272,10 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
                               )
                             : const Text(
                                 'Kirim Undangan',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
                               ),
                       ),
                     ),

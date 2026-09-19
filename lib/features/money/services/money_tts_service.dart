@@ -38,10 +38,15 @@ class MoneyTtsService {
   }
 
   /// Speaks the results of a single photo inference once.
-  Future<void> speakResults(List<MoneyDetection> detections, double totalAmount) async {
+  Future<void> speakResults(
+    List<MoneyDetection> detections,
+    double totalAmount,
+  ) async {
     if (!isVoiceEnabled || !_isInitialized) return;
     if (detections.isEmpty) {
-      await speak('Belum ada uang terdeteksi. Pastikan uang terlihat jelas dan coba foto lagi.');
+      await speak(
+        'Belum ada uang terdeteksi. Pastikan uang terlihat jelas dan coba foto lagi.',
+      );
       return;
     }
     final speechSentence = _buildSpeechSentence(detections, totalAmount);
@@ -109,7 +114,9 @@ class MoneyTtsService {
       itemsListStr = '$allExceptLast, dan ${spokenItems.last}';
     }
 
-    final totalSpoken = RiyalCurrencyHelper.totalToSpokenIndonesian(totalAmount);
+    final totalSpoken = RiyalCurrencyHelper.totalToSpokenIndonesian(
+      totalAmount,
+    );
     return 'Terdeteksi $countWords uang. $itemsListStr. Total $totalSpoken.';
   }
 

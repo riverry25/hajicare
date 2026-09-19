@@ -49,6 +49,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
     FilterChipItem(label: 'Toilet & Wudhu', icon: Icons.wc_rounded),
     FilterChipItem(label: 'Maktab', icon: Icons.holiday_village_rounded),
     FilterChipItem(label: 'Pos Pantau', icon: Icons.flag_rounded),
+    FilterChipItem(label: 'Hotel', icon: Icons.hotel_rounded),
   ];
 
   @override
@@ -374,117 +375,121 @@ class _CollapsedMemberBarState extends State<_CollapsedMemberBar>
                   color: isDark
                       ? AppColors.darkSurface
                       : AppColors.surfaceWhite,
-                borderRadius: BorderRadius.circular(AppRadius.xl),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.08)
-                      : AppColors.espressoDark.withValues(alpha: 0.06),
-                  width: 1,
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : AppColors.espressoDark.withValues(alpha: 0.06),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(
+                        alpha: isDark ? 0.25 : 0.08,
+                      ),
+                      blurRadius: 16,
+                      spreadRadius: 0,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.08),
-                    blurRadius: 16,
-                    spreadRadius: 0,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: AppColors.goldPrimary.withValues(
-                        alpha: isDark ? 0.25 : 0.16,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AppColors.goldPrimary.withValues(
+                          alpha: isDark ? 0.25 : 0.16,
+                        ),
+                        shape: BoxShape.circle,
                       ),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.groups_rounded,
-                      color: isDark
-                          ? AppColors.goldPrimary
-                          : AppColors.espressoDark,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          label,
-                          style: AppTypography.titleSmall.copyWith(
-                            color: isDark
-                                ? Colors.white
-                                : AppColors.espressoDark,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Tarik ke atas atau ketuk untuk detail',
-                          style: AppTypography.captionSmall.copyWith(
-                            color: isDark ? Colors.white60 : AppColors.textBody,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkSurfaceContainer
-                          : AppColors.canvasCream,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      border: Border.all(
+                      child: Icon(
+                        Icons.groups_rounded,
                         color: isDark
-                            ? AppColors.goldPrimary.withValues(alpha: 0.3)
-                            : AppColors.espressoDark.withValues(alpha: 0.1),
-                        width: 1,
+                            ? AppColors.goldPrimary
+                            : AppColors.espressoDark,
+                        size: 20,
                       ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Buka',
-                          style: TextStyle(
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            label,
+                            style: AppTypography.titleSmall.copyWith(
+                              color: isDark
+                                  ? Colors.white
+                                  : AppColors.espressoDark,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Tarik ke atas atau ketuk untuk detail',
+                            style: AppTypography.captionSmall.copyWith(
+                              color: isDark
+                                  ? Colors.white60
+                                  : AppColors.textBody,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppColors.darkSurfaceContainer
+                            : AppColors.canvasCream,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        border: Border.all(
+                          color: isDark
+                              ? AppColors.goldPrimary.withValues(alpha: 0.3)
+                              : AppColors.espressoDark.withValues(alpha: 0.1),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Buka',
+                            style: TextStyle(
+                              color: isDark
+                                  ? AppColors.goldPrimary
+                                  : AppColors.espressoDark,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.keyboard_arrow_up_rounded,
                             color: isDark
                                 ? AppColors.goldPrimary
                                 : AppColors.espressoDark,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
+                            size: 16,
                           ),
-                        ),
-                        const SizedBox(width: 4),
-                        Icon(
-                          Icons.keyboard_arrow_up_rounded,
-                          color: isDark
-                              ? AppColors.goldPrimary
-                              : AppColors.espressoDark,
-                          size: 16,
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
 
 extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
@@ -558,14 +563,16 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
           );
         }),
 
-        // 3. Safe Radius Circle Layer — changes on GPS update
-        Obx(
-          () => fmap.CircleLayer(
+        // 3. Safe Radius Circle Layer — changes on GPS update (only if real GPS is available)
+        Obx(() {
+          final userLocation = mapCtrl.currentUserLocation.value;
+          if (userLocation == null) {
+            return const SizedBox.shrink();
+          }
+          return fmap.CircleLayer(
             circles: [
               fmap.CircleMarker(
-                point:
-                    mapCtrl.currentUserLocation.value ??
-                    MapController.defaultMinaBase,
+                point: userLocation,
                 radius: mapCtrl.safeRadiusMeters.value,
                 useRadiusInMeter: true,
                 color: AppColors.statusSafe.withValues(alpha: 0.08),
@@ -573,25 +580,24 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                 borderStrokeWidth: 2.0,
               ),
             ],
-          ),
-        ),
+          );
+        }),
 
         // 4. Marker Layer — rebuilds on room members, location, and filter change
         Obx(() {
-          final userLocation =
-              mapCtrl.currentUserLocation.value ??
-              MapController.defaultMinaBase;
+          final userLocation = mapCtrl.currentUserLocation.value;
           final searchResult = mapCtrl.selectedSearchResult.value;
 
           return fmap.MarkerLayer(
             markers: [
-              // Current User Marker ("Anda") - Exactly ONE
-              fmap.Marker(
-                point: userLocation,
-                width: 130,
-                height: 75,
-                child: RepaintBoundary(child: _buildCompanionMarker()),
-              ),
+              // Current User Marker ("Anda") - Exactly ONE, rendered ONLY when real GPS exists
+              if (userLocation != null)
+                fmap.Marker(
+                  point: userLocation,
+                  width: 130,
+                  height: 75,
+                  child: RepaintBoundary(child: _buildCompanionMarker()),
+                ),
 
               // Room Member Markers (filtered, excluding current user)
               if (mapCtrl.roomMembers.isNotEmpty)
@@ -1066,11 +1072,15 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
 
   List<fmap.Marker> _buildPoiMarkers(MapController mapCtrl) {
     final isDark = AppColors.isDark(context);
-    final userPos = mapCtrl.currentUserLocation.value ?? MapController.defaultMinaBase;
+    final userPos =
+        mapCtrl.currentUserLocation.value ?? MapController.defaultMinaBase;
 
     return mapCtrl.filteredPois.map((poi) {
       final isSelected = mapCtrl.selectedPoi.value?.id == poi.id;
-      final distMeters = mapCtrl.calculateDistanceMeters(userPos, poi.coordinate);
+      final distMeters = mapCtrl.calculateDistanceMeters(
+        userPos,
+        poi.coordinate,
+      );
       final distText = MapController.formatDistance(distMeters);
 
       return fmap.Marker(
@@ -1139,13 +1149,17 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: poi.color.withValues(alpha: isSelected ? 0.55 : 0.35),
+                                color: poi.color.withValues(
+                                  alpha: isSelected ? 0.55 : 0.35,
+                                ),
                                 blurRadius: isSelected ? 12 : 8,
                                 spreadRadius: isSelected ? 1 : 0,
                                 offset: const Offset(0, 3),
                               ),
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.15),
+                                color: Colors.black.withValues(
+                                  alpha: isDark ? 0.35 : 0.15,
+                                ),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
                               ),
@@ -1193,13 +1207,15 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                       color: isSelected
                           ? poi.color
                           : (isDark
-                              ? Colors.white.withValues(alpha: 0.15)
-                              : Colors.black.withValues(alpha: 0.08)),
+                                ? Colors.white.withValues(alpha: 0.15)
+                                : Colors.black.withValues(alpha: 0.08)),
                       width: isSelected ? 1.5 : 0.8,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.12),
+                        color: Colors.black.withValues(
+                          alpha: isDark ? 0.35 : 0.12,
+                        ),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
@@ -1223,9 +1239,13 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            color: isDark ? Colors.white : AppColors.espressoDark,
+                            color: isDark
+                                ? Colors.white
+                                : AppColors.espressoDark,
                             fontSize: 9.5,
-                            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
+                            fontWeight: isSelected
+                                ? FontWeight.w800
+                                : FontWeight.w700,
                             letterSpacing: -0.2,
                           ),
                         ),
@@ -1234,7 +1254,9 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                       Text(
                         '· $distText',
                         style: TextStyle(
-                          color: isSelected ? poi.color : (isDark ? Colors.white60 : AppColors.textMuted),
+                          color: isSelected
+                              ? poi.color
+                              : (isDark ? Colors.white60 : AppColors.textMuted),
                           fontSize: 8.5,
                           fontWeight: FontWeight.w600,
                         ),
@@ -1305,4 +1327,3 @@ class _TrianglePointerPainter extends CustomPainter {
   bool shouldRepaint(covariant _TrianglePointerPainter oldDelegate) =>
       oldDelegate.color != color || oldDelegate.borderColor != borderColor;
 }
-

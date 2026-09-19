@@ -15,11 +15,7 @@ import '../services/riyal_currency_helper.dart';
 import '../services/smart_multi_pass_detector.dart';
 
 /// State modes for photo-based money recognition.
-enum RecognitionMode {
-  camera,
-  processing,
-  result,
-}
+enum RecognitionMode { camera, processing, result }
 
 class MoneyRecognitionScreen extends StatefulWidget {
   const MoneyRecognitionScreen({super.key});
@@ -78,10 +74,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
   Future<void> _initServices() async {
     await _ttsService.init();
     try {
-      _yolo = YOLO(
-        modelPath: _modelAssetPath,
-        task: YOLOTask.detect,
-      );
+      _yolo = YOLO(modelPath: _modelAssetPath, task: YOLOTask.detect);
       final loaded = await _yolo.loadModel();
 
       _multiPassDetector = SmartMultiPassDetector(
@@ -173,17 +166,17 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
       );
 
       // 4. Run Smart Multi-Pass Pipeline (Pass 1 Baseline -> Pass 2 Enhanced -> Pass 3 Tiled -> IoU Merge)
-      final MultiPassDetectionResult result =
-          await _multiPassDetector.processImage(
-        photoBytes,
-        onStatusUpdate: (status) {
-          if (mounted) {
-            setState(() {
-              _processingStatus = status;
-            });
-          }
-        },
-      );
+      final MultiPassDetectionResult result = await _multiPassDetector
+          .processImage(
+            photoBytes,
+            onStatusUpdate: (status) {
+              if (mounted) {
+                setState(() {
+                  _processingStatus = status;
+                });
+              }
+            },
+          );
 
       if (!mounted) return;
 
@@ -196,7 +189,10 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
       });
 
       // 5. Speak announcement once in Indonesian
-      await _ttsService.speakResults(result.finalDetections, result.totalAmount);
+      await _ttsService.speakResults(
+        result.finalDetections,
+        result.totalAmount,
+      );
     } catch (e) {
       debugPrint('Capture & inference pipeline error: $e');
       if (!mounted) return;
@@ -305,8 +301,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
             _buildCameraView(),
 
           // 2. Processing Loading Overlay with dynamic pass status
-          if (_mode == RecognitionMode.processing)
-            _buildProcessingOverlay(),
+          if (_mode == RecognitionMode.processing) _buildProcessingOverlay(),
 
           // 3. Error Overlay if model failed to load
           if (_modelError != null && _mode == RecognitionMode.camera)
@@ -495,7 +490,9 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                   width: 46,
                   height: 46,
                   child: Icon(
-                    _isTorchOn ? Icons.flash_on_rounded : Icons.flash_off_rounded,
+                    _isTorchOn
+                        ? Icons.flash_on_rounded
+                        : Icons.flash_off_rounded,
                     color: _isTorchOn ? AppColors.espressoDark : Colors.white,
                     size: 22,
                   ),
@@ -699,10 +696,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                   height: 86,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.goldPrimary,
-                      width: 4,
-                    ),
+                    border: Border.all(color: AppColors.goldPrimary, width: 4),
                     boxShadow: [
                       BoxShadow(
                         color: AppColors.goldPrimary.withValues(alpha: 0.35),
@@ -827,8 +821,8 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     final bool hasDetections = _capturedDetections.isNotEmpty;
 
-    final double aspectRatio = (_capturedImageSize != null &&
-            _capturedImageSize!.height > 0)
+    final double aspectRatio =
+        (_capturedImageSize != null && _capturedImageSize!.height > 0)
         ? (_capturedImageSize!.width / _capturedImageSize!.height)
         : (3 / 4);
 
@@ -849,7 +843,10 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                  icon: const Icon(
+                    Icons.arrow_back_rounded,
+                    color: Colors.white,
+                  ),
                   tooltip: 'Foto Ulang',
                   onPressed: _retakePhoto,
                 ),
@@ -926,10 +923,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                       child: Stack(
                         fit: StackFit.expand,
                         children: [
-                          Image.memory(
-                            _capturedImageBytes!,
-                            fit: BoxFit.fill,
-                          ),
+                          Image.memory(_capturedImageBytes!, fit: BoxFit.fill),
                           CustomPaint(
                             painter: MoneyBoundingBoxPainter(
                               detections: _capturedDetections,
@@ -952,7 +946,9 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                         color: AppColors.statusPositive.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(AppRadius.md),
                         border: Border.all(
-                          color: AppColors.statusPositive.withValues(alpha: 0.4),
+                          color: AppColors.statusPositive.withValues(
+                            alpha: 0.4,
+                          ),
                           width: 1.2,
                         ),
                       ),
@@ -978,10 +974,14 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                     Container(
                       padding: const EdgeInsets.all(AppSpacing.md),
                       decoration: BoxDecoration(
-                        color: AppColors.distanceWarning.withValues(alpha: 0.15),
+                        color: AppColors.distanceWarning.withValues(
+                          alpha: 0.15,
+                        ),
                         borderRadius: BorderRadius.circular(AppRadius.md),
                         border: Border.all(
-                          color: AppColors.distanceWarning.withValues(alpha: 0.4),
+                          color: AppColors.distanceWarning.withValues(
+                            alpha: 0.4,
+                          ),
                         ),
                       ),
                       child: Row(
@@ -1032,10 +1032,11 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                     const SizedBox(height: 8),
                     ...List.generate(_capturedDetections.length, (index) {
                       final item = _capturedDetections[index];
-                      final color = MoneyBoundingBoxPainter.getDenominationColor(
-                        item.amount,
-                        item.isCoin,
-                      );
+                      final color =
+                          MoneyBoundingBoxPainter.getDenominationColor(
+                            item.amount,
+                            item.isCoin,
+                          );
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 8),
@@ -1044,7 +1045,9 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.primaryContainer.withValues(alpha: 0.7),
+                          color: AppColors.primaryContainer.withValues(
+                            alpha: 0.7,
+                          ),
                           borderRadius: BorderRadius.circular(AppRadius.md),
                           border: Border.all(
                             color: color.withValues(alpha: 0.5),
@@ -1105,10 +1108,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                       gradient: const LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [
-                          AppColors.espressoDark,
-                          Color(0xFF22160E),
-                        ],
+                        colors: [AppColors.espressoDark, Color(0xFF22160E)],
                       ),
                       borderRadius: BorderRadius.circular(AppRadius.xl),
                       border: Border.all(
@@ -1158,7 +1158,9 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                           'Terbilang: ${RiyalCurrencyHelper.totalToSpokenIndonesian(_totalAmount)}',
                           textAlign: TextAlign.center,
                           style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.canvasCream.withValues(alpha: 0.85),
+                            color: AppColors.canvasCream.withValues(
+                              alpha: 0.85,
+                            ),
                             fontStyle: FontStyle.italic,
                           ),
                         ),
@@ -1193,10 +1195,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                                 _totalAmount,
                               );
                             },
-                            icon: const Icon(
-                              Icons.volume_up_rounded,
-                              size: 22,
-                            ),
+                            icon: const Icon(Icons.volume_up_rounded, size: 22),
                             label: Text(
                               'Bacakan Suara',
                               style: AppTypography.labelLarge.copyWith(
@@ -1416,7 +1415,9 @@ class MoneyBoundingBoxPainter extends CustomPainter {
     if (isCoin) return const Color(0xFFF59E0B); // Amber / coin
     if (amount >= 500) return const Color(0xFF9333EA); // Purple (500 SAR)
     if (amount >= 200) return const Color(0xFF8D6E63); // Brown (200 SAR)
-    if (amount >= 100) return const Color(0xFFE11D48); // Red / Crimson (100 SAR)
+    if (amount >= 100) {
+      return const Color(0xFFE11D48); // Red / Crimson (100 SAR)
+    }
     if (amount >= 50) return const Color(0xFF16A34A); // Green (50 SAR)
     if (amount >= 20) return const Color(0xFFEA580C); // Deep orange (20 SAR)
     if (amount >= 10) return const Color(0xFFD97706); // Amber (10 SAR)

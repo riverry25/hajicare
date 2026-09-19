@@ -50,39 +50,55 @@ class NotificationController extends GetxController {
   /// Guarded against duplicate subscriptions for the same user.
   void startListening(String uid) {
     if (_currentListeningUid == uid && _notifSub != null) {
-      debugPrint('[NotificationController] Already actively listening for uid: $uid (skipping duplicate)');
+      debugPrint(
+        '[NotificationController] Already actively listening for uid: $uid (skipping duplicate)',
+      );
       return;
     }
 
     stopListening();
     _currentListeningUid = uid;
     isLoading.value = true;
-    debugPrint('[NotificationController] Subscribing realtime listeners for uid: $uid');
+    debugPrint(
+      '[NotificationController] Subscribing realtime listeners for uid: $uid',
+    );
 
     // 1. Notifications Stream
-    _notifSub = _notificationService.getUserNotificationsStream(uid).listen(
-      (items) {
-        notifications.assignAll(items);
-        unreadCount.value = items.where((n) => !n.isRead).length;
-        isLoading.value = false;
-        debugPrint('[NotificationController] Received ${items.length} notifications (${unreadCount.value} unread)');
-      },
-      onError: (err) {
-        isLoading.value = false;
-        debugPrint('[NotificationController] Notification listener error: $err');
-      },
-    );
+    _notifSub = _notificationService
+        .getUserNotificationsStream(uid)
+        .listen(
+          (items) {
+            notifications.assignAll(items);
+            unreadCount.value = items.where((n) => !n.isRead).length;
+            isLoading.value = false;
+            debugPrint(
+              '[NotificationController] Received ${items.length} notifications (${unreadCount.value} unread)',
+            );
+          },
+          onError: (err) {
+            isLoading.value = false;
+            debugPrint(
+              '[NotificationController] Notification listener error: $err',
+            );
+          },
+        );
 
     // 2. Pending Invitations Stream
-    _invitationSub = _roomService.getPendingInvitationsStream(uid).listen(
-      (invs) {
-        pendingInvitations.assignAll(invs);
-        debugPrint('[NotificationController] Received ${invs.length} pending invitations');
-      },
-      onError: (err) {
-        debugPrint('[NotificationController] Invitation listener error: $err');
-      },
-    );
+    _invitationSub = _roomService
+        .getPendingInvitationsStream(uid)
+        .listen(
+          (invs) {
+            pendingInvitations.assignAll(invs);
+            debugPrint(
+              '[NotificationController] Received ${invs.length} pending invitations',
+            );
+          },
+          onError: (err) {
+            debugPrint(
+              '[NotificationController] Invitation listener error: $err',
+            );
+          },
+        );
   }
 
   /// Cleanly closes active subscriptions and resets state.
@@ -176,7 +192,8 @@ class NotificationController extends GetxController {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    final userName = (user.displayName != null && user.displayName!.trim().isNotEmpty)
+    final userName =
+        (user.displayName != null && user.displayName!.trim().isNotEmpty)
         ? user.displayName!.trim()
         : 'Jamaah';
 
@@ -202,7 +219,8 @@ class NotificationController extends GetxController {
         AppDialog.success(
           context: context,
           title: 'Undangan Diterima!',
-          message: 'Anda telah berhasil bergabung ke dalam room "${invitation.roomName}".',
+          message:
+              'Anda telah berhasil bergabung ke dalam room "${invitation.roomName}".',
         );
       }
     } catch (e) {
@@ -246,7 +264,8 @@ class NotificationController extends GetxController {
         AppDialog.info(
           context: context,
           title: 'Undangan Ditolak',
-          message: 'Anda menolak undangan untuk bergabung ke room "${invitation.roomName}".',
+          message:
+              'Anda menolak undangan untuk bergabung ke room "${invitation.roomName}".',
         );
       }
     } catch (e) {

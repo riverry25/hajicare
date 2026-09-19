@@ -82,8 +82,12 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    final controller = Get.isRegistered<HajiCareController>() ? Get.find<HajiCareController>() : null;
-    final actorRole = controller?.role == UserRole.admin ? 'admin' : 'pendamping';
+    final controller = Get.isRegistered<HajiCareController>()
+        ? Get.find<HajiCareController>()
+        : null;
+    final actorRole = controller?.role == UserRole.admin
+        ? 'admin'
+        : 'pendamping';
     final actorName = user.displayName?.trim().isNotEmpty == true
         ? user.displayName!.trim()
         : (actorRole == 'admin' ? 'Admin' : 'Pendamping');
@@ -91,7 +95,8 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
     AppAlert.confirm(
       context,
       title: 'Keluarkan Jamaah?',
-      message: 'Jamaah ini akan dikeluarkan dari room dan fitur yang membutuhkan room akan dinonaktifkan.',
+      message:
+          'Jamaah ini akan dikeluarkan dari room dan fitur yang membutuhkan room akan dinonaktifkan.',
       confirmText: 'Keluarkan',
       cancelText: 'Batal',
       isDestructive: true,
@@ -112,7 +117,8 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
           AppAlert.success(
             context,
             title: 'Jamaah Dikeluarkan',
-            message: '${widget.jamaah.name} telah berhasil dikeluarkan dari room "${widget.roomName}".',
+            message:
+                '${widget.jamaah.name} telah berhasil dikeluarkan dari room "${widget.roomName}".',
           );
           widget.onRemoved?.call();
         } catch (e) {
@@ -148,12 +154,16 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
     final bodyColor = AppColors.textBodyColor(context);
     final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
     final tierColor = widget.jamaah.tier.color;
-    final initial = widget.jamaah.name.trim().isNotEmpty ? widget.jamaah.name.trim()[0].toUpperCase() : 'J';
+    final initial = widget.jamaah.name.trim().isNotEmpty
+        ? widget.jamaah.name.trim()[0].toUpperCase()
+        : 'J';
 
     return Container(
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xl),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.1),
@@ -178,7 +188,9 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: isDark ? AppColors.darkOutlineVariant : AppColors.surfaceVariant,
+                color: isDark
+                    ? AppColors.darkOutlineVariant
+                    : AppColors.surfaceVariant,
                 borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
             ),
@@ -198,8 +210,14 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
                         colors: isDark
-                            ? [AppColors.darkPrimaryContainer, AppColors.darkSurfaceContainerHighest]
-                            : [AppColors.espressoDark, AppColors.primaryContainer],
+                            ? [
+                                AppColors.darkPrimaryContainer,
+                                AppColors.darkSurfaceContainerHighest,
+                              ]
+                            : [
+                                AppColors.espressoDark,
+                                AppColors.primaryContainer,
+                              ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -221,12 +239,11 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                       width: 14,
                       height: 14,
                       decoration: BoxDecoration(
-                        color: widget.jamaah.isGpsActive ? AppColors.statusSafe : AppColors.outline,
+                        color: widget.jamaah.isGpsActive
+                            ? AppColors.statusSafe
+                            : AppColors.outline,
                         shape: BoxShape.circle,
-                        border: Border.all(
-                          color: cardBg,
-                          width: 2,
-                        ),
+                        border: Border.all(color: cardBg, width: 2),
                       ),
                     ),
                   ),
@@ -248,7 +265,10 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.statusSafe.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -264,10 +284,15 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                         if (widget.jamaah.sosActive) ...[
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.sosEmergency,
-                              borderRadius: BorderRadius.circular(AppRadius.pill),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
                             ),
                             child: const Text(
                               'SOS DARURAT',
@@ -297,10 +322,14 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
           Container(
             padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream.withValues(alpha: 0.5),
+              color: isDark
+                  ? AppColors.darkSurfaceContainer
+                  : AppColors.canvasCream.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(
-                color: isDark ? AppColors.darkCardBorder : AppColors.goldLight.withValues(alpha: 0.4),
+                color: isDark
+                    ? AppColors.darkCardBorder
+                    : AppColors.goldLight.withValues(alpha: 0.4),
               ),
             ),
             child: Column(
@@ -313,7 +342,9 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                       children: [
                         Text(
                           'Jarak ke Pendamping',
-                          style: AppTypography.captionSmall.copyWith(color: bodyColor),
+                          style: AppTypography.captionSmall.copyWith(
+                            color: bodyColor,
+                          ),
                         ),
                         const SizedBox(height: 2),
                         Row(
@@ -340,7 +371,9 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                       ],
                     ),
                     AppStatusBadge(
-                      label: widget.jamaah.isGpsActive ? context.tr('statusSafe') : 'GPS Mati',
+                      label: widget.jamaah.isGpsActive
+                          ? context.tr('statusSafe')
+                          : 'GPS Mati',
                       statusType: _mapStatusType(widget.jamaah.tier),
                       icon: widget.jamaah.tier.icon,
                     ),
@@ -352,12 +385,18 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                     Expanded(
                       child: Row(
                         children: [
-                          Icon(Icons.schedule_rounded, size: 16, color: bodyColor),
+                          Icon(
+                            Icons.schedule_rounded,
+                            size: 16,
+                            color: bodyColor,
+                          ),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               'Sinkron: ${_formatTimestamp(widget.jamaah.locationUpdatedAt)}',
-                              style: AppTypography.captionSmall.copyWith(color: bodyColor),
+                              style: AppTypography.captionSmall.copyWith(
+                                color: bodyColor,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -369,15 +408,23 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                       child: Row(
                         children: [
                           Icon(
-                            widget.jamaah.isGpsActive ? Icons.gps_fixed_rounded : Icons.gps_off_rounded,
+                            widget.jamaah.isGpsActive
+                                ? Icons.gps_fixed_rounded
+                                : Icons.gps_off_rounded,
                             size: 16,
-                            color: widget.jamaah.isGpsActive ? AppColors.statusSafe : AppColors.error,
+                            color: widget.jamaah.isGpsActive
+                                ? AppColors.statusSafe
+                                : AppColors.error,
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            widget.jamaah.isGpsActive ? 'Sensor Aktif' : 'Sensor Mati',
+                            widget.jamaah.isGpsActive
+                                ? 'Sensor Aktif'
+                                : 'Sensor Mati',
                             style: AppTypography.captionSmall.copyWith(
-                              color: widget.jamaah.isGpsActive ? AppColors.statusSafe : AppColors.error,
+                              color: widget.jamaah.isGpsActive
+                                  ? AppColors.statusSafe
+                                  : AppColors.error,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -395,7 +442,9 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream,
+              color: isDark
+                  ? AppColors.darkSurfaceContainer
+                  : AppColors.canvasCream,
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Row(
@@ -403,11 +452,18 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.meeting_room_outlined, size: 18, color: primaryColor),
+                    Icon(
+                      Icons.meeting_room_outlined,
+                      size: 18,
+                      color: primaryColor,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       widget.roomName,
-                      style: AppTypography.bodySmall.copyWith(color: headingColor, fontWeight: FontWeight.bold),
+                      style: AppTypography.bodySmall.copyWith(
+                        color: headingColor,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -430,12 +486,17 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
               backgroundColor: primaryColor,
               foregroundColor: Colors.white,
               minimumSize: const Size(0, 46),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
               elevation: 0,
             ),
             onPressed: _isRemoving ? null : _handleSendPrivateNotification,
             icon: const Icon(Icons.send_rounded, size: 18),
-            label: const Text('Kirim Notifikasi Langsung', style: TextStyle(fontWeight: FontWeight.bold)),
+            label: const Text(
+              'Kirim Notifikasi Langsung',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
 
@@ -443,16 +504,24 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.error,
-              side: BorderSide(color: AppColors.error.withValues(alpha: 0.5), width: 1.5),
+              side: BorderSide(
+                color: AppColors.error.withValues(alpha: 0.5),
+                width: 1.5,
+              ),
               minimumSize: const Size(0, 46),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
             ),
             onPressed: _isRemoving ? null : _handleRemoveJamaah,
             icon: _isRemoving
                 ? const SizedBox(
                     width: 18,
                     height: 18,
-                    child: CircularProgressIndicator(color: AppColors.error, strokeWidth: 2),
+                    child: CircularProgressIndicator(
+                      color: AppColors.error,
+                      strokeWidth: 2,
+                    ),
                   )
                 : const Icon(Icons.person_remove_rounded, size: 18),
             label: Text(

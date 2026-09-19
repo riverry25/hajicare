@@ -85,15 +85,16 @@ class PendampingJamaahSelector extends StatelessWidget {
               ],
             ),
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 4,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.statusSafe.withValues(alpha: isDark ? 0.15 : 0.1),
+                color: AppColors.statusSafe.withValues(
+                  alpha: isDark ? 0.15 : 0.1,
+                ),
                 borderRadius: BorderRadius.circular(AppRadius.pill),
                 border: Border.all(
-                  color: AppColors.statusSafe.withValues(alpha: isDark ? 0.35 : 0.25),
+                  color: AppColors.statusSafe.withValues(
+                    alpha: isDark ? 0.35 : 0.25,
+                  ),
                   width: 1,
                 ),
               ),
@@ -353,7 +354,9 @@ class PendampingJamaahSelector extends StatelessWidget {
                 child: Icon(
                   Icons.info_outline_rounded,
                   size: 16,
-                  color: isActive ? headingColor : bodyColor.withValues(alpha: 0.6),
+                  color: isActive
+                      ? headingColor
+                      : bodyColor.withValues(alpha: 0.6),
                 ),
               ),
             ),

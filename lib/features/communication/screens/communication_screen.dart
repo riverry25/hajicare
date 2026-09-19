@@ -207,15 +207,15 @@ class CommunicationScreen extends StatelessWidget {
           color: phrase.isUrgent
               ? AppColors.errorContainer.withValues(alpha: 0.35)
               : (isCurrentlyPlaying
-                  ? AppColors.goldPrimary.withValues(alpha: 0.12)
-                  : AppColors.cardBgColor(context)),
+                    ? AppColors.goldPrimary.withValues(alpha: 0.12)
+                    : AppColors.cardBgColor(context)),
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
             color: isCurrentlyPlaying
                 ? AppColors.goldPrimary
                 : (phrase.isUrgent
-                    ? AppColors.sosEmergency.withValues(alpha: 0.4)
-                    : AppColors.cardBorderColor(context)),
+                      ? AppColors.sosEmergency.withValues(alpha: 0.4)
+                      : AppColors.cardBorderColor(context)),
             width: isCurrentlyPlaying ? 2 : 1,
           ),
           boxShadow: [
@@ -315,8 +315,8 @@ class CommunicationScreen extends StatelessWidget {
                     color: phrase.isUrgent
                         ? AppColors.sosEmergency
                         : (isCurrentlyPlaying
-                            ? AppColors.espressoDark
-                            : AppColors.canvasCream),
+                              ? AppColors.espressoDark
+                              : AppColors.canvasCream),
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: isCurrentlyPlaying
@@ -326,10 +326,11 @@ class CommunicationScreen extends StatelessWidget {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: (phrase.isUrgent
-                                ? AppColors.sosEmergency
-                                : AppColors.espressoDark)
-                            .withValues(alpha: 0.2),
+                        color:
+                            (phrase.isUrgent
+                                    ? AppColors.sosEmergency
+                                    : AppColors.espressoDark)
+                                .withValues(alpha: 0.2),
                         blurRadius: 8,
                         offset: const Offset(0, 3),
                       ),

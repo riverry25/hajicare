@@ -4,13 +4,7 @@ import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 
-enum AppStatusType {
-  safe,
-  warning,
-  danger,
-  neutral,
-  custom,
-}
+enum AppStatusType { safe, warning, danger, neutral, custom }
 
 class AppStatusBadge extends StatelessWidget {
   final String label;
@@ -57,11 +51,7 @@ class AppStatusBadge extends StatelessWidget {
             ),
             const SizedBox(width: AppSpacing.sm2),
           ] else if (icon != null) ...[
-            Icon(
-              icon,
-              size: 12,
-              color: textColor ?? text,
-            ),
+            Icon(icon, size: 12, color: textColor ?? text),
             const SizedBox(width: AppSpacing.sm2),
           ],
           Text(
@@ -94,10 +84,7 @@ class AppStatusBadge extends StatelessWidget {
           AppColors.sosEmergency,
         );
       case AppStatusType.neutral:
-        return (
-          AppColors.canvasCream,
-          AppColors.espressoDark,
-        );
+        return (AppColors.canvasCream, AppColors.espressoDark);
       case AppStatusType.custom:
         return (
           backgroundColor ?? AppColors.canvasCream,

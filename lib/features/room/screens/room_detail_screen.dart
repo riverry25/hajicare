@@ -77,7 +77,8 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
         ? Get.find<HajiCareController>()
         : null;
 
-    final resolvedRoom = (Get.arguments as RoomModel?) ??
+    final resolvedRoom =
+        (Get.arguments as RoomModel?) ??
         _adminController?.selectedRoom.value ??
         hajiCare?.activeRoom.value;
 
@@ -95,9 +96,8 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
         ? Get.find<HajiCareController>()
         : null;
 
-    final roomId = _room?.id ??
-        hajiCare?.activeRoomId.value ??
-        hajiCare?.cachedRoomId;
+    final roomId =
+        _room?.id ?? hajiCare?.activeRoomId.value ?? hajiCare?.cachedRoomId;
 
     if (roomId != null && roomId.isNotEmpty) {
       _subscribeToRoom(roomId);
@@ -114,62 +114,72 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
   void _subscribeToRoom(String roomId) {
     _roomSub?.cancel();
-    _roomSub = _roomService.getRoomStream(roomId).listen((roomData) {
-      if (!mounted) return;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        setState(() {
-          if (roomData != null) {
-            _room = roomData;
-          }
-          _isLoadingRoom = false;
-        });
-      });
-    }, onError: (e) {
-      debugPrint('[RoomDetailScreen] Error listening to room: $e');
-      if (!mounted) return;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          setState(() {
-            _isLoadingRoom = false;
-          });
-        }
-      });
-    });
+    _roomSub = _roomService
+        .getRoomStream(roomId)
+        .listen(
+          (roomData) {
+            if (!mounted) return;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              setState(() {
+                if (roomData != null) {
+                  _room = roomData;
+                }
+                _isLoadingRoom = false;
+              });
+            });
+          },
+          onError: (e) {
+            debugPrint('[RoomDetailScreen] Error listening to room: $e');
+            if (!mounted) return;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                setState(() {
+                  _isLoadingRoom = false;
+                });
+              }
+            });
+          },
+        );
   }
 
   void _subscribeToMembers(String roomId) {
     _membersSub?.cancel();
-    _membersSub = _roomService.getRoomMembersStream(roomId).listen((members) {
-      if (!mounted) return;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        setState(() {
-          _allMembers = members;
-          _isLoadingMembers = false;
+    _membersSub = _roomService
+        .getRoomMembersStream(roomId)
+        .listen(
+          (members) {
+            if (!mounted) return;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              setState(() {
+                _allMembers = members;
+                _isLoadingMembers = false;
 
-          final maxPages = _totalPages;
-          if (_currentPage > maxPages) {
-            _currentPage = maxPages.clamp(1, 999);
-          }
-        });
+                final maxPages = _totalPages;
+                if (_currentPage > maxPages) {
+                  _currentPage = maxPages.clamp(1, 999);
+                }
+              });
 
-        // Sync with AdminRoomController safely if present
-        if (_adminController != null) {
-          _adminController!.roomMembers.value = members;
-        }
-      });
-    }, onError: (e) {
-      debugPrint('[RoomDetailScreen] Error listening to members: $e');
-      if (!mounted) return;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          setState(() {
-            _isLoadingMembers = false;
-          });
-        }
-      });
-    });
+              // Sync with AdminRoomController safely if present
+              if (_adminController != null) {
+                _adminController!.roomMembers.value = members;
+              }
+            });
+          },
+          onError: (e) {
+            debugPrint('[RoomDetailScreen] Error listening to members: $e');
+            if (!mounted) return;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                setState(() {
+                  _isLoadingMembers = false;
+                });
+              }
+            });
+          },
+        );
   }
 
   // ── Computed Getters ────────────────────────────────────────────────────────
@@ -210,8 +220,18 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
   String _formatDate(DateTime? dt) {
     if (dt == null) return '-';
     const months = [
-      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
     ];
     return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
   }
@@ -224,8 +244,11 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
     final isAdmin = hajiCare?.role == UserRole.admin;
     final isCreator = _room != null && _room!.createdBy == currentUid;
+    final isPendampingMember = _allMembers.any(
+      (m) => m.uid == currentUid && m.isPendamping,
+    );
 
-    return !isJamaah && (isAdmin || isCreator);
+    return !isJamaah && (isAdmin || isCreator || isPendampingMember);
   }
 
   /// Memeriksa apakah user berhak mengedit atau menghapus room.
@@ -278,7 +301,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
           final hajiCare = Get.isRegistered<HajiCareController>()
               ? Get.find<HajiCareController>()
               : null;
-          final userRole = hajiCare?.role == UserRole.admin ? 'admin' : 'pendamping';
+          final userRole = hajiCare?.role == UserRole.admin
+              ? 'admin'
+              : 'pendamping';
 
           await _roomService.deleteRoomByCreator(
             roomId: room.id,
@@ -314,7 +339,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     final isDark = AppColors.isDark(context);
     final scaffoldBg = isDark ? AppColors.darkScaffold : AppColors.canvasCream;
     final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = isDark ? AppColors.darkTextHeading : AppColors.espressoDark;
+    final headingColor = isDark
+        ? AppColors.darkTextHeading
+        : AppColors.espressoDark;
     final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
     final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
 
@@ -337,9 +364,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
             ),
           ),
         ),
-        body: Center(
-          child: CircularProgressIndicator(color: primaryColor),
-        ),
+        body: Center(child: CircularProgressIndicator(color: primaryColor)),
       );
     }
 
@@ -461,11 +486,13 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
               decoration: BoxDecoration(
                 color: primaryColor.withValues(alpha: isDark ? 0.20 : 0.12),
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(
-                  color: primaryColor.withValues(alpha: 0.35),
-                ),
+                border: Border.all(color: primaryColor.withValues(alpha: 0.35)),
               ),
-              child: Icon(Icons.qr_code_2_rounded, color: primaryColor, size: 20),
+              child: Icon(
+                Icons.qr_code_2_rounded,
+                color: primaryColor,
+                size: 20,
+              ),
             ),
             tooltip: 'Tampilkan QR Code Room',
             onPressed: () => RoomQrDialog.show(context, room: room),
@@ -474,7 +501,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
             PopupMenuButton<String>(
               icon: Icon(Icons.more_vert_rounded, color: headingColor),
               tooltip: 'Opsi Room',
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               color: cardBg,
               onSelected: (val) {
                 if (val == 'edit') {
@@ -490,7 +519,13 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                     children: [
                       Icon(Icons.edit_outlined, size: 18, color: headingColor),
                       const SizedBox(width: 10),
-                      Text('Edit Room', style: TextStyle(color: headingColor, fontWeight: FontWeight.w600)),
+                      Text(
+                        'Edit Room',
+                        style: TextStyle(
+                          color: headingColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -498,9 +533,19 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                   value: 'delete',
                   child: Row(
                     children: [
-                      Icon(Icons.delete_outline_rounded, size: 18, color: AppColors.error),
+                      Icon(
+                        Icons.delete_outline_rounded,
+                        size: 18,
+                        color: AppColors.error,
+                      ),
                       const SizedBox(width: 10),
-                      Text('Hapus Room', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w600)),
+                      Text(
+                        'Hapus Room',
+                        style: TextStyle(
+                          color: AppColors.error,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -529,7 +574,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                 color: cardBg,
                 borderRadius: BorderRadius.circular(22),
                 border: Border.all(
-                  color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
+                  color: isDark
+                      ? AppColors.darkCardBorder
+                      : AppColors.lightCardBorder,
                   width: 1.2,
                 ),
                 boxShadow: [
@@ -555,19 +602,29 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: isDark
-                                  ? [AppColors.darkPrimaryContainer, AppColors.darkSurfaceContainerHighest]
-                                  : [AppColors.surfaceContainer, AppColors.canvasCream],
+                                  ? [
+                                      AppColors.darkPrimaryContainer,
+                                      AppColors.darkSurfaceContainerHighest,
+                                    ]
+                                  : [
+                                      AppColors.surfaceContainer,
+                                      AppColors.canvasCream,
+                                    ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: isDark ? AppColors.darkCardBorder : AppColors.canvasCreamSubtle,
+                              color: isDark
+                                  ? AppColors.darkCardBorder
+                                  : AppColors.canvasCreamSubtle,
                             ),
                           ),
                           child: Icon(
                             Icons.meeting_room_rounded,
-                            color: isDark ? AppColors.goldLight : AppColors.espressoDark,
+                            color: isDark
+                                ? AppColors.goldLight
+                                : AppColors.espressoDark,
                             size: 22,
                           ),
                         ),
@@ -600,14 +657,23 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4.5,
+                          ),
                           decoration: BoxDecoration(
-                            color: (room.isActive ? AppColors.statusSafe : bodyColor)
-                                .withValues(alpha: isDark ? 0.18 : 0.10),
+                            color:
+                                (room.isActive
+                                        ? AppColors.statusSafe
+                                        : bodyColor)
+                                    .withValues(alpha: isDark ? 0.18 : 0.10),
                             borderRadius: BorderRadius.circular(AppRadius.pill),
                             border: Border.all(
-                              color: (room.isActive ? AppColors.statusSafe : bodyColor)
-                                  .withValues(alpha: 0.3),
+                              color:
+                                  (room.isActive
+                                          ? AppColors.statusSafe
+                                          : bodyColor)
+                                      .withValues(alpha: 0.3),
                               width: 1.0,
                             ),
                           ),
@@ -618,7 +684,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                 width: 6,
                                 height: 6,
                                 decoration: BoxDecoration(
-                                  color: room.isActive ? AppColors.statusSafe : AppColors.textSecondary,
+                                  color: room.isActive
+                                      ? AppColors.statusSafe
+                                      : AppColors.textSecondary,
                                   shape: BoxShape.circle,
                                 ),
                               ),
@@ -626,7 +694,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                               Text(
                                 room.isActive ? 'Aktif' : 'Nonaktif',
                                 style: TextStyle(
-                                  color: room.isActive ? AppColors.statusSafe : AppColors.textSecondary,
+                                  color: room.isActive
+                                      ? AppColors.statusSafe
+                                      : AppColors.textSecondary,
                                   fontWeight: FontWeight.w700,
                                   fontSize: 11,
                                 ),
@@ -641,7 +711,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                   Divider(
                     height: 1,
                     thickness: 1,
-                    color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder.withValues(alpha: 0.5),
+                    color: isDark
+                        ? AppColors.darkCardBorder
+                        : AppColors.lightCardBorder.withValues(alpha: 0.5),
                   ),
 
                   // ── Main Body Information (Room Data & Privileged Actions) ──
@@ -652,10 +724,15 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                         // Kode Room Banner Tile
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 11,
+                          ),
                           decoration: BoxDecoration(
                             color: isDark
-                                ? AppColors.darkPrimaryContainer.withValues(alpha: 0.35)
+                                ? AppColors.darkPrimaryContainer.withValues(
+                                    alpha: 0.35,
+                                  )
                                 : AppColors.surfaceContainerLow,
                             borderRadius: BorderRadius.circular(15),
                             border: Border.all(
@@ -670,10 +747,16 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                               Container(
                                 padding: const EdgeInsets.all(7),
                                 decoration: BoxDecoration(
-                                  color: primaryColor.withValues(alpha: isDark ? 0.20 : 0.12),
+                                  color: primaryColor.withValues(
+                                    alpha: isDark ? 0.20 : 0.12,
+                                  ),
                                   borderRadius: BorderRadius.circular(9),
                                 ),
-                                child: Icon(Icons.key_rounded, size: 17, color: primaryColor),
+                                child: Icon(
+                                  Icons.key_rounded,
+                                  size: 17,
+                                  color: primaryColor,
+                                ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -704,27 +787,39 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                               InkWell(
                                 onTap: () {
                                   HapticFeedback.lightImpact();
-                                  Clipboard.setData(ClipboardData(text: room.code));
+                                  Clipboard.setData(
+                                    ClipboardData(text: room.code),
+                                  );
                                   AppAlert.success(
                                     context,
                                     title: 'Kode Disalin',
-                                    message: 'Kode room "${room.code}" berhasil disalin.',
+                                    message:
+                                        'Kode room "${room.code}" berhasil disalin.',
                                   );
                                 },
                                 borderRadius: BorderRadius.circular(10),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 11,
+                                    vertical: 6,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: cardBg,
                                     borderRadius: BorderRadius.circular(9),
                                     border: Border.all(
-                                      color: isDark ? AppColors.darkOutlineVariant : const Color(0xFFE2E8F0),
+                                      color: isDark
+                                          ? AppColors.darkOutlineVariant
+                                          : const Color(0xFFE2E8F0),
                                     ),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(Icons.copy_rounded, size: 13, color: primaryColor),
+                                      Icon(
+                                        Icons.copy_rounded,
+                                        size: 13,
+                                        color: primaryColor,
+                                      ),
                                       const SizedBox(width: 5),
                                       Text(
                                         'Salin',
@@ -749,12 +844,23 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                           children: [
                             Expanded(
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 13,
+                                  vertical: 11,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream.withValues(alpha: 0.45),
+                                  color: isDark
+                                      ? AppColors.darkSurfaceContainer
+                                      : AppColors.canvasCream.withValues(
+                                          alpha: 0.45,
+                                        ),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                    color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder.withValues(alpha: 0.6),
+                                    color: isDark
+                                        ? AppColors.darkCardBorder
+                                        : AppColors.lightCardBorder.withValues(
+                                            alpha: 0.6,
+                                          ),
                                   ),
                                 ),
                                 child: Row(
@@ -763,27 +869,40 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                       width: 32,
                                       height: 32,
                                       decoration: BoxDecoration(
-                                        color: isDark ? AppColors.darkPrimaryContainer : AppColors.canvasCreamSubtle,
+                                        color: isDark
+                                            ? AppColors.darkPrimaryContainer
+                                            : AppColors.canvasCreamSubtle,
                                         borderRadius: BorderRadius.circular(8),
                                       ),
-                                      child: Icon(Icons.hotel_rounded, size: 16, color: isDark ? AppColors.goldLight : AppColors.espressoDark),
+                                      child: Icon(
+                                        Icons.hotel_rounded,
+                                        size: 16,
+                                        color: isDark
+                                            ? AppColors.goldLight
+                                            : AppColors.espressoDark,
+                                      ),
                                     ),
                                     const SizedBox(width: 9),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             'Maktab',
                                             style: TextStyle(
-                                              color: bodyColor.withValues(alpha: 0.7),
+                                              color: bodyColor.withValues(
+                                                alpha: 0.7,
+                                              ),
                                               fontSize: 10.5,
                                               fontWeight: FontWeight.w500,
                                             ),
                                           ),
                                           const SizedBox(height: 1),
                                           Text(
-                                            room.maktab?.isNotEmpty == true ? room.maktab! : '-',
+                                            room.maktab?.isNotEmpty == true
+                                                ? room.maktab!
+                                                : '-',
                                             style: TextStyle(
                                               color: headingColor,
                                               fontWeight: FontWeight.w700,
@@ -802,12 +921,23 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                             const SizedBox(width: 10),
                             Expanded(
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 13,
+                                  vertical: 11,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream.withValues(alpha: 0.45),
+                                  color: isDark
+                                      ? AppColors.darkSurfaceContainer
+                                      : AppColors.canvasCream.withValues(
+                                          alpha: 0.45,
+                                        ),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                    color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder.withValues(alpha: 0.6),
+                                    color: isDark
+                                        ? AppColors.darkCardBorder
+                                        : AppColors.lightCardBorder.withValues(
+                                            alpha: 0.6,
+                                          ),
                                   ),
                                 ),
                                 child: Row(
@@ -816,27 +946,40 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                       width: 32,
                                       height: 32,
                                       decoration: BoxDecoration(
-                                        color: isDark ? AppColors.darkPrimaryContainer : AppColors.canvasCreamSubtle,
+                                        color: isDark
+                                            ? AppColors.darkPrimaryContainer
+                                            : AppColors.canvasCreamSubtle,
                                         borderRadius: BorderRadius.circular(8),
                                       ),
-                                      child: Icon(Icons.flight_takeoff_rounded, size: 16, color: isDark ? AppColors.goldLight : AppColors.espressoDark),
+                                      child: Icon(
+                                        Icons.flight_takeoff_rounded,
+                                        size: 16,
+                                        color: isDark
+                                            ? AppColors.goldLight
+                                            : AppColors.espressoDark,
+                                      ),
                                     ),
                                     const SizedBox(width: 9),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             'Kloter',
                                             style: TextStyle(
-                                              color: bodyColor.withValues(alpha: 0.7),
+                                              color: bodyColor.withValues(
+                                                alpha: 0.7,
+                                              ),
                                               fontSize: 10.5,
                                               fontWeight: FontWeight.w500,
                                             ),
                                           ),
                                           const SizedBox(height: 1),
                                           Text(
-                                            room.kloter?.isNotEmpty == true ? room.kloter! : '-',
+                                            room.kloter?.isNotEmpty == true
+                                                ? room.kloter!
+                                                : '-',
                                             style: TextStyle(
                                               color: headingColor,
                                               fontWeight: FontWeight.w700,
@@ -860,7 +1003,11 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.event_note_rounded, size: 13, color: bodyColor.withValues(alpha: 0.5)),
+                              Icon(
+                                Icons.event_note_rounded,
+                                size: 13,
+                                color: bodyColor.withValues(alpha: 0.5),
+                              ),
                               const SizedBox(width: 5),
                               Text(
                                 'Dibuat pada ${_formatDate(room.createdAt)}',
@@ -883,18 +1030,26 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                           child: ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: primaryColor,
-                              foregroundColor: isDark ? AppColors.darkOnPrimary : Colors.white,
+                              foregroundColor: isDark
+                                  ? AppColors.darkOnPrimary
+                                  : Colors.white,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.pill),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.pill,
+                                ),
                               ),
                               elevation: 0,
                             ),
                             icon: const Icon(Icons.qr_code_2_rounded, size: 19),
                             label: const Text(
                               'Lihat & Bagikan QR Code Room',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13.5,
+                              ),
                             ),
-                            onPressed: () => RoomQrDialog.show(context, room: room),
+                            onPressed: () =>
+                                RoomQrDialog.show(context, room: room),
                           ),
                         ),
 
@@ -908,17 +1063,34 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: headingColor,
                                     side: BorderSide(
-                                      color: isDark ? AppColors.darkOutlineVariant : AppColors.lightCardBorder,
+                                      color: isDark
+                                          ? AppColors.darkOutlineVariant
+                                          : AppColors.lightCardBorder,
                                       width: 1.2,
                                     ),
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.pill,
+                                      ),
                                     ),
-                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 10,
+                                    ),
                                   ),
-                                  icon: Icon(Icons.edit_outlined, size: 15, color: primaryColor),
-                                  label: const Text('Edit Room', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
-                                  onPressed: () => _showEditRoomSheet(context, room),
+                                  icon: Icon(
+                                    Icons.edit_outlined,
+                                    size: 15,
+                                    color: primaryColor,
+                                  ),
+                                  label: const Text(
+                                    'Edit Room',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 12.5,
+                                    ),
+                                  ),
+                                  onPressed: () =>
+                                      _showEditRoomSheet(context, room),
                                 ),
                               ),
                               const SizedBox(width: 10),
@@ -927,17 +1099,33 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: AppColors.error,
                                     side: BorderSide(
-                                      color: AppColors.error.withValues(alpha: 0.45),
+                                      color: AppColors.error.withValues(
+                                        alpha: 0.45,
+                                      ),
                                       width: 1.2,
                                     ),
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.pill,
+                                      ),
                                     ),
-                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 10,
+                                    ),
                                   ),
-                                  icon: const Icon(Icons.delete_outline_rounded, size: 15),
-                                  label: const Text('Hapus Room', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
-                                  onPressed: () => _handleDeleteRoom(context, room),
+                                  icon: const Icon(
+                                    Icons.delete_outline_rounded,
+                                    size: 15,
+                                  ),
+                                  label: const Text(
+                                    'Hapus Room',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 12.5,
+                                    ),
+                                  ),
+                                  onPressed: () =>
+                                      _handleDeleteRoom(context, room),
                                 ),
                               ),
                             ],
@@ -949,15 +1137,26 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
                   // ── Member Breakdown Strip ──────────────────────────────────
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 13,
+                    ),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? AppColors.darkSurfaceContainer.withValues(alpha: 0.5)
+                          ? AppColors.darkSurfaceContainer.withValues(
+                              alpha: 0.5,
+                            )
                           : AppColors.canvasCream.withValues(alpha: 0.35),
-                      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(22)),
+                      borderRadius: const BorderRadius.vertical(
+                        bottom: Radius.circular(22),
+                      ),
                       border: Border(
                         top: BorderSide(
-                          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder.withValues(alpha: 0.5),
+                          color: isDark
+                              ? AppColors.darkCardBorder
+                              : AppColors.lightCardBorder.withValues(
+                                  alpha: 0.5,
+                                ),
                         ),
                       ),
                     ),
@@ -973,7 +1172,11 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                         Container(
                           height: 26,
                           width: 1,
-                          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder.withValues(alpha: 0.6),
+                          color: isDark
+                              ? AppColors.darkCardBorder
+                              : AppColors.lightCardBorder.withValues(
+                                  alpha: 0.6,
+                                ),
                         ),
                         _buildStatSummaryItem(
                           label: 'Jamaah',
@@ -984,7 +1187,11 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                         Container(
                           height: 26,
                           width: 1,
-                          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder.withValues(alpha: 0.6),
+                          color: isDark
+                              ? AppColors.darkCardBorder
+                              : AppColors.lightCardBorder.withValues(
+                                  alpha: 0.6,
+                                ),
                         ),
                         _buildStatSummaryItem(
                           label: 'Pendamping',
@@ -1001,23 +1208,49 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
             const SizedBox(height: AppSpacing.lg),
 
             // ── 2. Search Bar & Filter Chips ──────────────────────────────────
-            _buildSearchAndFilters(context, cardBg, headingColor, bodyColor, primaryColor, isDark),
+            _buildSearchAndFilters(
+              context,
+              cardBg,
+              headingColor,
+              bodyColor,
+              primaryColor,
+              isDark,
+            ),
 
             const SizedBox(height: AppSpacing.md),
 
             // ── 3. Pagination Summary & Limit Selector ────────────────────────
-            _buildPaginationHeader(headingColor, bodyColor, primaryColor, isDark),
+            _buildPaginationHeader(
+              headingColor,
+              bodyColor,
+              primaryColor,
+              isDark,
+            ),
 
             const SizedBox(height: AppSpacing.sm),
 
             // ── 4. Members List (Paginated) ───────────────────────────────────
-            _buildMembersList(context, room, cardBg, headingColor, bodyColor, primaryColor, isDark),
+            _buildMembersList(
+              context,
+              room,
+              cardBg,
+              headingColor,
+              bodyColor,
+              primaryColor,
+              isDark,
+            ),
 
             const SizedBox(height: AppSpacing.md),
 
             // ── 5. Pagination Footer Navigation ───────────────────────────────
             if (_filteredMembers.isNotEmpty)
-              _buildPaginationFooter(cardBg, headingColor, bodyColor, primaryColor, isDark),
+              _buildPaginationFooter(
+                cardBg,
+                headingColor,
+                bodyColor,
+                primaryColor,
+                isDark,
+              ),
 
             const SizedBox(height: 36),
           ],
@@ -1203,8 +1436,8 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
               color: isSelected
                   ? activeColor
                   : (isDark
-                      ? AppColors.darkOutlineVariant
-                      : const Color(0xFFE2E8F0)),
+                        ? AppColors.darkOutlineVariant
+                        : const Color(0xFFE2E8F0)),
               width: isSelected ? 1.4 : 1.0,
             ),
           ),
@@ -1294,7 +1527,10 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                 },
                 child: Container(
                   margin: const EdgeInsets.only(left: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: isCurrentLimit
                         ? primaryColor.withValues(alpha: isDark ? 0.25 : 0.15)
@@ -1311,7 +1547,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                     style: TextStyle(
                       color: isCurrentLimit ? primaryColor : bodyColor,
                       fontSize: 10.5,
-                      fontWeight: isCurrentLimit ? FontWeight.bold : FontWeight.w500,
+                      fontWeight: isCurrentLimit
+                          ? FontWeight.bold
+                          : FontWeight.w500,
                     ),
                   ),
                 ),
@@ -1350,7 +1588,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
       if (_searchQuery.isNotEmpty || _selectedFilter != 'Semua') {
         return AppCard(
           backgroundColor: cardBg,
-          borderColor: isDark ? AppColors.darkCardBorder : AppColors.canvasCreamSubtle,
+          borderColor: isDark
+              ? AppColors.darkCardBorder
+              : AppColors.canvasCreamSubtle,
           child: Padding(
             padding: const EdgeInsets.symmetric(
               vertical: AppSpacing.xl,
@@ -1394,9 +1634,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                     },
                     icon: const Icon(Icons.refresh_rounded, size: 16),
                     label: const Text('Reset Filter & Pencarian'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: primaryColor,
-                    ),
+                    style: TextButton.styleFrom(foregroundColor: primaryColor),
                   ),
                 ],
               ),
@@ -1407,7 +1645,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
       return AppCard(
         backgroundColor: cardBg,
-        borderColor: isDark ? AppColors.darkCardBorder : AppColors.canvasCreamSubtle,
+        borderColor: isDark
+            ? AppColors.darkCardBorder
+            : AppColors.canvasCreamSubtle,
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.xl),
           child: Center(
@@ -1447,13 +1687,18 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                 OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
                     foregroundColor: primaryColor,
-                    side: BorderSide(color: primaryColor.withValues(alpha: 0.5)),
+                    side: BorderSide(
+                      color: primaryColor.withValues(alpha: 0.5),
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                   ),
                   icon: const Icon(Icons.qr_code_2_rounded, size: 16),
-                  label: const Text('Buka QR Code Room', style: TextStyle(fontWeight: FontWeight.bold)),
+                  label: const Text(
+                    'Buka QR Code Room',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   onPressed: () => RoomQrDialog.show(context, room: room),
                 ),
               ],
@@ -1469,7 +1714,8 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: pagedList.length,
-      separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.sm),
+      separatorBuilder: (context, index) =>
+          const SizedBox(height: AppSpacing.sm),
       itemBuilder: (context, index) {
         final member = pagedList[index];
         return _MemberTile(
@@ -1573,7 +1819,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     bool canManage,
   ) {
     final isDark = AppColors.isDark(context);
-    final headingColor = isDark ? AppColors.darkTextHeading : AppColors.espressoDark;
+    final headingColor = isDark
+        ? AppColors.darkTextHeading
+        : AppColors.espressoDark;
     final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
     final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
 
@@ -1612,19 +1860,23 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                         color: member.isPendamping
                             ? const Color(0xFF1D4ED8).withValues(alpha: 0.15)
                             : (member.isJamaah
-                                ? AppColors.emeraldIslamic.withValues(alpha: 0.15)
-                                : primaryColor.withValues(alpha: 0.15)),
+                                  ? AppColors.emeraldIslamic.withValues(
+                                      alpha: 0.15,
+                                    )
+                                  : primaryColor.withValues(alpha: 0.15)),
                         borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
                       child: Center(
                         child: Text(
-                          member.name.isNotEmpty ? member.name[0].toUpperCase() : '?',
+                          member.name.isNotEmpty
+                              ? member.name[0].toUpperCase()
+                              : '?',
                           style: TextStyle(
                             color: member.isPendamping
                                 ? const Color(0xFF1D4ED8)
                                 : (member.isJamaah
-                                    ? AppColors.emeraldIslamic
-                                    : primaryColor),
+                                      ? AppColors.emeraldIslamic
+                                      : primaryColor),
                             fontWeight: FontWeight.bold,
                             fontSize: 22,
                           ),
@@ -1646,14 +1898,23 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                           ),
                           const SizedBox(height: 4),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: member.isPendamping
-                                  ? const Color(0xFF1D4ED8).withValues(alpha: 0.12)
+                                  ? const Color(
+                                      0xFF1D4ED8,
+                                    ).withValues(alpha: 0.12)
                                   : (member.isJamaah
-                                      ? AppColors.emeraldIslamic.withValues(alpha: 0.12)
-                                      : primaryColor.withValues(alpha: 0.12)),
-                              borderRadius: BorderRadius.circular(AppRadius.pill),
+                                        ? AppColors.emeraldIslamic.withValues(
+                                            alpha: 0.12,
+                                          )
+                                        : primaryColor.withValues(alpha: 0.12)),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
                             ),
                             child: Text(
                               member.role.toUpperCase(),
@@ -1661,8 +1922,8 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                 color: member.isPendamping
                                     ? const Color(0xFF1D4ED8)
                                     : (member.isJamaah
-                                        ? AppColors.emeraldIslamic
-                                        : primaryColor),
+                                          ? AppColors.emeraldIslamic
+                                          : primaryColor),
                                 fontWeight: FontWeight.w700,
                                 fontSize: 10,
                                 letterSpacing: 0.8,
@@ -1688,7 +1949,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                 _buildModalInfoTile(
                   icon: Icons.calendar_today_rounded,
                   label: 'Tanggal Bergabung',
-                  value: member.joinedAt != null ? _formatDate(member.joinedAt) : 'Tidak diketahui',
+                  value: member.joinedAt != null
+                      ? _formatDate(member.joinedAt)
+                      : 'Tidak diketahui',
                   color: primaryColor,
                   headingColor: headingColor,
                   bodyColor: bodyColor,
@@ -1698,7 +1961,8 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                   _buildModalInfoTile(
                     icon: Icons.location_on_rounded,
                     label: 'Koordinat Lokasi',
-                    value: '${member.latitude!.toStringAsFixed(5)}, ${member.longitude!.toStringAsFixed(5)}',
+                    value:
+                        '${member.latitude!.toStringAsFixed(5)}, ${member.longitude!.toStringAsFixed(5)}',
                     color: primaryColor,
                     headingColor: headingColor,
                     bodyColor: bodyColor,
@@ -1725,7 +1989,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                             foregroundColor: primaryColor,
                             side: BorderSide(color: primaryColor),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.pill),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
@@ -1740,13 +2006,18 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                             Navigator.pop(ctx);
                             _handleRemoveMember(context, member, room);
                           },
-                          icon: const Icon(Icons.person_remove_rounded, size: 16),
+                          icon: const Icon(
+                            Icons.person_remove_rounded,
+                            size: 16,
+                          ),
                           label: const Text('Keluarkan'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.error,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.pill),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
@@ -1805,12 +2076,17 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     );
   }
 
-  void _handleRemoveMember(BuildContext context, RoomMemberModel member, RoomModel room) {
+  void _handleRemoveMember(
+    BuildContext context,
+    RoomMemberModel member,
+    RoomModel room,
+  ) {
     HapticFeedback.mediumImpact();
     AppAlert.confirm(
       context,
       title: 'Keluarkan Jamaah?',
-      message: 'Apakah Anda yakin ingin mengeluarkan "${member.name}" dari room pantau ini?',
+      message:
+          'Apakah Anda yakin ingin mengeluarkan "${member.name}" dari room pantau ini?',
       confirmText: 'Keluarkan',
       cancelText: 'Batal',
       isDestructive: true,
@@ -1924,7 +2200,9 @@ class _MemberTile extends StatelessWidget {
       badgeBg = isDark
           ? const Color(0xFF1E3A8A).withValues(alpha: 0.4)
           : const Color(0xFFE0E7FF);
-      badgeTextColor = isDark ? const Color(0xFF93C5FD) : const Color(0xFF1D4ED8);
+      badgeTextColor = isDark
+          ? const Color(0xFF93C5FD)
+          : const Color(0xFF1D4ED8);
       roleLabel = 'Pendamping';
       roleIcon = Icons.health_and_safety_rounded;
     } else if (member.isJamaah) {
@@ -1941,7 +2219,9 @@ class _MemberTile extends StatelessWidget {
       roleIcon = Icons.admin_panel_settings_rounded;
     }
 
-    final initial = member.name.trim().isNotEmpty ? member.name.trim()[0].toUpperCase() : '?';
+    final initial = member.name.trim().isNotEmpty
+        ? member.name.trim()[0].toUpperCase()
+        : '?';
 
     return Material(
       color: Colors.transparent,
@@ -1950,7 +2230,9 @@ class _MemberTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.card),
         child: AppCard(
           backgroundColor: cardBg,
-          borderColor: isDark ? AppColors.darkCardBorder : AppColors.canvasCreamSubtle,
+          borderColor: isDark
+              ? AppColors.darkCardBorder
+              : AppColors.canvasCreamSubtle,
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.cardPadding,
             vertical: AppSpacing.sm + 2,

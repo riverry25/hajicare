@@ -38,17 +38,14 @@ class StaleInvitationException extends RoomException {
   ]);
 }
 
-enum _AcceptInvitationStatus {
-  success,
-  staleRoom,
-}
+enum _AcceptInvitationStatus { success, staleRoom }
 
 /// Service handling all Room CRUD, Membership, and Join operations
 class RoomService {
   final FirebaseFirestore _firestore;
 
   RoomService({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   // ── Code Generation ────────────────────────────────────────────────────────
   static const String _codeChars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -106,7 +103,9 @@ class RoomService {
     );
 
     await docRef.set(room.toFirestore());
-    debugPrint('[RoomService] Created room: ${room.name} (${room.code}) id: ${room.id}');
+    debugPrint(
+      '[RoomService] Created room: ${room.name} (${room.code}) id: ${room.id}',
+    );
 
     // Log Activity
     await logActivity(
@@ -136,10 +135,15 @@ class RoomService {
     }
 
     // Constraint: 1 active room per user
-    final userDoc = await _firestore.collection('users').doc(pendampingUid).get();
+    final userDoc = await _firestore
+        .collection('users')
+        .doc(pendampingUid)
+        .get();
     final currentActiveRoom = userDoc.data()?['activeRoomId'] as String?;
     if (currentActiveRoom != null && currentActiveRoom.trim().isNotEmpty) {
-      throw const RoomException('Anda sudah memiliki Room aktif. Tidak dapat membuat room kedua.');
+      throw const RoomException(
+        'Anda sudah memiliki Room aktif. Tidak dapat membuat room kedua.',
+      );
     }
 
     final code = await generateUniqueRoomCode();
@@ -152,6 +156,7 @@ class RoomService {
       createdBy: pendampingUid,
       createdByRole: 'pendamping',
       pendampingId: pendampingUid,
+      pendampingIds: [pendampingUid],
       maktab: maktab?.trim(),
       kloter: kloter?.trim(),
       safeRadius: 200.0,
@@ -173,9 +178,7 @@ class RoomService {
     });
 
     // Update user activeRoomId and sync maktab/kloter if present
-    final userUpdate = <String, dynamic>{
-      'activeRoomId': docRef.id,
-    };
+    final userUpdate = <String, dynamic>{'activeRoomId': docRef.id};
     if (maktab != null && maktab.trim().isNotEmpty) {
       userUpdate['maktab'] = maktab.trim();
     }
@@ -185,12 +188,15 @@ class RoomService {
     batch.update(_firestore.collection('users').doc(pendampingUid), userUpdate);
 
     await batch.commit();
-    debugPrint('[RoomService] Pendamping created room: ${room.name} (${room.code}) id: ${room.id}');
+    debugPrint(
+      '[RoomService] Pendamping created room: ${room.name} (${room.code}) id: ${room.id}',
+    );
 
     await logActivity(
       type: ActivityType.roomCreated,
       title: 'Room Dibuat oleh Pendamping',
-      description: 'Pendamping $pendampingName membuat room "${room.name}" (${room.code}).',
+      description:
+          'Pendamping $pendampingName membuat room "${room.name}" (${room.code}).',
       roomId: room.id,
       roomName: room.name,
       userId: pendampingUid,
@@ -253,14 +259,20 @@ class RoomService {
       updates['name'] = name.trim();
     }
     if (maktab != null) {
-      updates['maktab'] = maktab.trim().isNotEmpty ? maktab.trim() : FieldValue.delete();
+      updates['maktab'] = maktab.trim().isNotEmpty
+          ? maktab.trim()
+          : FieldValue.delete();
     }
     if (kloter != null) {
-      updates['kloter'] = kloter.trim().isNotEmpty ? kloter.trim() : FieldValue.delete();
+      updates['kloter'] = kloter.trim().isNotEmpty
+          ? kloter.trim()
+          : FieldValue.delete();
     }
     if (safeRadius != null) {
       if (safeRadius <= 0) {
-        throw const RoomException('Radius aman harus bernilai positif lebih dari 0 meter.');
+        throw const RoomException(
+          'Radius aman harus bernilai positif lebih dari 0 meter.',
+        );
       }
       updates['safeRadius'] = safeRadius;
     }
@@ -279,7 +291,10 @@ class RoomService {
       userUpdates['kloter'] = kloter.trim();
     }
     if (userUpdates.isNotEmpty) {
-      batch.update(_firestore.collection('users').doc(currentUserId), userUpdates);
+      batch.update(
+        _firestore.collection('users').doc(currentUserId),
+        userUpdates,
+      );
     }
 
     await batch.commit();
@@ -287,7 +302,8 @@ class RoomService {
     await logActivity(
       type: ActivityType.roomUpdated,
       title: 'Pengaturan Room Diperbarui',
-      description: 'Pengaturan room "${updates['name'] ?? roomData['name']}" berhasil diperbarui.',
+      description:
+          'Pengaturan room "${updates['name'] ?? roomData['name']}" berhasil diperbarui.',
       roomId: roomId,
       roomName: updates['name'] as String? ?? roomData['name'] as String?,
       userId: currentUserId,
@@ -319,7 +335,9 @@ class RoomService {
     await updateRoom(roomId: roomId, isActive: nextStatus);
 
     await logActivity(
-      type: nextStatus ? ActivityType.roomActivated : ActivityType.roomDeactivated,
+      type: nextStatus
+          ? ActivityType.roomActivated
+          : ActivityType.roomDeactivated,
       title: nextStatus ? 'Room Diaktifkan' : 'Room Dinonaktifkan',
       description: nextStatus
           ? 'Room telah diaktifkan kembali untuk operasional.'
@@ -353,7 +371,9 @@ class RoomService {
 
     // Enforce creator ownership
     if (!isAdmin && (createdBy == null || createdBy != currentUserId)) {
-      throw const RoomException('Anda bukan pembuat room ini. Hanya pembuat room yang berhak menghapus.');
+      throw const RoomException(
+        'Anda bukan pembuat room ini. Hanya pembuat room yang berhak menghapus.',
+      );
     }
 
     final membersSnap = await _firestore
@@ -368,7 +388,8 @@ class RoomService {
     for (final doc in membersSnap.docs) {
       final memberUid = doc.id;
       final memberData = doc.data();
-      final memberRole = (memberData['role'] as String?)?.toLowerCase() ?? 'jamaah';
+      final memberRole =
+          (memberData['role'] as String?)?.toLowerCase() ?? 'jamaah';
 
       // Remove member doc
       batch.delete(doc.reference);
@@ -385,7 +406,8 @@ class RoomService {
         final notifRef = _firestore.collection('notifications').doc();
         batch.set(notifRef, {
           'title': 'Room Dihapus',
-          'message': 'Room "$roomName" ($roomCode) telah dihapus oleh Pendamping $senderName. Akses ke pemantauan room dinonaktifkan.',
+          'message':
+              'Room "$roomName" ($roomCode) telah dihapus oleh Pendamping $senderName. Akses ke pemantauan room dinonaktifkan.',
           'type': 'room_deleted',
           'recipientId': memberUid,
           'senderId': currentUserId,
@@ -402,9 +424,7 @@ class RoomService {
 
     // 2. Ensure creator user doc also resets activeRoomId
     final creatorUserRef = _firestore.collection('users').doc(currentUserId);
-    batch.update(creatorUserRef, {
-      'activeRoomId': FieldValue.delete(),
-    });
+    batch.update(creatorUserRef, {'activeRoomId': FieldValue.delete()});
 
     // 3. Invalidate any pending invitations for this room
     final pendingInvitations = await _firestore
@@ -429,7 +449,8 @@ class RoomService {
     await logActivity(
       type: ActivityType.roomDeactivated,
       title: 'Room Dihapus oleh Pendamping',
-      description: 'Room "$roomName" ($roomCode) telah dihapus oleh $senderName beserta seluruh anggotanya.',
+      description:
+          'Room "$roomName" ($roomCode) telah dihapus oleh $senderName beserta seluruh anggotanya.',
       roomId: roomId,
       roomName: roomName,
       userId: currentUserId,
@@ -475,7 +496,8 @@ class RoomService {
     await logActivity(
       type: ActivityType.roomDeactivated,
       title: 'Room Dihapus',
-      description: 'Room ${roomName != null ? '"$roomName"' : roomId} telah dihapus beserta anggotanya.',
+      description:
+          'Room ${roomName != null ? '"$roomName"' : roomId} telah dihapus beserta anggotanya.',
       roomId: roomId,
       roomName: roomName,
     );
@@ -487,7 +509,10 @@ class RoomService {
         .collection('rooms')
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snap) => snap.docs.map((doc) => RoomModel.fromFirestore(doc)).toList());
+        .map(
+          (snap) =>
+              snap.docs.map((doc) => RoomModel.fromFirestore(doc)).toList(),
+        );
   }
 
   /// Fetches a single room by ID.
@@ -507,7 +532,11 @@ class RoomService {
         .collection('members')
         .orderBy('joinedAt', descending: false)
         .snapshots()
-        .map((snap) => snap.docs.map((doc) => RoomMemberModel.fromFirestore(doc)).toList());
+        .map(
+          (snap) => snap.docs
+              .map((doc) => RoomMemberModel.fromFirestore(doc))
+              .toList(),
+        );
   }
 
   /// Realtime stream alias for room members.
@@ -565,7 +594,9 @@ class RoomService {
     final userDoc = await _firestore.collection('users').doc(uid).get();
     final existingRoomId = userDoc.data()?['activeRoomId'] as String?;
     if (existingRoomId != null && existingRoomId.trim().isNotEmpty) {
-      throw const RoomException('Anda sudah terdaftar dalam room lain. Setiap pengguna hanya boleh memiliki 1 room aktif.');
+      throw const RoomException(
+        'Anda sudah terdaftar dalam room lain. Setiap pengguna hanya boleh memiliki 1 room aktif.',
+      );
     }
 
     // 2. Query by room code
@@ -576,7 +607,9 @@ class RoomService {
         .get();
 
     if (querySnap.docs.isEmpty) {
-      throw const RoomNotFoundException('Kode room tidak ditemukan. Silakan periksa kembali kode Anda.');
+      throw const RoomNotFoundException(
+        'Kode room tidak ditemukan. Silakan periksa kembali kode Anda.',
+      );
     }
 
     final roomDoc = querySnap.docs.first;
@@ -585,27 +618,27 @@ class RoomService {
     final isActive = (roomData['isActive'] as bool?) ?? true;
 
     if (!isActive) {
-      throw const RoomInactiveException('Room ini sedang nonaktif dan tidak dapat menerima anggota baru.');
+      throw const RoomInactiveException(
+        'Room ini sedang nonaktif dan tidak dapat menerima anggota baru.',
+      );
     }
 
     final roomId = roomDoc.id;
     final normalizedRole = role.trim().toLowerCase();
 
-    // 3. For Pendamping: verify room does not already have an active pendamping
+    // 3. For Pendamping: verify room does not exceed max 5 active pendamping
     if (normalizedRole == 'pendamping') {
-      final existingPendampingId = roomData['pendampingId'] as String?;
-      if (existingPendampingId != null && existingPendampingId.isNotEmpty && existingPendampingId != uid) {
-        throw const RoomException('Room ini sudah memiliki Pendamping aktif. Tidak dapat bergabung sebagai pendamping kedua.');
-      }
       final membersSnap = await _firestore
           .collection('rooms')
           .doc(roomId)
           .collection('members')
           .where('role', isEqualTo: 'pendamping')
-          .limit(1)
           .get();
-      if (membersSnap.docs.isNotEmpty && membersSnap.docs.first.id != uid) {
-        throw const RoomException('Room ini sudah memiliki Pendamping aktif.');
+      final isAlreadyMember = membersSnap.docs.any((d) => d.id == uid);
+      if (!isAlreadyMember && membersSnap.docs.length >= 5) {
+        throw const RoomException(
+          'Room ini sudah memiliki batas maksimal 5 Pendamping.',
+        );
       }
     }
 
@@ -627,9 +660,14 @@ class RoomService {
     batch.update(userRef, {'activeRoomId': roomId});
 
     if (normalizedRole == 'pendamping') {
-      batch.update(_firestore.collection('rooms').doc(roomId), {
-        'pendampingId': uid,
-      });
+      final existingPendampingId = roomData['pendampingId'] as String?;
+      final roomUpdate = <String, dynamic>{
+        'pendampingIds': FieldValue.arrayUnion([uid]),
+      };
+      if (existingPendampingId == null || existingPendampingId.isEmpty) {
+        roomUpdate['pendampingId'] = uid;
+      }
+      batch.update(_firestore.collection('rooms').doc(roomId), roomUpdate);
     }
 
     await batch.commit();
@@ -638,7 +676,8 @@ class RoomService {
     await logActivity(
       type: ActivityType.memberJoined,
       title: isPendamping ? 'Pendamping Bergabung' : 'Jamaah Bergabung',
-      description: '$userName bergabung ke $realName ($normalizedCode) sebagai ${isPendamping ? 'Pendamping' : 'Jamaah'}.',
+      description:
+          '$userName bergabung ke $realName ($normalizedCode) sebagai ${isPendamping ? 'Pendamping' : 'Jamaah'}.',
       roomId: roomId,
       roomName: realName,
       userId: uid,
@@ -689,15 +728,22 @@ class RoomService {
       'sosActive': false,
     });
 
+    final isPendamping = role.trim().toLowerCase() == 'pendamping';
+    if (isPendamping) {
+      batch.update(_firestore.collection('rooms').doc(roomId), {
+        'pendampingIds': FieldValue.arrayRemove([uid]),
+      });
+    }
+
     await batch.commit();
     debugPrint('[RoomService] User $uid successfully left room $roomId');
 
     // Log Activity
-    final isPendamping = role.trim().toLowerCase() == 'pendamping';
     await logActivity(
       type: ActivityType.memberLeft,
       title: isPendamping ? 'Pendamping Keluar' : 'Jamaah Keluar',
-      description: '$userName telah keluar dari room ${roomName != null ? '"$roomName"' : roomId}.',
+      description:
+          '$userName telah keluar dari room ${roomName != null ? '"$roomName"' : roomId}.',
       roomId: roomId,
       roomName: roomName,
       userId: uid,
@@ -725,14 +771,23 @@ class RoomService {
     final roomName = (roomData['name'] as String?)?.trim() ?? 'Room';
     final roomCode = (roomData['code'] as String?)?.trim().toUpperCase() ?? '';
     final pendampingId = roomData['pendampingId'] as String?;
+    final pendampingIds =
+        (roomData['pendampingIds'] as List?)
+            ?.map((e) => e.toString())
+            .toList() ??
+        [];
 
     // 2. Validate actor authority (Admin or Pendamping of this room)
     final normalizedActorRole = actorRole.trim().toLowerCase();
     final isAdmin = normalizedActorRole == 'admin';
-    final isAuthorizedPendamping = normalizedActorRole == 'pendamping' && pendampingId == actorUid;
+    final isAuthorizedPendamping =
+        normalizedActorRole == 'pendamping' &&
+        (pendampingId == actorUid || pendampingIds.contains(actorUid));
 
     if (!isAdmin && !isAuthorizedPendamping) {
-      throw const RoomException('Anda tidak memiliki kewenangan untuk mengeluarkan jamaah dari room ini.');
+      throw const RoomException(
+        'Anda tidak memiliki kewenangan untuk mengeluarkan jamaah dari room ini.',
+      );
     }
 
     // 3. Verify target Jamaah is member of this room
@@ -743,7 +798,9 @@ class RoomService {
         .doc(jamaahUid);
     final memberDoc = await memberRef.get();
     if (!memberDoc.exists) {
-      throw const RoomException('Jamaah ini bukan merupakan anggota aktif dari room ini.');
+      throw const RoomException(
+        'Jamaah ini bukan merupakan anggota aktif dari room ini.',
+      );
     }
     final memberData = memberDoc.data()!;
     final jamaahName = (memberData['name'] as String?)?.trim() ?? 'Jamaah';
@@ -758,6 +815,13 @@ class RoomService {
       'sosActive': false,
     });
 
+    final targetRole = (memberData['role'] as String?)?.trim().toLowerCase();
+    if (targetRole == 'pendamping') {
+      batch.update(_firestore.collection('rooms').doc(roomId), {
+        'pendampingIds': FieldValue.arrayRemove([jamaahUid]),
+      });
+    }
+
     final notifDocRef = _firestore.collection('notifications').doc();
     final rolePrefix = isAdmin ? 'Admin' : 'Pendamping';
     final notif = AppNotificationModel(
@@ -765,7 +829,8 @@ class RoomService {
       recipientId: jamaahUid,
       type: 'room_removed',
       title: 'Anda dikeluarkan dari Room',
-      message: 'Anda telah dikeluarkan dari Room "$roomName" ($roomCode) oleh $rolePrefix $actorName.',
+      message:
+          'Anda telah dikeluarkan dari Room "$roomName" ($roomCode) oleh $rolePrefix $actorName.',
       senderId: actorUid,
       senderRole: normalizedActorRole,
       senderName: actorName,
@@ -789,13 +854,16 @@ class RoomService {
     batch.set(notifDocRef, notif.toFirestore());
 
     await batch.commit();
-    debugPrint('[RoomService] Jamaah $jamaahUid removed from room $roomId by $actorName ($actorRole)');
+    debugPrint(
+      '[RoomService] Jamaah $jamaahUid removed from room $roomId by $actorName ($actorRole)',
+    );
 
     // 5. Log Activity
     await logActivity(
       type: ActivityType.memberLeft,
       title: 'Jamaah Dikeluarkan dari Room',
-      description: '$jamaahName telah dikeluarkan dari room "$roomName" ($roomCode) oleh $rolePrefix $actorName.',
+      description:
+          '$jamaahName telah dikeluarkan dari room "$roomName" ($roomCode) oleh $rolePrefix $actorName.',
       roomId: roomId,
       roomName: roomName,
       userId: jamaahUid,
@@ -825,7 +893,9 @@ class RoomService {
     }
 
     final existingRoomId = data['activeRoomId'] as String?;
-    if (existingRoomId != null && existingRoomId.isNotEmpty && existingRoomId != roomId) {
+    if (existingRoomId != null &&
+        existingRoomId.isNotEmpty &&
+        existingRoomId != roomId) {
       throw const RoomException('Jamaah ini sudah terdaftar di room lain.');
     }
 
@@ -871,7 +941,9 @@ class RoomService {
   }) async {
     final normalizedEmail = email.trim().toLowerCase();
     if (normalizedEmail.isEmpty || !normalizedEmail.contains('@')) {
-      throw const RoomException('Format email tidak valid. Masukkan email yang benar.');
+      throw const RoomException(
+        'Format email tidak valid. Masukkan email yang benar.',
+      );
     }
 
     // 1. Verify active room exists and is active
@@ -884,7 +956,9 @@ class RoomService {
     final roomCode = (roomData['code'] as String?)?.trim().toUpperCase() ?? '';
     final isActive = (roomData['isActive'] as bool?) ?? true;
     if (!isActive) {
-      throw const RoomException('Room ini sedang nonaktif dan tidak dapat menerima anggota baru.');
+      throw const RoomException(
+        'Room ini sedang nonaktif dan tidak dapat menerima anggota baru.',
+      );
     }
 
     // 2. Query user by email
@@ -895,7 +969,9 @@ class RoomService {
         .get();
 
     if (querySnap.docs.isEmpty) {
-      throw RoomException('Email "$normalizedEmail" belum terdaftar di sistem HajiCare.');
+      throw RoomException(
+        'Email "$normalizedEmail" belum terdaftar di sistem HajiCare.',
+      );
     }
 
     final targetDoc = querySnap.docs.first;
@@ -904,13 +980,17 @@ class RoomService {
 
     // 3. Validation: Pendamping adding self
     if (targetUid == currentPendampingUid) {
-      throw const RoomException('Anda tidak dapat mengundang diri sendiri sebagai Jamaah.');
+      throw const RoomException(
+        'Anda tidak dapat mengundang diri sendiri sebagai Jamaah.',
+      );
     }
 
     // 4. Validation: User role must be jamaah
     final role = (data['role'] as String?)?.toLowerCase() ?? 'jamaah';
     if (role != 'jamaah') {
-      throw RoomException('Akun ini terdaftar sebagai ${role.toUpperCase()}, bukan sebagai Jamaah.');
+      throw RoomException(
+        'Akun ini terdaftar sebagai ${role.toUpperCase()}, bukan sebagai Jamaah.',
+      );
     }
 
     // 5. Validation: User already in this room
@@ -927,7 +1007,9 @@ class RoomService {
 
     // 6. Validation: User already in another room
     final existingRoomId = data['activeRoomId'] as String?;
-    if (existingRoomId != null && existingRoomId.isNotEmpty && existingRoomId != roomId) {
+    if (existingRoomId != null &&
+        existingRoomId.isNotEmpty &&
+        existingRoomId != roomId) {
       throw const RoomException('Jamaah ini sudah terdaftar di room lain.');
     }
 
@@ -941,7 +1023,9 @@ class RoomService {
         .get();
 
     if (pendingInvSnap.docs.isNotEmpty) {
-      throw const RoomException('Undangan sudah pernah dikirimkan ke Jamaah ini dan sedang menunggu respons.');
+      throw const RoomException(
+        'Undangan sudah pernah dikirimkan ke Jamaah ini dan sedang menunggu respons.',
+      );
     }
 
     final invDocRef = _firestore.collection('invitations').doc();
@@ -964,7 +1048,8 @@ class RoomService {
       recipientId: targetUid,
       type: 'room_invitation',
       title: 'Undangan Masuk Room',
-      message: '$currentPendampingName mengundang Anda bergabung ke "$roomName" ($roomCode).',
+      message:
+          '$currentPendampingName mengundang Anda bergabung ke "$roomName" ($roomCode).',
       relatedId: invDocRef.id,
       isRead: false,
       createdAt: DateTime.now(),
@@ -981,12 +1066,15 @@ class RoomService {
     batch.set(notifDocRef, notif.toFirestore());
     await batch.commit();
 
-    debugPrint('[RoomService] Invitation sent to $normalizedEmail for room $roomId');
+    debugPrint(
+      '[RoomService] Invitation sent to $normalizedEmail for room $roomId',
+    );
 
     await logActivity(
       type: ActivityType.memberJoined,
       title: 'Undangan Room Dikirim',
-      description: 'Undangan dikirim ke $normalizedEmail untuk bergabung ke "$roomName".',
+      description:
+          'Undangan dikirim ke $normalizedEmail untuk bergabung ke "$roomName".',
       roomId: roomId,
       roomName: roomName,
       userId: targetUid,
@@ -1030,7 +1118,9 @@ class RoomService {
     String resolvedRoomId = '';
     String resolvedRoomName = 'Room';
 
-    final result = await _firestore.runTransaction<_AcceptInvitationStatus>((transaction) async {
+    final result = await _firestore.runTransaction<_AcceptInvitationStatus>((
+      transaction,
+    ) async {
       // ── READS (Must precede all writes in Firestore transactions) ───────────
       final invSnap = await transaction.get(invRef);
       if (!invSnap.exists) {
@@ -1042,7 +1132,9 @@ class RoomService {
         throw RoomException('Undangan ini sudah tidak aktif ($status).');
       }
       if (invData['toUserId'] != uid) {
-        throw const RoomException('Undangan ini bukan ditujukan untuk akun Anda.');
+        throw const RoomException(
+          'Undangan ini bukan ditujukan untuk akun Anda.',
+        );
       }
 
       final roomId = (invData['roomId'] as String?)?.trim() ?? '';
@@ -1074,8 +1166,11 @@ class RoomService {
       // ── VALIDATE ROOM EXISTENCE AND ACTIVE STATUS ──────────────────────────
       final roomExists = roomSnap.exists;
       final roomData = roomExists ? roomSnap.data() : null;
-      final isRoomActive = roomExists && (roomData?['isActive'] as bool? ?? true);
-      final isDeleted = roomExists && (roomData?['status'] as String?)?.toLowerCase() == 'deleted';
+      final isRoomActive =
+          roomExists && (roomData?['isActive'] as bool? ?? true);
+      final isDeleted =
+          roomExists &&
+          (roomData?['status'] as String?)?.toLowerCase() == 'deleted';
 
       if (!roomExists || !isRoomActive || isDeleted) {
         // Mark invitation as expired within transaction
@@ -1087,7 +1182,8 @@ class RoomService {
         return _AcceptInvitationStatus.staleRoom;
       }
 
-      resolvedRoomName = (roomData?['name'] as String?)?.trim() ?? resolvedRoomName;
+      resolvedRoomName =
+          (roomData?['name'] as String?)?.trim() ?? resolvedRoomName;
 
       // ── WRITES (Only executed when room is active & valid) ──────────────────
       // 1. Update invitation status to accepted
@@ -1106,16 +1202,16 @@ class RoomService {
       }, SetOptions(merge: true));
 
       // 3. Update user activeRoomId
-      transaction.update(userRef, {
-        'activeRoomId': roomId,
-      });
+      transaction.update(userRef, {'activeRoomId': roomId});
 
       return _AcceptInvitationStatus.success;
     });
 
     // Check transaction result
     if (result == _AcceptInvitationStatus.staleRoom) {
-      throw const StaleInvitationException('Room yang mengirim undangan ini sudah tidak tersedia.');
+      throw const StaleInvitationException(
+        'Room yang mengirim undangan ini sudah tidak tersedia.',
+      );
     }
 
     // ── POST-TRANSACTION CLEANUP & LOGGING ────────────────────────────────────
@@ -1138,7 +1234,8 @@ class RoomService {
       await logActivity(
         type: ActivityType.memberJoined,
         title: 'Undangan Diterima',
-        description: '$userName menerima undangan dan bergabung ke room "$resolvedRoomName".',
+        description:
+            '$userName menerima undangan dan bergabung ke room "$resolvedRoomName".',
         roomId: resolvedRoomId,
         roomName: resolvedRoomName,
         userId: uid,
@@ -1157,7 +1254,10 @@ class RoomService {
     required String invitationId,
     required String uid,
   }) async {
-    final invDoc = await _firestore.collection('invitations').doc(invitationId).get();
+    final invDoc = await _firestore
+        .collection('invitations')
+        .doc(invitationId)
+        .get();
     if (!invDoc.exists) return;
 
     final batch = _firestore.batch();
@@ -1184,7 +1284,9 @@ class RoomService {
     required double radius,
   }) async {
     if (radius <= 0 || radius > 10000) {
-      throw const RoomException('Radius harus berupa angka positif hingga maksimal 10.000 meter.');
+      throw const RoomException(
+        'Radius harus berupa angka positif hingga maksimal 10.000 meter.',
+      );
     }
     await _firestore.collection('rooms').doc(roomId).update({
       'safeRadius': radius,
@@ -1198,7 +1300,11 @@ class RoomService {
         .where('toUserId', isEqualTo: uid)
         .where('status', isEqualTo: 'pending')
         .snapshots()
-        .map((snap) => snap.docs.map((d) => RoomInvitationModel.fromFirestore(d)).toList());
+        .map(
+          (snap) => snap.docs
+              .map((d) => RoomInvitationModel.fromFirestore(d))
+              .toList(),
+        );
   }
 
   /// Streams notifications for a user, sorted newest first.
@@ -1208,7 +1314,9 @@ class RoomService {
         .where('recipientId', isEqualTo: uid)
         .snapshots()
         .map((snap) {
-          final items = snap.docs.map((d) => AppNotificationModel.fromFirestore(d)).toList();
+          final items = snap.docs
+              .map((d) => AppNotificationModel.fromFirestore(d))
+              .toList();
           items.sort((a, b) {
             final tA = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
             final tB = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
@@ -1247,7 +1355,9 @@ class RoomService {
     String? resolvedByUid,
   }) async {
     final batch = _firestore.batch();
-    batch.update(_firestore.collection('users').doc(userId), {'sosActive': false});
+    batch.update(_firestore.collection('users').doc(userId), {
+      'sosActive': false,
+    });
 
     if (roomId != null && roomId.isNotEmpty) {
       final memberRef = _firestore
@@ -1267,7 +1377,10 @@ class RoomService {
     }
 
     if (eventId != null && eventId.isNotEmpty) {
-      batch.update(_firestore.collection('sos_events').doc(eventId), updateData);
+      batch.update(
+        _firestore.collection('sos_events').doc(eventId),
+        updateData,
+      );
     } else {
       final activeSosQuery = await _firestore
           .collection('sos_events')
@@ -1319,11 +1432,15 @@ class RoomService {
         .orderBy('timestamp', descending: true)
         .limit(limit)
         .snapshots()
-        .map((snap) => snap.docs.map((doc) => ActivityModel.fromFirestore(doc)).toList());
+        .map(
+          (snap) =>
+              snap.docs.map((doc) => ActivityModel.fromFirestore(doc)).toList(),
+        );
   }
 
   /// Fetches a paginated batch of activities using Firestore document cursors (best practice 10 per page).
-  Future<({List<ActivityModel> items, DocumentSnapshot? lastDoc, bool hasMore})> getActivitiesPaginated({
+  Future<({List<ActivityModel> items, DocumentSnapshot? lastDoc, bool hasMore})>
+  getActivitiesPaginated({
     int limit = 10,
     DocumentSnapshot? startAfterDoc,
     String? categoryFilter,
@@ -1333,18 +1450,26 @@ class RoomService {
           .collection('activities')
           .orderBy('timestamp', descending: true);
 
-      if (categoryFilter != null && categoryFilter.isNotEmpty && categoryFilter != 'Semua') {
+      if (categoryFilter != null &&
+          categoryFilter.isNotEmpty &&
+          categoryFilter != 'Semua') {
         if (categoryFilter == 'Darurat') {
           query = query.where('type', isEqualTo: 'sos_active');
         } else if (categoryFilter == 'Kamar') {
-          query = query.where('type', whereIn: [
-            'room_created',
-            'room_activated',
-            'room_deactivated',
-            'room_updated',
-          ]);
+          query = query.where(
+            'type',
+            whereIn: [
+              'room_created',
+              'room_activated',
+              'room_deactivated',
+              'room_updated',
+            ],
+          );
         } else if (categoryFilter == 'Anggota') {
-          query = query.where('type', whereIn: ['member_joined', 'member_left']);
+          query = query.where(
+            'type',
+            whereIn: ['member_joined', 'member_left'],
+          );
         }
       }
 
@@ -1353,7 +1478,9 @@ class RoomService {
       }
 
       final snap = await query.limit(limit).get();
-      final items = snap.docs.map((doc) => ActivityModel.fromFirestore(doc)).toList();
+      final items = snap.docs
+          .map((doc) => ActivityModel.fromFirestore(doc))
+          .toList();
       final last = snap.docs.isNotEmpty ? snap.docs.last : null;
       final hasMore = snap.docs.length >= limit;
 
@@ -1405,8 +1532,10 @@ class RoomService {
           list.sort((a, b) {
             final tA = (a['timestamp'] ?? a['createdAt']) as Timestamp?;
             final tB = (b['timestamp'] ?? b['createdAt']) as Timestamp?;
-            final dateA = tA?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0);
-            final dateB = tB?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0);
+            final dateA =
+                tA?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0);
+            final dateB =
+                tB?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0);
             return dateB.compareTo(dateA);
           });
           return list;
@@ -1414,7 +1543,9 @@ class RoomService {
   }
 
   /// Streams resolved SOS events for recent history in Alert Center.
-  Stream<List<Map<String, dynamic>>> getResolvedSosEventsStream({int limit = 5}) {
+  Stream<List<Map<String, dynamic>>> getResolvedSosEventsStream({
+    int limit = 5,
+  }) {
     return _firestore
         .collection('sos_events')
         .where('status', isEqualTo: 'selesai')
@@ -1423,10 +1554,16 @@ class RoomService {
         .map((snap) {
           final list = snap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
           list.sort((a, b) {
-            final tA = (a['resolvedAt'] ?? a['timestamp'] ?? a['createdAt']) as Timestamp?;
-            final tB = (b['resolvedAt'] ?? b['timestamp'] ?? b['createdAt']) as Timestamp?;
-            final dateA = tA?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0);
-            final dateB = tB?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0);
+            final tA =
+                (a['resolvedAt'] ?? a['timestamp'] ?? a['createdAt'])
+                    as Timestamp?;
+            final tB =
+                (b['resolvedAt'] ?? b['timestamp'] ?? b['createdAt'])
+                    as Timestamp?;
+            final dateA =
+                tA?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0);
+            final dateB =
+                tB?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0);
             return dateB.compareTo(dateA);
           });
           return list;
@@ -1467,14 +1604,20 @@ class RoomService {
         final activeRoomId = data['activeRoomId'] as String?;
         final role = (data['role'] as String?)?.toLowerCase();
         if (activeRoomId != null && activeRoomId.isNotEmpty) {
-          breakdown.putIfAbsent(activeRoomId, () => {'jamaah': 0, 'pendamping': 0, 'sos': 0});
+          breakdown.putIfAbsent(
+            activeRoomId,
+            () => {'jamaah': 0, 'pendamping': 0, 'sos': 0},
+          );
           if (role == 'jamaah') {
-            breakdown[activeRoomId]!['jamaah'] = (breakdown[activeRoomId]!['jamaah'] ?? 0) + 1;
+            breakdown[activeRoomId]!['jamaah'] =
+                (breakdown[activeRoomId]!['jamaah'] ?? 0) + 1;
           } else if (role == 'pendamping') {
-            breakdown[activeRoomId]!['pendamping'] = (breakdown[activeRoomId]!['pendamping'] ?? 0) + 1;
+            breakdown[activeRoomId]!['pendamping'] =
+                (breakdown[activeRoomId]!['pendamping'] ?? 0) + 1;
           }
           if (data['sosActive'] == true) {
-            breakdown[activeRoomId]!['sos'] = (breakdown[activeRoomId]!['sos'] ?? 0) + 1;
+            breakdown[activeRoomId]!['sos'] =
+                (breakdown[activeRoomId]!['sos'] ?? 0) + 1;
           }
         }
       }

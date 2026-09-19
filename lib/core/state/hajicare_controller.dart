@@ -140,11 +140,15 @@ class HajiCareController extends GetxController {
       _role.value = UserRole.jamaah;
     }
 
-    final trimmedRoomId = (roomId != null && roomId.trim().isNotEmpty) ? roomId.trim() : null;
+    final trimmedRoomId = (roomId != null && roomId.trim().isNotEmpty)
+        ? roomId.trim()
+        : null;
     _cachedRoomId = trimmedRoomId;
     activeRoomId.value = trimmedRoomId;
 
-    if (name != null && name.trim().isNotEmpty && _role.value == UserRole.pendamping) {
+    if (name != null &&
+        name.trim().isNotEmpty &&
+        _role.value == UserRole.pendamping) {
       pendampingName.value = name.trim();
     }
 
@@ -172,7 +176,10 @@ class HajiCareController extends GetxController {
 
   /// Explicitly syncs user doc from Firestore, updates in-memory state, and saves to cache.
   /// Called during login/bootstrap to ensure state is ready before navigation.
-  Future<void> syncUserData(String uid, {Map<String, dynamic>? preloadedData}) async {
+  Future<void> syncUserData(
+    String uid, {
+    Map<String, dynamic>? preloadedData,
+  }) async {
     try {
       Map<String, dynamic>? data = preloadedData;
       if (data == null) {
@@ -189,13 +196,10 @@ class HajiCareController extends GetxController {
       if (data != null) {
         final roleStr = (data['role'] as String?)?.toLowerCase() ?? 'jamaah';
         final roomId = data['activeRoomId'] as String?;
-        final rawName = data['name'] as String? ?? data['displayName'] as String?;
+        final rawName =
+            data['name'] as String? ?? data['displayName'] as String?;
 
-        await applyUserData(
-          roleStr: roleStr,
-          roomId: roomId,
-          name: rawName,
-        );
+        await applyUserData(roleStr: roleStr, roomId: roomId, name: rawName);
       }
     } catch (e) {
       debugPrint('[HajiCareController] Error in syncUserData: $e');
@@ -237,10 +241,12 @@ class HajiCareController extends GetxController {
     activeRoomId.value = null;
     activeRoom.value = null;
     _cachedRoomId = null;
-    SharedPreferences.getInstance().then((prefs) {
-      prefs.remove(keyActiveRoomId);
-      prefs.remove(keyUserRole);
-    }).catchError((_) {});
+    SharedPreferences.getInstance()
+        .then((prefs) {
+          prefs.remove(keyActiveRoomId);
+          prefs.remove(keyUserRole);
+        })
+        .catchError((_) {});
     myCurrentPosition.value = null;
     isMyGpsActive.value = false;
     calculatedDistance.value = null;
@@ -257,97 +263,124 @@ class HajiCareController extends GetxController {
     _invitationsSub?.cancel();
     _sosEventsSub?.cancel();
 
-    _invitationsSub = _roomService.getPendingInvitationsStream(uid).listen((invs) {
+    _invitationsSub = _roomService.getPendingInvitationsStream(uid).listen((
+      invs,
+    ) {
       pendingInvitations.value = invs;
     });
 
-    _sosEventsSub = _roomService.getActiveSosEventsStream().listen((sosList) {
-      activeSosEvents.value = sosList;
-      activeSosCount.value = sosList.length;
+    _sosEventsSub = _roomService.getActiveSosEventsStream().listen(
+      (sosList) {
+        activeSosEvents.value = sosList;
+        activeSosCount.value = sosList.length;
 
-      // Update matching jamaah in list if needed
-      for (final j in jamaahList) {
-        final hasActiveSos = sosList.any((s) => s['userId'] == j.id || s['jamaahId'] == j.id);
-        if (j.sosActive != hasActiveSos) {
-          j.sosActive = hasActiveSos;
-          j.refresh();
+        // Update matching jamaah in list if needed
+        for (final j in jamaahList) {
+          final hasActiveSos = sosList.any(
+            (s) => s['userId'] == j.id || s['jamaahId'] == j.id,
+          );
+          if (j.sosActive != hasActiveSos) {
+            j.sosActive = hasActiveSos;
+            j.refresh();
+          }
         }
-      }
-      if (_self != null) {
-        final hasSelfSos = sosList.any((s) => s['userId'] == uid || s['jamaahId'] == uid);
-        if (_self!.sosActive != hasSelfSos) {
-          _self!.sosActive = hasSelfSos;
-          _self!.refresh();
+        if (_self != null) {
+          final hasSelfSos = sosList.any(
+            (s) => s['userId'] == uid || s['jamaahId'] == uid,
+          );
+          if (_self!.sosActive != hasSelfSos) {
+            _self!.sosActive = hasSelfSos;
+            _self!.refresh();
+          }
         }
-      }
-    }, onError: (e) {
-      debugPrint('[HajiCareController] Error listening to active SOS events: $e');
-    });
+      },
+      onError: (e) {
+        debugPrint(
+          '[HajiCareController] Error listening to active SOS events: $e',
+        );
+      },
+    );
     try {
       _userDocSub = FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
           .snapshots()
           .listen((doc) {
-        if (!doc.exists) return;
-        final data = doc.data()!;
-        final roleStr = (data['role'] as String?)?.toLowerCase() ?? 'jamaah';
+            if (!doc.exists) return;
+            final data = doc.data()!;
+            final roleStr =
+                (data['role'] as String?)?.toLowerCase() ?? 'jamaah';
 
-        if (roleStr == 'admin') {
-          _role.value = UserRole.admin;
-        } else if (roleStr == 'pendamping') {
-          _role.value = UserRole.pendamping;
-        } else {
-          _role.value = UserRole.jamaah;
-        }
+            if (roleStr == 'admin') {
+              _role.value = UserRole.admin;
+            } else if (roleStr == 'pendamping') {
+              _role.value = UserRole.pendamping;
+            } else {
+              _role.value = UserRole.jamaah;
+            }
 
-        final currentRoomId = (data['activeRoomId'] as String?)?.trim();
-        final effectiveRoomId = (currentRoomId != null && currentRoomId.isNotEmpty) ? currentRoomId : null;
-        _cachedRoomId = effectiveRoomId;
+            final currentRoomId = (data['activeRoomId'] as String?)?.trim();
+            final effectiveRoomId =
+                (currentRoomId != null && currentRoomId.isNotEmpty)
+                ? currentRoomId
+                : null;
+            _cachedRoomId = effectiveRoomId;
 
-        final userKloter = (data['kloter'] as String?)?.trim();
-        final userMaktab = (data['maktab'] as String?)?.trim();
-        pendampingKloter.value = (userKloter != null && userKloter.isNotEmpty) ? userKloter : null;
-        pendampingMaktab.value = (userMaktab != null && userMaktab.isNotEmpty) ? userMaktab : null;
+            final userKloter = (data['kloter'] as String?)?.trim();
+            final userMaktab = (data['maktab'] as String?)?.trim();
+            pendampingKloter.value =
+                (userKloter != null && userKloter.isNotEmpty)
+                ? userKloter
+                : null;
+            pendampingMaktab.value =
+                (userMaktab != null && userMaktab.isNotEmpty)
+                ? userMaktab
+                : null;
 
-        // Persist snapshot update to SharedPreferences
-        SharedPreferences.getInstance().then((prefs) {
-          prefs.setString(keyUserRole, roleStr);
-          if (effectiveRoomId != null) {
-            prefs.setString(keyActiveRoomId, effectiveRoomId);
-          } else {
-            prefs.remove(keyActiveRoomId);
-          }
-        }).catchError((e) {
-          debugPrint('[HajiCareController] Error persisting snapshot to cache: $e');
-        });
+            // Persist snapshot update to SharedPreferences
+            SharedPreferences.getInstance()
+                .then((prefs) {
+                  prefs.setString(keyUserRole, roleStr);
+                  if (effectiveRoomId != null) {
+                    prefs.setString(keyActiveRoomId, effectiveRoomId);
+                  } else {
+                    prefs.remove(keyActiveRoomId);
+                  }
+                })
+                .catchError((e) {
+                  debugPrint(
+                    '[HajiCareController] Error persisting snapshot to cache: $e',
+                  );
+                });
 
-        if (effectiveRoomId != activeRoomId.value || _roomDocSub == null) {
-          activeRoomId.value = effectiveRoomId;
-          if (effectiveRoomId != null && effectiveRoomId.isNotEmpty) {
-            _listenToActiveRoom(effectiveRoomId, uid);
-          } else {
-            _clearRoomListeners();
-          }
-        }
+            if (effectiveRoomId != activeRoomId.value || _roomDocSub == null) {
+              activeRoomId.value = effectiveRoomId;
+              if (effectiveRoomId != null && effectiveRoomId.isNotEmpty) {
+                _listenToActiveRoom(effectiveRoomId, uid);
+              } else {
+                _clearRoomListeners();
+              }
+            }
 
-        if (_role.value == UserRole.pendamping) {
-          final currentUser = FirebaseAuth.instance.currentUser;
-          final rawName = data['name'] as String? ?? data['displayName'] as String?;
-          pendampingName.value = (rawName != null && rawName.trim().isNotEmpty)
-              ? rawName.trim()
-              : (currentUser?.displayName?.trim().isNotEmpty == true
-                  ? currentUser!.displayName!.trim()
-                  : 'Pendamping');
-        } else if (_role.value == UserRole.jamaah) {
-          _self = JamaahData.fromFirestore(doc);
-          if (jamaahList.isEmpty || !jamaahList.any((j) => j.id == uid)) {
-            jamaahList.value = [_self!];
-          }
-          _listenToSelf(uid);
-        }
-        _recalculateRealDistance();
-      });
+            if (_role.value == UserRole.pendamping) {
+              final currentUser = FirebaseAuth.instance.currentUser;
+              final rawName =
+                  data['name'] as String? ?? data['displayName'] as String?;
+              pendampingName.value =
+                  (rawName != null && rawName.trim().isNotEmpty)
+                  ? rawName.trim()
+                  : (currentUser?.displayName?.trim().isNotEmpty == true
+                        ? currentUser!.displayName!.trim()
+                        : 'Pendamping');
+            } else if (_role.value == UserRole.jamaah) {
+              _self = JamaahData.fromFirestore(doc);
+              if (jamaahList.isEmpty || !jamaahList.any((j) => j.id == uid)) {
+                jamaahList.value = [_self!];
+              }
+              _listenToSelf(uid);
+            }
+            _recalculateRealDistance();
+          });
     } catch (e) {
       debugPrint('[HajiCareController] Error loading user doc: $e');
     }
@@ -378,22 +411,25 @@ class HajiCareController extends GetxController {
         .collection('rooms')
         .doc(roomId)
         .snapshots()
-        .listen((doc) {
-      if (doc.exists) {
-        final r = RoomModel.fromFirestore(doc);
-        activeRoom.value = r;
-        activeRoom.refresh();
-        safeRadiusMeters.value = r.safeRadius;
-        if (r.maktab != null && r.maktab!.isNotEmpty) {
-          pendampingMaktab.value = r.maktab;
-        }
-        if (r.kloter != null && r.kloter!.isNotEmpty) {
-          pendampingKloter.value = r.kloter;
-        }
-      }
-    }, onError: (e) {
-      debugPrint('[HajiCareController] Error in _roomDocSub: $e');
-    });
+        .listen(
+          (doc) {
+            if (doc.exists) {
+              final r = RoomModel.fromFirestore(doc);
+              activeRoom.value = r;
+              activeRoom.refresh();
+              safeRadiusMeters.value = r.safeRadius;
+              if (r.maktab != null && r.maktab!.isNotEmpty) {
+                pendampingMaktab.value = r.maktab;
+              }
+              if (r.kloter != null && r.kloter!.isNotEmpty) {
+                pendampingKloter.value = r.kloter;
+              }
+            }
+          },
+          onError: (e) {
+            debugPrint('[HajiCareController] Error in _roomDocSub: $e');
+          },
+        );
 
     _roomMembersSub?.cancel();
     _roomMembersSub = FirebaseFirestore.instance
@@ -402,31 +438,41 @@ class HajiCareController extends GetxController {
         .collection('members')
         .snapshots()
         .listen((snap) {
-      final members = snap.docs.map((d) => RoomMemberModel.fromFirestore(d)).toList();
-      activeRoomMembers.value = members;
+          final members = snap.docs
+              .map((d) => RoomMemberModel.fromFirestore(d))
+              .toList();
+          activeRoomMembers.value = members;
 
-      if (_role.value == UserRole.pendamping) {
-        // Find only jamaah member UIDs for monitoring
-        final jamaahMembers = members.where((m) => m.isJamaah).toList();
-        final jamaahUids = jamaahMembers.map((m) => m.uid).toList();
-        _syncJamaahFromRoomMembers(jamaahMembers);
-        _syncJamaahListeners(jamaahUids);
-      } else if (_role.value == UserRole.jamaah) {
-        // Resolve pendamping name and real coordinates from room members
-        final pendampingMember = members.firstWhereOrNull((m) => m.isPendamping);
-        if (pendampingMember != null) {
-          pendampingName.value = pendampingMember.name;
-          _listenToPendampingLocation(pendampingMember.uid, pendampingMember);
-        } else {
-          pendampingLocation.value = null;
-          isPendampingGpsActive.value = false;
-        }
-      }
-      _recalculateRealDistance();
-    });
+          if (_role.value == UserRole.pendamping) {
+            // Find only jamaah member UIDs for monitoring
+            final jamaahMembers = members.where((m) => m.isJamaah).toList();
+            final jamaahUids = jamaahMembers.map((m) => m.uid).toList();
+            _syncJamaahFromRoomMembers(jamaahMembers);
+            _syncJamaahListeners(jamaahUids);
+          } else if (_role.value == UserRole.jamaah) {
+            // Resolve pendamping name and real coordinates from room members
+            final pendampingMember = members.firstWhereOrNull(
+              (m) => m.isPendamping,
+            );
+            if (pendampingMember != null) {
+              pendampingName.value = pendampingMember.name;
+              _listenToPendampingLocation(
+                pendampingMember.uid,
+                pendampingMember,
+              );
+            } else {
+              pendampingLocation.value = null;
+              isPendampingGpsActive.value = false;
+            }
+          }
+          _recalculateRealDistance();
+        });
   }
 
-  void _listenToPendampingLocation(String pendampingUid, RoomMemberModel memberFallback) {
+  void _listenToPendampingLocation(
+    String pendampingUid,
+    RoomMemberModel memberFallback,
+  ) {
     if (memberFallback.currentLocation != null) {
       pendampingLocation.value = memberFallback.currentLocation;
       pendampingLocationUpdatedAt.value = memberFallback.locationUpdatedAt;
@@ -439,21 +485,21 @@ class HajiCareController extends GetxController {
         .doc(pendampingUid)
         .snapshots()
         .listen((doc) {
-      if (!doc.exists) return;
-      final data = doc.data()!;
-      final loc = data['currentLocation'] as GeoPoint?;
-      final isGps = (data['isGpsActive'] as bool?) ?? (loc != null);
+          if (!doc.exists) return;
+          final data = doc.data()!;
+          final loc = data['currentLocation'] as GeoPoint?;
+          final isGps = (data['isGpsActive'] as bool?) ?? (loc != null);
 
-      DateTime? locTime;
-      if (data['locationUpdatedAt'] is Timestamp) {
-        locTime = (data['locationUpdatedAt'] as Timestamp).toDate();
-      }
+          DateTime? locTime;
+          if (data['locationUpdatedAt'] is Timestamp) {
+            locTime = (data['locationUpdatedAt'] as Timestamp).toDate();
+          }
 
-      pendampingLocation.value = loc;
-      pendampingLocationUpdatedAt.value = locTime;
-      isPendampingGpsActive.value = isGps && loc != null;
-      _recalculateRealDistance();
-    });
+          pendampingLocation.value = loc;
+          pendampingLocationUpdatedAt.value = locTime;
+          isPendampingGpsActive.value = isGps && loc != null;
+          _recalculateRealDistance();
+        });
   }
 
   void _syncJamaahFromRoomMembers(List<RoomMemberModel> members) {
@@ -486,7 +532,9 @@ class HajiCareController extends GetxController {
 
   void _syncJamaahListeners(List<String> jamaahIds) {
     // Remove old
-    final toRemove = _jamaahSubs.keys.where((id) => !jamaahIds.contains(id)).toList();
+    final toRemove = _jamaahSubs.keys
+        .where((id) => !jamaahIds.contains(id))
+        .toList();
     for (final id in toRemove) {
       _jamaahSubs[id]?.cancel();
       _jamaahSubs.remove(id);
@@ -501,23 +549,24 @@ class HajiCareController extends GetxController {
             .doc(id)
             .snapshots()
             .listen((doc) {
-          if (doc.exists) {
-            final jData = JamaahData.fromFirestore(doc);
-            final index = jamaahList.indexWhere((j) => j.id == id);
-            if (index >= 0) {
-              final existing = jamaahList[index];
-              if (jData.currentLocation == null && existing.currentLocation != null) {
-                jData.currentLocation = existing.currentLocation;
-                jData.locationUpdatedAt = existing.locationUpdatedAt;
-                jData.isGpsActive = existing.isGpsActive;
+              if (doc.exists) {
+                final jData = JamaahData.fromFirestore(doc);
+                final index = jamaahList.indexWhere((j) => j.id == id);
+                if (index >= 0) {
+                  final existing = jamaahList[index];
+                  if (jData.currentLocation == null &&
+                      existing.currentLocation != null) {
+                    jData.currentLocation = existing.currentLocation;
+                    jData.locationUpdatedAt = existing.locationUpdatedAt;
+                    jData.isGpsActive = existing.isGpsActive;
+                  }
+                  jamaahList[index] = jData;
+                } else {
+                  jamaahList.add(jData);
+                }
+                _recalculateRealDistance();
               }
-              jamaahList[index] = jData;
-            } else {
-              jamaahList.add(jData);
-            }
-            _recalculateRealDistance();
-          }
-        });
+            });
       }
     }
   }
@@ -529,19 +578,19 @@ class HajiCareController extends GetxController {
         .doc(uid)
         .snapshots()
         .listen((doc) {
-      if (doc.exists) {
-        _self = JamaahData.fromFirestore(doc);
-        if (_role.value == UserRole.jamaah) {
-          final index = jamaahList.indexWhere((j) => j.id == uid);
-          if (index >= 0) {
-            jamaahList[index] = _self!;
-          } else {
-            jamaahList.add(_self!);
+          if (doc.exists) {
+            _self = JamaahData.fromFirestore(doc);
+            if (_role.value == UserRole.jamaah) {
+              final index = jamaahList.indexWhere((j) => j.id == uid);
+              if (index >= 0) {
+                jamaahList[index] = _self!;
+              } else {
+                jamaahList.add(_self!);
+              }
+              _recalculateRealDistance();
+            }
           }
-          _recalculateRealDistance();
-        }
-      }
-    });
+        });
   }
 
   // ── REAL GPS LOCATION TRACKING (NO DUMMY DATA) ─────────────────────────────
@@ -569,15 +618,18 @@ class HajiCareController extends GetxController {
     try {
       _gpsStreamSub = _locationService
           .getPositionStream(distanceFilter: 5, accuracy: LocationAccuracy.high)
-          .listen((position) {
-        myCurrentPosition.value = position;
-        isMyGpsActive.value = true;
-        _broadcastLocationToFirestore(uid, position);
-        _recalculateRealDistance();
-      }, onError: (e) {
-        debugPrint('[HajiCareController] GPS stream error: $e');
-        isMyGpsActive.value = false;
-      });
+          .listen(
+            (position) {
+              myCurrentPosition.value = position;
+              isMyGpsActive.value = true;
+              _broadcastLocationToFirestore(uid, position);
+              _recalculateRealDistance();
+            },
+            onError: (e) {
+              debugPrint('[HajiCareController] GPS stream error: $e');
+              isMyGpsActive.value = false;
+            },
+          );
     } catch (e) {
       debugPrint('[HajiCareController] Failed to listen to GPS stream: $e');
       isMyGpsActive.value = false;
@@ -661,7 +713,9 @@ class HajiCareController extends GetxController {
             if (j.currentLocation == null ||
                 (member.locationUpdatedAt != null &&
                     (j.locationUpdatedAt == null ||
-                        member.locationUpdatedAt!.isAfter(j.locationUpdatedAt!)))) {
+                        member.locationUpdatedAt!.isAfter(
+                          j.locationUpdatedAt!,
+                        )))) {
               j.currentLocation = member.currentLocation;
               j.locationUpdatedAt = member.locationUpdatedAt;
               j.isGpsActive = true;
@@ -695,7 +749,9 @@ class HajiCareController extends GetxController {
       try {
         await _roomService.updateSafeRadius(roomId: roomId, radius: radius);
       } catch (e) {
-        debugPrint('[HajiCareController] Error updating safe radius in Firestore: $e');
+        debugPrint(
+          '[HajiCareController] Error updating safe radius in Firestore: $e',
+        );
       }
     }
   }
@@ -707,8 +763,11 @@ class HajiCareController extends GetxController {
     if (uid == null || roomId == null || roomId.isEmpty) return false;
 
     try {
-      final roleStr = _role.value == UserRole.pendamping ? 'pendamping' : 'jamaah';
-      final uName = _self?.name ??
+      final roleStr = _role.value == UserRole.pendamping
+          ? 'pendamping'
+          : 'jamaah';
+      final uName =
+          _self?.name ??
           FirebaseAuth.instance.currentUser?.displayName ??
           'Jamaah';
       final rName = activeRoom.value?.name;
@@ -829,7 +888,9 @@ class HajiCareController extends GetxController {
     try {
       final myPos = myCurrentPosition.value;
       final roomId = activeRoomId.value;
-      final roomName = activeRoom.value?.name ?? (roomId != null ? 'Room $roomId' : 'Darurat Terbuka');
+      final roomName =
+          activeRoom.value?.name ??
+          (roomId != null ? 'Room $roomId' : 'Darurat Terbuka');
       final userName = _self?.name ?? user.displayName ?? 'Jamaah';
 
       // 1. Create real SOS event document with status 'active'
@@ -842,7 +903,8 @@ class HajiCareController extends GetxController {
         'timestamp': FieldValue.serverTimestamp(),
         'createdAt': FieldValue.serverTimestamp(),
         'status': 'active',
-        if (myPos != null) 'location': GeoPoint(myPos.latitude, myPos.longitude),
+        if (myPos != null)
+          'location': GeoPoint(myPos.latitude, myPos.longitude),
       });
 
       // 2. Update user doc
@@ -911,8 +973,8 @@ class HajiCareController extends GetxController {
     final fallbackName = currentUser?.displayName?.trim().isNotEmpty == true
         ? currentUser!.displayName!.trim()
         : (currentUser?.email?.trim().isNotEmpty == true
-            ? currentUser!.email!.split('@').first
-            : 'Jamaah');
+              ? currentUser!.email!.split('@').first
+              : 'Jamaah');
     return JamaahData(
       id: currentUser?.uid ?? 'self',
       name: fallbackName,
@@ -922,7 +984,8 @@ class HajiCareController extends GetxController {
     );
   }
 
-  bool get anySosActive => activeSosCount.value > 0 || jamaahList.any((j) => j.sosActive);
+  bool get anySosActive =>
+      activeSosCount.value > 0 || jamaahList.any((j) => j.sosActive);
 
   bool get anyJamaahSeparated => jamaahList.any((j) => j.separatedMode);
 
@@ -947,9 +1010,11 @@ class HajiCareController extends GetxController {
     final rStr = newRole == UserRole.admin
         ? 'admin'
         : (newRole == UserRole.pendamping ? 'pendamping' : 'jamaah');
-    SharedPreferences.getInstance().then((prefs) {
-      prefs.setString(keyUserRole, rStr);
-    }).catchError((_) {});
+    SharedPreferences.getInstance()
+        .then((prefs) {
+          prefs.setString(keyUserRole, rStr);
+        })
+        .catchError((_) {});
   }
 
   /// Re-triggers GPS location tracking (e.g. after user enables GPS from settings).
@@ -959,7 +1024,6 @@ class HajiCareController extends GetxController {
       await startLocationTracking(uid);
     }
   }
-
 
   @override
   void onClose() {

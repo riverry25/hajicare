@@ -25,17 +25,22 @@ const Map<String, String> suTranslations = {
   'onboardingStage3': 'TAHAP 3 TINA 3',
   'chooseLanguageTitle': 'Pilih Basa Nu Nyaman',
   'chooseLanguageSubtitle': 'Basa Pangjajap Aplikasi',
-  'chooseLanguageDesc': 'Pilih basa nu panggampangna dipahaman supados ibadah sareng komunikasi darurat langkung nyaman.',
+  'chooseLanguageDesc':
+      'Pilih basa nu panggampangna dipahaman supados ibadah sareng komunikasi darurat langkung nyaman.',
   'canChangeLater': 'Tiasa dirobah iraha waé',
   'autoAdjustHint': 'Ukuran tulisan & sora bakal otomatis disaluyukeun',
   'safetyTitle': 'Kasalametan Kapantau',
-  'safetyDesc': 'Pantau lokasi kulawarga sacara langsung ngagunakeun radar jarak pinter sareng peringatan darurat instan.',
+  'safetyDesc':
+      'Pantau lokasi kulawarga sacara langsung ngagunakeun radar jarak pinter sareng peringatan darurat instan.',
   'accessibilityTitle': 'Ramah Sepuh & Difabel',
-  'accessibilityDesc': 'Dilengkepan ku pambaca artos riyal, komunikasi isyarat, sareng tombol darurat SOS nu gampang dipake.',
+  'accessibilityDesc':
+      'Dilengkepan ku pambaca artos riyal, komunikasi isyarat, sareng tombol darurat SOS nu gampang dipake.',
   'scanMoneyTitle': 'Pindai Artos Riyal',
-  'scanMoneyDesc': 'Arahkeun kamera kana lembaran riyal, jumlahna langsung diwaca otomatis ku sora (Text-to-Speech).',
+  'scanMoneyDesc':
+      'Arahkeun kamera kana lembaran riyal, jumlahna langsung diwaca otomatis ku sora (Text-to-Speech).',
   'commGestureTitle': 'Komunikasi & Isyarat',
-  'commGestureDesc': 'Ngarobah omongan jadi tulisan gedé sareng ungkapan darurat gancang (Tulung, Sakit, Cai) nu gampang kaharti.',
+  'commGestureDesc':
+      'Ngarobah omongan jadi tulisan gedé sareng ungkapan darurat gancang (Tulung, Sakit, Cai) nu gampang kaharti.',
   'ttsReady': 'Pambaca Sora parantos siap',
   'btnNextFeature': 'Salajengna ka Fitur Utama',
   'btnNextAccess': 'Salajengna ka Aksesibilitas',
@@ -47,9 +52,11 @@ const Map<String, String> suTranslations = {
   'loginSubtitle': 'Pilih peran Anjeun pikeun neraskeun',
   'chooseRole': 'Pilih Peran',
   'roleJamaah': 'Jamaah Haji',
-  'roleJamaahDesc': 'Kanggo jamaah sepuh / mandiri sareng navigasi basajan & tombol SOS gancang',
+  'roleJamaahDesc':
+      'Kanggo jamaah sepuh / mandiri sareng navigasi basajan & tombol SOS gancang',
   'rolePendamping': 'Pangaping / Kulawarga',
-  'rolePendampingDesc': 'Mantau posisi jamaah, jarak aman, sareng nampi peringatan darurat',
+  'rolePendampingDesc':
+      'Mantau posisi jamaah, jarak aman, sareng nampi peringatan darurat',
   'phoneLabel': 'Nomer Telepon / Pasapor',
   'phoneHint': 'Conto: 08123456789',
   'pinLabel': 'PIN Kaamanan',
@@ -94,7 +101,8 @@ const Map<String, String> suTranslations = {
 
   // SOS Modal
   'sosActiveHeader': 'PERINGATAN DARURAT AKTIF',
-  'sosActiveBody': 'Sinyal SOS parantos dikirim ka petugas sareng pangaping nu pangdeukeutna. Hapunten tetap tenang di tempat Anjeun.',
+  'sosActiveBody':
+      'Sinyal SOS parantos dikirim ka petugas sareng pangaping nu pangdeukeutna. Hapunten tetap tenang di tempat Anjeun.',
   'cancelSos': 'Batalkeun Panggilan Darurat',
   'confirmCancelSos': 'Naha Anjeun yakin kaayaan darurat parantos bérés?',
   'yesImSafe': 'Muhun, Abdi Parantos Aman',
@@ -197,29 +205,41 @@ const Map<String, String> suTranslations = {
   'catTechnicalDesc': 'Ngatasi masalah sareng gangguan aplikasi',
   'faqTitle': 'Patarosan Umum (FAQ)',
   'faqQ1': 'Kumaha cara nyieun akun?',
-  'faqA1': 'Buka aplikasi HajiCare, pilih "Daftar Énggal" di kaca asup, terus isi data Anjeun kalebet nami lengkep, nomer telepon, sareng nyieun PIN kaamanan.',
+  'faqA1':
+      'Buka aplikasi HajiCare, pilih "Daftar Énggal" di kaca asup, terus isi data Anjeun kalebet nami lengkep, nomer telepon, sareng nyieun PIN kaamanan.',
   'faqQ2': 'Kumaha cara ngarobah data profil?',
-  'faqA2': 'Buka menu Profil di bagian handap aplikasi, terus pilih opsi nu hayang dirobah.',
+  'faqA2':
+      'Buka menu Profil di bagian handap aplikasi, terus pilih opsi nu hayang dirobah.',
   'faqQ3': 'Kumaha cara ngaganti poto profil?',
-  'faqA3': 'Di kaca Profil, ketok ikon pensil dina poto profil Anjeun. Tiasa milih poto tina galeri atawa ngambil poto énggal ngagunakeun kamera.',
+  'faqA3':
+      'Di kaca Profil, ketok ikon pensil dina poto profil Anjeun. Tiasa milih poto tina galeri atawa ngambil poto énggal ngagunakeun kamera.',
   'faqQ4': 'Kumaha cara kaluar tina akun?',
-  'faqA4': 'Buka kaca Profil, gulung ka handap, terus ketok tombol "Kaluar". Pastikeun pilihan Anjeun dina dialog nu muncul.',
+  'faqA4':
+      'Buka kaca Profil, gulung ka handap, terus ketok tombol "Kaluar". Pastikeun pilihan Anjeun dina dialog nu muncul.',
   'faqQ5': 'Kumaha cara ngagedékeun ukuran tulisan?',
-  'faqA5': 'Buka Profil → Aksesibilitas → Ukuran Tulisan, terus pilih ukuran nu cocog. Parobahan langsung berlaku di sakumna aplikasi.',
+  'faqA5':
+      'Buka Profil → Aksesibilitas → Ukuran Tulisan, terus pilih ukuran nu cocog. Parobahan langsung berlaku di sakumna aplikasi.',
   'faqQ6': 'Naha ukuran tulisan langsung robah?',
-  'faqA6': 'Muhun, parobahan ukuran tulisan langsung berlaku di sakumna aplikasi tanpa perlu muat ulang atawa ganti basa.',
+  'faqA6':
+      'Muhun, parobahan ukuran tulisan langsung berlaku di sakumna aplikasi tanpa perlu muat ulang atawa ganti basa.',
   'faqQ7': 'Kumaha cara ngaktifkeun mode poék?',
-  'faqA7': 'Buka Profil → Séjén & Pilihan → Téma Tampilan, terus pilih Mode Poék, Mode Caang, atawa Otomatis.',
+  'faqA7':
+      'Buka Profil → Séjén & Pilihan → Téma Tampilan, terus pilih Mode Poék, Mode Caang, atawa Otomatis.',
   'faqQ8': 'Kumaha cara nyambungkeun pangaping?',
-  'faqA8': 'Fitur pangaping nyambungkeun jamaah sareng pangaping sacara otomatis dumasar data kloter.',
+  'faqA8':
+      'Fitur pangaping nyambungkeun jamaah sareng pangaping sacara otomatis dumasar data kloter.',
   'faqQ9': 'Saha nu tiasa jadi pangaping?',
-  'faqA9': 'Pangaping nyaéta anggota kulawarga atawa petugas nu kadaptarkeun dina sistem HajiCare.',
+  'faqA9':
+      'Pangaping nyaéta anggota kulawarga atawa petugas nu kadaptarkeun dina sistem HajiCare.',
   'faqQ10': 'Naon fungsi HajiCare?',
-  'faqA10': 'HajiCare nyaéta aplikasi pangaping ibadah haji nu mantuan mantau kasalametan jamaah sareng nyambungkeun sareng pangaping.',
+  'faqA10':
+      'HajiCare nyaéta aplikasi pangaping ibadah haji nu mantuan mantau kasalametan jamaah sareng nyambungkeun sareng pangaping.',
   'faqQ11': 'Naha data abdi aman?',
-  'faqA11': 'Muhun, data Anjeun diamankeun ngagunakeun Firebase Authentication sareng disimpen di server nu terproteksi.',
+  'faqA11':
+      'Muhun, data Anjeun diamankeun ngagunakeun Firebase Authentication sareng disimpen di server nu terproteksi.',
   'faqQ12': 'Naon lamun aplikasi aya masalah?',
-  'faqA12': 'Coba tutup sareng buka deui aplikasi. Pastikan koneksi internét stabil. Lamun masalah teras, hubungi tim HajiCare.',
+  'faqA12':
+      'Coba tutup sareng buka deui aplikasi. Pastikan koneksi internét stabil. Lamun masalah teras, hubungi tim HajiCare.',
   'contactSupportTitle': 'Masih peryogi bantuan?',
   'contactSupportSubtitle': 'Hubungi tim HajiCare',
   'contactEmail': 'Kirim Email',
@@ -228,31 +248,39 @@ const Map<String, String> suTranslations = {
 
   // About App
   'aboutTitle': 'Ngeunaan HajiCare',
-  'aboutSubtitle': 'Rencang perjalanan ibadah nu aman, nyambung, sareng inklusif.',
-  'aboutDescription': 'HajiCare hadir pikeun ngadampingi perjalanan ibadah haji Anjeun sareng téknologi nu ramah, aman, sareng gampang digunakeun.',
+  'aboutSubtitle':
+      'Rencang perjalanan ibadah nu aman, nyambung, sareng inklusif.',
+  'aboutDescription':
+      'HajiCare hadir pikeun ngadampingi perjalanan ibadah haji Anjeun sareng téknologi nu ramah, aman, sareng gampang digunakeun.',
   'featuresTitle': 'Fitur Utama',
   'featureCompanion': 'Pangaping Jamaah',
-  'featureCompanionDesc': 'Sambungkeun sareng pangaping sareng pantau posisi sacara real-time',
+  'featureCompanionDesc':
+      'Sambungkeun sareng pangaping sareng pantau posisi sacara real-time',
   'featureInfo': 'Informasi & Panduan',
   'featureInfoDesc': 'Jadwal salat, arah kiblat, sareng panduan ibadah',
   'featureAccessibility': 'Fitur Aksesibilitas',
-  'featureAccessibilityDesc': 'Ukuran tulisan nu tiasa disesuaikan sareng antarmuka nu gampang dibaca',
+  'featureAccessibilityDesc':
+      'Ukuran tulisan nu tiasa disesuaikan sareng antarmuka nu gampang dibaca',
   'featureLanguage': 'Setelan Basa',
-  'featureLanguageDesc': 'Kasayagikeun dina Basa Indonesia, Jawa, Sunda, sareng Inggris',
+  'featureLanguageDesc':
+      'Kasayagikeun dina Basa Indonesia, Jawa, Sunda, sareng Inggris',
   'featureDarkMode': 'Mode Poék',
   'featureDarkModeDesc': 'Tampilan nu nyaman dina sagala kaayaan cahaya',
   'featureProfile': 'Profil Personal',
   'featureProfileDesc': 'Kelola data pribadi, kasehatan, sareng pilihan',
   'accessibilitySectionTitle': 'Aksesibilitas',
-  'accessibilitySectionDesc': 'HajiCare dirancang khusus supados sadaya jamaah tiasa ngagunakeun aplikasi sareng gampang, kalebet sepuh sareng panyandang disabilitas.',
+  'accessibilitySectionDesc':
+      'HajiCare dirancang khusus supados sadaya jamaah tiasa ngagunakeun aplikasi sareng gampang, kalebet sepuh sareng panyandang disabilitas.',
   'privacySectionTitle': 'Privasi & Kaamanan',
-  'privacySectionDesc': 'Data pribadi sareng lokasi Anjeun dilindungi ngagunakeun enkripsi standar industri ngaliwatan Firebase.',
+  'privacySectionDesc':
+      'Data pribadi sareng lokasi Anjeun dilindungi ngagunakeun enkripsi standar industri ngaliwatan Firebase.',
   'legalSectionTitle': 'Inpormasi Legal',
   'privacyPolicy': 'Kawijakan Privasi',
   'termsOfService': 'Sarat Panggunaan',
   'openSourceLicenses': 'Lisensi Sumber Terbuka',
   'appFooter': 'HajiCare',
-  'appFooterSubtitle': 'Dijieun pikeun perjalanan ibadah nu leuwih aman sareng inklusif.',
+  'appFooterSubtitle':
+      'Dijieun pikeun perjalanan ibadah nu leuwih aman sareng inklusif.',
   'appVersionLabel': 'Vérsi Aplikasi',
 
   // Dashboard Dynamic & Accessibility
@@ -308,7 +336,8 @@ const Map<String, String> suTranslations = {
 
   // Jamaah SOS & Banners
   'sosConfirmTitle': 'Kirim Tanda SOS?',
-  'sosConfirmMessage': 'Naha anjeun yakin badé ngirim tanda darurat ka pangaping sareng petugas?',
+  'sosConfirmMessage':
+      'Naha anjeun yakin badé ngirim tanda darurat ka pangaping sareng petugas?',
   'sosSendButton': 'Kirim SOS',
   'sosSentTo': 'SOS kakirim ka',
   'sosButtonTitle': 'TOMBOL DARURAT SOS',
@@ -317,14 +346,18 @@ const Map<String, String> suTranslations = {
   'sosSectorOfficers': 'Petugas Maktab 48',
   'sosAnd': ' sareng ',
   'sosFamilyCompanion': 'Pangaping Kulawarga.',
-  'sos24HoursResponse': 'Tanggapan Gancang 24 Jam • Séktor Khusus Masjidil Haram',
-  'separatedWarning': 'Kamungkinan papisah ti pangaping! Tenang di tempat anjeun.',
+  'sos24HoursResponse':
+      'Tanggapan Gancang 24 Jam • Séktor Khusus Masjidil Haram',
+  'separatedWarning':
+      'Kamungkinan papisah ti pangaping! Tenang di tempat anjeun.',
   'officerAdviceTitle': 'WASIAT PETUGAS SÉKTOR',
-  'officerAdviceBody': 'Kudu sasarengan sareng rombongan nuju jamarat. Pastikeun cai nginum pinuh sareng nganggo geulang idéntitas.',
+  'officerAdviceBody':
+      'Kudu sasarengan sareng rombongan nuju jamarat. Pastikeun cai nginum pinuh sareng nganggo geulang idéntitas.',
 
   // Pendamping Dashboard
   'pendampingGreeting': 'Assalamu’alaikum',
-  'pendampingSubtitleDesc': 'Pantau kasalametan sareng gerakan jamaah anjeun sacara langsung.',
+  'pendampingSubtitleDesc':
+      'Pantau kasalametan sareng gerakan jamaah anjeun sacara langsung.',
   'monitoredPilgrims': 'Jamaah nu Dipantau',
   'syncSmartBand': 'Singkronkeun Geulang Pinter',
   'realtimePosition': 'Posisi Lapangan Nyata',
@@ -348,7 +381,8 @@ const Map<String, String> suTranslations = {
   'endSos': 'Rengkeseun SOS',
   'sosStatusStandby': 'Status Darurat & SOS: Sayaga',
   'sosStandbyBadge': 'SAYAGA',
-  'sosStandbyDesc': 'Alarm geter & sora tarik disada otomatis upami tombol geulang dipencét atanapi jarak jamaah langkung ti 200m.',
+  'sosStandbyDesc':
+      'Alarm geter & sora tarik disada otomatis upami tombol geulang dipencét atanapi jarak jamaah langkung ti 200m.',
   'testAlarmSignal': 'Uji Tanda Alarm',
   'responseCenter': 'Puseur Tanggap',
   'separatedAlertDetail': 'aya di luar radius aman (Tebih teuing).',
@@ -364,5 +398,6 @@ const Map<String, String> suTranslations = {
   'qiblaRotateToKabah': '(Puter ka arah Ka\'bah)',
   'prayerScheduleSectionTitle': 'Jadwal Sholat',
   'prayerNextBadge': 'Salajengna',
-  'kompasNoSensor': 'Kompas ngan ukur jalan dina parangkat mobile nu gaduh sénsor.',
+  'kompasNoSensor':
+      'Kompas ngan ukur jalan dina parangkat mobile nu gaduh sénsor.',
 };

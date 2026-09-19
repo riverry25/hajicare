@@ -15,7 +15,9 @@ class AboutScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
     final scaffoldBg = isDark ? AppColors.darkScaffold : AppColors.canvasCream;
-    final headingColor = isDark ? AppColors.darkTextHeading : AppColors.espressoDark;
+    final headingColor = isDark
+        ? AppColors.darkTextHeading
+        : AppColors.espressoDark;
     final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
     final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
 
@@ -39,7 +41,12 @@ class AboutScreen extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: [
           // ── App Identity Header ─────────────────────────────────────────
-          _AppIdentitySection(headingColor: headingColor, bodyColor: bodyColor, cardBg: cardBg, isDark: isDark),
+          _AppIdentitySection(
+            headingColor: headingColor,
+            bodyColor: bodyColor,
+            cardBg: cardBg,
+            isDark: isDark,
+          ),
           const SizedBox(height: AppSpacing.gapSection),
 
           // ── About Description ───────────────────────────────────────────
@@ -55,7 +62,12 @@ class AboutScreen extends StatelessWidget {
           const SizedBox(height: AppSpacing.gapCards),
 
           // ── Features ───────────────────────────────────────────────────
-          _FeaturesSection(cardBg: cardBg, headingColor: headingColor, bodyColor: bodyColor, isDark: isDark),
+          _FeaturesSection(
+            cardBg: cardBg,
+            headingColor: headingColor,
+            bodyColor: bodyColor,
+            isDark: isDark,
+          ),
           const SizedBox(height: AppSpacing.gapCards),
 
           // ── Accessibility ───────────────────────────────────────────────
@@ -83,7 +95,12 @@ class AboutScreen extends StatelessWidget {
           const SizedBox(height: AppSpacing.gapCards),
 
           // ── Legal ───────────────────────────────────────────────────────
-          _LegalSection(cardBg: cardBg, headingColor: headingColor, bodyColor: bodyColor, isDark: isDark),
+          _LegalSection(
+            cardBg: cardBg,
+            headingColor: headingColor,
+            bodyColor: bodyColor,
+            isDark: isDark,
+          ),
           const SizedBox(height: AppSpacing.gapSection),
 
           // ── Footer ──────────────────────────────────────────────────────
@@ -126,7 +143,9 @@ class _AppIdentitySection extends StatelessWidget {
         color: cardBg,
         borderRadius: BorderRadius.circular(AppConstants.radiusCard),
         border: Border.all(
-          color: isDark ? AppColors.darkOutlineVariant : AppColors.canvasCreamSubtle,
+          color: isDark
+              ? AppColors.darkOutlineVariant
+              : AppColors.canvasCreamSubtle,
         ),
       ),
       child: Column(
@@ -239,7 +258,9 @@ class _ContentSection extends StatelessWidget {
         color: cardBg,
         borderRadius: BorderRadius.circular(AppConstants.radiusCard),
         border: Border.all(
-          color: isDark ? AppColors.darkOutlineVariant : AppColors.canvasCreamSubtle,
+          color: isDark
+              ? AppColors.darkOutlineVariant
+              : AppColors.canvasCreamSubtle,
         ),
       ),
       child: Column(
@@ -268,7 +289,10 @@ class _ContentSection extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           Text(
             content,
-            style: AppTypography.bodyMedium.copyWith(color: bodyColor, height: 1.6),
+            style: AppTypography.bodyMedium.copyWith(
+              color: bodyColor,
+              height: 1.6,
+            ),
           ),
         ],
       ),
@@ -296,12 +320,42 @@ class _FeaturesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final features = [
-      (Icons.people_outline_rounded, 'featureCompanion', 'featureCompanionDesc', AppColors.secondary),
-      (Icons.schedule_rounded, 'featureInfo', 'featureInfoDesc', AppColors.accentGoldStar),
-      (Icons.accessibility_new_rounded, 'featureAccessibility', 'featureAccessibilityDesc', AppColors.statusSafe),
-      (Icons.translate_rounded, 'featureLanguage', 'featureLanguageDesc', AppColors.tanMedium),
-      (Icons.dark_mode_outlined, 'featureDarkMode', 'featureDarkModeDesc', AppColors.primary),
-      (Icons.person_outline_rounded, 'featureProfile', 'featureProfileDesc', AppColors.statusWarning),
+      (
+        Icons.people_outline_rounded,
+        'featureCompanion',
+        'featureCompanionDesc',
+        AppColors.secondary,
+      ),
+      (
+        Icons.schedule_rounded,
+        'featureInfo',
+        'featureInfoDesc',
+        AppColors.accentGoldStar,
+      ),
+      (
+        Icons.accessibility_new_rounded,
+        'featureAccessibility',
+        'featureAccessibilityDesc',
+        AppColors.statusSafe,
+      ),
+      (
+        Icons.translate_rounded,
+        'featureLanguage',
+        'featureLanguageDesc',
+        AppColors.tanMedium,
+      ),
+      (
+        Icons.dark_mode_outlined,
+        'featureDarkMode',
+        'featureDarkModeDesc',
+        AppColors.primary,
+      ),
+      (
+        Icons.person_outline_rounded,
+        'featureProfile',
+        'featureProfileDesc',
+        AppColors.statusWarning,
+      ),
     ];
 
     final accentColor = isDark ? AppColors.darkPrimary : AppColors.espressoDark;
@@ -312,7 +366,9 @@ class _FeaturesSection extends StatelessWidget {
         color: cardBg,
         borderRadius: BorderRadius.circular(AppConstants.radiusCard),
         border: Border.all(
-          color: isDark ? AppColors.darkOutlineVariant : AppColors.canvasCreamSubtle,
+          color: isDark
+              ? AppColors.darkOutlineVariant
+              : AppColors.canvasCreamSubtle,
         ),
       ),
       child: Column(
@@ -327,7 +383,11 @@ class _FeaturesSection extends StatelessWidget {
                   color: accentColor.withValues(alpha: isDark ? 0.15 : 0.08),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.star_outline_rounded, color: accentColor, size: AppSizes.iconMd),
+                child: Icon(
+                  Icons.star_outline_rounded,
+                  color: accentColor,
+                  size: AppSizes.iconMd,
+                ),
               ),
               const SizedBox(width: AppSpacing.md),
               Text(
@@ -337,43 +397,47 @@ class _FeaturesSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
-          ...features.map((f) => Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.md),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: f.$4.withValues(alpha: isDark ? 0.15 : 0.1),
-                    borderRadius: BorderRadius.circular(AppRadius.md),
+          ...features.map(
+            (f) => Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.md),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: f.$4.withValues(alpha: isDark ? 0.15 : 0.1),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                    child: Icon(f.$1, color: f.$4, size: 18),
                   ),
-                  child: Icon(f.$1, color: f.$4, size: 18),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        context.tr(f.$2),
-                        style: AppTypography.bodyLarge.copyWith(
-                          color: headingColor,
-                          fontWeight: FontWeight.w600,
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          context.tr(f.$2),
+                          style: AppTypography.bodyLarge.copyWith(
+                            color: headingColor,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        context.tr(f.$3),
-                        style: AppTypography.bodySmall.copyWith(color: bodyColor),
-                      ),
-                    ],
+                        const SizedBox(height: 2),
+                        Text(
+                          context.tr(f.$3),
+                          style: AppTypography.bodySmall.copyWith(
+                            color: bodyColor,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          )),
+          ),
         ],
       ),
     );
@@ -412,14 +476,21 @@ class _LegalSection extends StatelessWidget {
         color: cardBg,
         borderRadius: BorderRadius.circular(AppConstants.radiusCard),
         border: Border.all(
-          color: isDark ? AppColors.darkOutlineVariant : AppColors.canvasCreamSubtle,
+          color: isDark
+              ? AppColors.darkOutlineVariant
+              : AppColors.canvasCreamSubtle,
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.lg, AppSpacing.xl, AppSpacing.sm),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.xl,
+              AppSpacing.lg,
+              AppSpacing.xl,
+              AppSpacing.sm,
+            ),
             child: Row(
               children: [
                 Container(
@@ -429,7 +500,11 @@ class _LegalSection extends StatelessWidget {
                     color: accentColor.withValues(alpha: isDark ? 0.15 : 0.08),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.article_outlined, color: accentColor, size: AppSizes.iconMd),
+                  child: Icon(
+                    Icons.article_outlined,
+                    color: accentColor,
+                    size: AppSizes.iconMd,
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.md),
                 Text(
@@ -447,12 +522,16 @@ class _LegalSection extends StatelessWidget {
                 Divider(
                   height: 1,
                   indent: AppSpacing.xl,
-                  color: isDark ? AppColors.darkOutlineVariant : AppColors.canvasCreamSubtle,
+                  color: isDark
+                      ? AppColors.darkOutlineVariant
+                      : AppColors.canvasCreamSubtle,
                 ),
                 InkWell(
                   onTap: () {},
                   borderRadius: i == items.length - 1
-                      ? const BorderRadius.vertical(bottom: Radius.circular(AppRadius.lg))
+                      ? const BorderRadius.vertical(
+                          bottom: Radius.circular(AppRadius.lg),
+                        )
                       : BorderRadius.zero,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
@@ -466,12 +545,16 @@ class _LegalSection extends StatelessWidget {
                         Expanded(
                           child: Text(
                             item.$1,
-                            style: AppTypography.bodyMedium.copyWith(color: headingColor),
+                            style: AppTypography.bodyMedium.copyWith(
+                              color: headingColor,
+                            ),
                           ),
                         ),
                         Icon(
                           Icons.chevron_right_rounded,
-                          color: isDark ? AppColors.darkOutline : AppColors.tanMedium,
+                          color: isDark
+                              ? AppColors.darkOutline
+                              : AppColors.tanMedium,
                         ),
                       ],
                     ),
@@ -514,7 +597,9 @@ class _FooterSection extends StatelessWidget {
         const SizedBox(height: AppSpacing.xs),
         Text(
           '\u00a9 2025 HajiCare',
-          style: AppTypography.caption.copyWith(color: bodyColor.withValues(alpha: 0.6)),
+          style: AppTypography.caption.copyWith(
+            color: bodyColor.withValues(alpha: 0.6),
+          ),
           textAlign: TextAlign.center,
         ),
       ],

@@ -72,37 +72,59 @@ void main() {
       expect(formatted.endsWith('JST'), isTrue);
     });
 
-    test('Resolves London, UK and handles DST (BST in summer, GMT in winter)', () {
-      const lat = 51.5074;
-      const lng = -0.1278;
+    test(
+      'Resolves London, UK and handles DST (BST in summer, GMT in winter)',
+      () {
+        const lat = 51.5074;
+        const lng = -0.1278;
 
-      final tzId = tzService.getTimezoneId(lat, lng);
-      expect(tzId, equals('Europe/London'));
+        final tzId = tzService.getTimezoneId(lat, lng);
+        expect(tzId, equals('Europe/London'));
 
-      // Summer test (June) -> BST
-      final summerInfo = tzService.getTimezoneInfo(lat, lng, dateTime: DateTime(2026, 6, 15));
-      expect(summerInfo.abbreviation, equals('BST'));
+        // Summer test (June) -> BST
+        final summerInfo = tzService.getTimezoneInfo(
+          lat,
+          lng,
+          dateTime: DateTime(2026, 6, 15),
+        );
+        expect(summerInfo.abbreviation, equals('BST'));
 
-      // Winter test (January) -> GMT
-      final winterInfo = tzService.getTimezoneInfo(lat, lng, dateTime: DateTime(2026, 1, 15));
-      expect(winterInfo.abbreviation, equals('GMT'));
-    });
+        // Winter test (January) -> GMT
+        final winterInfo = tzService.getTimezoneInfo(
+          lat,
+          lng,
+          dateTime: DateTime(2026, 1, 15),
+        );
+        expect(winterInfo.abbreviation, equals('GMT'));
+      },
+    );
 
-    test('Resolves New York, US and handles DST (EDT in summer, EST in winter)', () {
-      const lat = 40.7128;
-      const lng = -74.0060;
+    test(
+      'Resolves New York, US and handles DST (EDT in summer, EST in winter)',
+      () {
+        const lat = 40.7128;
+        const lng = -74.0060;
 
-      final tzId = tzService.getTimezoneId(lat, lng);
-      expect(tzId, equals('America/New_York'));
+        final tzId = tzService.getTimezoneId(lat, lng);
+        expect(tzId, equals('America/New_York'));
 
-      // Summer test (June) -> EDT
-      final summerInfo = tzService.getTimezoneInfo(lat, lng, dateTime: DateTime(2026, 6, 15));
-      expect(summerInfo.abbreviation, equals('EDT'));
+        // Summer test (June) -> EDT
+        final summerInfo = tzService.getTimezoneInfo(
+          lat,
+          lng,
+          dateTime: DateTime(2026, 6, 15),
+        );
+        expect(summerInfo.abbreviation, equals('EDT'));
 
-      // Winter test (January) -> EST
-      final winterInfo = tzService.getTimezoneInfo(lat, lng, dateTime: DateTime(2026, 1, 15));
-      expect(winterInfo.abbreviation, equals('EST'));
-    });
+        // Winter test (January) -> EST
+        final winterInfo = tzService.getTimezoneInfo(
+          lat,
+          lng,
+          dateTime: DateTime(2026, 1, 15),
+        );
+        expect(winterInfo.abbreviation, equals('EST'));
+      },
+    );
   });
 
   group('PrayerCalculationService Tests', () {
@@ -116,27 +138,51 @@ void main() {
 
     test('Maps country codes to calculation methods', () {
       // Indonesia
-      final (_, idLabel) = prayerService.resolveCalculationMethod('ID', -6.2, 106.8);
+      final (_, idLabel) = prayerService.resolveCalculationMethod(
+        'ID',
+        -6.2,
+        106.8,
+      );
       expect(idLabel, contains('MABIMS'));
 
       // Saudi Arabia
-      final (_, saLabel) = prayerService.resolveCalculationMethod('SA', 21.4, 39.8);
+      final (_, saLabel) = prayerService.resolveCalculationMethod(
+        'SA',
+        21.4,
+        39.8,
+      );
       expect(saLabel, equals('Umm Al-Qura'));
 
       // Pakistan
-      final (_, pkLabel) = prayerService.resolveCalculationMethod('PK', 24.8, 67.0);
+      final (_, pkLabel) = prayerService.resolveCalculationMethod(
+        'PK',
+        24.8,
+        67.0,
+      );
       expect(pkLabel, equals('Karachi'));
 
       // Egypt
-      final (_, egLabel) = prayerService.resolveCalculationMethod('EG', 30.0, 31.2);
+      final (_, egLabel) = prayerService.resolveCalculationMethod(
+        'EG',
+        30.0,
+        31.2,
+      );
       expect(egLabel, contains('Egyptian'));
 
       // Turkey
-      final (_, trLabel) = prayerService.resolveCalculationMethod('TR', 41.0, 28.9);
+      final (_, trLabel) = prayerService.resolveCalculationMethod(
+        'TR',
+        41.0,
+        28.9,
+      );
       expect(trLabel, equals('Diyanet'));
 
       // North America
-      final (_, usLabel) = prayerService.resolveCalculationMethod('US', 37.7, -122.4);
+      final (_, usLabel) = prayerService.resolveCalculationMethod(
+        'US',
+        37.7,
+        -122.4,
+      );
       expect(usLabel, contains('North America'));
     });
 

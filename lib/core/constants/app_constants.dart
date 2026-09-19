@@ -47,4 +47,3 @@ class AppConstants {
   static const String cartoDarkMatterUrl =
       'https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png?key=$cartoApiKey';
 }
-

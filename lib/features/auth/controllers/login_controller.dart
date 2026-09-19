@@ -161,7 +161,8 @@ class LoginController extends GetxController {
     } catch (e) {
       if (isClosed) return;
 
-      errorMessage.value = 'Terjadi kesalahan saat masuk. Silakan coba beberapa saat lagi.';
+      errorMessage.value =
+          'Terjadi kesalahan saat masuk. Silakan coba beberapa saat lagi.';
 
       _showErrorSnackbar(errorMessage.value!);
     } finally {
@@ -328,8 +329,11 @@ class LoginController extends GetxController {
         return;
       }
 
-      if (errorStr.contains('network') || errorStr.contains('socket') || errorStr.contains('connection')) {
-        errorMessage.value = 'Gagal masuk dengan Google. Periksa koneksi internet Anda.';
+      if (errorStr.contains('network') ||
+          errorStr.contains('socket') ||
+          errorStr.contains('connection')) {
+        errorMessage.value =
+            'Gagal masuk dengan Google. Periksa koneksi internet Anda.';
       } else {
         errorMessage.value = 'Gagal masuk dengan Google. Silakan coba lagi.';
       }
@@ -372,7 +376,8 @@ class LoginController extends GetxController {
       case 'account-exists-with-different-credential':
         return 'Akun sudah terdaftar dengan metode masuk yang berbeda.';
       default:
-        if (lowerMessage.contains('network') || lowerMessage.contains('connection')) {
+        if (lowerMessage.contains('network') ||
+            lowerMessage.contains('connection')) {
           return 'Gagal terhubung ke server. Periksa koneksi internet Anda.';
         }
         return 'Gagal masuk. Periksa kembali email dan kata sandi Anda.';

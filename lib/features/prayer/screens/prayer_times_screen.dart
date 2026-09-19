@@ -26,8 +26,12 @@ class PrayerTimesScreen extends StatelessWidget {
       backgroundColor: AppColors.scaffoldColor(context),
       extendBody: true,
       appBar: HajiCareHeader(
-        title: context.tr('prayerTitle').isEmpty ? 'Jadwal Sholat & Kiblat' : context.tr('prayerTitle'),
-        subtitle: context.tr('prayerSubtitle').isEmpty ? 'Waktu sholat akurat & kompas arah Ka\'bah' : context.tr('prayerSubtitle'),
+        title: context.tr('prayerTitle').isEmpty
+            ? 'Jadwal Sholat & Kiblat'
+            : context.tr('prayerTitle'),
+        subtitle: context.tr('prayerSubtitle').isEmpty
+            ? 'Waktu sholat akurat & kompas arah Ka\'bah'
+            : context.tr('prayerSubtitle'),
         icon: Icons.mosque_rounded,
         actions: [
           Padding(
@@ -694,7 +698,9 @@ class PrayerTimesScreen extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              isAligned ? Icons.check_circle_rounded : Icons.navigation_rounded,
+                              isAligned
+                                  ? Icons.check_circle_rounded
+                                  : Icons.navigation_rounded,
                               size: 16,
                               color: isAligned
                                   ? AppColors.statusPositive
@@ -759,11 +765,17 @@ class PrayerTimesScreen extends StatelessWidget {
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
-                                    context.tr('prayerScheduleSectionTitle').isEmpty
+                                    context
+                                            .tr('prayerScheduleSectionTitle')
+                                            .isEmpty
                                         ? 'Jadwal 5 Waktu Sholat'
-                                        : context.tr('prayerScheduleSectionTitle'),
+                                        : context.tr(
+                                            'prayerScheduleSectionTitle',
+                                          ),
                                     style: AppTypography.titleMedium.copyWith(
-                                      color: AppColors.textHeadingColor(context),
+                                      color: AppColors.textHeadingColor(
+                                        context,
+                                      ),
                                       fontWeight: FontWeight.w800,
                                     ),
                                     maxLines: 1,
@@ -784,7 +796,9 @@ class PrayerTimesScreen extends StatelessWidget {
                                 color: isDark
                                     ? AppColors.darkSurfaceContainerHigh
                                     : AppColors.canvasCream,
-                                borderRadius: BorderRadius.circular(AppRadius.pill),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.pill,
+                                ),
                                 border: Border.all(
                                   color: AppColors.cardBorderColor(context),
                                 ),
@@ -844,10 +858,7 @@ class PrayerTimesScreen extends StatelessWidget {
     final isDark = AppColors.isDark(context);
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 14,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: isNext
             ? (isDark
@@ -859,10 +870,7 @@ class PrayerTimesScreen extends StatelessWidget {
             color: AppColors.cardBorderColor(context).withValues(alpha: 0.7),
           ),
           left: isNext
-              ? const BorderSide(
-                  color: AppColors.goldPrimary,
-                  width: 4,
-                )
+              ? const BorderSide(color: AppColors.goldPrimary, width: 4)
               : BorderSide.none,
         ),
       ),
@@ -884,10 +892,7 @@ class PrayerTimesScreen extends StatelessWidget {
                             : AppColors.canvasCream),
                   shape: BoxShape.circle,
                   border: isNext
-                      ? Border.all(
-                          color: AppColors.goldPrimary,
-                          width: 1.5,
-                        )
+                      ? Border.all(color: AppColors.goldPrimary, width: 1.5)
                       : null,
                 ),
                 child: Icon(
@@ -939,10 +944,7 @@ class PrayerTimesScreen extends StatelessWidget {
                         ? AppColors.darkPrimaryContainer
                         : AppColors.espressoDark,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
-                    border: Border.all(
-                      color: AppColors.goldPrimary,
-                      width: 1,
-                    ),
+                    border: Border.all(color: AppColors.goldPrimary, width: 1),
                   ),
                   child: Text(
                     context.tr('prayerNextBadge').isEmpty
@@ -961,9 +963,7 @@ class PrayerTimesScreen extends StatelessWidget {
                 time,
                 style: AppTypography.titleMedium.copyWith(
                   color: isNext
-                      ? (isDark
-                            ? AppColors.goldLight
-                            : AppColors.espressoDark)
+                      ? (isDark ? AppColors.goldLight : AppColors.espressoDark)
                       : AppColors.textHeadingColor(context),
                   fontWeight: isNext ? FontWeight.w800 : FontWeight.w600,
                 ),

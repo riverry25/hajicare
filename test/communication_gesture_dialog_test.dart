@@ -13,12 +13,11 @@ void main() {
   setUp(() {
     Get.reset();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(
-      const MethodChannel('flutter_tts'),
-      (MethodCall methodCall) async {
-        return 1;
-      },
-    );
+        .setMockMethodCallHandler(const MethodChannel('flutter_tts'), (
+          MethodCall methodCall,
+        ) async {
+          return 1;
+        });
   });
 
   tearDown(() {
@@ -26,45 +25,46 @@ void main() {
   });
 
   group('CommunicationGestureDialog Widget Tests', () {
-    testWidgets('Renders gesture dialog with header, tip, filter chips, and phrases', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.lightTheme,
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-            FallbackMaterialLocalizationsDelegate(),
-            FallbackCupertinoLocalizationsDelegate(),
-            FallbackWidgetsLocalizationsDelegate(),
-          ],
-          home: const Scaffold(
-            body: CommunicationGestureDialog(),
+    testWidgets(
+      'Renders gesture dialog with header, tip, filter chips, and phrases',
+      (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.lightTheme,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              FallbackMaterialLocalizationsDelegate(),
+              FallbackCupertinoLocalizationsDelegate(),
+              FallbackWidgetsLocalizationsDelegate(),
+            ],
+            home: const Scaffold(body: CommunicationGestureDialog()),
           ),
-        ),
-      );
+        );
 
-      await tester.pumpAndSettle();
+        await tester.pumpAndSettle();
 
-      // Check title and guidance
-      expect(find.text('Komunikasi Cepat'), findsOneWidget);
-      expect(find.text('Semua'), findsOneWidget);
-      expect(find.text('Darurat & Kesehatan'), findsOneWidget);
-      expect(find.text('Arah & Lokasi'), findsOneWidget);
-      expect(find.text('Umum'), findsOneWidget);
+        // Check title and guidance
+        expect(find.text('Komunikasi Cepat'), findsOneWidget);
+        expect(find.text('Semua'), findsOneWidget);
+        expect(find.text('Darurat & Kesehatan'), findsOneWidget);
+        expect(find.text('Arah & Lokasi'), findsOneWidget);
+        expect(find.text('Umum'), findsOneWidget);
 
-      // Check phrase content
-      expect(find.text('Tolong, saya butuh dokter'), findsOneWidget);
-      expect(find.text('PENTING / DARURAT'), findsWidgets);
+        // Check phrase content
+        expect(find.text('Tolong, saya butuh dokter'), findsOneWidget);
+        expect(find.text('PENTING / DARURAT'), findsWidgets);
 
-      // Tap on filter chip 'Umum'
-      await tester.tap(find.text('Umum'));
-      await tester.pumpAndSettle();
+        // Tap on filter chip 'Umum'
+        await tester.tap(find.text('Umum'));
+        await tester.pumpAndSettle();
 
-      // Urgent health phrase should be filtered out
-      expect(find.text('Tolong, saya butuh dokter'), findsNothing);
-      expect(find.text('Terima kasih'), findsOneWidget);
-    });
+        // Urgent health phrase should be filtered out
+        expect(find.text('Tolong, saya butuh dokter'), findsNothing);
+        expect(find.text('Terima kasih'), findsOneWidget);
+      },
+    );
   });
 }

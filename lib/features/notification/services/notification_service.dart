@@ -37,21 +37,36 @@ class NotificationService {
     // ── Security validation for Pendamping ──────────────────────────────────
     if (normalizedRole == 'pendamping') {
       if (normalizedScope != 'room' && normalizedScope != 'user') {
-        throw Exception('Pendamping hanya berwenang mengirim notifikasi ke room sendiri atau jamaah di room.');
+        throw Exception(
+          'Pendamping hanya berwenang mengirim notifikasi ke room sendiri atau jamaah di room.',
+        );
       }
       if (targetRoomId == null || targetRoomId.isEmpty) {
         throw Exception('Target room tidak ditemukan.');
       }
 
       // Verify that this pendamping owns/manages targetRoomId
-      final roomDoc = await _firestore.collection('rooms').doc(targetRoomId).get();
+      final roomDoc = await _firestore
+          .collection('rooms')
+          .doc(targetRoomId)
+          .get();
       if (!roomDoc.exists) {
         throw Exception('Room tidak ditemukan.');
       }
       final roomData = roomDoc.data()!;
       final roomPendampingId = roomData['pendampingId'] as String?;
-      if (roomPendampingId != senderUid) {
-        throw Exception('Anda hanya dapat mengirim notifikasi ke room yang Anda kelola.');
+      final roomPendampingIds =
+          (roomData['pendampingIds'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [];
+      final isManagingPendamping =
+          roomPendampingId == senderUid ||
+          roomPendampingIds.contains(senderUid);
+      if (!isManagingPendamping) {
+        throw Exception(
+          'Anda hanya dapat mengirim notifikasi ke room yang Anda kelola.',
+        );
       }
 
       // If user scope, verify target user is member of this room
@@ -66,7 +81,9 @@ class NotificationService {
             .doc(targetUserId)
             .get();
         if (!memberDoc.exists) {
-          throw Exception('Jamaah target bukan merupakan anggota aktif dari room Anda.');
+          throw Exception(
+            'Jamaah target bukan merupakan anggota aktif dari room Anda.',
+          );
         }
       }
     }
@@ -130,7 +147,9 @@ class NotificationService {
 
       case 'global':
         if (normalizedRole != 'admin') {
-          throw Exception('Hanya Administrator yang dapat mengirim notifikasi Global.');
+          throw Exception(
+            'Hanya Administrator yang dapat mengirim notifikasi Global.',
+          );
         }
         final allUsersSnap = await _firestore.collection('users').get();
         for (final doc in allUsersSnap.docs) {
@@ -155,7 +174,9 @@ class NotificationService {
     for (int i = 0; i < recipientList.length; i += batchChunkSize) {
       final chunk = recipientList.sublist(
         i,
-        (i + batchChunkSize > recipientList.length) ? recipientList.length : i + batchChunkSize,
+        (i + batchChunkSize > recipientList.length)
+            ? recipientList.length
+            : i + batchChunkSize,
       );
 
       final batch = _firestore.batch();
@@ -185,7 +206,9 @@ class NotificationService {
       await batch.commit();
     }
 
-    debugPrint('[NotificationService] Sent $type notification to ${recipientList.length} recipients (scope: $scope)');
+    debugPrint(
+      '[NotificationService] Sent $type notification to ${recipientList.length} recipients (scope: $scope)',
+    );
     return recipientList.length;
   }
 
@@ -196,7 +219,9 @@ class NotificationService {
         .where('recipientId', isEqualTo: uid)
         .snapshots()
         .map((snap) {
-          final items = snap.docs.map((d) => AppNotificationModel.fromFirestore(d)).toList();
+          final items = snap.docs
+              .map((d) => AppNotificationModel.fromFirestore(d))
+              .toList();
           items.sort((a, b) {
             final tA = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
             final tB = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
@@ -234,7 +259,9 @@ class NotificationService {
       }
       await batch.commit();
     } catch (e) {
-      debugPrint('[NotificationService] Error marking all notifications read: $e');
+      debugPrint(
+        '[NotificationService] Error marking all notifications read: $e',
+      );
     }
   }
 }
