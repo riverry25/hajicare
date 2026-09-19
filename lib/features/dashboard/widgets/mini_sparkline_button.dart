@@ -1,25 +1,31 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../core/models/jamaah_data.dart';
 import '../../../core/theme/app_colors.dart';
 
 /// An enlarged, transparent mini sparkline wave chart button that blends
 /// seamlessly into the hero card background, featuring a glowing Mecca gold
 /// wave with gradient fill matching AppColors.
+///
+/// Synchronizes visually with the room's live jamaah data (distance & status)
+/// and triggers full location & room synchronization on tap.
 class MiniSparklineButton extends StatefulWidget {
   final Future<void> Function() onSync;
   final String? tooltip;
   final double width;
   final double height;
   final Color waveColor;
+  final List<JamaahData>? jamaahList;
 
   const MiniSparklineButton({
     super.key,
     required this.onSync,
     this.tooltip,
-    this.width = 150,
-    this.height = 74,
+    this.width = 175,
+    this.height = 84,
     this.waveColor = AppColors.accentGoldStar,
+    this.jamaahList,
   });
 
   @override
@@ -36,7 +42,7 @@ class _MiniSparklineButtonState extends State<MiniSparklineButton>
     super.initState();
     _animCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 1200),
     );
   }
 
@@ -86,14 +92,19 @@ class _MiniSparklineButtonState extends State<MiniSparklineButton>
               builder: (context, child) {
                 return Opacity(
                   opacity: _isSyncing
-                      ? 0.45 +
-                            0.55 *
+                      ? 0.55 +
+                            0.45 *
                                 (0.5 +
                                     0.5 *
                                         math.sin(_animCtrl.value * 2 * math.pi))
                       : 1.0,
                   child: CustomPaint(
-                    painter: _SparklineWavePainter(waveColor: widget.waveColor),
+                    painter: _SparklineWavePainter(
+                      waveColor: widget.waveColor,
+                      jamaahList: widget.jamaahList,
+                      syncPhase: _isSyncing ? _animCtrl.value : 0.0,
+                      isSyncing: _isSyncing,
+                    ),
                   ),
                 );
               },
@@ -112,8 +123,16 @@ class _MiniSparklineButtonState extends State<MiniSparklineButton>
 
 class _SparklineWavePainter extends CustomPainter {
   final Color waveColor;
+  final List<JamaahData>? jamaahList;
+  final double syncPhase;
+  final bool isSyncing;
 
-  const _SparklineWavePainter({required this.waveColor});
+  const _SparklineWavePainter({
+    required this.waveColor,
+    this.jamaahList,
+    this.syncPhase = 0.0,
+    this.isSyncing = false,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -141,26 +160,55 @@ class _SparklineWavePainter extends CustomPainter {
     final path = Path();
     final fillPath = Path();
 
-    // ── Smooth Bezier Wave Points matching Reference Image 2 ──
-    final p0 = Offset(4, h * 0.65);
-    final p1 = Offset(w * 0.28, h * 0.26);
-    final p2 = Offset(w * 0.52, h * 0.58);
-    final p3 = Offset(w * 0.76, h * 0.16);
-    final p4 = Offset(w - 4, h * 0.36);
+    // ── Generate Smooth Bezier Wave Points (Adaptive to room jamaah data) ──
+    // Determine dynamic elevation factor based on room jamaah status
+    double elevationOffset = 0.0;
+    if (jamaahList != null && jamaahList!.isNotEmpty) {
+      final safeCount = jamaahList!
+          .where((j) => j.tier == DistanceTier.aman)
+          .length;
+      final ratio = safeCount / jamaahList!.length;
+      // High safe ratio -> wave sits higher (healthy), lower -> sits deeper
+      elevationOffset = (1.0 - ratio) * (h * 0.12);
+    }
+
+    // Sync animation ripple
+    final ripple = isSyncing ? math.sin(syncPhase * 2 * math.pi) * 3.5 : 0.0;
+
+    final p0 = Offset(
+      4,
+      (h * 0.65 + elevationOffset + ripple).clamp(h * 0.1, h * 0.9),
+    );
+    final p1 = Offset(
+      w * 0.28,
+      (h * 0.26 + elevationOffset - ripple).clamp(h * 0.1, h * 0.9),
+    );
+    final p2 = Offset(
+      w * 0.52,
+      (h * 0.58 + elevationOffset + ripple * 0.7).clamp(h * 0.1, h * 0.9),
+    );
+    final p3 = Offset(
+      w * 0.76,
+      (h * 0.16 + elevationOffset - ripple * 0.7).clamp(h * 0.1, h * 0.9),
+    );
+    final p4 = Offset(
+      w - 4,
+      (h * 0.36 + elevationOffset).clamp(h * 0.1, h * 0.9),
+    );
 
     path.moveTo(p0.dx, p0.dy);
 
     // Curve 1: up to peak 1
-    path.cubicTo(w * 0.10, h * 0.65, w * 0.18, h * 0.26, p1.dx, p1.dy);
+    path.cubicTo(w * 0.10, p0.dy, w * 0.18, p1.dy, p1.dx, p1.dy);
 
     // Curve 2: down to trough
-    path.cubicTo(w * 0.36, h * 0.26, w * 0.44, h * 0.58, p2.dx, p2.dy);
+    path.cubicTo(w * 0.36, p1.dy, w * 0.44, p2.dy, p2.dx, p2.dy);
 
     // Curve 3: up to peak 2
-    path.cubicTo(w * 0.60, h * 0.58, w * 0.68, h * 0.16, p3.dx, p3.dy);
+    path.cubicTo(w * 0.60, p2.dy, w * 0.68, p3.dy, p3.dx, p3.dy);
 
     // Curve 4: down to end
-    path.cubicTo(w * 0.84, h * 0.16, w * 0.92, h * 0.36, p4.dx, p4.dy);
+    path.cubicTo(w * 0.84, p3.dy, w * 0.92, p4.dy, p4.dx, p4.dy);
 
     // Fill underneath the wave
     fillPath.addPath(path, Offset.zero);
@@ -174,5 +222,8 @@ class _SparklineWavePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _SparklineWavePainter oldDelegate) =>
-      oldDelegate.waveColor != waveColor;
+      oldDelegate.waveColor != waveColor ||
+      oldDelegate.syncPhase != syncPhase ||
+      oldDelegate.isSyncing != isSyncing ||
+      oldDelegate.jamaahList?.length != jamaahList?.length;
 }

@@ -210,9 +210,9 @@ const Map<String, String> suTranslations = {
   'faqQ2': 'Kumaha cara ngarobah data profil?',
   'faqA2':
       'Buka menu Profil di bagian handap aplikasi, terus pilih opsi nu hayang dirobah.',
-  'faqQ3': 'Kumaha cara ngaganti poto profil?',
+  'faqQ3': 'Kumaha cara ngalengkepan data medis?',
   'faqA3':
-      'Di kaca Profil, ketok ikon pensil dina poto profil Anjeun. Tiasa milih poto tina galeri atawa ngambil poto énggal ngagunakeun kamera.',
+      'Buka Profil, pilih Data Medis, teras eusian golongan darah, alergi, kondisi khusus, sareng kontak darurat. Pariksa deui sateuacan disimpen.',
   'faqQ4': 'Kumaha cara kaluar tina akun?',
   'faqA4':
       'Buka kaca Profil, gulung ka handap, terus ketok tombol "Kaluar". Pastikeun pilihan Anjeun dina dialog nu muncul.',
@@ -227,7 +227,7 @@ const Map<String, String> suTranslations = {
       'Buka Profil → Séjén & Pilihan → Téma Tampilan, terus pilih Mode Poék, Mode Caang, atawa Otomatis.',
   'faqQ8': 'Kumaha cara nyambungkeun pangaping?',
   'faqA8':
-      'Fitur pangaping nyambungkeun jamaah sareng pangaping sacara otomatis dumasar data kloter.',
+      'Menta kode rombongan ka pangaping. Buka menu Rombongan, teras asupkeun kode pikeun gabung.',
   'faqQ9': 'Saha nu tiasa jadi pangaping?',
   'faqA9':
       'Pangaping nyaéta anggota kulawarga atawa petugas nu kadaptarkeun dina sistem HajiCare.',
@@ -236,7 +236,7 @@ const Map<String, String> suTranslations = {
       'HajiCare nyaéta aplikasi pangaping ibadah haji nu mantuan mantau kasalametan jamaah sareng nyambungkeun sareng pangaping.',
   'faqQ11': 'Naha data abdi aman?',
   'faqA11':
-      'Muhun, data Anjeun diamankeun ngagunakeun Firebase Authentication sareng disimpen di server nu terproteksi.',
+      'HajiCare ngagunakeun Firebase Authentication sareng aturan akses Firestore. Jaga kecap akses, ulah asal ngabagikeun kode rombongan, sareng pariksa idin aplikasi.',
   'faqQ12': 'Naon lamun aplikasi aya masalah?',
   'faqA12':
       'Coba tutup sareng buka deui aplikasi. Pastikan koneksi internét stabil. Lamun masalah teras, hubungi tim HajiCare.',
@@ -282,6 +282,39 @@ const Map<String, String> suTranslations = {
   'appFooterSubtitle':
       'Dijieun pikeun perjalanan ibadah nu leuwih aman sareng inklusif.',
   'appVersionLabel': 'Vérsi Aplikasi',
+
+  'legalVersionNote': 'Lumaku pikeun HajiCare versi',
+  'legalHelpCta': 'Hubungi Pusat Bantuan',
+  'privacyDataTitle': 'Data anu digunakeun',
+  'privacyDataBody':
+      'HajiCare ngagunakeun data akun sareng profil, kaanggotaan rombongan, lokasi, status darurat, sareng data alat nalika fitur nu patali digunakeun.',
+  'privacyUseTitle': 'Tujuan ngagunakeun data',
+  'privacyUseBody':
+      'Data digunakeun pikeun fitur kaamanan, koordinasi rombongan, bewara, peta, sareng layanan aplikasi anu dipilih.',
+  'privacySharingTitle': 'Saha anu tiasa ningali data',
+  'privacySharingBody':
+      'Data rombongan sareng lokasi ngan ditembongkeun ka akun anu gaduh peran sareng akses. Firebase tiasa ngolah data pikeun asup akun sareng panyimpenan aplikasi.',
+  'privacyPermissionsTitle': 'Idin alat',
+  'privacyPermissionsBody':
+      'Lokasi, kamera, mikropon, Bluetooth, sareng bewara ngan dipenta nalika diperlukeun ku fitur. Idin tiasa diatur dina setelan alat.',
+  'privacyControlTitle': 'Kadali Anjeun',
+  'privacyControlBody':
+      'Anjeun tiasa ngarobah profil, kaluar ti rombongan, mareuman idin, atanapi ngahubungi bantuan ngeunaan data akun.',
+  'termsPurposeTitle': 'Tujuan aplikasi',
+  'termsPurposeBody':
+      'HajiCare mangrupa alat bantu kaamanan sareng koordinasi jamaah. Aplikasi henteu ngaganti arahan petugas, layanan darurat, atanapi tanaga medis.',
+  'termsAccountTitle': 'Tanggung jawab akun',
+  'termsAccountBody':
+      'Pake data anu leres, jaga kaamanan akun, sareng ulah ngabagikeun kode rombongan ka pihak anu henteu boga hak.',
+  'termsSafetyTitle': 'Fitur kaamanan',
+  'termsSafetyBody':
+      'Pake SOS ngan dina kaayaan darurat. Pikeun kaayaan penting, tetep hubungi petugas, pangaping, atanapi layanan darurat.',
+  'termsLimitationsTitle': 'Watesan layanan',
+  'termsLimitationsBody':
+      'Katepatan lokasi, rute, sareng bewara tiasa kapangaruhan ku alat, idin, sinyal GPS, internet, sareng layanan pihak katilu.',
+  'termsConductTitle': 'Pamakéan anu diidinan',
+  'termsConductBody':
+      'Ulah nyalahgunakeun akun, ngirim pesen ngaganggu, muka data tanpa idin, atanapi ngagunakeun aplikasi pikeun ngarugikeun batur.',
 
   // Dashboard Dynamic & Accessibility
   'dashboardSubtitle': 'Pangaping Ibadah Anjeun',

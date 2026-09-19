@@ -206,13 +206,13 @@ const Map<String, String> enTranslations = {
   'faqTitle': 'Frequently Asked Questions',
   'faqQ1': 'How do I create an account?',
   'faqA1':
-      'Open HajiCare, tap "Create Account" on the sign-in page, then fill in your details including full name, phone number, and create a security PIN.',
+      'On the sign-in page, select "Create Account". Enter your name, email, and password, then choose your account type.',
   'faqQ2': 'How do I update my profile?',
   'faqA2':
       'Open the Profile tab at the bottom, then select the option you want to change. Medical data and kloter information can be updated from the profile page.',
-  'faqQ3': 'How do I change my profile photo?',
+  'faqQ3': 'How do I complete my medical information?',
   'faqA3':
-      'On the Profile page, tap the pencil icon on your profile photo. You can choose a photo from the gallery or take a new photo using the camera.',
+      'Open Profile, select Medical Information, then enter your blood type, allergies, special conditions, and emergency contact. Review the details before saving.',
   'faqQ4': 'How do I sign out?',
   'faqA4':
       'Open the Profile page, scroll down, then tap the "Log Out" button. Confirm your choice in the dialog that appears.',
@@ -227,7 +227,7 @@ const Map<String, String> enTranslations = {
       'Go to Profile → Other & Preferences → Display Theme, then choose Dark Mode, Light Mode, or Automatic to follow the system setting.',
   'faqQ8': 'How do I connect a companion?',
   'faqA8':
-      'The companion feature connects pilgrims and companions automatically based on kloter data. Contact your kloter administrator for further setup.',
+      'Ask your companion for the group code. Open the Group menu, then enter the code to join.',
   'faqQ9': 'Who can be a companion?',
   'faqA9':
       'A companion is a family member or officer registered in the HajiCare system. They can monitor the pilgrim\'s position and condition in real-time.',
@@ -236,7 +236,7 @@ const Map<String, String> enTranslations = {
       'HajiCare is a Hajj pilgrimage companion app that helps monitor pilgrim safety, connect with companions, provide prayer schedules, and offer accessibility features for the elderly and those with disabilities.',
   'faqQ11': 'Is my data safe?',
   'faqA11':
-      'Yes, your data is secured using Firebase Authentication and stored on protected servers. We do not share personal data with third parties.',
+      'HajiCare uses Firebase Authentication and Firestore access rules. Keep your password secure, do not share group codes carelessly, and review app permissions on your device.',
   'faqQ12': 'What if the app has a problem?',
   'faqA12':
       'Try closing and reopening the app. Make sure your internet connection is stable. If the problem persists, contact the HajiCare support team via the available contact.',
@@ -271,7 +271,7 @@ const Map<String, String> enTranslations = {
       'HajiCare is specially designed to ensure all pilgrims can use the app easily, including the elderly and those with disabilities. Available features include adjustable text size, dark mode for eye comfort, clear and intuitive navigation, and a readable interface.',
   'privacySectionTitle': 'Privacy & Security',
   'privacySectionDesc':
-      'Your personal data and location are protected using industry-standard encryption through Firebase. We only collect data necessary to ensure your safety and comfort during worship.',
+      'Data access is limited by account and role. Location, camera, microphone, Bluetooth, and notification permissions are used only by features that need them.',
   'legalSectionTitle': 'Legal Information',
   'privacyPolicy': 'Privacy Policy',
   'termsOfService': 'Terms of Service',
@@ -279,6 +279,38 @@ const Map<String, String> enTranslations = {
   'appFooter': 'HajiCare',
   'appFooterSubtitle': 'Built for a safer and more inclusive pilgrimage.',
   'appVersionLabel': 'App Version',
+  'legalVersionNote': 'Applies to HajiCare version',
+  'legalHelpCta': 'Contact Help Centre',
+  'privacyDataTitle': 'Data we use',
+  'privacyDataBody':
+      'HajiCare uses account and profile data, group membership, location, emergency status, and device data required when related features are used.',
+  'privacyUseTitle': 'How data is used',
+  'privacyUseBody':
+      'Data is used to provide safety features, group coordination, notifications, maps, and the app services you choose.',
+  'privacySharingTitle': 'Who can view data',
+  'privacySharingBody':
+      'Group and location data is shown only to accounts with the relevant role and access. Service providers such as Firebase may process data for authentication and app storage.',
+  'privacyPermissionsTitle': 'Device permissions',
+  'privacyPermissionsBody':
+      'Location, camera, microphone, Bluetooth, and notification access is requested only when a feature needs it. Permissions can be reviewed or disabled in device settings.',
+  'privacyControlTitle': 'Your choices',
+  'privacyControlBody':
+      'You can update your profile, leave a group, disable permissions, or contact support for help with account data.',
+  'termsPurposeTitle': 'Purpose of the app',
+  'termsPurposeBody':
+      'HajiCare is an aid for pilgrim safety and coordination. It does not replace official guidance, emergency services, or medical professionals.',
+  'termsAccountTitle': 'Account responsibility',
+  'termsAccountBody':
+      'Provide accurate information, protect your account, and do not share group codes with unauthorized people.',
+  'termsSafetyTitle': 'Safety features',
+  'termsSafetyBody':
+      'Use SOS only for emergencies. In urgent situations, continue to contact officers, companions, or local emergency services.',
+  'termsLimitationsTitle': 'Service limitations',
+  'termsLimitationsBody':
+      'Location, route, and notification accuracy can be affected by the device, permissions, GPS signal, internet connection, and third-party services.',
+  'termsConductTitle': 'Acceptable use',
+  'termsConductBody':
+      'Do not misuse accounts, send disruptive messages, access data without permission, or use the app to harm others.',
 
   // Dashboard Dynamic & Accessibility
   'dashboardSubtitle': 'Your Ibadah Companion',

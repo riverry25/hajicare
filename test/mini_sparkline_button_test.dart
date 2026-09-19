@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hajicare/core/models/jamaah_data.dart';
 import 'package:hajicare/features/dashboard/widgets/mini_sparkline_button.dart';
 
 void main() {
@@ -12,7 +13,7 @@ void main() {
           home: Scaffold(
             body: Center(
               child: MiniSparklineButton(
-                tooltip: 'Perbarui Statistik Jamaah',
+                tooltip: 'Sinkronisasi Data Rombongan & Lokasi',
                 onSync: () async {},
               ),
             ),
@@ -49,9 +50,84 @@ void main() {
 
       expect(synced, isTrue);
 
-      // Settle animations
       await tester.pump(const Duration(milliseconds: 800));
       await tester.pumpAndSettle();
     });
+
+    testWidgets(
+      'MiniSparklineButton renders with jamaahList with all safe members',
+      (tester) async {
+        final jamaahList = [
+          JamaahData(
+            id: 'j1',
+            name: 'Ahmad',
+            shortLabel: 'Ahmad',
+            distance: 30,
+          ),
+          JamaahData(
+            id: 'j2',
+            name: 'Budi',
+            shortLabel: 'Budi',
+            distance: 50,
+          ),
+        ];
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: MiniSparklineButton(
+                  onSync: () async {},
+                  jamaahList: jamaahList,
+                ),
+              ),
+            ),
+          ),
+        );
+
+        expect(find.byType(MiniSparklineButton), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets(
+      'MiniSparklineButton renders with jamaahList with danger members',
+      (tester) async {
+        final jamaahList = [
+          JamaahData(
+            id: 'j1',
+            name: 'Ahmad',
+            shortLabel: 'Ahmad',
+            distance: 600,
+          ),
+          JamaahData(
+            id: 'j2',
+            name: 'Budi',
+            shortLabel: 'Budi',
+            distance: 800,
+          ),
+        ];
+
+        for (final j in jamaahList) {
+          j.tier = DistanceTier.terlalujJauh;
+        }
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: MiniSparklineButton(
+                  onSync: () async {},
+                  jamaahList: jamaahList,
+                ),
+              ),
+            ),
+          ),
+        );
+
+        expect(find.byType(MiniSparklineButton), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
   });
 }

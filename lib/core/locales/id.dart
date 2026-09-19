@@ -210,9 +210,9 @@ const Map<String, String> idTranslations = {
   'faqQ2': 'Bagaimana cara mengubah data profil?',
   'faqA2':
       'Buka menu Profil di bagian bawah aplikasi, lalu pilih opsi yang ingin diubah. Data medis dan informasi kloter dapat diperbarui dari halaman profil.',
-  'faqQ3': 'Bagaimana cara mengganti foto profil?',
+  'faqQ3': 'Bagaimana cara melengkapi data medis?',
   'faqA3':
-      'Di halaman Profil, ketuk ikon pensil pada foto profil Anda. Anda dapat memilih foto dari galeri atau mengambil foto baru menggunakan kamera.',
+      'Buka halaman Profil, pilih Data Medis, lalu isi golongan darah, alergi, kondisi khusus, dan kontak darurat. Periksa kembali sebelum menyimpan.',
   'faqQ4': 'Bagaimana cara keluar dari akun?',
   'faqA4':
       'Buka halaman Profil, gulir ke bawah, lalu ketuk tombol "Keluar". Konfirmasi pilihan Anda pada dialog yang muncul.',
@@ -236,7 +236,7 @@ const Map<String, String> idTranslations = {
       'HajiCare adalah aplikasi pendamping ibadah haji yang membantu memantau keselamatan jamaah, menghubungkan dengan pendamping, menyediakan jadwal salat, dan fitur aksesibilitas untuk lansia dan penyandang disabilitas.',
   'faqQ11': 'Apakah data saya aman?',
   'faqA11':
-      'Ya, data Anda diamankan menggunakan Firebase Authentication dan disimpan di server yang terproteksi. Kami tidak membagikan data pribadi kepada pihak ketiga.',
+      'HajiCare menggunakan Firebase Authentication dan aturan akses Firestore. Tetap jaga kata sandi, jangan bagikan kode rombongan sembarangan, dan tinjau izin aplikasi di perangkat Anda.',
   'faqQ12': 'Bagaimana jika aplikasi mengalami masalah?',
   'faqA12':
       'Coba tutup dan buka kembali aplikasi. Pastikan koneksi internet stabil. Jika masalah berlanjut, hubungi tim dukungan HajiCare melalui kontak yang tersedia.',
@@ -273,7 +273,7 @@ const Map<String, String> idTranslations = {
       'HajiCare dirancang khusus untuk memastikan semua jamaah dapat menggunakan aplikasi dengan mudah, termasuk lansia dan penyandang disabilitas. Fitur yang tersedia meliputi ukuran teks yang dapat disesuaikan, mode gelap untuk kenyamanan mata, navigasi yang jelas dan intuitif, serta antarmuka yang mudah dibaca.',
   'privacySectionTitle': 'Privasi & Keamanan',
   'privacySectionDesc':
-      'Data pribadi dan lokasi Anda dilindungi menggunakan enkripsi standar industri melalui Firebase. Kami hanya mengumpulkan data yang diperlukan untuk memastikan keselamatan dan kenyamanan ibadah Anda.',
+      'Akses data dibatasi berdasarkan akun dan peran. Izin lokasi, kamera, mikrofon, Bluetooth, dan notifikasi hanya digunakan oleh fitur yang membutuhkannya.',
   'legalSectionTitle': 'Informasi Legal',
   'privacyPolicy': 'Kebijakan Privasi',
   'termsOfService': 'Syarat Penggunaan',
@@ -282,6 +282,38 @@ const Map<String, String> idTranslations = {
   'appFooterSubtitle':
       'Dibuat untuk perjalanan ibadah yang lebih aman dan inklusif.',
   'appVersionLabel': 'Versi Aplikasi',
+  'legalVersionNote': 'Berlaku untuk HajiCare versi',
+  'legalHelpCta': 'Hubungi Pusat Bantuan',
+  'privacyDataTitle': 'Data yang digunakan',
+  'privacyDataBody':
+      'HajiCare menggunakan data akun dan profil, keanggotaan rombongan, lokasi, status darurat, serta data perangkat yang diperlukan ketika fitur terkait digunakan.',
+  'privacyUseTitle': 'Tujuan penggunaan data',
+  'privacyUseBody':
+      'Data digunakan untuk menjalankan fitur keselamatan, koordinasi rombongan, notifikasi, peta, dan layanan aplikasi yang Anda pilih.',
+  'privacySharingTitle': 'Siapa yang dapat melihat data',
+  'privacySharingBody':
+      'Data rombongan dan lokasi hanya ditampilkan kepada akun yang memiliki peran dan akses terkait. Penyedia layanan seperti Firebase dapat memproses data untuk autentikasi dan penyimpanan aplikasi.',
+  'privacyPermissionsTitle': 'Izin perangkat',
+  'privacyPermissionsBody':
+      'Lokasi, kamera, mikrofon, Bluetooth, dan notifikasi hanya diminta ketika dibutuhkan oleh suatu fitur. Izin dapat ditinjau atau dimatikan melalui pengaturan perangkat.',
+  'privacyControlTitle': 'Kendali Anda',
+  'privacyControlBody':
+      'Anda dapat memperbarui profil, keluar dari rombongan, menonaktifkan izin, atau menghubungi dukungan untuk meminta bantuan terkait data akun.',
+  'termsPurposeTitle': 'Tujuan aplikasi',
+  'termsPurposeBody':
+      'HajiCare adalah alat bantu untuk keselamatan dan koordinasi jamaah. Aplikasi tidak menggantikan arahan petugas resmi, layanan darurat, atau tenaga medis.',
+  'termsAccountTitle': 'Tanggung jawab akun',
+  'termsAccountBody':
+      'Gunakan data yang benar, jaga keamanan akun, dan jangan membagikan kode rombongan kepada pihak yang tidak berkepentingan.',
+  'termsSafetyTitle': 'Penggunaan fitur keselamatan',
+  'termsSafetyBody':
+      'Gunakan SOS hanya dalam keadaan darurat. Untuk kondisi mendesak, tetap hubungi petugas, pendamping, atau layanan darurat setempat.',
+  'termsLimitationsTitle': 'Batasan layanan',
+  'termsLimitationsBody':
+      'Ketepatan lokasi, rute, dan notifikasi dapat dipengaruhi perangkat, izin, sinyal GPS, internet, dan layanan pihak ketiga.',
+  'termsConductTitle': 'Penggunaan yang diperbolehkan',
+  'termsConductBody':
+      'Dilarang menyalahgunakan akun, mengirim pesan mengganggu, mengakses data tanpa izin, atau menggunakan aplikasi untuk tindakan yang merugikan orang lain.',
 
   // Dashboard Dynamic & Accessibility
   'dashboardSubtitle': 'Sahabat Ibadah Anda',

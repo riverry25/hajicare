@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/locales/app_localizations.dart';
+import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_sizes.dart';
+import 'legal_document_screen.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -37,76 +39,101 @@ class AboutScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        children: [
-          // ── App Identity Header ─────────────────────────────────────────
-          _AppIdentitySection(
-            headingColor: headingColor,
-            bodyColor: bodyColor,
-            cardBg: cardBg,
-            isDark: isDark,
-          ),
-          const SizedBox(height: AppSpacing.gapSection),
+      body: SafeArea(
+        top: false,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760),
+            child: ListView(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              children: [
+                // ── App Identity Header ─────────────────────────────────────────
+                _AppIdentitySection(
+                  headingColor: headingColor,
+                  bodyColor: bodyColor,
+                  cardBg: cardBg,
+                  isDark: isDark,
+                ),
+                const SizedBox(height: AppSpacing.gapSection),
 
-          // ── About Description ───────────────────────────────────────────
-          _ContentSection(
-            title: context.tr('aboutTitle'),
-            content: context.tr('aboutDescription'),
-            icon: Icons.info_outline_rounded,
-            cardBg: cardBg,
-            headingColor: headingColor,
-            bodyColor: bodyColor,
-            isDark: isDark,
-          ),
-          const SizedBox(height: AppSpacing.gapCards),
+                // ── About Description ───────────────────────────────────────────
+                _ContentSection(
+                  title: context.tr('aboutTitle'),
+                  content: context.tr('aboutDescription'),
+                  icon: Icons.info_outline_rounded,
+                  cardBg: cardBg,
+                  headingColor: headingColor,
+                  bodyColor: bodyColor,
+                  isDark: isDark,
+                ),
+                const SizedBox(height: AppSpacing.gapCards),
 
-          // ── Features ───────────────────────────────────────────────────
-          _FeaturesSection(
-            cardBg: cardBg,
-            headingColor: headingColor,
-            bodyColor: bodyColor,
-            isDark: isDark,
-          ),
-          const SizedBox(height: AppSpacing.gapCards),
+                // ── Features ───────────────────────────────────────────────────
+                _FeaturesSection(
+                  cardBg: cardBg,
+                  headingColor: headingColor,
+                  bodyColor: bodyColor,
+                  isDark: isDark,
+                ),
+                const SizedBox(height: AppSpacing.gapCards),
 
-          // ── Accessibility ───────────────────────────────────────────────
-          _ContentSection(
-            title: context.tr('accessibilitySectionTitle'),
-            content: context.tr('accessibilitySectionDesc'),
-            icon: Icons.accessibility_new_rounded,
-            cardBg: cardBg,
-            headingColor: headingColor,
-            bodyColor: bodyColor,
-            isDark: isDark,
-          ),
-          const SizedBox(height: AppSpacing.gapCards),
+                // ── Accessibility ───────────────────────────────────────────────
+                _ContentSection(
+                  title: context.tr('accessibilitySectionTitle'),
+                  content: context.tr('accessibilitySectionDesc'),
+                  icon: Icons.accessibility_new_rounded,
+                  cardBg: cardBg,
+                  headingColor: headingColor,
+                  bodyColor: bodyColor,
+                  isDark: isDark,
+                ),
+                const SizedBox(height: AppSpacing.gapCards),
 
-          // ── Privacy & Security ──────────────────────────────────────────
-          _ContentSection(
-            title: context.tr('privacySectionTitle'),
-            content: context.tr('privacySectionDesc'),
-            icon: Icons.shield_outlined,
-            cardBg: cardBg,
-            headingColor: headingColor,
-            bodyColor: bodyColor,
-            isDark: isDark,
-          ),
-          const SizedBox(height: AppSpacing.gapCards),
+                // ── Privacy & Security ──────────────────────────────────────────
+                _ContentSection(
+                  title: context.tr('privacySectionTitle'),
+                  content: context.tr('privacySectionDesc'),
+                  icon: Icons.shield_outlined,
+                  cardBg: cardBg,
+                  headingColor: headingColor,
+                  bodyColor: bodyColor,
+                  isDark: isDark,
+                ),
+                const SizedBox(height: AppSpacing.gapCards),
 
-          // ── Legal ───────────────────────────────────────────────────────
-          _LegalSection(
-            cardBg: cardBg,
-            headingColor: headingColor,
-            bodyColor: bodyColor,
-            isDark: isDark,
-          ),
-          const SizedBox(height: AppSpacing.gapSection),
+                // ── Legal ───────────────────────────────────────────────────────
+                _LegalSection(
+                  cardBg: cardBg,
+                  headingColor: headingColor,
+                  bodyColor: bodyColor,
+                  isDark: isDark,
+                ),
+                const SizedBox(height: AppSpacing.gapSection),
 
-          // ── Footer ──────────────────────────────────────────────────────
-          _FooterSection(bodyColor: bodyColor),
-          const SizedBox(height: AppSpacing.huge),
-        ],
+                OutlinedButton.icon(
+                  key: const Key('about_help_button'),
+                  onPressed: () => Get.toNamed(AppRoutes.helpCenter),
+                  icon: const Icon(Icons.help_outline_rounded),
+                  label: Text(context.tr('legalHelpCta')),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: isDark
+                        ? AppColors.darkPrimary
+                        : AppColors.espressoDark,
+                    minimumSize: const Size.fromHeight(52),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.gapSection),
+
+                // ── Footer ──────────────────────────────────────────────────────
+                _FooterSection(bodyColor: bodyColor),
+                const SizedBox(height: AppSpacing.huge),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -215,7 +242,7 @@ class _AppIdentitySection extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.pill),
             ),
             child: Text(
-              ' ',
+              '${context.tr('appVersionLabel')} ${AppConstants.appVersion}',
               style: AppTypography.labelLarge.copyWith(color: accentColor),
             ),
           ),
@@ -465,10 +492,47 @@ class _LegalSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final accentColor = isDark ? AppColors.darkPrimary : AppColors.espressoDark;
 
-    final items = [
-      (context.tr('privacyPolicy'), Icons.privacy_tip_outlined),
-      (context.tr('termsOfService'), Icons.gavel_rounded),
-      (context.tr('openSourceLicenses'), Icons.code_rounded),
+    final items = <(String, IconData, VoidCallback)>[
+      (
+        context.tr('privacyPolicy'),
+        Icons.privacy_tip_outlined,
+        () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) =>
+                const LegalDocumentScreen(type: LegalDocumentType.privacy),
+          ),
+        ),
+      ),
+      (
+        context.tr('termsOfService'),
+        Icons.gavel_rounded,
+        () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) =>
+                const LegalDocumentScreen(type: LegalDocumentType.terms),
+          ),
+        ),
+      ),
+      (
+        context.tr('openSourceLicenses'),
+        Icons.code_rounded,
+        () => showLicensePage(
+          context: context,
+          applicationName: context.tr('appName'),
+          applicationVersion: AppConstants.appVersion,
+          applicationIcon: Padding(
+            padding: const EdgeInsets.all(AppSpacing.sm),
+            child: Image.asset(
+              'assets/icon.jpeg',
+              width: 52,
+              height: 52,
+              errorBuilder: (_, _, _) =>
+                  const Icon(Icons.mosque_rounded, size: 48),
+            ),
+          ),
+          applicationLegalese: '© ${DateTime.now().year} HajiCare',
+        ),
+      ),
     ];
 
     return Container(
@@ -526,37 +590,45 @@ class _LegalSection extends StatelessWidget {
                       ? AppColors.darkOutlineVariant
                       : AppColors.canvasCreamSubtle,
                 ),
-                InkWell(
-                  onTap: () {},
-                  borderRadius: i == items.length - 1
-                      ? const BorderRadius.vertical(
-                          bottom: Radius.circular(AppRadius.lg),
-                        )
-                      : BorderRadius.zero,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.xl,
-                      vertical: AppSpacing.md,
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(item.$2, size: AppSizes.iconMd, color: bodyColor),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          child: Text(
-                            item.$1,
-                            style: AppTypography.bodyMedium.copyWith(
-                              color: headingColor,
+                Semantics(
+                  button: true,
+                  label: item.$1,
+                  child: InkWell(
+                    onTap: item.$3,
+                    borderRadius: i == items.length - 1
+                        ? const BorderRadius.vertical(
+                            bottom: Radius.circular(AppRadius.lg),
+                          )
+                        : BorderRadius.zero,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xl,
+                        vertical: AppSpacing.md,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            item.$2,
+                            size: AppSizes.iconMd,
+                            color: bodyColor,
+                          ),
+                          const SizedBox(width: AppSpacing.md),
+                          Expanded(
+                            child: Text(
+                              item.$1,
+                              style: AppTypography.bodyMedium.copyWith(
+                                color: headingColor,
+                              ),
                             ),
                           ),
-                        ),
-                        Icon(
-                          Icons.chevron_right_rounded,
-                          color: isDark
-                              ? AppColors.darkOutline
-                              : AppColors.tanMedium,
-                        ),
-                      ],
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            color: isDark
+                                ? AppColors.darkOutline
+                                : AppColors.tanMedium,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -596,7 +668,7 @@ class _FooterSection extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.xs),
         Text(
-          '\u00a9 2025 HajiCare',
+          '© ${DateTime.now().year} HajiCare',
           style: AppTypography.caption.copyWith(
             color: bodyColor.withValues(alpha: 0.6),
           ),

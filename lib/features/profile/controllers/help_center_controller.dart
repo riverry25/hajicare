@@ -1,29 +1,48 @@
-﻿import 'package:get/get.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
-/// GetX controller for the Help Center screen.
-/// Manages reactive search filtering and single-open FAQ expansion.
+/// Controls search, category filtering, and FAQ expansion state.
 class HelpCenterController extends GetxController {
-  // Search
+  final TextEditingController searchTextController = TextEditingController();
   final RxString searchQuery = ''.obs;
+  final RxnString selectedCategory = RxnString();
+  final RxInt expandedIndex = (-1).obs;
 
   void updateSearch(String query) {
     searchQuery.value = query.toLowerCase().trim();
-  }
-
-  void clearSearch() {
-    searchQuery.value = '';
-  }
-
-  // FAQ expansion: one open at a time
-  final RxInt expandedIndex = (-1).obs;
-
-  void toggleFaq(int index) {
-    if (expandedIndex.value == index) {
+    if (searchQuery.value.isNotEmpty) {
+      selectedCategory.value = null;
       expandedIndex.value = -1;
-    } else {
-      expandedIndex.value = index;
     }
   }
 
+  void clearSearch() {
+    searchTextController.clear();
+    searchQuery.value = '';
+    expandedIndex.value = -1;
+  }
+
+  void selectCategory(String category) {
+    clearSearch();
+    selectedCategory.value = selectedCategory.value == category
+        ? null
+        : category;
+  }
+
+  void clearCategory() {
+    selectedCategory.value = null;
+    expandedIndex.value = -1;
+  }
+
+  void toggleFaq(int index) {
+    expandedIndex.value = expandedIndex.value == index ? -1 : index;
+  }
+
   bool isExpanded(int index) => expandedIndex.value == index;
+
+  @override
+  void onClose() {
+    searchTextController.dispose();
+    super.onClose();
+  }
 }

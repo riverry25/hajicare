@@ -212,9 +212,9 @@ const Map<String, String> jvTranslations = {
   'faqQ2': 'Kados pundi caranipun ngowahi data profil?',
   'faqA2':
       'Bikak menu Profil ing bagian ngandhap aplikasi, lajeng pilih opsi ingkang badhe diowahi.',
-  'faqQ3': 'Kados pundi caranipun ngganti gambar profil?',
+  'faqQ3': 'Kados pundi caranipun nglengkapi data medis?',
   'faqA3':
-      'Ing kaca Profil, ketuk ikon pensil ing gambar profil panjenengan. Saged milih gambar saking galeri utawi jepret gambar énggal.',
+      'Bikak Profil, pilih Data Medis, lajeng isi golongan darah, alergi, kondisi khusus, lan kontak darurat. Priksa malih sadurunge nyimpen.',
   'faqQ4': 'Kados pundi caranipun medal saking akun?',
   'faqA4':
       'Bikak kaca Profil, gulung mangandhap, lajeng ketuk tombol "Medal". Pasthekaken pilihan panjenengan ing dialog ingkang muncul.',
@@ -229,7 +229,7 @@ const Map<String, String> jvTranslations = {
       'Bikak Profil → Sanesipun & Pilihan → Tema Tampilan, lajeng pilih Mode Peteng, Mode Padhang, utawi Otomatis.',
   'faqQ8': 'Kados pundi caranipun nyambungaken pendamping?',
   'faqA8':
-      'Fitur pendamping nyambungaken jamaah lan pendamping kanthi otomatis adhedhasar data kloter. Hubungi administrator kloter kanggo setelan luwih lanjut.',
+      'Nyuwuna kode rombongan saking pendamping. Bikak menu Rombongan, lajeng lebokaken kode kasebut kanggo gabung.',
   'faqQ9': 'Sinten ingkang saged dados pendamping?',
   'faqA9':
       'Pendamping inggih punika anggota brayat utawi petugas ingkang kadaftaraken ing sistem HajiCare.',
@@ -238,7 +238,7 @@ const Map<String, String> jvTranslations = {
       'HajiCare inggih punika aplikasi pendamping ibadah haji ingkang mbiyantu ngawasi kaslametan jamaah lan nyambungaken kaliyan pendamping.',
   'faqQ11': 'Punapa data kula aman?',
   'faqA11':
-      'Inggih, data panjenengan diamanaken ngginakaken Firebase Authentication lan kasimpen ing server ingkang terproteksi.',
+      'HajiCare ngginakaken Firebase Authentication lan aturan akses Firestore. Jaga sandhi, sampun sembrana maringi kode rombongan, lan priksa idin aplikasi.',
   'faqQ12': 'Menapa menawi aplikasi wonten masalah?',
   'faqA12':
       'Cobi tutup lan bikak malih aplikasi. Pastikan koneksi internet stabil. Menawi masalah terus, hubungi tim HajiCare.',
@@ -284,6 +284,38 @@ const Map<String, String> jvTranslations = {
   'appFooterSubtitle':
       'Kagunakaken kangge lampah ibadah ingkang langkung aman lan inklusif.',
   'appVersionLabel': 'Versi Aplikasi',
+  'legalVersionNote': 'Kagem HajiCare versi',
+  'legalHelpCta': 'Hubungi Pusat Pitulungan',
+  'privacyDataTitle': 'Data ingkang dipunginakaken',
+  'privacyDataBody':
+      'HajiCare ngginakaken data akun lan profil, anggota rombongan, lokasi, status darurat, saha data piranti nalika fitur gegayutan dipunginakaken.',
+  'privacyUseTitle': 'Pigunanipun data',
+  'privacyUseBody':
+      'Data dipunginakaken kangge fitur keamanan, koordinasi rombongan, kabar, peta, lan layanan aplikasi ingkang panjenengan pilih.',
+  'privacySharingTitle': 'Sinten ingkang saged mirsani data',
+  'privacySharingBody':
+      'Data rombongan lan lokasi namung dipuntingalaken dhateng akun ingkang gadhah peran lan akses. Firebase saged ngolah data kangge mlebet akun lan panyimpenan aplikasi.',
+  'privacyPermissionsTitle': 'Idin piranti',
+  'privacyPermissionsBody':
+      'Lokasi, kamera, mikrofon, Bluetooth, lan kabar namung dipunsuwun nalika fitur mbutuhake. Idin saged dipunatur wonten ing setelan piranti.',
+  'privacyControlTitle': 'Kendali panjenengan',
+  'privacyControlBody':
+      'Panjenengan saged ngowahi profil, medal saking rombongan, mateni idin, utawi ngubungi pitulungan bab data akun.',
+  'termsPurposeTitle': 'Tujuan aplikasi',
+  'termsPurposeBody':
+      'HajiCare minangka piranti bantu keamanan lan koordinasi jamaah. Aplikasi boten nggantos arahan petugas, layanan darurat, utawi tenaga medis.',
+  'termsAccountTitle': 'Tanggung jawab akun',
+  'termsAccountBody':
+      'Gunakna data ingkang leres, jaganen akun, lan sampun maringi kode rombongan dhateng tiyang ingkang boten gadhah wewenang.',
+  'termsSafetyTitle': 'Fitur keamanan',
+  'termsSafetyBody':
+      'Gunakna SOS namung nalika darurat. Kangge kahanan wigati, tetep hubungi petugas, pendamping, utawi layanan darurat.',
+  'termsLimitationsTitle': 'Watesan layanan',
+  'termsLimitationsBody':
+      'Ketepatan lokasi, rute, lan kabar saged dipunpengaruhi piranti, idin, sinyal GPS, internet, lan layanan pihak sanes.',
+  'termsConductTitle': 'Panggunaan ingkang dipunparengaken',
+  'termsConductBody':
+      'Sampun nyalahgunakaken akun, ngirim pesen gangguan, mbikak data tanpa idin, utawi ngginakaken aplikasi kangge ngrugekaken tiyang sanes.',
 
   // Dashboard Dynamic & Accessibility
   'dashboardSubtitle': 'Kanca Ibadah Panjenengan',

@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/locales/app_localizations.dart';
@@ -9,9 +11,12 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_sizes.dart';
 import '../controllers/help_center_controller.dart';
+import '../services/profile_support_service.dart';
 
 class HelpCenterScreen extends StatelessWidget {
-  const HelpCenterScreen({super.key});
+  final ProfileSupportService? supportService;
+
+  const HelpCenterScreen({super.key, this.supportService});
 
   @override
   Widget build(BuildContext context) {
@@ -23,6 +28,7 @@ class HelpCenterScreen extends StatelessWidget {
         : AppColors.espressoDark;
     final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
     final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
+    final support = supportService ?? ProfileSupportService();
 
     return Scaffold(
       backgroundColor: scaffoldBg,
@@ -45,113 +51,129 @@ class HelpCenterScreen extends StatelessWidget {
           // Header section with search
           Container(
             color: scaffoldBg,
+            alignment: Alignment.center,
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.lg,
               AppSpacing.xs,
               AppSpacing.lg,
               AppSpacing.lg,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.tr('helpCenterSubtitle'),
-                  style: AppTypography.bodyMedium.copyWith(color: bodyColor),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                // Search field
-                Container(
-                  decoration: BoxDecoration(
-                    color: cardBg,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                    border: Border.all(
-                      color: isDark
-                          ? AppColors.darkOutlineVariant
-                          : AppColors.outlineVariant,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 728),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    context.tr('helpCenterSubtitle'),
+                    style: AppTypography.bodyMedium.copyWith(color: bodyColor),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  // Search field
+                  Container(
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      border: Border.all(
+                        color: isDark
+                            ? AppColors.darkOutlineVariant
+                            : AppColors.outlineVariant,
+                      ),
+                    ),
+                    child: TextField(
+                      controller: controller.searchTextController,
+                      onChanged: controller.updateSearch,
+                      textInputAction: TextInputAction.search,
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: headingColor,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: context.tr('searchHelp'),
+                        hintStyle: AppTypography.bodyMedium.copyWith(
+                          color: bodyColor,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.search_rounded,
+                          color: bodyColor,
+                        ),
+                        suffixIcon: Obx(
+                          () => controller.searchQuery.value.isNotEmpty
+                              ? IconButton(
+                                  icon: Icon(
+                                    Icons.clear_rounded,
+                                    color: bodyColor,
+                                    size: 18,
+                                  ),
+                                  onPressed: controller.clearSearch,
+                                )
+                              : const SizedBox.shrink(),
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.lg,
+                          vertical: AppSpacing.md,
+                        ),
+                      ),
                     ),
                   ),
-                  child: TextField(
-                    onChanged: controller.updateSearch,
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: headingColor,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: context.tr('searchHelp'),
-                      hintStyle: AppTypography.bodyMedium.copyWith(
-                        color: bodyColor,
-                      ),
-                      prefixIcon: Icon(Icons.search_rounded, color: bodyColor),
-                      suffixIcon: Obx(
-                        () => controller.searchQuery.value.isNotEmpty
-                            ? IconButton(
-                                icon: Icon(
-                                  Icons.clear_rounded,
-                                  color: bodyColor,
-                                  size: 18,
-                                ),
-                                onPressed: controller.clearSearch,
-                              )
-                            : const SizedBox.shrink(),
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.lg,
-                        vertical: AppSpacing.md,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
           // Scrollable content
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                0,
-                AppSpacing.lg,
-                AppSpacing.huge,
-              ),
-              children: [
-                // Categories section
-                Obx(() {
-                  if (controller.searchQuery.value.isNotEmpty) {
-                    return const SizedBox.shrink();
-                  }
-                  return _CategoriesSection(
-                    cardBg: cardBg,
-                    headingColor: headingColor,
-                    bodyColor: bodyColor,
-                    isDark: isDark,
-                  );
-                }),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 760),
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    0,
+                    AppSpacing.lg,
+                    AppSpacing.huge,
+                  ),
+                  children: [
+                    // Categories section
+                    Obx(() {
+                      if (controller.searchQuery.value.isNotEmpty) {
+                        return const SizedBox.shrink();
+                      }
+                      return _CategoriesSection(
+                        controller: controller,
+                        cardBg: cardBg,
+                        headingColor: headingColor,
+                        bodyColor: bodyColor,
+                        isDark: isDark,
+                      );
+                    }),
 
-                // FAQ section
-                _FaqSection(
-                  controller: controller,
-                  cardBg: cardBg,
-                  headingColor: headingColor,
-                  bodyColor: bodyColor,
-                  isDark: isDark,
+                    // FAQ section
+                    _FaqSection(
+                      controller: controller,
+                      cardBg: cardBg,
+                      headingColor: headingColor,
+                      bodyColor: bodyColor,
+                      isDark: isDark,
+                    ),
+
+                    const SizedBox(height: AppSpacing.gapSection),
+
+                    // Contact support
+                    Obx(() {
+                      if (controller.searchQuery.value.isNotEmpty) {
+                        return const SizedBox.shrink();
+                      }
+                      return _ContactSupportSection(
+                        supportService: support,
+                        cardBg: cardBg,
+                        headingColor: headingColor,
+                        bodyColor: bodyColor,
+                        isDark: isDark,
+                      );
+                    }),
+                  ],
                 ),
-
-                const SizedBox(height: AppSpacing.gapSection),
-
-                // Contact support
-                Obx(() {
-                  if (controller.searchQuery.value.isNotEmpty) {
-                    return const SizedBox.shrink();
-                  }
-                  return _ContactSupportSection(
-                    cardBg: cardBg,
-                    headingColor: headingColor,
-                    bodyColor: bodyColor,
-                    isDark: isDark,
-                  );
-                }),
-              ],
+              ),
             ),
           ),
         ],
@@ -165,12 +187,14 @@ class HelpCenterScreen extends StatelessWidget {
 // ────────────────────────────────────────────────────────────────────────────
 
 class _CategoriesSection extends StatelessWidget {
+  final HelpCenterController controller;
   final Color cardBg;
   final Color headingColor;
   final Color bodyColor;
   final bool isDark;
 
   const _CategoriesSection({
+    required this.controller,
     required this.cardBg,
     required this.headingColor,
     required this.bodyColor,
@@ -181,36 +205,42 @@ class _CategoriesSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final categories = [
       (
+        'account',
         Icons.person_outline_rounded,
         'catAccountProfile',
         'catAccountProfileDesc',
         AppColors.primary,
       ),
       (
+        'companion',
         Icons.people_outline_rounded,
         'catCompanion',
         'catCompanionDesc',
         AppColors.secondary,
       ),
       (
+        'features',
         Icons.apps_rounded,
         'catFeatures',
         'catFeaturesDesc',
         AppColors.tanMedium,
       ),
       (
+        'accessibility',
         Icons.accessibility_new_rounded,
         'catAccessibility',
         'catAccessibilityDesc',
         AppColors.accentGoldStar,
       ),
       (
+        'language',
         Icons.translate_rounded,
         'catLanguage',
         'catLanguageDesc',
         AppColors.statusSafe,
       ),
       (
+        'technical',
         Icons.build_rounded,
         'catTechnical',
         'catTechnicalDesc',
@@ -254,13 +284,16 @@ class _CategoriesSection extends StatelessWidget {
                         : AppColors.canvasCreamSubtle,
                   ),
                 _CategoryTile(
-                  icon: categories[i].$1,
-                  titleKey: categories[i].$2,
-                  descKey: categories[i].$3,
-                  iconColor: categories[i].$4,
+                  icon: categories[i].$2,
+                  titleKey: categories[i].$3,
+                  descKey: categories[i].$4,
+                  iconColor: categories[i].$5,
                   headingColor: headingColor,
                   bodyColor: bodyColor,
                   isDark: isDark,
+                  isSelected:
+                      controller.selectedCategory.value == categories[i].$1,
+                  onTap: () => controller.selectCategory(categories[i].$1),
                 ),
               ],
             ],
@@ -280,6 +313,8 @@ class _CategoryTile extends StatelessWidget {
   final Color headingColor;
   final Color bodyColor;
   final bool isDark;
+  final bool isSelected;
+  final VoidCallback onTap;
 
   const _CategoryTile({
     required this.icon,
@@ -289,15 +324,18 @@ class _CategoryTile extends StatelessWidget {
     required this.headingColor,
     required this.bodyColor,
     required this.isDark,
+    required this.isSelected,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
+      selected: isSelected,
       label: context.tr(titleKey),
       child: InkWell(
-        onTap: () {},
+        onTap: onTap,
         borderRadius: BorderRadius.circular(AppConstants.radiusCard),
         child: Padding(
           padding: const EdgeInsets.symmetric(
@@ -335,9 +373,15 @@ class _CategoryTile extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: isDark ? AppColors.darkOutline : AppColors.tanMedium,
+              AnimatedRotation(
+                turns: isSelected ? 0.25 : 0,
+                duration: const Duration(milliseconds: 180),
+                child: Icon(
+                  Icons.chevron_right_rounded,
+                  color: isSelected
+                      ? iconColor
+                      : (isDark ? AppColors.darkOutline : AppColors.tanMedium),
+                ),
               ),
             ],
           ),
@@ -369,25 +413,28 @@ class _FaqSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final allFaqs = [
-      ('faqQ1', 'faqA1'),
-      ('faqQ2', 'faqA2'),
-      ('faqQ3', 'faqA3'),
-      ('faqQ4', 'faqA4'),
-      ('faqQ5', 'faqA5'),
-      ('faqQ6', 'faqA6'),
-      ('faqQ7', 'faqA7'),
-      ('faqQ8', 'faqA8'),
-      ('faqQ9', 'faqA9'),
-      ('faqQ10', 'faqA10'),
-      ('faqQ11', 'faqA11'),
-      ('faqQ12', 'faqA12'),
+      ('faqQ1', 'faqA1', 'account'),
+      ('faqQ2', 'faqA2', 'account'),
+      ('faqQ3', 'faqA3', 'account'),
+      ('faqQ4', 'faqA4', 'account'),
+      ('faqQ5', 'faqA5', 'accessibility'),
+      ('faqQ6', 'faqA6', 'accessibility'),
+      ('faqQ7', 'faqA7', 'language'),
+      ('faqQ8', 'faqA8', 'companion'),
+      ('faqQ9', 'faqA9', 'companion'),
+      ('faqQ10', 'faqA10', 'features'),
+      ('faqQ11', 'faqA11', 'technical'),
+      ('faqQ12', 'faqA12', 'technical'),
     ];
 
     return Obx(() {
       final query = controller.searchQuery.value;
+      final selectedCategory = controller.selectedCategory.value;
 
       final filtered = allFaqs.where((faq) {
-        if (query.isEmpty) return true;
+        if (query.isEmpty) {
+          return selectedCategory == null || faq.$3 == selectedCategory;
+        }
         final q = context.tr(faq.$1).toLowerCase();
         final a = context.tr(faq.$2).toLowerCase();
         return q.contains(query) || a.contains(query);
@@ -402,9 +449,17 @@ class _FaqSection extends StatelessWidget {
                 Icon(Icons.search_off_rounded, size: 48, color: bodyColor),
                 const SizedBox(height: AppSpacing.md),
                 Text(
-                  'Tidak ada hasil yang ditemukan',
+                  'Belum ada jawaban yang sesuai',
                   style: AppTypography.bodyMedium.copyWith(color: bodyColor),
                   textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                TextButton.icon(
+                  onPressed: query.isNotEmpty
+                      ? controller.clearSearch
+                      : controller.clearCategory,
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Tampilkan semua bantuan'),
                 ),
               ],
             ),
@@ -420,9 +475,24 @@ class _FaqSection extends StatelessWidget {
               left: AppSpacing.sm,
               bottom: AppSpacing.sm,
             ),
-            child: Text(
-              context.tr('faqTitle'),
-              style: AppTypography.labelPill.copyWith(color: bodyColor),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    query.isNotEmpty
+                        ? 'Hasil Pencarian (${filtered.length})'
+                        : context.tr('faqTitle'),
+                    style: AppTypography.labelPill.copyWith(color: bodyColor),
+                  ),
+                ),
+                if (selectedCategory != null)
+                  TextButton.icon(
+                    key: const Key('clear_help_category'),
+                    onPressed: controller.clearCategory,
+                    icon: const Icon(Icons.close_rounded, size: 17),
+                    label: const Text('Semua'),
+                  ),
+              ],
             ),
           ),
           Container(
@@ -560,12 +630,14 @@ class _FaqItem extends StatelessWidget {
 // ────────────────────────────────────────────────────────────────────────────
 
 class _ContactSupportSection extends StatelessWidget {
+  final ProfileSupportService supportService;
   final Color cardBg;
   final Color headingColor;
   final Color bodyColor;
   final bool isDark;
 
   const _ContactSupportSection({
+    required this.supportService,
     required this.cardBg,
     required this.headingColor,
     required this.bodyColor,
@@ -607,37 +679,118 @@ class _ContactSupportSection extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.xl),
-          Row(
-            children: [
-              Expanded(
-                child: _ContactButton(
-                  icon: Icons.email_outlined,
-                  label: context.tr('contactEmail'),
-                  isDark: isDark,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: _ContactButton(
-                  icon: Icons.chat_outlined,
-                  label: context.tr('contactWhatsApp'),
-                  isDark: isDark,
-                  isPrimary: true,
-                ),
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final stackActions =
+                  constraints.maxWidth < 360 ||
+                  MediaQuery.textScalerOf(context).scale(1) > 1.25;
+              final buttons = <Widget>[
+                if (supportService.hasSupportEmail)
+                  _ContactButton(
+                    key: const Key('support_email_button'),
+                    icon: Icons.email_outlined,
+                    label: context.tr('contactEmail'),
+                    isDark: isDark,
+                    isPrimary: true,
+                    onTap: () => _openEmail(context),
+                  ),
+                if (supportService.hasSupportWhatsApp)
+                  _ContactButton(
+                    key: const Key('support_whatsapp_button'),
+                    icon: Icons.chat_outlined,
+                    label: context.tr('contactWhatsApp'),
+                    isDark: isDark,
+                    onTap: () => _openWhatsApp(context),
+                  ),
+              ];
+              if (buttons.isEmpty) {
+                return Text(
+                  'Untuk bantuan langsung, hubungi pendamping rombongan Anda.',
+                  textAlign: TextAlign.center,
+                  style: AppTypography.bodyMedium.copyWith(color: bodyColor),
+                );
+              }
+              if (stackActions || buttons.length == 1) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (int index = 0; index < buttons.length; index++) ...[
+                      if (index > 0) const SizedBox(height: AppSpacing.sm),
+                      buttons[index],
+                    ],
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  for (int index = 0; index < buttons.length; index++) ...[
+                    if (index > 0) const SizedBox(width: AppSpacing.md),
+                    Expanded(child: buttons[index]),
+                  ],
+                ],
+              );
+            },
           ),
           const SizedBox(height: AppSpacing.md),
           SizedBox(
             width: double.infinity,
             child: _ContactButton(
+              key: const Key('report_problem_button'),
               icon: Icons.bug_report_outlined,
               label: context.tr('reportProblem'),
               isDark: isDark,
+              onTap: () => _openEmail(context, reportProblem: true),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _openEmail(
+    BuildContext context, {
+    bool reportProblem = false,
+  }) async {
+    final opened = await supportService.openEmail(
+      reportProblem: reportProblem,
+      platformLabel: kIsWeb ? 'Web' : defaultTargetPlatform.name,
+    );
+    if (!context.mounted || opened) return;
+
+    if (supportService.hasSupportEmail) {
+      await Clipboard.setData(ClipboardData(text: supportService.supportEmail));
+      if (!context.mounted) return;
+      AppAlert.info(
+        context,
+        title: 'Alamat Email Disalin',
+        message:
+            'Aplikasi email belum dapat dibuka. Alamat ${supportService.supportEmail} sudah disalin dan siap ditempel.',
+        okText: 'Mengerti',
+      );
+      return;
+    }
+
+    AppAlert.warning(
+      context,
+      title: 'Kontak Belum Tersedia',
+      message: 'Silakan minta bantuan pendamping rombongan Anda.',
+    );
+  }
+
+  Future<void> _openWhatsApp(BuildContext context) async {
+    final opened = await supportService.openWhatsApp();
+    if (!context.mounted || opened) return;
+
+    await Clipboard.setData(
+      ClipboardData(text: supportService.supportWhatsAppDigits),
+    );
+    if (!context.mounted) return;
+    AppAlert.info(
+      context,
+      title: 'Nomor WhatsApp Disalin',
+      message:
+          'WhatsApp belum dapat dibuka. Nomor dukungan sudah disalin dan siap ditempel.',
+      okText: 'Mengerti',
     );
   }
 }
@@ -647,11 +800,14 @@ class _ContactButton extends StatelessWidget {
   final String label;
   final bool isDark;
   final bool isPrimary;
+  final VoidCallback onTap;
 
   const _ContactButton({
+    super.key,
     required this.icon,
     required this.label,
     required this.isDark,
+    required this.onTap,
     this.isPrimary = false,
   });
 
@@ -669,14 +825,7 @@ class _ContactButton extends StatelessWidget {
       button: true,
       label: label,
       child: InkWell(
-        onTap: () {
-          AppAlert.info(
-            context,
-            title: 'Layanan Belum Tersedia',
-            message:
-                'Hubungi pendamping Anda untuk bantuan. Dalam keadaan darurat, gunakan tombol SOS.',
-          );
-        },
+        onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Container(
           padding: const EdgeInsets.symmetric(

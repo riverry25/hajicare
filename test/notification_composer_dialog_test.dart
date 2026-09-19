@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:hajicare/core/models/jamaah_data.dart';
 import 'package:hajicare/core/state/hajicare_controller.dart';
 import 'package:hajicare/features/notification/widgets/notification_composer_dialog.dart';
-import 'package:hajicare/features/room/models/room_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

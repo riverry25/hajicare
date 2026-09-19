@@ -296,21 +296,23 @@ class DashboardPendampingScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              // Sparkline statistics wave (transparent & gold, enlarged)
+              // Sparkline statistics wave (transparent & gold, enlarged, synced with room)
               MiniSparklineButton(
-                width: 150,
-                height: 74,
+                width: 175,
+                height: 84,
                 waveColor: AppColors.accentGoldStar,
-                tooltip: 'Perbarui Statistik Jamaah',
+                jamaahList: state.jamaahList,
+                tooltip: 'Sinkronisasi Data Rombongan & Lokasi',
                 onSync: () async {
                   final success = await state.refreshLocation();
+                  state.jamaahList.refresh();
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
                           success
-                              ? 'Lokasi dan data jamaah sudah diperbarui.'
-                              : 'Lokasi belum ditemukan. Aktifkan lokasi ponsel, lalu coba lagi.',
+                              ? 'Data rombongan & lokasi jamaah berhasil disinkronkan.'
+                              : 'Pembaruan selesai. Pastikan GPS ponsel aktif untuk pemetaan real-time.',
                         ),
                         duration: const Duration(seconds: 3),
                         behavior: SnackBarBehavior.floating,
