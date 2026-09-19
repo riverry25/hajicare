@@ -141,7 +141,7 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
             // ── Collapsible Floating Controls Group ───────────────────────────
             SizeTransition(
               sizeFactor: _expandAnimation,
-              alignment: Alignment.topCenter,
+              axisAlignment: -1.0,
               child: FadeTransition(
                 opacity: _expandAnimation,
                 child: Padding(
