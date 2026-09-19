@@ -724,7 +724,6 @@ class DashboardJamaahScreen extends StatelessWidget {
 
           // ── Section 1: "Status & Peringatan" ("Bot Alert") ────────
           _buildSectionHeader(
-            icon: Icons.radar_rounded,
             title: 'Status & Peringatan',
             subtitle: 'Koneksi GPS & pemantauan rombongan',
             actionText: 'Lihat peta',
@@ -739,7 +738,6 @@ class DashboardJamaahScreen extends StatelessWidget {
 
           // ── Section 2: "Kamar & Maktab" ───────────────────────────
           _buildSectionHeader(
-            icon: Icons.meeting_room_rounded,
             title: 'Kamar & Maktab',
             subtitle: 'Informasi room & rombongan hotel',
             actionText: 'Kelola',
@@ -763,7 +761,6 @@ class DashboardJamaahScreen extends StatelessWidget {
 
           // ── Section 3: "Tips & Panduan Ibadah" ("News and Updates")
           _buildSectionHeader(
-            icon: Icons.menu_book_rounded,
             title: 'Tips & Panduan Ibadah',
             subtitle: 'Doa harian, rukun & info penting',
             actionText: 'Lihat semua',
@@ -849,9 +846,8 @@ class DashboardJamaahScreen extends StatelessWidget {
     );
   }
 
-  // ── Section Header (Icon Container + Title + Subtitle + Action) ───────────
+  // ── Section Header (Title + Subtitle + Action) ─────────────────────────────
   Widget _buildSectionHeader({
-    required IconData icon,
     required String title,
     required String subtitle,
     required String actionText,
@@ -864,34 +860,6 @@ class DashboardJamaahScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.darkSurfaceContainer
-                  : AppColors.surfaceWhite,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isDark
-                    ? AppColors.darkCardBorder
-                    : AppColors.lightCardBorder,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Icon(
-              icon,
-              color: isDark ? AppColors.goldLight : AppColors.espressoDark,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

@@ -60,6 +60,10 @@ class _MapBottomSheetState extends State<MapBottomSheet>
   bool _isDismissing = false;
   double _dragOffset = 0.0;
 
+  bool _isSearchOpen = false;
+  String _searchQuery = '';
+  late final TextEditingController _searchCtrl;
+
   HajiCareState get state => widget.state;
   JamaahData? get activeJamaah => widget.activeJamaah;
   RoomMemberModel? get selectedMember => widget.selectedMember;
@@ -82,6 +86,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
   @override
   void initState() {
     super.initState();
+    _searchCtrl = TextEditingController();
     _animCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 240),
@@ -104,6 +109,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
 
   @override
   void dispose() {
+    _searchCtrl.dispose();
     _slideAnim?.removeListener(_onAnimTick);
     _animCtrl.dispose();
     super.dispose();
@@ -243,7 +249,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Interactive Drag Handle Bar
+                      // Interactive Drag Handle (Chevron Indicator matching Foto 1)
                       GestureDetector(
                         behavior: HitTestBehavior.opaque,
                         onTap: () => _dismissWithAnimation(),
@@ -252,20 +258,17 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                         onVerticalDragCancel: _onVerticalDragCancel,
                         child: Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          padding: const EdgeInsets.only(top: 8, bottom: 2),
                           color: Colors.transparent,
                           child: Center(
-                            child: Container(
-                              width: 44,
-                              height: 4.5,
-                              decoration: BoxDecoration(
-                                color: AppColors.outlineVariant.withValues(
-                                  alpha: 0.7,
-                                ),
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.pill,
-                                ),
-                              ),
+                            child: Icon(
+                              Icons.keyboard_arrow_up_rounded,
+                              size: 22,
+                              color: isDark
+                                  ? AppColors.darkOutline
+                                  : AppColors.outlineVariant.withValues(
+                                      alpha: 0.85,
+                                    ),
                             ),
                           ),
                         ),
@@ -730,7 +733,67 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     return '${seconds ~/ 3600}j ${(seconds % 3600) ~/ 60}m';
   }
 
-  // ── 2. ROOM MEMBERS LIST PANEL ─────────────────────────────────────────────
+  // ── 2. ROOM MEMBERS LIST PANEL (Gambar 2 Fusion & Compact Design) ──────────
+
+  Widget _buildCircularHeaderButton({
+    required BuildContext context,
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onTap,
+    bool isActive = false,
+  }) {
+    final isDark = AppColors.isDark(context);
+    final activeBg = isDark
+        ? AppColors.darkPrimaryContainer
+        : AppColors.espressoDark;
+    final activeColor = isDark ? AppColors.goldLight : AppColors.canvasCream;
+    final defaultBg = isDark
+        ? AppColors.darkSurfaceContainerHighest
+        : AppColors.canvasCream;
+    final defaultColor = isDark
+        ? AppColors.darkTextHeading
+        : AppColors.espressoDark;
+
+    return Semantics(
+      button: true,
+      label: tooltip,
+      child: Tooltip(
+        message: tooltip,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            child: Ink(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: isActive ? activeBg : defaultBg,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isActive
+                      ? (isDark
+                            ? AppColors.goldPrimary
+                            : AppColors.espressoDark)
+                      : (isDark
+                            ? AppColors.darkOutlineVariant
+                            : AppColors.lightCardBorder),
+                  width: 1.1,
+                ),
+              ),
+              child: Center(
+                child: Icon(
+                  icon,
+                  size: 17,
+                  color: isActive ? activeColor : defaultColor,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildRoomMembersList(
     BuildContext context,
@@ -750,66 +813,190 @@ class _MapBottomSheetState extends State<MapBottomSheet>
         AppSpacing.cardPadding,
         AppSpacing.xs,
         AppSpacing.cardPadding,
-        AppSpacing.md,
+        AppSpacing.sm,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
+          // ── Header: Title on Left, 2 Circular Action Buttons on Right ──
           GestureDetector(
             behavior: HitTestBehavior.translucent,
             onVerticalDragUpdate: _onVerticalDragUpdate,
             onVerticalDragEnd: _onVerticalDragEnd,
             onVerticalDragCancel: _onVerticalDragCancel,
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
+                // Left Title block
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Anggota Room',
-                      style: AppTypography.titleMedium.copyWith(
-                        color: AppColors.textHeadingColor(context),
-                        fontWeight: FontWeight.w800,
+                      'Pilih Anggota',
+                      style: AppTypography.titleSmall.copyWith(
+                        color: isDark
+                            ? AppColors.darkTextBody
+                            : AppColors.textMuted,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12.5,
+                        letterSpacing: 0.2,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
+                    const SizedBox(height: 1),
+                    Text(
+                      'Rombongan',
+                      style: AppTypography.displayMedium.copyWith(
+                        color: AppColors.textHeadingColor(context),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 19,
+                        height: 1.1,
                       ),
-                      decoration: BoxDecoration(
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${members.length} anggota terdaftar',
+                      style: AppTypography.captionSmall.copyWith(
                         color: isDark
-                            ? AppColors.darkSurfaceContainer
-                            : AppColors.canvasCream,
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                        border: Border.all(
-                          color: AppColors.cardBorderColor(context),
-                        ),
-                      ),
-                      child: Text(
-                        '${members.length} anggota',
-                        style: AppTypography.captionSmall.copyWith(
-                          color: isDark
-                              ? AppColors.darkTextBody
-                              : AppColors.espressoDark,
-                          fontWeight: FontWeight.w800,
-                        ),
+                            ? AppColors.goldLight
+                            : AppColors.secondary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 10.5,
                       ),
                     ),
                   ],
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close_rounded, size: 20),
-                  color: AppColors.outlineVariant,
-                  onPressed: () => _dismissWithAnimation(),
+
+                // Right Action Buttons
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildCircularHeaderButton(
+                      context: context,
+                      icon: Icons.search_rounded,
+                      tooltip: _isSearchOpen
+                          ? 'Tutup Pencarian'
+                          : 'Cari Anggota',
+                      isActive: _isSearchOpen,
+                      onTap: () {
+                        setState(() {
+                          _isSearchOpen = !_isSearchOpen;
+                          if (!_isSearchOpen) {
+                            _searchQuery = '';
+                            _searchCtrl.clear();
+                          }
+                        });
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    _buildCircularHeaderButton(
+                      context: context,
+                      icon: Icons.close_rounded,
+                      tooltip: 'Tutup Dialog',
+                      onTap: () => _dismissWithAnimation(),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          const SizedBox(height: AppSpacing.sm),
+
+          // ── Search Bar: Unified styling (no color clash / belang) ──
+          if (_isSearchOpen) ...[
+            const SizedBox(height: 8),
+            Container(
+              height: 38,
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.darkSurfaceContainer
+                    : AppColors.canvasCream,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                border: Border.all(
+                  color: isDark
+                      ? AppColors.darkOutlineVariant
+                      : AppColors.lightCardBorder,
+                  width: 1.0,
+                ),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Theme(
+                data: Theme.of(context).copyWith(
+                  inputDecorationTheme: const InputDecorationTheme(
+                    filled: false,
+                    fillColor: Colors.transparent,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.search_rounded,
+                      size: 17,
+                      color: isDark
+                          ? AppColors.goldLight
+                          : AppColors.espressoDark,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: _searchCtrl,
+                        onChanged: (val) {
+                          setState(() {
+                            _searchQuery = val;
+                          });
+                        },
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textHeadingColor(context),
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Cari nama atau status...',
+                          hintStyle: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: isDark
+                                ? AppColors.darkOutline
+                                : AppColors.textMuted,
+                          ),
+                          filled: false,
+                          fillColor: Colors.transparent,
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          errorBorder: InputBorder.none,
+                          disabledBorder: InputBorder.none,
+                          isDense: true,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                    ),
+                    if (_searchQuery.isNotEmpty)
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _searchQuery = '';
+                            _searchCtrl.clear();
+                          });
+                        },
+                        child: Icon(
+                          Icons.cancel_rounded,
+                          size: 16,
+                          color: isDark
+                              ? AppColors.goldLight
+                              : AppColors.textMuted,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 8),
           _buildMemberListView(context, sorted),
         ],
       ),
@@ -821,18 +1008,48 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     List<RoomMemberModel> sorted,
   ) {
     final isDark = AppColors.isDark(context);
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.goldPrimary;
     final mq = MediaQuery.of(context);
-    const double kOverhead =
-        30 + 44 + 24 + 16; // handle + header + spacing + padding
-    final double listMaxHeight =
-        mq.size.height -
-        mq.padding.top -
-        bottomOffset -
-        mq.padding.bottom -
-        kOverhead;
+    // Compact max height so it does NOT dominate or cover the map view
+    final double listMaxHeight = (mq.size.height * 0.38).clamp(180.0, 310.0);
+
+    final filtered = sorted.where((m) {
+      if (_searchQuery.trim().isEmpty) return true;
+      final q = _searchQuery.trim().toLowerCase();
+      final nameMatches = m.name.toLowerCase().contains(q);
+      final roleMatches = (m.isPendamping ? 'pendamping' : 'jamaah').contains(
+        q,
+      );
+      final locStatus = m.getLocationStatus().toLowerCase();
+      final statusMatches = locStatus.contains(q);
+      return nameMatches || roleMatches || statusMatches;
+    }).toList();
+
+    if (filtered.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        alignment: Alignment.center,
+        child: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.search_off_rounded,
+              size: 28,
+              color: AppColors.outlineVariant,
+            ),
+            SizedBox(height: 6),
+            Text(
+              'Tidak ada anggota yang cocok',
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textMuted,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
@@ -856,20 +1073,23 @@ class _MapBottomSheetState extends State<MapBottomSheet>
         return false;
       },
       child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: listMaxHeight.clamp(160.0, double.infinity),
-        ),
-        child: ListView.separated(
+        constraints: BoxConstraints(maxHeight: listMaxHeight),
+        child: GridView.builder(
           shrinkWrap: true,
           physics: const BouncingScrollPhysics(),
-          padding: EdgeInsets.only(top: 4, bottom: mq.padding.bottom + 8),
-          itemCount: sorted.length,
-          separatorBuilder: (context, index) => const SizedBox(height: 8),
+          padding: EdgeInsets.only(top: 2, bottom: mq.padding.bottom + 4),
+          itemCount: filtered.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            mainAxisExtent: 138,
+          ),
           itemBuilder: (context, index) {
-            final m = sorted[index];
+            final m = filtered[index];
             final dist = getMemberDistanceText != null
-                ? getMemberDistanceText!(m) ?? 'Lokasi belum tersedia'
-                : (m.hasLocation ? 'Lokasi aktif' : 'Lokasi belum tersedia');
+                ? getMemberDistanceText!(m) ?? 'Lokasi -'
+                : (m.hasLocation ? 'Lokasi aktif' : 'Lokasi -');
             final isPendamping = m.isPendamping;
             final locStatus = m.getLocationStatus();
             final isOnline = locStatus == 'Online';
@@ -877,300 +1097,302 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                 ? m.name.trim()[0].toUpperCase()
                 : (isPendamping ? 'P' : 'J');
 
+            // ── Unified Color Configuration (Same clean card for all members) ──
+            final cardBg = isDark
+                ? AppColors.darkSurfaceContainer
+                : AppColors.surfaceWhite;
+            final cardBorder = isDark
+                ? AppColors.darkOutlineVariant
+                : AppColors.lightCardBorder;
+            final cardTextColor = isDark
+                ? AppColors.darkTextHeading
+                : AppColors.textHeading;
+            final cardSubtextColor = isDark
+                ? AppColors.darkTextBody.withValues(alpha: 0.8)
+                : AppColors.textMuted;
+            final cardDistanceColor = isDark
+                ? AppColors.darkTextHeading
+                : AppColors.textHeading;
+            final cardDistanceIconColor = isDark
+                ? AppColors.darkPrimary
+                : AppColors.goldPrimary;
+            final roleBgColor = isPendamping
+                ? AppColors.goldPrimary.withValues(alpha: isDark ? 0.25 : 0.15)
+                : AppColors.statusSafe.withValues(alpha: isDark ? 0.2 : 0.1);
+            final roleBorderColor = isPendamping
+                ? AppColors.goldPrimary.withValues(alpha: isDark ? 0.45 : 0.35)
+                : AppColors.statusSafe.withValues(alpha: 0.28);
+            final roleTextColor = isPendamping
+                ? (isDark ? AppColors.goldLight : AppColors.espressoDark)
+                : AppColors.statusSafe;
+            final arrowBtnBg = isDark
+                ? AppColors.darkSurfaceContainerHighest
+                : AppColors.canvasCream;
+            final arrowBtnBorder = isDark
+                ? AppColors.darkOutlineVariant
+                : AppColors.lightCardBorder;
+            final arrowBtnIconColor = isDark
+                ? AppColors.darkTextHeading
+                : AppColors.espressoDark;
+            final displayStatus = locStatus == 'Lokasi tidak diperbarui'
+                ? 'Tidak diperbarui'
+                : locStatus;
+
             return Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () {
-                  onMemberTap?.call(m);
-                },
-                borderRadius: BorderRadius.circular(16),
+                onTap: () => onMemberTap?.call(m),
+                borderRadius: BorderRadius.circular(18),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
+                    horizontal: 10,
+                    vertical: 9,
                   ),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? (isPendamping
-                              ? AppColors.darkPrimaryContainer.withValues(
-                                  alpha: 0.35,
-                                )
-                              : AppColors.darkSurfaceContainer)
-                        : (isPendamping
-                              ? AppColors.primaryContainer.withValues(
-                                  alpha: 0.28,
-                                )
-                              : AppColors.surfaceWhite),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isPendamping
-                          ? (isDark
-                                ? AppColors.goldPrimary.withValues(alpha: 0.4)
-                                : AppColors.goldPrimary.withValues(alpha: 0.35))
-                          : (isDark
-                                ? AppColors.darkOutlineVariant
-                                : AppColors.canvasCreamSubtle),
-                      width: 1.0,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(
-                          alpha: isDark ? 0.2 : 0.03,
-                        ),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+                    color: cardBg,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: cardBorder, width: 1.0),
                   ),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // ── Avatar with Status Dot ──
-                      Stack(
-                        clipBehavior: Clip.none,
+                      // ── Top Row: Avatar on Left, Member Name on Right ──
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Container(
-                            width: 38,
-                            height: 38,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                colors: isPendamping
-                                    ? (isDark
-                                          ? [
-                                              AppColors.darkPrimaryContainer,
-                                              AppColors
-                                                  .darkSurfaceContainerHighest,
-                                            ]
-                                          : [
-                                              AppColors.espressoDark,
-                                              AppColors.primaryContainer,
-                                            ])
-                                    : (isDark
-                                          ? [
-                                              AppColors
-                                                  .darkSurfaceContainerHigh,
-                                              AppColors.darkSurfaceContainer,
-                                            ]
-                                          : [
-                                              AppColors.tanLight.withValues(
-                                                alpha: 0.4,
-                                              ),
-                                              AppColors.canvasCream,
-                                            ]),
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
+                          // Avatar with Status Dot
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Container(
+                                width: 34,
+                                height: 34,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: LinearGradient(
+                                    colors: isPendamping
+                                        ? (isDark
+                                              ? [
+                                                  AppColors
+                                                      .darkSurfaceContainerHighest,
+                                                  AppColors
+                                                      .darkPrimaryContainer,
+                                                ]
+                                              : [
+                                                  AppColors.espressoMedium,
+                                                  AppColors.primaryContainer,
+                                                ])
+                                        : (isDark
+                                              ? [
+                                                  AppColors
+                                                      .darkSurfaceContainerHigh,
+                                                  AppColors
+                                                      .darkSurfaceContainer,
+                                                ]
+                                              : [
+                                                  AppColors.tanLight.withValues(
+                                                    alpha: 0.4,
+                                                  ),
+                                                  AppColors.canvasCream,
+                                                ]),
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  border: Border.all(
+                                    color: isPendamping
+                                        ? AppColors.goldPrimary
+                                        : (isDark
+                                              ? AppColors.darkOutlineVariant
+                                              : AppColors.tanMedium.withValues(
+                                                  alpha: 0.35,
+                                                )),
+                                    width: 1.1,
+                                  ),
+                                ),
+                                alignment: Alignment.center,
+                                child: isPendamping
+                                    ? Icon(
+                                        Icons.shield_rounded,
+                                        size: 17,
+                                        color: isDark
+                                            ? AppColors.goldLight
+                                            : Colors.white,
+                                      )
+                                    : Text(
+                                        initial,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: isDark
+                                              ? AppColors.darkTextHeading
+                                              : AppColors.espressoDark,
+                                        ),
+                                      ),
                               ),
-                              border: Border.all(
-                                color: isPendamping
-                                    ? AppColors.goldPrimary
-                                    : (isDark
-                                          ? AppColors.darkOutlineVariant
-                                          : AppColors.tanMedium.withValues(
-                                              alpha: 0.35,
-                                            )),
-                                width: 1.2,
-                              ),
-                            ),
-                            alignment: Alignment.center,
-                            child: isPendamping
-                                ? Icon(
-                                    Icons.shield_rounded,
-                                    size: 19,
-                                    color: isDark
-                                        ? AppColors.goldLight
-                                        : Colors.white,
-                                  )
-                                : Text(
-                                    initial,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      color: isDark
-                                          ? AppColors.darkTextHeading
-                                          : AppColors.espressoDark,
+                              Positioned(
+                                right: -1,
+                                bottom: -1,
+                                child: Container(
+                                  width: 9.5,
+                                  height: 9.5,
+                                  decoration: BoxDecoration(
+                                    color: m.hasLocation && isOnline
+                                        ? AppColors.statusSafe
+                                        : (m.hasLocation
+                                              ? AppColors.statusWarning
+                                              : AppColors.outlineVariant),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: cardBg,
+                                      width: 1.8,
                                     ),
                                   ),
+                                ),
+                              ),
+                            ],
                           ),
-                          Positioned(
-                            right: -1,
-                            bottom: -1,
-                            child: Container(
-                              width: 11,
-                              height: 11,
-                              decoration: BoxDecoration(
-                                color: m.hasLocation && isOnline
-                                    ? AppColors.statusSafe
-                                    : (m.hasLocation
-                                          ? AppColors.statusWarning
-                                          : AppColors.outlineVariant),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: isDark
-                                      ? AppColors.darkSurface
-                                      : AppColors.surfaceWhite,
-                                  width: 2,
+                          const SizedBox(width: 8),
+
+                          // Member Name (bold, 2 lines max, legible)
+                          Expanded(
+                            child: Text(
+                              m.name,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: cardTextColor,
+                                height: 1.15,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      // ── Middle: Role Badge Pill ──
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: roleBgColor,
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          border: Border.all(
+                            color: roleBorderColor,
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Text(
+                          isPendamping ? '👑 Pendamping' : 'Jamaah',
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w800,
+                            color: roleTextColor,
+                          ),
+                        ),
+                      ),
+
+                      // ── Bottom Row: Distance & Status on Left, Diagonal Arrow on Right (Gambar 2 Fusion) ──
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          // Left side: Distance & Location Status on 2 separate lines (Never truncated!)
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      m.hasLocation
+                                          ? Icons.near_me_rounded
+                                          : Icons.location_off_rounded,
+                                      size: 11,
+                                      color: cardDistanceIconColor,
+                                    ),
+                                    const SizedBox(width: 3),
+                                    Flexible(
+                                      child: Text(
+                                        dist,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w800,
+                                          color: cardDistanceColor,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      isOnline
+                                          ? Icons.sensors_rounded
+                                          : Icons.access_time_rounded,
+                                      size: 10,
+                                      color: isOnline
+                                          ? AppColors.statusSafe
+                                          : cardSubtextColor,
+                                    ),
+                                    const SizedBox(width: 3),
+                                    Flexible(
+                                      child: Text(
+                                        displayStatus,
+                                        style: TextStyle(
+                                          fontSize: 9.5,
+                                          fontWeight: FontWeight.w600,
+                                          color: isOnline
+                                              ? AppColors.statusSafe
+                                              : cardSubtextColor,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+
+                          // Right side: Circular Diagonal Arrow Button (matching Gambar 2 bottom-right)
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () => onMemberTap?.call(m),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                              child: Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: arrowBtnBg,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: arrowBtnBorder,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Icon(
+                                    Icons.arrow_outward_rounded,
+                                    size: 16,
+                                    color: arrowBtnIconColor,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ],
-                      ),
-                      const SizedBox(width: 10),
-
-                      // ── Member Name & Subtitle ──
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Row(
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    m.name,
-                                    style: AppTypography.titleSmall.copyWith(
-                                      color: headingColor,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 13.5,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isPendamping
-                                        ? AppColors.goldPrimary.withValues(
-                                            alpha: isDark ? 0.25 : 0.15,
-                                          )
-                                        : AppColors.statusSafe.withValues(
-                                            alpha: isDark ? 0.2 : 0.12,
-                                          ),
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.pill,
-                                    ),
-                                    border: Border.all(
-                                      color: isPendamping
-                                          ? AppColors.goldPrimary.withValues(
-                                              alpha: 0.4,
-                                            )
-                                          : AppColors.statusSafe.withValues(
-                                              alpha: 0.3,
-                                            ),
-                                      width: 0.8,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    isPendamping ? '👑 Pendamping' : 'Jamaah',
-                                    style: TextStyle(
-                                      fontSize: 9.5,
-                                      fontWeight: FontWeight.w800,
-                                      color: isPendamping
-                                          ? (isDark
-                                                ? AppColors.goldLight
-                                                : AppColors.espressoDark)
-                                          : AppColors.statusSafe,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 3),
-                            Row(
-                              children: [
-                                Icon(
-                                  m.hasLocation && isOnline
-                                      ? Icons.sensors_rounded
-                                      : Icons.access_time_rounded,
-                                  size: 11,
-                                  color: isOnline
-                                      ? AppColors.statusSafe
-                                      : bodyColor.withValues(alpha: 0.7),
-                                ),
-                                const SizedBox(width: 3.5),
-                                Expanded(
-                                  child: Text(
-                                    locStatus,
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w500,
-                                      color: isOnline
-                                          ? AppColors.statusSafe
-                                          : bodyColor.withValues(alpha: 0.8),
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-
-                      // ── Distance Pill & Action Chevron ──
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? AppColors.darkSurfaceContainerHighest
-                              : AppColors.canvasCream,
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                          border: Border.all(
-                            color: m.hasLocation
-                                ? (isDark
-                                      ? AppColors.goldPrimary.withValues(
-                                          alpha: 0.3,
-                                        )
-                                      : AppColors.goldLight.withValues(
-                                          alpha: 0.5,
-                                        ))
-                                : (isDark
-                                      ? AppColors.darkOutlineVariant
-                                      : AppColors.lightCardBorder),
-                            width: 0.8,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.near_me_rounded,
-                              size: 11,
-                              color: m.hasLocation
-                                  ? primaryColor
-                                  : AppColors.textMuted,
-                            ),
-                            const SizedBox(width: 3),
-                            Text(
-                              dist,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                color: m.hasLocation
-                                    ? headingColor
-                                    : AppColors.textMuted,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        size: 18,
-                        color: isDark
-                            ? AppColors.goldLight.withValues(alpha: 0.7)
-                            : AppColors.tanMedium,
                       ),
                     ],
                   ),

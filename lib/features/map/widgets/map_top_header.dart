@@ -312,17 +312,6 @@ class _MapTopHeaderState extends State<MapTopHeader> {
                   : const [Color(0xFFE53935), Color(0xFFC62828)],
             ),
             borderRadius: BorderRadius.circular(AppRadius.pill),
-            boxShadow: [
-              BoxShadow(
-                color:
-                    (hasActiveSos
-                            ? const Color(0xFFFF1744)
-                            : const Color(0xFFE53935))
-                        .withValues(alpha: hasActiveSos ? 0.65 : 0.38),
-                blurRadius: hasActiveSos ? 12 : 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
