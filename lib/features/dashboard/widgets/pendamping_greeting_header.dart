@@ -49,7 +49,7 @@ class PendampingGreetingHeader extends StatelessWidget {
       } else if (maktab != null) {
         groupInfo = maktab;
       } else if (room != null && room.name.isNotEmpty) {
-        groupInfo = room.name;
+        groupInfo = room.capitalizedName;
       }
 
       return Padding(

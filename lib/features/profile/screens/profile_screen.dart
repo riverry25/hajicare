@@ -1219,103 +1219,425 @@ class _ProfileHeader extends StatelessWidget {
     final roleLabel = state?.role == UserRole.pendamping
         ? 'Pendamping'
         : 'Jamaah Haji';
+    final kloterStr = state?.effectiveKloter;
+    final maktabStr = state?.effectiveMaktab;
+
+    const double bannerHeight = 104.0;
+    const double bannerProtrude = 34.0;
 
     return MediaQuery(
       data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(
-            color: AppColors.cardBorderColor(context),
-            width: 1.2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.espressoDark.withValues(alpha: 0.05),
-              blurRadius: 14,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: Padding(
+        padding: const EdgeInsets.only(top: bannerProtrude),
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.topCenter,
           children: [
-            // Top row: Avatar + Name/Email + Button
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Avatar with camera badge
-                Obx(
-                  () => _InitialsAvatar(
-                    initials: controller.initials,
-                    isDark: isDark,
-                    onCameraTap: () {},
-                  ),
+            // ── 1. Main Card Container (Tailwind Card Body) ──────────────
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(
+                20,
+                (bannerHeight - bannerProtrude) + 18,
+                20,
+                20,
+              ),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: AppColors.cardBorderColor(context),
+                  width: 1.2,
                 ),
-                const SizedBox(width: 12),
-
-                // Name + Email
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Obx(
-                        () => Text(
-                          controller.displayName.value,
-                          style: AppTypography.titleMedium.copyWith(
-                            color: headingColor,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 15,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark
+                        ? Colors.black.withValues(alpha: 0.35)
+                        : AppColors.espressoDark.withValues(alpha: 0.07),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Display Name (Large & Bold title like Image 2)
+                  Obx(
+                    () => Text(
+                      controller.displayName.value.isNotEmpty
+                          ? controller.displayName.value
+                          : 'Pengguna HajiCare',
+                      style: AppTypography.titleLarge.copyWith(
+                        color: headingColor,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 20,
+                        letterSpacing: -0.3,
                       ),
-                      const SizedBox(height: 2),
-                      if (controller.safeEmail.isNotEmpty)
-                        Text(
-                          controller.safeEmail,
-                          style: AppTypography.bodySmall.copyWith(
-                            color: bodyColor,
-                            fontSize: 11.5,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+
+                  // Email
+                  if (controller.safeEmail.isNotEmpty)
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.mail_outline_rounded,
+                          size: 14,
+                          color: bodyColor.withValues(alpha: 0.75),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            controller.safeEmail,
+                            style: AppTypography.bodySmall.copyWith(
+                              color: bodyColor,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w400,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+
+                  const SizedBox(height: 14),
+
+                  // Tag Chips Row
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [
+                      _TagChip(
+                        icon: Icons.badge_rounded,
+                        label: porsiText,
+                        isDark: isDark,
+                        isPrimary: false,
+                      ),
+                      if (kloterStr != null &&
+                          kloterStr.isNotEmpty &&
+                          kloterStr != '-')
+                        _TagChip(
+                          icon: Icons.flight_takeoff_rounded,
+                          label: kloterStr.toLowerCase().startsWith('kloter')
+                              ? kloterStr
+                              : 'Kloter $kloterStr',
+                          isDark: isDark,
+                          isPrimary: false,
+                        ),
+                      if (maktabStr != null &&
+                          maktabStr.isNotEmpty &&
+                          maktabStr != '-')
+                        _TagChip(
+                          icon: Icons.hotel_rounded,
+                          label: maktabStr.toLowerCase().startsWith('maktab')
+                              ? maktabStr
+                              : 'Maktab $maktabStr',
+                          isDark: isDark,
+                          isPrimary: false,
                         ),
                     ],
                   ),
-                ),
-                const SizedBox(width: 8),
 
-                // Ubah Profil button — aligned top-right
-                _EditNameButton(controller: controller, isDark: isDark),
-              ],
-            ),
+                  const SizedBox(height: 18),
 
-            const SizedBox(height: 10),
-
-            // Bottom row: Tag chips in Wrap (never overflows)
-            Align(
-              alignment: Alignment.bottomRight,
-              child: Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                children: [
-                  _TagChip(
-                    icon: Icons.group_rounded,
-                    label: roleLabel,
-                    isDark: isDark,
-                    isPrimary: true,
-                  ),
-                  _TagChip(
-                    icon: Icons.badge_rounded,
-                    label: porsiText,
-                    isDark: isDark,
-                    isPrimary: false,
+                  // Action Button: "Ubah Profil" (styled like "READ MORE" button in Image 2)
+                  SizedBox(
+                    width: double.infinity,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => _showEditNameDialog(context),
+                        borderRadius: BorderRadius.circular(14),
+                        child: Ink(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 13,
+                            horizontal: 18,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: isDark
+                                  ? [AppColors.goldPrimary, AppColors.goldDark]
+                                  : [AppColors.primary, AppColors.espressoDark],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                color:
+                                    (isDark
+                                            ? AppColors.goldPrimary
+                                            : AppColors.primary)
+                                        .withValues(alpha: 0.28),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.edit_rounded,
+                                size: 16,
+                                color: isDark ? Colors.black : Colors.white,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Ubah Profil',
+                                style: TextStyle(
+                                  color: isDark ? Colors.black : Colors.white,
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
+              ),
+            ),
+
+            // ── 2. Elevated Floating Top Banner (Image 1 & 2 inspired) ──
+            Positioned(
+              top: -bannerProtrude,
+              left: 12,
+              right: 12,
+              height: bannerHeight,
+              child: Container(
+                clipBehavior: Clip.antiAlias,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  gradient: LinearGradient(
+                    colors: isDark
+                        ? [
+                            AppColors.darkPrimaryContainer,
+                            AppColors.espressoDark,
+                            const Color(0xFF160E09),
+                          ]
+                        : [
+                            AppColors.primary,
+                            AppColors.espressoDark,
+                            const Color(0xFF23160D),
+                          ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (isDark ? Colors.black : AppColors.espressoDark)
+                          .withValues(alpha: 0.35),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Stack(
+                  children: [
+                    // 3D Concentric Ripples in top-right (Image 1 reference!)
+                    Positioned(
+                      top: -45,
+                      right: -45,
+                      child: SizedBox(
+                        width: 220,
+                        height: 220,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Outer ripple ring
+                            Container(
+                              width: 210,
+                              height: 210,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.05),
+                                  width: 1.5,
+                                ),
+                              ),
+                            ),
+                            // Mid ripple ring 2
+                            Container(
+                              width: 160,
+                              height: 160,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white.withValues(alpha: 0.03),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.07),
+                                  width: 1.5,
+                                ),
+                              ),
+                            ),
+                            // Mid ripple ring 1
+                            Container(
+                              width: 110,
+                              height: 110,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white.withValues(alpha: 0.05),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.10),
+                                  width: 1.5,
+                                ),
+                              ),
+                            ),
+                            // Inner ripple
+                            Container(
+                              width: 65,
+                              height: 65,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white.withValues(alpha: 0.08),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.14),
+                                  width: 1.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    // Glossy Glass Arc Highlight across top (Image 1 reference!)
+                    Positioned(
+                      top: -50,
+                      left: -30,
+                      right: -30,
+                      height: 110,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: const BorderRadius.vertical(
+                            bottom: Radius.elliptical(260, 90),
+                          ),
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.white.withValues(alpha: 0.16),
+                              Colors.white.withValues(alpha: 0.0),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Content inside Banner: Avatar + Greeting + Top-Right Glassmorphic Badge
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Avatar with Camera icon & gold border
+                          Obx(
+                            () => _InitialsAvatar(
+                              initials: controller.initials,
+                              isDark: isDark,
+                              onCameraTap: () => _showEditNameDialog(context),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+
+                          // Title / Greeting beside Avatar
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.verified_rounded,
+                                      size: 14,
+                                      color: AppColors.accentGoldStar,
+                                    ),
+                                    const SizedBox(width: 5),
+                                    const Text(
+                                      'Kartu Jamaah',
+                                      style: TextStyle(
+                                        color: AppColors.goldLight,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.8,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 3),
+                                Obx(
+                                  () => Text(
+                                    controller.displayName.value.isNotEmpty
+                                        ? controller.displayName.value
+                                        : 'Pengguna',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: -0.2,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Top-Right Glassmorphic Badge (Like "UI" badge in Image 1!)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.22),
+                                width: 1.1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.statusSafe,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  roleLabel,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -1323,9 +1645,412 @@ class _ProfileHeader extends StatelessWidget {
       ),
     );
   }
+
+  void _showEditNameDialog(BuildContext context) {
+    final isDarkDialog = AppColors.isDark(context);
+    final dialogBg = isDarkDialog
+        ? AppColors.darkSurface
+        : AppColors.surfaceWhite;
+    final headingClr = isDarkDialog
+        ? AppColors.darkTextHeading
+        : AppColors.espressoDark;
+    final bodyClr = isDarkDialog ? AppColors.darkTextBody : AppColors.textBody;
+    final primaryColor = isDarkDialog
+        ? AppColors.goldPrimary
+        : AppColors.primary;
+    final nameCtrl = TextEditingController(text: controller.displayName.value);
+    final inputError = RxnString();
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogCtx) => Dialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 380),
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.topCenter,
+            children: [
+              // ── 1. Main Card Body (Below floating hero) ───────────
+              Container(
+                margin: const EdgeInsets.only(top: 36),
+                padding: const EdgeInsets.fromLTRB(22, 96, 22, 22),
+                decoration: BoxDecoration(
+                  color: dialogBg,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(
+                    color: isDarkDialog
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : AppColors.goldLight.withValues(alpha: 0.35),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(
+                        alpha: isDarkDialog ? 0.45 : 0.09,
+                      ),
+                      blurRadius: 26,
+                      offset: const Offset(0, 12),
+                    ),
+                  ],
+                ),
+                child: SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Title
+                      Text(
+                        'Ubah Nama Pengguna',
+                        style: AppTypography.titleMedium.copyWith(
+                          color: headingClr,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 19,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Description
+                      Text(
+                        'Nama ini akan ditampilkan pada profil, dashboard, dan pantauan rombongan jamaah.',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: bodyClr.withValues(alpha: 0.85),
+                          height: 1.4,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+
+                      // Text Field with validation
+                      Obx(
+                        () => TextField(
+                          controller: nameCtrl,
+                          autofocus: true,
+                          keyboardType: TextInputType.name,
+                          textCapitalization: TextCapitalization.words,
+                          maxLength: 50,
+                          style: TextStyle(
+                            color: headingClr,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          decoration: InputDecoration(
+                            counterText: '',
+                            labelText: 'Nama Lengkap',
+                            labelStyle: TextStyle(
+                              color: bodyClr.withValues(alpha: 0.8),
+                              fontSize: 13,
+                            ),
+                            hintText: 'Masukkan nama lengkap',
+                            hintStyle: TextStyle(
+                              color: bodyClr.withValues(alpha: 0.4),
+                              fontSize: 13,
+                            ),
+                            errorText: inputError.value,
+                            filled: true,
+                            fillColor: isDarkDialog
+                                ? AppColors.darkSurfaceContainer
+                                : AppColors.canvasCream.withValues(alpha: 0.45),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide(
+                                color: isDarkDialog
+                                    ? AppColors.darkOutlineVariant
+                                    : AppColors.goldLight,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide(
+                                color: isDarkDialog
+                                    ? AppColors.darkOutlineVariant
+                                    : AppColors.goldLight.withValues(
+                                        alpha: 0.6,
+                                      ),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide(
+                                color: primaryColor,
+                                width: 1.8,
+                              ),
+                            ),
+                            prefixIcon: Icon(
+                              Icons.person_outline_rounded,
+                              color: primaryColor,
+                              size: 20,
+                            ),
+                            suffixIcon: IconButton(
+                              icon: const Icon(Icons.clear_rounded, size: 18),
+                              onPressed: () => nameCtrl.clear(),
+                            ),
+                          ),
+                          onChanged: (_) {
+                            if (inputError.value != null) {
+                              inputError.value = null;
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+
+                      // Action Buttons
+                      Obx(() {
+                        final saving = controller.isSavingName.value;
+                        return Row(
+                          children: [
+                            // Batal
+                            Expanded(
+                              child: OutlinedButton(
+                                style: OutlinedButton.styleFrom(
+                                  minimumSize: const Size(0, 46),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  side: BorderSide(
+                                    color: isDarkDialog
+                                        ? AppColors.darkOutlineVariant
+                                        : AppColors.goldLight.withValues(
+                                            alpha: 0.8,
+                                          ),
+                                  ),
+                                ),
+                                onPressed: saving
+                                    ? null
+                                    : () => Navigator.of(dialogCtx).pop(),
+                                child: Text(
+                                  dialogCtx.tr('cancel').isEmpty
+                                      ? 'Batal'
+                                      : dialogCtx.tr('cancel'),
+                                  style: TextStyle(
+                                    color: isDarkDialog
+                                        ? Colors.white70
+                                        : AppColors.textBody,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+
+                            // Simpan
+                            Expanded(
+                              flex: 2,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: primaryColor,
+                                  foregroundColor: isDarkDialog
+                                      ? Colors.black
+                                      : Colors.white,
+                                  elevation: 2,
+                                  shadowColor: primaryColor.withValues(
+                                    alpha: 0.4,
+                                  ),
+                                  minimumSize: const Size(0, 46),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                onPressed: saving
+                                    ? null
+                                    : () async {
+                                        final input = nameCtrl.text.trim();
+                                        if (input.isEmpty) {
+                                          inputError.value =
+                                              'Nama tidak boleh kosong';
+                                          return;
+                                        }
+                                        inputError.value = null;
+
+                                        try {
+                                          await controller.updateDisplayName(
+                                            input,
+                                          );
+                                          if (dialogCtx.mounted &&
+                                              Navigator.of(
+                                                dialogCtx,
+                                              ).canPop()) {
+                                            Navigator.of(dialogCtx).pop();
+                                          }
+                                          if (!context.mounted) return;
+                                          AppAlert.success(
+                                            context,
+                                            title: 'Berhasil',
+                                            message:
+                                                'Nama berhasil diperbarui menjadi "$input"',
+                                          );
+                                        } catch (_) {
+                                          if (!context.mounted) return;
+                                          AppAlert.error(
+                                            context,
+                                            title: 'Gagal',
+                                            message:
+                                                'Gagal memperbarui nama. Silakan coba lagi.',
+                                          );
+                                        }
+                                      },
+                                child: saving
+                                    ? SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: isDarkDialog
+                                              ? Colors.black
+                                              : Colors.white,
+                                        ),
+                                      )
+                                    : const Text(
+                                        'Simpan Perubahan',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 13.5,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                          ],
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+              ),
+
+              // ── 2. Floating Hero Card (Protruding at top, Tailwind style) ─
+              Positioned(
+                top: 0,
+                left: 18,
+                right: 18,
+                height: 115,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: isDarkDialog
+                          ? [const Color(0xFF38251A), const Color(0xFF1F140D)]
+                          : [AppColors.espressoDark, const Color(0xFF563B2A)],
+                    ),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: AppColors.goldPrimary.withValues(alpha: 0.4),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.espressoDark.withValues(alpha: 0.35),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    children: [
+                      // Ambient Background Circular Glows
+                      Positioned(
+                        top: -20,
+                        right: -20,
+                        child: Container(
+                          width: 90,
+                          height: 90,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.goldPrimary.withValues(
+                              alpha: 0.12,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: -25,
+                        left: -20,
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.goldPrimary.withValues(
+                              alpha: 0.08,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Center Hero Graphic
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: LinearGradient(
+                                  colors: [
+                                    AppColors.goldPrimary.withValues(
+                                      alpha: 0.25,
+                                    ),
+                                    AppColors.goldPrimary.withValues(
+                                      alpha: 0.08,
+                                    ),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                border: Border.all(
+                                  color: AppColors.goldPrimary.withValues(
+                                    alpha: 0.5,
+                                  ),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.edit_rounded,
+                                  color: AppColors.accentGoldStar,
+                                  size: 24,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            const Text(
+                              'IDENTITAS PENGGUNA',
+                              style: TextStyle(
+                                color: AppColors.goldLight,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1.1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
-// ── Initials Avatar with Camera Badge ────────────────────────────────────────
+// ── Initials Avatar with Edit Badge ──────────────────────────────────────────
 
 class _InitialsAvatar extends StatelessWidget {
   final String initials;
@@ -1340,50 +2065,79 @@ class _InitialsAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: 68,
-          height: 68,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: isDark
-                  ? [
-                      AppColors.darkPrimaryContainer,
-                      AppColors.darkSurfaceContainerHigh,
-                    ]
-                  : [AppColors.espressoDark, const Color(0xFF22160E)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            border: Border.all(color: AppColors.goldPrimary, width: 2.5),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.goldPrimary.withValues(alpha: 0.2),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
+    return GestureDetector(
+      onTap: onCameraTap,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 62,
+            height: 62,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: isDark
+                    ? [
+                        AppColors.darkPrimaryContainer,
+                        AppColors.darkSurfaceContainerHigh,
+                      ]
+                    : [AppColors.espressoDark, const Color(0xFF22160E)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-            ],
-          ),
-          alignment: Alignment.center,
-          child: MediaQuery(
-            data: MediaQuery.of(
-              context,
-            ).copyWith(textScaler: TextScaler.noScaling),
-            child: Text(
-              initials,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 26,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1,
+              border: Border.all(color: AppColors.goldPrimary, width: 2.2),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.goldPrimary.withValues(alpha: 0.25),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            alignment: Alignment.center,
+            child: MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: TextScaler.noScaling),
+              child: Text(
+                initials,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1,
+                ),
               ),
             ),
           ),
-        ),
-      ],
+          Positioned(
+            right: -2,
+            bottom: -2,
+            child: Container(
+              width: 21,
+              height: 21,
+              decoration: BoxDecoration(
+                color: AppColors.goldPrimary,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isDark ? AppColors.espressoDark : Colors.white,
+                  width: 1.8,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.25),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: const Center(
+                child: Icon(Icons.edit_rounded, size: 11, color: Colors.white),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1416,7 +2170,7 @@ class _TagChip extends StatelessWidget {
         : AppColors.textHeadingColor(context);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(20),
@@ -1425,336 +2179,17 @@ class _TagChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 11, color: textColor),
-          const SizedBox(width: 4),
+          Icon(icon, size: 12, color: textColor),
+          const SizedBox(width: 5),
           Text(
             label,
             style: TextStyle(
               color: textColor,
-              fontSize: 10,
+              fontSize: 11,
               fontWeight: FontWeight.w700,
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ── Edit Name Button ──────────────────────────────────────────────────────────
-
-class _EditNameButton extends StatelessWidget {
-  final ProfileController controller;
-  final bool isDark;
-
-  const _EditNameButton({required this.controller, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    final borderColor = isDark
-        ? AppColors.darkOutlineVariant
-        : AppColors.canvasCreamSubtle;
-    final textColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-
-    return Semantics(
-      button: true,
-      label: context.tr('editName'),
-      child: InkWell(
-        onTap: () => _showEditNameDialog(context),
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            border: Border.all(color: borderColor, width: 1.2),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.edit_rounded, size: 13, color: textColor),
-              const SizedBox(width: 5),
-              Text(
-                'Ubah Profil',
-                style: TextStyle(
-                  color: textColor,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showEditNameDialog(BuildContext context) {
-    final isDarkDialog = AppColors.isDark(context);
-    final dialogBg = isDarkDialog
-        ? AppColors.darkSurface
-        : AppColors.surfaceWhite;
-    final headingClr = isDarkDialog
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyClr = isDarkDialog ? AppColors.darkTextBody : AppColors.textBody;
-    final borderClr = isDarkDialog
-        ? AppColors.darkOutlineVariant
-        : AppColors.cardBorderColor(context);
-    final nameCtrl = TextEditingController(text: controller.displayName.value);
-    final inputError = RxnString();
-
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (dialogCtx) => Dialog(
-        backgroundColor: dialogBg,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-          side: BorderSide(
-            color: AppColors.goldPrimary.withValues(alpha: 0.35),
-            width: 1.2,
-          ),
-        ),
-        elevation: 12,
-        insetPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.screenEdgeGutter,
-          vertical: 24,
-        ),
-        child: SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.xl),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Center Icon Badge
-                  Center(
-                    child: Container(
-                      width: 58,
-                      height: 58,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.goldPrimary.withValues(alpha: 0.22),
-                            AppColors.goldPrimary.withValues(alpha: 0.06),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        border: Border.all(
-                          color: AppColors.goldPrimary.withValues(alpha: 0.45),
-                          width: 1.5,
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.edit_note_rounded,
-                        color: AppColors.goldPrimary,
-                        size: 30,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-
-                  // Title
-                  Text(
-                    dialogCtx.tr('editNameTitle').isEmpty
-                        ? 'Ubah Nama Lengkap'
-                        : dialogCtx.tr('editNameTitle'),
-                    textAlign: TextAlign.center,
-                    style: AppTypography.titleLarge.copyWith(
-                      color: headingClr,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Nama ini akan ditampilkan pada profil, dashboard, dan pantauan rombongan.',
-                    textAlign: TextAlign.center,
-                    style: AppTypography.caption.copyWith(
-                      color: bodyClr,
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-
-                  // Text Field with validation
-                  Obx(
-                    () => TextField(
-                      controller: nameCtrl,
-                      autofocus: true,
-                      keyboardType: TextInputType.name,
-                      textCapitalization: TextCapitalization.words,
-                      maxLength: 50,
-                      style: AppTypography.bodyLarge.copyWith(
-                        color: headingClr,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      decoration: InputDecoration(
-                        counterText: '',
-                        labelText: dialogCtx.tr('name').isEmpty
-                            ? 'Nama Lengkap'
-                            : dialogCtx.tr('name'),
-                        labelStyle: TextStyle(color: bodyClr),
-                        errorText: inputError.value,
-                        filled: true,
-                        fillColor: isDarkDialog
-                            ? AppColors.darkSurfaceContainer
-                            : AppColors.canvasCream,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.lg,
-                          vertical: AppSpacing.md,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.lg),
-                          borderSide: BorderSide(color: borderClr),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.lg),
-                          borderSide: BorderSide(color: borderClr),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.lg),
-                          borderSide: const BorderSide(
-                            color: AppColors.goldPrimary,
-                            width: 1.8,
-                          ),
-                        ),
-                        prefixIcon: const Icon(
-                          Icons.person_rounded,
-                          color: AppColors.goldPrimary,
-                          size: 20,
-                        ),
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.clear_rounded, size: 18),
-                          onPressed: () => nameCtrl.clear(),
-                        ),
-                      ),
-                      onChanged: (_) {
-                        if (inputError.value != null) inputError.value = null;
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-
-                  // Action Buttons: Batal & Simpan
-                  Obx(() {
-                    final saving = controller.isSavingName.value;
-                    return Row(
-                      children: [
-                        Expanded(
-                          child: SizedBox(
-                            height: 48,
-                            child: OutlinedButton(
-                              onPressed: saving
-                                  ? null
-                                  : () => Navigator.of(dialogCtx).pop(),
-                              style: OutlinedButton.styleFrom(
-                                side: BorderSide(color: borderClr),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.pill,
-                                  ),
-                                ),
-                              ),
-                              child: Text(
-                                dialogCtx.tr('cancel').isEmpty
-                                    ? 'Batal'
-                                    : dialogCtx.tr('cancel'),
-                                style: TextStyle(
-                                  color: isDarkDialog
-                                      ? AppColors.darkTextBody
-                                      : AppColors.espressoDark,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          child: SizedBox(
-                            height: 48,
-                            child: ElevatedButton(
-                              onPressed: saving
-                                  ? null
-                                  : () async {
-                                      final input = nameCtrl.text.trim();
-                                      if (input.isEmpty) {
-                                        inputError.value =
-                                            'Nama tidak boleh kosong';
-                                        return;
-                                      }
-                                      inputError.value = null;
-
-                                      try {
-                                        await controller.updateDisplayName(
-                                          input,
-                                        );
-                                        if (dialogCtx.mounted &&
-                                            Navigator.of(dialogCtx).canPop()) {
-                                          Navigator.of(dialogCtx).pop();
-                                        }
-                                        if (!context.mounted) return;
-                                        AppAlert.success(
-                                          context,
-                                          title: 'Berhasil',
-                                          message:
-                                              'Nama berhasil diperbarui menjadi "$input"',
-                                        );
-                                      } catch (_) {
-                                        if (!context.mounted) return;
-                                        AppAlert.error(
-                                          context,
-                                          title: 'Gagal',
-                                          message:
-                                              'Gagal memperbarui nama. Silakan coba lagi.',
-                                        );
-                                      }
-                                    },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: isDarkDialog
-                                    ? AppColors.darkPrimaryContainer
-                                    : AppColors.espressoDark,
-                                foregroundColor: isDarkDialog
-                                    ? AppColors.goldLight
-                                    : Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.pill,
-                                  ),
-                                ),
-                              ),
-                              child: saving
-                                  ? const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2.2,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : const Text(
-                                      'Simpan',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  }),
-                ],
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }

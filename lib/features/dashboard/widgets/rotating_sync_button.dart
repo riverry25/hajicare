@@ -8,6 +8,8 @@ class RotatingSyncButton extends StatefulWidget {
   final double iconSize;
   final Color? backgroundColor;
   final Color? iconColor;
+  final IconData icon;
+  final String? tooltip;
 
   const RotatingSyncButton({
     super.key,
@@ -16,6 +18,8 @@ class RotatingSyncButton extends StatefulWidget {
     this.iconSize = 22.0,
     this.backgroundColor,
     this.iconColor,
+    this.icon = Icons.sync_rounded,
+    this.tooltip,
   });
 
   @override
@@ -75,7 +79,7 @@ class _RotatingSyncButtonState extends State<RotatingSyncButton>
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final button = Container(
       width: widget.size,
       height: widget.size,
       decoration: BoxDecoration(
@@ -96,7 +100,7 @@ class _RotatingSyncButtonState extends State<RotatingSyncButton>
             child: RotationTransition(
               turns: _animController,
               child: Icon(
-                Icons.sync_rounded,
+                widget.icon,
                 color: widget.iconColor ?? Colors.white,
                 size: widget.iconSize,
               ),
@@ -105,5 +109,10 @@ class _RotatingSyncButtonState extends State<RotatingSyncButton>
         ),
       ),
     );
+
+    if (widget.tooltip != null && widget.tooltip!.isNotEmpty) {
+      return Tooltip(message: widget.tooltip!, child: button);
+    }
+    return button;
   }
 }

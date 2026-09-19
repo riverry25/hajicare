@@ -129,6 +129,21 @@ class RoomModel {
     );
   }
 
+  /// Returns auto-capitalized title-case room name (e.g. 'jihad gang' -> 'Jihad Gang').
+  String get capitalizedName {
+    if (name.trim().isEmpty) return name;
+    return name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .map((word) {
+          if (word.isEmpty) return '';
+          if (word.length == 1) return word.toUpperCase();
+          if (word == word.toUpperCase()) return word;
+          return '${word[0].toUpperCase()}${word.substring(1)}';
+        })
+        .join(' ');
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

@@ -156,7 +156,8 @@ class PendampingJamaahSelector extends StatelessWidget {
 
   void _openJamaahDetail(BuildContext context, JamaahData jamaah) {
     final roomId = state.activeRoomId.value ?? '';
-    final roomName = state.activeRoom.value?.name ?? 'Room Pemantauan';
+    final roomName =
+        state.activeRoom.value?.capitalizedName ?? 'Room Pemantauan';
     final roomCode = state.activeRoom.value?.code ?? '';
     JamaahDetailSheet.show(
       context,

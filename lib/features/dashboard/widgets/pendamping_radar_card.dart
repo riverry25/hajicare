@@ -401,7 +401,8 @@ class PendampingRadarCard extends StatelessWidget {
       // GPS signal is only considered valid if we have a real coordinate AND isGpsActive flag.
       final hasSignal = jamaah.currentLocation != null && jamaah.isGpsActive;
       final roomId = state.activeRoomId.value ?? '';
-      final roomName = state.activeRoom.value?.name ?? 'Room Pemantauan';
+      final roomName =
+          state.activeRoom.value?.capitalizedName ?? 'Room Pemantauan';
       final roomCode = state.activeRoom.value?.code ?? '';
 
       return Container(

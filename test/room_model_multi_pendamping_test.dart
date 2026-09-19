@@ -50,5 +50,16 @@ void main() {
       expect(updated.pendampingIds, ['pendamping_1', 'pendamping_2']);
       expect(updated.pendampingId, 'pendamping_1');
     });
+
+    test('RoomModel capitalizedName auto-capitalizes lowercase names', () {
+      const room = RoomModel(
+        id: 'room_jihad',
+        name: 'jihad gang',
+        code: 'KZFRCJ',
+        createdBy: 'pendamping_1',
+      );
+
+      expect(room.capitalizedName, 'Jihad Gang');
+    });
   });
 }

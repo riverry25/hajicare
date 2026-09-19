@@ -125,7 +125,8 @@ class DashboardPendampingScreen extends StatelessWidget {
 
     final kloterStr = state.effectiveKloter ?? '-';
     final maktabStr = state.effectiveMaktab ?? '-';
-    final roomName = state.activeRoom.value?.name ?? 'Belum Ada Room';
+    final roomName =
+        state.activeRoom.value?.capitalizedName ?? 'Belum Ada Room';
     final jamaahCount = state.jamaahList.length;
 
     final prayerName = prayerCtrl.nextPrayerName.value.isNotEmpty
@@ -302,12 +303,16 @@ class DashboardPendampingScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   RotatingSyncButton(
+                    icon: Icons.bar_chart_rounded,
+                    tooltip: 'Perbarui Statistik Jamaah',
                     onSync: () async {
                       await state.refreshLocation();
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Lokasi GPS berhasil diperbarui'),
+                            content: Text(
+                              'Statistik jamaah & lokasi GPS berhasil diperbarui',
+                            ),
                             duration: Duration(seconds: 2),
                             behavior: SnackBarBehavior.floating,
                           ),

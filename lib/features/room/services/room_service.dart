@@ -77,6 +77,21 @@ class RoomService {
     return generateCodeCandidate(8);
   }
 
+  /// Formats string into Title Case (e.g. 'jihad gang' -> 'Jihad Gang').
+  static String capitalizeWords(String text) {
+    if (text.trim().isEmpty) return text.trim();
+    return text
+        .trim()
+        .split(RegExp(r'\s+'))
+        .map((word) {
+          if (word.isEmpty) return '';
+          if (word.length == 1) return word.toUpperCase();
+          if (word == word.toUpperCase()) return word;
+          return '${word[0].toUpperCase()}${word.substring(1)}';
+        })
+        .join(' ');
+  }
+
   // ── Room CRUD (Admin) ──────────────────────────────────────────────────────
 
   /// Creates a new room in `rooms/{roomId}` with an auto-generated unique code.
@@ -84,7 +99,7 @@ class RoomService {
     required String name,
     required String adminUid,
   }) async {
-    final trimmedName = name.trim();
+    final trimmedName = capitalizeWords(name);
     if (trimmedName.isEmpty) {
       throw const RoomException('Nama room tidak boleh kosong');
     }
@@ -129,7 +144,7 @@ class RoomService {
     String? maktab,
     String? kloter,
   }) async {
-    final trimmedName = name.trim();
+    final trimmedName = capitalizeWords(name);
     if (trimmedName.isEmpty) {
       throw const RoomException('Nama room tidak boleh kosong');
     }
@@ -256,7 +271,7 @@ class RoomService {
 
     final updates = <String, dynamic>{};
     if (name != null && name.trim().isNotEmpty) {
-      updates['name'] = name.trim();
+      updates['name'] = capitalizeWords(name);
     }
     if (maktab != null) {
       updates['maktab'] = maktab.trim().isNotEmpty

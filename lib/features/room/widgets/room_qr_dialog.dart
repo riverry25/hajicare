@@ -109,7 +109,7 @@ class RoomQrDialog extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    room.name,
+                    room.capitalizedName,
                     style: AppTypography.titleMedium.copyWith(
                       color: headingColor,
                       fontWeight: FontWeight.bold,
@@ -304,7 +304,7 @@ class RoomQrDialog extends StatelessWidget {
                 onPressed: () {
                   HapticFeedback.lightImpact();
                   final shareText =
-                      "Assalamu'alaikum, bergabunglah ke rombongan '${room.name}' di aplikasi HajiCare.\n\nKode Room: ${room.code}\n\nMasukkan kode tersebut pada menu 'Gabung Room' di aplikasi HajiCare.";
+                      "Assalamu'alaikum, bergabunglah ke rombongan '${room.capitalizedName}' di aplikasi HajiCare.\n\nKode Room: ${room.code}\n\nMasukkan kode tersebut pada menu 'Gabung Room' di aplikasi HajiCare.";
                   Clipboard.setData(ClipboardData(text: shareText));
                   AppAlert.success(
                     context,
