@@ -54,6 +54,10 @@ class LandmarkStreamBuffer {
       _frameBuffer.removeAt(0);
     }
 
+    if (_frameBuffer.length % 10 == 0 || _frameBuffer.length == windowSize) {
+      debugPrint('[BISINDO_BUFFER] ${_frameBuffer.length}/$windowSize');
+    }
+
     _checkAndTriggerInference();
   }
 
@@ -90,6 +94,9 @@ class LandmarkStreamBuffer {
     try {
       final prediction = await inferenceService.predictFromLandmarks(
         sequenceSnapshot,
+      );
+      debugPrint(
+        '[BISINDO_INFERENCE] prediction=${prediction.label} confidence=${prediction.confidence.toStringAsFixed(2)}',
       );
       onPrediction?.call(prediction);
     } catch (e, stack) {

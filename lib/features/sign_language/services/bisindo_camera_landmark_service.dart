@@ -31,6 +31,32 @@ class BisindoCameraLandmarkService {
   String? get lastError => _lastError;
   int get receivedFramesCount => _receivedFramesCount;
 
+  /// Checks the current camera permission status ("granted", "denied").
+  Future<String> checkPermission() async {
+    try {
+      final String? result = await _methodChannel.invokeMethod<String>(
+        'checkPermission',
+      );
+      return result ?? 'denied';
+    } catch (e) {
+      debugPrint('[BISINDO_CAMERA] checkPermission error: $e');
+      return 'denied';
+    }
+  }
+
+  /// Requests runtime camera permission from Android OS.
+  Future<String> requestPermission() async {
+    try {
+      final String? result = await _methodChannel.invokeMethod<String>(
+        'requestPermission',
+      );
+      return result ?? 'denied';
+    } catch (e) {
+      debugPrint('[BISINDO_CAMERA] requestPermission error: $e');
+      return 'denied';
+    }
+  }
+
   /// Starts the native Android camera stream and subscribes to MediaPipe landmark events.
   Future<bool> startCamera() async {
     if (_isCameraActive) return true;
@@ -53,9 +79,7 @@ class BisindoCameraLandmarkService {
       _isCameraActive = success == true;
       isStreamingNotifier.value = _isCameraActive;
 
-      debugPrint(
-        '[BISINDO_CAMERA] camera started (native success: $_isCameraActive)',
-      );
+      debugPrint('[BISINDO_CAMERA] started');
       return _isCameraActive;
     } catch (e) {
       _isCameraActive = false;
@@ -137,10 +161,8 @@ class BisindoCameraLandmarkService {
     // Send valid frame to temporal inference buffer
     streamBuffer.addFrame(frame);
 
-    if (_receivedFramesCount % 30 == 0) {
-      debugPrint(
-        '[BISINDO_CAMERA] landmarks=543, buffer=${streamBuffer.bufferLength}/100',
-      );
+    if (_receivedFramesCount == 1 || _receivedFramesCount % 20 == 0) {
+      debugPrint('[BISINDO_CAMERA] landmarks=543');
     }
   }
 

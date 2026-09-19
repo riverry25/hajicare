@@ -17,6 +17,7 @@ import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarker
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarkerResult
 import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarker
 import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarkerResult
+import androidx.camera.view.PreviewView
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -47,6 +48,9 @@ class BisindoCameraHelper(
     private var poseLandmarker: PoseLandmarker? = null
     private var handLandmarker: HandLandmarker? = null
 
+    @Volatile
+    private var previewView: PreviewView? = null
+
     private var isRunning = false
     private var lastProcessedTimestamp = 0L
 
@@ -57,6 +61,20 @@ class BisindoCameraHelper(
     private var latestLeftHandLandmarks: List<List<Double>>? = null
     @Volatile
     private var latestRightHandLandmarks: List<List<Double>>? = null
+
+    fun attachPreviewView(view: PreviewView) {
+        previewView = view
+        if (isRunning && cameraProvider != null) {
+            bindCameraUseCases()
+        }
+    }
+
+    fun detachPreviewView() {
+        previewView = null
+        if (isRunning && cameraProvider != null) {
+            bindCameraUseCases()
+        }
+    }
 
     fun initialize() {
         try {
@@ -112,7 +130,6 @@ class BisindoCameraHelper(
             try {
                 cameraProvider = cameraProviderFuture.get()
                 bindCameraUseCases()
-                Log.d(TAG, "camera started")
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to start camera: ${e.message}", e)
                 onError("Kamera gagal dimulai: ${e.message}")
@@ -140,7 +157,16 @@ class BisindoCameraHelper(
 
         try {
             provider.unbindAll()
-            provider.bindToLifecycle(lifecycleOwner, cameraSelector, imageAnalysis)
+            val pv = previewView
+            if (pv != null) {
+                val preview = Preview.Builder().build().also {
+                    it.setSurfaceProvider(pv.surfaceProvider)
+                }
+                provider.bindToLifecycle(lifecycleOwner, cameraSelector, preview, imageAnalysis)
+            } else {
+                provider.bindToLifecycle(lifecycleOwner, cameraSelector, imageAnalysis)
+            }
+            Log.d(TAG, "started")
         } catch (e: Exception) {
             Log.e(TAG, "Use case binding failed: ${e.message}", e)
             onError("Gagal menghubungkan camera usecase: ${e.message}")
@@ -232,33 +258,41 @@ class BisindoCameraHelper(
     /**
      * Assembles exactly 543 landmarks in the strictly required sequence:
      * - 0..32    : Pose 33
-     * - 33..500  : Face 468 (zero-filled)
+     * - 33..500  : Face 468 (zero-filled placeholder)
      * - 501..521 : Left Hand 21
      * - 522..542 : Right Hand 21
      */
     @Synchronized
     private fun assembleAndEmitLandmarks() {
-        val pose = latestPoseLandmarks ?: return
+        val pose = latestPoseLandmarks
+        val left = latestLeftHandLandmarks
+        val right = latestRightHandLandmarks
 
+        // Only emit if at least pose OR a hand is detected
+        if (pose == null && left == null && right == null) {
+            return
+        }
+
+        val zeroPoint = listOf(0.0, 0.0, 0.0)
         val totalLandmarks = ArrayList<List<Double>>(543)
 
         // 1. Pose 33 points (0..32)
+        val poseCount = if (pose != null) pose.size else 0
         for (i in 0 until 33) {
-            if (i < pose.size) {
+            if (pose != null && i < pose.size) {
                 totalLandmarks.add(pose[i])
             } else {
-                totalLandmarks.add(listOf(0.0, 0.0, 0.0))
+                totalLandmarks.add(zeroPoint)
             }
         }
 
-        // 2. Face 468 points (33..500) -> zero-filled
-        val zeroPoint = listOf(0.0, 0.0, 0.0)
+        // 2. Face 468 points (33..500) -> zero-filled placeholder
         for (i in 33..500) {
             totalLandmarks.add(zeroPoint)
         }
 
         // 3. Left Hand 21 points (501..521)
-        val left = latestLeftHandLandmarks
+        val leftHandCount = if (left != null) left.size else 0
         for (i in 0 until 21) {
             if (left != null && i < left.size) {
                 totalLandmarks.add(left[i])
@@ -268,7 +302,7 @@ class BisindoCameraHelper(
         }
 
         // 4. Right Hand 21 points (522..542)
-        val right = latestRightHandLandmarks
+        val rightHandCount = if (right != null) right.size else 0
         for (i in 0 until 21) {
             if (right != null && i < right.size) {
                 totalLandmarks.add(right[i])
@@ -278,6 +312,9 @@ class BisindoCameraHelper(
         }
 
         if (totalLandmarks.size == 543) {
+            Log.d(TAG, "pose=$poseCount")
+            Log.d(TAG, "leftHand=$leftHandCount")
+            Log.d(TAG, "rightHand=$rightHandCount")
             Log.d(TAG, "landmarks=543")
             onLandmarksReady(totalLandmarks)
         }

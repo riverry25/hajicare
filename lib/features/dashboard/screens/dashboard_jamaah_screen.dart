@@ -639,60 +639,82 @@ class DashboardJamaahScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Quick Service Categories (Row of 4 Horizontal Items) ─
+          // ── Quick Service Categories (Row of 5 Horizontal Items) ─
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildCategoryItem(
-                  context: context,
-                  label: 'Komunikasi Cepat',
-                  icon: Icons.record_voice_over_rounded,
-                  bgColor: isDark
-                      ? AppColors.darkSurfaceContainer
-                      : AppColors.canvasCream,
-                  iconColor: isDark
-                      ? AppColors.goldLight
-                      : AppColors.espressoDark,
-                  onTap: () => CommunicationGestureDialog.show(context),
+                Expanded(
+                  child: _buildCategoryItem(
+                    context: context,
+                    label: 'Komunikasi Cepat',
+                    icon: Icons.record_voice_over_rounded,
+                    bgColor: isDark
+                        ? AppColors.darkSurfaceContainer
+                        : AppColors.canvasCream,
+                    iconColor: isDark
+                        ? AppColors.goldLight
+                        : AppColors.espressoDark,
+                    onTap: () => CommunicationGestureDialog.show(context),
+                  ),
                 ),
-                _buildCategoryItem(
-                  context: context,
-                  label: 'Smart Band',
-                  icon: Icons.watch_rounded,
-                  bgColor: isDark
-                      ? AppColors.darkSurfaceContainer
-                      : AppColors.canvasCream,
-                  iconColor: isDark
-                      ? AppColors.goldLight
-                      : AppColors.espressoDark,
-                  onTap: () => _showSmartBandDialog(context),
+                Expanded(
+                  child: _buildCategoryItem(
+                    context: context,
+                    label: 'Smart Band',
+                    icon: Icons.watch_rounded,
+                    bgColor: isDark
+                        ? AppColors.darkSurfaceContainer
+                        : AppColors.canvasCream,
+                    iconColor: isDark
+                        ? AppColors.goldLight
+                        : AppColors.espressoDark,
+                    onTap: () => _showSmartBandDialog(context),
+                  ),
                 ),
-                _buildCategoryItem(
-                  context: context,
-                  label: 'Panduan Doa',
-                  icon: Icons.menu_book_rounded,
-                  bgColor: isDark
-                      ? AppColors.darkSurfaceContainer
-                      : AppColors.canvasCream,
-                  iconColor: isDark
-                      ? AppColors.goldLight
-                      : AppColors.espressoDark,
-                  onTap: () => _showDoaSheet(context),
+                Expanded(
+                  child: _buildCategoryItem(
+                    context: context,
+                    label: 'Panduan Doa',
+                    icon: Icons.menu_book_rounded,
+                    bgColor: isDark
+                        ? AppColors.darkSurfaceContainer
+                        : AppColors.canvasCream,
+                    iconColor: isDark
+                        ? AppColors.goldLight
+                        : AppColors.espressoDark,
+                    onTap: () => _showDoaSheet(context),
+                  ),
                 ),
-                _buildCategoryItem(
-                  context: context,
-                  label: 'Pos Medis',
-                  icon: Icons.local_hospital_rounded,
-                  bgColor: isDark
-                      ? AppColors.darkSurfaceContainer
-                      : AppColors.canvasCream,
-                  iconColor: isDark
-                      ? AppColors.goldLight
-                      : AppColors.espressoDark,
-                  onTap: () => _showMedicalSheet(context),
+                Expanded(
+                  child: _buildCategoryItem(
+                    context: context,
+                    label: 'Pos Medis',
+                    icon: Icons.local_hospital_rounded,
+                    bgColor: isDark
+                        ? AppColors.darkSurfaceContainer
+                        : AppColors.canvasCream,
+                    iconColor: isDark
+                        ? AppColors.goldLight
+                        : AppColors.espressoDark,
+                    onTap: () => _showMedicalSheet(context),
+                  ),
+                ),
+                Expanded(
+                  child: _buildCategoryItem(
+                    context: context,
+                    label: 'BISINDO',
+                    icon: Icons.sign_language_rounded,
+                    bgColor: isDark
+                        ? AppColors.darkSurfaceContainer
+                        : AppColors.canvasCream,
+                    iconColor: isDark
+                        ? AppColors.goldLight
+                        : AppColors.espressoDark,
+                    onTap: () => Get.toNamed(AppRoutes.bisindo),
+                  ),
                 ),
               ],
             ),
@@ -775,17 +797,17 @@ class DashboardJamaahScreen extends StatelessWidget {
       },
       borderRadius: BorderRadius.circular(18),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 4),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
-              width: 58,
-              height: 58,
+              width: 52,
+              height: 52,
               decoration: BoxDecoration(
                 color: bgColor,
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isDark
                       ? AppColors.darkOutlineVariant.withValues(alpha: 0.5)
@@ -797,25 +819,24 @@ class DashboardJamaahScreen extends StatelessWidget {
                     color: isDark
                         ? Colors.black.withValues(alpha: 0.25)
                         : AppColors.espressoDark.withValues(alpha: 0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
-              child: Center(child: Icon(icon, color: iconColor, size: 26)),
+              child: Center(child: Icon(icon, color: iconColor, size: 24)),
             ),
-            const SizedBox(height: 7),
+            const SizedBox(height: 6),
             Container(
-              width: 76,
-              constraints: const BoxConstraints(minHeight: 34),
+              constraints: const BoxConstraints(minHeight: 32),
               alignment: Alignment.topCenter,
               child: Text(
                 label,
                 style: TextStyle(
                   color: textHeading,
-                  fontSize: 11,
+                  fontSize: 10.5,
                   fontWeight: FontWeight.w600,
-                  height: 1.22,
+                  height: 1.2,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 2,
