@@ -490,7 +490,6 @@ class ProfileScreen extends StatelessWidget {
     final isDark = AppColors.isDark(context);
     final cardBg = AppColors.cardBgColor(context);
     final headingColor = AppColors.textHeadingColor(context);
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
 
     final bloodTypeCtrl = TextEditingController(
       text: profileCtrl.bloodType.value,
@@ -507,241 +506,451 @@ class ProfileScreen extends StatelessWidget {
 
     showDialog(
       context: context,
+      barrierDismissible: true,
       builder: (dialogCtx) {
+        Future<void> submit() async {
+          if (profileCtrl.isSavingMedical.value) return;
+          try {
+            await profileCtrl.updateMedicalData(
+              bloodTypeVal: bloodTypeCtrl.text.trim(),
+              allergiesVal: allergiesCtrl.text.trim(),
+              conditionsVal: conditionsCtrl.text.trim(),
+              emergencyContactVal: emergencyContactCtrl.text.trim(),
+            );
+            if (dialogCtx.mounted && Navigator.of(dialogCtx).canPop()) {
+              Navigator.of(dialogCtx).pop();
+            }
+            if (!context.mounted) return;
+            AppAlert.success(
+              context,
+              title: 'Data Medis Disimpan',
+              message: 'Data medis Anda sudah diperbarui.',
+            );
+          } catch (_) {
+            if (!context.mounted) return;
+            AppAlert.error(
+              context,
+              title: 'Data Belum Disimpan',
+              message: 'Periksa internet, lalu coba simpan sekali lagi.',
+              okText: 'Coba Lagi',
+            );
+          }
+        }
+
+        Widget buildUnderlineField({
+          required String label,
+          required String hint,
+          required TextEditingController ctrl,
+          TextInputType keyboardType = TextInputType.text,
+          IconData? icon,
+        }) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: headingColor,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 2),
+              TextField(
+                controller: ctrl,
+                keyboardType: keyboardType,
+                style: TextStyle(
+                  color: headingColor,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+                decoration: InputDecoration(
+                  hintText: hint,
+                  hintStyle: TextStyle(
+                    color: isDark ? Colors.white38 : const Color(0xFF9E8E81),
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w400,
+                  ),
+                  prefixIcon: icon != null
+                      ? Icon(
+                          icon,
+                          size: 17,
+                          color: isDark
+                              ? AppColors.goldLight.withValues(alpha: 0.7)
+                              : AppColors.espressoDark.withValues(alpha: 0.6),
+                        )
+                      : null,
+                  prefixIconConstraints: const BoxConstraints(
+                    minWidth: 26,
+                    minHeight: 26,
+                  ),
+                  filled: false,
+                  contentPadding: const EdgeInsets.fromLTRB(0, 6, 0, 2),
+                  border: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                      color: isDark
+                          ? AppColors.darkOutlineVariant
+                          : const Color(0xFFD4C7BC),
+                      width: 1.2,
+                    ),
+                  ),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                      color: isDark
+                          ? AppColors.darkOutlineVariant
+                          : const Color(0xFFD4C7BC),
+                      width: 1.2,
+                    ),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                      color: isDark
+                          ? AppColors.goldLight
+                          : AppColors.espressoDark,
+                      width: 1.8,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+
         return Dialog(
-          backgroundColor: cardBg,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-          ),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
           insetPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 24,
+            horizontal: 20,
+            vertical: 20,
           ),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 440),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSpacing.cardPadding),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.sosEmergency.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(AppRadius.md),
+            constraints: const BoxConstraints(maxWidth: 400, maxHeight: 620),
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.topCenter,
+              children: [
+                // ── 1. Main Card Body ─────────────────────────────────────────
+                Container(
+                  margin: const EdgeInsets.only(
+                    top: 28,
+                    bottom: 12,
+                    right: 10,
+                    left: 10,
+                  ),
+                  padding: const EdgeInsets.fromLTRB(20, 68, 20, 14),
+                  decoration: BoxDecoration(
+                    color: cardBg,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.1)
+                          : AppColors.goldLight.withValues(alpha: 0.35),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(
+                          alpha: isDark ? 0.45 : 0.09,
                         ),
-                        child: const Icon(
-                          Icons.medical_services_rounded,
-                          color: AppColors.sosEmergency,
-                          size: 22,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Kelola Data Medis',
-                              style: AppTypography.titleMedium.copyWith(
-                                color: headingColor,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              'Informasi kesehatan pribadi Jamaah',
-                              style: AppTypography.captionSmall.copyWith(
-                                color: AppColors.textBodyColor(context),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close_rounded),
-                        onPressed: () => Navigator.of(dialogCtx).pop(),
+                        blurRadius: 24,
+                        offset: const Offset(0, 10),
                       ),
                     ],
                   ),
-                  const Divider(height: 24),
-
-                  // Golongan Darah
-                  Text(
-                    'Golongan Darah',
-                    style: AppTypography.labelMedium.copyWith(
-                      color: headingColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: bloodTypeCtrl,
-                    style: TextStyle(color: headingColor),
-                    decoration: InputDecoration(
-                      hintText: 'Contoh: O Rhesus (+), A (+), B (+)',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                      prefixIcon: const Icon(Icons.bloodtype_rounded, size: 20),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Riwayat Alergi
-                  Text(
-                    'Riwayat Alergi Obat / Makanan',
-                    style: AppTypography.labelMedium.copyWith(
-                      color: headingColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: allergiesCtrl,
-                    style: TextStyle(color: headingColor),
-                    decoration: InputDecoration(
-                      hintText: 'Contoh: Alergi penisilin, atau tidak ada',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                      prefixIcon: const Icon(
-                        Icons.warning_amber_rounded,
-                        size: 20,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Kondisi Khusus
-                  Text(
-                    'Kondisi Khusus / Riwayat Penyakit',
-                    style: AppTypography.labelMedium.copyWith(
-                      color: headingColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: conditionsCtrl,
-                    style: TextStyle(color: headingColor),
-                    decoration: InputDecoration(
-                      hintText: 'Contoh: Hipertensi, Diabetes, Asma, dsb.',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                      prefixIcon: const Icon(Icons.healing_rounded, size: 20),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Kontak Darurat
-                  Text(
-                    'Nomor Kontak Darurat (Keluarga)',
-                    style: AppTypography.labelMedium.copyWith(
-                      color: headingColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: emergencyContactCtrl,
-                    keyboardType: TextInputType.phone,
-                    style: TextStyle(color: headingColor),
-                    decoration: InputDecoration(
-                      hintText: 'Contoh: 0812-3456-7890 (Anak / Pasangan)',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                      prefixIcon: const Icon(
-                        Icons.phone_in_talk_rounded,
-                        size: 20,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Actions
-                  Obx(() {
-                    final saving = profileCtrl.isSavingMedical.value;
-                    return Row(
+                  child: SingleChildScrollView(
+                    physics: const ClampingScrollPhysics(),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: saving
-                                ? null
-                                : () => Navigator.of(dialogCtx).pop(),
-                            child: const Text('Batal'),
+                        // Title
+                        Text(
+                          'Kelola Data Medis',
+                          style: AppTypography.titleMedium.copyWith(
+                            color: headingColor,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 17.5,
+                            letterSpacing: -0.2,
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          flex: 2,
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryColor,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
+                        const SizedBox(height: 4),
+
+                        // Subtitle
+                        Text(
+                          'Informasi kesehatan pribadi Jamaah untuk pertolongan pertama darurat.',
+                          style: AppTypography.bodySmall.copyWith(
+                            color: AppColors.textBodyColor(
+                              context,
+                            ).withValues(alpha: 0.85),
+                            height: 1.35,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Field 1: Golongan Darah
+                        buildUnderlineField(
+                          label: 'Golongan Darah',
+                          hint: 'Contoh: O Rhesus (+), A (+), B (+)',
+                          ctrl: bloodTypeCtrl,
+                          icon: Icons.bloodtype_rounded,
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Field 2: Riwayat Alergi
+                        buildUnderlineField(
+                          label: 'Riwayat Alergi Obat / Makanan',
+                          hint: 'Contoh: Alergi penisilin, udang, dsb.',
+                          ctrl: allergiesCtrl,
+                          icon: Icons.warning_amber_rounded,
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Field 3: Kondisi Khusus
+                        buildUnderlineField(
+                          label: 'Kondisi Khusus / Riwayat Penyakit',
+                          hint: 'Contoh: Hipertensi, Diabetes, Asma',
+                          ctrl: conditionsCtrl,
+                          icon: Icons.healing_rounded,
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Field 4: Kontak Darurat
+                        buildUnderlineField(
+                          label: 'Nomor Kontak Darurat (Keluarga)',
+                          hint: 'Contoh: 0812-3456-7890 (Anak / Pasangan)',
+                          ctrl: emergencyContactCtrl,
+                          keyboardType: TextInputType.phone,
+                          icon: Icons.phone_in_talk_rounded,
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Bottom Row: Cancel button on left, space reserved for protruding button
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                foregroundColor: isDark
+                                    ? Colors.white60
+                                    : const Color(0xFF8C7A6B),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 4,
+                                ),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              onPressed: () => Navigator.of(dialogCtx).pop(),
+                              child: Text(
+                                dialogCtx.tr('cancel').isEmpty
+                                    ? 'Batal'
+                                    : dialogCtx.tr('cancel'),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
                             ),
-                            onPressed: saving
-                                ? null
-                                : () async {
-                                    await profileCtrl.updateMedicalData(
-                                      bloodTypeVal: bloodTypeCtrl.text,
-                                      allergiesVal: allergiesCtrl.text,
-                                      conditionsVal: conditionsCtrl.text,
-                                      emergencyContactVal:
-                                          emergencyContactCtrl.text,
-                                    );
-                                    if (dialogCtx.mounted) {
-                                      Navigator.of(dialogCtx).pop();
-                                    }
-                                    if (context.mounted) {
-                                      AppAlert.success(
-                                        context,
-                                        message:
-                                            'Data medis berhasil diperbarui.',
-                                      );
-                                    }
-                                  },
-                            icon: saving
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
+                            const SizedBox(
+                              width: 135,
+                            ), // Spacer for protruding button
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // ── 2. Floating Hero Card (Compact header) ───────────────────
+                Positioned(
+                  top: 0,
+                  left: 22,
+                  right: 22,
+                  height: 86,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: isDark
+                            ? [const Color(0xFF38251A), const Color(0xFF1F140D)]
+                            : [AppColors.espressoDark, const Color(0xFF563B2A)],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.goldPrimary.withValues(alpha: 0.4),
+                        width: 1.2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.espressoDark.withValues(alpha: 0.35),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Stack(
+                      children: [
+                        // Ambient Background Circular Glows
+                        Positioned(
+                          top: -15,
+                          right: -15,
+                          child: Container(
+                            width: 70,
+                            height: 70,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.goldPrimary.withValues(
+                                alpha: 0.12,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: -20,
+                          left: -15,
+                          child: Container(
+                            width: 65,
+                            height: 65,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.goldPrimary.withValues(
+                                alpha: 0.08,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // Center Hero Graphic
+                        Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      AppColors.goldPrimary.withValues(
+                                        alpha: 0.25,
+                                      ),
+                                      AppColors.goldPrimary.withValues(
+                                        alpha: 0.08,
+                                      ),
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  border: Border.all(
+                                    color: AppColors.goldPrimary.withValues(
+                                      alpha: 0.5,
                                     ),
-                                  )
-                                : const Icon(Icons.save_rounded, size: 18),
-                            label: Text(
-                              saving ? 'Menyimpan...' : 'Simpan Data Medis',
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.medical_services_rounded,
+                                    color: AppColors.accentGoldStar,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              const Text(
+                                'DATA KESEHATAN JAMAAH',
+                                style: TextStyle(
+                                  color: AppColors.goldLight,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.1,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // ── 3. Protruding Ribbon Submit Button (No shadow) ───────────
+                Obx(() {
+                  final saving = profileCtrl.isSavingMedical.value;
+                  return Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        // Ribbon fold triangle at the top-right corner
+                        Positioned(
+                          top: -10,
+                          right: 0,
+                          child: CustomPaint(
+                            size: const Size(10, 10),
+                            painter: _RibbonFoldPainter(
+                              color: isDark
+                                  ? const Color(0xFF140D08)
+                                  : const Color(0xFF160D07),
+                            ),
+                          ),
+                        ),
+
+                        // Main Pill Submit Button without box shadow
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: saving ? null : submit,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(24),
+                              bottomLeft: Radius.circular(24),
+                              bottomRight: Radius.circular(5),
+                            ),
+                            child: Ink(
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? AppColors.darkPrimaryContainer
+                                    : AppColors.espressoDark,
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(24),
+                                  bottomLeft: Radius.circular(24),
+                                  bottomRight: Radius.circular(5),
+                                ),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 28,
+                                vertical: 13.5,
+                              ),
+                              child: saving
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'SIMPAN',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 13,
+                                        letterSpacing: 2.2,
+                                      ),
+                                    ),
                             ),
                           ),
                         ),
                       ],
-                    );
-                  }),
-                ],
-              ),
+                    ),
+                  );
+                }),
+              ],
             ),
           ),
         );
@@ -902,7 +1111,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Anda belum memiliki room aktif. Gabung ke room untuk mengaktifkan koordinasi dengan ketua rombongan & monitoring jarak realtime.',
+                        'Anda belum bergabung dengan rombongan. Masukkan kode dari pendamping agar lokasi Anda dapat dipantau.',
                         textAlign: TextAlign.center,
                         style: AppTypography.captionSmall.copyWith(
                           color: bodyColor,
@@ -1655,399 +1864,473 @@ class _ProfileHeader extends StatelessWidget {
         ? AppColors.darkTextHeading
         : AppColors.espressoDark;
     final bodyClr = isDarkDialog ? AppColors.darkTextBody : AppColors.textBody;
-    final primaryColor = isDarkDialog
-        ? AppColors.goldPrimary
-        : AppColors.primary;
     final nameCtrl = TextEditingController(text: controller.displayName.value);
     final inputError = RxnString();
 
     showDialog(
       context: context,
       barrierDismissible: true,
-      builder: (dialogCtx) => Dialog(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 380),
-          child: Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.topCenter,
-            children: [
-              // ── 1. Main Card Body (Below floating hero) ───────────
-              Container(
-                margin: const EdgeInsets.only(top: 36),
-                padding: const EdgeInsets.fromLTRB(22, 96, 22, 22),
-                decoration: BoxDecoration(
-                  color: dialogBg,
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(
-                    color: isDarkDialog
-                        ? Colors.white.withValues(alpha: 0.1)
-                        : AppColors.goldLight.withValues(alpha: 0.35),
-                    width: 1,
+      builder: (dialogCtx) {
+        Future<void> submit() async {
+          if (controller.isSavingName.value) return;
+          final input = nameCtrl.text.trim();
+          if (input.isEmpty) {
+            inputError.value = 'Nama tidak boleh kosong';
+            return;
+          }
+          inputError.value = null;
+
+          try {
+            await controller.updateDisplayName(input);
+            if (dialogCtx.mounted && Navigator.of(dialogCtx).canPop()) {
+              Navigator.of(dialogCtx).pop();
+            }
+            if (!context.mounted) return;
+            AppAlert.success(
+              context,
+              title: 'Nama Berhasil Diubah',
+              message: 'Nama Anda sekarang "$input".',
+            );
+          } catch (_) {
+            if (!context.mounted) return;
+            AppAlert.error(
+              context,
+              title: 'Nama Belum Diubah',
+              message: 'Periksa internet, lalu coba simpan sekali lagi.',
+              okText: 'Coba Lagi',
+            );
+          }
+        }
+
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 24,
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 380),
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.topCenter,
+              children: [
+                // ── 1. Main Card Body ─────────────────────────────────────────
+                Container(
+                  margin: const EdgeInsets.only(
+                    top: 28,
+                    bottom: 12,
+                    right: 10,
+                    left: 10,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(
-                        alpha: isDarkDialog ? 0.45 : 0.09,
-                      ),
-                      blurRadius: 26,
-                      offset: const Offset(0, 12),
-                    ),
-                  ],
-                ),
-                child: SingleChildScrollView(
-                  physics: const ClampingScrollPhysics(),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Title
-                      Text(
-                        'Ubah Nama Pengguna',
-                        style: AppTypography.titleMedium.copyWith(
-                          color: headingClr,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 19,
-                          letterSpacing: -0.2,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Description
-                      Text(
-                        'Nama ini akan ditampilkan pada profil, dashboard, dan pantauan rombongan jamaah.',
-                        style: AppTypography.bodySmall.copyWith(
-                          color: bodyClr.withValues(alpha: 0.85),
-                          height: 1.4,
-                          fontSize: 13,
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-
-                      // Text Field with validation
-                      Obx(
-                        () => TextField(
-                          controller: nameCtrl,
-                          autofocus: true,
-                          keyboardType: TextInputType.name,
-                          textCapitalization: TextCapitalization.words,
-                          maxLength: 50,
-                          style: TextStyle(
-                            color: headingClr,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          decoration: InputDecoration(
-                            counterText: '',
-                            labelText: 'Nama Lengkap',
-                            labelStyle: TextStyle(
-                              color: bodyClr.withValues(alpha: 0.8),
-                              fontSize: 13,
-                            ),
-                            hintText: 'Masukkan nama lengkap',
-                            hintStyle: TextStyle(
-                              color: bodyClr.withValues(alpha: 0.4),
-                              fontSize: 13,
-                            ),
-                            errorText: inputError.value,
-                            filled: true,
-                            fillColor: isDarkDialog
-                                ? AppColors.darkSurfaceContainer
-                                : AppColors.canvasCream.withValues(alpha: 0.45),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide(
-                                color: isDarkDialog
-                                    ? AppColors.darkOutlineVariant
-                                    : AppColors.goldLight,
-                              ),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide(
-                                color: isDarkDialog
-                                    ? AppColors.darkOutlineVariant
-                                    : AppColors.goldLight.withValues(
-                                        alpha: 0.6,
-                                      ),
-                              ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide(
-                                color: primaryColor,
-                                width: 1.8,
-                              ),
-                            ),
-                            prefixIcon: Icon(
-                              Icons.person_outline_rounded,
-                              color: primaryColor,
-                              size: 20,
-                            ),
-                            suffixIcon: IconButton(
-                              icon: const Icon(Icons.clear_rounded, size: 18),
-                              onPressed: () => nameCtrl.clear(),
-                            ),
-                          ),
-                          onChanged: (_) {
-                            if (inputError.value != null) {
-                              inputError.value = null;
-                            }
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 22),
-
-                      // Action Buttons
-                      Obx(() {
-                        final saving = controller.isSavingName.value;
-                        return Row(
-                          children: [
-                            // Batal
-                            Expanded(
-                              child: OutlinedButton(
-                                style: OutlinedButton.styleFrom(
-                                  minimumSize: const Size(0, 46),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  side: BorderSide(
-                                    color: isDarkDialog
-                                        ? AppColors.darkOutlineVariant
-                                        : AppColors.goldLight.withValues(
-                                            alpha: 0.8,
-                                          ),
-                                  ),
-                                ),
-                                onPressed: saving
-                                    ? null
-                                    : () => Navigator.of(dialogCtx).pop(),
-                                child: Text(
-                                  dialogCtx.tr('cancel').isEmpty
-                                      ? 'Batal'
-                                      : dialogCtx.tr('cancel'),
-                                  style: TextStyle(
-                                    color: isDarkDialog
-                                        ? Colors.white70
-                                        : AppColors.textBody,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-
-                            // Simpan
-                            Expanded(
-                              flex: 2,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: primaryColor,
-                                  foregroundColor: isDarkDialog
-                                      ? Colors.black
-                                      : Colors.white,
-                                  elevation: 2,
-                                  shadowColor: primaryColor.withValues(
-                                    alpha: 0.4,
-                                  ),
-                                  minimumSize: const Size(0, 46),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                onPressed: saving
-                                    ? null
-                                    : () async {
-                                        final input = nameCtrl.text.trim();
-                                        if (input.isEmpty) {
-                                          inputError.value =
-                                              'Nama tidak boleh kosong';
-                                          return;
-                                        }
-                                        inputError.value = null;
-
-                                        try {
-                                          await controller.updateDisplayName(
-                                            input,
-                                          );
-                                          if (dialogCtx.mounted &&
-                                              Navigator.of(
-                                                dialogCtx,
-                                              ).canPop()) {
-                                            Navigator.of(dialogCtx).pop();
-                                          }
-                                          if (!context.mounted) return;
-                                          AppAlert.success(
-                                            context,
-                                            title: 'Berhasil',
-                                            message:
-                                                'Nama berhasil diperbarui menjadi "$input"',
-                                          );
-                                        } catch (_) {
-                                          if (!context.mounted) return;
-                                          AppAlert.error(
-                                            context,
-                                            title: 'Gagal',
-                                            message:
-                                                'Gagal memperbarui nama. Silakan coba lagi.',
-                                          );
-                                        }
-                                      },
-                                child: saving
-                                    ? SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: isDarkDialog
-                                              ? Colors.black
-                                              : Colors.white,
-                                        ),
-                                      )
-                                    : const Text(
-                                        'Simpan Perubahan',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 13.5,
-                                        ),
-                                      ),
-                              ),
-                            ),
-                          ],
-                        );
-                      }),
-                    ],
-                  ),
-                ),
-              ),
-
-              // ── 2. Floating Hero Card (Protruding at top, Tailwind style) ─
-              Positioned(
-                top: 0,
-                left: 18,
-                right: 18,
-                height: 115,
-                child: Container(
+                  padding: const EdgeInsets.fromLTRB(20, 68, 20, 14),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: isDarkDialog
-                          ? [const Color(0xFF38251A), const Color(0xFF1F140D)]
-                          : [AppColors.espressoDark, const Color(0xFF563B2A)],
-                    ),
-                    borderRadius: BorderRadius.circular(18),
+                    color: dialogBg,
+                    borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: AppColors.goldPrimary.withValues(alpha: 0.4),
-                      width: 1.2,
+                      color: isDarkDialog
+                          ? Colors.white.withValues(alpha: 0.1)
+                          : AppColors.goldLight.withValues(alpha: 0.35),
+                      width: 1,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.espressoDark.withValues(alpha: 0.35),
-                        blurRadius: 18,
-                        offset: const Offset(0, 8),
+                        color: Colors.black.withValues(
+                          alpha: isDarkDialog ? 0.45 : 0.09,
+                        ),
+                        blurRadius: 24,
+                        offset: const Offset(0, 10),
                       ),
                     ],
                   ),
-                  child: Stack(
-                    children: [
-                      // Ambient Background Circular Glows
-                      Positioned(
-                        top: -20,
-                        right: -20,
-                        child: Container(
-                          width: 90,
-                          height: 90,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.goldPrimary.withValues(
-                              alpha: 0.12,
-                            ),
+                  child: SingleChildScrollView(
+                    physics: const ClampingScrollPhysics(),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Title
+                        Text(
+                          'Ubah Nama Pengguna',
+                          style: AppTypography.titleMedium.copyWith(
+                            color: headingClr,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 17.5,
+                            letterSpacing: -0.2,
                           ),
                         ),
-                      ),
-                      Positioned(
-                        bottom: -25,
-                        left: -20,
-                        child: Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.goldPrimary.withValues(
-                              alpha: 0.08,
-                            ),
-                          ),
-                        ),
-                      ),
+                        const SizedBox(height: 4),
 
-                      // Center Hero Graphic
-                      Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: LinearGradient(
-                                  colors: [
-                                    AppColors.goldPrimary.withValues(
-                                      alpha: 0.25,
-                                    ),
-                                    AppColors.goldPrimary.withValues(
-                                      alpha: 0.08,
-                                    ),
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
+                        // Description
+                        Text(
+                          'Nama ini akan ditampilkan pada profil, dashboard, dan pantauan rombongan jamaah.',
+                          style: AppTypography.bodySmall.copyWith(
+                            color: bodyClr.withValues(alpha: 0.85),
+                            height: 1.35,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Minimalist Underline Text Field (Reference Photo 2 Style)
+                        Obx(
+                          () => Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              TextField(
+                                controller: nameCtrl,
+                                autofocus: true,
+                                keyboardType: TextInputType.name,
+                                textCapitalization: TextCapitalization.words,
+                                textInputAction: TextInputAction.done,
+                                onSubmitted: (_) => submit(),
+                                maxLength: 50,
+                                style: TextStyle(
+                                  color: headingClr,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
                                 ),
-                                border: Border.all(
-                                  color: AppColors.goldPrimary.withValues(
-                                    alpha: 0.5,
+                                decoration: InputDecoration(
+                                  counterText: '',
+                                  hintText: 'Nama lengkap Anda',
+                                  hintStyle: TextStyle(
+                                    color: isDarkDialog
+                                        ? Colors.white38
+                                        : const Color(0xFF9E8E81),
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w400,
                                   ),
-                                  width: 1.5,
+                                  filled: false,
+                                  contentPadding: const EdgeInsets.fromLTRB(
+                                    0,
+                                    6,
+                                    0,
+                                    2,
+                                  ),
+                                  border: UnderlineInputBorder(
+                                    borderSide: BorderSide(
+                                      color: isDarkDialog
+                                          ? AppColors.darkOutlineVariant
+                                          : const Color(0xFFD4C7BC),
+                                      width: 1.2,
+                                    ),
+                                  ),
+                                  enabledBorder: UnderlineInputBorder(
+                                    borderSide: BorderSide(
+                                      color: isDarkDialog
+                                          ? AppColors.darkOutlineVariant
+                                          : const Color(0xFFD4C7BC),
+                                      width: 1.2,
+                                    ),
+                                  ),
+                                  focusedBorder: UnderlineInputBorder(
+                                    borderSide: BorderSide(
+                                      color: isDarkDialog
+                                          ? AppColors.goldLight
+                                          : AppColors.espressoDark,
+                                      width: 1.8,
+                                    ),
+                                  ),
+                                  errorBorder: const UnderlineInputBorder(
+                                    borderSide: BorderSide(
+                                      color: AppColors.sosEmergency,
+                                      width: 1.4,
+                                    ),
+                                  ),
+                                  focusedErrorBorder:
+                                      const UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: AppColors.sosEmergency,
+                                          width: 1.8,
+                                        ),
+                                      ),
+                                  suffixIconConstraints: const BoxConstraints(
+                                    minWidth: 28,
+                                    minHeight: 28,
+                                  ),
                                 ),
+                                onChanged: (_) {
+                                  if (inputError.value != null) {
+                                    inputError.value = null;
+                                  }
+                                },
                               ),
-                              child: const Center(
-                                child: Icon(
-                                  Icons.edit_rounded,
-                                  color: AppColors.accentGoldStar,
-                                  size: 24,
+                              if (inputError.value != null) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  inputError.value!,
+                                  style: const TextStyle(
+                                    color: AppColors.sosEmergency,
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Bottom Row: Cancel button on left, space reserved for protruding button
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                foregroundColor: isDarkDialog
+                                    ? Colors.white60
+                                    : const Color(0xFF8C7A6B),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 4,
+                                ),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              onPressed: () => Navigator.of(dialogCtx).pop(),
+                              child: Text(
+                                dialogCtx.tr('cancel').isEmpty
+                                    ? 'Batal'
+                                    : dialogCtx.tr('cancel'),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                  letterSpacing: 0.5,
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 6),
-                            const Text(
-                              'IDENTITAS PENGGUNA',
-                              style: TextStyle(
-                                color: AppColors.goldLight,
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1.1,
-                              ),
-                            ),
+                            const SizedBox(
+                              width: 135,
+                            ), // Spacer for protruding button
                           ],
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+
+                // ── 2. Floating Hero Card (Compact header) ───────────────────
+                Positioned(
+                  top: 0,
+                  left: 22,
+                  right: 22,
+                  height: 86,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: isDarkDialog
+                            ? [const Color(0xFF38251A), const Color(0xFF1F140D)]
+                            : [AppColors.espressoDark, const Color(0xFF563B2A)],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.goldPrimary.withValues(alpha: 0.4),
+                        width: 1.2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.espressoDark.withValues(alpha: 0.35),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Stack(
+                      children: [
+                        // Ambient Background Circular Glows
+                        Positioned(
+                          top: -15,
+                          right: -15,
+                          child: Container(
+                            width: 70,
+                            height: 70,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.goldPrimary.withValues(
+                                alpha: 0.12,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: -20,
+                          left: -15,
+                          child: Container(
+                            width: 65,
+                            height: 65,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.goldPrimary.withValues(
+                                alpha: 0.08,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // Center Hero Graphic
+                        Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      AppColors.goldPrimary.withValues(
+                                        alpha: 0.25,
+                                      ),
+                                      AppColors.goldPrimary.withValues(
+                                        alpha: 0.08,
+                                      ),
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  border: Border.all(
+                                    color: AppColors.goldPrimary.withValues(
+                                      alpha: 0.5,
+                                    ),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.edit_rounded,
+                                    color: AppColors.accentGoldStar,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              const Text(
+                                'IDENTITAS PENGGUNA',
+                                style: TextStyle(
+                                  color: AppColors.goldLight,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.1,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // ── 3. Protruding Ribbon Submit Button (Slightly larger, no shadow) ──
+                Obx(() {
+                  final saving = controller.isSavingName.value;
+                  return Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        // Ribbon fold triangle at the top-right corner
+                        Positioned(
+                          top: -10,
+                          right: 0,
+                          child: CustomPaint(
+                            size: const Size(10, 10),
+                            painter: _RibbonFoldPainter(
+                              color: isDarkDialog
+                                  ? const Color(0xFF140D08)
+                                  : const Color(0xFF160D07),
+                            ),
+                          ),
+                        ),
+
+                        // Main Pill Submit Button without box shadow
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: saving ? null : submit,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(24),
+                              bottomLeft: Radius.circular(24),
+                              bottomRight: Radius.circular(5),
+                            ),
+                            child: Ink(
+                              decoration: BoxDecoration(
+                                color: isDarkDialog
+                                    ? AppColors.darkPrimaryContainer
+                                    : AppColors.espressoDark,
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(24),
+                                  bottomLeft: Radius.circular(24),
+                                  bottomRight: Radius.circular(5),
+                                ),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 28,
+                                vertical: 13.5,
+                              ),
+                              child: saving
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'SIMPAN',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 13,
+                                        letterSpacing: 2.2,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
+}
+
+/// Painter for the 3D folded ribbon corner flap on the protruding submit button
+class _RibbonFoldPainter extends CustomPainter {
+  final Color color;
+  const _RibbonFoldPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    final path = Path()
+      ..moveTo(
+        0,
+        size.height,
+      ) // bottom-left (intersection of card wall & button)
+      ..lineTo(size.width, size.height) // bottom-right (top-right of button)
+      ..lineTo(0, 0) // top-left (on card wall)
+      ..close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _RibbonFoldPainter oldDelegate) =>
+      oldDelegate.color != color;
 }
 
 // ── Initials Avatar with Edit Badge ──────────────────────────────────────────

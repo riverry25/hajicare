@@ -9,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/user_feedback_message.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../dashboard/controllers/dashboard_controller.dart';
 import '../controllers/admin_room_controller.dart';
@@ -299,10 +300,10 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     HapticFeedback.mediumImpact();
     AppAlert.confirm(
       context,
-      title: 'Hapus Room?',
+      title: 'Hapus Rombongan?',
       message:
-          'Apakah Anda yakin ingin menghapus room "${room.name}" (${room.code})? Semua anggota akan dikeluarkan dan akses pemantauan room ini akan dinonaktifkan.',
-      confirmText: 'Hapus Room',
+          'Rombongan "${room.name}" akan dihapus dan semua anggota akan dikeluarkan. Tindakan ini tidak dapat dibatalkan.',
+      confirmText: 'Hapus Rombongan',
       cancelText: 'Batal',
       isDestructive: true,
       onConfirm: () async {
@@ -329,8 +330,8 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
           if (context.mounted) {
             AppAlert.success(
               context,
-              title: 'Room Dihapus',
-              message: 'Room "${room.name}" berhasil dihapus.',
+              title: 'Rombongan Dihapus',
+              message: 'Rombongan "${room.name}" sudah dihapus.',
             );
             await hajiCare?.leaveRoom();
             Get.back();
@@ -339,8 +340,11 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
           if (context.mounted) {
             AppAlert.error(
               context,
-              title: 'Gagal Menghapus Room',
-              message: e.toString().replaceAll('Exception: ', ''),
+              title: 'Belum Dapat Dihapus',
+              message: UserFeedbackMessage.from(
+                e,
+                fallback: 'Rombongan belum dapat dihapus. Silakan coba lagi.',
+              ),
             );
           }
         }
@@ -696,7 +700,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                         context,
                                         title: 'Kode Disalin',
                                         message:
-                                            'Kode room "${room.code}" berhasil disalin.',
+                                            'Kode rombongan "${room.code}" sudah disalin.',
                                       );
                                     },
                                     borderRadius: BorderRadius.circular(10),
@@ -2227,8 +2231,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     AppAlert.confirm(
       context,
       title: 'Keluarkan Jamaah?',
-      message:
-          'Apakah Anda yakin ingin mengeluarkan "${member.name}" dari room pantau ini?',
+      message: 'Keluarkan "${member.name}" dari rombongan ini?',
       confirmText: 'Keluarkan',
       cancelText: 'Batal',
       isDestructive: true,
@@ -2252,15 +2255,18 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
             AppAlert.success(
               context,
               title: 'Jamaah Dikeluarkan',
-              message: '${member.name} berhasil dikeluarkan dari room.',
+              message: '${member.name} sudah dikeluarkan dari rombongan.',
             );
           }
         } catch (e) {
           if (context.mounted) {
             AppAlert.error(
               context,
-              title: 'Gagal Mengeluarkan Jamaah',
-              message: e.toString().replaceAll('Exception: ', ''),
+              title: 'Belum Dapat Dikeluarkan',
+              message: UserFeedbackMessage.from(
+                e,
+                fallback: 'Jamaah belum dapat dikeluarkan. Silakan coba lagi.',
+              ),
             );
           }
         }

@@ -328,7 +328,7 @@ const Map<String, String> suTranslations = {
   'serviceCommTitle': 'Komunikasi Gancang',
   'serviceCommSubtitle': 'Basa Arab: Tulung, Sakit, Cai',
   'serviceBandTitle': 'Geulang Pinter',
-  'serviceBandSubtitle': 'GPS & Detak Jantung Nyambung',
+  'serviceBandSubtitle': 'Pariksa sambungan sareng sénsor gelang',
   'servicePrayerTitle': 'Doa & Manasik',
   'servicePrayerSubtitle': 'Doa Tawaf, Sai Hurup Gedé + Sora',
   'serviceCallTitle': 'Nelepon Petugas',

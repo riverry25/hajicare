@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
@@ -9,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vibration/vibration.dart';
 
 import '../../../core/services/geocoding_service.dart';
+import '../../../core/services/app_alert_service.dart';
 import '../../../core/services/location_service.dart';
 import '../../../core/services/prayer_calculation_service.dart';
 import '../../../core/services/timezone_service.dart';
@@ -211,46 +211,30 @@ class PrayerTimesController extends GetxController {
       );
     } else {
       if (result.state == LocationPermissionState.serviceDisabled) {
-        Get.snackbar(
-          'Layanan GPS Nonaktif',
-          'Aktifkan GPS perangkat untuk mendeteksi lokasi aktual Anda.',
-          snackPosition: SnackPosition.BOTTOM,
-          duration: const Duration(seconds: 4),
-          mainButton: TextButton(
-            onPressed: () => _locationService.openLocationSettings(),
-            child: const Text(
-              'Aktifkan',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+        AppAlert.warning(
+          Get.context,
+          title: 'Lokasi Ponsel Belum Aktif',
+          message:
+              'Aktifkan lokasi ponsel agar jadwal salat sesuai tempat Anda berada.',
+          okText: 'Buka Pengaturan',
+          onOk: () => _locationService.openLocationSettings(),
         );
       } else if (result.state == LocationPermissionState.deniedForever) {
-        Get.snackbar(
-          'Izin Lokasi Ditolak Permanen',
-          'Buka pengaturan aplikasi untuk memberikan izin lokasi.',
-          snackPosition: SnackPosition.BOTTOM,
-          duration: const Duration(seconds: 4),
-          mainButton: TextButton(
-            onPressed: () => _locationService.openAppSettings(),
-            child: const Text(
-              'Pengaturan',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+        AppAlert.warning(
+          Get.context,
+          title: 'Izin Lokasi Diperlukan',
+          message:
+              'Buka pengaturan, lalu izinkan HajiCare memakai lokasi ponsel.',
+          okText: 'Buka Pengaturan',
+          onOk: () => _locationService.openAppSettings(),
         );
       } else if (result.errorMessage != null &&
           result.errorMessage!.isNotEmpty) {
-        Get.snackbar(
-          'Lokasi',
-          result.errorMessage!,
-          snackPosition: SnackPosition.BOTTOM,
-          duration: const Duration(seconds: 3),
+        AppAlert.error(
+          Get.context,
+          title: 'Lokasi Belum Ditemukan',
+          message: result.errorMessage!,
+          okText: 'Coba Lagi',
         );
       }
     }

@@ -8,6 +8,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/services/geocoding_service.dart';
 import '../../../core/state/hajicare_controller.dart';
+import '../../../core/utils/user_feedback_message.dart';
 import '../../room/services/room_service.dart';
 import '../models/map_poi.dart';
 import '../models/map_search_result.dart';
@@ -97,6 +98,14 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   final selectedRoleFilter = 0.obs; // 0: Semua, 1: Jamaah, 2: Pendamping
 
   final pois = <MapPoi>[].obs;
+  final isPoiLoading = false.obs;
+  final poiError = RxnString();
+  final showSearchThisArea = false.obs;
+  final poiQueryCenter = Rxn<LatLng>();
+  final mapCameraCenter = Rxn<LatLng>();
+  final mapZoom = 16.5.obs;
+  double _mapCameraZoom = 16.5;
+  int _poiRequestId = 0;
   final safeRadiusMeters = 200.0.obs;
   final activeTileUrl = AppConstants.cartoVoyagerUrl.obs;
   final isBottomSheetOpen = true.obs;
@@ -111,7 +120,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
   void closeBottomSheet() {
     isBottomSheetOpen.value = false;
-    clearSelectionAndRoute();
+    clearSelection();
   }
 
   void openBottomSheet() {
@@ -135,29 +144,100 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     _autoStartGps();
   }
 
-  Future<void> _refreshNearbyPois(LatLng center) async {
+  Future<void> refreshNearbyPois(
+    LatLng center, {
+    bool force = false,
+    int? radiusMeters,
+  }) async {
     // Spatial buffer: only refresh POIs if user moved >= 500m from last query coordinate
+    double? movedDistance;
     if (_lastPoiFetchCoord != null) {
-      final movedDist = calculateDistanceMeters(_lastPoiFetchCoord!, center);
+      movedDistance = calculateDistanceMeters(_lastPoiFetchCoord!, center);
+    }
+    if (!force && movedDistance != null) {
+      final movedDist = movedDistance;
       if (movedDist < 500.0 && pois.isNotEmpty) {
-        debugPrint(
-          '[POI] User within 500m buffer (${movedDist.toInt()}m), keeping current POIs',
-        );
         return;
       }
     }
 
-    _lastPoiFetchCoord = center;
-    debugPrint(
-      '[POI] Refreshing nearby POIs for center: (${center.latitude}, ${center.longitude})',
-    );
-    final realPois = await _poiService.fetchRealNearbyPois(
-      center: center,
-      roomName: activeRoomName.value.isNotEmpty ? activeRoomName.value : null,
-    );
-    if (realPois.isNotEmpty || pois.isEmpty) {
-      pois.value = realPois;
+    // Never keep pins from a different area while a new area is loading.
+    if (movedDistance != null && movedDistance > 500) {
+      pois.clear();
+      clearSelection();
     }
+
+    _lastPoiFetchCoord = center;
+    poiQueryCenter.value = center;
+    showSearchThisArea.value = false;
+    poiError.value = null;
+    isPoiLoading.value = true;
+    final requestId = ++_poiRequestId;
+    try {
+      final realPois = await _poiService.fetchNearbyPois(
+        center: center,
+        radiusMeters: radiusMeters ?? _radiusForZoom(_mapCameraZoom),
+        forceRefresh: force,
+      );
+      if (requestId == _poiRequestId) {
+        pois.assignAll(realPois);
+      }
+    } on PoiServiceException catch (error) {
+      if (requestId == _poiRequestId) poiError.value = error.message;
+    } catch (error) {
+      if (requestId == _poiRequestId) {
+        poiError.value = 'Tempat di area ini belum dapat dimuat';
+      }
+      debugPrint('[MapController] POI refresh error: $error');
+    } finally {
+      if (requestId == _poiRequestId) isPoiLoading.value = false;
+    }
+  }
+
+  void onMapPositionChanged(
+    LatLng center,
+    double zoom, {
+    required bool hasGesture,
+  }) {
+    mapCameraCenter.value = center;
+    _mapCameraZoom = zoom;
+    if ((mapZoom.value - zoom).abs() > 0.05) mapZoom.value = zoom;
+    if (!hasGesture || poiQueryCenter.value == null) return;
+    final distance = calculateDistanceMeters(poiQueryCenter.value!, center);
+    showSearchThisArea.value = distance > _searchAreaThresholdForZoom(zoom);
+  }
+
+  void handleMapReady() {
+    if (isMapReady.value || !isMapAttached) return;
+    isMapReady.value = true;
+    final camera = flutterMapController.camera;
+    onMapPositionChanged(camera.center, camera.zoom, hasGesture: false);
+    if (poiQueryCenter.value == null && !isPoiLoading.value) {
+      refreshNearbyPois(camera.center);
+    }
+  }
+
+  Future<void> searchThisArea() async {
+    final center =
+        mapCameraCenter.value ??
+        poiQueryCenter.value ??
+        currentUserLocation.value;
+    if (center == null) return;
+    await refreshNearbyPois(center, force: true);
+  }
+
+  static int _radiusForZoom(double zoom) {
+    if (zoom >= 17) return 1000;
+    if (zoom >= 15) return 2500;
+    if (zoom >= 13) return 5000;
+    return 8000;
+  }
+
+  static double _searchAreaThresholdForZoom(double zoom) {
+    if (zoom >= 17) return 250;
+    if (zoom >= 15) return 500;
+    if (zoom >= 13) return 1200;
+    return 2500;
   }
 
   // ── ROOM MEMBER LISTENERS ──────────────────────────────────────────────────
@@ -189,7 +269,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       final state = Get.find<HajiCareController>();
       activeRoomName.value = state.activeRoom.value?.name ?? 'Room $roomId';
       if (currentUserLocation.value != null) {
-        _refreshNearbyPois(currentUserLocation.value!);
+        refreshNearbyPois(currentUserLocation.value!);
       }
     }
 
@@ -212,7 +292,11 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
             },
             onError: (e) {
               debugPrint('[MapController] watchRoomMembers error: $e');
-              roomMembersError.value = e.toString();
+              roomMembersError.value = UserFeedbackMessage.from(
+                e,
+                fallback:
+                    'Data rombongan belum dapat dimuat. Silakan coba lagi.',
+              );
               isRoomMembersLoading.value = false;
             },
           );
@@ -339,13 +423,13 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        locationError.value = 'GPS dinonaktifkan';
+        locationError.value = 'Lokasi ponsel belum aktif';
         isLocationLoading.value = false;
         AppAlert.warning(
           Get.context,
-          title: 'GPS Nonaktif',
-          message: 'Aktifkan GPS perangkat untuk melihat posisi Anda di peta.',
-          okText: 'Aktifkan GPS',
+          title: 'Lokasi Ponsel Belum Aktif',
+          message: 'Aktifkan lokasi ponsel agar posisi Anda terlihat di peta.',
+          okText: 'Buka Pengaturan',
           onOk: () => Geolocator.openLocationSettings(),
         );
         return;
@@ -355,26 +439,27 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          locationError.value = 'Izin ditolak';
+          locationError.value = 'Izin lokasi belum diberikan';
           isLocationLoading.value = false;
           AppAlert.warning(
             Get.context,
             title: 'Izin Lokasi Diperlukan',
             message:
-                'Izin akses lokasi diperlukan agar peta dapat menampilkan posisi Anda.',
+                'Izinkan HajiCare memakai lokasi agar posisi Anda terlihat di peta.',
           );
           return;
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
-        locationError.value = 'Izin ditolak permanen';
+        locationError.value = 'Izin lokasi belum diberikan';
         isLocationLoading.value = false;
         AppAlert.warning(
           Get.context,
-          title: 'Izin Ditolak Permanen',
-          message: 'Harap izinkan akses lokasi melalui Pengaturan Aplikasi.',
-          okText: 'Pengaturan',
+          title: 'Buka Pengaturan Lokasi',
+          message:
+              'Izin lokasi belum diberikan. Buka pengaturan, lalu izinkan akses lokasi untuk HajiCare.',
+          okText: 'Buka Pengaturan',
           onOk: () => Geolocator.openAppSettings(),
         );
         return;
@@ -405,7 +490,11 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       }
     } catch (e) {
       debugPrint('[MapController] GPS init error: $e');
-      locationError.value = e.toString();
+      locationError.value = UserFeedbackMessage.from(
+        e,
+        fallback:
+            'Lokasi belum dapat ditemukan. Periksa pengaturan lokasi ponsel, lalu coba lagi.',
+      );
       isLocationLoading.value = false;
       // Do NOT set currentUserLocation to defaultMinaBase on failure:
       // real GPS location must remain null until an actual device fix is acquired.
@@ -446,7 +535,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     final newCoord = LatLng(position.latitude, position.longitude);
     currentUserLocation.value = newCoord;
     gpsAccuracy.value = position.accuracy;
-    _refreshNearbyPois(newCoord);
+    refreshNearbyPois(newCoord);
 
     // Live navigation: evaluate route deviation if active route is engaged
     _checkRouteDeviation(newCoord);
@@ -590,22 +679,14 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       selectedPoi.value = null;
       openBottomSheet();
     } else {
-      // POI Category filters: 3: Posko Medis, 4: Toilet & Wudhu, 5: Maktab, 6: Pos Pantau, 7: Hotel
+      // POI filters only change visibility. They never invent/select a place.
       selectedRoleFilter.value = 0;
-      final matchingPois = filteredPois;
-      if (matchingPois.isNotEmpty) {
-        final userLoc = currentUserLocation.value ?? defaultMinaBase;
-        MapPoi bestPoi = matchingPois.first;
-        double minDistance = double.infinity;
-        for (final p in matchingPois) {
-          final d = calculateDistanceMeters(userLoc, p.coordinate);
-          if (d < minDistance) {
-            minDistance = d;
-            bestPoi = p;
-          }
-        }
-        selectPoi(bestPoi);
+      final currentPoi = selectedPoi.value;
+      if (currentPoi != null &&
+          !filteredPois.any((p) => p.id == currentPoi.id)) {
+        clearSelection();
       }
+      isBottomSheetOpen.value = false;
     }
   }
 
@@ -618,9 +699,10 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   List<MapPoi> get filteredPois {
     switch (selectedFilter.value) {
       case 0:
+        return pois;
       case 1:
       case 2:
-        return pois;
+        return const [];
       case 3:
         return pois.where((p) => p.category == PoiCategory.medis).toList();
       case 4:
@@ -648,6 +730,10 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     debugPrint('[SELECT] poi = ${poi.name}');
     isBottomSheetOpen.value = true;
     if (selectedPoi.value?.id == poi.id) return;
+    if (_activeDestination != null &&
+        calculateDistanceMeters(_activeDestination!, poi.coordinate) > 2) {
+      clearRoute();
+    }
     selectedPoi.value = poi;
     selectedJamaah.value = null;
     selectedMember.value = null;
@@ -677,7 +763,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     } else {
       clearRoute();
       if (!hasUserLoc) {
-        routeError.value = 'Lokasi GPS Anda belum tersedia';
+        routeError.value = 'Lokasi Anda belum ditemukan';
       } else if (!hasDestLoc) {
         routeError.value = 'Lokasi anggota belum tersedia';
       }
@@ -704,7 +790,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     } else {
       clearRoute();
       if (!hasUserLoc) {
-        routeError.value = 'Lokasi GPS Anda belum tersedia';
+        routeError.value = 'Lokasi Anda belum ditemukan';
       } else if (!hasDestLoc) {
         routeError.value = 'Lokasi jamaah belum tersedia';
       }
@@ -744,7 +830,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     final start = currentUserLocation.value;
     if (start == null) {
       if (!isReroute) clearRoute();
-      routeError.value = 'Lokasi GPS Anda belum tersedia';
+      routeError.value = 'Lokasi Anda belum ditemukan';
       return;
     }
 
@@ -827,7 +913,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     } else {
       clearRoute();
       if (currentUserLocation.value == null) {
-        routeError.value = 'Lokasi GPS Anda belum tersedia';
+        routeError.value = 'Lokasi Anda belum ditemukan';
       } else if (!member.hasLocation) {
         routeError.value = 'Lokasi anggota belum tersedia';
       }
@@ -842,6 +928,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     }
     if (currentUserLocation.value != null) {
       await _updateRouteTo(poi.coordinate);
+    } else {
+      clearRoute();
+      routeError.value = 'Aktifkan lokasi GPS untuk membuat rute';
     }
   }
 
@@ -856,7 +945,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     } else {
       clearRoute();
       if (currentUserLocation.value == null) {
-        routeError.value = 'Lokasi GPS Anda belum tersedia';
+        routeError.value = 'Lokasi Anda belum ditemukan';
       } else if (jamaah.currentLocation == null) {
         routeError.value = 'Lokasi jamaah belum tersedia';
       }
@@ -1034,7 +1123,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     if (!isMapAttached) return;
     animatedMove(
       flutterMapController.camera.center,
-      flutterMapController.camera.zoom + 1.0,
+      (flutterMapController.camera.zoom + 1.0).clamp(3.0, 19.0),
     );
   }
 
@@ -1042,7 +1131,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     if (!isMapAttached) return;
     animatedMove(
       flutterMapController.camera.center,
-      flutterMapController.camera.zoom - 1.0,
+      (flutterMapController.camera.zoom - 1.0).clamp(3.0, 19.0),
     );
   }
 
@@ -1052,8 +1141,8 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       if (Get.context != null) {
         AppAlert.info(
           Get.context,
-          title: 'Mode Peta: OpenStreetMap',
-          message: 'Menampilkan peta standar OpenStreetMap.',
+          title: 'Tampilan Peta Diubah',
+          message: 'Peta sederhana sedang digunakan.',
         );
       }
     } else {
@@ -1061,8 +1150,8 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       if (Get.context != null) {
         AppAlert.info(
           Get.context,
-          title: 'Mode Peta: Voyager',
-          message: 'Menampilkan peta bertema hangat & bersih.',
+          title: 'Tampilan Peta Diubah',
+          message: 'Peta berwarna sedang digunakan.',
         );
       }
     }
@@ -1131,12 +1220,25 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   /// Selects a location result, dismisses dropdown, updates search marker,
   /// and animates camera to the target coordinates.
   void selectSearchResult(MapSearchResult result) {
+    if (_activeDestination != null &&
+        calculateDistanceMeters(_activeDestination!, result.coordinate) > 2) {
+      clearRoute();
+    }
     selectedSearchResult.value = result;
+    selectedPoi.value = MapPoi(
+      id: 'search_${result.id}',
+      name: result.name,
+      category: PoiCategory.place,
+      coordinate: result.coordinate,
+      statusLabel: 'Hasil pencarian',
+      subtitle: result.address,
+    );
+    selectedMember.value = null;
+    selectedJamaah.value = null;
     searchState.value = MapSearchState.idle;
     searchResults.clear();
 
-    // Close bottom sheet if open to emphasize the found location
-    isBottomSheetOpen.value = false;
+    isBottomSheetOpen.value = true;
 
     // Smoothly animate camera to search result coordinate
     animatedMove(result.coordinate, 16.5);
@@ -1168,6 +1270,8 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     _statePositionSub?.cancel();
     _roomMembersSub?.cancel();
     _roomWorker?.dispose();
+    _poiRequestId++;
+    _poiService.dispose();
     flutterMapController.dispose();
     super.onClose();
   }

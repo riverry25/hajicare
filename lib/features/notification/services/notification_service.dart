@@ -34,21 +34,21 @@ class NotificationService {
     final cleanMessage = message.trim();
 
     if (cleanTitle.isEmpty) {
-      throw Exception('Judul notifikasi tidak boleh kosong.');
+      throw Exception('Isi judul pesan terlebih dahulu.');
     }
     if (cleanMessage.isEmpty) {
-      throw Exception('Pesan notifikasi tidak boleh kosong.');
+      throw Exception('Isi pesan terlebih dahulu.');
     }
 
     // ── Security validation for Pendamping ──────────────────────────────────
     if (normalizedRole == 'pendamping') {
       if (normalizedScope != 'room' && normalizedScope != 'user') {
         throw Exception(
-          'Pendamping hanya berwenang mengirim notifikasi ke room sendiri atau jamaah di room.',
+          'Pendamping hanya dapat mengirim pesan ke rombongan yang dikelola.',
         );
       }
       if (targetRoomId == null || targetRoomId.isEmpty) {
-        throw Exception('Target room tidak ditemukan.');
+        throw Exception('Pilih rombongan tujuan terlebih dahulu.');
       }
 
       // Verify that this pendamping owns/manages targetRoomId
@@ -57,7 +57,7 @@ class NotificationService {
           .doc(targetRoomId)
           .get();
       if (!roomDoc.exists) {
-        throw Exception('Room tidak ditemukan.');
+        throw Exception('Rombongan tujuan tidak ditemukan.');
       }
       final roomData = roomDoc.data()!;
       final roomPendampingId = roomData['pendampingId'] as String?;
@@ -71,7 +71,7 @@ class NotificationService {
           roomPendampingIds.contains(senderUid);
       if (!isManagingPendamping) {
         throw Exception(
-          'Anda hanya dapat mengirim notifikasi ke room yang Anda kelola.',
+          'Anda hanya dapat mengirim pesan ke rombongan yang Anda kelola.',
         );
       }
 
@@ -88,7 +88,7 @@ class NotificationService {
             .get();
         if (!memberDoc.exists) {
           throw Exception(
-            'Jamaah target bukan merupakan anggota aktif dari room Anda.',
+            'Jamaah tersebut tidak lagi berada dalam rombongan Anda.',
           );
         }
       }
@@ -106,7 +106,7 @@ class NotificationService {
 
       case 'room':
         if (targetRoomId == null || targetRoomId.isEmpty) {
-          throw Exception('ID Room target wajib diisi.');
+          throw Exception('Pilih rombongan tujuan terlebih dahulu.');
         }
         final membersSnap = await _firestore
             .collection('rooms')
@@ -123,7 +123,7 @@ class NotificationService {
 
       case 'maktab':
         if (targetMaktab == null || targetMaktab.trim().isEmpty) {
-          throw Exception('Target Maktab wajib ditentukan.');
+          throw Exception('Pilih maktab tujuan terlebih dahulu.');
         }
         final maktabSnap = await _firestore
             .collection('users')
@@ -138,7 +138,7 @@ class NotificationService {
 
       case 'kloter':
         if (targetKloter == null || targetKloter.trim().isEmpty) {
-          throw Exception('Target Kloter wajib ditentukan.');
+          throw Exception('Pilih kloter tujuan terlebih dahulu.');
         }
         final kloterSnap = await _firestore
             .collection('users')
@@ -154,7 +154,7 @@ class NotificationService {
       case 'global':
         if (normalizedRole != 'admin') {
           throw Exception(
-            'Hanya Administrator yang dapat mengirim notifikasi Global.',
+            'Pesan untuk semua jamaah hanya dapat dikirim oleh pengelola utama.',
           );
         }
         final allUsersSnap = await _firestore.collection('users').get();
@@ -166,11 +166,11 @@ class NotificationService {
         break;
 
       default:
-        throw Exception('Scope notifikasi "$scope" tidak valid.');
+        throw Exception('Pilihan penerima tidak dikenali. Pilih kembali.');
     }
 
     if (recipientUids.isEmpty) {
-      throw Exception('Tidak ditemukan penerima untuk target notifikasi ini.');
+      throw Exception('Belum ada penerima yang dapat menerima pesan ini.');
     }
 
     // ── Batched Fan-out Writes ──────────────────────────────────────────────

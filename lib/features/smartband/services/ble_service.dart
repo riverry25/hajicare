@@ -93,7 +93,7 @@ class BleService {
             : result.advertisementData.advName;
 
         if (name.trim() == targetDeviceName) {
-          onStatusLog?.call('Ditemukan perangkat: $name');
+          onStatusLog?.call('Gelang ditemukan: $name');
           timeoutTimer?.cancel();
           _scanSubscription?.cancel();
           _scanSubscription = null;
@@ -139,7 +139,7 @@ class BleService {
   /// Connect to the specified device and discover services & characteristics.
   Future<void> connectToDevice(BluetoothDevice device) async {
     try {
-      onStatusLog?.call('Menghubungkan ke ${device.platformName}...');
+      onStatusLog?.call('Menghubungkan gelang...');
 
       await device.connect(
         license: License.nonprofit,
@@ -168,7 +168,7 @@ class BleService {
       // DISCOVER SERVICES
       // ==========================================
 
-      onStatusLog?.call('Mencari BLE Service...');
+      onStatusLog?.call('Menyiapkan gelang...');
 
       final services = await device.discoverServices();
 
@@ -243,7 +243,7 @@ class BleService {
       // LDR NOTIFICATION
       // ==========================================
 
-      onStatusLog?.call('Mengaktifkan LDR notification...');
+      onStatusLog?.call('Menyiapkan sensor cahaya...');
 
       await _valueSubscription?.cancel();
 
@@ -259,7 +259,7 @@ class BleService {
       // FLAME NOTIFICATION
       // ==========================================
 
-      onStatusLog?.call('Mengaktifkan Flame notification...');
+      onStatusLog?.call('Menyiapkan sensor api...');
 
       await _flameSubscription?.cancel();
 
@@ -277,7 +277,7 @@ class BleService {
 
       onConnectionChanged?.call(true);
 
-      onStatusLog?.call('Terhubung & Sync BLE Aktif');
+      onStatusLog?.call('Gelang terhubung');
     } catch (e) {
       if (e is BleException) {
         rethrow;

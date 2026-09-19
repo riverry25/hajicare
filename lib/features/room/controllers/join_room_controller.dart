@@ -1,16 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/app_startup_controller.dart';
 import '../../../core/state/hajicare_controller.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/user_feedback_message.dart';
 import '../services/room_service.dart';
+import '../widgets/room_qr_dialog.dart';
 
 class JoinRoomController extends GetxController {
   final RoomService _roomService = RoomService();
@@ -90,7 +87,7 @@ class JoinRoomController extends GetxController {
     final kloter = createKloterController.text.trim();
 
     if (name.isEmpty) {
-      errorMessage.value = 'Harap isi Nama Room / Rombongan.';
+      errorMessage.value = 'Isi nama rombongan terlebih dahulu.';
       _showErrorAlert(errorMessage.value!);
       return;
     }
@@ -138,7 +135,10 @@ class JoinRoomController extends GetxController {
       _showErrorAlert(e.message);
     } catch (e) {
       isLoading.value = false;
-      errorMessage.value = 'Gagal membuat room: $e';
+      errorMessage.value = UserFeedbackMessage.from(
+        e,
+        fallback: 'Rombongan belum dapat dibuat. Silakan coba lagi.',
+      );
       _showErrorAlert(errorMessage.value!);
     }
   }
@@ -151,7 +151,7 @@ class JoinRoomController extends GetxController {
     final roomCode = roomCodeController.text.trim().toUpperCase();
 
     if (roomCode.isEmpty) {
-      errorMessage.value = 'Harap masukkan 6 digit Kode Room.';
+      errorMessage.value = 'Masukkan 6 huruf atau angka kode rombongan.';
       _showErrorAlert(errorMessage.value!);
       return;
     }
@@ -189,9 +189,9 @@ class JoinRoomController extends GetxController {
       if (Get.context != null) {
         AppAlert.success(
           Get.context,
-          title: 'Berhasil Bergabung!',
+          title: 'Berhasil Bergabung',
           message:
-              'Anda telah bergabung ke room "${joinedRoom.name}". Fitur monitoring kini aktif.',
+              'Anda sudah bergabung dengan rombongan "${joinedRoom.name}".',
         );
       }
 
@@ -202,7 +202,11 @@ class JoinRoomController extends GetxController {
       _showErrorAlert(e.message);
     } catch (e) {
       isLoading.value = false;
-      errorMessage.value = 'Gagal bergabung ke room: $e';
+      errorMessage.value = UserFeedbackMessage.from(
+        e,
+        fallback:
+            'Belum dapat bergabung. Periksa kode rombongan, lalu coba lagi.',
+      );
       _showErrorAlert(errorMessage.value!);
     }
   }
@@ -211,160 +215,7 @@ class JoinRoomController extends GetxController {
     BuildContext context,
     RoomModel room,
   ) async {
-    final isDark = AppColors.isDark(context);
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-    final primaryColor = isDark ? AppColors.goldLight : AppColors.goldPrimary;
-
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) {
-        return Dialog(
-          backgroundColor: cardBg,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            side: BorderSide(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.1)
-                  : AppColors.goldLight.withValues(alpha: 0.3),
-            ),
-          ),
-          insetPadding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.lg,
-          ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 380),
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: AppColors.statusSafe.withValues(alpha: 0.15),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.check_circle_rounded,
-                            color: AppColors.statusSafe,
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        Expanded(
-                          child: Text(
-                            'Room Berhasil Dibuat!',
-                            style: AppTypography.titleMedium.copyWith(
-                              color: headingColor,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    Text(
-                      'Bagikan kode room atau QR code ini kepada jamaah rombongan Anda:',
-                      textAlign: TextAlign.center,
-                      style: AppTypography.bodySmall.copyWith(color: bodyColor),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    // QR Code Container with fixed dimensions
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        border: Border.all(
-                          color: primaryColor.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: SizedBox(
-                        width: 160,
-                        height: 160,
-                        child: QrImageView(
-                          data: room.code,
-                          version: QrVersions.auto,
-                          size: 160,
-                          backgroundColor: Colors.white,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    // Room Code Badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: primaryColor.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                        border: Border.all(
-                          color: primaryColor.withValues(alpha: 0.4),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            room.code,
-                            style: AppTypography.titleLarge.copyWith(
-                              color: primaryColor,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 4,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      'Nama: ${room.name}',
-                      style: AppTypography.captionSmall.copyWith(
-                        color: bodyColor,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 44,
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.of(ctx).pop(),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryColor,
-                          foregroundColor: isDark
-                              ? AppColors.espressoDark
-                              : AppColors.surfaceWhite,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'Buka Dashboard Monitoring',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
+    await RoomQrDialog.show(context, room: room);
   }
 
   Future<void> switchAccount() async {
@@ -378,7 +229,12 @@ class JoinRoomController extends GetxController {
 
   void _showErrorAlert(String msg) {
     if (Get.context != null) {
-      AppAlert.error(Get.context!, title: 'Perhatian', message: msg);
+      AppAlert.error(
+        Get.context!,
+        title: 'Belum Berhasil',
+        message: msg,
+        okText: 'Coba Lagi',
+      );
     }
   }
 

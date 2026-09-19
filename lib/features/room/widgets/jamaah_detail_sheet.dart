@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/user_feedback_message.dart';
 import '../../../core/widgets/app_status_badge.dart';
 import '../../notification/widgets/notification_composer_dialog.dart';
 import '../services/room_service.dart';
@@ -96,7 +97,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
       context,
       title: 'Keluarkan Jamaah?',
       message:
-          'Jamaah ini akan dikeluarkan dari room dan fitur yang membutuhkan room akan dinonaktifkan.',
+          'Jamaah ini akan dikeluarkan dari rombongan dan tidak lagi dapat dipantau oleh pendamping.',
       confirmText: 'Keluarkan',
       cancelText: 'Batal',
       isDestructive: true,
@@ -118,7 +119,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
             context,
             title: 'Jamaah Dikeluarkan',
             message:
-                '${widget.jamaah.name} telah berhasil dikeluarkan dari room "${widget.roomName}".',
+                '${widget.jamaah.name} sudah dikeluarkan dari rombongan "${widget.roomName}".',
           );
           widget.onRemoved?.call();
         } catch (e) {
@@ -126,8 +127,11 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
           setState(() => _isRemoving = false);
           AppAlert.error(
             context,
-            title: 'Gagal Mengeluarkan',
-            message: e.toString().replaceAll('Exception: ', ''),
+            title: 'Belum Dapat Dikeluarkan',
+            message: UserFeedbackMessage.from(
+              e,
+              fallback: 'Jamaah belum dapat dikeluarkan. Silakan coba lagi.',
+            ),
           );
         }
       },

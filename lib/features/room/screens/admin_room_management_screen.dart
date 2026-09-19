@@ -1459,7 +1459,8 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                     AppAlert.info(
                       context,
                       title: 'Kode Disalin',
-                      message: 'Kode room "${room.code}" disalin ke clipboard.',
+                      message:
+                          'Kode rombongan "${room.code}" sudah disalin dan siap ditempel.',
                     );
                   },
                 ),
@@ -1927,7 +1928,7 @@ class _RoomManagementCard extends StatelessWidget {
                             context,
                             title: 'Kode Disalin',
                             message:
-                                'Kode room "${room.code}" disalin ke clipboard.',
+                                'Kode rombongan "${room.code}" sudah disalin dan siap ditempel.',
                           );
                         },
                         borderRadius: BorderRadius.circular(AppRadius.sm),

@@ -151,7 +151,7 @@ class LoginController extends GetxController {
 
       AppDialog.success(
         title: 'Berhasil Masuk',
-        message: 'Selamat datang kembali di HajiCare! Menyiapkan dashboard...',
+        message: 'Selamat datang kembali di HajiCare.',
         okText: 'Lanjut',
         onOk: navigate,
         autoDismissDuration: const Duration(milliseconds: 1500),
@@ -179,15 +179,11 @@ class LoginController extends GetxController {
 
   void _showErrorSnackbar(String msg) {
     if (isClosed) return;
-    if (Get.context != null) {
-      Get.snackbar(
-        'Gagal Masuk',
-        msg,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.shade800,
-        colorText: Colors.white,
-      );
-    }
+    AppDialog.error(
+      title: 'Belum Bisa Masuk',
+      message: msg,
+      okText: 'Coba Lagi',
+    );
   }
 
   Future<void> loginWithGoogle() async {
@@ -307,7 +303,7 @@ class LoginController extends GetxController {
 
       AppDialog.success(
         title: 'Selamat Datang!',
-        message: 'Login Google berhasil. Mengarahkan ke dashboard...',
+        message: 'Anda berhasil masuk dengan Google.',
         okText: 'Masuk Sekarang',
         onOk: navigateGoogle,
         autoDismissDuration: const Duration(milliseconds: 1500),
@@ -371,7 +367,7 @@ class LoginController extends GetxController {
       case 'too-many-requests':
         return 'Terlalu banyak percobaan masuk yang gagal. Silakan coba beberapa saat lagi.';
       case 'network-request-failed':
-        return 'Tidak ada koneksi internet. Periksa jaringan Anda.';
+        return 'Sambungan internet bermasalah. Periksa internet, lalu coba lagi.';
       case 'operation-not-allowed':
         return 'Metode masuk ini sedang dinonaktifkan.';
       case 'channel-error':
@@ -381,7 +377,7 @@ class LoginController extends GetxController {
       default:
         if (lowerMessage.contains('network') ||
             lowerMessage.contains('connection')) {
-          return 'Gagal terhubung ke server. Periksa koneksi internet Anda.';
+          return 'Sambungan internet bermasalah. Periksa internet, lalu coba lagi.';
         }
         return 'Gagal masuk. Periksa kembali email dan kata sandi Anda.';
     }
@@ -390,7 +386,7 @@ class LoginController extends GetxController {
   void _showErrorDialog(String message) {
     if (isClosed) return;
     AppDialog.error(
-      title: 'Gagal Masuk',
+      title: 'Belum Bisa Masuk',
       message: message,
       okText: 'Coba Lagi',
     );

@@ -72,7 +72,7 @@ class JamaahServiceGrid extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'Status: Terhubung (BLE Sync Aktif)',
+                        'Buka halaman sensor untuk memeriksa koneksi gelang',
                         style: AppTypography.caption.copyWith(
                           color: AppColors.statusSafe,
                           fontWeight: FontWeight.w600,
@@ -91,7 +91,7 @@ class JamaahServiceGrid extends StatelessWidget {
                     context: context,
                     icon: Icons.battery_charging_full_rounded,
                     label: 'Baterai',
-                    value: '88%',
+                    value: '-',
                     color: AppColors.statusSafe,
                   ),
                 ),
@@ -101,7 +101,7 @@ class JamaahServiceGrid extends StatelessWidget {
                     context: context,
                     icon: Icons.favorite_rounded,
                     label: 'Detak Jantung',
-                    value: '76 bpm',
+                    value: '-',
                     color: AppColors.sosEmergency,
                   ),
                 ),
@@ -111,7 +111,7 @@ class JamaahServiceGrid extends StatelessWidget {
                     context: context,
                     icon: Icons.directions_walk_rounded,
                     label: 'Langkah',
-                    value: '4.210',
+                    value: '-',
                     color: AppColors.goldPrimary,
                   ),
                 ),
@@ -124,15 +124,10 @@ class JamaahServiceGrid extends StatelessWidget {
               child: ElevatedButton.icon(
                 onPressed: () {
                   Get.back();
-                  AppAlert.success(
-                    context,
-                    title: 'Sinkronisasi Berhasil',
-                    message:
-                        'Data vital dan lokasi gelang pintar telah diperbarui.',
-                  );
+                  Get.toNamed(AppRoutes.smartbandLdr);
                 },
-                icon: const Icon(Icons.sync_rounded),
-                label: const Text('Sinkronisasi Sekarang'),
+                icon: const Icon(Icons.bluetooth_searching_rounded),
+                label: const Text('Hubungkan Gelang'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryContainer,
                   foregroundColor: AppColors.surfaceWhite,
@@ -157,7 +152,7 @@ class JamaahServiceGrid extends StatelessWidget {
                   color: AppColors.accentGoldStar,
                 ),
                 label: Text(
-                  'Uji Koneksi & Sensor LDR',
+                  'Buka Detail Sensor',
                   style: AppTypography.button.copyWith(
                     color: isDark
                         ? AppColors.darkTextHeading
@@ -369,12 +364,9 @@ class JamaahServiceGrid extends StatelessWidget {
   void _showOfficerCallDialog(BuildContext context) {
     AppAlert.info(
       context,
-      title: 'Panggilan Petugas Siaga',
+      title: 'Hubungi Pendamping',
       message:
-          'Silakan hubungi kontak darurat berikut:\n\n'
-          '• Call Center Haji Kemenag: 195\n'
-          '• Posko Medis: +966 50 123 4567\n'
-          '• Ketua Kloter: +966 50 987 6543',
+          'Nomor petugas belum tersimpan di aplikasi. Hubungi pendamping rombongan Anda. Jika keadaan mendesak, gunakan tombol SOS.',
     );
   }
 

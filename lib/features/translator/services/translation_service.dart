@@ -42,7 +42,9 @@ class TranslationService {
           isWifiRequired: false,
         );
         if (!success) {
-          onStatusUpdate?.call('Gagal mengunduh model bahasa sumber.');
+          onStatusUpdate?.call(
+            'Bahasa belum siap. Periksa internet, lalu coba lagi.',
+          );
           return false;
         }
       }
@@ -57,7 +59,9 @@ class TranslationService {
           isWifiRequired: false,
         );
         if (!success) {
-          onStatusUpdate?.call('Gagal mengunduh model bahasa tujuan.');
+          onStatusUpdate?.call(
+            'Bahasa belum siap. Periksa internet, lalu coba lagi.',
+          );
           return false;
         }
       }
@@ -65,7 +69,9 @@ class TranslationService {
       return true;
     } catch (e) {
       debugPrint('[TranslationService] ensureModelsDownloaded error: $e');
-      onStatusUpdate?.call('Gagal memeriksa atau mengunduh model bahasa: $e');
+      onStatusUpdate?.call(
+        'Bahasa belum dapat disiapkan. Periksa internet, lalu coba lagi.',
+      );
       return false;
     }
   }
@@ -89,7 +95,9 @@ class TranslationService {
     );
 
     if (!modelsReady) {
-      throw Exception('Model bahasa belum siap atau gagal diunduh.');
+      throw Exception(
+        'Bahasa belum dapat disiapkan. Periksa internet, lalu coba lagi.',
+      );
     }
 
     // Recreate translator instance only if language pair changed

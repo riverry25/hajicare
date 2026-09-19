@@ -96,7 +96,8 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
       debugPrint('Failed to load YOLO model: $e');
       if (mounted) {
         setState(() {
-          _modelError = 'Gagal memuat model deteksi: $e';
+          _modelError =
+              'Pemindai uang belum siap. Tutup lalu buka kembali halaman ini.';
         });
       }
     }
@@ -120,7 +121,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
     if (!_isModelLoaded) {
       Get.snackbar(
         'Menyiapkan Kamera',
-        'Model deteksi sedang disiapkan, silakan coba sesaat lagi.',
+        'Pemindai uang sedang disiapkan. Tunggu sebentar, lalu coba lagi.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.black87,
         colorText: Colors.white,
@@ -202,8 +203,8 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
       });
 
       Get.snackbar(
-        'Gagal Memindai',
-        'Terjadi kesalahan saat memproses gambar: $e',
+        'Uang Belum Terbaca',
+        'Uang belum dapat dikenali. Pastikan gambar terang dan tidak buram, lalu coba lagi.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.black87,
         colorText: Colors.white,
@@ -337,7 +338,10 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
             },
             onModelError: (error, path, task) {
               if (mounted) {
-                setState(() => _modelError = error.toString());
+                setState(
+                  () => _modelError =
+                      'Pemindai uang belum siap. Tekan Coba Lagi.',
+                );
               }
             },
           ),
@@ -1269,7 +1273,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
             ),
             const SizedBox(height: AppSpacing.md),
             Text(
-              'Gagal Memuat Model',
+              'Pemindai Belum Siap',
               style: AppTypography.titleLarge.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
@@ -1277,7 +1281,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              _modelError ?? 'Model deteksi gagal dimuat',
+              _modelError ?? 'Pemindai uang belum siap. Tekan Coba Lagi.',
               textAlign: TextAlign.center,
               style: AppTypography.bodyMedium.copyWith(color: Colors.white70),
             ),

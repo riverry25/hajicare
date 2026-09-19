@@ -246,7 +246,8 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
       if (mounted) {
         setState(() {
           _isTranslating = false;
-          _statusMessage = 'Gagal menerjemahkan: $e';
+          _statusMessage =
+              'Terjemahan belum berhasil. Periksa internet, lalu coba lagi.';
         });
       }
     }
@@ -286,7 +287,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
     Clipboard.setData(ClipboardData(text: _resultText.trim()));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Teks terjemahan disalin ke papan klip'),
+        content: const Text('Teks terjemahan sudah disalin dan siap ditempel.'),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(

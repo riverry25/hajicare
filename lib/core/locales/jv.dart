@@ -330,7 +330,7 @@ const Map<String, String> jvTranslations = {
   'serviceCommTitle': 'Komunikasi Cepet',
   'serviceCommSubtitle': 'Basa Arab: Tulung, Lara, Banyu',
   'serviceBandTitle': 'Gelang Pinter',
-  'serviceBandSubtitle': 'GPS & Detak Jantung Sambung',
+  'serviceBandSubtitle': 'Priksa sambungan lan sensor gelang',
   'servicePrayerTitle': 'Donga & Manasik',
   'servicePrayerSubtitle': 'Donga Tawaf, Sai Tulisan Gedhe + Swara',
   'serviceCallTitle': 'Telpon Petugas',

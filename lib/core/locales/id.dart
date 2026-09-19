@@ -206,7 +206,7 @@ const Map<String, String> idTranslations = {
   'faqTitle': 'Pertanyaan Umum (FAQ)',
   'faqQ1': 'Bagaimana cara membuat akun?',
   'faqA1':
-      'Buka aplikasi HajiCare, pilih "Daftar Baru" di halaman masuk, lalu isi data diri Anda termasuk nama lengkap, nomor telepon, dan buat PIN keamanan.',
+      'Di halaman masuk, pilih "Daftar Baru". Isi nama, email, dan kata sandi, lalu pilih jenis akun Anda.',
   'faqQ2': 'Bagaimana cara mengubah data profil?',
   'faqA2':
       'Buka menu Profil di bagian bawah aplikasi, lalu pilih opsi yang ingin diubah. Data medis dan informasi kloter dapat diperbarui dari halaman profil.',
@@ -227,7 +227,7 @@ const Map<String, String> idTranslations = {
       'Buka Profil → Lainnya & Preferensi → Tema Tampilan, lalu pilih Mode Gelap, Mode Terang, atau Otomatis mengikuti sistem.',
   'faqQ8': 'Bagaimana cara menghubungkan pendamping?',
   'faqA8':
-      'Fitur pendamping menghubungkan jamaah dan pendamping secara otomatis berdasarkan data kloter. Hubungi administrator kloter untuk pengaturan lebih lanjut.',
+      'Minta kode rombongan dari pendamping. Buka menu Rombongan, lalu masukkan kode tersebut untuk bergabung.',
   'faqQ9': 'Siapa yang dapat menjadi pendamping?',
   'faqA9':
       'Pendamping adalah anggota keluarga atau petugas yang didaftarkan dalam sistem HajiCare. Mereka dapat memantau posisi dan kondisi jamaah secara real-time.',
@@ -241,7 +241,7 @@ const Map<String, String> idTranslations = {
   'faqA12':
       'Coba tutup dan buka kembali aplikasi. Pastikan koneksi internet stabil. Jika masalah berlanjut, hubungi tim dukungan HajiCare melalui kontak yang tersedia.',
   'contactSupportTitle': 'Masih membutuhkan bantuan?',
-  'contactSupportSubtitle': 'Hubungi tim HajiCare',
+  'contactSupportSubtitle': 'Minta bantuan pendamping rombongan Anda',
   'contactEmail': 'Kirim Email',
   'contactWhatsApp': 'WhatsApp',
   'reportProblem': 'Laporkan Masalah',
@@ -312,7 +312,7 @@ const Map<String, String> idTranslations = {
   'nearDistanceLabel': '0m (Dekat)',
   'warningDistanceLabel': '200m (Peringatan)',
   'smartBand': 'Gelang Pintar',
-  'batteryGpsActive': 'Baterai 92% • GPS Aktif',
+  'batteryGpsActive': 'Status gelang belum tersedia',
   'lastSync': 'Terakhir Sinkron',
   'secondsAgo': '15 detik yang lalu',
   'trackOnInteractiveMap': 'Lacak di Peta Interaktif',
@@ -328,11 +328,11 @@ const Map<String, String> idTranslations = {
   'serviceCommTitle': 'Komunikasi Cepat',
   'serviceCommSubtitle': 'Frasa Arab: Tolong, Sakit, Air',
   'serviceBandTitle': 'Gelang Pintar',
-  'serviceBandSubtitle': 'GPS & Detak Jantung Terhubung',
+  'serviceBandSubtitle': 'Periksa koneksi dan sensor gelang',
   'servicePrayerTitle': 'Doa & Manasik',
   'servicePrayerSubtitle': 'Doa Tawaf, Sai Huruf Besar + Audio',
   'serviceCallTitle': 'Panggilan Petugas',
-  'serviceCallSubtitle': 'Telepon Pos Maktab & Kloter',
+  'serviceCallSubtitle': 'Petunjuk meminta bantuan pendamping',
 
   // Jamaah SOS & Banners
   'sosConfirmTitle': 'Kirim Sinyal SOS?',
@@ -343,10 +343,10 @@ const Map<String, String> idTranslations = {
   'sosButtonTitle': 'TOMBOL DARURAT SOS',
   'sosButtonSubtitle': 'Tekan Langsung Saat Butuh Pertolongan',
   'sosForwardedTo': 'Sinyal GPS darurat akan seketika diteruskan ke ',
-  'sosSectorOfficers': 'Petugas Maktab 48',
+  'sosSectorOfficers': 'Pendamping rombongan',
   'sosAnd': ' dan ',
   'sosFamilyCompanion': 'Pendamping Keluarga.',
-  'sos24HoursResponse': 'Respons Cepat 24 Jam • Sektor Khusus Masjidil Haram',
+  'sos24HoursResponse': 'Tetap di tempat aman sambil menunggu bantuan',
   'separatedWarning':
       'Kemungkinan terpisah dari pendamping! Tetap tenang di tempat Anda.',
   'officerAdviceTitle': 'HIMBAUAN PETUGAS SEKTOR',

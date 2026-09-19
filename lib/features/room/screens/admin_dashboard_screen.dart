@@ -4971,7 +4971,7 @@ class _RoomPantauCard extends StatelessWidget {
                                   context,
                                   title: 'Kode Disalin',
                                   message:
-                                      'Kode room "${room.code}" berhasil disalin ke clipboard.',
+                                      'Kode rombongan "${room.code}" sudah disalin dan siap ditempel.',
                                 );
                               },
                             ),

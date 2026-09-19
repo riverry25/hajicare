@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/app_startup_controller.dart';
+import '../../../core/utils/user_feedback_message.dart';
 import '../models/activity_model.dart';
 import '../models/room_member_model.dart';
 import '../models/room_model.dart';
@@ -278,7 +279,7 @@ class AdminRoomController extends GetxController {
       AppAlert.warning(
         context,
         title: 'Perhatian',
-        message: 'Nama room tidak boleh kosong.',
+        message: 'Isi nama rombongan terlebih dahulu.',
       );
       return;
     }
@@ -296,17 +297,20 @@ class AdminRoomController extends GetxController {
         Navigator.of(context).pop(); // Close creation modal/sheet
         AppAlert.success(
           context,
-          title: 'Room Berhasil Dibuat',
+          title: 'Rombongan Berhasil Dibuat',
           message:
-              'Room "${newRoom.name}" berhasil dibuat dengan kode ${newRoom.code}.',
+              'Rombongan "${newRoom.name}" dibuat dengan kode ${newRoom.code}.',
         );
       }
     } catch (e) {
       if (context.mounted) {
         AppAlert.error(
           context,
-          title: 'Terjadi kesalahan',
-          message: 'Gagal membuat room: $e',
+          title: 'Belum Berhasil',
+          message: UserFeedbackMessage.from(
+            e,
+            fallback: 'Rombongan belum dapat dibuat. Silakan coba lagi.',
+          ),
         );
       }
     } finally {
@@ -324,7 +328,7 @@ class AdminRoomController extends GetxController {
       AppAlert.warning(
         context,
         title: 'Perhatian',
-        message: 'Nama room tidak boleh kosong.',
+        message: 'Isi nama rombongan terlebih dahulu.',
       );
       return;
     }
@@ -334,16 +338,19 @@ class AdminRoomController extends GetxController {
       if (context.mounted) {
         AppAlert.success(
           context,
-          title: 'Berhasil',
-          message: 'Nama room berhasil diperbarui menjadi "$trimmed".',
+          title: 'Nama Berhasil Diubah',
+          message: 'Nama rombongan sekarang "$trimmed".',
         );
       }
     } catch (e) {
       if (context.mounted) {
         AppAlert.error(
           context,
-          title: 'Terjadi kesalahan',
-          message: 'Gagal mengubah nama room: $e',
+          title: 'Nama Belum Diubah',
+          message: UserFeedbackMessage.from(
+            e,
+            fallback: 'Nama rombongan belum dapat diubah. Silakan coba lagi.',
+          ),
         );
       }
     }
@@ -353,9 +360,9 @@ class AdminRoomController extends GetxController {
     if (room.isActive) {
       AppAlert.confirm(
         context,
-        title: 'Nonaktifkan Room?',
+        title: 'Nonaktifkan Rombongan?',
         message:
-            'Room "${room.name}" akan dinonaktifkan sementara. Anggota tidak dapat check-in selama nonaktif.',
+            'Rombongan "${room.name}" akan dinonaktifkan sementara. Anggota tidak dapat bergabung selama dinonaktifkan.',
         confirmText: 'Nonaktifkan',
         cancelText: 'Batal',
         isDestructive: true,
@@ -378,15 +385,18 @@ class AdminRoomController extends GetxController {
         AppAlert.success(
           context,
           title: 'Status Diperbarui',
-          message: 'Room berhasil $label.',
+          message: 'Rombongan berhasil $label.',
         );
       }
     } catch (e) {
       if (context.mounted) {
         AppAlert.error(
           context,
-          title: 'Terjadi kesalahan',
-          message: 'Gagal mengubah status room: $e',
+          title: 'Status Belum Diubah',
+          message: UserFeedbackMessage.from(
+            e,
+            fallback: 'Status rombongan belum dapat diubah. Silakan coba lagi.',
+          ),
         );
       }
     }
@@ -395,9 +405,9 @@ class AdminRoomController extends GetxController {
   void promptDeleteRoom(BuildContext context, RoomModel room) {
     AppAlert.confirm(
       context,
-      title: 'Hapus room?',
+      title: 'Hapus Rombongan?',
       message:
-          'Semua anggota akan kehilangan akses ke room "${room.name}". Tindakan ini tidak dapat dibatalkan.',
+          'Semua anggota akan keluar dari rombongan "${room.name}". Rombongan yang dihapus tidak dapat dikembalikan.',
       confirmText: 'Hapus',
       cancelText: 'Batal',
       isDestructive: true,
@@ -407,16 +417,19 @@ class AdminRoomController extends GetxController {
           if (context.mounted) {
             AppAlert.success(
               context,
-              title: 'Room Dihapus',
-              message: 'Room "${room.name}" beserta datanya telah dihapus.',
+              title: 'Rombongan Dihapus',
+              message: 'Rombongan "${room.name}" telah dihapus.',
             );
           }
         } catch (e) {
           if (context.mounted) {
             AppAlert.error(
               context,
-              title: 'Terjadi kesalahan',
-              message: 'Gagal menghapus room: $e',
+              title: 'Belum Dapat Dihapus',
+              message: UserFeedbackMessage.from(
+                e,
+                fallback: 'Rombongan belum dapat dihapus. Silakan coba lagi.',
+              ),
             );
           }
         }

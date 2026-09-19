@@ -121,7 +121,7 @@ void main() {
           isA<RouteException>().having(
             (e) => e.message,
             'message',
-            contains('HTTP 500'),
+            contains('Periksa internet'),
           ),
         ),
       );
@@ -151,7 +151,7 @@ void main() {
 
     test('falls back to OSM foot routing when apiKey is empty', () async {
       final client = MockClient((request) async {
-        if (!request.url.toString().contains('project-osrm.org')) {
+        if (!request.url.toString().contains('routing.openstreetmap.de')) {
           return http.Response('Not Found', 404);
         }
 

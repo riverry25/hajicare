@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
+import '../../../core/utils/user_feedback_message.dart';
 import '../../room/services/room_service.dart';
 import '../models/notification_model.dart';
 import '../services/notification_service.dart';
@@ -236,7 +237,7 @@ class NotificationController extends GetxController {
           context: context,
           title: 'Undangan Diterima!',
           message:
-              'Anda telah berhasil bergabung ke dalam room "${invitation.roomName}".',
+              'Anda sudah bergabung dengan rombongan “${invitation.roomName}”.',
         );
       }
     } catch (e) {
@@ -245,13 +246,16 @@ class NotificationController extends GetxController {
           AppDialog.warning(
             context: context,
             title: 'Undangan Tidak Berlaku',
-            message: 'Room yang mengirim undangan ini sudah tidak tersedia.',
+            message: 'Rombongan ini sudah tidak tersedia.',
           );
         } else {
           AppDialog.error(
             context: context,
-            title: 'Gagal Menerima Undangan',
-            message: e.toString().replaceAll('Exception: ', ''),
+            title: 'Belum Dapat Bergabung',
+            message: UserFeedbackMessage.from(
+              e,
+              fallback: 'Undangan belum dapat diterima. Silakan coba lagi.',
+            ),
           );
         }
       }
@@ -281,15 +285,18 @@ class NotificationController extends GetxController {
           context: context,
           title: 'Undangan Ditolak',
           message:
-              'Anda menolak undangan untuk bergabung ke room "${invitation.roomName}".',
+              'Anda tidak bergabung dengan rombongan “${invitation.roomName}”.',
         );
       }
     } catch (e) {
       if (context.mounted) {
         AppDialog.error(
           context: context,
-          title: 'Gagal Menolak Undangan',
-          message: e.toString().replaceAll('Exception: ', ''),
+          title: 'Pilihan Belum Disimpan',
+          message: UserFeedbackMessage.from(
+            e,
+            fallback: 'Pilihan belum dapat disimpan. Silakan coba lagi.',
+          ),
         );
       }
     } finally {

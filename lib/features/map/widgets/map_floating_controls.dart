@@ -84,55 +84,66 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             // ── Hamburger Toggle Button ───────────────────────────────────────
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: _toggleMenu,
-                borderRadius: BorderRadius.circular(16),
-                child: Ink(
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: _isExpanded
-                        ? AppColors.espressoDark
-                        : (isDark
-                              ? AppColors.darkSurface
-                              : AppColors.surfaceWhite),
+            Tooltip(
+              message: _isExpanded ? 'Tutup kontrol peta' : 'Buka kontrol peta',
+              child: Semantics(
+                button: true,
+                label: _isExpanded ? 'Tutup kontrol peta' : 'Buka kontrol peta',
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _toggleMenu,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: _isExpanded
-                          ? AppColors.goldPrimary
-                          : (isDark
-                                ? Colors.white.withValues(alpha: 0.12)
-                                : AppColors.goldLight.withValues(alpha: 0.35)),
-                      width: 1.2,
-                    ),
-                  ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      AnimatedIcon(
-                        icon: AnimatedIcons.menu_close,
-                        progress: _expandAnimation,
-                        size: 22,
+                    child: Ink(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
                         color: _isExpanded
-                            ? AppColors.goldPrimary
-                            : (isDark ? Colors.white : AppColors.espressoDark),
-                      ),
-                      if (widget.isLiveTracking && !_isExpanded)
-                        Positioned(
-                          right: 8,
-                          top: 8,
-                          child: Container(
-                            width: 7,
-                            height: 7,
-                            decoration: const BoxDecoration(
-                              color: AppColors.statusSafe,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
+                            ? AppColors.espressoDark
+                            : (isDark
+                                  ? AppColors.darkSurface
+                                  : AppColors.surfaceWhite),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: _isExpanded
+                              ? AppColors.goldPrimary
+                              : (isDark
+                                    ? Colors.white.withValues(alpha: 0.12)
+                                    : AppColors.goldLight.withValues(
+                                        alpha: 0.35,
+                                      )),
+                          width: 1.2,
                         ),
-                    ],
+                      ),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          AnimatedIcon(
+                            icon: AnimatedIcons.menu_close,
+                            progress: _expandAnimation,
+                            size: 22,
+                            color: _isExpanded
+                                ? AppColors.goldPrimary
+                                : (isDark
+                                      ? Colors.white
+                                      : AppColors.espressoDark),
+                          ),
+                          if (widget.isLiveTracking && !_isExpanded)
+                            Positioned(
+                              right: 8,
+                              top: 8,
+                              child: Container(
+                                width: 7,
+                                height: 7,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.statusSafe,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -382,7 +393,11 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
     );
 
     if (tooltip != null) {
-      return Tooltip(message: tooltip, child: button);
+      return Semantics(
+        button: true,
+        label: tooltip,
+        child: Tooltip(message: tooltip, child: button),
+      );
     }
     return button;
   }
@@ -396,22 +411,29 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
     bool isBottom = false,
   }) {
     final isDark = AppColors.isDark(context);
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.vertical(
-          top: isTop ? const Radius.circular(16) : Radius.zero,
-          bottom: isBottom ? const Radius.circular(16) : Radius.zero,
-        ),
-        child: SizedBox(
-          width: 46,
-          height: 38,
-          child: Center(
-            child: Icon(
-              icon,
-              size: 20,
-              color: isDark ? Colors.white : AppColors.espressoDark,
+    return Semantics(
+      button: true,
+      label: tooltip,
+      child: Tooltip(
+        message: tooltip,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.vertical(
+              top: isTop ? const Radius.circular(16) : Radius.zero,
+              bottom: isBottom ? const Radius.circular(16) : Radius.zero,
+            ),
+            child: SizedBox(
+              width: 46,
+              height: 38,
+              child: Center(
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: isDark ? Colors.white : AppColors.espressoDark,
+                ),
+              ),
             ),
           ),
         ),
