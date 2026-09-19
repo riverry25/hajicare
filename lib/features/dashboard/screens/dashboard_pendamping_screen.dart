@@ -306,14 +306,16 @@ class DashboardPendampingScreen extends StatelessWidget {
                     icon: Icons.bar_chart_rounded,
                     tooltip: 'Perbarui Statistik Jamaah',
                     onSync: () async {
-                      await state.refreshLocation();
+                      final success = await state.refreshLocation();
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
+                          SnackBar(
                             content: Text(
-                              'Statistik jamaah & lokasi GPS berhasil diperbarui',
+                              success
+                                  ? 'Lokasi dan data jamaah sudah diperbarui.'
+                                  : 'Lokasi belum ditemukan. Aktifkan lokasi ponsel, lalu coba lagi.',
                             ),
-                            duration: Duration(seconds: 2),
+                            duration: const Duration(seconds: 3),
                             behavior: SnackBarBehavior.floating,
                           ),
                         );
@@ -530,11 +532,11 @@ class DashboardPendampingScreen extends StatelessWidget {
                       } else {
                         AppAlert.warning(
                           context,
-                          title: 'Belum Ada Room',
+                          title: 'Belum Ada Rombongan',
                           message:
-                              'Anda belum memiliki room aktif. Silakan pilih atau buat room terlebih dahulu untuk mengundang jamaah.',
+                              'Pilih atau buat rombongan terlebih dahulu sebelum mengundang jamaah.',
                           onOk: () => Get.toNamed(AppRoutes.joinRoom),
-                          okText: 'Kelola Room',
+                          okText: 'Kelola Rombongan',
                         );
                       }
                     },
@@ -584,13 +586,23 @@ class DashboardPendampingScreen extends StatelessWidget {
                       confirmText: 'Ya, Akhiri SOS',
                       cancelText: 'Batal',
                       onConfirm: () async {
-                        await state.dismissSos(jamaahId);
+                        final success = await state.dismissSos(jamaahId);
                         if (context.mounted) {
-                          AppAlert.success(
-                            context,
-                            title: 'SOS Diakhiri',
-                            message: 'Sinyal darurat berhasil dinonaktifkan.',
-                          );
+                          if (success) {
+                            AppAlert.success(
+                              context,
+                              title: 'SOS Diakhiri',
+                              message: 'Sinyal darurat sudah dinonaktifkan.',
+                            );
+                          } else {
+                            AppAlert.error(
+                              context,
+                              title: 'SOS Belum Diakhiri',
+                              message:
+                                  'Periksa internet, lalu coba akhiri SOS sekali lagi.',
+                              okText: 'Coba Lagi',
+                            );
+                          }
                         }
                       },
                     );

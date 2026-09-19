@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart' as fmap;
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart' hide Path;
@@ -122,6 +123,8 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
             ),
           ),
 
+          Obx(() => _buildPoiStatusOverlay(context, mapCtrl)),
+
           // 3. Floating Quick Action Controls (Compass, MyLocation, Zoom In/Out, Focus All, Layers, Band)
           Obx(
             () => MapFloatingControls(
@@ -133,20 +136,8 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
               onFitAllTap: mapCtrl.focusToAllMembers,
               onLayersTap: mapCtrl.toggleMapTileLayer,
               onBandTap: () => _showSmartBandDialog(context, state),
-              onZoomInTap: () {
-                final cam = mapCtrl.flutterMapController.camera;
-                mapCtrl.flutterMapController.move(
-                  cam.center,
-                  (cam.zoom + 1.0).clamp(11.0, 19.0),
-                );
-              },
-              onZoomOutTap: () {
-                final cam = mapCtrl.flutterMapController.camera;
-                mapCtrl.flutterMapController.move(
-                  cam.center,
-                  (cam.zoom - 1.0).clamp(11.0, 19.0),
-                );
-              },
+              onZoomInTap: mapCtrl.zoomIn,
+              onZoomOutTap: mapCtrl.zoomOut,
             ),
           ),
 
@@ -166,13 +157,13 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
 
             final selectedPoi = mapCtrl.selectedPoi.value;
             if (selectedPoi != null) {
-              final userPos =
-                  mapCtrl.currentUserLocation.value ??
-                  MapController.defaultMinaBase;
-              final dist = mapCtrl.calculateDistanceMeters(
-                userPos,
-                selectedPoi.coordinate,
-              );
+              final userPos = mapCtrl.currentUserLocation.value;
+              final dist = userPos == null
+                  ? null
+                  : mapCtrl.calculateDistanceMeters(
+                      userPos,
+                      selectedPoi.coordinate,
+                    );
 
               return Positioned(
                 left: AppSpacing.md,
@@ -182,9 +173,29 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                   child: LocationDetailSheet(
                     poi: selectedPoi,
                     distanceMeters: dist,
+                    isRouteLoading: mapCtrl.isRouteLoading.value,
+                    routeError: mapCtrl.routeError.value,
+                    routeDistanceMeters: mapCtrl.routeDistanceMeters.value,
+                    routeDurationSeconds: mapCtrl.routeDurationSeconds.value,
                     onRoute: () {
                       debugPrint('[2] ROUTE BUTTON PRESSED');
                       mapCtrl.requestRouteToPoi(selectedPoi);
+                    },
+                    onShare: () async {
+                      final coordinate = selectedPoi.coordinate;
+                      final url =
+                          selectedPoi.openStreetMapUri?.toString() ??
+                          'https://www.openstreetmap.org/?mlat=${coordinate.latitude}&mlon=${coordinate.longitude}#map=18/${coordinate.latitude}/${coordinate.longitude}';
+                      await Clipboard.setData(
+                        ClipboardData(text: '${selectedPoi.name}\n$url'),
+                      );
+                      if (context.mounted) {
+                        AppAlert.success(
+                          context,
+                          title: 'Lokasi Disalin',
+                          message: 'Tautan lokasi siap dibagikan.',
+                        );
+                      }
                     },
                     onClose: mapCtrl.closeBottomSheet,
                   ),
@@ -217,18 +228,42 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
               routeDurationSeconds: mapCtrl.routeDurationSeconds.value,
               routeError: mapCtrl.routeError.value,
               onRetryRoute: mapCtrl.retryRoute,
-              onShareLocation: () {
-                AppAlert.success(
-                  context,
-                  title: 'Bagikan Lokasi',
-                  message: 'Tautan koordinat langsung disalin ke papan klip.',
-                );
+              onShareLocation: () async {
+                final member = mapCtrl.selectedMember.value;
+                final jamaah = mapCtrl.selectedJamaah.value;
+                final coordinate = member?.hasLocation == true
+                    ? LatLng(member!.latitude!, member.longitude!)
+                    : jamaah?.currentLocation != null
+                    ? mapCtrl.getJamaahCoordinate(jamaah!)
+                    : null;
+                if (coordinate == null) {
+                  AppAlert.warning(
+                    context,
+                    title: 'Lokasi Belum Tersedia',
+                    message:
+                        'Tunggu sampai lokasi jamaah muncul, lalu coba lagi.',
+                  );
+                  return;
+                }
+                final name = member?.name ?? jamaah?.name ?? 'Lokasi jamaah';
+                final url =
+                    'https://www.openstreetmap.org/?mlat=${coordinate.latitude}&mlon=${coordinate.longitude}#map=18/${coordinate.latitude}/${coordinate.longitude}';
+                await Clipboard.setData(ClipboardData(text: '$name\n$url'));
+                if (context.mounted) {
+                  AppAlert.success(
+                    context,
+                    title: 'Lokasi Disalin',
+                    message:
+                        'Tautan lokasi sudah disalin dan siap ditempel ke pesan.',
+                  );
+                }
               },
               onCall: () {
                 AppAlert.info(
                   context,
-                  title: 'Memanggil Kontak',
-                  message: 'Menghubungi nomor darurat anggota room...',
+                  title: 'Nomor Telepon Belum Tersedia',
+                  message:
+                      'Nomor telepon jamaah belum tersimpan. Hubungi pendamping melalui rombongan.',
                 );
               },
               bottomOffset: sheetBottomOffset,
@@ -495,6 +530,80 @@ class _CollapsedMemberBarState extends State<_CollapsedMemberBar>
 }
 
 extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
+  Widget _buildPoiStatusOverlay(BuildContext context, MapController mapCtrl) {
+    final loading = mapCtrl.isPoiLoading.value;
+    final error = mapCtrl.poiError.value;
+    final searchArea = mapCtrl.showSearchThisArea.value;
+    if (!loading && error == null && !searchArea) {
+      return const SizedBox.shrink();
+    }
+
+    final isDark = AppColors.isDark(context);
+    final label = loading
+        ? 'Memuat tempat nyata di sekitar…'
+        : error != null
+        ? 'Coba muat tempat lagi'
+        : 'Cari di area ini';
+    final icon = loading
+        ? null
+        : error != null
+        ? Icons.refresh_rounded
+        : Icons.search_rounded;
+
+    return Positioned(
+      top: MediaQuery.of(context).padding.top + 156,
+      left: 72,
+      right: 72,
+      child: Center(
+        child: Semantics(
+          button: !loading,
+          label: label,
+          child: Material(
+            color: isDark ? AppColors.darkSurface : Colors.white,
+            elevation: 5,
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            child: InkWell(
+              onTap: loading ? null : mapCtrl.searchThisArea,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (loading)
+                      const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    else
+                      Icon(icon, size: 18, color: AppColors.goldPrimary),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: isDark ? Colors.white : AppColors.espressoDark,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   // ---------------------------------------------------------------------------
   // INTERACTIVE FLUTTER_MAP CANVAS
   // ---------------------------------------------------------------------------
@@ -508,7 +617,13 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
         initialZoom: 16.5,
         minZoom: 11.0,
         maxZoom: 19.0,
+        onMapReady: mapCtrl.handleMapReady,
         onPositionChanged: (camera, hasGesture) {
+          mapCtrl.onMapPositionChanged(
+            camera.center,
+            camera.zoom,
+            hasGesture: hasGesture,
+          );
           if ((mapCtrl.compassRotation.value - camera.rotation).abs() > 0.05) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (Get.isRegistered<MapController>()) {
@@ -611,10 +726,18 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
               ..._buildPoiMarkers(mapCtrl),
 
               // Dedicated Search Location Marker (isolated logic)
-              if (searchResult != null) _buildSearchMarker(searchResult),
+              if (searchResult != null &&
+                  mapCtrl.selectedPoi.value?.id != 'search_${searchResult.id}')
+                _buildSearchMarker(searchResult),
             ],
           );
         }),
+        const fmap.RichAttributionWidget(
+          attributions: [
+            fmap.TextSourceAttribution('OpenStreetMap contributors'),
+            fmap.TextSourceAttribution('CARTO'),
+          ],
+        ),
       ],
     );
   }
@@ -962,7 +1085,10 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
     }
 
     final isDark = AppColors.isDark(context);
-    final list = state.jamaahList.isNotEmpty ? state.jamaahList : [state.self];
+    final source = state.jamaahList.isNotEmpty
+        ? state.jamaahList
+        : [state.self];
+    final list = source.where((jamaah) => jamaah.currentLocation != null);
 
     return list.map((jamaah) {
       final coord = mapCtrl.getJamaahCoordinate(jamaah);
@@ -1077,21 +1203,21 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
 
   List<fmap.Marker> _buildPoiMarkers(MapController mapCtrl) {
     final isDark = AppColors.isDark(context);
-    final userPos =
-        mapCtrl.currentUserLocation.value ?? MapController.defaultMinaBase;
+    final userPos = mapCtrl.currentUserLocation.value;
 
     return mapCtrl.filteredPois.map((poi) {
       final isSelected = mapCtrl.selectedPoi.value?.id == poi.id;
-      final distMeters = mapCtrl.calculateDistanceMeters(
-        userPos,
-        poi.coordinate,
-      );
-      final distText = MapController.formatDistance(distMeters);
+      final showLabel = isSelected || mapCtrl.mapZoom.value >= 15.5;
+      final distText = userPos == null
+          ? null
+          : MapController.formatDistance(
+              mapCtrl.calculateDistanceMeters(userPos, poi.coordinate),
+            );
 
       return fmap.Marker(
         point: poi.coordinate,
         width: 130,
-        height: 82,
+        height: showLabel ? 82 : 52,
         alignment: Alignment.topCenter,
         child: RepaintBoundary(
           child: GestureDetector(
@@ -1195,80 +1321,85 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                   ],
                 ),
 
-                const SizedBox(height: 2),
+                if (showLabel) const SizedBox(height: 2),
 
                 // ── FLOATING CALLOUT LABEL PILL ──
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 7,
-                    vertical: 2.5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkSurface.withValues(alpha: 0.95)
-                        : Colors.white.withValues(alpha: 0.96),
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                    border: Border.all(
-                      color: isSelected
-                          ? poi.color
-                          : (isDark
-                                ? Colors.white.withValues(alpha: 0.15)
-                                : Colors.black.withValues(alpha: 0.08)),
-                      width: isSelected ? 1.5 : 0.8,
+                if (showLabel)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 2.5,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(
-                          alpha: isDark ? 0.35 : 0.12,
-                        ),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.darkSurface.withValues(alpha: 0.95)
+                          : Colors.white.withValues(alpha: 0.96),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      border: Border.all(
+                        color: isSelected
+                            ? poi.color
+                            : (isDark
+                                  ? Colors.white.withValues(alpha: 0.15)
+                                  : Colors.black.withValues(alpha: 0.08)),
+                        width: isSelected ? 1.5 : 0.8,
                       ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 5,
-                        height: 5,
-                        decoration: BoxDecoration(
-                          color: poi.color,
-                          shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(
+                            alpha: isDark ? 0.35 : 0.12,
+                          ),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          poi.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: isDark
-                                ? Colors.white
-                                : AppColors.espressoDark,
-                            fontSize: 9.5,
-                            fontWeight: isSelected
-                                ? FontWeight.w800
-                                : FontWeight.w700,
-                            letterSpacing: -0.2,
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 5,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: poi.color,
+                            shape: BoxShape.circle,
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 3),
-                      Text(
-                        '· $distText',
-                        style: TextStyle(
-                          color: isSelected
-                              ? poi.color
-                              : (isDark ? Colors.white60 : AppColors.textMuted),
-                          fontSize: 8.5,
-                          fontWeight: FontWeight.w600,
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            poi.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: isDark
+                                  ? Colors.white
+                                  : AppColors.espressoDark,
+                              fontSize: 9.5,
+                              fontWeight: isSelected
+                                  ? FontWeight.w800
+                                  : FontWeight.w700,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
+                        if (distText != null) ...[
+                          const SizedBox(width: 3),
+                          Text(
+                            '· $distText',
+                            style: TextStyle(
+                              color: isSelected
+                                  ? poi.color
+                                  : (isDark
+                                        ? Colors.white60
+                                        : AppColors.textMuted),
+                              fontSize: 8.5,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -1278,20 +1409,11 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
   }
 
   void _showSmartBandDialog(BuildContext context, HajiCareController state) {
-    AppAlert.confirm(
+    AppAlert.info(
       context,
-      title: 'Panggil Gelang Pintar',
+      title: 'Gelang Belum Terhubung',
       message:
-          'Kirimkan sinyal getar dan alarm suara ke gelang pintar ${state.self.name} untuk memandu arah kembali.',
-      confirmText: 'Kirim Sinyal',
-      cancelText: 'Batal',
-      onConfirm: () {
-        AppAlert.success(
-          context,
-          title: 'Sinyal Terkirim',
-          message: 'Gelang pintar bergetar dan membunyikan nada panduan.',
-        );
-      },
+          'Hubungkan gelang pintar milik ${state.self.name}, lalu coba lagi.',
     );
   }
 }

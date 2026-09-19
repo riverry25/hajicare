@@ -14,6 +14,10 @@ class LocationDetailSheet extends StatefulWidget {
   final VoidCallback? onRoute;
   final VoidCallback? onShare;
   final VoidCallback? onClose;
+  final bool isRouteLoading;
+  final String? routeError;
+  final double? routeDistanceMeters;
+  final int? routeDurationSeconds;
 
   const LocationDetailSheet({
     super.key,
@@ -22,6 +26,10 @@ class LocationDetailSheet extends StatefulWidget {
     this.onRoute,
     this.onShare,
     this.onClose,
+    this.isRouteLoading = false,
+    this.routeError,
+    this.routeDistanceMeters,
+    this.routeDurationSeconds,
   });
 
   @override
@@ -183,7 +191,7 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
   Widget build(BuildContext context) {
     final formattedDistance = distanceMeters != null
         ? DistanceFormatter.format(distanceMeters)
-        : 'Dekat';
+        : 'Aktifkan GPS untuk melihat jarak';
 
     final isDark = AppColors.isDark(context);
     final opacity = (1.0 - (_dragOffset / 280.0)).clamp(0.0, 1.0);
@@ -319,8 +327,10 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                             Container(
                               width: 6,
                               height: 6,
-                              decoration: const BoxDecoration(
-                                color: AppColors.statusSafe,
+                              decoration: BoxDecoration(
+                                color: poi.openingHours == '24/7'
+                                    ? AppColors.statusSafe
+                                    : AppColors.goldPrimary,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -482,6 +492,48 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                     ),
                   ],
 
+                  if (poi.phone != null || poi.website != null) ...[
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 14,
+                      runSpacing: 6,
+                      children: [
+                        if (poi.phone != null)
+                          _buildMetadata(
+                            Icons.phone_rounded,
+                            poi.phone!,
+                            isDark,
+                          ),
+                        if (poi.website != null)
+                          _buildMetadata(
+                            Icons.language_rounded,
+                            'Situs tersedia',
+                            isDark,
+                          ),
+                      ],
+                    ),
+                  ],
+
+                  if (widget.routeError != null) ...[
+                    const SizedBox(height: 12),
+                    _buildRouteMessage(
+                      icon: Icons.info_outline_rounded,
+                      text: widget.routeError!,
+                      color: AppColors.sosEmergency,
+                      isDark: isDark,
+                    ),
+                  ] else if (widget.routeDistanceMeters != null) ...[
+                    const SizedBox(height: 12),
+                    _buildRouteMessage(
+                      icon: Icons.directions_walk_rounded,
+                      text:
+                          '${DistanceFormatter.format(widget.routeDistanceMeters)}'
+                          '${widget.routeDurationSeconds == null ? '' : ' · ${(widget.routeDurationSeconds! / 60).ceil()} menit'}',
+                      color: AppColors.statusSafe,
+                      isDark: isDark,
+                    ),
+                  ],
+
                   const SizedBox(height: 20),
 
                   // Actions Row: Rute Berjalan (Primary 52px) & Bagikan (Secondary)
@@ -492,16 +544,29 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                         child: SizedBox(
                           height: 52,
                           child: ElevatedButton.icon(
-                            onPressed: onRoute ?? () {},
-                            icon: Icon(
-                              Icons.directions_walk_rounded,
-                              size: 20,
-                              color: isDark
-                                  ? AppColors.espressoDark
-                                  : AppColors.goldPrimary,
-                            ),
+                            onPressed: widget.isRouteLoading ? null : onRoute,
+                            icon: widget.isRouteLoading
+                                ? SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: isDark
+                                          ? AppColors.espressoDark
+                                          : AppColors.goldPrimary,
+                                    ),
+                                  )
+                                : Icon(
+                                    Icons.directions_walk_rounded,
+                                    size: 20,
+                                    color: isDark
+                                        ? AppColors.espressoDark
+                                        : AppColors.goldPrimary,
+                                  ),
                             label: Text(
-                              'Rute Jalan Kaki',
+                              widget.isRouteLoading
+                                  ? 'Mencari Rute…'
+                                  : 'Rute Jalan Kaki',
                               style: AppTypography.labelLarge.copyWith(
                                 color: isDark
                                     ? AppColors.espressoDark
@@ -543,7 +608,7 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                         child: SizedBox(
                           height: 52,
                           child: OutlinedButton.icon(
-                            onPressed: onShare ?? () {},
+                            onPressed: onShare,
                             icon: Icon(
                               Icons.share_outlined,
                               size: 18,
@@ -586,6 +651,56 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildMetadata(IconData icon, String text, bool isDark) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: AppColors.goldPrimary),
+        const SizedBox(width: 5),
+        Text(
+          text,
+          style: AppTypography.captionSmall.copyWith(
+            color: isDark ? AppColors.darkTextBody : AppColors.textMuted,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRouteMessage({
+    required IconData icon,
+    required String text,
+    required Color color,
+    required bool isDark,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: isDark ? 0.16 : 0.08),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 17, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: isDark ? Colors.white : AppColors.espressoDark,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

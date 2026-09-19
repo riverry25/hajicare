@@ -34,7 +34,7 @@ void main() {
       expect(poi.coordinate.longitude, equals(39.8255));
       expect(poi.isAccessible, isTrue);
       expect(poi.tags, contains('Bintang 5'));
-      expect(poi.statusLabel, contains('Bintang 5'));
+      expect(poi.statusLabel, equals('Data OpenStreetMap'));
     });
 
     test(
@@ -59,7 +59,7 @@ void main() {
         expect(poi.name, equals('Swissôtel Al Maqam'));
         expect(poi.coordinate.latitude, equals(21.4200));
         expect(poi.coordinate.longitude, equals(39.8300));
-        expect(poi.tags, contains('1624 Kamar'));
+        expect(poi.tags, contains('1624 kamar'));
       },
     );
 
@@ -112,7 +112,7 @@ void main() {
 
         final poi = service.mapOsmElementToHotel(anonymousHotel);
         expect(poi, isNotNull);
-        expect(poi!.name, equals('Hotel'));
+        expect(poi!.name, equals('Hotel / Penginapan'));
       },
     );
 
@@ -172,7 +172,7 @@ void main() {
     );
 
     test(
-      'fetchNearbyHotels retains existing hotels on temporary network failure',
+      'fetchNearbyHotels does not reuse hotels from a different area on failure',
       () async {
         int callCount = 0;
         final mockClient = MockClient((request) async {
@@ -186,7 +186,7 @@ void main() {
                     "id": 777,
                     "lat": 21.421,
                     "lon": 39.826,
-                    "tags": {"name": "Solid Hotel"},
+                    "tags": {"tourism": "hotel", "name": "Solid Hotel"},
                   },
                 ],
               }),
@@ -204,15 +204,53 @@ void main() {
         final res1 = await service.fetchNearbyHotels(center: center1);
         expect(res1.isNotEmpty, isTrue);
 
-        // 2. Second fetch fails, but gracefully returns previous cache rather than crashing
-        final res2 = await service.fetchNearbyHotels(center: center2FarAway);
-        expect(res2.isNotEmpty, isTrue);
-        expect(res2.first.name, equals('Solid Hotel'));
+        // A different area must never receive stale pins from center1.
+        await expectLater(
+          service.fetchNearbyHotels(center: center2FarAway),
+          throwsA(isA<PoiServiceException>()),
+        );
       },
     );
   });
 
   group('Route Service & GeoJSON Geometry Tests', () {
+    test('no-key fallback uses the pedestrian OpenStreetMap backend', () async {
+      late Uri requestedUri;
+      final mockClient = MockClient((request) async {
+        requestedUri = request.url;
+        return http.Response(
+          jsonEncode({
+            'code': 'Ok',
+            'routes': [
+              {
+                'distance': 92.0,
+                'duration': 73.5,
+                'geometry': {
+                  'type': 'LineString',
+                  'coordinates': [
+                    [106.8456, -6.2088],
+                    [106.8460, -6.2095],
+                  ],
+                },
+              },
+            ],
+          }),
+          200,
+        );
+      });
+      final service = RouteService(client: mockClient, apiKey: '');
+
+      final result = await service.getWalkingRoute(
+        origin: const LatLng(-6.2088, 106.8456),
+        destination: const LatLng(-6.2095, 106.8460),
+      );
+
+      expect(requestedUri.host, 'routing.openstreetmap.de');
+      expect(requestedUri.path, contains('/routed-foot/'));
+      expect(result.distanceMeters, 92.0);
+      expect(result.points, hasLength(2));
+    });
+
     test(
       'HeiGIT GeoJSON line string coordinates converted correctly to LatLng',
       () async {

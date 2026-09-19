@@ -7,6 +7,7 @@ import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/services/app_alert_service.dart';
+import '../../../core/utils/user_feedback_message.dart';
 
 /// Simple full-screen edit room form.
 /// Uses normal screen navigation (Get.toNamed) instead of dialogs/modals,
@@ -93,14 +94,17 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
         AppAlert.success(
           context,
           title: 'Perubahan Disimpan',
-          message: 'Pengaturan room "$name" berhasil diperbarui.',
+          message: 'Pengaturan rombongan "$name" sudah diperbarui.',
         );
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _isSaving = false;
-          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+          _errorMessage = UserFeedbackMessage.from(
+            e,
+            fallback: 'Perubahan belum dapat disimpan. Silakan coba lagi.',
+          );
         });
       }
     }

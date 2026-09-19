@@ -8,10 +8,30 @@ import 'package:hajicare/features/map/controllers/map_controller.dart';
 import 'package:hajicare/features/map/models/map_poi.dart';
 import 'package:hajicare/features/map/models/map_search_result.dart';
 import 'package:hajicare/features/room/models/room_member_model.dart';
-import 'package:hajicare/features/map/services/poi_service.dart';
 import 'package:hajicare/features/map/services/route_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
+
+List<MapPoi> get samplePois => [
+  MapPoi(
+    id: 'medical-1',
+    name: 'Klinik OSM',
+    category: PoiCategory.medis,
+    coordinate: const LatLng(21.4145, 39.8942),
+  ),
+  MapPoi(
+    id: 'toilet-1',
+    name: 'Toilet OSM',
+    category: PoiCategory.toilet,
+    coordinate: const LatLng(21.4130, 39.8922),
+  ),
+  MapPoi(
+    id: 'hotel-1',
+    name: 'Hotel OSM',
+    category: PoiCategory.hotel,
+    coordinate: const LatLng(21.4150, 39.8950),
+  ),
+];
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -42,12 +62,12 @@ void main() {
     );
 
     test('Filters POIs correctly based on selected category chip', () {
-      controller.pois.value = PoiService.holyLandRealPois;
+      controller.pois.value = samplePois;
       controller.selectFilter(0);
       expect(controller.filteredPois.isNotEmpty, isTrue);
 
       controller.selectFilter(1);
-      expect(controller.filteredPois.length, equals(controller.pois.length));
+      expect(controller.filteredPois, isEmpty);
 
       controller.selectFilter(3);
       expect(
@@ -64,7 +84,33 @@ void main() {
         ),
         isTrue,
       );
+
+      controller.selectFilter(7);
+      expect(controller.filteredPois, hasLength(1));
+      expect(controller.filteredPois.single.category, PoiCategory.hotel);
+      expect(controller.selectedPoi.value, isNull);
     });
+
+    test(
+      'camera movement exposes search-this-area only after a useful move',
+      () {
+        controller.poiQueryCenter.value = const LatLng(-6.2088, 106.8456);
+
+        controller.onMapPositionChanged(
+          const LatLng(-6.2090, 106.8458),
+          16,
+          hasGesture: true,
+        );
+        expect(controller.showSearchThisArea.value, isFalse);
+
+        controller.onMapPositionChanged(
+          const LatLng(-6.2200, 106.8600),
+          16,
+          hasGesture: true,
+        );
+        expect(controller.showSearchThisArea.value, isTrue);
+      },
+    );
 
     test(
       'Distance calculation between coordinates returns accurate metric distance',
@@ -83,7 +129,7 @@ void main() {
       () async {
         // Simulate real GPS location acquired
         controller.currentUserLocation.value = const LatLng(21.4135, 39.8930);
-        controller.pois.value = PoiService.holyLandRealPois;
+        controller.pois.value = samplePois;
         final poi = controller.pois.firstWhere(
           (p) => p.category == PoiCategory.toilet,
         );
@@ -118,7 +164,7 @@ void main() {
     );
 
     test('clearSelectionAndRoute resets all selected entities and route', () {
-      controller.pois.value = PoiService.holyLandRealPois;
+      controller.pois.value = samplePois;
       final poi = controller.pois.first;
       controller.selectPoi(poi);
       expect(controller.selectedPoi.value, isNotNull);
@@ -129,6 +175,20 @@ void main() {
       expect(controller.selectedMember.value, isNull);
       expect(controller.activeRoute.isEmpty, isTrue);
     });
+
+    test(
+      'closing place details preserves an active navigation route',
+      () async {
+        controller.currentUserLocation.value = const LatLng(21.4135, 39.8930);
+        final poi = samplePois.first;
+        await controller.requestRouteToPoi(poi);
+
+        controller.closeBottomSheet();
+
+        expect(controller.selectedPoi.value, isNull);
+        expect(controller.activeRoute, isNotEmpty);
+      },
+    );
 
     test('Reset compass resets compassRotation to 0.0', () {
       controller.compassRotation.value = 45.0;
@@ -372,7 +432,7 @@ void main() {
         expect(mockRouteService.callCount, equals(initialCalls));
         expect(
           controller.routeError.value,
-          contains('Lokasi GPS Anda belum tersedia'),
+          contains('Lokasi Anda belum ditemukan'),
         );
       },
     );
@@ -645,6 +705,9 @@ void main() {
           searchController.currentUserLocation.value,
           equals(initialUserLoc),
         );
+        expect(searchController.selectedPoi.value?.name, 'Monas');
+        expect(searchController.selectedPoi.value?.category, PoiCategory.place);
+        expect(searchController.isBottomSheetOpen.value, isTrue);
       },
     );
 

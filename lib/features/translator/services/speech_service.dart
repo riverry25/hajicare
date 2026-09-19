@@ -112,7 +112,10 @@ class SpeechService {
     } catch (e) {
       debugPrint('[SpeechService] startListening error: $e');
       _status = SpeechStatus.serviceUnavailable;
-      onStatusChanged?.call(_status, 'Gagal memulai mikrofon: $e');
+      onStatusChanged?.call(
+        _status,
+        'Mikrofon belum dapat digunakan. Periksa izin mikrofon, lalu coba lagi.',
+      );
     }
   }
 

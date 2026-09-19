@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hajicare/features/map/models/map_poi.dart';
 import 'package:hajicare/features/map/services/poi_service.dart';
@@ -7,142 +8,148 @@ import 'package:http/testing.dart';
 import 'package:latlong2/latlong.dart';
 
 void main() {
-  group('PoiService Real-World POI Discovery Tests', () {
+  group('PoiService dynamic OpenStreetMap discovery', () {
     test(
-      'isInHolyLand correctly identifies Makkah, Mina, and Madinah coordinates',
-      () {
-        // Mina Tent City
-        expect(PoiService.isInHolyLand(const LatLng(21.4135, 39.8930)), isTrue);
-        // Ka'bah / Masjidil Haram
-        expect(PoiService.isInHolyLand(const LatLng(21.4225, 39.8262)), isTrue);
-        // Masjid Nabawi Madinah
-        expect(PoiService.isInHolyLand(const LatLng(24.4672, 39.6111)), isTrue);
-        // Jakarta, Indonesia (NOT holy land)
-        expect(
-          PoiService.isInHolyLand(const LatLng(-6.2088, 106.8456)),
-          isFalse,
+      'queries Overpass in Holy Land instead of returning static places',
+      () async {
+        var callCount = 0;
+        final service = PoiService(
+          client: MockClient((request) async {
+            callCount++;
+            expect(request.body, contains('21.4135'));
+            expect(request.body, contains('nwr'));
+            return http.Response(jsonEncode({'elements': <Object>[]}), 200);
+          }),
         );
-        // Mountain View, USA (NOT holy land)
-        expect(
-          PoiService.isInHolyLand(const LatLng(37.4220, -122.0841)),
-          isFalse,
+
+        final result = await service.fetchNearbyPois(
+          center: const LatLng(21.4135, 39.8930),
         );
+
+        expect(callCount, 1);
+        expect(result, isEmpty);
       },
     );
 
     test(
-      'fetchRealNearbyPois returns verified authentic Holy Land POIs when in Masyair/Makkah',
+      'parses nodes, ways, and relations into truthful POI metadata',
       () async {
-        final mockClient = MockClient((request) async {
-          return http.Response(jsonEncode({"elements": []}), 200);
-        });
-        final service = PoiService(client: mockClient);
-        const minaCoord = LatLng(21.4135, 39.8930);
-
-        final pois = await service.fetchRealNearbyPois(center: minaCoord);
-
-        expect(pois.isNotEmpty, isTrue);
-        expect(pois.any((p) => p.name.contains('Maktab 48')), isTrue);
-        expect(pois.any((p) => p.name.contains('Posko Medis PPIH')), isTrue);
-        expect(pois.any((p) => p.name.contains('Toilet')), isTrue);
-      },
-    );
-
-    test(
-      'fetchRealNearbyPois queries Overpass API and parses genuine real-world amenities outside Holy Land',
-      () async {
-        final mockOverpassResponse = {
-          "elements": [
+        final response = {
+          'elements': [
             {
-              "type": "node",
-              "id": 101,
-              "lat": -6.2080,
-              "lon": 106.8450,
-              "tags": {
-                "amenity": "toilets",
-                "name": "Toilet Publik Stasiun",
-                "wheelchair": "yes",
+              'type': 'node',
+              'id': 101,
+              'lat': -6.2080,
+              'lon': 106.8450,
+              'tags': {
+                'amenity': 'restaurant',
+                'name': 'Warung Nusantara',
+                'cuisine': 'indonesian;seafood',
+                'opening_hours': 'Mo-Su 08:00-22:00',
+                'addr:street': 'Jalan Merdeka',
+                'addr:housenumber': '10',
               },
             },
             {
-              "type": "node",
-              "id": 102,
-              "lat": -6.2095,
-              "lon": 106.8460,
-              "tags": {
-                "amenity": "hospital",
-                "name": "RSUD Tebet",
-                "opening_hours": "24/7",
-                "emergency": "yes",
+              'type': 'way',
+              'id': 102,
+              'center': {'lat': -6.2095, 'lon': 106.8460},
+              'tags': {
+                'tourism': 'hotel',
+                'name': 'Hotel Nyata',
+                'stars': '4',
+                'wheelchair': 'yes',
               },
             },
             {
-              "type": "node",
-              "id": 103,
-              "lat": -6.2070,
-              "lon": 106.8440,
-              "tags": {
-                "amenity": "place_of_worship",
-                "religion": "muslim",
-                "name": "Masjid Al-Barkah",
-              },
+              'type': 'relation',
+              'id': 103,
+              'center': {'lat': -6.2070, 'lon': 106.8440},
+              'tags': {'amenity': 'atm', 'operator': 'Bank Contoh'},
             },
           ],
         };
-
-        final mockClient = MockClient((request) async {
-          if (request.url.host.contains('overpass-api.de')) {
-            return http.Response(jsonEncode(mockOverpassResponse), 200);
-          }
-          return http.Response('Not Found', 404);
-        });
-
-        final service = PoiService(client: mockClient);
-        const jakartaCoord = LatLng(-6.2088, 106.8456);
-
-        final pois = await service.fetchRealNearbyPois(
-          center: jakartaCoord,
-          includeHotels: false,
+        final service = PoiService(
+          client: MockClient(
+            (_) async => http.Response(jsonEncode(response), 200),
+          ),
         );
 
-        expect(pois.length, equals(3));
-
-        // 1. Check Toilet
-        final toilet = pois.firstWhere((p) => p.category == PoiCategory.toilet);
-        expect(toilet.name, equals('Toilet Publik Stasiun'));
-        expect(toilet.isAccessible, isTrue);
-        expect(toilet.coordinate.latitude, equals(-6.2080));
-
-        // 2. Check Hospital
-        final hospital = pois.firstWhere(
-          (p) => p.category == PoiCategory.medis,
+        final pois = await service.fetchNearbyPois(
+          center: const LatLng(-6.2088, 106.8456),
         );
-        expect(hospital.name, equals('RSUD Tebet'));
-        expect(hospital.statusLabel, equals('Siaga 24 Jam'));
-        expect(hospital.coordinate.latitude, equals(-6.2095));
 
-        // 3. Check Mosque
-        final mosque = pois.firstWhere((p) => p.category == PoiCategory.ibadah);
-        expect(mosque.name, equals('Masjid Al-Barkah'));
-        expect(mosque.coordinate.latitude, equals(-6.2070));
+        expect(pois, hasLength(3));
+        final restaurant = pois.firstWhere(
+          (poi) => poi.category == PoiCategory.restaurant,
+        );
+        expect(restaurant.address, 'Jalan Merdeka 10');
+        expect(restaurant.openingHours, 'Mo-Su 08:00-22:00');
+        expect(restaurant.tags, containsAll(['Indonesian', 'Seafood']));
+
+        final hotel = pois.firstWhere(
+          (poi) => poi.category == PoiCategory.hotel,
+        );
+        expect(hotel.id, 'osm_way_102');
+        expect(hotel.isAccessible, isTrue);
+        expect(hotel.tags, containsAll(['Bintang 4', 'Akses kursi roda']));
+
+        final atm = pois.firstWhere((poi) => poi.category == PoiCategory.atm);
+        expect(atm.name, 'Bank Contoh');
+        expect(atm.openStreetMapUri.toString(), contains('/relation/103'));
       },
     );
 
+    test('deduplicates provider elements and reuses same-area cache', () async {
+      var calls = 0;
+      final payload = {
+        'elements': [
+          {
+            'type': 'node',
+            'id': 1,
+            'lat': -6.2,
+            'lon': 106.8,
+            'tags': {'amenity': 'cafe', 'name': 'Kafe A'},
+          },
+          {
+            'type': 'node',
+            'id': 1,
+            'lat': -6.2,
+            'lon': 106.8,
+            'tags': {'amenity': 'cafe', 'name': 'Duplikat'},
+          },
+        ],
+      };
+      final service = PoiService(
+        client: MockClient((_) async {
+          calls++;
+          return http.Response(jsonEncode(payload), 200);
+        }),
+      );
+
+      final first = await service.fetchNearbyPois(
+        center: const LatLng(-6.2001, 106.8001),
+      );
+      final second = await service.fetchNearbyPois(
+        center: const LatLng(-6.2002, 106.8002),
+      );
+
+      expect(first, hasLength(1));
+      expect(second, hasLength(1));
+      expect(calls, 1);
+    });
+
     test(
-      'fetchRealNearbyPois returns empty list when no real amenities exist in area (no fake offset pins)',
+      'throws a controlled error when every Overpass endpoint fails',
       () async {
-        final mockEmptyResponse = {"elements": []};
+        final service = PoiService(
+          client: MockClient((_) async => http.Response('unavailable', 503)),
+        );
 
-        final mockClient = MockClient((request) async {
-          return http.Response(jsonEncode(mockEmptyResponse), 200);
-        });
-
-        final service = PoiService(client: mockClient);
-        const emptyLocation = LatLng(-7.5000, 110.5000);
-
-        final pois = await service.fetchRealNearbyPois(center: emptyLocation);
-
-        expect(pois, isEmpty);
+        expect(
+          () => service.fetchNearbyPois(center: const LatLng(-7.5, 110.5)),
+          throwsA(isA<PoiServiceException>()),
+        );
       },
     );
   });

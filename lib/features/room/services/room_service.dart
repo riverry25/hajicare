@@ -34,7 +34,7 @@ class RoomAlreadyJoinedException extends RoomException {
 
 class StaleInvitationException extends RoomException {
   const StaleInvitationException([
-    super.message = 'Room yang mengirim undangan ini sudah tidak tersedia.',
+    super.message = 'Rombongan yang mengirim undangan sudah tidak tersedia.',
   ]);
 }
 
@@ -107,7 +107,7 @@ class RoomService {
   }) async {
     final trimmedName = capitalizeWords(name);
     if (trimmedName.isEmpty) {
-      throw const RoomException('Nama room tidak boleh kosong');
+      throw const RoomException('Isi nama rombongan terlebih dahulu.');
     }
 
     final code = await generateUniqueRoomCode();
@@ -152,7 +152,7 @@ class RoomService {
   }) async {
     final trimmedName = capitalizeWords(name);
     if (trimmedName.isEmpty) {
-      throw const RoomException('Nama room tidak boleh kosong');
+      throw const RoomException('Isi nama rombongan terlebih dahulu.');
     }
 
     // Constraint: 1 active room per user
@@ -163,7 +163,7 @@ class RoomService {
     final currentActiveRoom = userDoc.data()?['activeRoomId'] as String?;
     if (currentActiveRoom != null && currentActiveRoom.trim().isNotEmpty) {
       throw const RoomException(
-        'Anda sudah memiliki Room aktif. Tidak dapat membuat room kedua.',
+        'Anda sudah berada dalam satu rombongan. Keluar dari rombongan tersebut sebelum membuat yang baru.',
       );
     }
 
@@ -261,7 +261,7 @@ class RoomService {
   }) async {
     final roomDoc = await _firestore.collection('rooms').doc(roomId).get();
     if (!roomDoc.exists) {
-      throw const RoomException('Room tidak ditemukan.');
+      throw const RoomException('Rombongan tidak ditemukan.');
     }
 
     final roomData = roomDoc.data()!;
@@ -271,7 +271,7 @@ class RoomService {
     // Enforce creator ownership
     if (!isAdmin && (createdBy == null || createdBy != currentUserId)) {
       throw const RoomException(
-        'Anda bukan pembuat room ini. Hanya pembuat room yang berhak mengubah pengaturan.',
+        'Hanya pembuat rombongan yang dapat mengubah pengaturannya.',
       );
     }
 
@@ -381,7 +381,9 @@ class RoomService {
   }) async {
     final roomDoc = await _firestore.collection('rooms').doc(roomId).get();
     if (!roomDoc.exists) {
-      throw const RoomException('Room tidak ditemukan atau sudah dihapus.');
+      throw const RoomException(
+        'Rombongan tidak ditemukan atau sudah dihapus.',
+      );
     }
 
     final roomData = roomDoc.data()!;
@@ -393,7 +395,7 @@ class RoomService {
     // Enforce creator ownership
     if (!isAdmin && (createdBy == null || createdBy != currentUserId)) {
       throw const RoomException(
-        'Anda bukan pembuat room ini. Hanya pembuat room yang berhak menghapus.',
+        'Hanya pembuat rombongan yang dapat menghapusnya.',
       );
     }
 
@@ -426,9 +428,9 @@ class RoomService {
       if (memberRole == 'jamaah' && memberUid != currentUserId) {
         final notifRef = _firestore.collection('notifications').doc();
         batch.set(notifRef, {
-          'title': 'Room Dihapus',
+          'title': 'Rombongan Dihapus',
           'message':
-              'Room "$roomName" ($roomCode) telah dihapus oleh Pendamping $senderName. Akses ke pemantauan room dinonaktifkan.',
+              'Rombongan "$roomName" telah dihapus oleh Pendamping $senderName. Anda sudah dikeluarkan dari rombongan tersebut.',
           'type': 'room_deleted',
           'recipientId': memberUid,
           'senderId': currentUserId,
@@ -608,7 +610,7 @@ class RoomService {
   }) async {
     final normalizedCode = roomCode.trim().toUpperCase();
     if (normalizedCode.isEmpty) {
-      throw const RoomException('Kode room wajib diisi');
+      throw const RoomException('Masukkan kode rombongan terlebih dahulu.');
     }
 
     // 1. Verify user doesn't already have an active room
@@ -616,7 +618,7 @@ class RoomService {
     final existingRoomId = userDoc.data()?['activeRoomId'] as String?;
     if (existingRoomId != null && existingRoomId.trim().isNotEmpty) {
       throw const RoomException(
-        'Anda sudah terdaftar dalam room lain. Setiap pengguna hanya boleh memiliki 1 room aktif.',
+        'Anda sudah berada dalam rombongan lain. Keluar dari rombongan tersebut terlebih dahulu.',
       );
     }
 
@@ -629,7 +631,7 @@ class RoomService {
 
     if (querySnap.docs.isEmpty) {
       throw const RoomNotFoundException(
-        'Kode room tidak ditemukan. Silakan periksa kembali kode Anda.',
+        'Kode rombongan tidak ditemukan. Periksa kembali kode Anda.',
       );
     }
 
@@ -640,7 +642,7 @@ class RoomService {
 
     if (!isActive) {
       throw const RoomInactiveException(
-        'Room ini sedang nonaktif dan tidak dapat menerima anggota baru.',
+        'Rombongan ini sedang dinonaktifkan dan belum dapat menerima anggota baru.',
       );
     }
 
@@ -657,9 +659,7 @@ class RoomService {
           .get();
       final isAlreadyMember = membersSnap.docs.any((d) => d.id == uid);
       if (!isAlreadyMember && membersSnap.docs.length >= 5) {
-        throw const RoomException(
-          'Room ini sudah memiliki batas maksimal 5 Pendamping.',
-        );
+        throw const RoomException('Rombongan ini sudah memiliki 5 pendamping.');
       }
     }
 
@@ -786,7 +786,7 @@ class RoomService {
     // 1. Verify Room exists
     final roomDoc = await _firestore.collection('rooms').doc(roomId).get();
     if (!roomDoc.exists) {
-      throw const RoomException('Room tidak ditemukan.');
+      throw const RoomException('Rombongan tidak ditemukan.');
     }
     final roomData = roomDoc.data()!;
     final roomName = (roomData['name'] as String?)?.trim() ?? 'Room';
@@ -807,7 +807,7 @@ class RoomService {
 
     if (!isAdmin && !isAuthorizedPendamping) {
       throw const RoomException(
-        'Anda tidak memiliki kewenangan untuk mengeluarkan jamaah dari room ini.',
+        'Anda tidak dapat mengeluarkan jamaah dari rombongan ini.',
       );
     }
 
@@ -820,7 +820,7 @@ class RoomService {
     final memberDoc = await memberRef.get();
     if (!memberDoc.exists) {
       throw const RoomException(
-        'Jamaah ini bukan merupakan anggota aktif dari room ini.',
+        'Jamaah ini sudah tidak berada dalam rombongan.',
       );
     }
     final memberData = memberDoc.data()!;
@@ -849,9 +849,9 @@ class RoomService {
       id: notifDocRef.id,
       recipientId: jamaahUid,
       type: 'room_removed',
-      title: 'Anda dikeluarkan dari Room',
+      title: 'Anda Dikeluarkan dari Rombongan',
       message:
-          'Anda telah dikeluarkan dari Room "$roomName" ($roomCode) oleh $rolePrefix $actorName.',
+          'Anda sudah dikeluarkan dari rombongan "$roomName" oleh $rolePrefix $actorName.',
       senderId: actorUid,
       senderRole: normalizedActorRole,
       senderName: actorName,
@@ -910,14 +910,16 @@ class RoomService {
     final data = targetDoc.data()!;
     final role = (data['role'] as String?) ?? 'jamaah';
     if (role != 'jamaah') {
-      throw const RoomException('User ini bukan merupakan Jamaah.');
+      throw const RoomException('Akun ini bukan akun jamaah.');
     }
 
     final existingRoomId = data['activeRoomId'] as String?;
     if (existingRoomId != null &&
         existingRoomId.isNotEmpty &&
         existingRoomId != roomId) {
-      throw const RoomException('Jamaah ini sudah terdaftar di room lain.');
+      throw const RoomException(
+        'Jamaah ini sudah berada dalam rombongan lain.',
+      );
     }
 
     // 2. Atomic batch: add to members & update activeRoomId
@@ -963,14 +965,16 @@ class RoomService {
     final normalizedEmail = email.trim().toLowerCase();
     if (normalizedEmail.isEmpty || !normalizedEmail.contains('@')) {
       throw const RoomException(
-        'Format email tidak valid. Masukkan email yang benar.',
+        'Penulisan email belum benar. Periksa kembali email jamaah.',
       );
     }
 
     // 1. Verify active room exists and is active
     final roomDoc = await _firestore.collection('rooms').doc(roomId).get();
     if (!roomDoc.exists) {
-      throw const RoomException('Room tidak ditemukan atau telah dihapus.');
+      throw const RoomException(
+        'Rombongan tidak ditemukan atau sudah dihapus.',
+      );
     }
     final roomData = roomDoc.data()!;
     final roomName = (roomData['name'] as String?)?.trim() ?? 'Room';
@@ -978,7 +982,7 @@ class RoomService {
     final isActive = (roomData['isActive'] as bool?) ?? true;
     if (!isActive) {
       throw const RoomException(
-        'Room ini sedang nonaktif dan tidak dapat menerima anggota baru.',
+        'Rombongan ini sedang dinonaktifkan dan belum dapat menerima anggota baru.',
       );
     }
 
@@ -993,7 +997,7 @@ class RoomService {
 
     if (querySnap.docs.isEmpty) {
       throw RoomException(
-        'Email "$normalizedEmail" belum terdaftar di sistem HajiCare.',
+        'Email "$normalizedEmail" belum terdaftar sebagai jamaah HajiCare.',
       );
     }
 
@@ -1003,17 +1007,13 @@ class RoomService {
 
     // 3. Validation: Pendamping adding self
     if (targetUid == currentPendampingUid) {
-      throw const RoomException(
-        'Anda tidak dapat mengundang diri sendiri sebagai Jamaah.',
-      );
+      throw const RoomException('Anda tidak dapat mengundang akun sendiri.');
     }
 
     // 4. Validation: User role must be jamaah
     final role = (data['role'] as String?)?.toLowerCase() ?? 'jamaah';
     if (role != 'jamaah') {
-      throw RoomException(
-        'Akun ini terdaftar sebagai ${role.toUpperCase()}, bukan sebagai Jamaah.',
-      );
+      throw RoomException('Akun ini bukan akun jamaah.');
     }
 
     // 5. Validation: User already in this room
@@ -1025,7 +1025,7 @@ class RoomService {
         .get();
 
     if (existingMemberDoc.exists) {
-      throw const RoomException('Jamaah ini sudah berada di dalam room ini.');
+      throw const RoomException('Jamaah ini sudah berada dalam rombongan ini.');
     }
 
     // 6. Validation: User already in another room
@@ -1033,7 +1033,9 @@ class RoomService {
     if (existingRoomId != null &&
         existingRoomId.isNotEmpty &&
         existingRoomId != roomId) {
-      throw const RoomException('Jamaah ini sudah terdaftar di room lain.');
+      throw const RoomException(
+        'Jamaah ini sudah berada dalam rombongan lain.',
+      );
     }
 
     // 7. Validation: Check for existing pending invitation
@@ -1047,7 +1049,7 @@ class RoomService {
 
     if (pendingInvSnap.docs.isNotEmpty) {
       throw const RoomException(
-        'Undangan sudah pernah dikirimkan ke Jamaah ini dan sedang menunggu respons.',
+        'Undangan untuk jamaah ini sudah dikirim dan masih menunggu jawaban.',
       );
     }
 
@@ -1158,7 +1160,7 @@ class RoomService {
       final invData = invSnap.data()!;
       final status = (invData['status'] as String?)?.toLowerCase();
       if (status != 'pending') {
-        throw RoomException('Undangan ini sudah tidak aktif ($status).');
+        throw const RoomException('Undangan ini sudah tidak berlaku.');
       }
       if (invData['toUserId'] != uid) {
         throw const RoomException(
@@ -1184,7 +1186,7 @@ class RoomService {
       final currentRoom = (userSnap.data()?['activeRoomId'] as String?)?.trim();
       if (currentRoom != null && currentRoom.isNotEmpty) {
         throw const RoomException(
-          'Anda sudah memiliki Room aktif. Setiap jamaah hanya boleh memiliki 1 room. Silakan keluar dari room lama Anda terlebih dahulu.',
+          'Anda sudah berada dalam rombongan. Keluar dari rombongan tersebut terlebih dahulu.',
         );
       }
 

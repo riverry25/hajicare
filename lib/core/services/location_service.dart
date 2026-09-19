@@ -76,13 +76,13 @@ class LocationService {
             source: LocationSource.lastKnown,
             state: LocationPermissionState.serviceDisabled,
             errorMessage:
-                'Layanan lokasi (GPS) tidak aktif. Menggunakan lokasi perangkat sebelumnya.',
+                'Lokasi ponsel belum aktif. Lokasi terakhir akan digunakan.',
           );
         }
         return const LocationResult(
           source: LocationSource.unavailable,
           state: LocationPermissionState.serviceDisabled,
-          errorMessage: 'Layanan lokasi (GPS) tidak aktif.',
+          errorMessage: 'Lokasi ponsel belum aktif.',
         );
       }
 
@@ -93,7 +93,8 @@ class LocationService {
           return const LocationResult(
             source: LocationSource.unavailable,
             state: LocationPermissionState.denied,
-            errorMessage: 'Izin akses lokasi ditolak.',
+            errorMessage:
+                'Izin lokasi belum diberikan. Izinkan lokasi, lalu coba lagi.',
           );
         }
       }
@@ -103,7 +104,7 @@ class LocationService {
           source: LocationSource.unavailable,
           state: LocationPermissionState.deniedForever,
           errorMessage:
-              'Izin akses lokasi ditolak permanen. Buka Pengaturan untuk mengizinkan.',
+              'Izin lokasi belum diberikan. Buka pengaturan, lalu izinkan lokasi untuk HajiCare.',
         );
       }
 
@@ -132,14 +133,14 @@ class LocationService {
             source: LocationSource.lastKnown,
             state: LocationPermissionState.granted,
             errorMessage:
-                'Waktu permintaan GPS habis. Menggunakan lokasi perangkat sebelumnya.',
+                'Lokasi terbaru belum ditemukan. Lokasi terakhir akan digunakan.',
           );
         }
         return const LocationResult(
           source: LocationSource.unavailable,
           state: LocationPermissionState.granted,
           errorMessage:
-              'Waktu permintaan GPS habis dan tidak ada lokasi sebelumnya.',
+              'Lokasi belum ditemukan. Pastikan lokasi ponsel aktif, lalu coba lagi.',
         );
       } catch (gpsError) {
         debugPrint('[LocationService] getCurrentPosition error: $gpsError');
@@ -154,7 +155,8 @@ class LocationService {
         return LocationResult(
           source: LocationSource.unavailable,
           state: LocationPermissionState.denied,
-          errorMessage: gpsError.toString(),
+          errorMessage:
+              'Lokasi belum ditemukan. Pastikan lokasi ponsel aktif, lalu coba lagi.',
         );
       }
     } catch (e) {
@@ -162,7 +164,8 @@ class LocationService {
       return LocationResult(
         source: LocationSource.unavailable,
         state: LocationPermissionState.denied,
-        errorMessage: e.toString(),
+        errorMessage:
+            'Lokasi belum dapat ditemukan. Periksa pengaturan lokasi ponsel, lalu coba lagi.',
       );
     }
   }

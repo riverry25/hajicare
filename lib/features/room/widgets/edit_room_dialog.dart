@@ -10,6 +10,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/user_feedback_message.dart';
 import '../controllers/admin_room_controller.dart';
 import '../services/room_service.dart';
 
@@ -77,7 +78,7 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
 
     final name = _nameCtrl.text.trim();
     if (name.isEmpty) {
-      setState(() => _inputError = 'Nama room tidak boleh kosong');
+      setState(() => _inputError = 'Isi nama rombongan terlebih dahulu.');
       return;
     }
 
@@ -86,7 +87,9 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
     final radius = double.tryParse(_radiusCtrl.text.trim());
 
     if (radius == null || radius <= 0) {
-      setState(() => _inputError = 'Radius aman harus angka positif (> 0 m)');
+      setState(
+        () => _inputError = 'Jarak aman harus berupa angka lebih dari 0 meter.',
+      );
       return;
     }
 
@@ -175,15 +178,18 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
       if (mounted) {
         AppAlert.success(
           context,
-          title: 'Berhasil',
-          message: 'Pengaturan room "$name" berhasil diperbarui.',
+          title: 'Perubahan Disimpan',
+          message: 'Pengaturan rombongan "$name" sudah diperbarui.',
         );
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _isSaving = false;
-          _inputError = e.toString().replaceFirst('Exception: ', '');
+          _inputError = UserFeedbackMessage.from(
+            e,
+            fallback: 'Perubahan belum dapat disimpan. Silakan coba lagi.',
+          );
         });
       }
     }

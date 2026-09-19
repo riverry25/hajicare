@@ -15,7 +15,7 @@ class AppAlert {
     String title = 'Berhasil',
     required String message,
     VoidCallback? onOk,
-    String okText = 'OK',
+    String okText = 'Selesai',
   }) {
     AppDialog.success(
       context: context,
@@ -29,7 +29,7 @@ class AppAlert {
   /// Menampilkan dialog error.
   static void error(
     BuildContext? context, {
-    String title = 'Terjadi Kesalahan',
+    String title = 'Belum Berhasil',
     required String message,
     VoidCallback? onOk,
     String okText = 'Tutup',
@@ -66,7 +66,7 @@ class AppAlert {
     String title = 'Informasi',
     required String message,
     VoidCallback? onOk,
-    String okText = 'OK',
+    String okText = 'Baik',
   }) {
     AppDialog.info(
       context: context,
@@ -103,7 +103,7 @@ class AppAlert {
   /// Menampilkan dialog loading non-dismissible.
   static void loading(
     BuildContext? context, {
-    String message = 'Memproses...',
+    String message = 'Mohon tunggu...',
   }) {
     AppDialog.loading(context: context, message: message);
   }

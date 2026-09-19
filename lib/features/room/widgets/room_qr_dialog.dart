@@ -228,7 +228,7 @@ class RoomQrDialog extends StatelessWidget {
             AppAlert.success(
               context,
               title: 'Kode Disalin',
-              message: 'Kode room "${room.code}" berhasil disalin.',
+              message: 'Kode rombongan "${room.code}" sudah disalin.',
             );
           },
           borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -304,13 +304,13 @@ class RoomQrDialog extends StatelessWidget {
                 onPressed: () {
                   HapticFeedback.lightImpact();
                   final shareText =
-                      "Assalamu'alaikum, bergabunglah ke rombongan '${room.capitalizedName}' di aplikasi HajiCare.\n\nKode Room: ${room.code}\n\nMasukkan kode tersebut pada menu 'Gabung Room' di aplikasi HajiCare.";
+                      "Assalamu'alaikum, bergabunglah ke rombongan '${room.capitalizedName}' di aplikasi HajiCare.\n\nKode rombongan: ${room.code}\n\nMasukkan kode tersebut pada menu 'Gabung Rombongan' di aplikasi HajiCare.";
                   Clipboard.setData(ClipboardData(text: shareText));
                   AppAlert.success(
                     context,
                     title: 'Teks Undangan Disalin',
                     message:
-                        'Format teks undangan berhasil disalin ke clipboard untuk dibagikan ke WhatsApp / grup.',
+                        'Teks undangan sudah disalin dan siap ditempel ke WhatsApp atau grup.',
                   );
                 },
               ),

@@ -37,7 +37,7 @@ class AppDialog {
     required AppDialogType type,
     required String title,
     required String message,
-    String okText = 'OK',
+    String okText = 'Baik',
     Color? okColor,
     VoidCallback? onOk,
     String? cancelText,
@@ -49,7 +49,11 @@ class AppDialog {
     bool isDestructive = false,
   }) {
     final ctx = resolveSafeContext(context);
-    final isDark = ctx != null ? AppColors.isDark(ctx) : Get.isDarkMode;
+    if (ctx == null) {
+      return Future<T?>.value();
+    }
+
+    final isDark = AppColors.isDark(ctx);
     final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
     final headingColor = isDark
         ? AppColors.darkTextHeading
@@ -142,8 +146,8 @@ class AppDialog {
                           return Transform.scale(scale: scale, child: child);
                         },
                         child: Container(
-                          width: 58,
-                          height: 58,
+                          width: 64,
+                          height: 64,
                           decoration: BoxDecoration(
                             color: accentColor.withValues(alpha: 0.14),
                             shape: BoxShape.circle,
@@ -152,7 +156,7 @@ class AppDialog {
                               width: 2,
                             ),
                           ),
-                          child: Icon(iconData, color: accentColor, size: 32),
+                          child: Icon(iconData, color: accentColor, size: 36),
                         ),
                       ),
                       const SizedBox(height: AppSpacing.md),
@@ -169,12 +173,18 @@ class AppDialog {
                       const SizedBox(height: AppSpacing.sm),
 
                       // Message
-                      Text(
-                        message,
-                        textAlign: TextAlign.center,
-                        style: AppTypography.bodySmall.copyWith(
-                          color: bodyColor,
-                          height: 1.45,
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 240),
+                        child: SingleChildScrollView(
+                          child: Text(
+                            message,
+                            textAlign: TextAlign.center,
+                            style: AppTypography.bodyMedium.copyWith(
+                              color: bodyColor,
+                              height: 1.5,
+                              fontSize: 15,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: AppSpacing.lg),
@@ -198,7 +208,7 @@ class AppDialog {
                                     ),
                                   ),
                                   padding: const EdgeInsets.symmetric(
-                                    vertical: 12,
+                                    vertical: 14,
                                   ),
                                 ),
                                 onPressed: () {
@@ -212,7 +222,7 @@ class AppDialog {
                                   cancelText,
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w600,
-                                    fontSize: 13.5,
+                                    fontSize: 15,
                                   ),
                                 ),
                               ),
@@ -234,7 +244,7 @@ class AppDialog {
                                   ),
                                 ),
                                 padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
+                                  vertical: 14,
                                 ),
                                 elevation: 0,
                               ),
@@ -249,7 +259,7 @@ class AppDialog {
                                 okText,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 13.5,
+                                  fontSize: 15,
                                 ),
                               ),
                             ),
@@ -277,7 +287,7 @@ class AppDialog {
     String title = 'Berhasil',
     required String message,
     VoidCallback? onOk,
-    String okText = 'OK',
+    String okText = 'Selesai',
     Color? okColor,
     Duration? autoDismissDuration,
     VoidCallback? onDismiss,
@@ -298,7 +308,7 @@ class AppDialog {
   /// Shows an error modal feedback dialog.
   static Future<void> error({
     BuildContext? context,
-    String title = 'Terjadi Kesalahan',
+    String title = 'Belum Berhasil',
     required String message,
     VoidCallback? onOk,
     String okText = 'Tutup',
@@ -349,7 +359,7 @@ class AppDialog {
     String title = 'Informasi',
     required String message,
     VoidCallback? onOk,
-    String okText = 'OK',
+    String okText = 'Baik',
     Color? okColor,
     Duration? autoDismissDuration,
     VoidCallback? onDismiss,
@@ -398,7 +408,7 @@ class AppDialog {
   /// Shows a modal non-dismissible loading spinner.
   static void loading({
     BuildContext? context,
-    String message = 'Memproses...',
+    String message = 'Mohon tunggu...',
   }) {
     final ctx = resolveSafeContext(context);
     final isDark = ctx != null ? AppColors.isDark(ctx) : Get.isDarkMode;

@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/user_feedback_message.dart';
 import '../services/notification_service.dart';
 
 /// Interactive modal dialog for Admin and Pendamping to compose and send notifications
@@ -119,7 +120,11 @@ class _NotificationComposerDialogState
     final controller = Get.find<HajiCareController>();
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      AppAlert.error(context, message: 'User tidak terautentikasi.');
+      AppAlert.error(
+        context,
+        title: 'Silakan Masuk Kembali',
+        message: 'Waktu masuk Anda sudah berakhir. Silakan masuk kembali.',
+      );
       return;
     }
 
@@ -158,17 +163,19 @@ class _NotificationComposerDialogState
       Navigator.of(context).pop();
 
       AppDialog.success(
-        title: 'Notifikasi Terkirim',
-        message:
-            'Pesan berhasil disiarkan kepada $recipientCount jamaah / penerima.',
+        title: 'Pesan Terkirim',
+        message: 'Pesan sudah dikirim kepada $recipientCount orang.',
       );
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSending = false);
       AppDialog.error(
         context: context,
-        title: 'Gagal Mengirim Notifikasi',
-        message: e.toString().replaceAll('Exception: ', ''),
+        title: 'Pesan Belum Terkirim',
+        message: UserFeedbackMessage.from(
+          e,
+          fallback: 'Pesan belum terkirim. Periksa isinya, lalu coba lagi.',
+        ),
       );
     }
   }
@@ -233,8 +240,8 @@ class _NotificationComposerDialogState
                         ),
                         Text(
                           isAdmin
-                              ? 'Kirim siaran resmi Admin'
-                              : 'Kirim pesan ke Jamaah Room',
+                              ? 'Kirim pengumuman resmi'
+                              : 'Kirim pesan ke jamaah dalam rombongan',
                           style: AppTypography.captionSmall.copyWith(
                             color: bodyColor,
                           ),
@@ -264,7 +271,7 @@ class _NotificationComposerDialogState
                     children: [
                       // Scope Selection Section
                       Text(
-                        'Jangkauan Penerima (Scope)',
+                        'Pilih Penerima',
                         style: AppTypography.bodySmall.copyWith(
                           color: headingColor,
                           fontWeight: FontWeight.bold,
@@ -431,7 +438,7 @@ class _NotificationComposerDialogState
         ? [
             {
               'key': 'global',
-              'label': 'Global (Semua)',
+              'label': 'Semua Jamaah',
               'icon': Icons.public_rounded,
             },
             {
@@ -442,19 +449,19 @@ class _NotificationComposerDialogState
             {'key': 'kloter', 'label': 'Kloter', 'icon': Icons.groups_rounded},
             {
               'key': 'room',
-              'label': 'Room',
+              'label': 'Satu Rombongan',
               'icon': Icons.meeting_room_outlined,
             },
             {
               'key': 'user',
-              'label': 'User Tertentu',
+              'label': 'Satu Jamaah',
               'icon': Icons.person_rounded,
             },
           ]
         : [
             {
               'key': 'room',
-              'label': 'Semua di Room',
+              'label': 'Semua di Rombongan',
               'icon': Icons.meeting_room_outlined,
             },
             {
@@ -632,7 +639,7 @@ class _NotificationComposerDialogState
           final rName =
               _selectedRoomName ??
               controller.activeRoom.value?.name ??
-              'Room Anda';
+              'Rombongan Anda';
           return Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -651,7 +658,7 @@ class _NotificationComposerDialogState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Target Room: $rName',
+                        'Rombongan tujuan: $rName',
                         style: AppTypography.bodySmall.copyWith(
                           color: headingColor,
                           fontWeight: FontWeight.bold,
@@ -683,7 +690,7 @@ class _NotificationComposerDialogState
                     ? AppColors.darkSurfaceContainer
                     : AppColors.surfaceWhite,
                 decoration: InputDecoration(
-                  labelText: 'Pilih Room Target *',
+                  labelText: 'Pilih rombongan tujuan *',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
@@ -710,7 +717,7 @@ class _NotificationComposerDialogState
                 },
                 validator: (v) =>
                     (_selectedScope == 'room' && (v == null || v.isEmpty))
-                    ? 'Room target wajib dipilih'
+                    ? 'Pilih rombongan tujuan'
                     : null,
               );
             },
@@ -762,7 +769,7 @@ class _NotificationComposerDialogState
                           ),
                         ),
                         Text(
-                          'Penerima Tunggal (Jamaah di Room)',
+                          'Pilih satu jamaah dari rombongan',
                           style: AppTypography.captionSmall.copyWith(
                             color: bodyColor,
                           ),

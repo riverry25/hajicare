@@ -1513,7 +1513,11 @@ class DashboardJamaahScreen extends StatelessWidget {
                                       ),
                                     ),
                                     const SizedBox(height: 3),
-                                    Row(
+                                    Wrap(
+                                      crossAxisAlignment:
+                                          WrapCrossAlignment.center,
+                                      spacing: 5,
+                                      runSpacing: 2,
                                       children: [
                                         Icon(
                                           Icons.wb_sunny_rounded,
@@ -1522,7 +1526,6 @@ class DashboardJamaahScreen extends StatelessWidget {
                                               : AppColors.primaryGold,
                                           size: 16,
                                         ),
-                                        const SizedBox(width: 5),
                                         Text(
                                           '$displayLdr',
                                           style: TextStyle(
@@ -1532,7 +1535,6 @@ class DashboardJamaahScreen extends StatelessWidget {
                                             letterSpacing: -0.3,
                                           ),
                                         ),
-                                        const SizedBox(width: 4),
                                         Text(
                                           'Lux',
                                           style: TextStyle(
@@ -1543,7 +1545,6 @@ class DashboardJamaahScreen extends StatelessWidget {
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
-                                        const SizedBox(width: 6),
                                         Container(
                                           padding: const EdgeInsets.symmetric(
                                             horizontal: 5,
@@ -1616,7 +1617,11 @@ class DashboardJamaahScreen extends StatelessWidget {
                                       ),
                                     ),
                                     const SizedBox(height: 3),
-                                    Row(
+                                    Wrap(
+                                      crossAxisAlignment:
+                                          WrapCrossAlignment.center,
+                                      spacing: 5,
+                                      runSpacing: 2,
                                       children: [
                                         Icon(
                                           Icons.local_fire_department_rounded,
@@ -1627,7 +1632,6 @@ class DashboardJamaahScreen extends StatelessWidget {
                                                     : AppColors.tanMedium),
                                           size: 16,
                                         ),
-                                        const SizedBox(width: 5),
                                         Text(
                                           isFlame ? 'API!' : 'Normal',
                                           style: TextStyle(
@@ -1639,7 +1643,6 @@ class DashboardJamaahScreen extends StatelessWidget {
                                             letterSpacing: -0.3,
                                           ),
                                         ),
-                                        const SizedBox(width: 6),
                                         Container(
                                           padding: const EdgeInsets.symmetric(
                                             horizontal: 5,

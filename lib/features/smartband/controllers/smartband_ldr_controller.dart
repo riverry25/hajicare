@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/services/app_alert_service.dart';
+import '../../../core/utils/user_feedback_message.dart';
 import '../services/ble_service.dart';
 
 enum SmartbandConnectionState { disconnected, scanning, connecting, connected }
@@ -15,7 +16,7 @@ class SmartbandLdrController extends GetxController {
   final connectionState = SmartbandConnectionState.disconnected.obs;
   final receivingData = false.obs;
   final lastUpdated = Rxn<DateTime>();
-  final statusMessage = 'Menunggu koneksi BLE'.obs;
+  final statusMessage = 'Gelang belum terhubung'.obs;
   final serviceDiscovered = false.obs;
   final characteristicDiscovered = false.obs;
   final deviceName = 'HajiCare Watch'.obs;
@@ -147,7 +148,7 @@ class SmartbandLdrController extends GetxController {
         _previousFlameAlertTriggered = true;
         AppAlert.warning(
           Get.context,
-          title: '⚠️ Peringatan Api!',
+          title: 'Peringatan Api',
           message:
               'Sensor mendeteksi indikasi api di sekitar Anda! Harap waspada dan segera periksa kondisi sekitar.',
           okText: 'Mengerti',
@@ -161,12 +162,12 @@ class SmartbandLdrController extends GetxController {
     _bleService.onConnectionChanged = (connected) {
       if (connected) {
         connectionState.value = SmartbandConnectionState.connected;
-        statusMessage.value = 'BLE Sync Aktif';
+        statusMessage.value = 'Gelang terhubung';
         serviceDiscovered.value = true;
         characteristicDiscovered.value = true;
       } else {
         connectionState.value = SmartbandConnectionState.disconnected;
-        statusMessage.value = 'BLE Sync Tidak Aktif';
+        statusMessage.value = 'Gelang belum terhubung';
         receivingData.value = false;
         flameReceivingData.value = false;
         _previousFlameAlertTriggered = false;
@@ -242,7 +243,7 @@ class SmartbandLdrController extends GetxController {
     try {
       // 2. Update state to Scanning
       connectionState.value = SmartbandConnectionState.scanning;
-      statusMessage.value = 'Mencari HajiCare Watch...';
+      statusMessage.value = 'Mencari gelang HajiCare...';
       receivingData.value = false;
       flameReceivingData.value = false;
 
@@ -262,12 +263,20 @@ class SmartbandLdrController extends GetxController {
       await _bleService.connectToDevice(device);
     } catch (e) {
       connectionState.value = SmartbandConnectionState.disconnected;
-      statusMessage.value = 'Gagal terhubung';
+      statusMessage.value = 'Gelang belum terhubung';
       receivingData.value = false;
       flameReceivingData.value = false;
 
-      final message = e is BleException ? e.message : e.toString();
-      AppAlert.error(Get.context, title: 'Gagal Terhubung', message: message);
+      AppAlert.error(
+        Get.context,
+        title: 'Gelang Belum Terhubung',
+        message: UserFeedbackMessage.from(
+          e,
+          fallback:
+              'Pastikan gelang menyala dan berada dekat dengan ponsel, lalu coba lagi.',
+        ),
+        okText: 'Coba Lagi',
+      );
     }
   }
 
@@ -275,7 +284,7 @@ class SmartbandLdrController extends GetxController {
   Future<void> disconnectSmartband() async {
     await _bleService.disconnect();
     connectionState.value = SmartbandConnectionState.disconnected;
-    statusMessage.value = 'Terputus';
+    statusMessage.value = 'Gelang terputus';
     receivingData.value = false;
     flameReceivingData.value = false;
     _previousFlameAlertTriggered = false;

@@ -325,7 +325,7 @@ const Map<String, String> enTranslations = {
   'serviceCommTitle': 'Quick Communication',
   'serviceCommSubtitle': 'Arabic Phrases: Help, Pain, Water',
   'serviceBandTitle': 'Smart Band',
-  'serviceBandSubtitle': 'Connected GPS & Heart Rate',
+  'serviceBandSubtitle': 'Check band connection and sensors',
   'servicePrayerTitle': 'Prayers & Manasik',
   'servicePrayerSubtitle': 'Tawaf, Sai Prayers with Audio',
   'serviceCallTitle': 'Call Officers',

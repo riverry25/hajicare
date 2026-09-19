@@ -90,11 +90,19 @@ class _ModalSosScreenState extends State<ModalSosScreen>
     final success = await state.triggerSos();
     if (mounted) {
       if (success) {
-        AppAlert.error(
+        AppAlert.success(
           context,
           title: 'Sinyal SOS Terkirim!',
           message:
-              'Posisi darurat Anda telah disiarkan ke Pendamping dan Petugas Maktab.',
+              'Pendamping sudah diberi tahu. Tetap di tempat yang aman dan dekatkan ponsel Anda.',
+        );
+      } else {
+        AppAlert.error(
+          context,
+          title: 'SOS Belum Terkirim',
+          message:
+              'Periksa internet, lalu tekan tombol SOS lagi. Jika keadaan mendesak, segera minta bantuan orang terdekat.',
+          okText: 'Coba Lagi',
         );
       }
     }
@@ -398,7 +406,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
             final roomName =
                 (sos['roomName'] as String?)?.trim().isNotEmpty == true
                 ? (sos['roomName'] as String).trim()
-                : 'Darurat Bebas / Tanpa Room';
+                : 'Di luar rombongan';
             final status = sos['status'] as String? ?? 'active';
             final timeStr = _formatSosTime(
               sos['timestamp'] ?? sos['createdAt'],
@@ -648,17 +656,27 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                                 confirmText: 'Ya, Selesaikan',
                                 cancelText: 'Batal',
                                 onConfirm: () async {
-                                  await state.dismissSos(
+                                  final success = await state.dismissSos(
                                     userId,
                                     eventId: eventId,
                                   );
                                   if (context.mounted) {
-                                    AppAlert.success(
-                                      context,
-                                      title: 'Status Diperbarui',
-                                      message:
-                                          'Panggilan SOS untuk "$userName" telah ditandai selesai.',
-                                    );
+                                    if (success) {
+                                      AppAlert.success(
+                                        context,
+                                        title: 'SOS Selesai',
+                                        message:
+                                            'Panggilan SOS untuk "$userName" sudah diakhiri.',
+                                      );
+                                    } else {
+                                      AppAlert.error(
+                                        context,
+                                        title: 'Status Belum Diubah',
+                                        message:
+                                            'Periksa internet, lalu coba akhiri SOS sekali lagi.',
+                                        okText: 'Coba Lagi',
+                                      );
+                                    }
                                   }
                                 },
                               );
@@ -837,7 +855,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
           const SizedBox(height: 6),
           Text(
             isSosAlreadyActive
-                ? 'Koordinat GPS Anda telah disiarkan secara real-time ke Pendamping dan Petugas Maktab.'
+                ? 'Lokasi Anda sudah dikirim kepada pendamping rombongan.'
                 : (_isCountingDown
                       ? 'Ketuk tombol SOS untuk membatalkan sebelum hitungan mundur selesai.'
                       : 'Gunakan saat terpisah jauh dari rombongan atau membutuhkan bantuan darurat segera.'),
@@ -890,16 +908,28 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                 onPressed: () async {
                   final uid = state.currentUid;
                   if (uid != null) {
-                    await state.dismissSos(uid);
-                    setState(() {
-                      _sosSent = false;
-                    });
+                    final success = await state.dismissSos(uid);
+                    if (success) {
+                      setState(() {
+                        _sosSent = false;
+                      });
+                    }
                     if (context.mounted) {
-                      AppAlert.success(
-                        context,
-                        title: 'Sinyal SOS Dinonaktifkan',
-                        message: 'Status darurat Anda telah diakhiri.',
-                      );
+                      if (success) {
+                        AppAlert.success(
+                          context,
+                          title: 'Sinyal SOS Dinonaktifkan',
+                          message: 'Status darurat Anda sudah diakhiri.',
+                        );
+                      } else {
+                        AppAlert.error(
+                          context,
+                          title: 'SOS Belum Dinonaktifkan',
+                          message:
+                              'Periksa internet, lalu coba akhiri SOS sekali lagi.',
+                          okText: 'Coba Lagi',
+                        );
+                      }
                     }
                   }
                 },
@@ -955,8 +985,8 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                 const SizedBox(width: 6),
                 Text(
                   state.myCurrentPosition.value != null
-                      ? 'GPS Akurat (±${state.myCurrentPosition.value!.accuracy.round()}m)'
-                      : 'Menghubungkan GPS...',
+                      ? 'Lokasi ditemukan (±${state.myCurrentPosition.value!.accuracy.round()}m)'
+                      : 'Mencari lokasi ponsel...',
                   style: AppTypography.captionSmall.copyWith(
                     color: headingColor,
                     fontWeight: FontWeight.w600,

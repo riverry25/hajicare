@@ -390,7 +390,7 @@ class PendampingSosBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Simulasi alarm darurat berhasil diuji. Perangkat akan berdering dan bergetar otomatis saat tombol gelang ditekan atau jamaah melewati batas aman 200m.',
+                  'Uji bunyi dan getar pada ponsel ini sudah selesai.',
                   style: AppTypography.bodySmall.copyWith(
                     color: isDark ? AppColors.darkTextBody : AppColors.textBody,
                     height: 1.45,
@@ -636,7 +636,7 @@ class PendampingSosBanner extends StatelessWidget {
               HapticFeedback.lightImpact();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Nomor $number disalin ke clipboard'),
+                  content: Text('Nomor $number sudah disalin.'),
                   duration: const Duration(seconds: 2),
                   behavior: SnackBarBehavior.floating,
                 ),

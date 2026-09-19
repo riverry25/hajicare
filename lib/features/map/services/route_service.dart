@@ -28,7 +28,7 @@ class RouteService {
   static const String _orsBaseUrl =
       'https://api.heigit.org/openrouteservice/v2/directions/foot-walking/geojson';
   static const String _osrmBaseUrl =
-      'https://router.project-osrm.org/route/v1/foot';
+      'https://routing.openstreetmap.de/routed-foot/route/v1/driving';
 
   final http.Client _httpClient;
   final String _apiKey;
@@ -82,16 +82,16 @@ class RouteService {
     });
 
     try {
-      final response = await _httpClient.post(
-        Uri.parse(_orsBaseUrl),
-        headers: headers,
-        body: body,
-      );
+      final response = await _httpClient
+          .post(Uri.parse(_orsBaseUrl), headers: headers, body: body)
+          .timeout(const Duration(seconds: 18));
       debugPrint('[ROUTE] ORS status = ${response.statusCode}');
 
       if (response.statusCode != 200) {
         debugPrint('[ROUTE] ORS ERROR BODY: ${response.body}');
-        throw RouteException('Routing gagal: HTTP ${response.statusCode}');
+        throw const RouteException(
+          'Rute belum dapat dibuat. Periksa internet, lalu coba lagi.',
+        );
       }
 
       final data = jsonDecode(response.body);
@@ -135,25 +135,25 @@ class RouteService {
 
       if (fastestFeature == null) {
         throw const RouteException(
-          'Rute berjalan tidak memiliki durasi yang valid',
+          'Perkiraan waktu rute belum tersedia. Silakan coba lagi.',
         );
       }
 
       final geometry = fastestFeature['geometry'] as Map<String, dynamic>?;
       if (geometry == null || geometry['type'] != 'LineString') {
-        throw const RouteException('Format rute tidak didukung');
+        throw const RouteException('Rute ini belum dapat ditampilkan.');
       }
 
       final coordinates = geometry['coordinates'] as List<dynamic>?;
       if (coordinates == null || coordinates.isEmpty) {
-        throw const RouteException('Koordinat rute kosong');
+        throw const RouteException('Rute belum ditemukan.');
       }
 
       final points = _decodeGeoJsonCoords(coordinates);
       debugPrint('[ROUTE] route points = ${points.length}');
 
       if (points.isEmpty) {
-        throw const RouteException('Koordinat rute kosong setelah parsing');
+        throw const RouteException('Rute belum ditemukan.');
       }
 
       final summary =
@@ -171,7 +171,9 @@ class RouteService {
     } on RouteException {
       rethrow;
     } catch (e) {
-      throw const RouteException('Gagal terhubung ke layanan routing');
+      throw const RouteException(
+        'Rute belum dapat dibuat. Periksa internet, lalu coba lagi.',
+      );
     }
   }
 
@@ -185,7 +187,9 @@ class RouteService {
 
     try {
       debugPrint('[ROUTE] Fetching real walking route from OSM: $url');
-      final response = await _httpClient.get(url);
+      final response = await _httpClient
+          .get(url)
+          .timeout(const Duration(seconds: 18));
       debugPrint('[ROUTE] OSM status = ${response.statusCode}');
 
       if (response.statusCode != 200) {
@@ -202,7 +206,9 @@ class RouteService {
         } catch (e) {
           if (e is RouteException) rethrow;
         }
-        throw RouteException('Routing gagal: HTTP ${response.statusCode}');
+        throw const RouteException(
+          'Rute belum dapat dibuat. Periksa internet, lalu coba lagi.',
+        );
       }
 
       final data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -215,12 +221,12 @@ class RouteService {
       final primaryRoute = routes.first as Map<String, dynamic>;
       final geometry = primaryRoute['geometry'] as Map<String, dynamic>?;
       if (geometry == null || geometry['type'] != 'LineString') {
-        throw const RouteException('Format rute tidak didukung');
+        throw const RouteException('Rute ini belum dapat ditampilkan.');
       }
 
       final coordinates = geometry['coordinates'] as List<dynamic>?;
       if (coordinates == null || coordinates.isEmpty) {
-        throw const RouteException('Koordinat rute kosong');
+        throw const RouteException('Rute belum ditemukan.');
       }
 
       final points = _decodeGeoJsonCoords(coordinates);
@@ -239,7 +245,7 @@ class RouteService {
     } catch (e) {
       debugPrint('[ROUTE] OSM error: $e');
       throw const RouteException(
-        'Gagal terhubung ke layanan routing jalan kaki',
+        'Rute belum dapat dibuat. Periksa internet, lalu coba lagi.',
       );
     }
   }

@@ -10,6 +10,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../../core/utils/user_feedback_message.dart';
 import 'add_jamaah_dialog.dart';
 import 'edit_room_dialog.dart';
 import 'jamaah_detail_sheet.dart';
@@ -626,7 +627,7 @@ class ActiveRoomCard extends StatelessWidget {
                         AppAlert.info(
                           context,
                           title: 'Kode Disalin',
-                          message: 'Kode room $roomCode berhasil disalin.',
+                          message: 'Kode rombongan $roomCode sudah disalin.',
                         );
                       },
                       borderRadius: BorderRadius.circular(4),
@@ -1017,7 +1018,7 @@ class ActiveRoomCard extends StatelessWidget {
                         AppAlert.success(
                           context,
                           title: 'Disalin',
-                          message: 'Kode room $roomCode berhasil disalin.',
+                          message: 'Kode rombongan $roomCode sudah disalin.',
                         );
                       },
                       borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -1418,9 +1419,9 @@ class ActiveRoomCard extends StatelessWidget {
                           if (context.mounted) {
                             AppAlert.success(
                               context,
-                              title: 'Room Dihapus',
+                              title: 'Rombongan Dihapus',
                               message:
-                                  'Room "${room.name}" telah berhasil dihapus.',
+                                  'Rombongan "${room.name}" sudah dihapus.',
                             );
                           }
                         } catch (e) {
@@ -1430,10 +1431,11 @@ class ActiveRoomCard extends StatelessWidget {
                           if (context.mounted) {
                             AppAlert.error(
                               context,
-                              title: 'Gagal Menghapus',
-                              message: e.toString().replaceFirst(
-                                'Exception: ',
-                                '',
+                              title: 'Belum Dapat Dihapus',
+                              message: UserFeedbackMessage.from(
+                                e,
+                                fallback:
+                                    'Rombongan belum dapat dihapus. Silakan coba lagi.',
                               ),
                             );
                           }

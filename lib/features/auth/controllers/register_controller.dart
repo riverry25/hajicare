@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/state/app_startup_controller.dart';
 import '../../../core/state/hajicare_controller.dart';
+import '../../../core/utils/app_dialog.dart';
 
 class RegisterController extends GetxController {
   final obscurePassword = true.obs;
@@ -33,7 +34,7 @@ class RegisterController extends GetxController {
     if (emailController.text.isEmpty ||
         passwordController.text.isEmpty ||
         fullNameController.text.isEmpty) {
-      errorMessage.value = 'Harap isi semua kolom wajib';
+      errorMessage.value = 'Isi nama, email, dan kata sandi terlebih dahulu.';
       _showErrorSnackbar(errorMessage.value!);
       isLoading.value = false;
       return;
@@ -99,12 +100,11 @@ class RegisterController extends GetxController {
       _showErrorSnackbar(errorMessage.value!);
     } on FirebaseException catch (e) {
       debugPrint('=== ERROR FIRESTORE ===: ${e.code} - ${e.message}');
-      errorMessage.value = 'Gagal menyimpan profil akun. Silakan coba lagi.';
+      errorMessage.value = 'Profil belum dapat disimpan. Silakan coba lagi.';
       _showErrorSnackbar(errorMessage.value!);
     } catch (e, stackTrace) {
       debugPrint('=== ERROR UMUM ===: $e\n$stackTrace');
-      errorMessage.value =
-          'Terjadi kesalahan saat mendaftar. Silakan coba lagi.';
+      errorMessage.value = 'Pendaftaran belum berhasil. Silakan coba lagi.';
       _showErrorSnackbar(errorMessage.value!);
     } finally {
       isLoading.value = false;
@@ -118,26 +118,22 @@ class RegisterController extends GetxController {
       case 'weak-password':
         return 'Kata sandi terlalu lemah. Gunakan minimal 6 karakter.';
       case 'invalid-email':
-        return 'Format alamat email tidak valid.';
+        return 'Penulisan email belum benar. Periksa kembali email Anda.';
       case 'operation-not-allowed':
         return 'Pendaftaran akun sedang dinonaktifkan.';
       case 'network-request-failed':
-        return 'Gagal terhubung ke jaringan. Periksa koneksi internet Anda.';
+        return 'Sambungan internet bermasalah. Periksa internet, lalu coba lagi.';
       default:
         return 'Pendaftaran gagal. Periksa kembali data yang Anda masukkan.';
     }
   }
 
   void _showErrorSnackbar(String msg) {
-    if (Get.context != null) {
-      Get.snackbar(
-        'Gagal Mendaftar',
-        msg,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.shade800,
-        colorText: Colors.white,
-      );
-    }
+    AppDialog.error(
+      title: 'Pendaftaran Belum Berhasil',
+      message: msg,
+      okText: 'Coba Lagi',
+    );
   }
 
   @override

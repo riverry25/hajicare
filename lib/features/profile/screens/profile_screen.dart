@@ -704,22 +704,35 @@ class ProfileScreen extends StatelessWidget {
                             onPressed: saving
                                 ? null
                                 : () async {
-                                    await profileCtrl.updateMedicalData(
-                                      bloodTypeVal: bloodTypeCtrl.text,
-                                      allergiesVal: allergiesCtrl.text,
-                                      conditionsVal: conditionsCtrl.text,
-                                      emergencyContactVal:
-                                          emergencyContactCtrl.text,
-                                    );
-                                    if (dialogCtx.mounted) {
-                                      Navigator.of(dialogCtx).pop();
-                                    }
-                                    if (context.mounted) {
-                                      AppAlert.success(
-                                        context,
-                                        message:
-                                            'Data medis berhasil diperbarui.',
+                                    try {
+                                      await profileCtrl.updateMedicalData(
+                                        bloodTypeVal: bloodTypeCtrl.text,
+                                        allergiesVal: allergiesCtrl.text,
+                                        conditionsVal: conditionsCtrl.text,
+                                        emergencyContactVal:
+                                            emergencyContactCtrl.text,
                                       );
+                                      if (dialogCtx.mounted) {
+                                        Navigator.of(dialogCtx).pop();
+                                      }
+                                      if (context.mounted) {
+                                        AppAlert.success(
+                                          context,
+                                          title: 'Data Medis Disimpan',
+                                          message:
+                                              'Data medis Anda sudah diperbarui.',
+                                        );
+                                      }
+                                    } catch (_) {
+                                      if (context.mounted) {
+                                        AppAlert.error(
+                                          context,
+                                          title: 'Data Belum Disimpan',
+                                          message:
+                                              'Periksa internet, lalu coba simpan sekali lagi.',
+                                          okText: 'Coba Lagi',
+                                        );
+                                      }
                                     }
                                   },
                             icon: saving
@@ -902,7 +915,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Anda belum memiliki room aktif. Gabung ke room untuk mengaktifkan koordinasi dengan ketua rombongan & monitoring jarak realtime.',
+                        'Anda belum bergabung dengan rombongan. Masukkan kode dari pendamping agar lokasi Anda dapat dipantau.',
                         textAlign: TextAlign.center,
                         style: AppTypography.captionSmall.copyWith(
                           color: bodyColor,
@@ -1886,17 +1899,18 @@ class _ProfileHeader extends StatelessWidget {
                                           if (!context.mounted) return;
                                           AppAlert.success(
                                             context,
-                                            title: 'Berhasil',
+                                            title: 'Nama Berhasil Diubah',
                                             message:
-                                                'Nama berhasil diperbarui menjadi "$input"',
+                                                'Nama Anda sekarang "$input".',
                                           );
                                         } catch (_) {
                                           if (!context.mounted) return;
                                           AppAlert.error(
                                             context,
-                                            title: 'Gagal',
+                                            title: 'Nama Belum Diubah',
                                             message:
-                                                'Gagal memperbarui nama. Silakan coba lagi.',
+                                                'Periksa internet, lalu coba simpan sekali lagi.',
+                                            okText: 'Coba Lagi',
                                           );
                                         }
                                       },

@@ -4,6 +4,7 @@ import '../../../core/locales/app_translations.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/user_feedback_message.dart';
 import '../services/room_service.dart';
 
 /// Modern centered modal dialog for Pendamping to add a Jamaah by registered email.
@@ -66,7 +67,7 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
       AppDialog.success(
         title: 'Undangan Terkirim',
         message:
-            'Undangan telah berhasil dikirim ke "$email". Jamaah akan menerima notifikasi untuk menerima atau menolak.',
+            'Undangan sudah dikirim ke "$email". Jamaah dapat menerima atau menolak undangan tersebut.',
       );
     } catch (e) {
       if (!mounted) return;
@@ -74,8 +75,13 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
 
       AppDialog.error(
         context: context,
-        title: 'Gagal Mengirim Undangan',
-        message: e.toString().replaceAll('Exception: ', ''),
+        title: 'Undangan Belum Terkirim',
+        message: UserFeedbackMessage.from(
+          e,
+          fallback:
+              'Periksa kembali email jamaah, lalu kirim undangan sekali lagi.',
+        ),
+        okText: 'Coba Lagi',
       );
     }
   }

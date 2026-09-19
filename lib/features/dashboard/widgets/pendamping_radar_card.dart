@@ -273,15 +273,26 @@ class PendampingRadarCard extends StatelessWidget {
                       customError.value = 'Radius maksimum adalah 5000 meter.';
                       return;
                     }
-                    await state?.setSafeRadius(parsed.toDouble());
+                    final success =
+                        await state?.setSafeRadius(parsed.toDouble()) ?? false;
                     Get.back();
                     if (context.mounted) {
-                      AppAlert.success(
-                        context,
-                        title: 'Radius Diperbarui',
-                        message:
-                            'Batas aman berhasil diatur menjadi $parsed meter dan tersinkron ke semua anggota room.',
-                      );
+                      if (success) {
+                        AppAlert.success(
+                          context,
+                          title: 'Jarak Aman Diperbarui',
+                          message:
+                              'Batas aman $parsed meter sudah diterapkan untuk rombongan.',
+                        );
+                      } else {
+                        AppAlert.error(
+                          context,
+                          title: 'Jarak Aman Belum Diubah',
+                          message:
+                              'Periksa internet, lalu coba simpan sekali lagi.',
+                          okText: 'Coba Lagi',
+                        );
+                      }
                     }
                   },
                   child: Text(

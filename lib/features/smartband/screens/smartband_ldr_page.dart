@@ -156,7 +156,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
           iconData = Icons.bluetooth_connected_rounded;
           titleText = 'Bluetooth';
           subtitleText = 'Menghubungkan...';
-          noteText = 'Membuka koneksi & membaca service...';
+          noteText = 'Menyiapkan sensor gelang...';
           showSpinner = true;
           break;
 
@@ -167,11 +167,12 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
           iconData = Icons.watch_rounded;
           titleText = 'Gelang Pintar Haji';
           subtitleText = 'Terhubung';
-          noteText = 'BLE Sync Aktif';
+          noteText = 'Data sensor sedang diterima';
           break;
 
         case SmartbandConnectionState.disconnected:
-          final isExplicitDisconnected = ctrl.statusMessage.value == 'Terputus';
+          final isExplicitDisconnected =
+              ctrl.statusMessage.value == 'Gelang terputus';
           badgeBg = isDark
               ? AppColors.darkSurfaceContainerHighest
               : AppColors.canvasCreamSubtle;
@@ -187,8 +188,8 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
               ? 'Terputus'
               : 'Belum terhubung';
           noteText = isExplicitDisconnected
-              ? 'BLE Sync Tidak Aktif'
-              : 'Menunggu koneksi BLE';
+              ? 'Data sensor berhenti diterima'
+              : 'Tekan tombol Hubungkan Gelang';
           break;
       }
 

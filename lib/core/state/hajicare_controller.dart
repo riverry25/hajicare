@@ -794,19 +794,25 @@ class HajiCareController extends GetxController {
     }
   }
 
-  Future<void> setSafeRadius(double radius) async {
+  Future<bool> setSafeRadius(double radius) async {
+    final previousRadius = safeRadiusMeters.value;
     safeRadiusMeters.value = radius;
     _recalculateRealDistance();
     final roomId = activeRoomId.value;
     if (roomId != null && roomId.isNotEmpty) {
       try {
         await _roomService.updateSafeRadius(roomId: roomId, radius: radius);
+        return true;
       } catch (e) {
         debugPrint(
           '[HajiCareController] Error updating safe radius in Firestore: $e',
         );
+        safeRadiusMeters.value = previousRadius;
+        _recalculateRealDistance();
+        return false;
       }
     }
+    return false;
   }
 
   /// Leaves the current active room for this user.
@@ -858,7 +864,7 @@ class HajiCareController extends GetxController {
     final uid = currentUid;
     final roomId = activeRoomId.value;
     if (uid == null || roomId == null || roomId.isEmpty) {
-      throw const RoomException('Tidak ada room aktif yang dapat diedit.');
+      throw const RoomException('Belum ada rombongan yang dapat diedit.');
     }
 
     final roleStr = _role.value == UserRole.admin ? 'admin' : 'pendamping';
@@ -902,7 +908,7 @@ class HajiCareController extends GetxController {
     final uid = currentUid;
     final roomId = activeRoomId.value;
     if (uid == null || roomId == null || roomId.isEmpty) {
-      throw const RoomException('Tidak ada room aktif yang dapat dihapus.');
+      throw const RoomException('Belum ada rombongan yang dapat dihapus.');
     }
 
     final roleStr = _role.value == UserRole.admin ? 'admin' : 'pendamping';
@@ -940,8 +946,7 @@ class HajiCareController extends GetxController {
       final myPos = myCurrentPosition.value;
       final roomId = activeRoomId.value;
       final roomName =
-          activeRoom.value?.name ??
-          (roomId != null ? 'Room $roomId' : 'Darurat Terbuka');
+          activeRoom.value?.name ?? (roomId != null ? 'Rombongan' : 'Darurat');
       final userName = _self?.name ?? user.displayName ?? 'Jamaah';
 
       if (roomId == null || roomId.isEmpty) return false;
@@ -1051,11 +1056,13 @@ class HajiCareController extends GetxController {
   }
 
   /// Re-triggers GPS location tracking (e.g. after user enables GPS from settings).
-  Future<void> refreshLocation() async {
+  Future<bool> refreshLocation() async {
     final uid = currentUid;
     if (uid != null) {
       await startLocationTracking(uid);
+      return isMyGpsActive.value;
     }
+    return false;
   }
 
   @override

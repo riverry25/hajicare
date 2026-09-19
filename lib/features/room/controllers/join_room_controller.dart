@@ -10,6 +10,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/user_feedback_message.dart';
 import '../services/room_service.dart';
 
 class JoinRoomController extends GetxController {
@@ -90,7 +91,7 @@ class JoinRoomController extends GetxController {
     final kloter = createKloterController.text.trim();
 
     if (name.isEmpty) {
-      errorMessage.value = 'Harap isi Nama Room / Rombongan.';
+      errorMessage.value = 'Isi nama rombongan terlebih dahulu.';
       _showErrorAlert(errorMessage.value!);
       return;
     }
@@ -138,7 +139,10 @@ class JoinRoomController extends GetxController {
       _showErrorAlert(e.message);
     } catch (e) {
       isLoading.value = false;
-      errorMessage.value = 'Gagal membuat room: $e';
+      errorMessage.value = UserFeedbackMessage.from(
+        e,
+        fallback: 'Rombongan belum dapat dibuat. Silakan coba lagi.',
+      );
       _showErrorAlert(errorMessage.value!);
     }
   }
@@ -151,7 +155,7 @@ class JoinRoomController extends GetxController {
     final roomCode = roomCodeController.text.trim().toUpperCase();
 
     if (roomCode.isEmpty) {
-      errorMessage.value = 'Harap masukkan 6 digit Kode Room.';
+      errorMessage.value = 'Masukkan 6 huruf atau angka kode rombongan.';
       _showErrorAlert(errorMessage.value!);
       return;
     }
@@ -189,9 +193,9 @@ class JoinRoomController extends GetxController {
       if (Get.context != null) {
         AppAlert.success(
           Get.context,
-          title: 'Berhasil Bergabung!',
+          title: 'Berhasil Bergabung',
           message:
-              'Anda telah bergabung ke room "${joinedRoom.name}". Fitur monitoring kini aktif.',
+              'Anda sudah bergabung dengan rombongan "${joinedRoom.name}".',
         );
       }
 
@@ -202,7 +206,11 @@ class JoinRoomController extends GetxController {
       _showErrorAlert(e.message);
     } catch (e) {
       isLoading.value = false;
-      errorMessage.value = 'Gagal bergabung ke room: $e';
+      errorMessage.value = UserFeedbackMessage.from(
+        e,
+        fallback:
+            'Belum dapat bergabung. Periksa kode rombongan, lalu coba lagi.',
+      );
       _showErrorAlert(errorMessage.value!);
     }
   }
@@ -263,7 +271,7 @@ class JoinRoomController extends GetxController {
                         const SizedBox(width: AppSpacing.sm),
                         Expanded(
                           child: Text(
-                            'Room Berhasil Dibuat!',
+                            'Rombongan Berhasil Dibuat',
                             style: AppTypography.titleMedium.copyWith(
                               color: headingColor,
                               fontWeight: FontWeight.bold,
@@ -274,7 +282,7 @@ class JoinRoomController extends GetxController {
                     ),
                     const SizedBox(height: AppSpacing.md),
                     Text(
-                      'Bagikan kode room atau QR code ini kepada jamaah rombongan Anda:',
+                      'Bagikan kode atau gambar QR ini kepada jamaah yang akan bergabung:',
                       textAlign: TextAlign.center,
                       style: AppTypography.bodySmall.copyWith(color: bodyColor),
                     ),
@@ -352,7 +360,7 @@ class JoinRoomController extends GetxController {
                           elevation: 0,
                         ),
                         child: const Text(
-                          'Buka Dashboard Monitoring',
+                          'Buka Halaman Utama',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -378,7 +386,12 @@ class JoinRoomController extends GetxController {
 
   void _showErrorAlert(String msg) {
     if (Get.context != null) {
-      AppAlert.error(Get.context!, title: 'Perhatian', message: msg);
+      AppAlert.error(
+        Get.context!,
+        title: 'Belum Berhasil',
+        message: msg,
+        okText: 'Coba Lagi',
+      );
     }
   }
 

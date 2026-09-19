@@ -27,17 +27,27 @@ class JamaahSosBanner extends StatelessWidget {
         if (await Vibration.hasVibrator()) {
           Vibration.vibrate(pattern: [0, 200, 100, 200]);
         }
-        await state.triggerSos();
+        final success = await state.triggerSos();
         if (context.mounted) {
-          final sentTo = context.tr('sosSentTo');
-          final companion = state.pendampingName.value.isNotEmpty
-              ? state.pendampingName.value
-              : 'Pendamping & Petugas';
-          AppAlert.success(
-            context,
-            title: 'Sinyal Darurat Terkirim',
-            message: '$sentTo $companion. Mohon tetap tenang di lokasi Anda.',
-          );
+          if (success) {
+            final companion = state.pendampingName.value.isNotEmpty
+                ? state.pendampingName.value
+                : 'Pendamping';
+            AppAlert.success(
+              context,
+              title: 'Sinyal Darurat Terkirim',
+              message:
+                  '$companion sudah diberi tahu. Tetap di tempat yang aman dan dekatkan ponsel Anda.',
+            );
+          } else {
+            AppAlert.error(
+              context,
+              title: 'SOS Belum Terkirim',
+              message:
+                  'Periksa internet, lalu tekan tombol SOS lagi. Jika keadaan mendesak, segera minta bantuan orang terdekat.',
+              okText: 'Coba Lagi',
+            );
+          }
         }
       },
     );
@@ -100,7 +110,7 @@ class JamaahSosBanner extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        'Fitur darurat SOS mengirimkan koordinat real-time ke Pendamping. Masuk ke room terlebih dahulu untuk mengaktifkan.',
+                        'SOS memberi tahu pendamping beserta lokasi Anda. Bergabunglah dengan rombongan terlebih dahulu.',
                         style: AppTypography.bodySmall.copyWith(
                           color: bodyColor,
                         ),
@@ -118,7 +128,7 @@ class JamaahSosBanner extends StatelessWidget {
                 onPressed: () => Get.toNamed(AppRoutes.joinRoom),
                 icon: const Icon(Icons.meeting_room_outlined, size: 20),
                 label: const Text(
-                  'Gabung Room untuk Mengaktifkan',
+                  'Gabung Rombongan',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -248,7 +258,7 @@ class JamaahSosBanner extends StatelessWidget {
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
-                  'Koordinat GPS dikirim instan ke Pendamping & Maktab',
+                  'Lokasi Anda akan dikirim kepada pendamping rombongan',
                   style: AppTypography.caption.copyWith(
                     color: bodyColor,
                     fontWeight: FontWeight.w500,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/locales/app_localizations.dart';
+import '../../../core/services/app_alert_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -669,7 +670,12 @@ class _ContactButton extends StatelessWidget {
       label: label,
       child: InkWell(
         onTap: () {
-          Get.snackbar('Info', ' — ', snackPosition: SnackPosition.BOTTOM);
+          AppAlert.info(
+            context,
+            title: 'Layanan Belum Tersedia',
+            message:
+                'Hubungi pendamping Anda untuk bantuan. Dalam keadaan darurat, gunakan tombol SOS.',
+          );
         },
         borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Container(
