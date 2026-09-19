@@ -19,7 +19,7 @@ import '../../room/widgets/add_jamaah_dialog.dart';
 import '../controllers/dashboard_controller.dart';
 import '../widgets/pendamping_radar_card.dart';
 import '../widgets/pendamping_sos_banner.dart';
-import '../widgets/rotating_sync_button.dart';
+import '../widgets/mini_sparkline_button.dart';
 
 class DashboardPendampingScreen extends StatelessWidget {
   const DashboardPendampingScreen({super.key});
@@ -125,8 +125,6 @@ class DashboardPendampingScreen extends StatelessWidget {
 
     final kloterStr = state.effectiveKloter ?? '-';
     final maktabStr = state.effectiveMaktab ?? '-';
-    final roomName =
-        state.activeRoom.value?.capitalizedName ?? 'Belum Ada Room';
     final jamaahCount = state.jamaahList.length;
 
     final prayerName = prayerCtrl.nextPrayerName.value.isNotEmpty
@@ -298,52 +296,28 @@ class DashboardPendampingScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              // Sync + room chip
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  RotatingSyncButton(
-                    icon: Icons.bar_chart_rounded,
-                    tooltip: 'Perbarui Statistik Jamaah',
-                    onSync: () async {
-                      final success = await state.refreshLocation();
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              success
-                                  ? 'Lokasi dan data jamaah sudah diperbarui.'
-                                  : 'Lokasi belum ditemukan. Aktifkan lokasi ponsel, lalu coba lagi.',
-                            ),
-                            duration: const Duration(seconds: 3),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.10),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      roomName,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w600,
+              // Sparkline statistics wave (transparent & gold, enlarged)
+              MiniSparklineButton(
+                width: 150,
+                height: 74,
+                waveColor: AppColors.accentGoldStar,
+                tooltip: 'Perbarui Statistik Jamaah',
+                onSync: () async {
+                  final success = await state.refreshLocation();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          success
+                              ? 'Lokasi dan data jamaah sudah diperbarui.'
+                              : 'Lokasi belum ditemukan. Aktifkan lokasi ponsel, lalu coba lagi.',
+                        ),
+                        duration: const Duration(seconds: 3),
+                        behavior: SnackBarBehavior.floating,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
+                    );
+                  }
+                },
               ),
             ],
           ),
@@ -692,171 +666,143 @@ class DashboardPendampingScreen extends StatelessWidget {
     DashboardController dashboardCtrl,
     bool isDark,
   ) {
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
-          width: 1.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+    if (state.jamaahList.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Text(
+          'Belum ada jamaah terdaftar',
+          style: TextStyle(
+            color: isDark ? AppColors.darkTextBody : AppColors.textBody,
+            fontSize: 13,
           ),
-        ],
-      ),
-      child: state.jamaahList.isEmpty
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text(
-                  'Belum ada jamaah terdaftar',
-                  style: TextStyle(
-                    color: isDark ? AppColors.darkTextBody : AppColors.textBody,
-                    fontSize: 13,
+        ),
+      );
+    }
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: List.generate(state.jamaahList.length, (i) {
+        final j = state.jamaahList[i];
+        final hasSos = j.sosActive;
+        final isSep = j.separatedMode;
+        final dist = j.distance;
+        final distText = dist > 0
+            ? (dist < 1000
+                  ? '${dist.round()} m'
+                  : '${(dist / 1000).toStringAsFixed(1)} km')
+            : '—';
+        final isSelected = dashboardCtrl.selectedJamaahIndex.value == i;
+
+        final Color pill = hasSos
+            ? AppColors.sosEmergency
+            : (isSep ? AppColors.statusWarning : AppColors.statusSafe);
+
+        return GestureDetector(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            dashboardCtrl.selectJamaah(i);
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: EdgeInsets.symmetric(
+              horizontal: isSelected ? 13 : 11,
+              vertical: isSelected ? 7.5 : 6.5,
+            ),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? (isDark
+                        ? AppColors.darkPrimaryContainer
+                        : AppColors.canvasCreamSubtle)
+                  : pill.withValues(alpha: isDark ? 0.15 : 0.08),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isSelected
+                    ? (isDark ? AppColors.goldLight : AppColors.espressoDark)
+                    : pill.withValues(alpha: isDark ? 0.38 : 0.28),
+                width: isSelected ? 1.8 : 1.2,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: (isDark ? Colors.black : AppColors.espressoDark)
+                            .withValues(alpha: 0.16),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 7,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    color: pill,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: pill.withValues(alpha: 0.55),
+                        blurRadius: 4,
+                        spreadRadius: 1,
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            )
-          : Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: List.generate(state.jamaahList.length, (i) {
-                final j = state.jamaahList[i];
-                final hasSos = j.sosActive;
-                final isSep = j.separatedMode;
-                final dist = j.distance;
-                final distText = dist > 0
-                    ? (dist < 1000
-                          ? '${dist.round()} m'
-                          : '${(dist / 1000).toStringAsFixed(1)} km')
-                    : '—';
-                final isSelected = dashboardCtrl.selectedJamaahIndex.value == i;
-
-                final Color pill = hasSos
-                    ? AppColors.sosEmergency
-                    : (isSep ? AppColors.statusWarning : AppColors.statusSafe);
-
-                return GestureDetector(
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    dashboardCtrl.selectJamaah(i);
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isSelected ? 13 : 11,
-                      vertical: isSelected ? 7.5 : 6.5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? (isDark
-                                ? AppColors.darkPrimaryContainer
-                                : AppColors.canvasCreamSubtle)
-                          : pill.withValues(alpha: isDark ? 0.15 : 0.08),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: isSelected
-                            ? (isDark
-                                  ? AppColors.goldLight
-                                  : AppColors.espressoDark)
-                            : pill.withValues(alpha: isDark ? 0.38 : 0.28),
-                        width: isSelected ? 1.8 : 1.2,
-                      ),
-                      boxShadow: isSelected
-                          ? [
-                              BoxShadow(
-                                color:
-                                    (isDark
-                                            ? Colors.black
-                                            : AppColors.espressoDark)
-                                        .withValues(alpha: 0.16),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ]
-                          : null,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 7,
-                          height: 7,
-                          decoration: BoxDecoration(
-                            color: pill,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: pill.withValues(alpha: 0.55),
-                                blurRadius: 4,
-                                spreadRadius: 1,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          j.shortLabel.isNotEmpty
-                              ? j.shortLabel
-                              : (j.name.isNotEmpty
-                                    ? j.name.split(' ').first
-                                    : 'Jamaah ${i + 1}'),
-                          style: TextStyle(
-                            color: isSelected
-                                ? (isDark
-                                      ? AppColors.goldLight
-                                      : AppColors.espressoDark)
-                                : (isDark
-                                      ? AppColors.darkTextHeading
-                                      : AppColors.espressoDark),
-                            fontSize: 12.5,
-                            fontWeight: isSelected
-                                ? FontWeight.w800
-                                : FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(width: 5),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 5,
-                            vertical: 1.5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: pill.withValues(alpha: isDark ? 0.22 : 0.14),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            distText,
-                            style: TextStyle(
-                              color: pill,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.1,
-                            ),
-                          ),
-                        ),
-                        if (hasSos) ...[
-                          const SizedBox(width: 4),
-                          const Icon(
-                            Icons.emergency_rounded,
-                            color: AppColors.sosEmergency,
-                            size: 13,
-                          ),
-                        ],
-                      ],
+                const SizedBox(width: 6),
+                Text(
+                  j.shortLabel.isNotEmpty
+                      ? j.shortLabel
+                      : (j.name.isNotEmpty
+                            ? j.name.split(' ').first
+                            : 'Jamaah ${i + 1}'),
+                  style: TextStyle(
+                    color: isSelected
+                        ? (isDark
+                              ? AppColors.goldLight
+                              : AppColors.espressoDark)
+                        : (isDark
+                              ? AppColors.darkTextHeading
+                              : AppColors.espressoDark),
+                    fontSize: 12.5,
+                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(width: 5),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 1.5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: pill.withValues(alpha: isDark ? 0.22 : 0.14),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    distText,
+                    style: TextStyle(
+                      color: pill,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.1,
                     ),
                   ),
-                );
-              }),
+                ),
+                if (hasSos) ...[
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.emergency_rounded,
+                    color: AppColors.sosEmergency,
+                    size: 13,
+                  ),
+                ],
+              ],
             ),
+          ),
+        );
+      }),
     );
   }
 

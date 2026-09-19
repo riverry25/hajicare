@@ -41,6 +41,8 @@ class NotificationComposerDialog extends StatefulWidget {
     return showDialog(
       context: context,
       barrierDismissible: false,
+      barrierColor: Colors.black.withValues(alpha: 0.58),
+      useSafeArea: true,
       builder: (ctx) => NotificationComposerDialog(
         initialScope: initialScope,
         initialTargetUserId: initialTargetUserId,
@@ -63,7 +65,6 @@ class _NotificationComposerDialogState
   final _messageController = TextEditingController();
   final _maktabController = TextEditingController();
   final _kloterController = TextEditingController();
-  final _targetUserIdController = TextEditingController();
 
   final NotificationService _notificationService = NotificationService();
 
@@ -82,18 +83,17 @@ class _NotificationComposerDialogState
     final controller = Get.find<HajiCareController>();
     final isAdmin = controller.role == UserRole.admin;
 
-    // Determine initial scope
-    if (widget.initialScope != null) {
-      _selectedScope = widget.initialScope!;
-    } else {
-      _selectedScope = isAdmin ? 'global' : 'room';
-    }
+    const adminScopes = {'global', 'maktab', 'kloter', 'room', 'user'};
+    const pendampingScopes = {'room', 'user'};
+    final allowedScopes = isAdmin ? adminScopes : pendampingScopes;
+    final requestedScope = widget.initialScope?.trim().toLowerCase();
+    _selectedScope =
+        requestedScope != null && allowedScopes.contains(requestedScope)
+        ? requestedScope
+        : (isAdmin ? 'global' : 'room');
 
     _selectedTargetUserId = widget.initialTargetUserId;
     _selectedTargetUserName = widget.initialTargetUserName;
-    if (_selectedTargetUserId != null) {
-      _targetUserIdController.text = _selectedTargetUserId!;
-    }
 
     _selectedRoomId = widget.initialRoomId ?? controller.activeRoomId.value;
     _selectedRoomName =
@@ -110,12 +110,34 @@ class _NotificationComposerDialogState
     _messageController.dispose();
     _maktabController.dispose();
     _kloterController.dispose();
-    _targetUserIdController.dispose();
     super.dispose();
   }
 
   Future<void> _handleSend() async {
     if (!_formKey.currentState!.validate()) return;
+
+    String? targetMessage;
+    if ((_selectedScope == 'room' || _selectedScope == 'user') &&
+        (_selectedRoomId == null || _selectedRoomId!.isEmpty)) {
+      targetMessage = 'Pilih rombongan tujuan terlebih dahulu.';
+    } else if (_selectedScope == 'user' &&
+        (_selectedTargetUserId == null || _selectedTargetUserId!.isEmpty)) {
+      targetMessage = 'Pilih nama jamaah yang akan menerima pesan.';
+    } else if (_selectedScope == 'maktab' &&
+        _maktabController.text.trim().isEmpty) {
+      targetMessage = 'Pilih maktab tujuan terlebih dahulu.';
+    } else if (_selectedScope == 'kloter' &&
+        _kloterController.text.trim().isEmpty) {
+      targetMessage = 'Pilih kloter tujuan terlebih dahulu.';
+    }
+    if (targetMessage != null) {
+      AppAlert.warning(
+        context,
+        title: 'Penerima Belum Dipilih',
+        message: targetMessage,
+      );
+      return;
+    }
 
     final controller = Get.find<HajiCareController>();
     final user = FirebaseAuth.instance.currentUser;
@@ -132,7 +154,7 @@ class _NotificationComposerDialogState
     final senderRole = isAdmin ? 'admin' : 'pendamping';
     final senderName = user.displayName?.trim().isNotEmpty == true
         ? user.displayName!
-        : (isAdmin ? 'Admin Pusat' : 'Pendamping Room');
+        : (isAdmin ? 'Admin Pusat' : 'Pendamping Rombongan');
 
     setState(() => _isSending = true);
 
@@ -145,9 +167,7 @@ class _NotificationComposerDialogState
         senderName: senderName,
         scope: _selectedScope,
         type: _selectedType,
-        targetUserId: _selectedScope == 'user'
-            ? (_selectedTargetUserId ?? _targetUserIdController.text.trim())
-            : null,
+        targetUserId: _selectedScope == 'user' ? _selectedTargetUserId : null,
         targetRoomId: (_selectedScope == 'room' || _selectedScope == 'user')
             ? _selectedRoomId
             : null,
@@ -186,249 +206,520 @@ class _NotificationComposerDialogState
     final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
     final headingColor = AppColors.textHeadingColor(context);
     final bodyColor = AppColors.textBodyColor(context);
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+    final primaryColor = isDark ? AppColors.goldLight : AppColors.goldPrimary;
     final controller = Get.find<HajiCareController>();
     final isAdmin = controller.role == UserRole.admin;
+    final media = MediaQuery.of(context);
+    final availableHeight =
+        media.size.height -
+        media.viewInsets.bottom -
+        media.padding.vertical -
+        24;
+    final maxDialogHeight = availableHeight.clamp(280.0, 760.0).toDouble();
+    final horizontalInset = media.size.width < 360 ? 8.0 : 16.0;
 
-    return Dialog(
-      backgroundColor: cardBg,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-      ),
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520, maxHeight: 720),
-        child: Column(
-          children: [
-            // Modal Header
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 16, 12, 16),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
+    return PopScope(
+      canPop: !_isSending,
+      child: Dialog(
+        key: const Key('notification_composer_dialog'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        insetPadding: EdgeInsets.symmetric(
+          horizontal: horizontalInset,
+          vertical: 12,
+        ),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 560,
+            maxHeight: maxDialogHeight,
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.topCenter,
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 34, left: 4, right: 4),
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(
                     color: isDark
-                        ? AppColors.darkOutlineVariant
-                        : AppColors.surfaceVariant,
+                        ? Colors.white.withValues(alpha: 0.10)
+                        : AppColors.goldLight.withValues(alpha: 0.42),
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(
+                        alpha: isDark ? 0.45 : 0.18,
+                      ),
+                      blurRadius: 28,
+                      offset: const Offset(0, 12),
+                    ),
+                  ],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  children: [
+                    const SizedBox(height: 70),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        key: const Key('notification_composer_scroll'),
+                        keyboardDismissBehavior:
+                            ScrollViewKeyboardDismissBehavior.onDrag,
+                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Text(
+                                'Buat Notifikasi',
+                                style: AppTypography.titleMedium.copyWith(
+                                  color: headingColor,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 19,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                isAdmin
+                                    ? 'Sampaikan informasi resmi kepada penerima yang Anda pilih.'
+                                    : 'Sampaikan informasi penting kepada jamaah dalam rombongan Anda.',
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: bodyColor,
+                                  height: 1.4,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              _buildSectionTitle(
+                                icon: Icons.people_alt_outlined,
+                                title: 'Pilih Penerima',
+                                headingColor: headingColor,
+                              ),
+                              const SizedBox(height: 10),
+                              _buildScopeChips(isAdmin, primaryColor, isDark),
+                              const SizedBox(height: AppSpacing.md),
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 180),
+                                child: KeyedSubtree(
+                                  key: ValueKey(_selectedScope),
+                                  child: _buildDynamicScopeInput(
+                                    isAdmin,
+                                    controller,
+                                    isDark,
+                                    primaryColor,
+                                    headingColor,
+                                    bodyColor,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.xl),
+                              _buildSectionTitle(
+                                icon: Icons.label_outline_rounded,
+                                title: 'Kategori Pesan',
+                                headingColor: headingColor,
+                              ),
+                              const SizedBox(height: 10),
+                              _buildTypeChips(primaryColor, isDark),
+                              const SizedBox(height: AppSpacing.xl),
+                              _buildSectionTitle(
+                                icon: Icons.edit_note_rounded,
+                                title: 'Tulis Pesan',
+                                headingColor: headingColor,
+                              ),
+                              const SizedBox(height: 8),
+                              TextFormField(
+                                key: const Key('notification_title_field'),
+                                controller: _titleController,
+                                enabled: !_isSending,
+                                textCapitalization:
+                                    TextCapitalization.sentences,
+                                textInputAction: TextInputAction.next,
+                                maxLength: 80,
+                                style: TextStyle(
+                                  color: headingColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                decoration: _underlineInputDecoration(
+                                  isDark: isDark,
+                                  primaryColor: primaryColor,
+                                  hintText: 'Misalnya: Waktu Berkumpul',
+                                ).copyWith(counterText: ''),
+                                validator: (value) =>
+                                    value == null || value.trim().isEmpty
+                                    ? 'Isi judul pesan terlebih dahulu.'
+                                    : null,
+                              ),
+                              const SizedBox(height: AppSpacing.lg),
+                              TextFormField(
+                                key: const Key('notification_message_field'),
+                                controller: _messageController,
+                                enabled: !_isSending,
+                                minLines: 4,
+                                maxLines: 7,
+                                maxLength: 500,
+                                textCapitalization:
+                                    TextCapitalization.sentences,
+                                textInputAction: TextInputAction.newline,
+                                style: TextStyle(color: headingColor),
+                                decoration: _outlinedInputDecoration(
+                                  isDark: isDark,
+                                  primaryColor: primaryColor,
+                                  labelText: 'Isi pesan *',
+                                  hintText:
+                                      'Tuliskan waktu, lokasi, dan arahan dengan jelas.',
+                                  alignLabelWithHint: true,
+                                ),
+                                validator: (value) =>
+                                    value == null || value.trim().isEmpty
+                                    ? 'Isi pesan terlebih dahulu.'
+                                    : null,
+                              ),
+                              const SizedBox(height: AppSpacing.lg),
+                              _buildPreviewDisclosure(
+                                isDark: isDark,
+                                primaryColor: primaryColor,
+                                headingColor: headingColor,
+                                bodyColor: bodyColor,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    _buildFooter(
+                      isDark: isDark,
+                      primaryColor: primaryColor,
+                      headingColor: headingColor,
+                      bodyColor: bodyColor,
+                    ),
+                  ],
                 ),
               ),
-              child: Row(
+              Positioned(
+                top: 0,
+                left: 18,
+                right: 18,
+                height: 96,
+                child: _buildHeroHeader(
+                  isDark: isDark,
+                  primaryColor: primaryColor,
+                  onClose: _isSending
+                      ? null
+                      : () => Navigator.of(context).pop(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeroHeader({
+    required bool isDark,
+    required Color primaryColor,
+    required VoidCallback? onClose,
+  }) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [const Color(0xFF3B281C), const Color(0xFF21160F)]
+              : [AppColors.espressoDark, const Color(0xFF5B3C28)],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColors.goldPrimary.withValues(alpha: 0.48),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.espressoDark.withValues(alpha: 0.35),
+            blurRadius: 18,
+            offset: const Offset(0, 7),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(17),
+        child: Stack(
+          children: [
+            Positioned(right: -22, top: -28, child: _buildHeaderGlow(86, 0.13)),
+            Positioned(
+              left: -20,
+              bottom: -34,
+              child: _buildHeaderGlow(78, 0.08),
+            ),
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    width: 42,
+                    height: 42,
                     decoration: BoxDecoration(
-                      color: primaryColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      shape: BoxShape.circle,
+                      color: primaryColor.withValues(alpha: 0.16),
+                      border: Border.all(
+                        color: AppColors.goldPrimary.withValues(alpha: 0.55),
+                      ),
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.campaign_rounded,
-                      color: primaryColor,
-                      size: 22,
+                      color: AppColors.goldAccent,
+                      size: 23,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Buat Notifikasi',
-                          style: AppTypography.titleMedium.copyWith(
-                            color: headingColor,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          isAdmin
-                              ? 'Kirim pengumuman resmi'
-                              : 'Kirim pesan ke jamaah dalam rombongan',
-                          style: AppTypography.captionSmall.copyWith(
-                            color: bodyColor,
-                          ),
-                        ),
-                      ],
+                  const SizedBox(height: 5),
+                  const Text(
+                    'PESAN UNTUK JAMAAH',
+                    style: TextStyle(
+                      color: AppColors.goldLight,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.25,
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded),
-                    color: bodyColor,
-                    onPressed: _isSending
-                        ? null
-                        : () => Navigator.of(context).pop(),
                   ),
                 ],
               ),
             ),
-
-            // Modal Body Form
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Scope Selection Section
-                      Text(
-                        'Pilih Penerima',
-                        style: AppTypography.bodySmall.copyWith(
-                          color: headingColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      _buildScopeChips(isAdmin, primaryColor, isDark),
-                      const SizedBox(height: AppSpacing.md),
-
-                      // Dynamic Scope Inputs
-                      _buildDynamicScopeInput(
-                        isAdmin,
-                        controller,
-                        isDark,
-                        primaryColor,
-                        headingColor,
-                        bodyColor,
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-
-                      // Notification Type
-                      Text(
-                        'Kategori Notifikasi',
-                        style: AppTypography.bodySmall.copyWith(
-                          color: headingColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      _buildTypeChips(primaryColor, isDark),
-                      const SizedBox(height: AppSpacing.md),
-
-                      // Title Field
-                      TextFormField(
-                        controller: _titleController,
-                        style: TextStyle(color: headingColor),
-                        decoration: InputDecoration(
-                          labelText: 'Judul Notifikasi *',
-                          hintText: 'Contoh: Kumpul di Lobi Hotel Pukul 14.00',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                          ),
-                          prefixIcon: const Icon(Icons.title_rounded, size: 20),
-                        ),
-                        validator: (v) => (v == null || v.trim().isEmpty)
-                            ? 'Judul wajib diisi'
-                            : null,
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-
-                      // Message Field
-                      TextFormField(
-                        controller: _messageController,
-                        maxLines: 4,
-                        maxLength: 500,
-                        style: TextStyle(color: headingColor),
-                        decoration: InputDecoration(
-                          labelText: 'Isi Pesan *',
-                          hintText:
-                              'Tuliskan informasi lengkap yang perlu diketahui oleh jamaah...',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                          ),
-                          alignLabelWithHint: true,
-                        ),
-                        validator: (v) => (v == null || v.trim().isEmpty)
-                            ? 'Pesan wajib diisi'
-                            : null,
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-
-                      // Live Preview Section
-                      Text(
-                        'Pratinjau Tampilan Jamaah',
-                        style: AppTypography.bodySmall.copyWith(
-                          color: headingColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      _buildLivePreviewCard(
-                        context,
-                        isDark,
-                        primaryColor,
-                        headingColor,
-                        bodyColor,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // Modal Footer Actions
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: isDark
-                        ? AppColors.darkOutlineVariant
-                        : AppColors.surfaceVariant,
-                  ),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: bodyColor,
-                        minimumSize: const Size(0, 44),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                        ),
-                      ),
-                      onPressed: _isSending
-                          ? null
-                          : () => Navigator.of(context).pop(),
-                      child: const Text('Batal'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 2,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(0, 44),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                        ),
-                      ),
-                      onPressed: _isSending ? null : _handleSend,
-                      icon: _isSending
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Icon(Icons.send_rounded, size: 18),
-                      label: Text(
-                        _isSending ? 'Mengirim...' : 'Kirim Notifikasi',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                ],
+            Positioned(
+              top: 6,
+              right: 6,
+              child: IconButton(
+                tooltip: 'Tutup',
+                onPressed: onClose,
+                icon: const Icon(Icons.close_rounded),
+                color: Colors.white,
+                iconSize: 21,
+                visualDensity: VisualDensity.compact,
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderGlow(double size, double opacity) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.goldPrimary.withValues(alpha: opacity),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle({
+    required IconData icon,
+    required String title,
+    required Color headingColor,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, size: 19, color: headingColor),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            title,
+            style: AppTypography.bodyMedium.copyWith(
+              color: headingColor,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  InputDecoration _underlineInputDecoration({
+    required bool isDark,
+    required Color primaryColor,
+    required String hintText,
+  }) {
+    final idleColor = isDark ? AppColors.darkOutline : const Color(0xFFD1C2B5);
+    return InputDecoration(
+      labelText: 'Judul pesan *',
+      hintText: hintText,
+      hintStyle: TextStyle(
+        color: isDark ? Colors.white54 : AppColors.textMuted,
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+      ),
+      contentPadding: const EdgeInsets.fromLTRB(0, 10, 0, 8),
+      enabledBorder: UnderlineInputBorder(
+        borderSide: BorderSide(color: idleColor, width: 1.2),
+      ),
+      focusedBorder: UnderlineInputBorder(
+        borderSide: BorderSide(color: primaryColor, width: 2),
+      ),
+      errorBorder: const UnderlineInputBorder(
+        borderSide: BorderSide(color: AppColors.sosEmergency, width: 1.4),
+      ),
+      focusedErrorBorder: const UnderlineInputBorder(
+        borderSide: BorderSide(color: AppColors.sosEmergency, width: 2),
+      ),
+    );
+  }
+
+  InputDecoration _outlinedInputDecoration({
+    required bool isDark,
+    required Color primaryColor,
+    required String labelText,
+    String? hintText,
+    IconData? prefixIcon,
+    bool alignLabelWithHint = false,
+  }) {
+    final borderColor = isDark
+        ? AppColors.darkOutline
+        : AppColors.outlineVariant;
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderSide: BorderSide(color: borderColor),
+    );
+    return InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      alignLabelWithHint: alignLabelWithHint,
+      prefixIcon: prefixIcon == null ? null : Icon(prefixIcon, size: 21),
+      border: border,
+      enabledBorder: border,
+      focusedBorder: border.copyWith(
+        borderSide: BorderSide(color: primaryColor, width: 1.8),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+    );
+  }
+
+  Widget _buildPreviewDisclosure({
+    required bool isDark,
+    required Color primaryColor,
+    required Color headingColor,
+    required Color bodyColor,
+  }) {
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: Material(
+        type: MaterialType.transparency,
+        child: ExpansionTile(
+          key: const Key('notification_preview_expansion'),
+          tilePadding: EdgeInsets.zero,
+          childrenPadding: const EdgeInsets.only(top: 4),
+          leading: Icon(
+            Icons.visibility_outlined,
+            color: primaryColor,
+            size: 21,
+          ),
+          title: Text(
+            'Lihat tampilan pesan',
+            style: AppTypography.bodySmall.copyWith(
+              color: headingColor,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          subtitle: Text(
+            'Pratinjau yang akan dilihat jamaah',
+            style: AppTypography.captionSmall.copyWith(color: bodyColor),
+          ),
+          children: [
+            _buildLivePreviewCard(
+              context,
+              isDark,
+              primaryColor,
+              headingColor,
+              bodyColor,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFooter({
+    required bool isDark,
+    required Color primaryColor,
+    required Color headingColor,
+    required Color bodyColor,
+  }) {
+    final dividerColor = isDark
+        ? AppColors.darkOutlineVariant
+        : AppColors.outlineVariant.withValues(alpha: 0.65);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+        border: Border(top: BorderSide(color: dividerColor)),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final textScale = MediaQuery.textScalerOf(context).scale(1);
+          final stackButtons = constraints.maxWidth < 330 || textScale > 1.35;
+          final cancelButton = OutlinedButton(
+            key: const Key('notification_cancel_button'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: bodyColor,
+              minimumSize: const Size(0, 50),
+              side: BorderSide(color: dividerColor),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+              ),
+            ),
+            onPressed: _isSending ? null : () => Navigator.of(context).pop(),
+            child: const Text(
+              'Batal',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+          );
+          final sendButton = ElevatedButton.icon(
+            key: const Key('notification_send_button'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isDark
+                  ? AppColors.darkPrimaryContainer
+                  : AppColors.goldPrimary,
+              foregroundColor: isDark ? headingColor : Colors.white,
+              disabledBackgroundColor: primaryColor.withValues(alpha: 0.45),
+              minimumSize: const Size(0, 50),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+              ),
+            ),
+            onPressed: _isSending ? null : _handleSend,
+            icon: _isSending
+                ? const SizedBox(
+                    width: 19,
+                    height: 19,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Icon(Icons.send_rounded, size: 19),
+            label: Text(
+              _isSending ? 'Sedang Mengirim...' : 'Kirim Notifikasi',
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+          );
+
+          if (stackButtons) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [sendButton, const SizedBox(height: 8), cancelButton],
+            );
+          }
+          return Row(
+            children: [
+              Expanded(child: cancelButton),
+              const SizedBox(width: 12),
+              Expanded(flex: 2, child: sendButton),
+            ],
+          );
+        },
       ),
     );
   }
@@ -438,7 +729,7 @@ class _NotificationComposerDialogState
         ? [
             {
               'key': 'global',
-              'label': 'Semua Jamaah',
+              'label': 'Semua Pengguna',
               'icon': Icons.public_rounded,
             },
             {
@@ -476,7 +767,13 @@ class _NotificationComposerDialogState
       runSpacing: 8,
       children: availableScopes.map((scope) {
         final isSelected = _selectedScope == scope['key'];
+        final selectedContentColor =
+            ThemeData.estimateBrightnessForColor(primaryColor) ==
+                Brightness.dark
+            ? Colors.white
+            : AppColors.espressoDark;
         return ChoiceChip(
+          showCheckmark: false,
           label: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -484,7 +781,7 @@ class _NotificationComposerDialogState
                 scope['icon'] as IconData,
                 size: 15,
                 color: isSelected
-                    ? Colors.white
+                    ? selectedContentColor
                     : (isDark ? AppColors.darkTextBody : AppColors.textBody),
               ),
               const SizedBox(width: 6),
@@ -494,7 +791,7 @@ class _NotificationComposerDialogState
                   fontSize: 12,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   color: isSelected
-                      ? Colors.white
+                      ? selectedContentColor
                       : (isDark ? AppColors.darkTextBody : AppColors.textBody),
                 ),
               ),
@@ -505,11 +802,13 @@ class _NotificationComposerDialogState
           backgroundColor: isDark
               ? AppColors.darkSurfaceContainer
               : AppColors.surfaceVariant,
-          onSelected: (selected) {
-            if (selected) {
-              setState(() => _selectedScope = scope['key'] as String);
-            }
-          },
+          onSelected: _isSending
+              ? null
+              : (selected) {
+                  if (selected) {
+                    setState(() => _selectedScope = scope['key'] as String);
+                  }
+                },
         );
       }).toList(),
     );
@@ -532,14 +831,19 @@ class _NotificationComposerDialogState
       children: types.map((t) {
         final isSelected = _selectedType == t['key'];
         final color = t['color'] as Color;
+        final selectedContentColor =
+            ThemeData.estimateBrightnessForColor(color) == Brightness.dark
+            ? Colors.white
+            : AppColors.espressoDark;
         return ChoiceChip(
+          showCheckmark: false,
           label: Text(
             t['label'] as String,
             style: TextStyle(
               fontSize: 12,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               color: isSelected
-                  ? Colors.white
+                  ? selectedContentColor
                   : (isDark ? AppColors.darkTextBody : AppColors.textBody),
             ),
           ),
@@ -548,11 +852,13 @@ class _NotificationComposerDialogState
           backgroundColor: isDark
               ? AppColors.darkSurfaceContainer
               : AppColors.surfaceVariant,
-          onSelected: (selected) {
-            if (selected) {
-              setState(() => _selectedType = t['key'] as String);
-            }
-          },
+          onSelected: _isSending
+              ? null
+              : (selected) {
+                  if (selected) {
+                    setState(() => _selectedType = t['key'] as String);
+                  }
+                },
         );
       }).toList(),
     );
@@ -587,9 +893,10 @@ class _NotificationComposerDialogState
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Notifikasi ini akan disiarkan ke SELURUH jamaah yang terdaftar dalam sistem.',
+                  'Pesan akan dikirim kepada semua pengguna yang terdaftar. Periksa kembali isinya sebelum mengirim.',
                   style: AppTypography.captionSmall.copyWith(
                     color: headingColor,
+                    height: 1.35,
                   ),
                 ),
               ),
@@ -598,43 +905,43 @@ class _NotificationComposerDialogState
         );
 
       case 'maktab':
-        return TextFormField(
+        return _buildGroupPicker(
+          field: 'maktab',
+          label: 'Pilih maktab tujuan *',
+          emptyMessage: 'Belum ada maktab yang dapat dipilih.',
           controller: _maktabController,
-          style: TextStyle(color: headingColor),
-          decoration: InputDecoration(
-            labelText: 'Nomor / Nama Maktab *',
-            hintText: 'Contoh: Maktab 112 atau Mina 4',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-            prefixIcon: const Icon(Icons.apartment_rounded, size: 20),
-          ),
-          validator: (v) =>
-              (_selectedScope == 'maktab' && (v == null || v.trim().isEmpty))
-              ? 'Maktab wajib diisi'
-              : null,
+          icon: Icons.apartment_rounded,
+          isDark: isDark,
+          primaryColor: primaryColor,
+          headingColor: headingColor,
+          bodyColor: bodyColor,
         );
 
       case 'kloter':
-        return TextFormField(
+        return _buildGroupPicker(
+          field: 'kloter',
+          label: 'Pilih kloter tujuan *',
+          emptyMessage: 'Belum ada kloter yang dapat dipilih.',
           controller: _kloterController,
-          style: TextStyle(color: headingColor),
-          decoration: InputDecoration(
-            labelText: 'Kode / Nama Kloter *',
-            hintText: 'Contoh: JKG-01, SOC-12',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-            prefixIcon: const Icon(Icons.groups_rounded, size: 20),
-          ),
-          validator: (v) =>
-              (_selectedScope == 'kloter' && (v == null || v.trim().isEmpty))
-              ? 'Kloter wajib diisi'
-              : null,
+          icon: Icons.groups_rounded,
+          isDark: isDark,
+          primaryColor: primaryColor,
+          headingColor: headingColor,
+          bodyColor: bodyColor,
         );
 
       case 'room':
         if (!isAdmin) {
+          if (_selectedRoomId == null || _selectedRoomId!.isEmpty) {
+            return _buildDataStateCard(
+              icon: Icons.info_outline_rounded,
+              message:
+                  'Anda belum terhubung ke rombongan. Hubungkan rombongan sebelum mengirim pesan.',
+              isDark: isDark,
+              primaryColor: primaryColor,
+              bodyColor: bodyColor,
+            );
+          }
           // Pendamping is locked to active room
           final rName =
               _selectedRoomName ??
@@ -665,7 +972,7 @@ class _NotificationComposerDialogState
                         ),
                       ),
                       Text(
-                        'Notifikasi dikirim ke seluruh jamaah di dalam room ini.',
+                        'Pesan dikirim ke seluruh jamaah dalam rombongan ini.',
                         style: AppTypography.captionSmall.copyWith(
                           color: bodyColor,
                         ),
@@ -677,55 +984,26 @@ class _NotificationComposerDialogState
             ),
           );
         } else {
-          // Admin can specify Room ID or select
-          return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-            stream: FirebaseFirestore.instance.collection('rooms').snapshots(),
-            builder: (context, snapshot) {
-              final rooms = snapshot.data?.docs ?? [];
-              return DropdownButtonFormField<String>(
-                initialValue: rooms.any((d) => d.id == _selectedRoomId)
-                    ? _selectedRoomId
-                    : null,
-                dropdownColor: isDark
-                    ? AppColors.darkSurfaceContainer
-                    : AppColors.surfaceWhite,
-                decoration: InputDecoration(
-                  labelText: 'Pilih rombongan tujuan *',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
-                  prefixIcon: const Icon(Icons.meeting_room_rounded, size: 20),
-                ),
-                items: rooms.map((doc) {
-                  final data = doc.data();
-                  final name = data['name'] ?? 'Room ${doc.id}';
-                  final code = data['code'] ?? '';
-                  return DropdownMenuItem<String>(
-                    value: doc.id,
-                    child: Text(
-                      '$name ($code)',
-                      style: TextStyle(color: headingColor),
-                    ),
-                  );
-                }).toList(),
-                onChanged: (val) {
-                  setState(() {
-                    _selectedRoomId = val;
-                    final match = rooms.firstWhereOrNull((d) => d.id == val);
-                    _selectedRoomName = match?.data()['name'] as String?;
-                  });
-                },
-                validator: (v) =>
-                    (_selectedScope == 'room' && (v == null || v.isEmpty))
-                    ? 'Pilih rombongan tujuan'
-                    : null,
-              );
-            },
+          return _buildAdminRoomPicker(
+            isDark: isDark,
+            primaryColor: primaryColor,
+            headingColor: headingColor,
+            bodyColor: bodyColor,
           );
         }
 
       case 'user':
         if (!isAdmin) {
+          if (_selectedRoomId == null || _selectedRoomId!.isEmpty) {
+            return _buildDataStateCard(
+              icon: Icons.info_outline_rounded,
+              message:
+                  'Anda belum terhubung ke rombongan. Hubungkan rombongan untuk memilih jamaah.',
+              isDark: isDark,
+              primaryColor: primaryColor,
+              bodyColor: bodyColor,
+            );
+          }
           // Pendamping picks from current room's Jamaah
           final members = controller.jamaahList;
           if (_selectedTargetUserId != null &&
@@ -769,7 +1047,7 @@ class _NotificationComposerDialogState
                           ),
                         ),
                         Text(
-                          'Pilih satu jamaah dari rombongan',
+                          'Pesan hanya dikirim kepada jamaah ini.',
                           style: AppTypography.captionSmall.copyWith(
                             color: bodyColor,
                           ),
@@ -778,16 +1056,28 @@ class _NotificationComposerDialogState
                     ),
                   ),
                   TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _selectedTargetUserId = null;
-                        _selectedTargetUserName = null;
-                      });
-                    },
+                    onPressed: _isSending
+                        ? null
+                        : () {
+                            setState(() {
+                              _selectedTargetUserId = null;
+                              _selectedTargetUserName = null;
+                            });
+                          },
                     child: const Text('Ganti', style: TextStyle(fontSize: 12)),
                   ),
                 ],
               ),
+            );
+          }
+
+          if (members.isEmpty) {
+            return _buildDataStateCard(
+              icon: Icons.person_off_outlined,
+              message: 'Belum ada jamaah dalam rombongan ini.',
+              isDark: isDark,
+              primaryColor: primaryColor,
+              bodyColor: bodyColor,
             );
           }
 
@@ -798,54 +1088,422 @@ class _NotificationComposerDialogState
             dropdownColor: isDark
                 ? AppColors.darkSurfaceContainer
                 : AppColors.surfaceWhite,
-            decoration: InputDecoration(
-              labelText: 'Pilih Jamaah Target *',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              ),
-              prefixIcon: const Icon(Icons.person_outline_rounded, size: 20),
+            isExpanded: true,
+            decoration: _outlinedInputDecoration(
+              isDark: isDark,
+              primaryColor: primaryColor,
+              labelText: 'Pilih nama jamaah *',
+              prefixIcon: Icons.person_outline_rounded,
             ),
             items: members.map((j) {
               return DropdownMenuItem<String>(
                 value: j.id,
-                child: Text(j.name, style: TextStyle(color: headingColor)),
+                child: Text(
+                  j.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: headingColor),
+                ),
               );
             }).toList(),
-            onChanged: (val) {
-              setState(() {
-                _selectedTargetUserId = val;
-                final match = members.firstWhereOrNull((j) => j.id == val);
-                _selectedTargetUserName = match?.name;
-              });
-            },
+            onChanged: _isSending
+                ? null
+                : (val) {
+                    setState(() {
+                      _selectedTargetUserId = val;
+                      final match = members.firstWhereOrNull(
+                        (j) => j.id == val,
+                      );
+                      _selectedTargetUserName = match?.name;
+                    });
+                  },
             validator: (v) =>
                 (_selectedScope == 'user' && (v == null || v.isEmpty))
-                ? 'Jamaah target wajib dipilih'
+                ? 'Pilih nama jamaah terlebih dahulu.'
                 : null,
           );
         } else {
-          // Admin targets specific user via ID or lookup
-          return TextFormField(
-            controller: _targetUserIdController,
-            style: TextStyle(color: headingColor),
-            decoration: InputDecoration(
-              labelText: 'UID Jamaah / User *',
-              hintText: 'Masukkan User UID target',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              ),
-              prefixIcon: const Icon(Icons.person_rounded, size: 20),
-            ),
-            validator: (v) =>
-                (_selectedScope == 'user' && (v == null || v.trim().isEmpty))
-                ? 'Target User ID wajib diisi'
-                : null,
+          return _buildAdminUserPicker(
+            isDark: isDark,
+            primaryColor: primaryColor,
+            headingColor: headingColor,
+            bodyColor: bodyColor,
           );
         }
 
       default:
         return const SizedBox.shrink();
     }
+  }
+
+  Widget _buildGroupPicker({
+    required String field,
+    required String label,
+    required String emptyMessage,
+    required TextEditingController controller,
+    required IconData icon,
+    required bool isDark,
+    required Color primaryColor,
+    required Color headingColor,
+    required Color bodyColor,
+  }) {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance.collection('users').snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return _buildDataStateCard(
+            icon: Icons.wifi_off_rounded,
+            message: 'Daftar tujuan belum dapat dimuat. Coba lagi sebentar.',
+            isDark: isDark,
+            primaryColor: primaryColor,
+            bodyColor: bodyColor,
+          );
+        }
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
+          return _buildLoadingField('Memuat daftar tujuan...', bodyColor);
+        }
+
+        final values =
+            snapshot.data?.docs
+                .map((doc) => doc.data()[field]?.toString().trim() ?? '')
+                .where((value) => value.isNotEmpty)
+                .toSet()
+                .toList() ??
+            <String>[];
+        values.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+        if (values.isEmpty) {
+          return _buildDataStateCard(
+            icon: Icons.info_outline_rounded,
+            message: emptyMessage,
+            isDark: isDark,
+            primaryColor: primaryColor,
+            bodyColor: bodyColor,
+          );
+        }
+
+        final selectedValue = values.contains(controller.text)
+            ? controller.text
+            : null;
+        return DropdownButtonFormField<String>(
+          key: ValueKey('$field-${values.join('|')}'),
+          initialValue: selectedValue,
+          isExpanded: true,
+          dropdownColor: isDark
+              ? AppColors.darkSurfaceContainer
+              : AppColors.surfaceWhite,
+          decoration: _outlinedInputDecoration(
+            isDark: isDark,
+            primaryColor: primaryColor,
+            labelText: label,
+            prefixIcon: icon,
+          ),
+          items: values
+              .map(
+                (value) => DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: headingColor),
+                  ),
+                ),
+              )
+              .toList(),
+          onChanged: _isSending
+              ? null
+              : (value) {
+                  setState(() => controller.text = value ?? '');
+                },
+          validator: (value) => value == null || value.isEmpty
+              ? 'Pilih tujuan pesan terlebih dahulu.'
+              : null,
+        );
+      },
+    );
+  }
+
+  Widget _buildAdminRoomPicker({
+    required bool isDark,
+    required Color primaryColor,
+    required Color headingColor,
+    required Color bodyColor,
+    bool resetTargetUserOnChange = true,
+  }) {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance.collection('rooms').snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return _buildDataStateCard(
+            icon: Icons.wifi_off_rounded,
+            message: 'Daftar rombongan belum dapat dimuat. Coba lagi sebentar.',
+            isDark: isDark,
+            primaryColor: primaryColor,
+            bodyColor: bodyColor,
+          );
+        }
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
+          return _buildLoadingField('Memuat daftar rombongan...', bodyColor);
+        }
+
+        final rooms =
+            (snapshot.data?.docs ?? [])
+                .where((doc) => doc.data()['isActive'] != false)
+                .toList()
+              ..sort((a, b) {
+                final aName = a.data()['name']?.toString() ?? '';
+                final bName = b.data()['name']?.toString() ?? '';
+                return aName.toLowerCase().compareTo(bName.toLowerCase());
+              });
+        if (rooms.isEmpty) {
+          return _buildDataStateCard(
+            icon: Icons.meeting_room_outlined,
+            message: 'Belum ada rombongan aktif yang dapat dipilih.',
+            isDark: isDark,
+            primaryColor: primaryColor,
+            bodyColor: bodyColor,
+          );
+        }
+
+        final selectedValue = rooms.any((doc) => doc.id == _selectedRoomId)
+            ? _selectedRoomId
+            : null;
+        return DropdownButtonFormField<String>(
+          key: ValueKey('room-${rooms.map((doc) => doc.id).join('|')}'),
+          initialValue: selectedValue,
+          isExpanded: true,
+          dropdownColor: isDark
+              ? AppColors.darkSurfaceContainer
+              : AppColors.surfaceWhite,
+          decoration: _outlinedInputDecoration(
+            isDark: isDark,
+            primaryColor: primaryColor,
+            labelText: 'Pilih rombongan tujuan *',
+            prefixIcon: Icons.meeting_room_rounded,
+          ),
+          items: rooms.map((doc) {
+            final data = doc.data();
+            final name = data['name']?.toString().trim();
+            final code = data['code']?.toString().trim();
+            final displayName = name == null || name.isEmpty
+                ? 'Rombongan'
+                : name;
+            final displayText = code == null || code.isEmpty
+                ? displayName
+                : '$displayName • $code';
+            return DropdownMenuItem<String>(
+              value: doc.id,
+              child: Text(
+                displayText,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: headingColor),
+              ),
+            );
+          }).toList(),
+          onChanged: _isSending
+              ? null
+              : (value) {
+                  setState(() {
+                    _selectedRoomId = value;
+                    final match = rooms.firstWhereOrNull(
+                      (doc) => doc.id == value,
+                    );
+                    _selectedRoomName = match?.data()['name']?.toString();
+                    if (resetTargetUserOnChange) {
+                      _selectedTargetUserId = null;
+                      _selectedTargetUserName = null;
+                    }
+                  });
+                },
+          validator: (value) => value == null || value.isEmpty
+              ? 'Pilih rombongan tujuan terlebih dahulu.'
+              : null,
+        );
+      },
+    );
+  }
+
+  Widget _buildAdminUserPicker({
+    required bool isDark,
+    required Color primaryColor,
+    required Color headingColor,
+    required Color bodyColor,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildAdminRoomPicker(
+          isDark: isDark,
+          primaryColor: primaryColor,
+          headingColor: headingColor,
+          bodyColor: bodyColor,
+        ),
+        const SizedBox(height: 12),
+        if (_selectedRoomId == null || _selectedRoomId!.isEmpty)
+          _buildDataStateCard(
+            icon: Icons.touch_app_rounded,
+            message: 'Pilih rombongan lebih dulu untuk melihat nama jamaah.',
+            isDark: isDark,
+            primaryColor: primaryColor,
+            bodyColor: bodyColor,
+          )
+        else
+          StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            stream: FirebaseFirestore.instance
+                .collection('rooms')
+                .doc(_selectedRoomId)
+                .collection('members')
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return _buildDataStateCard(
+                  icon: Icons.wifi_off_rounded,
+                  message:
+                      'Daftar jamaah belum dapat dimuat. Coba lagi sebentar.',
+                  isDark: isDark,
+                  primaryColor: primaryColor,
+                  bodyColor: bodyColor,
+                );
+              }
+              if (snapshot.connectionState == ConnectionState.waiting &&
+                  !snapshot.hasData) {
+                return _buildLoadingField('Memuat daftar jamaah...', bodyColor);
+              }
+
+              final members =
+                  (snapshot.data?.docs ?? []).where((doc) {
+                    final role = doc.data()['role']?.toString().toLowerCase();
+                    return role == null || role.isEmpty || role == 'jamaah';
+                  }).toList()..sort((a, b) {
+                    final aName = a.data()['name']?.toString() ?? '';
+                    final bName = b.data()['name']?.toString() ?? '';
+                    return aName.toLowerCase().compareTo(bName.toLowerCase());
+                  });
+              if (members.isEmpty) {
+                return _buildDataStateCard(
+                  icon: Icons.person_off_outlined,
+                  message: 'Belum ada jamaah dalam rombongan ini.',
+                  isDark: isDark,
+                  primaryColor: primaryColor,
+                  bodyColor: bodyColor,
+                );
+              }
+
+              final selectedValue =
+                  members.any((doc) => doc.id == _selectedTargetUserId)
+                  ? _selectedTargetUserId
+                  : null;
+              return DropdownButtonFormField<String>(
+                key: ValueKey(
+                  'member-$_selectedRoomId-${members.map((doc) => doc.id).join('|')}',
+                ),
+                initialValue: selectedValue,
+                isExpanded: true,
+                dropdownColor: isDark
+                    ? AppColors.darkSurfaceContainer
+                    : AppColors.surfaceWhite,
+                decoration: _outlinedInputDecoration(
+                  isDark: isDark,
+                  primaryColor: primaryColor,
+                  labelText: 'Pilih nama jamaah *',
+                  prefixIcon: Icons.person_outline_rounded,
+                ),
+                items: members.map((doc) {
+                  final name = doc.data()['name']?.toString().trim();
+                  return DropdownMenuItem<String>(
+                    value: doc.id,
+                    child: Text(
+                      name == null || name.isEmpty ? 'Jamaah' : name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: headingColor),
+                    ),
+                  );
+                }).toList(),
+                onChanged: _isSending
+                    ? null
+                    : (value) {
+                        setState(() {
+                          _selectedTargetUserId = value;
+                          final match = members.firstWhereOrNull(
+                            (doc) => doc.id == value,
+                          );
+                          _selectedTargetUserName = match
+                              ?.data()['name']
+                              ?.toString();
+                        });
+                      },
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Pilih nama jamaah terlebih dahulu.'
+                    : null,
+              );
+            },
+          ),
+      ],
+    );
+  }
+
+  Widget _buildLoadingField(String message, Color bodyColor) {
+    return Semantics(
+      liveRegion: true,
+      label: message,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          children: [
+            const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: AppTypography.bodySmall.copyWith(color: bodyColor),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDataStateCard({
+    required IconData icon,
+    required String message,
+    required bool isDark,
+    required Color primaryColor,
+    required Color bodyColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark
+            ? AppColors.darkSurfaceContainer
+            : AppColors.canvasCream.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: primaryColor.withValues(alpha: 0.28)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: primaryColor, size: 21),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: AppTypography.bodySmall.copyWith(
+                color: bodyColor,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildLivePreviewCard(
@@ -863,7 +1521,7 @@ class _NotificationComposerDialogState
         : 'Isi ringkasan notifikasi akan tampil di sini seperti yang dilihat jamaah.';
 
     Color badgeColor;
-    String scopeLabel = _selectedScope.toUpperCase();
+    String scopeLabel = 'SEMUA PENGGUNA';
     if (_selectedScope == 'global') {
       badgeColor = primaryColor;
     } else if (_selectedScope == 'maktab') {
@@ -876,10 +1534,10 @@ class _NotificationComposerDialogState
           'KLOTER ${_kloterController.text.trim().isNotEmpty ? _kloterController.text.trim() : ""}';
     } else if (_selectedScope == 'room') {
       badgeColor = primaryColor;
-      scopeLabel = 'ROOM';
+      scopeLabel = 'ROMBONGAN';
     } else {
       badgeColor = AppColors.statusSafe;
-      scopeLabel = 'LANGSUNG';
+      scopeLabel = 'PRIBADI';
     }
 
     return Container(
