@@ -1348,11 +1348,11 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
           physics: const BouncingScrollPhysics(),
           child: Row(
             children: [
-              _buildFilterChipItem(
+              _buildFilterButtonItem(
                 label: 'Semua',
                 count: _totalCount,
+                icon: Icons.people_alt_rounded,
                 isSelected: _selectedFilter == 'Semua',
-                activeColor: primaryColor,
                 headingColor: headingColor,
                 bodyColor: bodyColor,
                 cardBg: cardBg,
@@ -1365,11 +1365,11 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                 },
               ),
               const SizedBox(width: 8),
-              _buildFilterChipItem(
+              _buildFilterButtonItem(
                 label: 'Jamaah',
                 count: _jamaahCount,
+                icon: Icons.person_rounded,
                 isSelected: _selectedFilter == 'Jamaah',
-                activeColor: AppColors.emeraldIslamic,
                 headingColor: headingColor,
                 bodyColor: bodyColor,
                 cardBg: cardBg,
@@ -1382,11 +1382,11 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                 },
               ),
               const SizedBox(width: 8),
-              _buildFilterChipItem(
+              _buildFilterButtonItem(
                 label: 'Pendamping',
                 count: _pendampingCount,
+                icon: Icons.health_and_safety_rounded,
                 isSelected: _selectedFilter == 'Pendamping',
-                activeColor: const Color(0xFF1D4ED8),
                 headingColor: headingColor,
                 bodyColor: bodyColor,
                 cardBg: cardBg,
@@ -1405,11 +1405,11 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     );
   }
 
-  Widget _buildFilterChipItem({
+  Widget _buildFilterButtonItem({
     required String label,
     required int count,
+    required IconData icon,
     required bool isSelected,
-    required Color activeColor,
     required Color headingColor,
     required Color bodyColor,
     required Color cardBg,
@@ -1423,50 +1423,109 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
           HapticFeedback.selectionClick();
           onTap();
         },
-        borderRadius: BorderRadius.circular(AppRadius.pill),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: isSelected
-                ? activeColor.withValues(alpha: isDark ? 0.25 : 0.12)
+                ? (isDark ? const Color(0xFF2C1E16) : AppColors.espressoDark)
                 : cardBg,
-            borderRadius: BorderRadius.circular(AppRadius.pill),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(
               color: isSelected
-                  ? activeColor
+                  ? AppColors.goldPrimary
                   : (isDark
                         ? AppColors.darkOutlineVariant
                         : const Color(0xFFE2E8F0)),
-              width: isSelected ? 1.4 : 1.0,
+              width: isSelected ? 1.6 : 1.0,
             ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: AppColors.espressoDark.withValues(
+                        alpha: isDark ? 0.35 : 0.16,
+                      ),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                label,
-                style: TextStyle(
-                  color: isSelected ? activeColor : headingColor,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                width: 28,
+                height: 28,
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? activeColor.withValues(alpha: isDark ? 0.40 : 0.20)
-                      : bodyColor.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ? AppColors.surfaceWhite.withValues(alpha: 0.14)
+                      : (isDark
+                            ? Colors.white.withValues(alpha: 0.06)
+                            : AppColors.canvasCream),
+                  borderRadius: BorderRadius.circular(8),
+                  border: isSelected
+                      ? Border.all(
+                          color: AppColors.goldPrimary.withValues(alpha: 0.4),
+                        )
+                      : null,
+                ),
+                child: Icon(
+                  icon,
+                  color: isSelected
+                      ? AppColors.goldPrimary
+                      : (isDark
+                            ? AppColors.darkTextBody
+                            : AppColors.espressoDark),
+                  size: 16,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: isSelected ? AppColors.surfaceWhite : headingColor,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
+                  fontSize: 12.5,
+                ),
+              ),
+              const SizedBox(width: 8),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppColors.goldPrimary
+                      : (isDark
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : AppColors.canvasCream),
+                  borderRadius: BorderRadius.circular(6),
+                  border: isSelected
+                      ? null
+                      : Border.all(
+                          color: isDark
+                              ? AppColors.darkOutlineVariant
+                              : const Color(0xFFE2E8F0),
+                          width: 1,
+                        ),
                 ),
                 child: Text(
                   '$count',
                   style: TextStyle(
-                    color: isSelected ? activeColor : bodyColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 10.5,
+                    color: isSelected
+                        ? AppColors.espressoDark
+                        : (isDark ? AppColors.darkTextBody : bodyColor),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 11,
                   ),
                 ),
               ),

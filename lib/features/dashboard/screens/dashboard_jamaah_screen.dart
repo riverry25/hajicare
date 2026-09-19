@@ -701,7 +701,9 @@ class DashboardJamaahScreen extends StatelessWidget {
 
           // ── Section 1: "Status & Peringatan" ("Bot Alert") ────────
           _buildSectionHeader(
+            icon: Icons.radar_rounded,
             title: 'Status & Peringatan',
+            subtitle: 'Koneksi GPS & pemantauan rombongan',
             actionText: 'Lihat peta',
             onAction: () => dashboardCtrl.changeTab(1),
             headingColor: headingColor,
@@ -714,7 +716,9 @@ class DashboardJamaahScreen extends StatelessWidget {
 
           // ── Section 2: "Kamar & Maktab" ───────────────────────────
           _buildSectionHeader(
+            icon: Icons.meeting_room_rounded,
             title: 'Kamar & Maktab',
+            subtitle: 'Informasi room & rombongan hotel',
             actionText: 'Kelola',
             onAction: () {
               if (state.activeRoomId.value != null) {
@@ -736,7 +740,9 @@ class DashboardJamaahScreen extends StatelessWidget {
 
           // ── Section 3: "Tips & Panduan Ibadah" ("News and Updates")
           _buildSectionHeader(
+            icon: Icons.menu_book_rounded,
             title: 'Tips & Panduan Ibadah',
+            subtitle: 'Doa harian, rukun & info penting',
             actionText: 'Lihat semua',
             onAction: () => _showDoaSheet(context),
             headingColor: headingColor,
@@ -821,41 +827,97 @@ class DashboardJamaahScreen extends StatelessWidget {
     );
   }
 
-  // ── Section Header (Title + See all) ──────────────────────────────────────
+  // ── Section Header (Icon Container + Title + Subtitle + Action) ───────────
   Widget _buildSectionHeader({
+    required IconData icon,
     required String title,
+    required String subtitle,
     required String actionText,
     required VoidCallback onAction,
     required Color headingColor,
     required bool isDark,
   }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style: AppTypography.titleMedium.copyWith(
-            fontWeight: FontWeight.w800,
-            color: headingColor,
-            fontSize: 16,
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppColors.darkSurfaceContainer
+                  : AppColors.surfaceWhite,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isDark
+                    ? AppColors.darkCardBorder
+                    : AppColors.lightCardBorder,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Icon(
+              icon,
+              color: isDark ? AppColors.goldLight : AppColors.espressoDark,
+              size: 20,
+            ),
           ),
-        ),
-        InkWell(
-          onTap: onAction,
-          borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-            child: Text(
-              actionText,
-              style: TextStyle(
-                color: isDark ? AppColors.goldLight : AppColors.espressoDark,
-                fontWeight: FontWeight.w700,
-                fontSize: 12.5,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.titleMedium.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: headingColor,
+                    fontSize: 15,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.captionSmall.copyWith(
+                    color: isDark
+                        ? AppColors.darkTextBody.withValues(alpha: 0.8)
+                        : AppColors.textMuted,
+                    height: 1.3,
+                    fontSize: 11.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          InkWell(
+            onTap: onAction,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              child: Text(
+                actionText,
+                style: TextStyle(
+                  color: isDark ? AppColors.goldLight : AppColors.espressoDark,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12.5,
+                ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

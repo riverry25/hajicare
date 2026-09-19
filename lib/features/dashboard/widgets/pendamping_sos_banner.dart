@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../../core/locales/app_translations.dart';
 import '../../../../core/routes/app_routes.dart';
@@ -298,6 +299,7 @@ class PendampingSosBanner extends StatelessWidget {
                           : AppColors.canvasCream,
                       fg: isDark ? AppColors.goldLight : AppColors.espressoDark,
                       outline: false,
+                      onTap: () => _handleTestAlarm(context),
                     ),
                     _buildSmallBtn(
                       icon: Icons.call_rounded,
@@ -308,10 +310,369 @@ class PendampingSosBanner extends StatelessWidget {
                       borderColor: AppColors.sosEmergency.withValues(
                         alpha: 0.4,
                       ),
+                      onTap: () => _handleResponseCenter(context),
                     ),
                   ],
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleTestAlarm(BuildContext context) async {
+    HapticFeedback.heavyImpact();
+    SystemSound.play(SystemSoundType.alert);
+
+    try {
+      final hasVib = await Vibration.hasVibrator();
+      if (hasVib == true) {
+        Vibration.vibrate(pattern: [0, 300, 150, 300, 150, 400]);
+      }
+    } catch (_) {}
+
+    if (!context.mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) {
+        final isDark = AppColors.isDark(ctx);
+        return Dialog(
+          backgroundColor: isDark
+              ? AppColors.darkSurface
+              : AppColors.surfaceWhite,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            side: BorderSide(
+              color: isDark
+                  ? AppColors.darkOutlineVariant
+                  : const Color(0xFFE2E8F0),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(22),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: AppColors.accentGoldStar.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.goldPrimary.withValues(alpha: 0.4),
+                      width: 2,
+                    ),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.volume_up_rounded,
+                      color: AppColors.goldPrimary,
+                      size: 32,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Uji Sinyal Alarm Berjalan',
+                  style: AppTypography.titleMedium.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: isDark
+                        ? AppColors.darkTextHeading
+                        : AppColors.espressoDark,
+                    fontSize: 17,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Simulasi alarm darurat berhasil diuji. Perangkat akan berdering dan bergetar otomatis saat tombol gelang ditekan atau jamaah melewati batas aman 200m.',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: isDark ? AppColors.darkTextBody : AppColors.textBody,
+                    height: 1.45,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      try {
+                        Vibration.cancel();
+                      } catch (_) {}
+                      Navigator.of(ctx).pop();
+                    },
+                    icon: const Icon(
+                      Icons.check_circle_outline_rounded,
+                      size: 18,
+                    ),
+                    label: const Text(
+                      'Selesai Uji Coba',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.espressoDark,
+                      foregroundColor: AppColors.surfaceWhite,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                      elevation: 2,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    ).then((_) {
+      try {
+        Vibration.cancel();
+      } catch (_) {}
+    });
+  }
+
+  void _handleResponseCenter(BuildContext context) {
+    HapticFeedback.selectionClick();
+    final isDark = AppColors.isDark(context);
+    final headingColor = AppColors.textHeadingColor(context);
+    final bodyColor = AppColors.textBodyColor(context);
+
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      backgroundColor: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.md,
+            AppSpacing.lg,
+            AppSpacing.xl,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.darkOutline
+                        : AppColors.outlineVariant,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: AppColors.sosEmergency.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.sosEmergency.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.phone_in_talk_rounded,
+                        color: AppColors.sosEmergency,
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Pusat Tanggap Darurat',
+                          style: AppTypography.titleMedium.copyWith(
+                            color: headingColor,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Akses cepat nomor darurat & pemantauan krisis',
+                          style: AppTypography.captionSmall.copyWith(
+                            color: bodyColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              _buildHotlineCard(
+                ctx,
+                title: 'Hotline Krisis Kemenag RI',
+                number: '800-119-999',
+                icon: Icons.support_agent_rounded,
+                isDark: isDark,
+                headingColor: headingColor,
+                bodyColor: bodyColor,
+              ),
+              const SizedBox(height: 10),
+              _buildHotlineCard(
+                ctx,
+                title: 'Ambulans Arab Saudi (Red Crescent)',
+                number: '997',
+                icon: Icons.medical_services_rounded,
+                isDark: isDark,
+                headingColor: headingColor,
+                bodyColor: bodyColor,
+              ),
+              const SizedBox(height: 10),
+              _buildHotlineCard(
+                ctx,
+                title: 'Polisi Darurat Arab Saudi',
+                number: '911',
+                icon: Icons.local_police_rounded,
+                isDark: isDark,
+                headingColor: headingColor,
+                bodyColor: bodyColor,
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    Get.toNamed(AppRoutes.modalSos);
+                  },
+                  icon: const Icon(Icons.emergency_rounded, size: 20),
+                  label: const Text(
+                    'Buka Panel Darurat SOS',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.sosEmergency,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                    elevation: 2,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHotlineCard(
+    BuildContext context, {
+    required String title,
+    required String number,
+    required IconData icon,
+    required bool isDark,
+    required Color headingColor,
+    required Color bodyColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(
+          color: isDark
+              ? AppColors.darkOutlineVariant
+              : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: AppColors.espressoDark),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: headingColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  number,
+                  style: const TextStyle(
+                    color: AppColors.sosEmergency,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          InkWell(
+            onTap: () {
+              Clipboard.setData(ClipboardData(text: number));
+              HapticFeedback.lightImpact();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Nomor $number disalin ke clipboard'),
+                  duration: const Duration(seconds: 2),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isDark
+                      ? AppColors.darkOutlineVariant
+                      : const Color(0xFFCBD5E1),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(
+                    Icons.copy_rounded,
+                    size: 14,
+                    color: AppColors.espressoDark,
+                  ),
+                  SizedBox(width: 4),
+                  Text(
+                    'Salin',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.espressoDark,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -326,32 +687,40 @@ class PendampingSosBanner extends StatelessWidget {
     required Color fg,
     required bool outline,
     Color? borderColor,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: 7,
-      ),
-      decoration: BoxDecoration(
-        color: bg,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: outline
-            ? Border.all(color: borderColor ?? fg, width: 1.2)
-            : null,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 15, color: fg),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: AppTypography.caption.copyWith(
-              color: fg,
-              fontWeight: FontWeight.w700,
-            ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: 7,
           ),
-        ],
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            border: outline
+                ? Border.all(color: borderColor ?? fg, width: 1.2)
+                : null,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 15, color: fg),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: AppTypography.caption.copyWith(
+                  color: fg,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
