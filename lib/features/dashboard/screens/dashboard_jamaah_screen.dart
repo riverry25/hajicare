@@ -139,11 +139,7 @@ class DashboardJamaahScreen extends StatelessWidget {
         ? displayName[0].toUpperCase()
         : 'J';
 
-    // Firebase Porsi number directly from users collection
-    final porsiNumber =
-        (jamaah.porsi != null && jamaah.porsi!.trim().isNotEmpty)
-        ? jamaah.porsi!.trim()
-        : '1300948201';
+    // Money Recognition shortcut (replaces Nomor Porsi — not available in Firebase)
 
     // Distance formatting (Promoted to Hero Display)
     final distanceDisplay = jamaah.distance > 0
@@ -331,7 +327,7 @@ class DashboardJamaahScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildMetricColumn(value: porsiNumber, label: 'Nomor Porsi'),
+              _buildMoneyRecognitionMetric(context),
               _buildMetricColumn(
                 value: '$prayerName $cleanPrayerTime',
                 label: 'Jadwal Salat',
@@ -519,6 +515,70 @@ class DashboardJamaahScreen extends StatelessWidget {
     );
   }
 
+  // ── Money Recognition Metric (Camera Shortcut) ───────────────────────────
+  Widget _buildMoneyRecognitionMetric(BuildContext context) {
+    return Expanded(
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          Get.toNamed(AppRoutes.moneyRecognition);
+        },
+        borderRadius: BorderRadius.circular(12),
+        splashColor: Colors.white.withValues(alpha: 0.08),
+        highlightColor: Colors.white.withValues(alpha: 0.04),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Icon chip — same height as the value text (fontSize 16 ≈ 20px)
+            Container(
+              height: 28,
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: AppColors.goldLight.withValues(alpha: 0.45),
+                  width: 1.0,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(
+                    Icons.camera_alt_rounded,
+                    color: AppColors.goldLight,
+                    size: 13,
+                  ),
+                  SizedBox(width: 4),
+                  Text(
+                    'Scan Riyal',
+                    style: TextStyle(
+                      color: AppColors.goldLight,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.1,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              'Kenali Uang',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.65),
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ── Metric Item Column Helper ─────────────────────────────────────────────
   Widget _buildMetricColumn({required String value, required String label}) {
     return Expanded(
@@ -637,7 +697,7 @@ class DashboardJamaahScreen extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 28),
+          const SizedBox(height: 20),
 
           // ── Section 1: "Status & Peringatan" ("Bot Alert") ────────
           _buildSectionHeader(

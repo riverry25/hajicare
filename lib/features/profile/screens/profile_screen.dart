@@ -1298,7 +1298,7 @@ class _ProfileHeader extends StatelessWidget {
 
             // Bottom row: Tag chips in Wrap (never overflows)
             Align(
-              alignment: Alignment.center,
+              alignment: Alignment.bottomRight,
               child: Wrap(
                 spacing: 6,
                 runSpacing: 4,

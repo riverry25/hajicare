@@ -106,7 +106,7 @@ class AppRoutes {
           name: roomDetail,
           page: () => const RoomDetailScreen(),
           middlewares: [
-            RoleAndRoomGuard(allowedRoles: ['admin']),
+            RoleAndRoomGuard(allowedRoles: ['admin', 'pendamping', 'jamaah']),
           ],
         ),
         // Role Dashboards with Active Room Protection

@@ -51,9 +51,14 @@ class RoleAndRoomGuard extends GetMiddleware {
             : null);
     final hasActiveRoom = currentRoomId != null && currentRoomId.isNotEmpty;
 
-    // Self-healing: if cached room ID exists but reactive RxnString was temporarily null, restore it
+    // Self-healing: if cached room ID exists but reactive RxnString was temporarily null, restore it.
+    // Deferred to post-frame to avoid calling setState() during the navigation/build phase.
     if (state.activeRoomId.value == null && hasActiveRoom) {
-      state.activeRoomId.value = currentRoomId;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (state.activeRoomId.value == null) {
+          state.activeRoomId.value = currentRoomId;
+        }
+      });
     }
 
     // 3. Role-based access control

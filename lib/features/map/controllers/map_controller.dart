@@ -459,7 +459,10 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     if (!_initialMoveDone) {
       _initialMoveDone = true;
       Future.delayed(const Duration(milliseconds: 300), () {
-        animatedMove(newCoord, 16.5);
+        // Defer to post-frame to avoid MapControllerImpl notifications during build
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (isMapAttached) animatedMove(newCoord, 16.5);
+        });
       });
     }
   }
@@ -850,12 +853,17 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
     try {
       final bounds = fmap.LatLngBounds.fromPoints(points);
-      flutterMapController.fitCamera(
-        fmap.CameraFit.bounds(
-          bounds: bounds,
-          padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 80),
-        ),
-      );
+      // Defer to post-frame to prevent MapControllerImpl notifications during build
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (isMapAttached) {
+          flutterMapController.fitCamera(
+            fmap.CameraFit.bounds(
+              bounds: bounds,
+              padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 80),
+            ),
+          );
+        }
+      });
     } catch (e) {
       debugPrint('[MapController] fitCamera error: $e');
     }
@@ -901,10 +909,15 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
     animCtrl.addListener(() {
       if (isMapAttached) {
-        flutterMapController.move(
-          LatLng(latTween.evaluate(animation), lngTween.evaluate(animation)),
-          zoomTween.evaluate(animation),
-        );
+        // Defer map moves to post-frame to prevent MapControllerImpl notifications during build
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (isMapAttached) {
+            flutterMapController.move(
+              LatLng(latTween.evaluate(animation), lngTween.evaluate(animation)),
+              zoomTween.evaluate(animation),
+            );
+          }
+        });
       }
     });
 
@@ -922,8 +935,10 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   }
 
   void resetCompass() {
-    if (isMapAttached) flutterMapController.rotate(0.0);
     compassRotation.value = 0.0;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (isMapAttached) flutterMapController.rotate(0.0);
+    });
   }
 
   void zoomIn() {
