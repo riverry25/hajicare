@@ -677,7 +677,7 @@ class _AdminDashboardHome extends StatelessWidget {
                     value: '$totalJamaah',
                     subtitle: 'Data Jamaah',
                     icon: Icons.groups_rounded,
-                    height: 156,
+                    height: 162,
                     isDark: isDark,
                     cardBg: cardBg,
                     borderColor: borderColor,
@@ -705,7 +705,7 @@ class _AdminDashboardHome extends StatelessWidget {
                     value: '$activeRooms',
                     subtitle: 'Room Aktif',
                     icon: Icons.meeting_room_rounded,
-                    height: 120,
+                    height: 126,
                     isDark: isDark,
                     cardBg: cardBg,
                     borderColor: borderColor,
@@ -743,7 +743,7 @@ class _AdminDashboardHome extends StatelessWidget {
                     value: '$totalPendamping',
                     subtitle: 'Siaga Maktab',
                     icon: Icons.badge_rounded,
-                    height: 120,
+                    height: 126,
                     isDark: isDark,
                     cardBg: cardBg,
                     borderColor: borderColor,
@@ -775,7 +775,7 @@ class _AdminDashboardHome extends StatelessWidget {
                     icon: hasSos
                         ? Icons.warning_amber_rounded
                         : Icons.health_and_safety_rounded,
-                    height: 156,
+                    height: 162,
                     isDark: isDark,
                     cardBg: hasSos
                         ? (isDark
@@ -841,7 +841,7 @@ class _AdminDashboardHome extends StatelessWidget {
     required VoidCallback onTap,
     bool isAlert = false,
   }) {
-    final isTall = height > 130;
+    final isTall = height > 135;
 
     return Container(
       height: height,
@@ -877,17 +877,18 @@ class _AdminDashboardHome extends StatelessWidget {
               .withValues(alpha: 0.06),
           child: Padding(
             padding: EdgeInsets.symmetric(
-              horizontal: isTall ? 12 : 10,
-              vertical: isTall ? 12 : 10,
+              horizontal: isTall ? 12 : 8,
+              vertical: isTall ? 10 : 6,
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // Circular Icon (Reference: circle icon badge)
                 Container(
-                  width: isTall ? 44 : 36,
-                  height: isTall ? 44 : 36,
+                  width: isTall ? 42 : 32,
+                  height: isTall ? 42 : 32,
                   decoration: BoxDecoration(
                     color: circleBg,
                     shape: BoxShape.circle,
@@ -901,9 +902,9 @@ class _AdminDashboardHome extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: Icon(icon, size: isTall ? 22 : 18, color: iconColor),
+                  child: Icon(icon, size: isTall ? 20 : 16, color: iconColor),
                 ),
-                SizedBox(height: isTall ? 8 : 5),
+                SizedBox(height: isTall ? 6 : 3),
 
                 // Metric Number / Count
                 Text(
@@ -916,7 +917,7 @@ class _AdminDashboardHome extends StatelessWidget {
                     height: 1.1,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 1.5),
 
                 // Title Label
                 Text(
@@ -927,13 +928,13 @@ class _AdminDashboardHome extends StatelessWidget {
                   style: AppTypography.captionSmall.copyWith(
                     color: isAlert ? AppColors.sosEmergency : headingColor,
                     fontWeight: FontWeight.w800,
-                    fontSize: isTall ? 12.5 : 11.5,
+                    fontSize: isTall ? 12.5 : 11.0,
                   ),
                 ),
 
                 // Subtitle / Pill Badge
                 if (isTall) ...[
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 4),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 7,
@@ -971,7 +972,7 @@ class _AdminDashboardHome extends StatelessWidget {
                     ),
                   ),
                 ] else ...[
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 1.5),
                   Text(
                     subtitle,
                     maxLines: 1,
