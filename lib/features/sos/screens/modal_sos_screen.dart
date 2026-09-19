@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_sizes.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/app_card.dart';
+import '../../map/controllers/map_controller.dart';
 
 class ModalSosScreen extends StatefulWidget {
   const ModalSosScreen({super.key});
@@ -17,51 +22,79 @@ class ModalSosScreen extends StatefulWidget {
 
 class _ModalSosScreenState extends State<ModalSosScreen>
     with SingleTickerProviderStateMixin {
+  late final HajiCareController state;
   late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+
   int _countdown = 3;
+  bool _isCountingDown = false;
   bool _sosSent = false;
 
   @override
   void initState() {
     super.initState();
+    state = Get.isRegistered<HajiCareController>()
+        ? Get.find<HajiCareController>()
+        : Get.put(HajiCareController());
+
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1800),
-    )..repeat();
+      duration: const Duration(milliseconds: 1400),
+    )..repeat(reverse: true);
 
-    final state = Get.isRegistered<HajiCareController>() ? Get.find<HajiCareController>() : null;
-    final hasRoom = state?.activeRoomId.value != null && state!.activeRoomId.value!.isNotEmpty;
+    _pulseAnimation = Tween<double>(begin: 0.95, end: 1.15).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
 
-    if (!hasRoom) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        AppAlert.warning(
-          context,
-          title: 'Room Diperlukan',
-          message: 'Anda belum terhubung ke Room manapun. Fitur SOS darurat hanya dapat dikirimkan kepada Pendamping dalam room aktif Anda.',
-        );
-        Get.back();
-      });
-      return;
+    // Auto-start countdown ONLY for Jamaah who do not already have an active SOS
+    final isOfficer = state.role == UserRole.pendamping || state.role == UserRole.admin;
+    final hasActiveSos = state.anySosActive;
+
+    if (!isOfficer && !hasActiveSos) {
+      _startCountdown();
     }
-
-    _startCountdown();
   }
 
   void _startCountdown() async {
+    setState(() {
+      _isCountingDown = true;
+      _countdown = 3;
+    });
+
     for (int i = 3; i >= 0; i--) {
-      if (!mounted) return;
+      if (!mounted || !_isCountingDown) return;
       await Future.delayed(const Duration(seconds: 1));
-      if (!mounted) return;
+      if (!mounted || !_isCountingDown) return;
+
       setState(() {
         _countdown = i;
         if (i == 0) {
+          _isCountingDown = false;
           _sosSent = true;
-          try {
-            Get.find<HajiCareController>().triggerSos();
-          } catch (_) {}
+          _sendSos();
         }
       });
+    }
+  }
+
+  void _cancelCountdown() {
+    setState(() {
+      _isCountingDown = false;
+    });
+    HapticFeedback.lightImpact();
+  }
+
+  Future<void> _sendSos() async {
+    HapticFeedback.heavyImpact();
+    final success = await state.triggerSos();
+    if (mounted) {
+      if (success) {
+        AppAlert.error(
+          context,
+          title: 'Sinyal SOS Terkirim!',
+          message: 'Posisi darurat Anda telah disiarkan ke Pendamping dan Petugas Maktab.',
+        );
+      }
     }
   }
 
@@ -71,690 +104,761 @@ class _ModalSosScreenState extends State<ModalSosScreen>
     super.dispose();
   }
 
+  String _formatSosTime(dynamic timestamp) {
+    if (timestamp == null) return 'Baru saja';
+    DateTime? dt;
+    if (timestamp is Timestamp) {
+      dt = timestamp.toDate();
+    } else if (timestamp is DateTime) {
+      dt = timestamp;
+    }
+    if (dt == null) return 'Baru saja';
+    return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} (${dt.day}/${dt.month}/${dt.year})';
+  }
+
+  String _calculateDistanceStr(dynamic location) {
+    if (location == null) return 'Koordinat tidak tersedia';
+    double? lat;
+    double? lng;
+
+    if (location is GeoPoint) {
+      lat = location.latitude;
+      lng = location.longitude;
+    } else if (location is Map) {
+      lat = (location['latitude'] as num?)?.toDouble() ?? (location['lat'] as num?)?.toDouble();
+      lng = (location['longitude'] as num?)?.toDouble() ?? (location['lng'] as num?)?.toDouble();
+    }
+
+    if (lat == null || lng == null) return 'Koordinat tidak tersedia';
+
+    final myPos = state.myCurrentPosition.value;
+    if (myPos == null) {
+      return 'Lat: ${lat.toStringAsFixed(4)}, Lng: ${lng.toStringAsFixed(4)}';
+    }
+
+    final meters = Geolocator.distanceBetween(myPos.latitude, myPos.longitude, lat, lng);
+    if (meters < 1000) {
+      return 'Jarak ±${meters.round()} meter dari Anda';
+    }
+    return 'Jarak ±${(meters / 1000).toStringAsFixed(1)} km dari Anda';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isDark = AppColors.isDark(context);
+    final scaffoldBg = isDark ? AppColors.darkScaffold : AppColors.canvasCream;
+    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
+    final headingColor = isDark ? AppColors.darkTextHeading : AppColors.espressoDark;
+    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
+    final isOfficer = state.role == UserRole.pendamping || state.role == UserRole.admin;
+
     return Scaffold(
-      backgroundColor: AppColors.espressoDark.withValues(alpha: 0.85),
-      body: SafeArea(
-        child: Column(
+      backgroundColor: scaffoldBg,
+      appBar: AppBar(
+        backgroundColor: scaffoldBg,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: headingColor),
+          tooltip: 'Kembali',
+          onPressed: () => Get.back(),
+        ),
+        title: Row(
           children: [
-            // Top Bar
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.screenEdgeGutter,
-                vertical: AppSpacing.sm,
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: const BoxDecoration(
+                color: AppColors.sosEmergency,
+                shape: BoxShape.circle,
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: AppColors.surfaceWhite,
-                      size: 26,
-                    ),
-                    onPressed: () => Get.back(),
-                  ),
-                  Row(
-                    children: [
-                      Container(
-                        width: 28,
-                        height: 28,
-                        decoration: const BoxDecoration(
-                          color: AppColors.espressoDark,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.health_and_safety,
-                          color: AppColors.surfaceWhite,
-                          size: 16,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm2),
-                      Text(
-                        'HajiCare',
-                        style: AppTypography.titleLarge.copyWith(
-                          color: AppColors.surfaceWhite,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: const BoxDecoration(
-                      color: AppColors.errorContainer,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.sos,
-                      color: AppColors.sosEmergency,
-                      size: 22,
-                    ),
-                  ),
-                ],
-              ),
+              child: const Icon(Icons.emergency_rounded, color: Colors.white, size: 16),
             ),
-
-            // Distance Alert Banner
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.screenEdgeGutter,
-              ),
-              child: Container(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: AppColors.distanceWarning.withValues(alpha: 0.95),
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(
-                    color: AppColors.surfaceWhite.withValues(alpha: 0.6),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.distanceWarning.withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: AppColors.espressoDark,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.espressoDark.withValues(alpha: 0.3),
-                            blurRadius: 6,
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.radar,
-                        color: AppColors.distanceWarning,
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.espressoDark,
-                                  borderRadius:
-                                      BorderRadius.circular(AppRadius.pill),
-                                ),
-                                child: Text(
-                                  'Peringatan Jarak Lansia',
-                                  style: AppTypography.captionSmall.copyWith(
-                                    color: AppColors.surfaceWhite,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.surfaceWhite.withValues(alpha: 0.8),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  '215m > 200m',
-                                  style: AppTypography.captionSmall.copyWith(
-                                    color: AppColors.sosEmergency,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Jamaah H. Ahmad Dahlan (Ayah) mulai terpisah dari batas aman maktab.',
-                            style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.espressoDark,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: AppSpacing.sm),
-
-            // Bottom Modal Sheet (Scroll-Safe)
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceWhite,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(AppRadius.xl),
-                  ),
-                  border: Border(
-                    top: BorderSide(
-                      color: AppColors.goldLight.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.espressoDark.withValues(alpha: 0.2),
-                      blurRadius: 30,
-                      offset: const Offset(0, -8),
-                    ),
-                  ],
-                ),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.screenEdgeGutter,
-                    AppSpacing.sm,
-                    AppSpacing.screenEdgeGutter,
-                    AppSpacing.lg,
-                  ),
-                  child: Column(
-                    children: [
-                      // Drag handle
-                      Container(
-                        width: 48,
-                        height: 5,
-                        decoration: BoxDecoration(
-                          color: AppColors.outlineVariant,
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-
-                      // Header with icon & status
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.emergency,
-                                  color: AppColors.sosEmergency,
-                                  size: 26,
-                                ),
-                                const SizedBox(width: AppSpacing.sm2),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Konfirmasi Darurat SOS',
-                                        style:
-                                            AppTypography.titleMedium.copyWith(
-                                          color: AppColors.textHeading,
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      Text(
-                                        'Rombongan 3 - Kelompok B',
-                                        style: AppTypography.caption.copyWith(
-                                          color: AppColors.textBody,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.sm,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.errorContainer,
-                              borderRadius:
-                                  BorderRadius.circular(AppRadius.pill),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.sosEmergency,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'SIAGA TINGGI',
-                                  style: AppTypography.captionSmall.copyWith(
-                                    color: AppColors.sosEmergency,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-
-                      // Countdown Card
-                      Container(
-                        padding: const EdgeInsets.all(AppSpacing.md),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceContainerLow,
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          border: Border.all(
-                            color: AppColors.goldLight.withValues(alpha: 0.4),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 36,
-                              height: 36,
-                              decoration: const BoxDecoration(
-                                color: AppColors.espressoDark,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  '$_countdown',
-                                  style: AppTypography.titleLarge.copyWith(
-                                    color: AppColors.accentGoldStar,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: AppSpacing.sm),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Kirim Otomatis ke Pendamping',
-                                    style: AppTypography.labelLarge.copyWith(
-                                      color: AppColors.espressoDark,
-                                    ),
-                                  ),
-                                  Text(
-                                    'Sinyal dikirim jika tidak dibatalkan dalam 3 detik',
-                                    style: AppTypography.caption.copyWith(
-                                      color: AppColors.textBody,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            OutlinedButton(
-                              onPressed: () => Get.back(),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: AppColors.espressoDark,
-                                side: const BorderSide(color: AppColors.outline),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(AppRadius.pill),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
-                                ),
-                              ),
-                              child: Text(
-                                'Hentikan',
-                                style: AppTypography.captionSmall.copyWith(
-                                  color: AppColors.espressoDark,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-
-                      // Telemetry Grid
-                      Row(
-                        children: [
-                          _buildTelemetryCell(
-                            Icons.smartphone,
-                            'Aktif',
-                            'GPS Ponsel',
-                            AppColors.statusPositive,
-                          ),
-                          const SizedBox(width: AppSpacing.sm2),
-                          _buildTelemetryCell(
-                            Icons.near_me,
-                            '±3 Meter',
-                            'Akurasi Posisi',
-                            AppColors.secondary,
-                          ),
-                          const SizedBox(width: AppSpacing.sm2),
-                          _buildTelemetryCell(
-                            Icons.social_distance,
-                            '215 Meter',
-                            'Jarak Terkini',
-                            AppColors.distanceWarning,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-
-                      // Signal Receivers
-                      Container(
-                        padding: const EdgeInsets.all(AppSpacing.sm),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceContainerLow,
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          border: Border.all(
-                            color:
-                                AppColors.outlineVariant.withValues(alpha: 0.5),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.cell_tower,
-                                  size: 14,
-                                  color: AppColors.textBody,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Penerima Sinyal Darurat Langsung:',
-                                  style: AppTypography.captionSmall.copyWith(
-                                    color: AppColors.textBody,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
-                              children: [
-                                _buildReceiverChip('Siti Aminah (Pendamping)'),
-                                _buildReceiverChip('Kontak Keluarga (0812-xxxx)'),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-
-                      // Main SOS Button
-                      AnimatedBuilder(
-                        animation: _pulseController,
-                        builder: (context, child) {
-                          return Container(
-                            decoration: BoxDecoration(
-                              borderRadius:
-                                  BorderRadius.circular(AppRadius.pill),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: (_sosSent
-                                          ? AppColors.statusPositive
-                                          : AppColors.sosEmergency)
-                                      .withValues(
-                                    alpha: 0.2 +
-                                        (0.15 *
-                                            (1 - _pulseController.value)),
-                                  ),
-                                  blurRadius:
-                                      16 + (8 * _pulseController.value),
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                            child: child,
-                          );
-                        },
-                        child: SizedBox(
-                          width: double.infinity,
-                          height: 56,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              if (!_sosSent) {
-                                setState(() => _sosSent = true);
-                              }
-                              try {
-                                Get.find<HajiCareController>().triggerSos();
-                              } catch (_) {}
-                              Get.back();
-                              Get.snackbar(
-                                'SOS Dikirim',
-                                'Tim bantuan sedang dalam perjalanan.',
-                                backgroundColor: AppColors.statusPositive,
-                                colorText: AppColors.surfaceWhite,
-                                duration: const Duration(seconds: 3),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _sosSent
-                                  ? AppColors.statusPositive
-                                  : AppColors.sosEmergency,
-                              foregroundColor: AppColors.surfaceWhite,
-                              shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.pill),
-                                side: const BorderSide(
-                                  color: AppColors.surfaceWhite,
-                                  width: 2,
-                                ),
-                              ),
-                              elevation: 8,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  _sosSent
-                                      ? Icons.done_all
-                                      : Icons.emergency_share,
-                                  color: AppColors.surfaceWhite,
-                                  size: 24,
-                                ),
-                                const SizedBox(width: AppSpacing.sm),
-                                Text(
-                                  _sosSent
-                                      ? 'SOS AKTIF & TERKIRIM'
-                                      : 'KIRIM SOS SEKARANG',
-                                  style: AppTypography.titleMedium.copyWith(
-                                    color: AppColors.surfaceWhite,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Kirim koordinat GPS langsung ke ponsel Pendamping',
-                        style: AppTypography.caption.copyWith(
-                          color: AppColors.textBody,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-
-                      // Secondary action buttons
-                      SizedBox(
-                        width: double.infinity,
-                        height: AppSizes.buttonHeightSecondary,
-                        child: OutlinedButton(
-                          onPressed: () {},
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.espressoDark,
-                            side: const BorderSide(
-                              color: AppColors.goldLight,
-                              width: 1.5,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(AppRadius.pill),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.vibration,
-                                size: 18,
-                                color: AppColors.tanMedium,
-                              ),
-                              const SizedBox(width: AppSpacing.sm2),
-                              Text(
-                                'Bunyikan Alarm & Getar Ponsel Jamaah',
-                                style: AppTypography.labelLarge.copyWith(
-                                  color: AppColors.espressoDark,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.sm2),
-                      SizedBox(
-                        width: double.infinity,
-                        height: AppSizes.buttonHeightSecondary,
-                        child: OutlinedButton(
-                          onPressed: () {},
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.espressoDark,
-                            side: BorderSide(
-                              color:
-                                  AppColors.sosEmergency.withValues(alpha: 0.3),
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(AppRadius.pill),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.call,
-                                size: 18,
-                                color: AppColors.sosEmergency,
-                              ),
-                              const SizedBox(width: AppSpacing.sm2),
-                              Text(
-                                'Hubungi Pusat Tanggap Maktab 48',
-                                style: AppTypography.labelLarge.copyWith(
-                                  color: AppColors.sosEmergency,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+            const SizedBox(width: 8),
+            Text(
+              'Pusat Darurat SOS',
+              style: AppTypography.headlineMedium.copyWith(
+                color: headingColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
               ),
             ),
           ],
         ),
+        actions: [
+          Obx(() {
+            final activeCount = state.activeSosCount.value;
+            if (activeCount <= 0) return const SizedBox.shrink();
+            return Container(
+              margin: const EdgeInsets.only(right: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.sosEmergency,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+              ),
+              child: Text(
+                '$activeCount AKTIF',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 11,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            );
+          }),
+        ],
       ),
+      body: Obx(() {
+        final activeSosList = state.activeSosEvents;
+        final hasActiveSos = activeSosList.isNotEmpty;
+
+        // If Officer OR there are active SOS events from Firestore, show Responder Panel
+        if (isOfficer || hasActiveSos) {
+          return _buildResponderView(
+            context,
+            activeSosList,
+            isDark,
+            cardBg,
+            headingColor,
+            bodyColor,
+          );
+        }
+
+        // Otherwise (Jamaah in Standby), show Emergency Sender Panel
+        return _buildJamaahSenderView(
+          context,
+          isDark,
+          cardBg,
+          headingColor,
+          bodyColor,
+        );
+      }),
     );
   }
 
-  Widget _buildTelemetryCell(
-    IconData icon,
-    String value,
-    String label,
-    Color color,
+  // ===========================================================================
+  // RESPONDER / OFFICER VIEW (REALTIME ACTIVE SOS LIST FROM FIRESTORE)
+  // ===========================================================================
+
+  Widget _buildResponderView(
+    BuildContext context,
+    List<Map<String, dynamic>> activeSosList,
+    bool isDark,
+    Color cardBg,
+    Color headingColor,
+    Color bodyColor,
   ) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm, horizontal: 4),
-        decoration: BoxDecoration(
-          color: AppColors.canvasCream.withValues(alpha: 0.7),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(
-            color: AppColors.goldLight.withValues(alpha: 0.3),
-          ),
-        ),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+    return ListView(
+      padding: const EdgeInsets.all(AppSpacing.screenEdgeGutter),
+      physics: const BouncingScrollPhysics(),
+      children: [
+        // ── 1. Siren Alert Header Banner ────────────────────────────────────
+        if (activeSosList.isNotEmpty) ...[
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFE53935), Color(0xFFC62828)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFE53935).withValues(alpha: 0.35),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
               children: [
-                Icon(icon, size: 16, color: color),
-                const SizedBox(width: 4),
-                Text(
-                  value,
-                  style: AppTypography.captionSmall.copyWith(
-                    color: AppColors.espressoDark,
+                ScaleTransition(
+                  scale: _pulseAnimation,
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.22),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.warning_rounded,
+                      color: Colors.white,
+                      size: 26,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm + 4),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'PANGGILAN DARURAT AKTIF',
+                        style: AppTypography.titleMedium.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Ada ${activeSosList.length} jamaah membutuhkan pertolongan segera.',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: Colors.white.withValues(alpha: 0.95),
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: AppTypography.captionSmall.copyWith(
-                color: AppColors.textBody,
-                fontWeight: FontWeight.normal,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+        ],
+
+        // ── 2. Real Active SOS Cards from Firestore ─────────────────────────
+        if (activeSosList.isEmpty) ...[
+          AppCard(
+            backgroundColor: cardBg,
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              child: Column(
+                children: [
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: AppColors.statusSafe.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check_circle_outline_rounded,
+                      color: AppColors.statusSafe,
+                      size: 36,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Text(
+                    'Kondisi Aman',
+                    style: AppTypography.titleMedium.copyWith(
+                      color: headingColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Tidak ada panggilan darurat SOS aktif saat ini. Seluruh jamaah terpantau dalam batas aman.',
+                    textAlign: TextAlign.center,
+                    style: AppTypography.bodySmall.copyWith(color: bodyColor),
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
+        ] else ...[
+          Text(
+            'Daftar Panggilan Masuk (${activeSosList.length})',
+            style: AppTypography.titleSmall.copyWith(
+              color: headingColor,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+
+          ...activeSosList.map((sos) {
+            final userName = (sos['userName'] as String?)?.trim().isNotEmpty == true
+                ? (sos['userName'] as String).trim()
+                : 'Jamaah Tanpa Nama';
+            final userId = sos['userId'] as String? ?? sos['jamaahId'] as String? ?? '';
+            final eventId = sos['id'] as String?;
+            final roomName = (sos['roomName'] as String?)?.trim().isNotEmpty == true
+                ? (sos['roomName'] as String).trim()
+                : 'Darurat Bebas / Tanpa Room';
+            final status = sos['status'] as String? ?? 'active';
+            final timeStr = _formatSosTime(sos['timestamp'] ?? sos['createdAt']);
+            final distanceStr = _calculateDistanceStr(sos['location']);
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: AppSpacing.md),
+              child: AppCard(
+                backgroundColor: cardBg,
+                borderColor: AppColors.sosEmergency.withValues(alpha: 0.6),
+                padding: const EdgeInsets.all(AppSpacing.cardPadding),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header: User Name + Status Badge
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: AppColors.sosEmergency.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(AppRadius.md),
+                                  border: Border.all(
+                                    color: AppColors.sosEmergency.withValues(alpha: 0.35),
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.person_pin_circle_rounded,
+                                  color: AppColors.sosEmergency,
+                                  size: 22,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      userName,
+                                      style: AppTypography.titleSmall.copyWith(
+                                        color: headingColor,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Text(
+                                      roomName,
+                                      style: AppTypography.captionSmall.copyWith(
+                                        color: bodyColor.withValues(alpha: 0.8),
+                                        fontSize: 11,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AppColors.sosEmergency.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                            border: Border.all(color: AppColors.sosEmergency.withValues(alpha: 0.4)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.sosEmergency,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                status.toUpperCase(),
+                                style: const TextStyle(
+                                  color: AppColors.sosEmergency,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 20),
+
+                    // Metadata Row: Time & Distance
+                    Row(
+                      children: [
+                        Icon(Icons.access_time_rounded, size: 14, color: bodyColor),
+                        const SizedBox(width: 4),
+                        Text(
+                          timeStr,
+                          style: AppTypography.captionSmall.copyWith(
+                            color: bodyColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(Icons.near_me_rounded, size: 14, color: AppColors.sosEmergency),
+                        const SizedBox(width: 4),
+                        Text(
+                          distanceStr,
+                          style: AppTypography.captionSmall.copyWith(
+                            color: AppColors.sosEmergency,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+
+                    // Action Buttons (Buka Peta & Selesaikan)
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.sosEmergency,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(AppRadius.pill),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              elevation: 0,
+                            ),
+                            icon: const Icon(Icons.navigation_rounded, size: 16),
+                            label: const Text(
+                              'Buka di Peta',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
+                            ),
+                            onPressed: () {
+                              final loc = sos['location'];
+                              LatLng? targetCoord;
+                              if (loc is GeoPoint) {
+                                targetCoord = LatLng(loc.latitude, loc.longitude);
+                              } else if (loc is Map) {
+                                final lat = (loc['latitude'] as num?)?.toDouble() ?? (loc['lat'] as num?)?.toDouble();
+                                final lng = (loc['longitude'] as num?)?.toDouble() ?? (loc['lng'] as num?)?.toDouble();
+                                if (lat != null && lng != null) targetCoord = LatLng(lat, lng);
+                              }
+
+                              Get.back(); // Close modal
+                              if (Get.isRegistered<MapController>() && targetCoord != null) {
+                                final mapCtrl = Get.find<MapController>();
+                                mapCtrl.animatedMove(targetCoord, 17.5);
+                              }
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          flex: 2,
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: headingColor,
+                              side: BorderSide(color: isDark ? AppColors.darkCardBorder : AppColors.canvasCreamSubtle),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(AppRadius.pill),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                            ),
+                            child: const Text(
+                              'Selesai',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
+                            ),
+                            onPressed: () {
+                              AppAlert.confirm(
+                                context,
+                                title: 'Selesaikan Darurat SOS?',
+                                message: 'Apakah situasi darurat untuk "$userName" sudah berhasil ditangani?',
+                                confirmText: 'Ya, Selesaikan',
+                                cancelText: 'Batal',
+                                onConfirm: () async {
+                                  await state.dismissSos(userId, eventId: eventId);
+                                  if (context.mounted) {
+                                    AppAlert.success(
+                                      context,
+                                      title: 'Status Diperbarui',
+                                      message: 'Panggilan SOS untuk "$userName" telah ditandai selesai.',
+                                    );
+                                  }
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
+
+        const SizedBox(height: AppSpacing.lg),
+
+        // ── 3. Emergency Hotline Info ───────────────────────────────────────
+        Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: (isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCreamSubtle)
+                .withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.phone_in_talk_rounded, color: AppColors.sosEmergency, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Hotline Darurat Haji Indonesia',
+                      style: AppTypography.titleSmall.copyWith(
+                        color: headingColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Text(
+                      'Pusat Krisis Kemenag: 800-119-999 • Ambulans: 997',
+                      style: AppTypography.captionSmall.copyWith(
+                        color: bodyColor,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
-  Widget _buildReceiverChip(String name) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceWhite,
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(
-          color: AppColors.goldLight.withValues(alpha: 0.4),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+  // ===========================================================================
+  // JAMAAH SENDER VIEW (EMERGENCY TRIGGER WITH LIVE FIREBASE SYNC)
+  // ===========================================================================
+
+  Widget _buildJamaahSenderView(
+    BuildContext context,
+    bool isDark,
+    Color cardBg,
+    Color headingColor,
+    Color bodyColor,
+  ) {
+    final self = state.self;
+    final isSosAlreadyActive = self.sosActive || _sosSent;
+
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.screenEdgeGutter),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: const BoxDecoration(
-              color: AppColors.statusPositive,
-              shape: BoxShape.circle,
-            ),
+          const Spacer(),
+
+          // ── Pulsing SOS Radar ─────────────────────────────────────────────
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              ScaleTransition(
+                scale: _pulseAnimation,
+                child: Container(
+                  width: 180,
+                  height: 180,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.sosEmergency.withValues(alpha: 0.15),
+                  ),
+                ),
+              ),
+              Container(
+                width: 140,
+                height: 140,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.sosEmergency.withValues(alpha: 0.3),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  if (_isCountingDown) {
+                    _cancelCountdown();
+                  } else if (!isSosAlreadyActive) {
+                    _sendSos();
+                  }
+                },
+                child: Container(
+                  width: 110,
+                  height: 110,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [Color(0xFFE53935), Color(0xFFB71C1C)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color(0xFFE53935),
+                        blurRadius: 20,
+                        offset: Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: _isCountingDown
+                        ? Text(
+                            '$_countdown',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 48,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          )
+                        : const Text(
+                            'SOS',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 32,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 2,
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 4),
+          const SizedBox(height: AppSpacing.xxl),
+
+          // ── Status Title & Subtitle ────────────────────────────────────────
           Text(
-            name,
-            style: AppTypography.captionSmall.copyWith(
-              color: AppColors.espressoDark,
+            isSosAlreadyActive
+                ? 'Sinyal Darurat Sedang Aktif!'
+                : (_isCountingDown ? 'Mengirim Sinyal SOS...' : 'Siap Mengirim Darurat SOS'),
+            style: AppTypography.titleLarge.copyWith(
+              color: isSosAlreadyActive ? AppColors.sosEmergency : headingColor,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            isSosAlreadyActive
+                ? 'Koordinat GPS Anda telah disiarkan secara real-time ke Pendamping dan Petugas Maktab.'
+                : (_isCountingDown
+                    ? 'Ketuk tombol SOS untuk membatalkan sebelum hitungan mundur selesai.'
+                    : 'Gunakan saat terpisah jauh dari rombongan atau membutuhkan bantuan darurat segera.'),
+            textAlign: TextAlign.center,
+            style: AppTypography.bodySmall.copyWith(
+              color: bodyColor.withValues(alpha: 0.85),
+              height: 1.4,
             ),
           ),
+          const SizedBox(height: AppSpacing.xl),
+
+          // ── Action Buttons ────────────────────────────────────────────────
+          if (_isCountingDown) ...[
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: headingColor,
+                  side: BorderSide(color: headingColor.withValues(alpha: 0.4)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                ),
+                icon: const Icon(Icons.close_rounded),
+                label: const Text('Batalkan Pengiriman', style: TextStyle(fontWeight: FontWeight.bold)),
+                onPressed: _cancelCountdown,
+              ),
+            ),
+          ] else if (isSosAlreadyActive) ...[
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.statusSafe,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                ),
+                icon: const Icon(Icons.check_circle_rounded),
+                label: const Text('Akhiri / Batalkan Sinyal SOS', style: TextStyle(fontWeight: FontWeight.bold)),
+                onPressed: () async {
+                  final uid = state.currentUid;
+                  if (uid != null) {
+                    await state.dismissSos(uid);
+                    setState(() {
+                      _sosSent = false;
+                    });
+                    if (context.mounted) {
+                      AppAlert.success(
+                        context,
+                        title: 'Sinyal SOS Dinonaktifkan',
+                        message: 'Status darurat Anda telah diakhiri.',
+                      );
+                    }
+                  }
+                },
+              ),
+            ),
+          ] else ...[
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.sosEmergency,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  elevation: 2,
+                ),
+                icon: const Icon(Icons.emergency_rounded),
+                label: const Text('Kirim Sinyal SOS Sekarang', style: TextStyle(fontWeight: FontWeight.bold)),
+                onPressed: _sendSos,
+              ),
+            ),
+          ],
+
+          const Spacer(),
+
+          // ── GPS Telemetry Strip ───────────────────────────────────────────
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              border: Border.all(
+                color: isDark ? AppColors.darkCardBorder : AppColors.canvasCreamSubtle,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.gps_fixed_rounded, size: 14, color: AppColors.statusSafe),
+                const SizedBox(width: 6),
+                Text(
+                  state.myCurrentPosition.value != null
+                      ? 'GPS Akurat (±${state.myCurrentPosition.value!.accuracy.round()}m)'
+                      : 'Menghubungkan GPS...',
+                  style: AppTypography.captionSmall.copyWith(
+                    color: headingColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
         ],
       ),
     );

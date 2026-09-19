@@ -31,6 +31,14 @@ class AdminRoomController extends GetxController {
   final activities = <ActivityModel>[].obs;
   final roomBreakdowns = <String, Map<String, int>>{}.obs;
 
+  // Paginated Activity State (10 records per batch)
+  final paginatedActivities = <ActivityModel>[].obs;
+  final isActivitiesPageLoading = false.obs;
+  final isActivitiesPageLoadingMore = false.obs;
+  final hasMoreActivities = true.obs;
+  DocumentSnapshot? _lastActivityDoc;
+  String _currentActivityFilter = 'Semua';
+
   // Room Management Search & Filter
   final searchQuery = ''.obs;
   final statusFilter = 'all'.obs; // 'all' | 'active' | 'inactive'
@@ -169,7 +177,49 @@ class AdminRoomController extends GetxController {
   int getRoomSosCount(String roomId) => roomBreakdowns[roomId]?['sos'] ?? 0;
 
   List<RoomModel> get recentActiveRooms {
-    return rooms.where((r) => r.isActive).take(5).toList();
+    return rooms.where((r) => r.isActive).take(2).toList();
+  }
+
+  // ── Cursor-based Activity Pagination (10 per page) ──────────────────────────
+
+  Future<void> loadInitialActivities({String filter = 'Semua'}) async {
+    _currentActivityFilter = filter;
+    _lastActivityDoc = null;
+    hasMoreActivities.value = true;
+    isActivitiesPageLoading.value = true;
+    paginatedActivities.clear();
+
+    final result = await _roomService.getActivitiesPaginated(
+      limit: 10,
+      startAfterDoc: null,
+      categoryFilter: filter,
+    );
+
+    paginatedActivities.assignAll(result.items);
+    _lastActivityDoc = result.lastDoc;
+    hasMoreActivities.value = result.hasMore;
+    isActivitiesPageLoading.value = false;
+  }
+
+  Future<void> loadMoreActivities() async {
+    if (!hasMoreActivities.value ||
+        isActivitiesPageLoadingMore.value ||
+        _lastActivityDoc == null) {
+      return;
+    }
+
+    isActivitiesPageLoadingMore.value = true;
+
+    final result = await _roomService.getActivitiesPaginated(
+      limit: 10,
+      startAfterDoc: _lastActivityDoc,
+      categoryFilter: _currentActivityFilter,
+    );
+
+    paginatedActivities.addAll(result.items);
+    _lastActivityDoc = result.lastDoc;
+    hasMoreActivities.value = result.hasMore;
+    isActivitiesPageLoadingMore.value = false;
   }
 
   List<RoomModel> get filteredRooms {

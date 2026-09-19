@@ -201,6 +201,26 @@ class RoomService {
     return room;
   }
 
+  /// Fetches a room document by its ID once.
+  Future<RoomModel?> getRoomById(String roomId) async {
+    try {
+      final doc = await _firestore.collection('rooms').doc(roomId).get();
+      if (!doc.exists) return null;
+      return RoomModel.fromFirestore(doc);
+    } catch (e) {
+      debugPrint('[RoomService] Error getRoomById: $e');
+      return null;
+    }
+  }
+
+  /// Streams a single room document by its ID in realtime.
+  Stream<RoomModel?> getRoomStream(String roomId) {
+    return _firestore.collection('rooms').doc(roomId).snapshots().map((doc) {
+      if (!doc.exists) return null;
+      return RoomModel.fromFirestore(doc);
+    });
+  }
+
   /// Updates room settings (name, maktab, kloter, safeRadius).
   /// Validates ownership: only creator (or admin) can update.
   Future<void> updateRoomSettings({
@@ -1292,14 +1312,56 @@ class RoomService {
 
   // ── Command Center Realtime Data Streams ───────────────────────────────────
 
-  /// Streams recent operational activities for Admin Command Center.
-  Stream<List<ActivityModel>> getRecentActivitiesStream({int limit = 15}) {
+  /// Streams the 10 most recent operational activities for Admin Command Center.
+  Stream<List<ActivityModel>> getRecentActivitiesStream({int limit = 10}) {
     return _firestore
         .collection('activities')
         .orderBy('timestamp', descending: true)
         .limit(limit)
         .snapshots()
         .map((snap) => snap.docs.map((doc) => ActivityModel.fromFirestore(doc)).toList());
+  }
+
+  /// Fetches a paginated batch of activities using Firestore document cursors (best practice 10 per page).
+  Future<({List<ActivityModel> items, DocumentSnapshot? lastDoc, bool hasMore})> getActivitiesPaginated({
+    int limit = 10,
+    DocumentSnapshot? startAfterDoc,
+    String? categoryFilter,
+  }) async {
+    try {
+      Query query = _firestore
+          .collection('activities')
+          .orderBy('timestamp', descending: true);
+
+      if (categoryFilter != null && categoryFilter.isNotEmpty && categoryFilter != 'Semua') {
+        if (categoryFilter == 'Darurat') {
+          query = query.where('type', isEqualTo: 'sos_active');
+        } else if (categoryFilter == 'Kamar') {
+          query = query.where('type', whereIn: [
+            'room_created',
+            'room_activated',
+            'room_deactivated',
+            'room_updated',
+          ]);
+        } else if (categoryFilter == 'Anggota') {
+          query = query.where('type', whereIn: ['member_joined', 'member_left']);
+        }
+      }
+
+      if (startAfterDoc != null) {
+        query = query.startAfterDocument(startAfterDoc);
+      }
+
+      final snap = await query.limit(limit).get();
+      final items = snap.docs.map((doc) => ActivityModel.fromFirestore(doc)).toList();
+      final last = snap.docs.isNotEmpty ? snap.docs.last : null;
+      final hasMore = snap.docs.length >= limit;
+
+      return (items: items, lastDoc: last, hasMore: hasMore);
+    } catch (e) {
+      debugPrint('[RoomService] Error getActivitiesPaginated: $e');
+      return (items: <ActivityModel>[], lastDoc: null, hasMore: false);
+    }
   }
 
   /// Logs an activity entry to `activities` collection.

@@ -1,10 +1,13 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../../../core/models/filter_chip_item.dart';
+import '../../../../core/routes/app_routes.dart';
+import '../../../../core/state/hajicare_controller.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/animated_ping_dot.dart';
+import 'map_voice_search_sheet.dart';
 
 class MapTopHeader extends StatefulWidget {
   final List<FilterChipItem> filters;
@@ -96,66 +99,62 @@ class _MapTopHeaderState extends State<MapTopHeader> {
         child: Container(
           padding: EdgeInsets.only(
             top: topSafeArea + 6,
-            left: AppSpacing.md,
-            right: AppSpacing.md,
             bottom: 8,
           ),
           decoration: BoxDecoration(
-            color: isDark
-                ? AppColors.darkSurface.withValues(alpha: 0.95)
-                : AppColors.canvasCream.withValues(alpha: 0.97),
-            border: Border(
-              bottom: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : AppColors.espressoDark.withValues(alpha: 0.06),
-                width: 1,
-              ),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                (isDark ? Colors.black : Colors.white)
+                    .withValues(alpha: isDark ? 0.35 : 0.20),
+                Colors.transparent,
+              ],
+              stops: const [0.0, 1.0],
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.06),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
-              ),
-            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // ── ROW 1: STATUS & HUB ROW (GPS BADGE, ROOM INFO, SOS) ──
-              SizedBox(
-                height: 32,
-                child: Row(
-                  children: [
-                    // GPS Tracking Status Pill
-                    _buildGpsStatusPill(isDark),
+              // ── ROW 1: FLOATING STATUS & HUB (GPS BADGE, ROOM INFO, SOS) ──
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: SizedBox(
+                  height: 32,
+                  child: Row(
+                    children: [
+                      // GPS Tracking Status Pill
+                      _buildGpsStatusPill(isDark),
 
-                    const SizedBox(width: 8),
+                      const SizedBox(width: 8),
 
-                    // Contextual Active Room Pill (if in a room)
-                    if (hasRoom)
-                      Expanded(child: _buildRoomHubPill(context, isDark))
-                    else
-                      const Spacer(),
+                      // Contextual Active Room Pill (if in a room)
+                      if (hasRoom)
+                        Expanded(child: _buildRoomHubPill(context, isDark))
+                      else
+                        const Spacer(),
 
-                    const SizedBox(width: 8),
+                      const SizedBox(width: 8),
 
-                    // Emergency SOS Quick Button
-                    _buildSosButton(),
-                  ],
+                      // Emergency SOS Quick Button
+                      _buildSosButton(),
+                    ],
+                  ),
                 ),
               ),
 
               const SizedBox(height: 8),
 
-              // ── ROW 2: SLEEK INTERACTIVE SEARCH BAR ──
-              _buildSearchBar(context, isDark),
+              // ── ROW 2: GOOGLE MAPS STYLE FLOATING SEARCH BAR ──
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _buildSearchBar(context, isDark),
+              ),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: 9),
 
-              // ── ROW 3: CATEGORY & ROLE FILTER CHIPS ──
+              // ── ROW 3: FLOATING CATEGORY & ROLE FILTER CHIPS ──
               _buildFilterChips(context, isDark),
             ],
           ),
@@ -165,26 +164,26 @@ class _MapTopHeaderState extends State<MapTopHeader> {
   }
 
   // ===========================================================================
-  // ROW 1 WIDGETS
+  // ROW 1 WIDGETS (FLOATING OVER MAP)
   // ===========================================================================
 
   Widget _buildGpsStatusPill(bool isDark) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite,
+        color: isDark ? AppColors.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(
           color: isDark
-              ? Colors.white.withValues(alpha: 0.10)
-              : AppColors.goldLight.withValues(alpha: 0.40),
+              ? Colors.white.withValues(alpha: 0.12)
+              : const Color(0xFFDADCE0),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.03),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
+            color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.08),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -197,10 +196,8 @@ class _MapTopHeaderState extends State<MapTopHeader> {
             widget.gpsAccuracy > 0
                 ? 'GPS ±${widget.gpsAccuracy.round()}m'
                 : 'GPS Aktif',
-            style: AppTypography.captionSmall.copyWith(
-              color: isDark
-                  ? AppColors.darkTextHeading
-                  : AppColors.espressoDark,
+            style: TextStyle(
+              color: isDark ? Colors.white : const Color(0xFF3C4043),
               fontWeight: FontWeight.w700,
               fontSize: 10.5,
               letterSpacing: 0.1,
@@ -227,22 +224,21 @@ class _MapTopHeaderState extends State<MapTopHeader> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: isDark
-                ? AppColors.goldPrimary.withValues(alpha: 0.14)
-                : AppColors.goldLight.withValues(alpha: 0.28),
+            color: isDark ? AppColors.darkSurface : Colors.white,
             borderRadius: BorderRadius.circular(AppRadius.pill),
             border: Border.all(
               color: isDark
-                  ? AppColors.goldPrimary.withValues(alpha: 0.40)
-                  : AppColors.goldPrimary.withValues(alpha: 0.35),
+                  ? AppColors.goldPrimary.withValues(alpha: 0.50)
+                  : AppColors.goldPrimary.withValues(alpha: 0.40),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.goldPrimary.withValues(
-                  alpha: isDark ? 0.08 : 0.05,
+                color: Colors.black.withValues(
+                  alpha: isDark ? 0.30 : 0.08,
                 ),
-                blurRadius: 4,
+                blurRadius: 6,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
@@ -260,7 +256,7 @@ class _MapTopHeaderState extends State<MapTopHeader> {
                     children: [
                       TextSpan(
                         text: widget.roomName!,
-                        style: AppTypography.captionSmall.copyWith(
+                        style: TextStyle(
                           color: isDark
                               ? AppColors.goldPrimary
                               : AppColors.espressoDark,
@@ -270,8 +266,8 @@ class _MapTopHeaderState extends State<MapTopHeader> {
                       ),
                       TextSpan(
                         text: ' • $summaryText',
-                        style: AppTypography.captionSmall.copyWith(
-                          color: isDark ? Colors.white70 : AppColors.textBody,
+                        style: TextStyle(
+                          color: isDark ? Colors.white70 : const Color(0xFF5F6368),
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
                         ),
@@ -296,6 +292,13 @@ class _MapTopHeaderState extends State<MapTopHeader> {
   }
 
   Widget _buildSosButton() {
+    int activeCount = 0;
+    if (Get.isRegistered<HajiCareController>()) {
+      activeCount = Get.find<HajiCareController>().activeSosCount.value;
+    }
+
+    final hasActiveSos = activeCount > 0;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -304,14 +307,17 @@ class _MapTopHeaderState extends State<MapTopHeader> {
         child: Ink(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFE53935), Color(0xFFC62828)],
+            gradient: LinearGradient(
+              colors: hasActiveSos
+                  ? const [Color(0xFFFF1744), Color(0xFFD50000)]
+                  : const [Color(0xFFE53935), Color(0xFFC62828)],
             ),
             borderRadius: BorderRadius.circular(AppRadius.pill),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFE53935).withValues(alpha: 0.38),
-                blurRadius: 8,
+                color: (hasActiveSos ? const Color(0xFFFF1744) : const Color(0xFFE53935))
+                    .withValues(alpha: hasActiveSos ? 0.65 : 0.38),
+                blurRadius: hasActiveSos ? 12 : 8,
                 offset: const Offset(0, 2),
               ),
             ],
@@ -326,8 +332,8 @@ class _MapTopHeaderState extends State<MapTopHeader> {
               ),
               const SizedBox(width: 4),
               Text(
-                'SOS',
-                style: AppTypography.captionSmall.copyWith(
+                hasActiveSos ? 'SOS ($activeCount)' : 'SOS',
+                style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w900,
                   fontSize: 11,
@@ -342,114 +348,204 @@ class _MapTopHeaderState extends State<MapTopHeader> {
   }
 
   // ===========================================================================
-  // ROW 2: SEARCH BAR
+  // ROW 2: GOOGLE MAPS STYLE FLOATING SEARCH BAR
   // ===========================================================================
 
   Widget _buildSearchBar(BuildContext context, bool isDark) {
+    String displayName = 'Jamaah';
+    String? photoUrl;
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        displayName = user.displayName ?? 'Jamaah';
+        photoUrl = user.photoURL;
+      }
+    } catch (_) {}
+    final initialLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : 'H';
+
     return Container(
-      height: 38,
+      height: 50,
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.darkSurfaceContainer.withValues(alpha: 0.85)
-            : AppColors.surfaceWhite,
+        color: isDark ? AppColors.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(
           color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : AppColors.goldLight.withValues(alpha: 0.35),
-          width: 1,
+              ? Colors.white.withValues(alpha: 0.12)
+              : const Color(0xFFE8EAED),
+          width: 1.0,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.12),
+            blurRadius: 14,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const SizedBox(width: 12),
-          Icon(
-            Icons.search_rounded,
-            color: isDark ? AppColors.goldPrimary : AppColors.espressoDark,
-            size: 18,
+          // Multi-color Google Maps style Location Pin Icon
+          Container(
+            margin: const EdgeInsets.only(left: 14, right: 10),
+            child: ShaderMask(
+              shaderCallback: (bounds) => const LinearGradient(
+                colors: [
+                  Color(0xFFEA4335), // Google Red
+                  Color(0xFFFBBC05), // Google Yellow
+                  Color(0xFF34A853), // Google Green
+                  Color(0xFF4285F4), // Google Blue
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ).createShader(bounds),
+              child: const Icon(
+                Icons.location_on_rounded,
+                size: 24,
+                color: Colors.white,
+              ),
+            ),
           ),
-          const SizedBox(width: 8),
+
+          // Search Location Text Field
           Expanded(
             child: TextField(
               controller: _effectiveSearchCtrl,
               onChanged: widget.onSearchChanged,
-              style: AppTypography.bodySmall.copyWith(
-                color: isDark ? Colors.white : AppColors.espressoDark,
-                fontSize: 12,
+              style: TextStyle(
+                color: isDark ? Colors.white : const Color(0xFF202124),
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
               decoration: InputDecoration(
-                hintText: 'Cari lokasi...',
-                hintStyle: AppTypography.bodySmall.copyWith(
+                hintText: 'Search Location...',
+                hintStyle: TextStyle(
                   color: isDark
                       ? Colors.white.withValues(alpha: 0.45)
-                      : AppColors.textMuted,
-                  fontSize: 12,
+                      : const Color(0xFF5F6368),
+                  fontSize: 14,
                 ),
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                disabledBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                focusedErrorBorder: InputBorder.none,
+                filled: false,
                 isDense: true,
-                contentPadding: EdgeInsets.zero,
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
               ),
             ),
           ),
+
           if (_hasSearchText)
             IconButton(
-              icon: const Icon(Icons.close_rounded, size: 16),
-              color: isDark ? Colors.white70 : AppColors.textMuted,
-              splashRadius: 16,
+              icon: const Icon(Icons.close_rounded, size: 18),
+              color: isDark ? Colors.white70 : const Color(0xFF5F6368),
+              splashRadius: 18,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              tooltip: 'Hapus Pencarian',
               onPressed: () {
                 _effectiveSearchCtrl.clear();
                 widget.onClearSearch?.call();
                 widget.onSearchChanged?.call('');
               },
-            )
-          else
-            IconButton(
-              icon: Icon(
-                Icons.mic_none_rounded,
-                size: 17,
-                color: isDark ? AppColors.goldPrimary : AppColors.tanMedium,
-              ),
-              splashRadius: 16,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-              tooltip: 'Pencarian Suara',
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Pencarian suara segera tersedia.'),
-                    duration: Duration(seconds: 1),
-                  ),
-                );
-              },
             ),
-          const SizedBox(width: 4),
+
+          // Google Maps Blue Voice Search Button
+          IconButton(
+            icon: const Icon(
+              Icons.mic_rounded,
+              size: 22,
+              color: Color(0xFF1A73E8), // Google Maps Blue
+            ),
+            splashRadius: 18,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            tooltip: 'Pencarian Suara',
+            onPressed: () async {
+              final voiceQuery = await MapVoiceSearchSheet.show(context);
+              if (voiceQuery != null && voiceQuery.trim().isNotEmpty) {
+                _effectiveSearchCtrl.text = voiceQuery.trim();
+                widget.onSearchChanged?.call(voiceQuery.trim());
+              }
+            },
+          ),
+
+          // Google Maps User Profile Avatar
+          GestureDetector(
+            onTap: () => Get.toNamed(AppRoutes.profile),
+            child: Container(
+              width: 32,
+              height: 32,
+              margin: const EdgeInsets.only(right: 10, left: 2),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFD4AF37), Color(0xFF8C6D23)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                border: Border.all(
+                  color: Colors.white,
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: ClipOval(
+                child: photoUrl != null && photoUrl.isNotEmpty
+                    ? Image.network(
+                        photoUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => Center(
+                          child: Text(
+                            initialLetter,
+                            style: const TextStyle(
+                              color: Color(0xFF1E140A),
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      )
+                    : Center(
+                        child: Text(
+                          initialLetter,
+                          style: const TextStyle(
+                            color: Color(0xFF1E140A),
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
   // ===========================================================================
-  // ROW 3: FILTER CHIPS
+  // ROW 3: FLOATING CATEGORY & ROLE FILTER CHIPS
   // ===========================================================================
 
   Widget _buildFilterChips(BuildContext context, bool isDark) {
     return SizedBox(
-      height: 32,
+      height: 36,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: widget.filters.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 6),
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           final filter = widget.filters[index];
           final isSelected = index == widget.selectedFilter;
@@ -463,51 +559,28 @@ class _MapTopHeaderState extends State<MapTopHeader> {
                 duration: const Duration(milliseconds: 180),
                 curve: Curves.easeOutCubic,
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 5,
+                  horizontal: 13,
+                  vertical: 6,
                 ),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? (isDark
-                            ? AppColors.goldPrimary
-                            : AppColors.espressoDark)
+                            ? const Color(0xFF1E3A5F)
+                            : const Color(0xFFE8F0FE)) // Google Maps active soft blue pill
                       : (isDark
-                            ? AppColors.darkSurfaceContainer.withValues(
-                                alpha: 0.70,
-                              )
-                            : AppColors.surfaceWhite),
+                            ? AppColors.darkSurface
+                            : Colors.white), // Floating pure white pill
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                   border: Border.all(
                     color: isSelected
                         ? (isDark
-                              ? AppColors.goldPrimary
-                              : AppColors.goldPrimary.withValues(alpha: 0.6))
+                              ? const Color(0xFF8AB4F8)
+                              : const Color(0xFF1A73E8))
                         : (isDark
-                              ? Colors.white.withValues(alpha: 0.08)
-                              : AppColors.goldLight.withValues(alpha: 0.35)),
-                    width: isSelected ? 1.2 : 1.0,
+                              ? Colors.white.withValues(alpha: 0.12)
+                              : const Color(0xFFDADCE0)),
+                    width: isSelected ? 1.4 : 1.0,
                   ),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color:
-                                (isDark
-                                        ? AppColors.goldPrimary
-                                        : AppColors.espressoDark)
-                                    .withValues(alpha: 0.25),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
-                      : [
-                          BoxShadow(
-                            color: Colors.black.withValues(
-                              alpha: isDark ? 0.12 : 0.02,
-                            ),
-                            blurRadius: 3,
-                            offset: const Offset(0, 1),
-                          ),
-                        ],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -515,31 +588,29 @@ class _MapTopHeaderState extends State<MapTopHeader> {
                     if (filter.icon != null) ...[
                       Icon(
                         filter.icon,
-                        size: 14,
+                        size: 15,
                         color: isSelected
                             ? (isDark
-                                  ? AppColors.espressoDark
-                                  : AppColors.goldPrimary)
-                            : (isDark
-                                  ? AppColors.darkTextBody
-                                  : AppColors.espressoDark.withValues(
-                                      alpha: 0.7,
-                                    )),
+                                  ? const Color(0xFF8AB4F8)
+                                  : const Color(0xFF1A73E8))
+                            : _getCategoryIconColor(filter.label, isDark),
                       ),
-                      const SizedBox(width: 5),
+                      const SizedBox(width: 6),
                     ],
                     Text(
                       filter.label,
-                      style: AppTypography.captionSmall.copyWith(
+                      style: TextStyle(
                         color: isSelected
-                            ? (isDark ? AppColors.espressoDark : Colors.white)
+                            ? (isDark
+                                  ? const Color(0xFF8AB4F8)
+                                  : const Color(0xFF1A73E8))
                             : (isDark
-                                  ? Colors.white70
-                                  : AppColors.espressoDark),
+                                  ? Colors.white
+                                  : const Color(0xFF3C4043)),
                         fontWeight: isSelected
-                            ? FontWeight.w800
-                            : FontWeight.w600,
-                        fontSize: 11,
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        fontSize: 12.5,
                       ),
                     ),
                   ],
@@ -550,5 +621,26 @@ class _MapTopHeaderState extends State<MapTopHeader> {
         },
       ),
     );
+  }
+
+  Color _getCategoryIconColor(String label, bool isDark) {
+    switch (label.toLowerCase()) {
+      case 'semua':
+        return const Color(0xFF1A73E8); // Google Blue
+      case 'jamaah':
+        return const Color(0xFF1E8E3E); // Google Green
+      case 'pendamping':
+        return const Color(0xFFD4AF37); // Warm Gold
+      case 'posko medis':
+        return const Color(0xFFD93025); // Google Red
+      case 'toilet & wudhu':
+        return const Color(0xFF129990); // Cyan / Teal
+      case 'maktab':
+        return const Color(0xFFE37400); // Amber / Orange
+      case 'pos pantau':
+        return const Color(0xFF9334E6); // Purple
+      default:
+        return isDark ? Colors.white70 : const Color(0xFF5F6368);
+    }
   }
 }

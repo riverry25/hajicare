@@ -86,18 +86,35 @@ class RegisterController extends GetxController {
       }
     } on FirebaseAuthException catch (e) {
       debugPrint('=== ERROR AUTH ===: ${e.code} - ${e.message}');
-      errorMessage.value = e.message ?? e.code;
-      _showErrorSnackbar('Error Auth: ${errorMessage.value}');
+      errorMessage.value = _friendlyRegisterError(e.code, e.message);
+      _showErrorSnackbar(errorMessage.value!);
     } on FirebaseException catch (e) {
       debugPrint('=== ERROR FIRESTORE ===: ${e.code} - ${e.message}');
-      errorMessage.value = 'Gagal menyimpan data: ${e.message}';
-      _showErrorSnackbar('Error Firestore: ${e.message}');
+      errorMessage.value = 'Gagal menyimpan profil akun. Silakan coba lagi.';
+      _showErrorSnackbar(errorMessage.value!);
     } catch (e, stackTrace) {
       debugPrint('=== ERROR UMUM ===: $e\n$stackTrace');
-      errorMessage.value = 'Terjadi kesalahan: $e';
+      errorMessage.value = 'Terjadi kesalahan saat mendaftar. Silakan coba lagi.';
       _showErrorSnackbar(errorMessage.value!);
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  String _friendlyRegisterError(String code, [String? message]) {
+    switch (code) {
+      case 'email-already-in-use':
+        return 'Email ini sudah terdaftar. Silakan masuk atau gunakan email lain.';
+      case 'weak-password':
+        return 'Kata sandi terlalu lemah. Gunakan minimal 6 karakter.';
+      case 'invalid-email':
+        return 'Format alamat email tidak valid.';
+      case 'operation-not-allowed':
+        return 'Pendaftaran akun sedang dinonaktifkan.';
+      case 'network-request-failed':
+        return 'Gagal terhubung ke jaringan. Periksa koneksi internet Anda.';
+      default:
+        return 'Pendaftaran gagal. Periksa kembali data yang Anda masukkan.';
     }
   }
 

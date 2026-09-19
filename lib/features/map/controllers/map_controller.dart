@@ -11,6 +11,7 @@ import '../../../core/state/hajicare_controller.dart';
 import '../../room/services/room_service.dart';
 import '../models/map_poi.dart';
 import '../models/map_search_result.dart';
+import '../services/poi_service.dart';
 import '../services/route_service.dart';
 
 /// State of the location search workflow.
@@ -30,14 +31,17 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   RoomService? _lazyRoomService;
   final RouteService _routeService;
   final GeocodingService _geocodingService;
+  final PoiService _poiService;
 
   MapController({
     RoomService? roomService,
     RouteService? routeService,
     GeocodingService? geocodingService,
+    PoiService? poiService,
   })  : _injectedRoomService = roomService,
         _routeService = routeService ?? RouteService(),
-        _geocodingService = geocodingService ?? GeocodingService();
+        _geocodingService = geocodingService ?? GeocodingService(),
+        _poiService = poiService ?? PoiService();
 
   RoomService? get _roomService {
     if (_injectedRoomService != null) return _injectedRoomService;
@@ -126,9 +130,18 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   @override
   void onInit() {
     super.onInit();
-    pois.value = List.from(MapPoi.defaultMinaPois);
+    final initialPos = currentUserLocation.value ?? defaultMinaBase;
+    _refreshNearbyPois(initialPos);
     _initRoomListener();
     _autoStartGps();
+  }
+
+  Future<void> _refreshNearbyPois(LatLng center) async {
+    final realPois = await _poiService.fetchRealNearbyPois(
+      center: center,
+      roomName: activeRoomName.value.isNotEmpty ? activeRoomName.value : null,
+    );
+    pois.value = realPois;
   }
 
   // ── ROOM MEMBER LISTENERS ──────────────────────────────────────────────────
@@ -159,6 +172,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     if (Get.isRegistered<HajiCareController>()) {
       final state = Get.find<HajiCareController>();
       activeRoomName.value = state.activeRoom.value?.name ?? 'Room $roomId';
+      if (currentUserLocation.value != null) {
+        _refreshNearbyPois(currentUserLocation.value!);
+      }
     }
 
     isRoomMembersLoading.value = true;
@@ -265,6 +281,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       return '${meters.round()} m';
     } else {
       final km = meters / 1000.0;
+      if (km >= 100) {
+        return '${km.round()} km';
+      }
       return '${km.toStringAsFixed(1)} km';
     }
   }
@@ -345,7 +364,13 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
         return;
       }
 
-      final firstPosition = await Geolocator.getCurrentPosition(
+      Position? firstPosition;
+      if (Get.isRegistered<HajiCareController>()) {
+        final state = Get.find<HajiCareController>();
+        firstPosition = state.myCurrentPosition.value;
+      }
+
+      firstPosition ??= await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
           timeLimit: Duration(seconds: 10),
@@ -404,6 +429,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     final newCoord = LatLng(position.latitude, position.longitude);
     currentUserLocation.value = newCoord;
     gpsAccuracy.value = position.accuracy;
+    _refreshNearbyPois(newCoord);
 
     if (publishToRoom) {
       // Dual-gate throttling: minimum 8 seconds AND 10 meters distance
@@ -475,6 +501,23 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       selectedJamaah.value = null;
       selectedPoi.value = null;
       openBottomSheet();
+    } else {
+      // POI Category filters: 3: Posko Medis, 4: Toilet & Wudhu, 5: Maktab, 6: Pos Pantau
+      selectedRoleFilter.value = 0;
+      final matchingPois = filteredPois;
+      if (matchingPois.isNotEmpty) {
+        final userLoc = currentUserLocation.value ?? defaultMinaBase;
+        MapPoi bestPoi = matchingPois.first;
+        double minDistance = double.infinity;
+        for (final p in matchingPois) {
+          final d = calculateDistanceMeters(userLoc, p.coordinate);
+          if (d < minDistance) {
+            minDistance = d;
+            bestPoi = p;
+          }
+        }
+        selectPoi(bestPoi);
+      }
     }
   }
 
@@ -493,7 +536,15 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       case 3:
         return pois.where((p) => p.category == PoiCategory.medis).toList();
       case 4:
-        return pois.where((p) => p.category == PoiCategory.toilet).toList();
+        return pois
+            .where((p) =>
+                p.category == PoiCategory.toilet ||
+                p.category == PoiCategory.wudhu)
+            .toList();
+      case 5:
+        return pois.where((p) => p.category == PoiCategory.maktab).toList();
+      case 6:
+        return pois.where((p) => p.category == PoiCategory.posPantau).toList();
       default:
         return pois;
     }
@@ -894,18 +945,22 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   void toggleMapTileLayer() {
     if (activeTileUrl.value.contains('cartocdn')) {
       activeTileUrl.value = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-      AppAlert.info(
-        Get.context,
-        title: 'Mode Peta: OpenStreetMap',
-        message: 'Menampilkan peta standar OpenStreetMap.',
-      );
+      if (Get.context != null) {
+        AppAlert.info(
+          Get.context,
+          title: 'Mode Peta: OpenStreetMap',
+          message: 'Menampilkan peta standar OpenStreetMap.',
+        );
+      }
     } else {
       activeTileUrl.value = AppConstants.cartoVoyagerUrl;
-      AppAlert.info(
-        Get.context,
-        title: 'Mode Peta: Voyager',
-        message: 'Menampilkan peta bertema hangat & bersih.',
-      );
+      if (Get.context != null) {
+        AppAlert.info(
+          Get.context,
+          title: 'Mode Peta: Voyager',
+          message: 'Menampilkan peta bertema hangat & bersih.',
+        );
+      }
     }
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/app_colors.dart';
+import '../utils/distance_formatter.dart';
 
 enum UserRole { admin, pendamping, jamaah }
 
@@ -184,4 +185,23 @@ class JamaahData {
     }
     tier = newTier;
   }
+
+  /// Formatted distance string (e.g. "120 m", "1.5 km", "14040 km")
+  String get formattedDistance => DistanceFormatter.format(distance);
+
+  /// Numeric string value for distance display
+  String get distanceValue {
+    if (distance.isNaN || distance.isInfinite) return '0';
+    if (distance >= 100000) {
+      return (distance / 1000).round().toString();
+    } else if (distance >= 1000) {
+      final km = distance / 1000;
+      return km >= 10 ? km.toStringAsFixed(0) : km.toStringAsFixed(1);
+    } else {
+      return distance.round().toString();
+    }
+  }
+
+  /// Unit string ('meter' or 'km')
+  String get distanceUnit => distance >= 1000 ? 'km' : 'meter';
 }

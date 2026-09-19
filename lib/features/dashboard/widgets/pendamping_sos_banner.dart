@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../../../core/locales/app_translations.dart';
+import '../../../../core/routes/app_routes.dart';
 import '../../../../core/state/hajicare_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -28,10 +30,31 @@ class PendampingSosBanner extends StatelessWidget {
 
   Widget _buildActiveSos(BuildContext context) {
     Vibration.vibrate();
-    final sosJamaah = state.jamaahList.firstWhere(
-      (j) => j.sosActive,
-      orElse: () => state.jamaahList.first,
-    );
+
+    String sosName = 'Jamaah';
+    String sosUserId = '';
+    String? sosEventId;
+    String? roomInfo;
+
+    if (state.activeSosEvents.isNotEmpty) {
+      final firstSos = state.activeSosEvents.first;
+      sosName = (firstSos['userName'] as String?)?.trim().isNotEmpty == true
+          ? (firstSos['userName'] as String).trim()
+          : 'Jamaah';
+      sosUserId = firstSos['userId'] as String? ?? firstSos['jamaahId'] as String? ?? '';
+      sosEventId = firstSos['id'] as String?;
+      final rName = (firstSos['roomName'] as String?)?.trim();
+      if (rName != null && rName.isNotEmpty) {
+        roomInfo = rName;
+      }
+    } else {
+      final sosJamaah = state.jamaahList.firstWhere(
+        (j) => j.sosActive,
+        orElse: () => state.jamaahList.first,
+      );
+      sosName = sosJamaah.name;
+      sosUserId = sosJamaah.id;
+    }
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.cardPadding),
@@ -68,17 +91,39 @@ class PendampingSosBanner extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      context.tr('sosEmergencyActive'),
-                      style: AppTypography.titleMedium.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.3,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          context.tr('sosEmergencyActive'),
+                          style: AppTypography.titleMedium.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                        if (roomInfo != null) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.25),
+                              borderRadius: BorderRadius.circular(AppRadius.pill),
+                            ),
+                            child: Text(
+                              roomInfo,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${sosJamaah.name} ${context.tr('sosNeedsImmediateHelp')}',
+                      '$sosName ${context.tr('sosNeedsImmediateHelp')}',
                       style: AppTypography.bodySmall.copyWith(
                         color: Colors.white.withValues(alpha: 0.95),
                       ),
@@ -94,8 +139,9 @@ class PendampingSosBanner extends StatelessWidget {
               Expanded(
                 child: SizedBox(
                   height: 44,
-                  child: ElevatedButton(
-                    onPressed: () {},
+                  child: ElevatedButton.icon(
+                    onPressed: () => Get.toNamed(AppRoutes.modalSos),
+                    icon: const Icon(Icons.location_searching_rounded, size: 18),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: AppColors.sosEmergency,
@@ -104,12 +150,9 @@ class PendampingSosBanner extends StatelessWidget {
                       ),
                       elevation: 0,
                     ),
-                    child: Text(
-                      context.tr('contactOfficer'),
-                      style: AppTypography.labelLarge.copyWith(
-                        color: AppColors.sosEmergency,
-                        fontWeight: FontWeight.w800,
-                      ),
+                    label: const Text(
+                      'Tinjau Darurat',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ),
                 ),
@@ -119,9 +162,13 @@ class PendampingSosBanner extends StatelessWidget {
                 child: SizedBox(
                   height: 44,
                   child: OutlinedButton(
-                    onPressed: onDismissSos != null
-                        ? () => onDismissSos!(sosJamaah.id)
-                        : () => state.dismissSos(sosJamaah.id),
+                    onPressed: () {
+                      if (onDismissSos != null && sosUserId.isNotEmpty) {
+                        onDismissSos!(sosUserId);
+                      } else {
+                        state.dismissSos(sosUserId, eventId: sosEventId);
+                      }
+                    },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.white,
                       side: const BorderSide(color: Colors.white, width: 1.5),

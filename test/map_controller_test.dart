@@ -52,7 +52,14 @@ void main() {
       expect(controller.filteredPois.every((p) => p.category == PoiCategory.medis), isTrue);
 
       controller.selectFilter(4);
-      expect(controller.filteredPois.every((p) => p.category == PoiCategory.toilet), isTrue);
+      expect(
+        controller.filteredPois.every(
+          (p) =>
+              p.category == PoiCategory.toilet ||
+              p.category == PoiCategory.wudhu,
+        ),
+        isTrue,
+      );
     });
 
     test('Distance calculation between coordinates returns accurate metric distance', () {

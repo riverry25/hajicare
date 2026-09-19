@@ -7,7 +7,7 @@ enum AppTextScale {
   small(0.9, 'Kecil / Small'),
   normal(1.0, 'Normal'),
   large(1.15, 'Besar / Large'),
-  extraLarge(1.3, 'Ekstra Besar / XL');
+  extraLarge(1.20, 'Ekstra Besar / XL');
 
   const AppTextScale(this.factor, this.label);
   final double factor;
@@ -17,7 +17,7 @@ enum AppTextScale {
 /// Centralized GetX controller for persistent user preferences:
 /// - Locale (language)
 /// - ThemeMode (light / dark / system)
-/// - Text scale factor (0.9 / 1.0 / 1.15 / 1.3)
+/// - Text scale factor (0.9 / 1.0 / 1.15 / 1.20)
 class AppSettingsController extends GetxController {
   static const _kLocaleKey = 'hajicare_locale';
   static const _kThemeKey = 'hajicare_theme';
@@ -144,7 +144,7 @@ class AppSettingsController extends GetxController {
   static AppTextScale _textScaleFromFactor(double factor) {
     if (factor <= 0.92) return AppTextScale.small;
     if (factor <= 1.07) return AppTextScale.normal;
-    if (factor <= 1.22) return AppTextScale.large;
+    if (factor <= 1.17) return AppTextScale.large;
     return AppTextScale.extraLarge;
   }
 }

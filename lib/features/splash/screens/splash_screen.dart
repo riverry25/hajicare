@@ -24,7 +24,7 @@ class _SplashScreenState extends State<SplashScreen>
     super.initState();
 
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 2400),
+      duration: const Duration(milliseconds: 2200),
       vsync: this,
     )..repeat(reverse: true);
 
@@ -54,105 +54,17 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.sizeOf(context);
-
     return Scaffold(
-      backgroundColor: AppColors.espressoDark,
+      backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // Background Gradient (Deep Espresso to Warm Kaaba Tone)
-          const Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    AppColors.espressoDark,
-                    AppColors.primaryContainer,
-                    AppColors.primary,
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // Ambient Golden Glow at the top
-          Positioned(
-            top: -size.width * 0.35,
-            left: -size.width * 0.15,
-            right: -size.width * 0.15,
-            child: AnimatedBuilder(
-              animation: _controller,
-              builder: (context, child) {
-                final scale = 0.92 + (_controller.value * 0.08);
-                return Transform.scale(scale: scale, child: child);
-              },
-              child: Container(
-                height: size.width * 0.9,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.goldPrimary.withValues(alpha: 0.08),
-                ),
-              ),
-            ),
-          ),
-
-          // Secondary subtle ambient glow at bottom
-          Positioned(
-            bottom: -size.width * 0.45,
-            left: -size.width * 0.25,
-            right: -size.width * 0.25,
-            child: Container(
-              height: size.width * 0.9,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.primaryContainer.withValues(alpha: 0.25),
-              ),
-            ),
-          ),
-
           // Main Content
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
               child: Column(
                 children: [
-                  // Top Brand Subtle Header
-                  Padding(
-                    padding: const EdgeInsets.only(top: AppSpacing.lg),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: const BoxDecoration(
-                            color: AppColors.goldPrimary,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'HAJICARE INDONESIA',
-                          style: AppTypography.captionSmall.copyWith(
-                            color: AppColors.canvasCreamSubtle,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 2.5,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: const BoxDecoration(
-                            color: AppColors.goldPrimary,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  // Top Brand Pill Badge
 
                   // Center Logo & Identity
                   Expanded(
@@ -165,7 +77,7 @@ class _SplashScreenState extends State<SplashScreen>
                             AnimatedBuilder(
                               animation: _controller,
                               builder: (context, child) {
-                                final scale = 1.0 + (_controller.value * 0.025);
+                                final scale = 1.0 + (_controller.value * 0.02);
                                 return Transform.scale(
                                   scale: scale,
                                   child: child,
@@ -174,21 +86,21 @@ class _SplashScreenState extends State<SplashScreen>
                               child: _buildLogo(),
                             ),
 
-                            const SizedBox(height: 28),
+                            const SizedBox(height: 24),
 
                             // Arabic Calligraphy Text
                             Text(
                               'رِعَايَةُ الحَجِيجِ وَالمُعْتَمِرِينَ',
                               textAlign: TextAlign.center,
                               style: GoogleFonts.amiri(
-                                fontSize: 24,
+                                fontSize: 23,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.goldPrimary,
-                                height: 1.3,
+                                color: AppColors.emeraldIslamic,
+                                height: 1.2,
                               ),
                             ),
 
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 10),
 
                             // App Brand Name
                             RichText(
@@ -198,68 +110,47 @@ class _SplashScreenState extends State<SplashScreen>
                                   TextSpan(
                                     text: 'Haji',
                                     style: AppTypography.displayLarge.copyWith(
-                                      color: AppColors.surfaceWhite,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 32,
-                                      letterSpacing: -1.0,
+                                      color: AppColors.textHeading,
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 34,
+                                      letterSpacing: -0.8,
                                     ),
                                   ),
                                   TextSpan(
                                     text: 'Care',
                                     style: AppTypography.displayLarge.copyWith(
                                       color: AppColors.goldPrimary,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 32,
-                                      letterSpacing: -1.0,
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 34,
+                                      letterSpacing: -0.8,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
 
-                            const SizedBox(height: 14),
-
-                            // Ornamental Divider
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                _buildDivider(),
-                                const Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 10),
-                                  child: Icon(
-                                    Icons.star_rounded,
-                                    size: 14,
-                                    color: AppColors.accentGoldStar,
-                                  ),
-                                ),
-                                _buildDivider(reverse: true),
-                              ],
-                            ),
-
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 10),
 
                             // Tagline
                             Text(
                               'Sahabat Setia & Amanah Ibadah Anda',
                               textAlign: TextAlign.center,
-                              style: AppTypography.titleMedium.copyWith(
-                                color: AppColors.canvasCream,
+                              style: AppTypography.titleSmall.copyWith(
+                                color: AppColors.textBody,
                                 fontWeight: FontWeight.w700,
+                                letterSpacing: 0.2,
                               ),
                             ),
 
                             const SizedBox(height: 6),
 
-                            // Description
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 320),
-                              child: Text(
-                                'Sistem pendampingan pintar, pemantauan jarak real-time, dan bantuan darurat ramah lansia.',
-                                textAlign: TextAlign.center,
-                                style: AppTypography.bodySmall.copyWith(
-                                  color: AppColors.canvasCreamSubtle.withValues(alpha: 0.85),
-                                  height: 1.45,
-                                ),
+                            // Subtle Feature Subtitle
+                            Text(
+                              'Pendampingan Pintar • Radar Jarak Jauh • Bantuan Lansia',
+                              textAlign: TextAlign.center,
+                              style: AppTypography.captionSmall.copyWith(
+                                color: AppColors.textMuted,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
@@ -273,29 +164,38 @@ class _SplashScreenState extends State<SplashScreen>
                     padding: const EdgeInsets.only(bottom: AppSpacing.xxl),
                     child: Column(
                       children: [
-                        SizedBox(
-                          width: 200,
+                        Container(
+                          width: 210,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
                           child: Column(
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     'Memuat data...',
-                                    style: AppTypography.caption.copyWith(
-                                      color: AppColors.canvasCreamSubtle,
+                                    style: AppTypography.captionSmall.copyWith(
+                                      color: AppColors.textBody,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                   AnimatedBuilder(
                                     animation: _controller,
                                     builder: (context, child) {
-                                      final pct = 25 + ((_controller.value * 75).round());
+                                      final pct =
+                                          25 +
+                                          ((_controller.value * 75).round());
                                       return Text(
                                         '$pct%',
-                                        style: AppTypography.captionSmall.copyWith(
-                                          color: AppColors.goldPrimary,
-                                          fontWeight: FontWeight.w700,
-                                        ),
+                                        style: AppTypography.captionSmall
+                                            .copyWith(
+                                              color: AppColors.emeraldIslamic,
+                                              fontWeight: FontWeight.w800,
+                                            ),
                                       );
                                     },
                                   ),
@@ -303,27 +203,27 @@ class _SplashScreenState extends State<SplashScreen>
                               ),
                               const SizedBox(height: 8),
                               Container(
-                                height: 5,
+                                height: 4,
                                 decoration: BoxDecoration(
-                                  color: AppColors.primaryContainer.withValues(alpha: 0.6),
-                                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                                  color: const Color(0xFFE5E5E5),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.pill,
+                                  ),
                                 ),
                                 child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.pill,
+                                  ),
                                   child: AnimatedBuilder(
                                     animation: _controller,
                                     builder: (context, child) {
                                       return FractionallySizedBox(
                                         alignment: Alignment.centerLeft,
-                                        widthFactor: 0.25 + (_controller.value * 0.75),
+                                        widthFactor:
+                                            0.25 + (_controller.value * 0.75),
                                         child: Container(
                                           decoration: const BoxDecoration(
-                                            gradient: LinearGradient(
-                                              colors: [
-                                                AppColors.goldLight,
-                                                AppColors.goldPrimary,
-                                              ],
-                                            ),
+                                            color: AppColors.goldPrimary,
                                           ),
                                         ),
                                       );
@@ -334,20 +234,21 @@ class _SplashScreenState extends State<SplashScreen>
                             ],
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 14),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             const Icon(
-                              Icons.verified_rounded,
-                              size: 15,
-                              color: AppColors.goldPrimary,
+                              Icons.verified_user_rounded,
+                              size: 14,
+                              color: AppColors.emeraldIslamic,
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'Melayani Jamaah dengan Amanah',
-                              style: AppTypography.caption.copyWith(
-                                color: AppColors.canvasCreamSubtle,
+                              'Melayani Jamaah dengan Amanah & Ikhlas',
+                              style: AppTypography.captionSmall.copyWith(
+                                color: AppColors.textMuted,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
@@ -366,109 +267,18 @@ class _SplashScreenState extends State<SplashScreen>
 
   Widget _buildLogo() {
     return SizedBox(
-      width: 148,
-      height: 148,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Outer delicate golden ring
-          Container(
-            width: 148,
-            height: 148,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.goldPrimary.withValues(alpha: 0.2),
-                width: 1,
-              ),
-            ),
-          ),
-
-          // Middle golden ring
-          Container(
-            width: 126,
-            height: 126,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.goldPrimary.withValues(alpha: 0.35),
-                width: 1,
-              ),
-            ),
-          ),
-
-          // Main Emblem
-          Container(
-            width: 104,
-            height: 104,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [AppColors.primaryContainer, AppColors.espressoDark],
-              ),
-              border: Border.all(
-                color: AppColors.goldPrimary.withValues(alpha: 0.8),
-                width: 2.0,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.goldPrimary.withValues(alpha: 0.15),
-                  blurRadius: 24,
-                  spreadRadius: 4,
-                ),
-              ],
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  width: 78,
-                  height: 78,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.goldPrimary.withValues(alpha: 0.2),
-                    ),
-                  ),
-                ),
-                const Icon(
-                  Icons.shield_rounded,
-                  size: 44,
-                  color: AppColors.goldPrimary,
-                ),
-                const Positioned(
-                  top: 18,
-                  right: 22,
-                  child: Icon(
-                    Icons.star_rounded,
-                    size: 10,
-                    color: AppColors.accentGoldStar,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDivider({bool reverse = false}) {
-    return Container(
-      width: 52,
-      height: 1,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: reverse ? Alignment.centerRight : Alignment.centerLeft,
-          end: reverse ? Alignment.centerLeft : Alignment.centerRight,
-          colors: [
-            Colors.transparent,
-            AppColors.goldPrimary.withValues(alpha: 0.3),
-            AppColors.goldPrimary.withValues(alpha: 0.9),
-          ],
-        ),
+      width: 140,
+      height: 140,
+      child: Image.asset(
+        'assets/icon.jpeg',
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) {
+          return const Icon(
+            Icons.mosque_rounded,
+            size: 54,
+            color: AppColors.goldPrimary,
+          );
+        },
       ),
     );
   }
