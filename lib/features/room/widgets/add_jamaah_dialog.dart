@@ -5,6 +5,7 @@ import '../../../core/services/app_alert_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/user_feedback_message.dart';
+import '../../../core/widgets/ribbon_fold_painter.dart';
 import '../services/room_service.dart';
 
 /// Modern centered modal dialog for Pendamping to add a Jamaah by registered email.
@@ -94,25 +95,29 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
         ? AppColors.darkTextHeading
         : AppColors.espressoDark;
     final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
 
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 380),
+        constraints: const BoxConstraints(maxWidth: 390, maxHeight: 560),
         child: Stack(
           clipBehavior: Clip.none,
           alignment: Alignment.topCenter,
           children: [
-            // ── Main Card Body (Below floating hero) ─────────────────────────
+            // ── 1. Main Card Body ──
             Container(
-              margin: const EdgeInsets.only(top: 36),
-              padding: const EdgeInsets.fromLTRB(22, 102, 22, 22),
+              margin: const EdgeInsets.only(
+                top: 28,
+                bottom: 12,
+                right: 10,
+                left: 10,
+              ),
+              padding: const EdgeInsets.fromLTRB(20, 68, 20, 14),
               decoration: BoxDecoration(
                 color: cardBg,
-                borderRadius: BorderRadius.circular(22),
+                borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: isDark
                       ? Colors.white.withValues(alpha: 0.1)
@@ -122,8 +127,8 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.09),
-                    blurRadius: 26,
-                    offset: const Offset(0, 12),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
                   ),
                 ],
               ),
@@ -135,97 +140,100 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Title
                       Text(
                         'Undang Jamaah',
                         style: AppTypography.titleMedium.copyWith(
                           color: headingColor,
                           fontWeight: FontWeight.w800,
-                          fontSize: 19,
+                          fontSize: 17.5,
                           letterSpacing: -0.2,
                         ),
                       ),
-                      const SizedBox(height: 8),
-
-                      // Description
+                      const SizedBox(height: 4),
                       Text(
-                        'Undangan akan dikirimkan ke akun Jamaah. Jamaah harus sudah memiliki akun di HajiCare dan dapat menerima atau menolak undangan ini.',
+                        'Undangan akan dikirimkan langsung ke akun email Jamaah yang terdaftar di HajiCare.',
                         style: AppTypography.bodySmall.copyWith(
                           color: bodyColor.withValues(alpha: 0.85),
-                          height: 1.4,
-                          fontSize: 13,
+                          height: 1.35,
+                          fontSize: 12.5,
                         ),
                       ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 16),
 
-                      // Email Input Field
+                      // Email Underline Input
+                      Text(
+                        'Email Jamaah',
+                        style: TextStyle(
+                          color: headingColor,
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
                       TextFormField(
                         controller: _emailCtrl,
                         keyboardType: TextInputType.emailAddress,
-                        autofocus: false,
                         enabled: !_isSubmitting,
                         style: TextStyle(
                           color: headingColor,
                           fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w600,
                         ),
                         decoration: InputDecoration(
-                          labelText: 'Email Jamaah',
-                          labelStyle: TextStyle(
-                            color: bodyColor.withValues(alpha: 0.8),
-                            fontSize: 13,
-                          ),
-                          hintText: 'contoh: jamaah@hajicare.com',
+                          hintText: 'contoh: jamaah@gmail.com',
                           hintStyle: TextStyle(
-                            color: bodyColor.withValues(alpha: 0.4),
-                            fontSize: 13,
+                            color: isDark
+                                ? Colors.white38
+                                : const Color(0xFF9E8E81),
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w400,
                           ),
                           prefixIcon: Icon(
                             Icons.mail_outline_rounded,
-                            color: primaryColor,
-                            size: 20,
+                            size: 17,
+                            color: isDark
+                                ? AppColors.goldLight.withValues(alpha: 0.7)
+                                : AppColors.espressoDark.withValues(alpha: 0.6),
                           ),
-                          filled: true,
-                          fillColor: isDark
-                              ? AppColors.darkSurfaceContainer
-                              : AppColors.canvasCream.withValues(alpha: 0.45),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 14,
+                          prefixIconConstraints: const BoxConstraints(
+                            minWidth: 26,
+                            minHeight: 26,
                           ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
+                          filled: false,
+                          contentPadding: const EdgeInsets.fromLTRB(0, 6, 0, 2),
+                          border: UnderlineInputBorder(
                             borderSide: BorderSide(
                               color: isDark
                                   ? AppColors.darkOutlineVariant
-                                  : AppColors.goldLight,
+                                  : const Color(0xFFD4C7BC),
+                              width: 1.2,
                             ),
                           ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
+                          enabledBorder: UnderlineInputBorder(
                             borderSide: BorderSide(
                               color: isDark
                                   ? AppColors.darkOutlineVariant
-                                  : AppColors.goldLight.withValues(alpha: 0.6),
+                                  : const Color(0xFFD4C7BC),
+                              width: 1.2,
                             ),
                           ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
+                          focusedBorder: UnderlineInputBorder(
                             borderSide: BorderSide(
-                              color: primaryColor,
+                              color: isDark
+                                  ? AppColors.goldLight
+                                  : AppColors.espressoDark,
                               width: 1.8,
                             ),
                           ),
-                          errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(
-                              color: Colors.redAccent,
+                          errorBorder: const UnderlineInputBorder(
+                            borderSide: BorderSide(
+                              color: AppColors.sosEmergency,
+                              width: 1.4,
                             ),
                           ),
-                          focusedErrorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(
-                              color: Colors.redAccent,
+                          focusedErrorBorder: const UnderlineInputBorder(
+                            borderSide: BorderSide(
+                              color: AppColors.sosEmergency,
                               width: 1.8,
                             ),
                           ),
@@ -240,81 +248,36 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 18),
 
-                      // Action Buttons
+                      // Bottom Row: Cancel button on left, space reserved for protruding button
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          // Batal
-                          Expanded(
-                            child: OutlinedButton(
-                              style: OutlinedButton.styleFrom(
-                                minimumSize: const Size(0, 46),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                side: BorderSide(
-                                  color: isDark
-                                      ? AppColors.darkOutlineVariant
-                                      : AppColors.goldLight.withValues(
-                                          alpha: 0.8,
-                                        ),
-                                ),
-                              ),
-                              onPressed: _isSubmitting
-                                  ? null
-                                  : () => Navigator.of(context).pop(),
-                              child: Text(
-                                context.tr('cancel').isEmpty
-                                    ? 'Batal'
-                                    : context.tr('cancel'),
-                                style: TextStyle(
-                                  color: isDark
-                                      ? Colors.white70
-                                      : AppColors.textBody,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                ),
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              foregroundColor: isDark
+                                  ? Colors.white60
+                                  : const Color(0xFF8C7A6B),
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            onPressed: _isSubmitting
+                                ? null
+                                : () => Navigator.of(context).pop(),
+                            child: Text(
+                              context.tr('cancel').isEmpty
+                                  ? 'Batal'
+                                  : context.tr('cancel'),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                                letterSpacing: 0.5,
                               ),
                             ),
                           ),
-                          const SizedBox(width: 10),
-
-                          // Kirim Undangan
-                          Expanded(
-                            flex: 2,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: primaryColor,
-                                foregroundColor: Colors.white,
-                                elevation: 2,
-                                shadowColor: primaryColor.withValues(
-                                  alpha: 0.4,
-                                ),
-                                minimumSize: const Size(0, 46),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              onPressed: _isSubmitting ? null : _handleSubmit,
-                              child: _isSubmitting
-                                  ? const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Text(
-                                      'Kirim Undangan',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 13.5,
-                                      ),
-                                    ),
-                            ),
-                          ),
+                          const SizedBox(width: 135),
                         ],
                       ),
                     ],
@@ -323,12 +286,12 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
               ),
             ),
 
-            // ── Floating Hero Card (Protruding at top, like Image 2) ────────
+            // ── 2. Floating Hero Card ──
             Positioned(
               top: 0,
-              left: 18,
-              right: 18,
-              height: 120,
+              left: 22,
+              right: 22,
+              height: 86,
               child: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -338,7 +301,7 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
                         ? [const Color(0xFF38251A), const Color(0xFF1F140D)]
                         : [AppColors.espressoDark, const Color(0xFF563B2A)],
                   ),
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: AppColors.goldPrimary.withValues(alpha: 0.4),
                     width: 1.2,
@@ -346,20 +309,19 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
                   boxShadow: [
                     BoxShadow(
                       color: AppColors.espressoDark.withValues(alpha: 0.35),
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
                     ),
                   ],
                 ),
                 child: Stack(
                   children: [
-                    // Ambient Background Circular Glows
                     Positioned(
-                      top: -20,
-                      right: -20,
+                      top: -15,
+                      right: -15,
                       child: Container(
-                        width: 90,
-                        height: 90,
+                        width: 70,
+                        height: 70,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: AppColors.goldPrimary.withValues(alpha: 0.12),
@@ -367,101 +329,132 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
                       ),
                     ),
                     Positioned(
-                      bottom: -25,
-                      left: -20,
+                      bottom: -20,
+                      left: -15,
                       child: Container(
-                        width: 80,
-                        height: 80,
+                        width: 65,
+                        height: 65,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: AppColors.goldPrimary.withValues(alpha: 0.08),
                         ),
                       ),
                     ),
-
-                    // Center Hero Graphic
                     Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Container(
-                            width: 50,
-                            height: 50,
+                            width: 40,
+                            height: 40,
                             decoration: BoxDecoration(
-                              color: AppColors.goldPrimary.withValues(
-                                alpha: 0.22,
-                              ),
                               shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppColors.goldPrimary.withValues(alpha: 0.25),
+                                  AppColors.goldPrimary.withValues(alpha: 0.08),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
                               border: Border.all(
                                 color: AppColors.goldPrimary.withValues(
-                                  alpha: 0.6,
+                                  alpha: 0.5,
                                 ),
                                 width: 1.5,
                               ),
                             ),
-                            child: const Icon(
-                              Icons.person_add_alt_1_rounded,
-                              color: AppColors.goldAccent,
-                              size: 26,
+                            child: const Center(
+                              child: Icon(
+                                Icons.person_add_alt_1_rounded,
+                                color: AppColors.accentGoldStar,
+                                size: 20,
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.3),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: AppColors.goldPrimary.withValues(
-                                  alpha: 0.3,
-                                ),
-                                width: 0.8,
-                              ),
-                            ),
-                            child: const Text(
-                              'UNDANG JAMAAH',
-                              style: TextStyle(
-                                color: AppColors.goldLight,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1.1,
-                              ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'UNDANG JAMAAH',
+                            style: TextStyle(
+                              color: AppColors.goldLight,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.1,
                             ),
                           ),
                         ],
                       ),
                     ),
-
-                    // Top-right Close Button
-                    if (!_isSubmitting)
-                      Positioned(
-                        top: 6,
-                        right: 6,
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(20),
-                            onTap: () => Navigator.of(context).pop(),
-                            child: Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.2),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.close_rounded,
-                                color: Colors.white70,
-                                size: 16,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
                   ],
                 ),
+              ),
+            ),
+
+            // ── 3. Protruding Ribbon Submit Button (No shadow) ──
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Positioned(
+                    top: -10,
+                    right: 0,
+                    child: CustomPaint(
+                      size: const Size(10, 10),
+                      painter: RibbonFoldPainter(
+                        color: isDark
+                            ? const Color(0xFF140D08)
+                            : const Color(0xFF160D07),
+                      ),
+                    ),
+                  ),
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _isSubmitting ? null : _handleSubmit,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(24),
+                        bottomLeft: Radius.circular(24),
+                        bottomRight: Radius.circular(5),
+                      ),
+                      child: Ink(
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? AppColors.darkPrimaryContainer
+                              : AppColors.espressoDark,
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(24),
+                            bottomLeft: Radius.circular(24),
+                            bottomRight: Radius.circular(5),
+                          ),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 28,
+                          vertical: 13.5,
+                        ),
+                        child: _isSubmitting
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'KIRIM',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 13,
+                                  letterSpacing: 2.2,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

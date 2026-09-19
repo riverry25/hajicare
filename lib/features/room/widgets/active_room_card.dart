@@ -2,7 +2,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
@@ -14,6 +13,7 @@ import '../../../core/utils/user_feedback_message.dart';
 import 'add_jamaah_dialog.dart';
 import 'edit_room_dialog.dart';
 import 'jamaah_detail_sheet.dart';
+import 'room_qr_dialog.dart';
 
 class ActiveRoomCard extends StatelessWidget {
   final bool isPendamping;
@@ -890,208 +890,13 @@ class ActiveRoomCard extends StatelessWidget {
   }
 
   void _showQrModal(BuildContext context, String roomName, String roomCode) {
-    final isDark = AppColors.isDark(context);
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-    final primaryColor = isDark ? AppColors.goldLight : AppColors.goldPrimary;
-
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        return Dialog(
-          backgroundColor: cardBg,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            side: BorderSide(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.1)
-                  : AppColors.goldLight.withValues(alpha: 0.3),
-            ),
-          ),
-          insetPadding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.lg,
-          ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 380),
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: primaryColor.withValues(alpha: 0.15),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.qr_code_2_rounded,
-                            color: primaryColor,
-                            size: 22,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                roomName,
-                                style: AppTypography.titleMedium.copyWith(
-                                  color: headingColor,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                'Kode & QR Room',
-                                style: AppTypography.captionSmall.copyWith(
-                                  color: bodyColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close_rounded, size: 20),
-                          color: bodyColor,
-                          onPressed: () => Navigator.of(ctx).pop(),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    Text(
-                      'Pindai QR Code atau masukkan 6 karakter kode untuk bergabung ke room:',
-                      textAlign: TextAlign.center,
-                      style: AppTypography.bodySmall.copyWith(
-                        color: bodyColor,
-                        height: 1.35,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-
-                    // QR Code Container with fixed dimensions
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                        border: Border.all(
-                          color: primaryColor.withValues(alpha: 0.3),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: SizedBox(
-                        width: 180,
-                        height: 180,
-                        child: QrImageView(
-                          data: roomCode,
-                          version: QrVersions.auto,
-                          size: 180,
-                          backgroundColor: Colors.white,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-
-                    // Room Code Badge with Copy button
-                    InkWell(
-                      onTap: () {
-                        Clipboard.setData(ClipboardData(text: roomCode));
-                        AppAlert.success(
-                          context,
-                          title: 'Disalin',
-                          message: 'Kode rombongan $roomCode sudah disalin.',
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: primaryColor.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                          border: Border.all(
-                            color: primaryColor.withValues(alpha: 0.4),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              roomCode,
-                              style: AppTypography.titleLarge.copyWith(
-                                color: primaryColor,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 4,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Icon(
-                              Icons.copy_rounded,
-                              size: 18,
-                              color: primaryColor,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Ketuk untuk menyalin kode',
-                      style: AppTypography.captionSmall.copyWith(
-                        color: bodyColor,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-
-                    // Action Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 44,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryColor,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                          ),
-                          elevation: 0,
-                        ),
-                        onPressed: () => Navigator.of(ctx).pop(),
-                        child: const Text(
-                          'Tutup',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
+    final state = Get.find<HajiCareController>();
+    final room = state.activeRoom.value;
+    if (room != null && (room.code == roomCode || roomCode.isEmpty)) {
+      RoomQrDialog.show(context, room: room);
+    } else {
+      RoomQrDialog.showDetails(context, roomName: roomName, roomCode: roomCode);
+    }
   }
 
   void _showMemberListSheet(

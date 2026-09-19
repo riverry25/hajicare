@@ -490,7 +490,6 @@ class ProfileScreen extends StatelessWidget {
     final isDark = AppColors.isDark(context);
     final cardBg = AppColors.cardBgColor(context);
     final headingColor = AppColors.textHeadingColor(context);
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
 
     final bloodTypeCtrl = TextEditingController(
       text: profileCtrl.bloodType.value,
@@ -507,254 +506,451 @@ class ProfileScreen extends StatelessWidget {
 
     showDialog(
       context: context,
+      barrierDismissible: true,
       builder: (dialogCtx) {
+        Future<void> submit() async {
+          if (profileCtrl.isSavingMedical.value) return;
+          try {
+            await profileCtrl.updateMedicalData(
+              bloodTypeVal: bloodTypeCtrl.text.trim(),
+              allergiesVal: allergiesCtrl.text.trim(),
+              conditionsVal: conditionsCtrl.text.trim(),
+              emergencyContactVal: emergencyContactCtrl.text.trim(),
+            );
+            if (dialogCtx.mounted && Navigator.of(dialogCtx).canPop()) {
+              Navigator.of(dialogCtx).pop();
+            }
+            if (!context.mounted) return;
+            AppAlert.success(
+              context,
+              title: 'Data Medis Disimpan',
+              message: 'Data medis Anda sudah diperbarui.',
+            );
+          } catch (_) {
+            if (!context.mounted) return;
+            AppAlert.error(
+              context,
+              title: 'Data Belum Disimpan',
+              message: 'Periksa internet, lalu coba simpan sekali lagi.',
+              okText: 'Coba Lagi',
+            );
+          }
+        }
+
+        Widget buildUnderlineField({
+          required String label,
+          required String hint,
+          required TextEditingController ctrl,
+          TextInputType keyboardType = TextInputType.text,
+          IconData? icon,
+        }) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: headingColor,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 2),
+              TextField(
+                controller: ctrl,
+                keyboardType: keyboardType,
+                style: TextStyle(
+                  color: headingColor,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+                decoration: InputDecoration(
+                  hintText: hint,
+                  hintStyle: TextStyle(
+                    color: isDark ? Colors.white38 : const Color(0xFF9E8E81),
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w400,
+                  ),
+                  prefixIcon: icon != null
+                      ? Icon(
+                          icon,
+                          size: 17,
+                          color: isDark
+                              ? AppColors.goldLight.withValues(alpha: 0.7)
+                              : AppColors.espressoDark.withValues(alpha: 0.6),
+                        )
+                      : null,
+                  prefixIconConstraints: const BoxConstraints(
+                    minWidth: 26,
+                    minHeight: 26,
+                  ),
+                  filled: false,
+                  contentPadding: const EdgeInsets.fromLTRB(0, 6, 0, 2),
+                  border: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                      color: isDark
+                          ? AppColors.darkOutlineVariant
+                          : const Color(0xFFD4C7BC),
+                      width: 1.2,
+                    ),
+                  ),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                      color: isDark
+                          ? AppColors.darkOutlineVariant
+                          : const Color(0xFFD4C7BC),
+                      width: 1.2,
+                    ),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                      color: isDark
+                          ? AppColors.goldLight
+                          : AppColors.espressoDark,
+                      width: 1.8,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+
         return Dialog(
-          backgroundColor: cardBg,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-          ),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
           insetPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 24,
+            horizontal: 20,
+            vertical: 20,
           ),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 440),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSpacing.cardPadding),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.sosEmergency.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(AppRadius.md),
+            constraints: const BoxConstraints(maxWidth: 400, maxHeight: 620),
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.topCenter,
+              children: [
+                // ── 1. Main Card Body ─────────────────────────────────────────
+                Container(
+                  margin: const EdgeInsets.only(
+                    top: 28,
+                    bottom: 12,
+                    right: 10,
+                    left: 10,
+                  ),
+                  padding: const EdgeInsets.fromLTRB(20, 68, 20, 14),
+                  decoration: BoxDecoration(
+                    color: cardBg,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.1)
+                          : AppColors.goldLight.withValues(alpha: 0.35),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(
+                          alpha: isDark ? 0.45 : 0.09,
                         ),
-                        child: const Icon(
-                          Icons.medical_services_rounded,
-                          color: AppColors.sosEmergency,
-                          size: 22,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Kelola Data Medis',
-                              style: AppTypography.titleMedium.copyWith(
-                                color: headingColor,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              'Informasi kesehatan pribadi Jamaah',
-                              style: AppTypography.captionSmall.copyWith(
-                                color: AppColors.textBodyColor(context),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close_rounded),
-                        onPressed: () => Navigator.of(dialogCtx).pop(),
+                        blurRadius: 24,
+                        offset: const Offset(0, 10),
                       ),
                     ],
                   ),
-                  const Divider(height: 24),
-
-                  // Golongan Darah
-                  Text(
-                    'Golongan Darah',
-                    style: AppTypography.labelMedium.copyWith(
-                      color: headingColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: bloodTypeCtrl,
-                    style: TextStyle(color: headingColor),
-                    decoration: InputDecoration(
-                      hintText: 'Contoh: O Rhesus (+), A (+), B (+)',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                      prefixIcon: const Icon(Icons.bloodtype_rounded, size: 20),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Riwayat Alergi
-                  Text(
-                    'Riwayat Alergi Obat / Makanan',
-                    style: AppTypography.labelMedium.copyWith(
-                      color: headingColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: allergiesCtrl,
-                    style: TextStyle(color: headingColor),
-                    decoration: InputDecoration(
-                      hintText: 'Contoh: Alergi penisilin, atau tidak ada',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                      prefixIcon: const Icon(
-                        Icons.warning_amber_rounded,
-                        size: 20,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Kondisi Khusus
-                  Text(
-                    'Kondisi Khusus / Riwayat Penyakit',
-                    style: AppTypography.labelMedium.copyWith(
-                      color: headingColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: conditionsCtrl,
-                    style: TextStyle(color: headingColor),
-                    decoration: InputDecoration(
-                      hintText: 'Contoh: Hipertensi, Diabetes, Asma, dsb.',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                      prefixIcon: const Icon(Icons.healing_rounded, size: 20),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Kontak Darurat
-                  Text(
-                    'Nomor Kontak Darurat (Keluarga)',
-                    style: AppTypography.labelMedium.copyWith(
-                      color: headingColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: emergencyContactCtrl,
-                    keyboardType: TextInputType.phone,
-                    style: TextStyle(color: headingColor),
-                    decoration: InputDecoration(
-                      hintText: 'Contoh: 0812-3456-7890 (Anak / Pasangan)',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                      prefixIcon: const Icon(
-                        Icons.phone_in_talk_rounded,
-                        size: 20,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Actions
-                  Obx(() {
-                    final saving = profileCtrl.isSavingMedical.value;
-                    return Row(
+                  child: SingleChildScrollView(
+                    physics: const ClampingScrollPhysics(),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: saving
-                                ? null
-                                : () => Navigator.of(dialogCtx).pop(),
-                            child: const Text('Batal'),
+                        // Title
+                        Text(
+                          'Kelola Data Medis',
+                          style: AppTypography.titleMedium.copyWith(
+                            color: headingColor,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 17.5,
+                            letterSpacing: -0.2,
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          flex: 2,
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryColor,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
+                        const SizedBox(height: 4),
+
+                        // Subtitle
+                        Text(
+                          'Informasi kesehatan pribadi Jamaah untuk pertolongan pertama darurat.',
+                          style: AppTypography.bodySmall.copyWith(
+                            color: AppColors.textBodyColor(
+                              context,
+                            ).withValues(alpha: 0.85),
+                            height: 1.35,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Field 1: Golongan Darah
+                        buildUnderlineField(
+                          label: 'Golongan Darah',
+                          hint: 'Contoh: O Rhesus (+), A (+), B (+)',
+                          ctrl: bloodTypeCtrl,
+                          icon: Icons.bloodtype_rounded,
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Field 2: Riwayat Alergi
+                        buildUnderlineField(
+                          label: 'Riwayat Alergi Obat / Makanan',
+                          hint: 'Contoh: Alergi penisilin, udang, dsb.',
+                          ctrl: allergiesCtrl,
+                          icon: Icons.warning_amber_rounded,
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Field 3: Kondisi Khusus
+                        buildUnderlineField(
+                          label: 'Kondisi Khusus / Riwayat Penyakit',
+                          hint: 'Contoh: Hipertensi, Diabetes, Asma',
+                          ctrl: conditionsCtrl,
+                          icon: Icons.healing_rounded,
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Field 4: Kontak Darurat
+                        buildUnderlineField(
+                          label: 'Nomor Kontak Darurat (Keluarga)',
+                          hint: 'Contoh: 0812-3456-7890 (Anak / Pasangan)',
+                          ctrl: emergencyContactCtrl,
+                          keyboardType: TextInputType.phone,
+                          icon: Icons.phone_in_talk_rounded,
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Bottom Row: Cancel button on left, space reserved for protruding button
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                foregroundColor: isDark
+                                    ? Colors.white60
+                                    : const Color(0xFF8C7A6B),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 4,
+                                ),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              onPressed: () => Navigator.of(dialogCtx).pop(),
+                              child: Text(
+                                dialogCtx.tr('cancel').isEmpty
+                                    ? 'Batal'
+                                    : dialogCtx.tr('cancel'),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
                             ),
-                            onPressed: saving
-                                ? null
-                                : () async {
-                                    try {
-                                      await profileCtrl.updateMedicalData(
-                                        bloodTypeVal: bloodTypeCtrl.text,
-                                        allergiesVal: allergiesCtrl.text,
-                                        conditionsVal: conditionsCtrl.text,
-                                        emergencyContactVal:
-                                            emergencyContactCtrl.text,
-                                      );
-                                      if (dialogCtx.mounted) {
-                                        Navigator.of(dialogCtx).pop();
-                                      }
-                                      if (context.mounted) {
-                                        AppAlert.success(
-                                          context,
-                                          title: 'Data Medis Disimpan',
-                                          message:
-                                              'Data medis Anda sudah diperbarui.',
-                                        );
-                                      }
-                                    } catch (_) {
-                                      if (context.mounted) {
-                                        AppAlert.error(
-                                          context,
-                                          title: 'Data Belum Disimpan',
-                                          message:
-                                              'Periksa internet, lalu coba simpan sekali lagi.',
-                                          okText: 'Coba Lagi',
-                                        );
-                                      }
-                                    }
-                                  },
-                            icon: saving
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
+                            const SizedBox(
+                              width: 135,
+                            ), // Spacer for protruding button
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // ── 2. Floating Hero Card (Compact header) ───────────────────
+                Positioned(
+                  top: 0,
+                  left: 22,
+                  right: 22,
+                  height: 86,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: isDark
+                            ? [const Color(0xFF38251A), const Color(0xFF1F140D)]
+                            : [AppColors.espressoDark, const Color(0xFF563B2A)],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.goldPrimary.withValues(alpha: 0.4),
+                        width: 1.2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.espressoDark.withValues(alpha: 0.35),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Stack(
+                      children: [
+                        // Ambient Background Circular Glows
+                        Positioned(
+                          top: -15,
+                          right: -15,
+                          child: Container(
+                            width: 70,
+                            height: 70,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.goldPrimary.withValues(
+                                alpha: 0.12,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: -20,
+                          left: -15,
+                          child: Container(
+                            width: 65,
+                            height: 65,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.goldPrimary.withValues(
+                                alpha: 0.08,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // Center Hero Graphic
+                        Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      AppColors.goldPrimary.withValues(
+                                        alpha: 0.25,
+                                      ),
+                                      AppColors.goldPrimary.withValues(
+                                        alpha: 0.08,
+                                      ),
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  border: Border.all(
+                                    color: AppColors.goldPrimary.withValues(
+                                      alpha: 0.5,
                                     ),
-                                  )
-                                : const Icon(Icons.save_rounded, size: 18),
-                            label: Text(
-                              saving ? 'Menyimpan...' : 'Simpan Data Medis',
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.medical_services_rounded,
+                                    color: AppColors.accentGoldStar,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              const Text(
+                                'DATA KESEHATAN JAMAAH',
+                                style: TextStyle(
+                                  color: AppColors.goldLight,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.1,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // ── 3. Protruding Ribbon Submit Button (No shadow) ───────────
+                Obx(() {
+                  final saving = profileCtrl.isSavingMedical.value;
+                  return Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        // Ribbon fold triangle at the top-right corner
+                        Positioned(
+                          top: -10,
+                          right: 0,
+                          child: CustomPaint(
+                            size: const Size(10, 10),
+                            painter: _RibbonFoldPainter(
+                              color: isDark
+                                  ? const Color(0xFF140D08)
+                                  : const Color(0xFF160D07),
+                            ),
+                          ),
+                        ),
+
+                        // Main Pill Submit Button without box shadow
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: saving ? null : submit,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(24),
+                              bottomLeft: Radius.circular(24),
+                              bottomRight: Radius.circular(5),
+                            ),
+                            child: Ink(
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? AppColors.darkPrimaryContainer
+                                    : AppColors.espressoDark,
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(24),
+                                  bottomLeft: Radius.circular(24),
+                                  bottomRight: Radius.circular(5),
+                                ),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 28,
+                                vertical: 13.5,
+                              ),
+                              child: saving
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'SIMPAN',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 13,
+                                        letterSpacing: 2.2,
+                                      ),
+                                    ),
                             ),
                           ),
                         ),
                       ],
-                    );
-                  }),
-                ],
-              ),
+                    ),
+                  );
+                }),
+              ],
             ),
           ),
         );
