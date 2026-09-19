@@ -12,7 +12,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/animated_ping_dot.dart';
 import '../../../../core/widgets/app_card.dart';
-import '../../../../core/widgets/app_status_badge.dart';
+import '../../room/widgets/jamaah_detail_sheet.dart';
 
 class PendampingRadarCard extends StatelessWidget {
   final JamaahData jamaah;
@@ -24,16 +24,6 @@ class PendampingRadarCard extends StatelessWidget {
     this.onTrackMap,
   });
 
-  AppStatusType _mapStatusType(DistanceTier tier) {
-    switch (tier) {
-      case DistanceTier.aman:
-        return AppStatusType.safe;
-      case DistanceTier.waspada:
-        return AppStatusType.warning;
-      case DistanceTier.terlalujJauh:
-        return AppStatusType.danger;
-    }
-  }
 
   String _localizedTierLabel(BuildContext context, DistanceTier tier) {
     switch (tier) {
@@ -354,8 +344,8 @@ class PendampingRadarCard extends StatelessWidget {
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isDark ? AppColors.darkPrimary : AppColors.primaryGold,
-                    foregroundColor: Colors.white,
+                    backgroundColor: isDark ? AppColors.darkPrimaryContainer : AppColors.espressoDark,
+                    foregroundColor: isDark ? AppColors.darkPrimary : Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
@@ -370,114 +360,313 @@ class PendampingRadarCard extends StatelessWidget {
 
       final safeRadius = state.safeRadiusMeters.value;
       // GPS signal is only considered valid if we have a real coordinate AND isGpsActive flag.
-      // Distance alone is NOT a reliable indicator — it can be huge when using default coords.
       final hasSignal = jamaah.currentLocation != null && jamaah.isGpsActive;
+      final roomId = state.activeRoomId.value ?? '';
+      final roomName = state.activeRoom.value?.name ?? 'Room Pemantauan';
+      final roomCode = state.activeRoom.value?.code ?? '';
 
-      return AppCard(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+      return Container(
+        decoration: BoxDecoration(
+          color: AppColors.cardBgColor(context),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: AppColors.cardBorderColor(context),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: (isDark ? Colors.black : AppColors.espressoDark).withValues(alpha: isDark ? 0.35 : 0.08),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ── Header Row (Radar icon, Name, Status Badge) ──────────────────
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? AppColors.darkPrimaryContainer
-                              : AppColors.canvasCream,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.radar_rounded,
-                          color: isDark ? AppColors.goldLight : AppColors.espressoDark,
-                          size: 22,
+            // ── Floating 3D Radar Wave Header (Ref 1 Elevated Header + Ref 2 Concentric Ripples) ─
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: LinearGradient(
+                  colors: isDark
+                      ? [
+                          AppColors.darkSurfaceContainerHigh,
+                          AppColors.darkSurfaceContainerHighest,
+                        ]
+                      : [
+                          AppColors.espressoDark,
+                          AppColors.primaryContainer,
+                        ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isDark ? Colors.black : AppColors.espressoDark).withValues(alpha: isDark ? 0.35 : 0.22),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Stack(
+                  children: [
+                    // Concentric 3D Radar Ripple Waves (Photo 2)
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: _RadarWavesPainter(
+                          waveColor: hasSignal
+                              ? (jamaah.tier == DistanceTier.aman
+                                  ? AppColors.goldLight
+                                  : (jamaah.tier == DistanceTier.waspada
+                                      ? AppColors.distanceWarning
+                                      : AppColors.sosEmergency))
+                              : AppColors.tanLight,
+                          centerFraction: const Offset(0.85, 0.28),
                         ),
                       ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    context.tr('radarJamaahDistance'),
-                                    style: AppTypography.captionSmall.copyWith(
-                                      color: bodyColor.withValues(alpha: 0.8),
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 0.3,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                    ),
+
+                    // Subtle Glassmorphic Sheen
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.white.withValues(alpha: isDark ? 0.07 : 0.12),
+                              Colors.transparent,
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Content inside Floating Header
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Top Row: Radar Active Pill & Floating Status Emblem (Photo 2)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // Left: Radar Active Chip
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4.5),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.28),
+                                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                                  border: Border.all(
+                                    color: AppColors.goldLight.withValues(alpha: 0.35),
+                                    width: 1,
                                   ),
                                 ),
-                                const SizedBox(width: 6),
-                                AnimatedPingDot(
-                                  color: hasSignal ? jamaah.tier.color : AppColors.outline,
-                                  size: 8,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    AnimatedPingDot(
+                                      color: hasSignal ? AppColors.accentGoldStar : AppColors.outlineVariant,
+                                      size: 7,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    const Text(
+                                      'RADAR AKTIF',
+                                      style: TextStyle(
+                                        color: AppColors.goldLight,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0.9,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              jamaah.name,
-                              style: AppTypography.titleMedium.copyWith(
-                                color: headingColor,
-                                fontWeight: FontWeight.bold,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                AppStatusBadge(
-                  label: hasSignal ? _localizedTierLabel(context, jamaah.tier) : 'Menunggu',
-                  statusType: hasSignal ? _mapStatusType(jamaah.tier) : AppStatusType.warning,
-                  icon: hasSignal ? jamaah.tier.icon : Icons.hourglass_top_rounded,
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
 
-            // ── Hero Distance & Radius Container ───────────────────────────
+                              // Right: Floating Glassmorphic Status Emblem in ripple center
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: (hasSignal ? jamaah.tier.color : AppColors.outline)
+                                      .withValues(alpha: 0.26),
+                                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                                  border: Border.all(
+                                    color: (hasSignal ? jamaah.tier.color : AppColors.outline)
+                                        .withValues(alpha: 0.55),
+                                    width: 1.2,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: (hasSignal ? jamaah.tier.color : Colors.black)
+                                          .withValues(alpha: 0.25),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      hasSignal ? jamaah.tier.icon : Icons.hourglass_top_rounded,
+                                      color: Colors.white,
+                                      size: 13,
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      hasSignal
+                                          ? _localizedTierLabel(context, jamaah.tier).toUpperCase()
+                                          : 'MENUNGGU',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Pilgrim Identity Row
+                          Row(
+                            children: [
+                              // Avatar circle with tier-colored halo ring
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: hasSignal ? jamaah.tier.color : AppColors.goldLight,
+                                    width: 2.2,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: (hasSignal ? jamaah.tier.color : AppColors.espressoDark)
+                                          .withValues(alpha: 0.35),
+                                      blurRadius: 8,
+                                    ),
+                                  ],
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      AppColors.espressoDark,
+                                      AppColors.primaryContainer,
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  jamaah.name.trim().isNotEmpty
+                                      ? jamaah.name.trim()[0].toUpperCase()
+                                      : 'J',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      jamaah.name,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.2,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 6.5,
+                                          height: 6.5,
+                                          decoration: BoxDecoration(
+                                            color: jamaah.isGpsActive ? AppColors.statusSafe : AppColors.error,
+                                            shape: BoxShape.circle,
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: (jamaah.isGpsActive ? AppColors.statusSafe : AppColors.error)
+                                                    .withValues(alpha: 0.6),
+                                                blurRadius: 4,
+                                                spreadRadius: 1,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: Text(
+                                            jamaah.isGpsActive
+                                                ? 'GPS Terkoneksi • Sinyal Stabil'
+                                                : 'GPS Terputus • Menunggu Sinyal',
+                                            style: TextStyle(
+                                              color: Colors.white.withValues(alpha: 0.85),
+                                              fontSize: 11.5,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // ── Hero Distance & Safe Radius Container ────────────────────────
             Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 color: isDark
                     ? AppColors.darkSurfaceContainer
                     : AppColors.canvasCream.withValues(alpha: 0.45),
-                borderRadius: BorderRadius.circular(AppRadius.lg),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isDark
                       ? AppColors.darkOutlineVariant
-                      : AppColors.goldLight.withValues(alpha: 0.4),
+                      : AppColors.goldLight.withValues(alpha: 0.35),
                   width: 1,
                 ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Distance Number + Safe Limit Info
+                  // Distance Number + Safe Limit Capsule
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Distance Value & Unit
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -491,7 +680,7 @@ class PendampingRadarCard extends StatelessWidget {
                                   style: AppTypography.displayLarge.copyWith(
                                     fontSize: 32,
                                     fontWeight: FontWeight.w800,
-                                    color: hasSignal ? jamaah.tier.color : bodyColor,
+                                    color: hasSignal ? jamaah.tier.color : headingColor,
                                     height: 1.1,
                                   ),
                                 ),
@@ -500,7 +689,7 @@ class PendampingRadarCard extends StatelessWidget {
                                   hasSignal ? _formatDistanceUnit(context, jamaah.distance) : context.tr('meterUnit'),
                                   style: AppTypography.titleMedium.copyWith(
                                     color: bodyColor,
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ],
@@ -509,7 +698,8 @@ class PendampingRadarCard extends StatelessWidget {
                             Text(
                               'Jarak Real-Time Saat Ini',
                               style: AppTypography.captionSmall.copyWith(
-                                color: bodyColor.withValues(alpha: 0.7),
+                                color: bodyColor.withValues(alpha: 0.75),
+                                fontSize: 11,
                               ),
                             ),
                           ],
@@ -527,6 +717,13 @@ class PendampingRadarCard extends StatelessWidget {
                                 ? AppColors.darkOutlineVariant
                                 : AppColors.espressoDark.withValues(alpha: 0.08),
                           ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.03),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
@@ -534,7 +731,7 @@ class PendampingRadarCard extends StatelessWidget {
                             Text(
                               context.tr('maxLimit'),
                               style: AppTypography.captionSmall.copyWith(
-                                color: bodyColor.withValues(alpha: 0.8),
+                                color: bodyColor.withValues(alpha: 0.75),
                                 fontSize: 10,
                               ),
                             ),
@@ -553,7 +750,7 @@ class PendampingRadarCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: 10),
 
                   // Progress / Range Indicator Bar
                   ClipRRect(
@@ -569,9 +766,9 @@ class PendampingRadarCard extends StatelessWidget {
                       minHeight: 8,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 7),
 
-                  // Range Context Tags (Never overflows)
+                  // Range Context Tags
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -579,6 +776,7 @@ class PendampingRadarCard extends StatelessWidget {
                         '0 m',
                         style: AppTypography.captionSmall.copyWith(
                           color: bodyColor.withValues(alpha: 0.6),
+                          fontSize: 10.5,
                         ),
                       ),
                       Flexible(
@@ -618,6 +816,7 @@ class PendampingRadarCard extends StatelessWidget {
                             : '${safeRadius.toInt()} m',
                         style: AppTypography.captionSmall.copyWith(
                           color: bodyColor.withValues(alpha: 0.6),
+                          fontSize: 10.5,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -626,9 +825,9 @@ class PendampingRadarCard extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: 12),
 
-            // ── Device & Sync Status Row (Clean Tiles) ──────────────────────
+            // ── Device & Sync Telemetry Tiles ────────────────────────────────
             Row(
               children: [
                 Expanded(
@@ -636,11 +835,11 @@ class PendampingRadarCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     decoration: BoxDecoration(
                       color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
-                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isDark
                             ? AppColors.darkOutlineVariant
-                            : AppColors.espressoDark.withValues(alpha: 0.06),
+                            : AppColors.espressoDark.withValues(alpha: 0.07),
                       ),
                     ),
                     child: Row(
@@ -655,25 +854,29 @@ class PendampingRadarCard extends StatelessWidget {
                           child: Icon(
                             Icons.watch_rounded,
                             color: jamaah.isGpsActive ? AppColors.statusSafe : AppColors.error,
-                            size: 16,
+                            size: 15,
                           ),
                         ),
-                        const SizedBox(width: AppSpacing.xs + 2),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 context.tr('smartBand'),
-                                style: AppTypography.captionSmall.copyWith(
+                                style: TextStyle(
                                   fontSize: 10,
                                   color: bodyColor.withValues(alpha: 0.7),
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                               Text(
-                                jamaah.isGpsActive ? 'GPS Terhubung' : 'GPS Terputus',
-                                style: AppTypography.captionSmall.copyWith(
-                                  color: jamaah.isGpsActive ? (isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32)) : AppColors.error,
+                                jamaah.isGpsActive ? 'GPS Aktif' : 'GPS Mati',
+                                style: TextStyle(
+                                  color: jamaah.isGpsActive
+                                      ? (isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32))
+                                      : AppColors.error,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                 ),
                                 maxLines: 1,
@@ -686,17 +889,17 @@ class PendampingRadarCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     decoration: BoxDecoration(
                       color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
-                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isDark
                             ? AppColors.darkOutlineVariant
-                            : AppColors.espressoDark.withValues(alpha: 0.06),
+                            : AppColors.espressoDark.withValues(alpha: 0.07),
                       ),
                     ),
                     child: Row(
@@ -710,25 +913,27 @@ class PendampingRadarCard extends StatelessWidget {
                           child: const Icon(
                             Icons.schedule_rounded,
                             color: AppColors.tanMedium,
-                            size: 16,
+                            size: 15,
                           ),
                         ),
-                        const SizedBox(width: AppSpacing.xs + 2),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 context.tr('lastSync'),
-                                style: AppTypography.captionSmall.copyWith(
+                                style: TextStyle(
                                   fontSize: 10,
                                   color: bodyColor.withValues(alpha: 0.7),
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                               Text(
                                 _formatTimestamp(jamaah.locationUpdatedAt),
-                                style: AppTypography.captionSmall.copyWith(
+                                style: TextStyle(
                                   color: headingColor,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                 ),
                                 maxLines: 1,
@@ -743,100 +948,182 @@ class PendampingRadarCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: 14),
 
-            // ── Primary Action: Track on Map ────────────────────────────────
-            ConstrainedBox(
-              constraints: const BoxConstraints(
-                minHeight: AppSizes.buttonHeightPrimary,
-              ),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: onTrackMap,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
-                      vertical: AppSpacing.sm2,
-                    ),
-                    backgroundColor: isDark
-                        ? AppColors.darkPrimaryContainer
-                        : AppColors.espressoDark,
-                    foregroundColor: isDark
-                        ? AppColors.darkPrimary
-                        : AppColors.surfaceWhite,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                    ),
-                    elevation: 1,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.near_me_rounded, size: 18),
-                      const SizedBox(width: AppSpacing.sm),
-                      Flexible(
-                        child: Text(
-                          context.tr('trackOnInteractiveMap'),
-                          style: AppTypography.labelLarge.copyWith(
-                            color: isDark ? AppColors.darkPrimary : AppColors.surfaceWhite,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+            // ── Bottom Action Bar (Photo 2 Circular Quick-Actions + Photo 1 Pill Action) ─
+            Row(
+              children: [
+                // Circular Button 1: Adjust Safe Radius (Photo 2)
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      _showRadiusSheet(context);
+                    },
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite,
+                        border: Border.all(
+                          color: isDark ? AppColors.darkOutlineVariant : AppColors.goldLight.withValues(alpha: 0.6),
+                          width: 1.2,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: AppSpacing.xs),
-                      const Icon(Icons.arrow_forward_rounded, size: 16),
-                    ],
+                      child: const Icon(
+                        Icons.tune_rounded,
+                        color: AppColors.tanMedium,
+                        size: 20,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xs + 2),
+                const SizedBox(width: 8),
 
-            // ── Secondary Action: Adjust Safe Radius ────────────────────────
-            ConstrainedBox(
-              constraints: const BoxConstraints(
-                minHeight: AppSizes.buttonHeightSecondary,
-              ),
-              child: SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () => _showRadiusSheet(context),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: headingColor,
-                    side: BorderSide(
-                      color: isDark ? AppColors.darkOutlineVariant : AppColors.goldLight,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.tune_rounded, size: 16, color: AppColors.tanMedium),
-                      const SizedBox(width: AppSpacing.sm2),
-                      Flexible(
-                        child: Text(
-                          'Atur Batas Radius Aman (${safeRadius.toInt()}m)',
-                          style: AppTypography.labelLarge.copyWith(
-                            color: headingColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                // Circular Button 2: Jamaah Details Sheet (Photo 2)
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      JamaahDetailSheet.show(
+                        context,
+                        jamaah: jamaah,
+                        roomId: roomId,
+                        roomName: roomName,
+                        roomCode: roomCode,
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite,
+                        border: Border.all(
+                          color: isDark ? AppColors.darkOutlineVariant : AppColors.goldLight.withValues(alpha: 0.6),
+                          width: 1.2,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                    ],
+                      child: Icon(
+                        Icons.person_outline_rounded,
+                        color: isDark ? AppColors.goldLight : AppColors.espressoDark,
+                        size: 20,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(width: 10),
+
+                // Primary Action Button (Photo 1)
+                Expanded(
+                  child: SizedBox(
+                    height: 44,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        onTrackMap?.call();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isDark
+                            ? AppColors.darkPrimaryContainer
+                            : AppColors.espressoDark,
+                        foregroundColor: isDark
+                            ? AppColors.darkPrimary
+                            : AppColors.surfaceWhite,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                        elevation: 2,
+                        shadowColor: (isDark ? Colors.black : AppColors.espressoDark).withValues(alpha: 0.3),
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.near_me_rounded, size: 17),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              context.tr('trackOnInteractiveMap'),
+                              style: TextStyle(
+                                color: isDark ? AppColors.darkPrimary : AppColors.surfaceWhite,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13.5,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Icon(Icons.arrow_forward_rounded, size: 15),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       );
     });
   }
+}
+
+/// Concentric 3D Radar Wave Painter inspired by Reference 2 (UIVERSE 3D UI)
+class _RadarWavesPainter extends CustomPainter {
+  final Color waveColor;
+  final Offset centerFraction;
+
+  _RadarWavesPainter({
+    required this.waveColor,
+    this.centerFraction = const Offset(0.85, 0.28),
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width * centerFraction.dx, size.height * centerFraction.dy);
+
+    final radii = [30.0, 58.0, 92.0, 134.0, 184.0, 244.0];
+    final strokeOpacities = [0.26, 0.18, 0.12, 0.08, 0.05, 0.025];
+    final fillOpacities = [0.08, 0.04, 0.02, 0.0, 0.0, 0.0];
+
+    for (int i = 0; i < radii.length; i++) {
+      if (fillOpacities[i] > 0) {
+        final fillPaint = Paint()
+          ..color = waveColor.withValues(alpha: fillOpacities[i])
+          ..style = PaintingStyle.fill;
+        canvas.drawCircle(center, radii[i], fillPaint);
+      }
+
+      final strokePaint = Paint()
+        ..color = waveColor.withValues(alpha: strokeOpacities[i])
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = i == 0 ? 2.2 : 1.2;
+      canvas.drawCircle(center, radii[i], strokePaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _RadarWavesPainter oldDelegate) =>
+      oldDelegate.waveColor != waveColor || oldDelegate.centerFraction != centerFraction;
 }

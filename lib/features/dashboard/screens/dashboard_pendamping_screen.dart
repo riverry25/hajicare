@@ -16,7 +16,6 @@ import '../../prayer/screens/prayer_times_screen.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../room/widgets/active_room_card.dart';
 import '../controllers/dashboard_controller.dart';
-import '../widgets/pendamping_jamaah_selector.dart';
 import '../widgets/pendamping_radar_card.dart';
 import '../widgets/pendamping_sos_banner.dart';
 import '../widgets/rotating_sync_button.dart';
@@ -436,12 +435,6 @@ class DashboardPendampingScreen extends StatelessWidget {
               _sectionHeader(title: 'Detail Posisi', actionText: 'Buka navigasi',
                   onAction: () => dashboardCtrl.changeTab(1), headingColor: headingColor, isDark: isDark),
               const SizedBox(height: 12),
-              PendampingJamaahSelector(
-                state: state,
-                selectedIndex: dashboardCtrl.selectedJamaahIndex.value,
-                onSelected: dashboardCtrl.selectJamaah,
-              ),
-              const SizedBox(height: 12),
               PendampingRadarCard(jamaah: selectedJamaah, onTrackMap: () => dashboardCtrl.changeTab(1)),
               const SizedBox(height: 26),
             ],
@@ -501,28 +494,63 @@ class DashboardPendampingScreen extends StatelessWidget {
                 final distText = dist > 0
                     ? (dist < 1000 ? '${dist.round()} m' : '${(dist / 1000).toStringAsFixed(1)} km')
                     : '—';
+                final isSelected = dashboardCtrl.selectedJamaahIndex.value == i;
 
                 final Color pill = hasSos
                     ? AppColors.sosEmergency
                     : (isSep ? AppColors.statusWarning : AppColors.statusSafe);
 
                 return GestureDetector(
-                  onTap: () { HapticFeedback.selectionClick(); dashboardCtrl.selectJamaah(i); },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    dashboardCtrl.selectJamaah(i);
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isSelected ? 13 : 11,
+                      vertical: isSelected ? 7.5 : 6.5,
+                    ),
                     decoration: BoxDecoration(
-                      color: pill.withValues(alpha: isDark ? 0.15 : 0.09),
+                      color: isSelected
+                          ? (isDark
+                              ? AppColors.darkPrimaryContainer
+                              : AppColors.canvasCreamSubtle)
+                          : pill.withValues(alpha: isDark ? 0.15 : 0.08),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: pill.withValues(alpha: isDark ? 0.38 : 0.28), width: 1.2),
+                      border: Border.all(
+                        color: isSelected
+                            ? (isDark ? AppColors.goldLight : AppColors.espressoDark)
+                            : pill.withValues(alpha: isDark ? 0.38 : 0.28),
+                        width: isSelected ? 1.8 : 1.2,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: (isDark ? Colors.black : AppColors.espressoDark)
+                                    .withValues(alpha: 0.16),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          width: 7, height: 7,
+                          width: 7,
+                          height: 7,
                           decoration: BoxDecoration(
-                            color: pill, shape: BoxShape.circle,
-                            boxShadow: [BoxShadow(color: pill.withValues(alpha: 0.5), blurRadius: 4, spreadRadius: 1)],
+                            color: pill,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: pill.withValues(alpha: 0.55),
+                                blurRadius: 4,
+                                spreadRadius: 1,
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(width: 6),
@@ -531,8 +559,12 @@ class DashboardPendampingScreen extends StatelessWidget {
                               ? j.shortLabel
                               : (j.name.isNotEmpty ? j.name.split(' ').first : 'Jamaah ${i + 1}'),
                           style: TextStyle(
-                              color: isDark ? AppColors.darkTextHeading : AppColors.espressoDark,
-                              fontSize: 12.5, fontWeight: FontWeight.w700),
+                            color: isSelected
+                                ? (isDark ? AppColors.goldLight : AppColors.espressoDark)
+                                : (isDark ? AppColors.darkTextHeading : AppColors.espressoDark),
+                            fontSize: 12.5,
+                            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                          ),
                         ),
                         const SizedBox(width: 5),
                         Container(
@@ -541,8 +573,15 @@ class DashboardPendampingScreen extends StatelessWidget {
                             color: pill.withValues(alpha: isDark ? 0.22 : 0.14),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: Text(distText,
-                              style: TextStyle(color: pill, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.1)),
+                          child: Text(
+                            distText,
+                            style: TextStyle(
+                              color: pill,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.1,
+                            ),
+                          ),
                         ),
                         if (hasSos) ...[
                           const SizedBox(width: 4),
