@@ -36,6 +36,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   late final TextEditingController _searchCtrl;
+  late final MapController _mapController;
 
   static const List<FilterChipItem> _filters = [
     FilterChipItem(
@@ -56,6 +57,9 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
   void initState() {
     super.initState();
     _searchCtrl = TextEditingController();
+    _mapController = Get.isRegistered<MapController>()
+        ? Get.find<MapController>()
+        : Get.put(MapController());
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
@@ -72,9 +76,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
   @override
   Widget build(BuildContext context) {
     final state = Get.find<HajiCareController>();
-    final mapCtrl = Get.isRegistered<MapController>()
-        ? Get.find<MapController>()
-        : Get.put(MapController());
+    final mapCtrl = _mapController;
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldColor(context),
@@ -1011,7 +1013,6 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                     ],
                   ),
                   child: Row(
-                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
                         Icons.elderly_rounded,
@@ -1019,13 +1020,17 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                         color: jamaah.tier.color,
                       ),
                       const SizedBox(width: 4),
-                      Text(
-                        jamaah.shortLabel,
-                        style: AppTypography.captionSmall.copyWith(
-                          color: isDark
-                              ? AppColors.darkTextHeading
-                              : AppColors.espressoDark,
-                          fontWeight: FontWeight.w800,
+                      Flexible(
+                        child: Text(
+                          jamaah.shortLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.captionSmall.copyWith(
+                            color: isDark
+                                ? AppColors.darkTextHeading
+                                : AppColors.espressoDark,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 4),

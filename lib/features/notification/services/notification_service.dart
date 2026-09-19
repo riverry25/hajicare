@@ -3,7 +3,13 @@ import 'package:flutter/foundation.dart';
 import '../models/notification_model.dart';
 
 class NotificationService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  NotificationService({FirebaseFirestore? firestore})
+    : _providedFirestore = firestore;
+
+  final FirebaseFirestore? _providedFirestore;
+
+  FirebaseFirestore get _firestore =>
+      _providedFirestore ?? FirebaseFirestore.instance;
 
   /// Sends notifications according to the specified scope and role authority.
   /// Uses a fan-out delivery pattern to ensure single-document recipient reads.

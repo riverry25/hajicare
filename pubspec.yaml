@@ -1,5 +1,5 @@
 name: hajicare
-description: "A new Flutter project."
+description: "Aplikasi pendamping ibadah haji dengan navigasi, komunikasi, dan keselamatan jamaah."
 publish_to: 'none'
 version: 0.1.0+1
 
@@ -12,8 +12,7 @@ dependencies:
   google_fonts: ^8.2.1
   flutter_localizations:
     sdk: flutter
-  provider: ^6.1.2
-  vibration: ^2.0.0
+  vibration: ^3.2.1
   flutter_tts: ^4.2.2
   shared_preferences: ^2.5.5
   adhan: ^2.0.0+1
@@ -32,14 +31,13 @@ dependencies:
   image: ^4.10.1
   flutter_map: ^8.3.2
   latlong2: ^0.10.1
-  awesome_dialog: 3.3.0
   http: ^1.6.0
-  google_sign_in: ^6.2.2
+  google_sign_in: ^7.2.0
   qr_flutter: ^4.1.0
   flutter_blue_plus: ^2.3.12
   mobile_scanner: ^7.4.2
-  speech_to_text: 7.4.0
-  google_mlkit_translation: 0.14.0
+  speech_to_text: ^7.5.0
+  google_mlkit_translation: ^0.15.1
 
 dev_dependencies:
   flutter_test:

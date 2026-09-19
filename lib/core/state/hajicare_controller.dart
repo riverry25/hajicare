@@ -11,6 +11,7 @@ import '../../features/room/models/room_model.dart';
 import '../../features/room/models/room_member_model.dart';
 import '../../features/room/models/room_invitation_model.dart';
 import '../../features/room/services/room_service.dart';
+import '../../features/sos/services/sos_service.dart';
 
 export '../models/jamaah_data.dart';
 export '../../features/room/models/room_model.dart';
@@ -18,6 +19,18 @@ export '../../features/room/models/room_member_model.dart';
 export '../../features/room/models/room_invitation_model.dart';
 
 class HajiCareController extends GetxController {
+  HajiCareController({
+    LocationService? locationService,
+    RoomService? roomService,
+    SosService? sosService,
+    FirebaseAuth? firebaseAuth,
+    FirebaseFirestore? firestore,
+  }) : _locationService = locationService ?? LocationService(),
+       _roomService = roomService ?? RoomService(),
+       _sosService = sosService ?? SosService(),
+       _providedFirebaseAuth = firebaseAuth,
+       _providedFirestore = firestore;
+
   static const String keyActiveRoomId = 'hajicare_active_room_id';
   static const String keyUserRole = 'hajicare_user_role';
 
@@ -30,7 +43,22 @@ class HajiCareController extends GetxController {
   final activeRoomId = RxnString();
   final activeRoom = Rxn<RoomModel>();
   final activeRoomMembers = <RoomMemberModel>[].obs;
-  String? get currentUid => FirebaseAuth.instance.currentUser?.uid;
+  final FirebaseAuth? _providedFirebaseAuth;
+  final FirebaseFirestore? _providedFirestore;
+
+  FirebaseAuth get _firebaseAuth =>
+      _providedFirebaseAuth ?? FirebaseAuth.instance;
+  FirebaseFirestore get _firestore =>
+      _providedFirestore ?? FirebaseFirestore.instance;
+
+  String? get currentUid {
+    try {
+      return _firebaseAuth.currentUser?.uid;
+    } catch (_) {
+      // Firebase is intentionally unavailable in isolated widget/unit tests.
+      return null;
+    }
+  }
 
   String? _cachedRoomId;
   String? get cachedRoomId => _cachedRoomId ?? activeRoomId.value;
@@ -61,8 +89,9 @@ class HajiCareController extends GetxController {
   }
 
   // Real GPS & Realtime Distance State
-  final LocationService _locationService = LocationService();
-  final RoomService _roomService = RoomService();
+  final LocationService _locationService;
+  final RoomService _roomService;
+  final SosService _sosService;
   final myCurrentPosition = Rxn<Position>();
   final isMyGpsActive = false.obs;
   final calculatedDistance = RxnDouble();
@@ -79,6 +108,7 @@ class HajiCareController extends GetxController {
   final activeSosEvents = <Map<String, dynamic>>[].obs;
   final activeSosCount = 0.obs;
   StreamSubscription? _sosEventsSub;
+  String? _sosSubscriptionScope;
 
   JamaahData? _self;
 
@@ -183,7 +213,7 @@ class HajiCareController extends GetxController {
     try {
       Map<String, dynamic>? data = preloadedData;
       if (data == null) {
-        final doc = await FirebaseFirestore.instance
+        final doc = await _firestore
             .collection('users')
             .doc(uid)
             .get()
@@ -208,7 +238,7 @@ class HajiCareController extends GetxController {
 
   void _initAuthListener() {
     try {
-      _authSub = FirebaseAuth.instance.authStateChanges().listen((user) {
+      _authSub = _firebaseAuth.authStateChanges().listen((user) {
         if (user != null) {
           _loadUserData(user.uid);
           startLocationTracking(user.uid);
@@ -269,121 +299,144 @@ class HajiCareController extends GetxController {
       pendingInvitations.value = invs;
     });
 
-    _sosEventsSub = _roomService.getActiveSosEventsStream().listen(
+    try {
+      _userDocSub = _firestore.collection('users').doc(uid).snapshots().listen((
+        doc,
+      ) {
+        if (!doc.exists) return;
+        final data = doc.data()!;
+        final roleStr = (data['role'] as String?)?.toLowerCase() ?? 'jamaah';
+
+        if (roleStr == 'admin') {
+          _role.value = UserRole.admin;
+        } else if (roleStr == 'pendamping') {
+          _role.value = UserRole.pendamping;
+        } else {
+          _role.value = UserRole.jamaah;
+        }
+
+        final currentRoomId = (data['activeRoomId'] as String?)?.trim();
+        final effectiveRoomId =
+            (currentRoomId != null && currentRoomId.isNotEmpty)
+            ? currentRoomId
+            : null;
+        _cachedRoomId = effectiveRoomId;
+        _listenToSosEvents(
+          uid: uid,
+          roomId: effectiveRoomId,
+          isAdmin: _role.value == UserRole.admin,
+        );
+
+        final userKloter = (data['kloter'] as String?)?.trim();
+        final userMaktab = (data['maktab'] as String?)?.trim();
+        pendampingKloter.value = (userKloter != null && userKloter.isNotEmpty)
+            ? userKloter
+            : null;
+        pendampingMaktab.value = (userMaktab != null && userMaktab.isNotEmpty)
+            ? userMaktab
+            : null;
+
+        // Persist snapshot update to SharedPreferences
+        SharedPreferences.getInstance()
+            .then((prefs) {
+              prefs.setString(keyUserRole, roleStr);
+              if (effectiveRoomId != null) {
+                prefs.setString(keyActiveRoomId, effectiveRoomId);
+              } else {
+                prefs.remove(keyActiveRoomId);
+              }
+            })
+            .catchError((e) {
+              debugPrint(
+                '[HajiCareController] Error persisting snapshot to cache: $e',
+              );
+            });
+
+        if (effectiveRoomId != activeRoomId.value || _roomDocSub == null) {
+          activeRoomId.value = effectiveRoomId;
+          if (effectiveRoomId != null && effectiveRoomId.isNotEmpty) {
+            _listenToActiveRoom(effectiveRoomId, uid);
+          } else {
+            _clearRoomListeners();
+          }
+        }
+
+        if (_role.value == UserRole.pendamping) {
+          final currentUser = _firebaseAuth.currentUser;
+          final rawName =
+              data['name'] as String? ?? data['displayName'] as String?;
+          pendampingName.value = (rawName != null && rawName.trim().isNotEmpty)
+              ? rawName.trim()
+              : (currentUser?.displayName?.trim().isNotEmpty == true
+                    ? currentUser!.displayName!.trim()
+                    : 'Pendamping');
+        } else if (_role.value == UserRole.jamaah) {
+          _self = JamaahData.fromFirestore(doc);
+          if (jamaahList.isEmpty || !jamaahList.any((j) => j.id == uid)) {
+            jamaahList.value = [_self!];
+          }
+          _listenToSelf(uid);
+        }
+        _recalculateRealDistance();
+      });
+    } catch (e) {
+      debugPrint('[HajiCareController] Error loading user doc: $e');
+    }
+  }
+
+  void _listenToSosEvents({
+    required String uid,
+    required String? roomId,
+    required bool isAdmin,
+  }) {
+    final scope = isAdmin
+        ? 'admin'
+        : roomId == null
+        ? 'user:$uid'
+        : 'room:$roomId';
+    if (_sosSubscriptionScope == scope && _sosEventsSub != null) return;
+
+    _sosEventsSub?.cancel();
+    _sosSubscriptionScope = scope;
+
+    final stream = isAdmin
+        ? _roomService.getActiveSosEventsStream()
+        : roomId == null
+        ? Stream<List<Map<String, dynamic>>>.value(const [])
+        : _roomService.getActiveSosEventsStream(roomId: roomId);
+
+    _sosEventsSub = stream.listen(
       (sosList) {
         activeSosEvents.value = sosList;
         activeSosCount.value = sosList.length;
 
-        // Update matching jamaah in list if needed
-        for (final j in jamaahList) {
-          final hasActiveSos = sosList.any(
-            (s) => s['userId'] == j.id || s['jamaahId'] == j.id,
+        for (final jamaah in jamaahList) {
+          final isActive = sosList.any(
+            (event) =>
+                event['userId'] == jamaah.id || event['jamaahId'] == jamaah.id,
           );
-          if (j.sosActive != hasActiveSos) {
-            j.sosActive = hasActiveSos;
-            j.refresh();
+          if (jamaah.sosActive != isActive) {
+            jamaah.sosActive = isActive;
+            jamaah.refresh();
           }
         }
+
         if (_self != null) {
-          final hasSelfSos = sosList.any(
-            (s) => s['userId'] == uid || s['jamaahId'] == uid,
+          final isSelfActive = sosList.any(
+            (event) => event['userId'] == uid || event['jamaahId'] == uid,
           );
-          if (_self!.sosActive != hasSelfSos) {
-            _self!.sosActive = hasSelfSos;
+          if (_self!.sosActive != isSelfActive) {
+            _self!.sosActive = isSelfActive;
             _self!.refresh();
           }
         }
       },
-      onError: (e) {
+      onError: (Object error) {
         debugPrint(
-          '[HajiCareController] Error listening to active SOS events: $e',
+          '[HajiCareController] Error listening to active SOS events: $error',
         );
       },
     );
-    try {
-      _userDocSub = FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .snapshots()
-          .listen((doc) {
-            if (!doc.exists) return;
-            final data = doc.data()!;
-            final roleStr =
-                (data['role'] as String?)?.toLowerCase() ?? 'jamaah';
-
-            if (roleStr == 'admin') {
-              _role.value = UserRole.admin;
-            } else if (roleStr == 'pendamping') {
-              _role.value = UserRole.pendamping;
-            } else {
-              _role.value = UserRole.jamaah;
-            }
-
-            final currentRoomId = (data['activeRoomId'] as String?)?.trim();
-            final effectiveRoomId =
-                (currentRoomId != null && currentRoomId.isNotEmpty)
-                ? currentRoomId
-                : null;
-            _cachedRoomId = effectiveRoomId;
-
-            final userKloter = (data['kloter'] as String?)?.trim();
-            final userMaktab = (data['maktab'] as String?)?.trim();
-            pendampingKloter.value =
-                (userKloter != null && userKloter.isNotEmpty)
-                ? userKloter
-                : null;
-            pendampingMaktab.value =
-                (userMaktab != null && userMaktab.isNotEmpty)
-                ? userMaktab
-                : null;
-
-            // Persist snapshot update to SharedPreferences
-            SharedPreferences.getInstance()
-                .then((prefs) {
-                  prefs.setString(keyUserRole, roleStr);
-                  if (effectiveRoomId != null) {
-                    prefs.setString(keyActiveRoomId, effectiveRoomId);
-                  } else {
-                    prefs.remove(keyActiveRoomId);
-                  }
-                })
-                .catchError((e) {
-                  debugPrint(
-                    '[HajiCareController] Error persisting snapshot to cache: $e',
-                  );
-                });
-
-            if (effectiveRoomId != activeRoomId.value || _roomDocSub == null) {
-              activeRoomId.value = effectiveRoomId;
-              if (effectiveRoomId != null && effectiveRoomId.isNotEmpty) {
-                _listenToActiveRoom(effectiveRoomId, uid);
-              } else {
-                _clearRoomListeners();
-              }
-            }
-
-            if (_role.value == UserRole.pendamping) {
-              final currentUser = FirebaseAuth.instance.currentUser;
-              final rawName =
-                  data['name'] as String? ?? data['displayName'] as String?;
-              pendampingName.value =
-                  (rawName != null && rawName.trim().isNotEmpty)
-                  ? rawName.trim()
-                  : (currentUser?.displayName?.trim().isNotEmpty == true
-                        ? currentUser!.displayName!.trim()
-                        : 'Pendamping');
-            } else if (_role.value == UserRole.jamaah) {
-              _self = JamaahData.fromFirestore(doc);
-              if (jamaahList.isEmpty || !jamaahList.any((j) => j.id == uid)) {
-                jamaahList.value = [_self!];
-              }
-              _listenToSelf(uid);
-            }
-            _recalculateRealDistance();
-          });
-    } catch (e) {
-      debugPrint('[HajiCareController] Error loading user doc: $e');
-    }
   }
 
   void _clearRoomListeners() {
@@ -407,7 +460,7 @@ class HajiCareController extends GetxController {
 
   void _listenToActiveRoom(String roomId, String currentUid) {
     _roomDocSub?.cancel();
-    _roomDocSub = FirebaseFirestore.instance
+    _roomDocSub = _firestore
         .collection('rooms')
         .doc(roomId)
         .snapshots()
@@ -432,7 +485,7 @@ class HajiCareController extends GetxController {
         );
 
     _roomMembersSub?.cancel();
-    _roomMembersSub = FirebaseFirestore.instance
+    _roomMembersSub = _firestore
         .collection('rooms')
         .doc(roomId)
         .collection('members')
@@ -480,7 +533,7 @@ class HajiCareController extends GetxController {
     }
 
     _pendampingDocSub?.cancel();
-    _pendampingDocSub = FirebaseFirestore.instance
+    _pendampingDocSub = _firestore
         .collection('users')
         .doc(pendampingUid)
         .snapshots()
@@ -544,7 +597,7 @@ class HajiCareController extends GetxController {
     // Add new
     for (final id in jamaahIds) {
       if (!_jamaahSubs.containsKey(id)) {
-        _jamaahSubs[id] = FirebaseFirestore.instance
+        _jamaahSubs[id] = _firestore
             .collection('users')
             .doc(id)
             .snapshots()
@@ -573,7 +626,7 @@ class HajiCareController extends GetxController {
 
   void _listenToSelf(String uid) {
     _jamaahSubs[uid]?.cancel();
-    _jamaahSubs[uid] = FirebaseFirestore.instance
+    _jamaahSubs[uid] = _firestore
         .collection('users')
         .doc(uid)
         .snapshots()
@@ -659,7 +712,7 @@ class HajiCareController extends GetxController {
 
     try {
       // 1. Update user doc
-      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+      await _firestore.collection('users').doc(uid).set({
         'currentLocation': geoPoint,
         'locationUpdatedAt': FieldValue.serverTimestamp(),
         'isGpsActive': true,
@@ -767,9 +820,7 @@ class HajiCareController extends GetxController {
           ? 'pendamping'
           : 'jamaah';
       final uName =
-          _self?.name ??
-          FirebaseAuth.instance.currentUser?.displayName ??
-          'Jamaah';
+          _self?.name ?? _firebaseAuth.currentUser?.displayName ?? 'Jamaah';
       final rName = activeRoom.value?.name;
 
       await _roomService.leaveRoom(
@@ -857,7 +908,7 @@ class HajiCareController extends GetxController {
     final roleStr = _role.value == UserRole.admin ? 'admin' : 'pendamping';
     final sName = pendampingName.value.isNotEmpty
         ? pendampingName.value
-        : (FirebaseAuth.instance.currentUser?.displayName ?? 'Pendamping');
+        : (_firebaseAuth.currentUser?.displayName ?? 'Pendamping');
 
     await _roomService.deleteRoomByCreator(
       roomId: roomId,
@@ -882,7 +933,7 @@ class HajiCareController extends GetxController {
   /// Triggers a real SOS event with current location to Firestore.
   /// Enforces that Jamaah must have an active room.
   Future<bool> triggerSos() async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = _firebaseAuth.currentUser;
     if (user == null) return false;
 
     try {
@@ -893,35 +944,17 @@ class HajiCareController extends GetxController {
           (roomId != null ? 'Room $roomId' : 'Darurat Terbuka');
       final userName = _self?.name ?? user.displayName ?? 'Jamaah';
 
-      // 1. Create real SOS event document with status 'active'
-      await FirebaseFirestore.instance.collection('sos_events').add({
-        'userId': user.uid,
-        'jamaahId': user.uid,
-        'userName': userName,
-        'roomId': roomId,
-        'roomName': roomName,
-        'timestamp': FieldValue.serverTimestamp(),
-        'createdAt': FieldValue.serverTimestamp(),
-        'status': 'active',
-        if (myPos != null)
-          'location': GeoPoint(myPos.latitude, myPos.longitude),
-      });
+      if (roomId == null || roomId.isEmpty) return false;
 
-      // 2. Update user doc
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-        'sosActive': true,
-        'sosTime': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-
-      // 3. Update room member doc if in a room
-      if (roomId != null && roomId.isNotEmpty) {
-        await FirebaseFirestore.instance
-            .collection('rooms')
-            .doc(roomId)
-            .collection('members')
-            .doc(user.uid)
-            .set({'sosActive': true}, SetOptions(merge: true));
-      }
+      await _sosService.trigger(
+        userId: user.uid,
+        userName: userName,
+        roomId: roomId,
+        roomName: roomName,
+        location: myPos == null
+            ? null
+            : GeoPoint(myPos.latitude, myPos.longitude),
+      );
 
       if (_self != null) {
         _self!.sosActive = true;
@@ -966,7 +999,7 @@ class HajiCareController extends GetxController {
     if (jamaahList.isNotEmpty) return jamaahList.first;
     User? currentUser;
     try {
-      currentUser = FirebaseAuth.instance.currentUser;
+      currentUser = _firebaseAuth.currentUser;
     } catch (_) {
       currentUser = null;
     }

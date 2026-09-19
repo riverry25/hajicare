@@ -20,9 +20,8 @@ class LoginController extends GetxController {
   static const String _googleServerClientId =
       '130436723221-l3spcu8ngaano7f8msjsgsh1v00bmnqf.apps.googleusercontent.com';
 
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    serverClientId: _googleServerClientId,
-  );
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  Future<void>? _googleInitialization;
 
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
@@ -44,6 +43,12 @@ class LoginController extends GetxController {
     } catch (_) {
       // Gunakan default true jika gagal membaca preference.
     }
+  }
+
+  Future<void> _ensureGoogleSignInInitialized() {
+    return _googleInitialization ??= _googleSignIn.initialize(
+      serverClientId: _googleServerClientId,
+    );
   }
 
   void setRole(String role) {
@@ -195,23 +200,18 @@ class LoginController extends GetxController {
     final shouldRemember = rememberMe.value;
 
     try {
+      await _ensureGoogleSignInInitialized();
+
       // Sign out terlebih dahulu agar pemilih akun Google selalu muncul
       try {
         await _googleSignIn.signOut();
       } catch (_) {}
 
       // Buka pemilih akun Google
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-
-      if (googleUser == null) {
-        isLoading.value = false;
-        isGoogleLoading.value = false;
-        return;
-      }
+      final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
 
       // Ambil ID Token & Access Token Google
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
 
       final idToken = googleAuth.idToken;
 
@@ -221,7 +221,6 @@ class LoginController extends GetxController {
 
       // Buat credential Firebase
       final OAuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
         idToken: idToken,
       );
 
@@ -319,6 +318,10 @@ class LoginController extends GetxController {
 
       errorMessage.value = _friendlyAuthError(e.code, e.message);
 
+      _showErrorDialog(errorMessage.value!);
+    } on GoogleSignInException catch (e) {
+      if (isClosed || e.code == GoogleSignInExceptionCode.canceled) return;
+      errorMessage.value = 'Gagal masuk dengan Google. Silakan coba lagi.';
       _showErrorDialog(errorMessage.value!);
     } catch (e) {
       if (isClosed) return;

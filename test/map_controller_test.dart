@@ -142,7 +142,7 @@ void main() {
         expect(controller.activeTileUrl.value, contains('cartocdn'));
         expect(
           controller.activeTileUrl.value,
-          contains(AppConstants.cartoApiKey),
+          contains('?key=${AppConstants.cartoApiKey}'),
         );
 
         controller.toggleMapTileLayer();
@@ -152,7 +152,7 @@ void main() {
         expect(controller.activeTileUrl.value, contains('cartocdn'));
         expect(
           controller.activeTileUrl.value,
-          contains(AppConstants.cartoApiKey),
+          contains('?key=${AppConstants.cartoApiKey}'),
         );
       },
     );

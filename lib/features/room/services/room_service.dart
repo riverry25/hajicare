@@ -42,10 +42,16 @@ enum _AcceptInvitationStatus { success, staleRoom }
 
 /// Service handling all Room CRUD, Membership, and Join operations
 class RoomService {
-  final FirebaseFirestore _firestore;
+  final FirebaseFirestore? _providedFirestore;
 
-  RoomService({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+  RoomService({FirebaseFirestore? firestore}) : _providedFirestore = firestore;
+
+  /// Resolves Firestore only when an operation actually needs it.
+  ///
+  /// Keeping construction side-effect free makes this service safe to inject
+  /// into controllers and widget tests that do not exercise Firebase.
+  FirebaseFirestore get _firestore =>
+      _providedFirestore ?? FirebaseFirestore.instance;
 
   // ── Code Generation ────────────────────────────────────────────────────────
   static const String _codeChars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -980,6 +986,8 @@ class RoomService {
     final querySnap = await _firestore
         .collection('users')
         .where('email', isEqualTo: normalizedEmail)
+        .where('role', isEqualTo: 'jamaah')
+        .where('activeRoomId', isNull: true)
         .limit(1)
         .get();
 
@@ -1065,6 +1073,12 @@ class RoomService {
       title: 'Undangan Masuk Room',
       message:
           '$currentPendampingName mengundang Anda bergabung ke "$roomName" ($roomCode).',
+      senderId: currentPendampingUid,
+      senderRole: 'pendamping',
+      senderName: currentPendampingName,
+      scope: 'user',
+      targetUserId: targetUid,
+      targetRoomId: roomId,
       relatedId: invDocRef.id,
       isRead: false,
       createdAt: DateTime.now(),
@@ -1426,6 +1440,7 @@ class RoomService {
     final query = await _firestore
         .collection('users')
         .where('role', isEqualTo: 'jamaah')
+        .where('activeRoomId', isNull: true)
         .get();
 
     final unassigned = <JamaahData>[];
@@ -1537,24 +1552,33 @@ class RoomService {
   }
 
   /// Streams active SOS events from `sos_events`.
-  Stream<List<Map<String, dynamic>>> getActiveSosEventsStream() {
-    return _firestore
-        .collection('sos_events')
-        .where('status', whereIn: ['active', 'baru', 'direspons'])
-        .snapshots()
-        .map((snap) {
-          final list = snap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
-          list.sort((a, b) {
-            final tA = (a['timestamp'] ?? a['createdAt']) as Timestamp?;
-            final tB = (b['timestamp'] ?? b['createdAt']) as Timestamp?;
-            final dateA =
-                tA?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0);
-            final dateB =
-                tB?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0);
-            return dateB.compareTo(dateA);
-          });
-          return list;
-        });
+  Stream<List<Map<String, dynamic>>> getActiveSosEventsStream({
+    String? roomId,
+  }) {
+    Query<Map<String, dynamic>> query = _firestore.collection('sos_events');
+    if (roomId != null && roomId.trim().isNotEmpty) {
+      query = query.where('roomId', isEqualTo: roomId.trim());
+    } else {
+      query = query.where('status', whereIn: ['active', 'baru', 'direspons']);
+    }
+
+    return query.snapshots().map((snap) {
+      final list = snap.docs
+          .map((d) => {'id': d.id, ...d.data()})
+          .where(
+            (event) =>
+                const {'active', 'baru', 'direspons'}.contains(event['status']),
+          )
+          .toList();
+      list.sort((a, b) {
+        final tA = (a['timestamp'] ?? a['createdAt']) as Timestamp?;
+        final tB = (b['timestamp'] ?? b['createdAt']) as Timestamp?;
+        final dateA = tA?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final dateB = tB?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return dateB.compareTo(dateA);
+      });
+      return list;
+    });
   }
 
   /// Streams resolved SOS events for recent history in Alert Center.

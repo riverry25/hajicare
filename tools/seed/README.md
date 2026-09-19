@@ -1,36 +1,28 @@
-# HajiCare — Admin Seed Script
+# HajiCare admin seed
 
-Utility untuk membuat atau memverifikasi akun **ADMIN** dev/testing di Firebase.
+Utility idempotent untuk membuat atau memperbarui administrator pengembangan.
+Hak admin diberikan melalui Firebase custom claim, bukan berdasarkan field yang
+dapat ditulis client.
 
-## Akun Admin Dev
-* **Email**: `admin@hajicare.test`
-* **Password**: `HajiCareAdmin2026!`
-* **Display Name**: `Administrator HajiCare`
-* **Role**: `admin`
-* **Path Firestore**: `users/{UID}`
-* **Karakteristik**: Bebas dari kewajiban `activeRoomId` dan langsung diarahkan ke `/admin/dashboard`.
+## Credentials
 
----
+Gunakan salah satu:
 
-## Autentikasi yang Didukung
+1. Application Default Credentials: `gcloud auth application-default login`.
+2. Service account lokal pada `tools/seed/service-account.json` (file ini
+   diabaikan Git dan tidak boleh di-commit).
 
-Script `seed_admin.js` mendukung 2 metode autentikasi secara otomatis:
+## Menjalankan di PowerShell
 
-1. **Firebase CLI (Rekomendasi / Otomatis)**:
-   Jika Anda sudah login via `firebase login` di terminal, script akan mendeteksi token OAuth lokal dan mengeksekusi pembuatan akun secara otomatis.
-
-2. **Service Account JSON**:
-   Simpan file service account key dari Firebase Console sebagai:
-   `tools/seed/service-account.json`
-
----
-
-## Cara Menjalankan
-
-```bash
+```powershell
 cd tools/seed
 npm install
+$env:HAJICARE_ADMIN_PASSWORD = 'password-kuat-minimal-12-karakter'
 node seed_admin.js
 ```
 
-Script bersifat **IDEMPOTENT** (aman dijalankan berkali-kali). Jika akun sudah ada, password dan data Firestore akan di-refresh tanpa membuat duplikat.
+Environment variable opsional:
+
+- `HAJICARE_ADMIN_EMAIL`
+- `HAJICARE_ADMIN_NAME`
+- `FIREBASE_PROJECT_ID`

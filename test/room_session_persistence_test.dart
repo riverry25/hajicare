@@ -56,7 +56,7 @@ void main() {
     );
 
     test(
-      'resolveUserRoleDestination returns joinRoom when no cached room exists for Jamaah',
+      'resolveUserRoleDestination keeps basic dashboard available when Jamaah has no room',
       () async {
         SharedPreferences.setMockInitialValues({
           AppStartupController.keyOnboardingDone: true,
@@ -68,7 +68,7 @@ void main() {
           'test_uid_789',
         );
 
-        expect(destination, equals(AppRoutes.joinRoom));
+        expect(destination, equals(AppRoutes.dashboardJamaah));
       },
     );
 

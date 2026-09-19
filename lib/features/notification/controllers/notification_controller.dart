@@ -12,8 +12,20 @@ import '../services/notification_service.dart';
 /// Manages exactly ONE realtime stream per user to prevent duplicate subscriptions
 /// and eliminate Firestore watchstream target errors.
 class NotificationController extends GetxController {
-  final NotificationService _notificationService = NotificationService();
-  final RoomService _roomService = RoomService();
+  NotificationController({
+    NotificationService? notificationService,
+    RoomService? roomService,
+    FirebaseAuth? firebaseAuth,
+  }) : _notificationService = notificationService ?? NotificationService(),
+       _roomService = roomService ?? RoomService(),
+       _providedFirebaseAuth = firebaseAuth;
+
+  final NotificationService _notificationService;
+  final RoomService _roomService;
+  final FirebaseAuth? _providedFirebaseAuth;
+
+  FirebaseAuth get _firebaseAuth =>
+      _providedFirebaseAuth ?? FirebaseAuth.instance;
 
   // ── Reactive State ──────────────────────────────────────────────────────────
   final notifications = <AppNotificationModel>[].obs;
@@ -30,19 +42,23 @@ class NotificationController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Automatically attach to FirebaseAuth state
-    _authSub = FirebaseAuth.instance.authStateChanges().listen((user) {
-      if (user != null) {
-        startListening(user.uid);
-      } else {
-        stopListening();
-      }
-    });
+    try {
+      _authSub = _firebaseAuth.authStateChanges().listen((user) {
+        if (user != null) {
+          startListening(user.uid);
+        } else {
+          stopListening();
+        }
+      });
 
-    // If a user is already authenticated on startup, start listening immediately
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser != null) {
-      startListening(currentUser.uid);
+      final currentUser = _firebaseAuth.currentUser;
+      if (currentUser != null) startListening(currentUser.uid);
+    } on FirebaseException catch (error) {
+      // Allows isolated widget tests to create the controller without a
+      // configured Firebase app. Production initializes Firebase in main().
+      debugPrint(
+        '[NotificationController] Firebase Auth is unavailable: $error',
+      );
     }
   }
 
@@ -149,7 +165,7 @@ class NotificationController extends GetxController {
 
   /// Marks all unread notifications as read.
   Future<void> markAllAsRead() async {
-    final uid = _currentListeningUid ?? FirebaseAuth.instance.currentUser?.uid;
+    final uid = _currentListeningUid ?? _firebaseAuth.currentUser?.uid;
     if (uid == null) return;
 
     // Optimistic update
@@ -189,7 +205,7 @@ class NotificationController extends GetxController {
     required BuildContext context,
     required RoomInvitationModel invitation,
   }) async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = _firebaseAuth.currentUser;
     if (user == null) return;
 
     final userName =
@@ -249,7 +265,7 @@ class NotificationController extends GetxController {
     required BuildContext context,
     required RoomInvitationModel invitation,
   }) async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = _firebaseAuth.currentUser;
     if (user == null) return;
 
     processingInvitations.add(invitation.id);

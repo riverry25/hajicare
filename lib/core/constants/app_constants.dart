@@ -31,8 +31,8 @@ class AppConstants {
   static const double radiusPill = AppRadius.pill;
 
   // ── App Version ────────────────────────────────────────────────────────────
-  // Update this when pubspec.yaml version changes.
-  static const String appVersion = '1.0.0';
+  // Keep this aligned with the public version in pubspec.yaml.
+  static const String appVersion = '0.1.0';
 
   // ── Support Contact Placeholders ───────────────────────────────────────────
 
@@ -41,7 +41,11 @@ class AppConstants {
   static const String supportWhatsAppUrl = 'https://wa.me/62000000000';
 
   // ── CARTO Configuration ───────────────────────────────────────────────────
-  static const String cartoApiKey = 'cb1_3juo_1_5f067ded7575ce8152ef26fc';
+  // Override at build time with: --dart-define=CARTO_API_KEY=your_key
+  static const String cartoApiKey = String.fromEnvironment(
+    'CARTO_API_KEY',
+    defaultValue: 'cb1_3juo_1_5f067ded7575ce8152ef26fc',
+  );
   static const String cartoVoyagerUrl =
       'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=$cartoApiKey';
   static const String cartoDarkMatterUrl =

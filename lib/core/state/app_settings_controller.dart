@@ -26,6 +26,7 @@ class AppSettingsController extends GetxController {
   final _locale = const Locale('id').obs;
   final _themeMode = ThemeMode.system.obs;
   final _textScale = AppTextScale.normal.obs;
+  Future<void>? _settingsLoad;
 
   // ── Getters ─────────────────────────────────────────────────────────────────
   Locale get currentLocale => _locale.value;
@@ -45,6 +46,10 @@ class AppSettingsController extends GetxController {
 
   // ── Load from SharedPreferences ─────────────────────────────────────────────
   Future<void> loadSettings() async {
+    await (_settingsLoad ??= _loadSettings());
+  }
+
+  Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
 
     // Language

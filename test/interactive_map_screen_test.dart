@@ -57,7 +57,7 @@ void main() {
       await tester.pump();
 
       expect(find.byType(InteractiveMapScreen), findsOneWidget);
-      expect(find.text('Pelacakan Aktif'), findsOneWidget);
+      expect(find.text('GPS Aktif'), findsOneWidget);
       expect(find.text('SOS'), findsOneWidget);
     });
 
@@ -92,7 +92,7 @@ void main() {
       await tester.pump();
 
       expect(find.byType(InteractiveMapScreen), findsOneWidget);
-      expect(find.text('Pelacakan Aktif'), findsOneWidget);
+      expect(find.text('GPS Aktif'), findsOneWidget);
       expect(find.text('SOS'), findsOneWidget);
     });
 
@@ -146,7 +146,7 @@ void main() {
         expect(polylineLayer.polylines.first.strokeWidth, equals(8.0));
         expect(
           polylineLayer.polylines.first.color,
-          equals(const Color(0xFF173B78)),
+          equals(const Color(0xFF1E60CC)),
         );
       },
     );

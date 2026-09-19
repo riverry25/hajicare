@@ -14,12 +14,25 @@ enum StartupState { checking, authenticated, unauthenticated }
 /// - Persistent onboarding status (one-time onboarding)
 /// - Persistent "Remember Me" preference and session lifecycle
 class AppStartupController extends GetxController {
+  AppStartupController({
+    FirebaseAuth? firebaseAuth,
+    FirebaseFirestore? firestore,
+  }) : _providedFirebaseAuth = firebaseAuth,
+       _providedFirestore = firestore;
+
   static const String keyOnboardingDone = 'hajicare_onboarding_done';
   static const String keyRememberMe = 'hajicare_remember_me';
 
   final startupState = StartupState.checking.obs;
 
   SharedPreferences? _prefs;
+  final FirebaseAuth? _providedFirebaseAuth;
+  final FirebaseFirestore? _providedFirestore;
+
+  FirebaseAuth get _firebaseAuth =>
+      _providedFirebaseAuth ?? FirebaseAuth.instance;
+  FirebaseFirestore get _firestore =>
+      _providedFirestore ?? FirebaseFirestore.instance;
 
   @override
   void onInit() {
@@ -103,7 +116,7 @@ class AppStartupController extends GetxController {
   Future<void> signOut() async {
     try {
       debugPrint('[AppStartupController] Signing out...');
-      await FirebaseAuth.instance.signOut();
+      await _firebaseAuth.signOut();
     } catch (e) {
       debugPrint(
         '[AppStartupController] Error during FirebaseAuth.signOut: $e',
@@ -156,11 +169,11 @@ class AppStartupController extends GetxController {
         debugPrint(
           '[AppStartupController] Remember Me was OFF. Ending session.',
         );
-        await FirebaseAuth.instance.signOut();
+        await _firebaseAuth.signOut();
       }
 
       // 3. Inspect current Firebase Auth user
-      final currentUser = FirebaseAuth.instance.currentUser;
+      final currentUser = _firebaseAuth.currentUser;
       if (currentUser == null) {
         startupState.value = StartupState.unauthenticated;
         return AppRoutes.login;
@@ -179,7 +192,7 @@ class AppStartupController extends GetxController {
   /// Resolves the user's role and activeRoom destination from Firestore or local cache.
   Future<String> resolveUserRoleDestination(String uid) async {
     try {
-      final doc = await FirebaseFirestore.instance
+      final doc = await _firestore
           .collection('users')
           .doc(uid)
           .get()
