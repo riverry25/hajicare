@@ -252,15 +252,6 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                                   ? Colors.white.withValues(alpha: 0.12)
                                   : AppColors.goldLight.withValues(alpha: 0.35),
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.espressoDark.withValues(
-                                  alpha: 0.10,
-                                ),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
                           ),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
@@ -379,13 +370,6 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                       : AppColors.goldLight.withValues(alpha: 0.35)),
               width: 1.2,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.espressoDark.withValues(alpha: 0.10),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
           ),
           child: Center(child: child ?? Icon(icon, size: 22, color: color)),
         ),

@@ -565,7 +565,6 @@ class DashboardPendampingScreen extends StatelessWidget {
             // Status Darurat (only when active)
             if (state.anySosActive || state.anyJamaahSeparated) ...[
               _sectionHeader(
-                icon: Icons.emergency_rounded,
                 title: 'Status Darurat',
                 subtitle: 'Peringatan SOS & jamaah terpisah',
                 actionText: 'Lihat peta',
@@ -617,7 +616,6 @@ class DashboardPendampingScreen extends StatelessWidget {
             if (state.activeRoomId.value != null &&
                 state.jamaahList.isNotEmpty) ...[
               _sectionHeader(
-                icon: Icons.people_outline_rounded,
                 title: 'Pantauan Jamaah',
                 subtitle: 'Daftar & status jarak anggota room',
                 actionText: 'Lihat peta',
@@ -634,7 +632,6 @@ class DashboardPendampingScreen extends StatelessWidget {
             if (state.activeRoomId.value != null &&
                 state.jamaahList.isNotEmpty) ...[
               _sectionHeader(
-                icon: Icons.near_me_rounded,
                 title: 'Detail Posisi',
                 subtitle: 'Arah navigasi ke jamaah terpilih',
                 actionText: 'Buka navigasi',
@@ -652,7 +649,6 @@ class DashboardPendampingScreen extends StatelessWidget {
 
             // Kamar & Maktab
             _sectionHeader(
-              icon: Icons.meeting_room_rounded,
               title: 'Kamar & Maktab',
               subtitle: 'Pengaturan room & kode pemantauan',
               actionText: 'Kelola',
@@ -672,7 +668,6 @@ class DashboardPendampingScreen extends StatelessWidget {
 
             // Tips
             _sectionHeader(
-              icon: Icons.menu_book_rounded,
               title: 'Tips & Panduan Tugas',
               subtitle: 'Pedoman dan checklist muthawif',
               actionText: 'Selengkapnya',
@@ -1123,7 +1118,6 @@ class DashboardPendampingScreen extends StatelessWidget {
   }
 
   Widget _sectionHeader({
-    required IconData icon,
     required String title,
     required String subtitle,
     required String actionText,
@@ -1136,34 +1130,6 @@ class DashboardPendampingScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.darkSurfaceContainer
-                  : AppColors.surfaceWhite,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isDark
-                    ? AppColors.darkCardBorder
-                    : AppColors.lightCardBorder,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Icon(
-              icon,
-              color: isDark ? AppColors.goldLight : AppColors.espressoDark,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

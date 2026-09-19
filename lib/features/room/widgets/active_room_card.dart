@@ -484,17 +484,9 @@ class ActiveRoomCard extends StatelessWidget {
                                     color: isDark
                                         ? Colors.white60
                                         : const Color(0xFF64748B),
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w500,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
                                   ),
-                                ),
-                                const SizedBox(height: 2),
-                                Icon(
-                                  Icons.qr_code_2_rounded,
-                                  size: 14,
-                                  color: isDark
-                                      ? AppColors.goldLight
-                                      : AppColors.primaryGold,
                                 ),
                               ],
                             ),
@@ -605,9 +597,8 @@ class ActiveRoomCard extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            // ── Bottom Row: 3 Horizontal Metrics with Mini Progress Bars ──
+            // ── Bottom Row: 2 Horizontal Metrics (Kode Room & Radius Radar) ──
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // Col 1: Kode Room
                 Expanded(
@@ -640,17 +631,17 @@ class ActiveRoomCard extends StatelessWidget {
                               style: const TextStyle(
                                 fontFamily: 'monospace',
                                 fontWeight: FontWeight.w800,
-                                fontSize: 11.5,
+                                fontSize: 12,
                                 letterSpacing: 0.8,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          const SizedBox(width: 3),
+                          const SizedBox(width: 4),
                           Icon(
                             Icons.copy_rounded,
-                            size: 11.5,
+                            size: 12.5,
                             color: isDark
                                 ? AppColors.goldLight
                                 : AppColors.primaryGold,
@@ -660,7 +651,7 @@ class ActiveRoomCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 16),
 
                 // Col 2: Radius Radar
                 Expanded(
@@ -676,7 +667,7 @@ class ActiveRoomCard extends StatelessWidget {
                     valueWidget: Text(
                       '${room?.safeRadius.toInt() ?? 200} m Aman',
                       style: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: isDark
                             ? Colors.white70
@@ -684,46 +675,6 @@ class ActiveRoomCard extends StatelessWidget {
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-
-                // Col 3: Monitoring
-                Expanded(
-                  child: _buildRoomLinearMetric(
-                    context: context,
-                    title: 'Monitoring',
-                    progress: 1.0,
-                    barColor: isDark
-                        ? AppColors.darkPrimary
-                        : AppColors.espressoDark,
-                    isDark: isDark,
-                    headingColor: headingColor,
-                    valueWidget: Row(
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: const BoxDecoration(
-                            color: AppColors.statusSafe,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        const Flexible(
-                          child: Text(
-                            'Real-time',
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.statusSafe,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
                     ),
                   ),
                 ),
@@ -855,28 +806,6 @@ class ActiveRoomCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
                         elevation: 0,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  const Icon(
-                    Icons.check_circle_outline_rounded,
-                    size: 15,
-                    color: AppColors.statusSafe,
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      'Monitoring aktif bersama pendamping secara realtime.',
-                      style: AppTypography.captionSmall.copyWith(
-                        color: isDark
-                            ? const Color(0xFF34D399)
-                            : const Color(0xFF059669),
-                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),

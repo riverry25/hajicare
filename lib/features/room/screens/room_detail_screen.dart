@@ -1074,16 +1074,16 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                           ),
                         ),
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            _buildStatSummaryItem(
-                              label: 'Total Anggota',
-                              value: '$_totalCount',
-                              color: headingColor,
-                              icon: Icons.groups_rounded,
+                            Expanded(
+                              child: _buildStatSummaryItem(
+                                label: 'Total Anggota',
+                                value: '$_totalCount',
+                                color: headingColor,
+                              ),
                             ),
                             Container(
-                              height: 26,
+                              height: 24,
                               width: 1,
                               color: isDark
                                   ? AppColors.darkCardBorder
@@ -1091,14 +1091,15 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                       alpha: 0.6,
                                     ),
                             ),
-                            _buildStatSummaryItem(
-                              label: 'Jamaah',
-                              value: '$_jamaahCount',
-                              color: AppColors.emeraldIslamic,
-                              icon: Icons.person_rounded,
+                            Expanded(
+                              child: _buildStatSummaryItem(
+                                label: 'Jamaah',
+                                value: '$_jamaahCount',
+                                color: AppColors.emeraldIslamic,
+                              ),
                             ),
                             Container(
-                              height: 26,
+                              height: 24,
                               width: 1,
                               color: isDark
                                   ? AppColors.darkCardBorder
@@ -1106,11 +1107,12 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                       alpha: 0.6,
                                     ),
                             ),
-                            _buildStatSummaryItem(
-                              label: 'Pendamping',
-                              value: '$_pendampingCount',
-                              color: const Color(0xFF1D4ED8),
-                              icon: Icons.health_and_safety_rounded,
+                            Expanded(
+                              child: _buildStatSummaryItem(
+                                label: 'Pendamping',
+                                value: '$_pendampingCount',
+                                color: const Color(0xFF1D4ED8),
+                              ),
                             ),
                           ],
                         ),
@@ -2278,33 +2280,32 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     required String label,
     required String value,
     required Color color,
-    required IconData icon,
   }) {
-    return Row(
+    return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Icon(icon, size: 15, color: color),
-        const SizedBox(width: 6),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              value,
-              style: AppTypography.titleSmall.copyWith(
-                color: color,
-                fontWeight: FontWeight.w800,
-                fontSize: 13.5,
-              ),
-            ),
-            Text(
-              label,
-              style: AppTypography.captionSmall.copyWith(
-                color: color.withValues(alpha: 0.8),
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
+        Text(
+          value,
+          textAlign: TextAlign.center,
+          style: AppTypography.titleMedium.copyWith(
+            color: color,
+            fontWeight: FontWeight.w800,
+            fontSize: 15,
+            height: 1.15,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTypography.captionSmall.copyWith(
+            color: color.withValues(alpha: 0.8),
+            fontSize: 10.5,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ],
     );
