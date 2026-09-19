@@ -227,6 +227,270 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     return !isJamaah && (isAdmin || isCreator);
   }
 
+  /// Memeriksa apakah user berhak mengedit atau menghapus room.
+  /// HANYA Admin atau Pendamping pembuat room (createdBy == currentUid).
+  /// Role Jamaah selalu bernilai FALSE dan tidak memiliki akses sama sekali.
+  bool _canEditOrDeleteRoom() {
+    final hajiCare = Get.isRegistered<HajiCareController>()
+        ? Get.find<HajiCareController>()
+        : null;
+    if (hajiCare?.role == UserRole.jamaah) return false;
+    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    final isAdmin = hajiCare?.role == UserRole.admin;
+    final isCreator = _room != null && _room!.createdBy == currentUid;
+
+    return isAdmin || isCreator;
+  }
+
+  void _showEditRoomSheet(BuildContext context, RoomModel room) {
+    HapticFeedback.lightImpact();
+    final nameCtrl = TextEditingController(text: room.name);
+    final maktabCtrl = TextEditingController(text: room.maktab ?? '');
+    final kloterCtrl = TextEditingController(text: room.kloter ?? '');
+    final isDark = AppColors.isDark(context);
+    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
+    final headingColor = isDark ? AppColors.darkTextHeading : AppColors.espressoDark;
+    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
+    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: cardBg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 16,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: bodyColor.withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Edit Informasi Room',
+                    style: AppTypography.titleLarge.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: headingColor,
+                      fontSize: 18,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: primaryColor.withValues(alpha: isDark ? 0.25 : 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: primaryColor.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Text(
+                      room.code,
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Perbarui nama room, nomor maktab, atau nomor kloter rombongan.',
+                style: AppTypography.captionSmall.copyWith(color: bodyColor),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: nameCtrl,
+                style: AppTypography.bodyMedium.copyWith(color: headingColor),
+                decoration: InputDecoration(
+                  labelText: 'Nama Room',
+                  prefixIcon: Icon(Icons.meeting_room_outlined, color: primaryColor, size: 20),
+                  filled: true,
+                  fillColor: isDark
+                      ? AppColors.darkScaffold.withValues(alpha: 0.6)
+                      : AppColors.canvasCream.withValues(alpha: 0.4),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(
+                      color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: maktabCtrl,
+                      style: AppTypography.bodyMedium.copyWith(color: headingColor),
+                      decoration: InputDecoration(
+                        labelText: 'Maktab',
+                        hintText: 'Contoh: 10',
+                        prefixIcon: Icon(Icons.hotel_outlined, color: primaryColor, size: 20),
+                        filled: true,
+                        fillColor: isDark
+                            ? AppColors.darkScaffold.withValues(alpha: 0.6)
+                            : AppColors.canvasCream.withValues(alpha: 0.4),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(
+                            color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: kloterCtrl,
+                      style: AppTypography.bodyMedium.copyWith(color: headingColor),
+                      decoration: InputDecoration(
+                        labelText: 'Kloter',
+                        hintText: 'Contoh: SOC-12',
+                        prefixIcon: Icon(Icons.flight_takeoff_rounded, color: primaryColor, size: 20),
+                        filled: true,
+                        fillColor: isDark
+                            ? AppColors.darkScaffold.withValues(alpha: 0.6)
+                            : AppColors.canvasCream.withValues(alpha: 0.4),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(
+                            color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 22),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: isDark ? AppColors.darkOnPrimary : Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    elevation: 0,
+                  ),
+                  onPressed: () async {
+                    final newName = nameCtrl.text.trim();
+                    if (newName.isEmpty) {
+                      AppAlert.error(context, title: 'Nama Wajib Diisi', message: 'Nama room tidak boleh kosong.');
+                      return;
+                    }
+                    Navigator.of(ctx).pop();
+                    try {
+                      final user = FirebaseAuth.instance.currentUser;
+                      final currentUid = user?.uid ?? '';
+                      final hajiCare = Get.isRegistered<HajiCareController>() ? Get.find<HajiCareController>() : null;
+                      final userRole = hajiCare?.role == UserRole.admin ? 'admin' : 'pendamping';
+
+                      await _roomService.updateRoomSettings(
+                        roomId: room.id,
+                        currentUserId: currentUid,
+                        userRole: userRole,
+                        name: newName,
+                        maktab: maktabCtrl.text.trim(),
+                        kloter: kloterCtrl.text.trim(),
+                      );
+                      if (context.mounted) {
+                        AppAlert.success(context, title: 'Berhasil Diperbarui', message: 'Informasi room berhasil disimpan.');
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        AppAlert.error(context, title: 'Gagal Memperbarui', message: e.toString().replaceAll('Exception: ', ''));
+                      }
+                    }
+                  },
+                  child: const Text('Simpan Perubahan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _handleDeleteRoom(BuildContext context, RoomModel room) {
+    HapticFeedback.mediumImpact();
+    AppAlert.confirm(
+      context,
+      title: 'Hapus Room?',
+      message:
+          'Apakah Anda yakin ingin menghapus room "${room.name}" (${room.code})? Semua anggota akan dikeluarkan dan akses pemantauan room ini akan dinonaktifkan.',
+      confirmText: 'Hapus Room',
+      cancelText: 'Batal',
+      isDestructive: true,
+      onConfirm: () async {
+        try {
+          final user = FirebaseAuth.instance.currentUser;
+          final currentUid = user?.uid ?? '';
+          final senderName = user?.displayName?.trim().isNotEmpty == true
+              ? user!.displayName!
+              : 'Petugas / Pendamping';
+          final hajiCare = Get.isRegistered<HajiCareController>()
+              ? Get.find<HajiCareController>()
+              : null;
+          final userRole = hajiCare?.role == UserRole.admin ? 'admin' : 'pendamping';
+
+          await _roomService.deleteRoomByCreator(
+            roomId: room.id,
+            currentUserId: currentUid,
+            senderName: senderName,
+            userRole: userRole,
+          );
+
+          if (context.mounted) {
+            AppAlert.success(
+              context,
+              title: 'Room Dihapus',
+              message: 'Room "${room.name}" berhasil dihapus.',
+            );
+            await hajiCare?.leaveRoom();
+            Get.back();
+          }
+        } catch (e) {
+          if (context.mounted) {
+            AppAlert.error(
+              context,
+              title: 'Gagal Menghapus Room',
+              message: e.toString().replaceAll('Exception: ', ''),
+            );
+          }
+        }
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
@@ -388,6 +652,43 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
             tooltip: 'Tampilkan QR Code Room',
             onPressed: () => RoomQrDialog.show(context, room: room),
           ),
+          if (_canEditOrDeleteRoom()) ...[
+            PopupMenuButton<String>(
+              icon: Icon(Icons.more_vert_rounded, color: headingColor),
+              tooltip: 'Opsi Room',
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              color: cardBg,
+              onSelected: (val) {
+                if (val == 'edit') {
+                  _showEditRoomSheet(context, room);
+                } else if (val == 'delete') {
+                  _handleDeleteRoom(context, room);
+                }
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit_outlined, size: 18, color: headingColor),
+                      const SizedBox(width: 10),
+                      Text('Edit Room', style: TextStyle(color: headingColor, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline_rounded, size: 18, color: AppColors.error),
+                      const SizedBox(width: 10),
+                      Text('Hapus Room', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(width: AppSpacing.xs),
         ],
       ),
@@ -404,78 +705,92 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
             parent: BouncingScrollPhysics(),
           ),
           children: [
-            // ── 1. Hero Room Information Card ─────────────────────────────────
-            AppCard(
-              backgroundColor: cardBg,
-              borderColor: isDark
-                  ? AppColors.darkCardBorder
-                  : primaryColor.withValues(alpha: 0.25),
-              padding: EdgeInsets.zero,
+            // ── 1. Hero Room Information Card (Redesigned: Spacious, Modern & Minimalist) ──
+            Container(
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(
+                  color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+                    blurRadius: 14,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    decoration: BoxDecoration(
-                      color: primaryColor.withValues(alpha: isDark ? 0.08 : 0.04),
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(AppRadius.card),
-                      ),
-                      border: Border(
-                        bottom: BorderSide(
-                          color: isDark ? AppColors.darkCardBorder : AppColors.canvasCreamSubtle,
-                        ),
-                      ),
-                    ),
+                  // ── Top Header Row ──────────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 18, 18, 15),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 38,
-                              height: 38,
-                              decoration: BoxDecoration(
-                                color: primaryColor.withValues(alpha: isDark ? 0.22 : 0.15),
-                                borderRadius: BorderRadius.circular(AppRadius.md),
-                                border: Border.all(
-                                  color: primaryColor.withValues(alpha: 0.3),
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: isDark
+                                  ? [AppColors.darkPrimaryContainer, AppColors.darkSurfaceContainerHighest]
+                                  : [AppColors.surfaceContainer, AppColors.canvasCream],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: isDark ? AppColors.darkCardBorder : AppColors.canvasCreamSubtle,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.meeting_room_rounded,
+                            color: isDark ? AppColors.goldLight : AppColors.espressoDark,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                room.name,
+                                style: TextStyle(
+                                  color: headingColor,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 16,
+                                  letterSpacing: -0.2,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Grup Maktab / Delegasi',
+                                style: TextStyle(
+                                  color: bodyColor.withValues(alpha: 0.7),
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
-                              child: Icon(Icons.meeting_room_rounded, color: primaryColor, size: 20),
-                            ),
-                            const SizedBox(width: AppSpacing.sm + 2),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Informasi Ruang Pantau',
-                                  style: AppTypography.titleMedium.copyWith(
-                                    color: headingColor,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14.5,
-                                  ),
-                                ),
-                                Text(
-                                  'Grup Maktab / Delegasi',
-                                  style: AppTypography.captionSmall.copyWith(
-                                    color: bodyColor.withValues(alpha: 0.7),
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
                           decoration: BoxDecoration(
                             color: (room.isActive ? AppColors.statusSafe : bodyColor)
-                                .withValues(alpha: isDark ? 0.20 : 0.12),
+                                .withValues(alpha: isDark ? 0.18 : 0.10),
                             borderRadius: BorderRadius.circular(AppRadius.pill),
                             border: Border.all(
                               color: (room.isActive ? AppColors.statusSafe : bodyColor)
                                   .withValues(alpha: 0.3),
+                              width: 1.0,
                             ),
                           ),
                           child: Row(
@@ -492,9 +807,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                               const SizedBox(width: 5),
                               Text(
                                 room.isActive ? 'Aktif' : 'Nonaktif',
-                                style: AppTypography.captionSmall.copyWith(
+                                style: TextStyle(
                                   color: room.isActive ? AppColors.statusSafe : AppColors.textSecondary,
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.w700,
                                   fontSize: 11,
                                 ),
                               ),
@@ -505,61 +820,216 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                     ),
                   ),
 
+                  Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder.withValues(alpha: 0.5),
+                  ),
+
+                  // ── Main Body Information (Room Data & Privileged Actions) ──
                   Padding(
-                    padding: const EdgeInsets.all(AppSpacing.md),
+                    padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
                     child: Column(
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.key_rounded, size: 16, color: primaryColor),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Kode Room:',
-                                  style: AppTypography.bodySmall.copyWith(
-                                    color: bodyColor,
-                                    fontWeight: FontWeight.w500,
+                        // Kode Room Banner Tile
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? AppColors.darkPrimaryContainer.withValues(alpha: 0.35)
+                                : AppColors.surfaceContainerLow,
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(
+                              color: isDark
+                                  ? AppColors.darkCardBorder
+                                  : AppColors.canvasCreamSubtle,
+                              width: 1.0,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(7),
+                                decoration: BoxDecoration(
+                                  color: primaryColor.withValues(alpha: isDark ? 0.20 : 0.12),
+                                  borderRadius: BorderRadius.circular(9),
+                                ),
+                                child: Icon(Icons.key_rounded, size: 17, color: primaryColor),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Kode Room',
+                                      style: TextStyle(
+                                        color: bodyColor.withValues(alpha: 0.7),
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 1),
+                                    Text(
+                                      room.code,
+                                      style: TextStyle(
+                                        color: headingColor,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 2.8,
+                                        fontSize: 15.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              InkWell(
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  Clipboard.setData(ClipboardData(text: room.code));
+                                  AppAlert.success(
+                                    context,
+                                    title: 'Kode Disalin',
+                                    message: 'Kode room "${room.code}" berhasil disalin.',
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(10),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: cardBg,
+                                    borderRadius: BorderRadius.circular(9),
+                                    border: Border.all(
+                                      color: isDark ? AppColors.darkOutlineVariant : const Color(0xFFE2E8F0),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.copy_rounded, size: 13, color: primaryColor),
+                                      const SizedBox(width: 5),
+                                      Text(
+                                        'Salin',
+                                        style: TextStyle(
+                                          color: primaryColor,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ],
-                            ),
-                            InkWell(
-                              onTap: () {
-                                HapticFeedback.lightImpact();
-                                Clipboard.setData(ClipboardData(text: room.code));
-                                AppAlert.success(
-                                  context,
-                                  title: 'Kode Disalin',
-                                  message: 'Kode room "${room.code}" berhasil disalin.',
-                                );
-                              },
-                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Maktab & Kloter Grid (Spacious 2-column cards)
+                        Row(
+                          children: [
+                            Expanded(
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
                                 decoration: BoxDecoration(
-                                  color: primaryColor.withValues(alpha: isDark ? 0.18 : 0.10),
-                                  borderRadius: BorderRadius.circular(AppRadius.md),
+                                  color: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream.withValues(alpha: 0.45),
+                                  borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                    color: primaryColor.withValues(alpha: 0.35),
-                                    width: 1,
+                                    color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder.withValues(alpha: 0.6),
                                   ),
                                 ),
                                 child: Row(
-                                  mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Text(
-                                      room.code,
-                                      style: AppTypography.titleSmall.copyWith(
-                                        color: primaryColor,
-                                        fontWeight: FontWeight.w900,
-                                        letterSpacing: 2.5,
-                                        fontSize: 14,
+                                    Container(
+                                      width: 32,
+                                      height: 32,
+                                      decoration: BoxDecoration(
+                                        color: isDark ? AppColors.darkPrimaryContainer : AppColors.canvasCreamSubtle,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Icon(Icons.hotel_rounded, size: 16, color: isDark ? AppColors.goldLight : AppColors.espressoDark),
+                                    ),
+                                    const SizedBox(width: 9),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Maktab',
+                                            style: TextStyle(
+                                              color: bodyColor.withValues(alpha: 0.7),
+                                              fontSize: 10.5,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 1),
+                                          Text(
+                                            room.maktab?.isNotEmpty == true ? room.maktab! : '-',
+                                            style: TextStyle(
+                                              color: headingColor,
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 13,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    const SizedBox(width: 6),
-                                    Icon(Icons.copy_rounded, size: 14, color: primaryColor),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+                                decoration: BoxDecoration(
+                                  color: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream.withValues(alpha: 0.45),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder.withValues(alpha: 0.6),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 32,
+                                      height: 32,
+                                      decoration: BoxDecoration(
+                                        color: isDark ? AppColors.darkPrimaryContainer : AppColors.canvasCreamSubtle,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Icon(Icons.flight_takeoff_rounded, size: 16, color: isDark ? AppColors.goldLight : AppColors.espressoDark),
+                                    ),
+                                    const SizedBox(width: 9),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Kloter',
+                                            style: TextStyle(
+                                              color: bodyColor.withValues(alpha: 0.7),
+                                              fontSize: 10.5,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 1),
+                                          Text(
+                                            room.kloter?.isNotEmpty == true ? room.kloter! : '-',
+                                            style: TextStyle(
+                                              color: headingColor,
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 13,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -567,74 +1037,31 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                           ],
                         ),
 
-                        if ((room.maktab != null && room.maktab!.isNotEmpty) ||
-                            (room.kloter != null && room.kloter!.isNotEmpty)) ...[
-                          const SizedBox(height: 10),
+                        if (room.createdAt != null) ...[
+                          const SizedBox(height: 12),
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              if (room.maktab != null && room.maktab!.isNotEmpty)
-                                Row(
-                                  children: [
-                                    Icon(Icons.hotel_rounded, size: 15, color: bodyColor.withValues(alpha: 0.7)),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      'Maktab: ${room.maktab}',
-                                      style: AppTypography.captionSmall.copyWith(
-                                        color: headingColor,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
+                              Icon(Icons.event_note_rounded, size: 13, color: bodyColor.withValues(alpha: 0.5)),
+                              const SizedBox(width: 5),
+                              Text(
+                                'Dibuat pada ${_formatDate(room.createdAt)}',
+                                style: TextStyle(
+                                  color: bodyColor.withValues(alpha: 0.65),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
                                 ),
-                              if (room.kloter != null && room.kloter!.isNotEmpty)
-                                Row(
-                                  children: [
-                                    Icon(Icons.flight_takeoff_rounded, size: 15, color: bodyColor.withValues(alpha: 0.7)),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      'Kloter: ${room.kloter}',
-                                      style: AppTypography.captionSmall.copyWith(
-                                        color: headingColor,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                              ),
                             ],
                           ),
                         ],
 
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 16),
 
-                        if (room.createdAt != null)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(Icons.event_note_rounded, size: 16, color: bodyColor.withValues(alpha: 0.7)),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Dibuat Pada:',
-                                    style: AppTypography.bodySmall.copyWith(color: bodyColor),
-                                  ),
-                                ],
-                              ),
-                              Text(
-                                _formatDate(room.createdAt),
-                                style: AppTypography.bodySmall.copyWith(
-                                  color: headingColor,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-
-                        const SizedBox(height: AppSpacing.md),
-
+                        // Tombol QR Code
                         SizedBox(
                           width: double.infinity,
+                          height: 46,
                           child: ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: primaryColor,
@@ -642,39 +1069,77 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(AppRadius.pill),
                               ),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
                               elevation: 0,
                             ),
-                            icon: const Icon(Icons.qr_code_2_rounded, size: 20),
+                            icon: const Icon(Icons.qr_code_2_rounded, size: 19),
                             label: const Text(
                               'Lihat & Bagikan QR Code Room',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13.5,
-                              ),
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
                             ),
                             onPressed: () => RoomQrDialog.show(context, room: room),
                           ),
                         ),
+
+                        // ── Role Privileges: Tombol Edit & Hapus (Admin & Creator Pendamping ONLY) ──
+                        if (_canEditOrDeleteRoom()) ...[
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: headingColor,
+                                    side: BorderSide(
+                                      color: isDark ? AppColors.darkOutlineVariant : AppColors.lightCardBorder,
+                                      width: 1.2,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                  ),
+                                  icon: Icon(Icons.edit_outlined, size: 15, color: primaryColor),
+                                  label: const Text('Edit Room', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+                                  onPressed: () => _showEditRoomSheet(context, room),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppColors.error,
+                                    side: BorderSide(
+                                      color: AppColors.error.withValues(alpha: 0.45),
+                                      width: 1.2,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                  ),
+                                  icon: const Icon(Icons.delete_outline_rounded, size: 15),
+                                  label: const Text('Hapus Room', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+                                  onPressed: () => _handleDeleteRoom(context, room),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   ),
 
-                  // Member Breakdown Stat Strip
+                  // ── Member Breakdown Strip ──────────────────────────────────
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
-                      vertical: AppSpacing.sm + 4,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
                     decoration: BoxDecoration(
-                      color: (isDark ? AppColors.darkCardBorder : AppColors.canvasCreamSubtle)
-                          .withValues(alpha: 0.35),
-                      borderRadius: const BorderRadius.vertical(
-                        bottom: Radius.circular(AppRadius.card),
-                      ),
+                      color: isDark
+                          ? AppColors.darkSurfaceContainer.withValues(alpha: 0.5)
+                          : AppColors.canvasCream.withValues(alpha: 0.35),
+                      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(22)),
                       border: Border(
                         top: BorderSide(
-                          color: isDark ? AppColors.darkCardBorder : AppColors.canvasCreamSubtle,
+                          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder.withValues(alpha: 0.5),
                         ),
                       ),
                     ),
@@ -688,9 +1153,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                           icon: Icons.groups_rounded,
                         ),
                         Container(
-                          height: 28,
+                          height: 26,
                           width: 1,
-                          color: isDark ? AppColors.darkCardBorder : AppColors.canvasCreamSubtle,
+                          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder.withValues(alpha: 0.6),
                         ),
                         _buildStatSummaryItem(
                           label: 'Jamaah',
@@ -699,9 +1164,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                           icon: Icons.person_rounded,
                         ),
                         Container(
-                          height: 28,
+                          height: 26,
                           width: 1,
-                          color: isDark ? AppColors.darkCardBorder : AppColors.canvasCreamSubtle,
+                          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder.withValues(alpha: 0.6),
                         ),
                         _buildStatSummaryItem(
                           label: 'Pendamping',
