@@ -196,42 +196,48 @@ class LoginScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Luxury badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 11,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceWhite.withValues(
-                                alpha: 0.12,
+                          GestureDetector(
+                            onTap: () {
+                              debugPrint('[DEMO] Tapping badge -> navigating to Bisindo');
+                              Get.toNamed(AppRoutes.bisindo);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 11,
+                                vertical: 6,
                               ),
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
-                              ),
-                              border: Border.all(
-                                color: AppColors.goldPrimary.withValues(
-                                  alpha: 0.35,
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceWhite.withValues(
+                                  alpha: 0.12,
                                 ),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.auto_awesome_rounded,
-                                  size: 14,
-                                  color: AppColors.goldPrimary,
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.pill,
                                 ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Teman Perjalanan Jamaah',
-                                  style: AppTypography.captionSmall.copyWith(
-                                    color: AppColors.canvasCream,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 0.2,
+                                border: Border.all(
+                                  color: AppColors.goldPrimary.withValues(
+                                    alpha: 0.35,
                                   ),
                                 ),
-                              ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.auto_awesome_rounded,
+                                    size: 14,
+                                    color: AppColors.goldPrimary,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Teman Perjalanan Jamaah (Demo)',
+                                    style: AppTypography.captionSmall.copyWith(
+                                      color: AppColors.canvasCream,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.2,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
 
@@ -728,6 +734,27 @@ class LoginScreen extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+
+              const SizedBox(height: 16),
+
+              Center(
+                child: TextButton.icon(
+                  onPressed: () => Get.offAllNamed(AppRoutes.dashboardJamaah),
+                  icon: const Icon(
+                    Icons.developer_mode_rounded,
+                    size: 16,
+                    color: AppColors.goldPrimary,
+                  ),
+                  label: Text(
+                    'Masuk Mode Pengujian (Demo Jamaah)',
+                    style: AppTypography.captionSmall.copyWith(
+                      color: AppColors.espressoDark,
+                      fontWeight: FontWeight.w700,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),

@@ -30,6 +30,8 @@ import '../../features/room/screens/room_detail_screen.dart';
 import '../../features/room/screens/edit_room_screen.dart';
 import '../../features/smartband/screens/smartband_ldr_page.dart';
 import '../../features/smartband/bindings/smartband_ldr_binding.dart';
+import '../../features/sign_language/screens/bisindo_screen.dart';
+import '../../features/sign_language/bindings/bisindo_binding.dart';
 import 'role_and_room_guard.dart';
 
 class AppRoutes {
@@ -54,6 +56,7 @@ class AppRoutes {
   static const String moneyRecognition = '/money_recognition';
   static const String money = '/money';
   static const String communication = '/communication';
+  static const String bisindo = '/bisindo';
   static const String profile = '/profile';
   static const String notification = '/notification';
   static const String helpCenter = '/help';
@@ -168,6 +171,11 @@ class AppRoutes {
       name: communication,
       page: () => const CommunicationScreen(),
       binding: CommunicationBinding(),
+    ),
+    GetPage(
+      name: bisindo,
+      page: () => const BisindoScreen(),
+      binding: BisindoBinding(),
     ),
     GetPage(name: profile, page: () => const ProfileScreen()),
     GetPage(name: notification, page: () => const NotificationScreen()),

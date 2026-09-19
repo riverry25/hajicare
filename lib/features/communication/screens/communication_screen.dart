@@ -8,6 +8,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../controllers/communication_controller.dart';
+import '../widgets/bisindo_card.dart';
 
 class CommunicationScreen extends StatelessWidget {
   const CommunicationScreen({super.key});
@@ -116,6 +117,9 @@ class CommunicationScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
+
+          // BISINDO Neural Network Gesture Recognizer
+          const BisindoCard(),
 
           // 1. Darurat & Kesehatan
           _buildCategoryHeader(
