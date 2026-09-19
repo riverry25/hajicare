@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -47,7 +46,9 @@ class _BisindoScreenState extends State<BisindoScreen> {
     _streamBuffer = LandmarkStreamBuffer(
       inferenceService: _inferenceService,
       windowSize: 100,
-      throttleDuration: const Duration(milliseconds: 300),
+      throttleDuration: const Duration(milliseconds: 350),
+      minimumFrames: 30,
+      requiredStablePredictions: 2,
       onPrediction: (prediction) {
         if (mounted) {
           setState(() {
@@ -57,9 +58,11 @@ class _BisindoScreenState extends State<BisindoScreen> {
         }
       },
       onError: (err) {
+        debugPrint('[BISINDO_UI] Inference error: $err');
         if (mounted) {
           setState(() {
-            _errorMessage = 'Inference error: $err';
+            _errorMessage =
+                'Gerakan belum dapat diproses. Hentikan kamera, lalu coba lagi.';
           });
         }
       },
@@ -82,9 +85,11 @@ class _BisindoScreenState extends State<BisindoScreen> {
         });
       }
     } catch (e) {
+      debugPrint('[BISINDO_UI] Model initialization error: $e');
       if (mounted) {
         setState(() {
-          _errorMessage = 'Gagal memuat model BISINDO: $e';
+          _errorMessage =
+              'Penerjemah BISINDO belum siap. Tutup halaman ini lalu coba lagi.';
         });
       }
     }
@@ -140,6 +145,8 @@ class _BisindoScreenState extends State<BisindoScreen> {
     setState(() {
       _isStartingCamera = true;
       _errorMessage = null;
+      _latestPrediction = null;
+      _bufferCount = 0;
     });
 
     // 1. Check and request camera permission
@@ -172,74 +179,15 @@ class _BisindoScreenState extends State<BisindoScreen> {
     }
   }
 
-  /// Diagnostic tool: Feeds synthetic landmark motion into the exact same pipeline
-  /// to demonstrate prediction shifts across prototypes (Air, Saya, Tuli).
-  Future<void> _runDiagnosticGesture(String targetClass) async {
-    setState(() {
-      _errorMessage = null;
-    });
-
-    try {
-      // Generate synthetic motion frame sequence with distinct hand/body kinematics
-      final frames = _generateDiagnosticSequence(targetClass);
-      for (final frame in frames) {
-        _streamBuffer.addFrame(frame);
-      }
-      setState(() {
-        _bufferCount = _streamBuffer.bufferLength;
-      });
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Uji diagnostik gagal: $e';
-      });
-    }
-  }
-
-  List<List<List<double>>> _generateDiagnosticSequence(String targetClass) {
-    // Generate 40 frames with class-specific hand placement
-    final int frames = 40;
-    final double handOffset = targetClass == 'Air'
-        ? 0.15
-        : (targetClass == 'Saya' ? -0.10 : 0.0);
-
-    return List.generate(frames, (t) {
-      final double progress = t / frames;
-      final double wave = math.sin(progress * math.pi * 2);
-
-      return List.generate(543, (i) {
-        if (i == 0) return [0.5, 0.2, 0.0]; // Nose
-        if (i == 2) return [0.48, 0.18, 0.0];
-        if (i == 5) return [0.52, 0.18, 0.0];
-        if (i == 11) return [0.40, 0.35, 0.0]; // Left shoulder
-        if (i == 12) return [0.60, 0.35, 0.0]; // Right shoulder
-        if (i == 13) return [0.35, 0.50 + 0.05 * wave, 0.0];
-        if (i == 14) return [0.65, 0.50 - 0.05 * wave, 0.0];
-        if (i >= 501 && i < 522) {
-          // Left hand
-          return [0.30 + handOffset + 0.05 * wave, 0.65, 0.0];
-        }
-        if (i >= 522 && i < 543) {
-          // Right hand
-          return [0.70 - handOffset - 0.05 * wave, 0.65, 0.0];
-        }
-        return [0.0, 0.0, 0.0];
-      });
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
     final isCameraActive = _cameraService.isCameraActive;
 
     return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.darkSurface
-          : AppColors.canvasCream,
+      backgroundColor: isDark ? AppColors.darkSurface : AppColors.canvasCream,
       appBar: AppBar(
-        backgroundColor: isDark
-            ? AppColors.darkSurface
-            : AppColors.canvasCream,
+        backgroundColor: isDark ? AppColors.darkSurface : AppColors.canvasCream,
         elevation: 0,
         leading: IconButton(
           icon: Icon(
@@ -305,8 +253,8 @@ class _BisindoScreenState extends State<BisindoScreen> {
               _buildActionButton(isCameraActive),
               const SizedBox(height: 20),
 
-              // 7. Diagnostic Quick Test (Air / Saya / Tuli)
-              _buildDiagnosticSection(isDark),
+              // 7. Short, non-technical usage guidance.
+              _buildUsageGuide(isDark),
               const SizedBox(height: 24),
             ],
           ),
@@ -405,7 +353,10 @@ class _BisindoScreenState extends State<BisindoScreen> {
               top: 12,
               left: 12,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: isCameraActive
                       ? Colors.red.withValues(alpha: 0.85)
@@ -446,7 +397,9 @@ class _BisindoScreenState extends State<BisindoScreen> {
   Widget _buildStatusRow(bool isCameraActive, bool isDark) {
     final statusText = !isCameraActive
         ? 'Kamera siap'
-        : (_bufferCount >= 100 ? 'Menganalisis...' : 'Mengumpulkan gerakan...');
+        : (_bufferCount >= 30
+              ? 'Sedang memastikan hasil...'
+              : 'Tunjukkan satu isyarat dengan jelas');
 
     return Row(
       children: [
@@ -469,7 +422,9 @@ class _BisindoScreenState extends State<BisindoScreen> {
             child: Row(
               children: [
                 Icon(
-                  isCameraActive ? Icons.radar_rounded : Icons.info_outline_rounded,
+                  isCameraActive
+                      ? Icons.radar_rounded
+                      : Icons.info_outline_rounded,
                   size: 16,
                   color: isCameraActive ? Colors.green : AppColors.goldPrimary,
                 ),
@@ -492,7 +447,7 @@ class _BisindoScreenState extends State<BisindoScreen> {
         ),
         const SizedBox(width: 8),
 
-        // Buffer Chip
+        // Simple, non-technical progress chip.
         Expanded(
           flex: 2,
           child: Container(
@@ -516,7 +471,7 @@ class _BisindoScreenState extends State<BisindoScreen> {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'Buffer $_bufferCount/100',
+                  _bufferCount >= 30 ? 'Memeriksa' : 'Bersiap',
                   style: AppTypography.captionSmall.copyWith(
                     color: AppColors.textHeadingColor(context),
                     fontWeight: FontWeight.w700,
@@ -537,11 +492,17 @@ class _BisindoScreenState extends State<BisindoScreen> {
       decoration: BoxDecoration(
         color: AppColors.errorContainer.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.sosEmergency.withValues(alpha: 0.4)),
+        border: Border.all(
+          color: AppColors.sosEmergency.withValues(alpha: 0.4),
+        ),
       ),
       child: Row(
         children: [
-          const Icon(Icons.warning_amber_rounded, color: AppColors.sosEmergency, size: 22),
+          const Icon(
+            Icons.warning_amber_rounded,
+            color: AppColors.sosEmergency,
+            size: 22,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -552,10 +513,7 @@ class _BisindoScreenState extends State<BisindoScreen> {
               ),
             ),
           ),
-          TextButton(
-            onPressed: _toggleDetection,
-            child: const Text('Izinkan'),
-          ),
+          TextButton(onPressed: _toggleDetection, child: const Text('Izinkan')),
         ],
       ),
     );
@@ -570,18 +528,21 @@ class _BisindoScreenState extends State<BisindoScreen> {
       ),
       child: Text(
         _errorMessage!,
-        style: AppTypography.captionSmall.copyWith(color: AppColors.sosEmergency),
+        style: AppTypography.captionSmall.copyWith(
+          color: AppColors.sosEmergency,
+        ),
       ),
     );
   }
 
   Widget _buildPredictionCard(bool isDark) {
     final pred = _latestPrediction;
-    final String label = pred?.label ?? 'Menunggu Isyarat...';
-    final int confidencePercent = pred != null
-        ? (pred.confidence * 100).round()
-        : 0;
-
+    final isRecognized = pred?.isRecognized == true;
+    final label = pred == null
+        ? 'Menunggu Isyarat...'
+        : isRecognized
+        ? pred.label
+        : 'Belum dikenali';
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -590,7 +551,7 @@ class _BisindoScreenState extends State<BisindoScreen> {
             : AppColors.cardBgColor(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
-          color: pred != null
+          color: isRecognized
               ? AppColors.goldPrimary.withValues(alpha: 0.5)
               : AppColors.canvasCreamSubtle,
           width: 1.5,
@@ -606,7 +567,6 @@ class _BisindoScreenState extends State<BisindoScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: BISINDO Tag & Confidence Badge
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -619,16 +579,16 @@ class _BisindoScreenState extends State<BisindoScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'BISINDO',
+                    'HASIL BISINDO',
                     style: AppTypography.captionSmall.copyWith(
                       color: AppColors.goldPrimary,
                       fontWeight: FontWeight.w800,
-                      letterSpacing: 1.0,
+                      letterSpacing: 1,
                     ),
                   ),
                 ],
               ),
-              if (pred != null)
+              if (isRecognized)
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
@@ -639,19 +599,16 @@ class _BisindoScreenState extends State<BisindoScreen> {
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Text(
-                    '$confidencePercent%',
+                    'Hasil stabil',
                     style: AppTypography.captionSmall.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
-                      fontSize: 13,
                     ),
                   ),
                 ),
             ],
           ),
           const SizedBox(height: 10),
-
-          // Main Predicted Word
           Text(
             label,
             style: AppTypography.displayMedium.copyWith(
@@ -660,62 +617,18 @@ class _BisindoScreenState extends State<BisindoScreen> {
               fontSize: 30,
             ),
           ),
-          const SizedBox(height: 12),
-
-          // Top candidate chips
+          const SizedBox(height: 8),
           Text(
-            'Kandidat Teratas:',
-            style: AppTypography.captionSmall.copyWith(
-              color: AppColors.textMuted,
-              fontWeight: FontWeight.w600,
+            pred?.guidance ??
+                (isRecognized
+                    ? 'Isyarat berhasil dikenali.'
+                    : 'Pastikan wajah, bahu, dan tangan terlihat di dalam bingkai.'),
+            style: AppTypography.bodySmall.copyWith(
+              color: isRecognized ? AppColors.textMuted : AppColors.goldPrimary,
+              fontWeight: isRecognized ? FontWeight.w500 : FontWeight.w600,
+              height: 1.4,
             ),
           ),
-          const SizedBox(height: 6),
-          if (pred != null && pred.candidates.isNotEmpty)
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: pred.candidates.take(4).map((c) {
-                final isTop = c.classId == pred.classId;
-                return Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isTop
-                        ? AppColors.goldPrimary.withValues(alpha: 0.15)
-                        : (isDark
-                            ? AppColors.darkSurface
-                            : AppColors.canvasCream),
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                    border: Border.all(
-                      color: isTop
-                          ? AppColors.goldPrimary
-                          : Colors.transparent,
-                      width: 1,
-                    ),
-                  ),
-                  child: Text(
-                    '${c.label} (${(c.confidence * 100).toStringAsFixed(0)}%)',
-                    style: AppTypography.captionSmall.copyWith(
-                      color: isTop
-                          ? AppColors.goldPrimary
-                          : AppColors.textMuted,
-                      fontWeight: isTop ? FontWeight.w700 : FontWeight.w500,
-                    ),
-                  ),
-                );
-              }).toList(),
-            )
-          else
-            Text(
-              'Air • Saya • Terima kasih • Tuli • Apa • Siapa • Di mana • Keluarga',
-              style: AppTypography.captionSmall.copyWith(
-                color: AppColors.textMuted.withValues(alpha: 0.6),
-                fontStyle: FontStyle.italic,
-              ),
-            ),
         ],
       ),
     );
@@ -767,7 +680,7 @@ class _BisindoScreenState extends State<BisindoScreen> {
     );
   }
 
-  Widget _buildDiagnosticSection(bool isDark) {
+  Widget _buildUsageGuide(bool isDark) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -775,9 +688,7 @@ class _BisindoScreenState extends State<BisindoScreen> {
             ? AppColors.darkSurfaceContainer.withValues(alpha: 0.5)
             : AppColors.canvasCreamSubtle,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(
-          color: AppColors.goldPrimary.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: AppColors.goldPrimary.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -785,13 +696,13 @@ class _BisindoScreenState extends State<BisindoScreen> {
           Row(
             children: [
               const Icon(
-                Icons.bug_report_rounded,
+                Icons.tips_and_updates_outlined,
                 size: 16,
                 color: AppColors.goldPrimary,
               ),
               const SizedBox(width: 6),
               Text(
-                'Diagnostic Quick Test (Verifikasi Model ONNX)',
+                'Agar isyarat mudah dikenali',
                 style: AppTypography.captionSmall.copyWith(
                   color: AppColors.textHeadingColor(context),
                   fontWeight: FontWeight.w700,
@@ -800,51 +711,13 @@ class _BisindoScreenState extends State<BisindoScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => _runDiagnosticGesture('Air'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    side: const BorderSide(color: AppColors.goldPrimary),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
-                  ),
-                  child: const Text('Uji Air', style: TextStyle(fontSize: 12)),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => _runDiagnosticGesture('Saya'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    side: const BorderSide(color: AppColors.goldPrimary),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
-                  ),
-                  child: const Text('Uji Saya', style: TextStyle(fontSize: 12)),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => _runDiagnosticGesture('Tuli'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    side: const BorderSide(color: AppColors.goldPrimary),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
-                  ),
-                  child: const Text('Uji Tuli', style: TextStyle(fontSize: 12)),
-                ),
-              ),
-            ],
+          const SizedBox(height: 8),
+          Text(
+            'Hadap kamera, pastikan cahaya cukup, lakukan satu isyarat secara perlahan, lalu tahan posisi akhir sebentar.',
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.textMuted,
+              height: 1.45,
+            ),
           ),
         ],
       ),

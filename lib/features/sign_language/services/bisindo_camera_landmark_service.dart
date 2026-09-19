@@ -64,6 +64,9 @@ class BisindoCameraLandmarkService {
     try {
       _lastError = null;
       errorNotifier.value = null;
+      streamBuffer.clear();
+      _receivedFramesCount = 0;
+      framesCountNotifier.value = 0;
 
       // 1. Subscribe to landmark stream
       _eventSubscription = _eventChannel.receiveBroadcastStream().listen(
@@ -79,12 +82,21 @@ class BisindoCameraLandmarkService {
       _isCameraActive = success == true;
       isStreamingNotifier.value = _isCameraActive;
 
+      if (!_isCameraActive) {
+        await _eventSubscription?.cancel();
+        _eventSubscription = null;
+        _lastError = 'Kamera belum dapat digunakan. Silakan coba lagi.';
+        errorNotifier.value = _lastError;
+      }
+
       debugPrint('[BISINDO_CAMERA] started');
       return _isCameraActive;
     } catch (e) {
       _isCameraActive = false;
       isStreamingNotifier.value = false;
-      _lastError = 'Gagal memulai kamera: $e';
+      await _eventSubscription?.cancel();
+      _eventSubscription = null;
+      _lastError = 'Kamera belum dapat digunakan. Silakan coba lagi.';
       errorNotifier.value = _lastError;
       debugPrint('[BISINDO_CAMERA] startCamera error: $e');
       return false;
@@ -93,15 +105,18 @@ class BisindoCameraLandmarkService {
 
   /// Stops the native camera stream and unbinds CameraX.
   Future<void> stopCamera() async {
-    if (!_isCameraActive) return;
-
     try {
       await _eventSubscription?.cancel();
       _eventSubscription = null;
 
-      await _methodChannel.invokeMethod<bool>('stopCamera');
+      if (_isCameraActive) {
+        await _methodChannel.invokeMethod<bool>('stopCamera');
+      }
       _isCameraActive = false;
       isStreamingNotifier.value = false;
+      streamBuffer.clear();
+      _receivedFramesCount = 0;
+      framesCountNotifier.value = 0;
       debugPrint('[BISINDO_CAMERA] camera stopped');
     } catch (e) {
       debugPrint('[BISINDO_CAMERA] stopCamera error: $e');
