@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../../core/services/trusted_backend_service.dart';
 import '../../../core/state/app_startup_controller.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/utils/app_dialog.dart';
@@ -28,68 +29,99 @@ class RegisterController extends GetxController {
   }
 
   Future<void> register() async {
+    if (isLoading.value || isClosed) return;
     isLoading.value = true;
     errorMessage.value = null;
 
-    if (emailController.text.isEmpty ||
-        passwordController.text.isEmpty ||
-        fullNameController.text.isEmpty) {
+    final name = fullNameController.text.trim();
+    final porsi = porsiController.text.trim();
+    final email = emailController.text.trim();
+    final password = passwordController.text;
+    final chosenRole = selectedRole.value.trim().toLowerCase();
+    final effectiveRole =
+        (chosenRole == 'pendamping' || chosenRole == 'petugas')
+        ? 'pendamping'
+        : 'jamaah';
+
+    if (email.isEmpty || password.isEmpty || name.isEmpty) {
       errorMessage.value = 'Isi nama, email, dan kata sandi terlebih dahulu.';
       _showErrorSnackbar(errorMessage.value!);
       isLoading.value = false;
       return;
     }
 
+    User? newUser;
     try {
-      final userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-            email: emailController.text.trim(),
-            password: passwordController.text,
-          );
+      // ── Step 1: Create Firebase Auth user ───────────────────────────────
+      final credential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: password);
+      newUser = credential.user;
 
-      final uid = userCredential.user!.uid;
-
-      // Create standard user payload
-      final userPayload = {
-        'name': fullNameController.text.trim(),
-        'porsi': porsiController.text.trim(),
-        'email': emailController.text.trim(),
-        'role': selectedRole.value,
-        'activeRoomId': null,
-        'createdAt': FieldValue.serverTimestamp(),
-      };
-
-      if (selectedRole.value == 'jamaah') {
-        userPayload['distance'] = 20.0;
-        userPayload['separatedMode'] = false;
-        userPayload['sosActive'] = false;
-        userPayload['shortLabel'] = fullNameController.text
-            .trim()
-            .split(' ')
-            .first;
-      }
-
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .set(userPayload);
-
-      // Persist onboarding status & Remember Me setting
-      final startup = Get.find<AppStartupController>();
-      await startup.handleSuccessfulLogin(rememberMe: true);
-
-      // Pre-set user role in HajiCareController
-      if (Get.isRegistered<HajiCareController>()) {
-        final hajicare = Get.find<HajiCareController>();
-        await hajicare.applyUserData(
-          roleStr: selectedRole.value,
-          roomId: null,
-          name: fullNameController.text.trim(),
+      if (newUser == null) {
+        throw FirebaseAuthException(
+          code: 'user-not-found',
+          message: 'Gagal membuat pengguna baru.',
         );
       }
 
-      // Navigate directly to respective role dashboard (basic features available without room)
-      if (selectedRole.value == 'pendamping') {
+      final uid = newUser.uid;
+
+      // Update Firebase Auth displayName
+      try {
+        await newUser.updateDisplayName(name);
+      } catch (_) {}
+
+      // ── Step 2: Direct Firestore write ──────────────────────────────────
+      // Write profile directly to Firestore so the user document is immediately
+      // created and never left in an orphaned Auth-only state.
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'uid': uid,
+        'name': name,
+        'displayName': name,
+        'email': email,
+        'normalizedEmail': email.toLowerCase(),
+        'nomorPorsi': porsi,
+        'porsi': porsi,
+        'role': effectiveRole,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'isGpsActive': false,
+      }, SetOptions(merge: true));
+      debugPrint(
+        '=== Direct Firestore write succeeded for uid: $uid, role: $effectiveRole',
+      );
+
+      // ── Step 3: Server synchronization via Cloud Functions ──────────────
+      // Non-fatal: if functions are not deployed or cold-starting, the Firestore
+      // write in Step 2 already guarantees the account works.
+      try {
+        await TrustedBackendService().call('ensureUserProfile', {
+          'name': name,
+          'nomorPorsi': porsi,
+          'requestedRole': effectiveRole,
+        });
+        debugPrint('=== Cloud Function ensureUserProfile succeeded');
+      } catch (cfError) {
+        debugPrint(
+          '=== Cloud Function ensureUserProfile skipped/failed (non-fatal): $cfError',
+        );
+      }
+
+      // ── Step 4: Persist session & sync state ────────────────────────────
+      final startup = Get.find<AppStartupController>();
+      await startup.handleSuccessfulLogin(rememberMe: true);
+
+      if (Get.isRegistered<HajiCareController>()) {
+        final hajicare = Get.find<HajiCareController>();
+        await hajicare.applyUserData(
+          roleStr: effectiveRole,
+          roomId: null,
+          name: name,
+        );
+      }
+
+      // ── Step 5: Navigate directly to respective role dashboard ──────────
+      if (effectiveRole == 'pendamping') {
         Get.offAllNamed(AppRoutes.dashboardPendamping);
       } else {
         Get.offAllNamed(AppRoutes.dashboardJamaah);
@@ -98,12 +130,18 @@ class RegisterController extends GetxController {
       debugPrint('=== ERROR AUTH ===: ${e.code} - ${e.message}');
       errorMessage.value = _friendlyRegisterError(e.code, e.message);
       _showErrorSnackbar(errorMessage.value!);
-    } on FirebaseException catch (e) {
-      debugPrint('=== ERROR FIRESTORE ===: ${e.code} - ${e.message}');
-      errorMessage.value = 'Profil belum dapat disimpan. Silakan coba lagi.';
-      _showErrorSnackbar(errorMessage.value!);
     } catch (e, stackTrace) {
       debugPrint('=== ERROR UMUM ===: $e\n$stackTrace');
+      // If Firestore write failed completely, delete the orphaned Auth user
+      // so the user can retry registration with the same email.
+      if (newUser != null) {
+        try {
+          await newUser.delete();
+          debugPrint('=== Orphaned Auth user deleted after total failure.');
+        } catch (deleteErr) {
+          debugPrint('=== Could not delete orphaned Auth user: $deleteErr');
+        }
+      }
       errorMessage.value = 'Pendaftaran belum berhasil. Silakan coba lagi.';
       _showErrorSnackbar(errorMessage.value!);
     } finally {

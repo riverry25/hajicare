@@ -20,6 +20,8 @@ import '../../features/communication/screens/communication_screen.dart';
 import '../../features/communication/bindings/communication_binding.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/profile/screens/help_center_screen.dart';
+import '../../features/profile/bindings/help_center_binding.dart';
+import '../../features/profile/bindings/profile_binding.dart';
 import '../../features/profile/screens/about_screen.dart';
 import '../../features/notification/screens/notification_screen.dart';
 import '../../features/onboarding/bindings/onboarding_binding.dart';
@@ -28,6 +30,8 @@ import '../../features/room/screens/admin_dashboard_screen.dart';
 import '../../features/room/screens/admin_room_management_screen.dart';
 import '../../features/room/screens/room_detail_screen.dart';
 import '../../features/room/screens/edit_room_screen.dart';
+import '../../features/room/bindings/admin_room_binding.dart';
+import '../../features/room/bindings/join_room_binding.dart';
 import '../../features/smartband/screens/smartband_ldr_page.dart';
 import '../../features/smartband/bindings/smartband_ldr_binding.dart';
 import '../../features/sign_language/screens/bisindo_screen.dart';
@@ -85,6 +89,7 @@ class AppRoutes {
     GetPage(
       name: joinRoom,
       page: () => const JoinRoomScreen(),
+      binding: JoinRoomBinding(),
       middlewares: [
         RoleAndRoomGuard(
           allowedRoles: ['pendamping', 'jamaah'],
@@ -95,7 +100,7 @@ class AppRoutes {
     GetPage(
       name: adminDashboard,
       page: () => const AdminDashboardScreen(),
-      binding: DashboardBinding(),
+      bindings: [DashboardBinding(), AdminRoomBinding()],
       middlewares: [
         RoleAndRoomGuard(allowedRoles: ['admin']),
       ],
@@ -103,6 +108,7 @@ class AppRoutes {
     GetPage(
       name: adminRooms,
       page: () => const AdminRoomManagementScreen(),
+      binding: AdminRoomBinding(),
       middlewares: [
         RoleAndRoomGuard(allowedRoles: ['admin']),
       ],
@@ -177,9 +183,17 @@ class AppRoutes {
       page: () => const BisindoScreen(),
       binding: BisindoBinding(),
     ),
-    GetPage(name: profile, page: () => const ProfileScreen()),
+    GetPage(
+      name: profile,
+      page: () => const ProfileScreen(),
+      binding: ProfileBinding(),
+    ),
     GetPage(name: notification, page: () => const NotificationScreen()),
-    GetPage(name: helpCenter, page: () => const HelpCenterScreen()),
+    GetPage(
+      name: helpCenter,
+      page: () => const HelpCenterScreen(),
+      binding: HelpCenterBinding(),
+    ),
     GetPage(name: about, page: () => const AboutScreen()),
     GetPage(
       name: smartbandLdr,

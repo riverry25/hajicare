@@ -1,14 +1,16 @@
+// ignore_for_file: use_null_aware_elements
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../core/services/trusted_backend_service.dart';
 
 /// Coordinates SOS writes so an emergency is either recorded completely or
 /// not recorded at all.
 class SosService {
-  SosService({FirebaseFirestore? firestore}) : _providedFirestore = firestore;
+  SosService({FirebaseFirestore? firestore, TrustedBackendService? backend})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
-  final FirebaseFirestore? _providedFirestore;
+  final FirebaseFirestore _firestore;
 
-  FirebaseFirestore get _firestore =>
-      _providedFirestore ?? FirebaseFirestore.instance;
 
   /// Creates the event and updates both realtime status records atomically.
   Future<String> trigger({

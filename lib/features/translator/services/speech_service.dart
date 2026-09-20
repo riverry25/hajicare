@@ -15,6 +15,8 @@ class SpeechService {
   final SpeechToText _speechToText = SpeechToText();
   bool _isInitialized = false;
   bool _hasPermission = false;
+  bool _isDisposed = false;
+  int _generation = 0;
 
   SpeechStatus _status = SpeechStatus.idle;
   SpeechStatus get status => _status;
@@ -25,11 +27,14 @@ class SpeechService {
   Function(String recognizedWords, bool isFinal)? onResult;
 
   Future<bool> init() async {
+    if (_isDisposed) return false;
     if (_isInitialized) return _hasPermission;
+    final generation = _generation;
 
     try {
       _hasPermission = await _speechToText.initialize(
         onStatus: (status) {
+          if (_isDisposed || generation != _generation) return;
           if (status == 'listening') {
             _status = SpeechStatus.listening;
             onStatusChanged?.call(_status, 'Mendengarkan... Silakan bicara');
@@ -39,6 +44,7 @@ class SpeechService {
           }
         },
         onError: (errorNotification) {
+          if (_isDisposed || generation != _generation) return;
           debugPrint('[SpeechService] onError: ${errorNotification.errorMsg}');
           if (errorNotification.errorMsg.contains('error_permission')) {
             _status = SpeechStatus.permissionDenied;
@@ -56,6 +62,11 @@ class SpeechService {
         },
       );
 
+      if (_isDisposed || generation != _generation) {
+        await _speechToText.cancel();
+        return false;
+      }
+
       _isInitialized = true;
       if (!_hasPermission) {
         _status = SpeechStatus.permissionDenied;
@@ -66,6 +77,7 @@ class SpeechService {
       }
       return _hasPermission;
     } catch (e) {
+      if (_isDisposed || generation != _generation) return false;
       debugPrint('[SpeechService] init error: $e');
       _isInitialized = true;
       _hasPermission = false;
@@ -79,6 +91,8 @@ class SpeechService {
   }
 
   Future<void> startListening({required String languageCode}) async {
+    if (_isDisposed) return;
+    final generation = _generation;
     if (!_isInitialized || !_hasPermission) {
       final ok = await init();
       if (!ok) return;
@@ -86,6 +100,7 @@ class SpeechService {
 
     try {
       final locales = await _speechToText.locales();
+      if (_isDisposed || generation != _generation) return;
       String? matchedLocaleId;
       final targetPrefix = languageCode.toLowerCase();
       for (final loc in locales) {
@@ -100,6 +115,7 @@ class SpeechService {
 
       await _speechToText.listen(
         onResult: (SpeechRecognitionResult result) {
+          if (_isDisposed || generation != _generation) return;
           onResult?.call(result.recognizedWords, result.finalResult);
         },
         listenOptions: SpeechListenOptions(
@@ -110,6 +126,7 @@ class SpeechService {
         ),
       );
     } catch (e) {
+      if (_isDisposed || generation != _generation) return;
       debugPrint('[SpeechService] startListening error: $e');
       _status = SpeechStatus.serviceUnavailable;
       onStatusChanged?.call(
@@ -136,6 +153,11 @@ class SpeechService {
   }
 
   void dispose() {
-    _speechToText.stop();
+    if (_isDisposed) return;
+    _isDisposed = true;
+    _generation++;
+    onStatusChanged = null;
+    onResult = null;
+    unawaited(_speechToText.cancel());
   }
 }

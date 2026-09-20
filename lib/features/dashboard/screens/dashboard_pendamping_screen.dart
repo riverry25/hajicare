@@ -37,9 +37,18 @@ class DashboardPendampingScreen extends StatelessWidget {
           index: dashboardCtrl.currentIndex.value,
           children: [
             _buildHome(context, state, dashboardCtrl),
-            const InteractiveMapScreen(showBottomNav: false),
-            const PrayerTimesScreen(showBottomNav: false),
-            const ProfileScreen(showBottomNav: false),
+            if (dashboardCtrl.visitedTabs.contains(1))
+              const InteractiveMapScreen(showBottomNav: false)
+            else
+              const SizedBox.shrink(),
+            if (dashboardCtrl.visitedTabs.contains(2))
+              const PrayerTimesScreen(showBottomNav: false)
+            else
+              const SizedBox.shrink(),
+            if (dashboardCtrl.visitedTabs.contains(3))
+              const ProfileScreen(showBottomNav: false)
+            else
+              const SizedBox.shrink(),
           ],
         ),
       ),
@@ -61,9 +70,7 @@ class DashboardPendampingScreen extends StatelessWidget {
     DashboardController dashboardCtrl,
   ) {
     final isDark = AppColors.isDark(context);
-    final prayerCtrl = Get.isRegistered<PrayerTimesController>()
-        ? Get.find<PrayerTimesController>()
-        : Get.put(PrayerTimesController());
+    final prayerCtrl = Get.find<PrayerTimesController>();
 
     final heroGradient = LinearGradient(
       colors: isDark
@@ -405,7 +412,11 @@ class DashboardPendampingScreen extends StatelessWidget {
                       ),
                       onTap: () {
                         HapticFeedback.mediumImpact();
-                        NotificationComposerDialog.show(context);
+                        NotificationComposerDialog.show(
+                          context,
+                          initialRoomId: state.activeRoomId.value,
+                          initialRoomName: state.activeRoom.value?.name,
+                        );
                       },
                       child: Center(
                         child: Row(
@@ -886,7 +897,12 @@ class DashboardPendampingScreen extends StatelessWidget {
       child: InkWell(
         onTap: () {
           HapticFeedback.lightImpact();
-          NotificationComposerDialog.show(context);
+          final state = Get.find<HajiCareController>();
+          NotificationComposerDialog.show(
+            context,
+            initialRoomId: state.activeRoomId.value,
+            initialRoomName: state.activeRoom.value?.name,
+          );
         },
         borderRadius: BorderRadius.circular(12),
         child: Column(

@@ -2,4 +2,6 @@ analyzer:
   exclude:
     - build/**
     - android/**
+    - functions/node_modules/**
+    - firebase-tests/node_modules/**
 include: package:flutter_lints/flutter.yaml

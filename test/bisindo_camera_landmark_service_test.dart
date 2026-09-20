@@ -108,40 +108,35 @@ void main() {
       expect(inferenceService.callCount, 1);
     });
 
-    test(
-      'Requires two matching predictions before confirming a word',
-      () async {
-        final results = <BisindoPrediction>[];
-        buffer.dispose();
-        buffer = LandmarkStreamBuffer(
-          inferenceService: inferenceService,
-          minimumFrames: 2,
-          requiredStablePredictions: 2,
-          throttleDuration: Duration.zero,
-          onPrediction: results.add,
-        );
-        final frame = List.generate(543, (i) => [0.1, 0.2, 0.0]);
+    test('Forwards every inference result to the recognition layer', () async {
+      final results = <BisindoPrediction>[];
+      buffer.dispose();
+      buffer = LandmarkStreamBuffer(
+        inferenceService: inferenceService,
+        minimumFrames: 2,
+        throttleDuration: Duration.zero,
+        onPrediction: results.add,
+      );
+      final frame = List.generate(543, (i) => [0.1, 0.2, 0.0]);
 
-        buffer.addFrame(frame);
-        buffer.addFrame(frame);
-        await Future<void>.delayed(Duration.zero);
-        expect(results.single.isRecognized, isFalse);
+      buffer.addFrame(frame);
+      buffer.addFrame(frame);
+      await Future<void>.delayed(Duration.zero);
+      expect(results.single.isRecognized, isTrue);
 
-        buffer.addFrame(frame);
-        await Future<void>.delayed(Duration.zero);
-        expect(results.last.isRecognized, isTrue);
-        expect(buffer.bufferLength, 0);
-      },
-    );
+      buffer.addFrame(frame);
+      await Future<void>.delayed(Duration.zero);
+      expect(results.last.isRecognized, isTrue);
+      expect(buffer.bufferLength, 3);
+    });
 
-    test('Strong match is confirmed immediately', () async {
+    test('Does not alter match quality from the inference service', () async {
       final results = <BisindoPrediction>[];
       inferenceService.matchQuality = BisindoMatchQuality.strong;
       buffer.dispose();
       buffer = LandmarkStreamBuffer(
         inferenceService: inferenceService,
         minimumFrames: 2,
-        requiredStablePredictions: 2,
         throttleDuration: Duration.zero,
         onPrediction: results.add,
       );
@@ -152,7 +147,8 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       expect(results.single.isRecognized, isTrue);
-      expect(buffer.bufferLength, 0);
+      expect(results.single.matchQuality, BisindoMatchQuality.strong);
+      expect(buffer.bufferLength, 2);
     });
   });
 }

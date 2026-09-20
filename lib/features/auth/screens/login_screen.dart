@@ -198,7 +198,9 @@ class LoginScreen extends StatelessWidget {
                           // Luxury badge
                           GestureDetector(
                             onTap: () {
-                              debugPrint('[DEMO] Tapping badge -> navigating to Bisindo');
+                              debugPrint(
+                                '[DEMO] Tapping badge -> navigating to Bisindo',
+                              );
                               Get.toNamed(AppRoutes.bisindo);
                             },
                             child: Container(

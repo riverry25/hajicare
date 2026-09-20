@@ -46,25 +46,30 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
       if (rawValue == null || rawValue.isEmpty) continue;
 
       // Extract room code:
-      // Case 1: URL with query parameter 'code=' or 'room='
+      // Case 1: URL with query parameter 'code=' or 'room=' or path segment
       // Case 2: Plain uppercase alphanumeric (6-8 characters)
       String extracted = rawValue;
-      if (rawValue.contains('code=')) {
-        final uri = Uri.tryParse(rawValue);
-        if (uri != null && uri.queryParameters.containsKey('code')) {
+      final uri = Uri.tryParse(rawValue);
+      if (uri != null) {
+        if (uri.queryParameters.containsKey('code')) {
           extracted = uri.queryParameters['code']!;
-        }
-      } else if (rawValue.contains('room=')) {
-        final uri = Uri.tryParse(rawValue);
-        if (uri != null && uri.queryParameters.containsKey('room')) {
+        } else if (uri.queryParameters.containsKey('room')) {
           extracted = uri.queryParameters['room']!;
+        } else if (uri.pathSegments.isNotEmpty) {
+          for (final seg in uri.pathSegments.reversed) {
+            final clean = seg.trim().toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
+            if (clean.length >= 6 && clean.length <= 8) {
+              extracted = clean;
+              break;
+            }
+          }
         }
       }
 
       // Filter to uppercase alphanumeric
       extracted = extracted.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
 
-      if (extracted.length >= 4) {
+      if (extracted.length >= 4 && extracted.length <= 12) {
         _hasDetected = true;
         Navigator.of(context).pop(extracted);
         return;

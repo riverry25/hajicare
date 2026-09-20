@@ -20,7 +20,7 @@ class HelpCenterScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(HelpCenterController());
+    final controller = Get.find<HelpCenterController>();
     final isDark = AppColors.isDark(context);
     final scaffoldBg = isDark ? AppColors.darkScaffold : AppColors.canvasCream;
     final headingColor = isDark

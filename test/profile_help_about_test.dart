@@ -6,6 +6,7 @@ import 'package:hajicare/core/locales/app_localizations.dart';
 import 'package:hajicare/core/routes/app_routes.dart';
 import 'package:hajicare/core/state/app_settings_controller.dart';
 import 'package:hajicare/core/constants/app_constants.dart';
+import 'package:hajicare/features/profile/bindings/help_center_binding.dart';
 import 'package:hajicare/features/profile/controllers/help_center_controller.dart';
 import 'package:hajicare/features/profile/screens/about_screen.dart';
 import 'package:hajicare/features/profile/screens/help_center_screen.dart';
@@ -20,6 +21,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     Get.reset();
     Get.put(AppSettingsController(), permanent: true);
+    HelpCenterBinding().dependencies();
   });
 
   tearDown(() {
@@ -218,7 +220,7 @@ void main() {
 
     testWidgets('help center remains usable with large text', (tester) async {
       await tester.pumpWidget(
-        buildTestApp(const HelpCenterScreen(), textScale: 1.6),
+        buildTestApp(const HelpCenterScreen(), textScale: 2),
       );
       await tester.pumpAndSettle();
 

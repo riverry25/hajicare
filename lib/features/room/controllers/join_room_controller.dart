@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -82,12 +83,19 @@ class JoinRoomController extends GetxController {
 
   /// Pendamping: Buat Room baru dengan auto-generated unique code
   Future<void> createRoom() async {
+    if (isLoading.value || isClosed) return;
     final name = createRoomNameController.text.trim();
     final maktab = createMaktabController.text.trim();
     final kloter = createKloterController.text.trim();
 
     if (name.isEmpty) {
       errorMessage.value = 'Isi nama rombongan terlebih dahulu.';
+      _showErrorAlert(errorMessage.value!);
+      return;
+    }
+    if (name.length > 100 || maktab.length > 60 || kloter.length > 60) {
+      errorMessage.value =
+          'Nama maksimal 100 karakter; maktab dan kloter maksimal 60 karakter.';
       _showErrorAlert(errorMessage.value!);
       return;
     }
@@ -145,13 +153,19 @@ class JoinRoomController extends GetxController {
 
   /// Jamaah atau Pendamping: Gabung ke room menggunakan 6-digit room code
   Future<void> joinRoom([String? explicitCode]) async {
+    if (isLoading.value || isClosed) return;
     if (explicitCode != null && explicitCode.trim().isNotEmpty) {
       roomCodeController.text = explicitCode.trim().toUpperCase();
     }
     final roomCode = roomCodeController.text.trim().toUpperCase();
 
     if (roomCode.isEmpty) {
-      errorMessage.value = 'Masukkan 6 huruf atau angka kode rombongan.';
+      errorMessage.value = 'Masukkan kode rombongan.';
+      _showErrorAlert(errorMessage.value!);
+      return;
+    }
+    if (!RegExp(r'^[A-Z0-9]{4,12}$').hasMatch(roomCode)) {
+      errorMessage.value = 'Format kode rombongan tidak valid (hanya huruf dan angka).';
       _showErrorAlert(errorMessage.value!);
       return;
     }
@@ -163,7 +177,20 @@ class JoinRoomController extends GetxController {
     }
 
     final state = Get.find<HajiCareController>();
-    final roleStr = state.role == UserRole.pendamping ? 'pendamping' : 'jamaah';
+    String effectiveRole = state.role == UserRole.pendamping ? 'pendamping' : 'jamaah';
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.uid)
+          .get();
+      if (userDoc.exists) {
+        final r = (userDoc.data()?['role'] as String?)?.toLowerCase();
+        if (r == 'pendamping' || r == 'petugas') {
+          effectiveRole = 'pendamping';
+        }
+      }
+    } catch (_) {}
+
     final userName = currentUser.displayName?.trim().isNotEmpty == true
         ? currentUser.displayName!.trim()
         : (currentUser.email?.trim().isNotEmpty == true
@@ -178,10 +205,10 @@ class JoinRoomController extends GetxController {
         roomCode: roomCode,
         uid: currentUser.uid,
         userName: userName,
-        role: roleStr,
+        role: effectiveRole,
       );
 
-      await state.applyUserData(roleStr: roleStr, roomId: joinedRoom.id);
+      await state.applyUserData(roleStr: effectiveRole, roomId: joinedRoom.id);
       state.activeRoom.value = joinedRoom;
 
       isLoading.value = false;

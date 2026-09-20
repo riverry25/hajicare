@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class ProfileController extends GetxController {
+  int _lifecycleGeneration = 0;
+
   // ── Reactive state ─────────────────────────────────────────────────────────
   final displayName = ''.obs;
   final isSavingName = false.obs;
@@ -25,10 +27,10 @@ class ProfileController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _loadUserData();
+    _loadUserData(_lifecycleGeneration);
   }
 
-  void _loadUserData() async {
+  Future<void> _loadUserData(int generation) async {
     User? user;
     try {
       user = FirebaseAuth.instance.currentUser;
@@ -53,6 +55,7 @@ class ProfileController extends GetxController {
           .collection('users')
           .doc(user.uid)
           .get();
+      if (generation != _lifecycleGeneration) return;
       if (doc.exists) {
         final data = doc.data();
         if (data != null) {
@@ -93,6 +96,7 @@ class ProfileController extends GetxController {
 
   // ── Update display name ────────────────────────────────────────────────────
   Future<void> updateDisplayName(String newName) async {
+    final generation = _lifecycleGeneration;
     final trimmed = newName.trim();
     if (trimmed.isEmpty) return;
 
@@ -104,11 +108,13 @@ class ProfileController extends GetxController {
       // 1. Update Firebase Auth displayName
       await user.updateDisplayName(trimmed);
       await user.reload();
+      if (generation != _lifecycleGeneration) return;
 
       // 2. Update Firestore with merge (safe even if doc doesn't exist)
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
         'displayName': trimmed,
       }, SetOptions(merge: true));
+      if (generation != _lifecycleGeneration) return;
 
       // 3. Reflect in reactive state immediately
       displayName.value = trimmed;
@@ -118,7 +124,9 @@ class ProfileController extends GetxController {
       debugPrint('[ProfileController] updateDisplayName error: $e');
       rethrow; // Let the UI handle the snackbar
     } finally {
-      isSavingName.value = false;
+      if (generation == _lifecycleGeneration) {
+        isSavingName.value = false;
+      }
     }
   }
 
@@ -129,6 +137,7 @@ class ProfileController extends GetxController {
     required String conditionsVal,
     required String emergencyContactVal,
   }) async {
+    final generation = _lifecycleGeneration;
     isSavingMedical.value = true;
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -140,6 +149,7 @@ class ProfileController extends GetxController {
         'conditions': conditionsVal.trim(),
         'emergencyContact': emergencyContactVal.trim(),
       }, SetOptions(merge: true));
+      if (generation != _lifecycleGeneration) return;
 
       bloodType.value = bloodTypeVal.trim();
       allergies.value = allergiesVal.trim();
@@ -151,7 +161,15 @@ class ProfileController extends GetxController {
       debugPrint('[ProfileController] updateMedicalData error: $e');
       rethrow;
     } finally {
-      isSavingMedical.value = false;
+      if (generation == _lifecycleGeneration) {
+        isSavingMedical.value = false;
+      }
     }
+  }
+
+  @override
+  void onClose() {
+    _lifecycleGeneration++;
+    super.onClose();
   }
 }

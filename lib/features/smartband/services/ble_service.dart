@@ -32,6 +32,10 @@ class BleService {
   StreamSubscription<BluetoothConnectionState>? _connectionSubscription;
   StreamSubscription<List<int>>? _valueSubscription;
   StreamSubscription<List<int>>? _flameSubscription;
+  Timer? _scanTimeoutTimer;
+  Completer<BluetoothDevice>? _scanCompleter;
+  bool _isDisposed = false;
+  int _generation = 0;
 
   // Callbacks for notifying controller of events
   void Function(int ldrValue, String rawString)? onDataReceived;
@@ -44,6 +48,7 @@ class BleService {
 
   /// Check if Bluetooth is available and turned on.
   Future<bool> isBluetoothEnabled() async {
+    if (_isDisposed) return false;
     try {
       final isSupported = await FlutterBluePlus.isSupported;
       if (!isSupported) return false;
@@ -70,7 +75,12 @@ class BleService {
   Future<BluetoothDevice> scanForDevice({
     Duration timeout = const Duration(seconds: 15),
   }) async {
+    if (_isDisposed) {
+      throw const BleException('Layanan gelang sudah ditutup.', code: 'CLOSED');
+    }
+    final generation = _generation;
     final enabled = await isBluetoothEnabled();
+    _ensureActive(generation);
     if (!enabled) {
       throw const BleException(
         'Bluetooth tidak aktif. Silakan aktifkan Bluetooth pada perangkat.',
@@ -83,10 +93,11 @@ class BleService {
     }
 
     final completer = Completer<BluetoothDevice>();
-    Timer? timeoutTimer;
+    _scanCompleter = completer;
 
     await _scanSubscription?.cancel();
     _scanSubscription = FlutterBluePlus.scanResults.listen((results) {
+      if (_isDisposed || generation != _generation) return;
       for (final result in results) {
         final name = result.device.platformName.isNotEmpty
             ? result.device.platformName
@@ -94,7 +105,7 @@ class BleService {
 
         if (name.trim() == targetDeviceName) {
           onStatusLog?.call('Gelang ditemukan: $name');
-          timeoutTimer?.cancel();
+          _scanTimeoutTimer?.cancel();
           _scanSubscription?.cancel();
           _scanSubscription = null;
           FlutterBluePlus.stopScan();
@@ -106,7 +117,7 @@ class BleService {
       }
     });
 
-    timeoutTimer = Timer(timeout, () async {
+    _scanTimeoutTimer = Timer(timeout, () async {
       await _scanSubscription?.cancel();
       _scanSubscription = null;
       await FlutterBluePlus.stopScan();
@@ -123,7 +134,7 @@ class BleService {
     try {
       await FlutterBluePlus.startScan(timeout: timeout);
     } catch (e) {
-      timeoutTimer.cancel();
+      _scanTimeoutTimer?.cancel();
       await _scanSubscription?.cancel();
       _scanSubscription = null;
       if (!completer.isCompleted) {
@@ -133,11 +144,22 @@ class BleService {
       }
     }
 
-    return completer.future;
+    try {
+      return await completer.future;
+    } finally {
+      if (identical(_scanCompleter, completer)) {
+        _scanCompleter = null;
+        _scanTimeoutTimer = null;
+      }
+    }
   }
 
   /// Connect to the specified device and discover services & characteristics.
   Future<void> connectToDevice(BluetoothDevice device) async {
+    if (_isDisposed) {
+      throw const BleException('Layanan gelang sudah ditutup.', code: 'CLOSED');
+    }
+    final generation = _generation;
     try {
       onStatusLog?.call('Menghubungkan gelang...');
 
@@ -146,6 +168,10 @@ class BleService {
         autoConnect: false,
         timeout: const Duration(seconds: 15),
       );
+      if (_isDisposed || generation != _generation) {
+        await device.disconnect();
+        _ensureActive(generation);
+      }
 
       _connectedDevice = device;
 
@@ -156,6 +182,7 @@ class BleService {
       await _connectionSubscription?.cancel();
 
       _connectionSubscription = device.connectionState.listen((state) {
+        if (_isDisposed || generation != _generation) return;
         if (state == BluetoothConnectionState.disconnected) {
           onStatusLog?.call('Perangkat terputus.');
           _handleDisconnection();
@@ -171,6 +198,7 @@ class BleService {
       onStatusLog?.call('Menyiapkan gelang...');
 
       final services = await device.discoverServices();
+      _ensureActive(generation);
 
       BluetoothService? targetService;
 
@@ -254,6 +282,7 @@ class BleService {
       device.cancelWhenDisconnected(_valueSubscription!);
 
       await ldrChar.setNotifyValue(true);
+      _ensureActive(generation);
 
       // ==========================================
       // FLAME NOTIFICATION
@@ -270,6 +299,7 @@ class BleService {
       device.cancelWhenDisconnected(_flameSubscription!);
 
       await flameChar.setNotifyValue(true);
+      _ensureActive(generation);
 
       // ==========================================
       // SUCCESS
@@ -292,6 +322,7 @@ class BleService {
 
   /// Process incoming byte stream from ESP32 notification.
   void _processReceivedData(List<int> bytes) {
+    if (_isDisposed) return;
     if (bytes.isEmpty) return;
     try {
       final rawString = utf8.decode(bytes).trim();
@@ -305,6 +336,7 @@ class BleService {
   }
 
   void _processFlameData(List<int> bytes) {
+    if (_isDisposed) return;
     if (bytes.isEmpty) return;
 
     try {
@@ -369,16 +401,38 @@ class BleService {
     _connectionSubscription?.cancel();
     _connectionSubscription = null;
 
-    onConnectionChanged?.call(false);
+    if (!_isDisposed) onConnectionChanged?.call(false);
+  }
+
+  void _ensureActive(int generation) {
+    if (_isDisposed || generation != _generation) {
+      throw const BleException('Operasi gelang dibatalkan.', code: 'CLOSED');
+    }
   }
 
   /// Cancel all active subscriptions and dispose resources.
   Future<void> dispose() async {
+    if (_isDisposed) return;
+    _isDisposed = true;
+    _generation++;
+    _scanTimeoutTimer?.cancel();
+    _scanTimeoutTimer = null;
     await _scanSubscription?.cancel();
     _scanSubscription = null;
     if (FlutterBluePlus.isScanningNow) {
       await FlutterBluePlus.stopScan();
     }
+    final pendingScan = _scanCompleter;
+    _scanCompleter = null;
+    if (pendingScan != null && !pendingScan.isCompleted) {
+      pendingScan.completeError(
+        const BleException('Operasi gelang dibatalkan.', code: 'CLOSED'),
+      );
+    }
+    onDataReceived = null;
+    onFlameDataReceived = null;
+    onConnectionChanged = null;
+    onStatusLog = null;
     await disconnect();
   }
 }

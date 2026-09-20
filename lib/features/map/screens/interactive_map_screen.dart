@@ -58,9 +58,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
   void initState() {
     super.initState();
     _searchCtrl = TextEditingController();
-    _mapController = Get.isRegistered<MapController>()
-        ? Get.find<MapController>()
-        : Get.put(MapController());
+    _mapController = Get.find<MapController>();
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),

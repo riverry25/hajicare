@@ -1,0 +1,17 @@
+{
+  "name": "hajicare-firebase-tests",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "firebase emulators:exec --project hajicare-test --only firestore \"node --test *.test.js\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "5.0.2",
+    "firebase": "12.19.0",
+    "firebase-admin": "14.4.0",
+    "firebase-tools": "15.30.2"
+  },
+  "overrides": {
+    "uuid": "11.1.1"
+  }
+}
