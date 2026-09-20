@@ -80,21 +80,29 @@ service cloud.firestore {
         isPendamping() &&
         resource.data.role != 'admin' &&
         request.resource.data.role == resource.data.role &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'activeRoomId', 'sosActive'
-        ]) && (
+        (
           (
-            request.resource.data.get('activeRoomId', null) != null &&
-            isRoomManager(request.resource.data.activeRoomId) &&
-            existsAfter(
-              /databases/$(database)/documents/rooms/$(request.resource.data.activeRoomId)/members/$(uid)
-            )
-          ) || (
-            request.resource.data.get('activeRoomId', null) == null &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sosActive']) &&
             resource.data.get('activeRoomId', null) != null &&
-            isRoomManager(resource.data.activeRoomId) &&
-            !existsAfter(
-              /databases/$(database)/documents/rooms/$(resource.data.activeRoomId)/members/$(uid)
+            isRoomManager(resource.data.activeRoomId)
+          ) || (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'activeRoomId', 'sosActive'
+            ]) && (
+              (
+                request.resource.data.get('activeRoomId', null) != null &&
+                isRoomManager(request.resource.data.activeRoomId) &&
+                existsAfter(
+                  /databases/$(database)/documents/rooms/$(request.resource.data.activeRoomId)/members/$(uid)
+                )
+              ) || (
+                request.resource.data.get('activeRoomId', null) == null &&
+                resource.data.get('activeRoomId', null) != null &&
+                isRoomManager(resource.data.activeRoomId) &&
+                !existsAfter(
+                  /databases/$(database)/documents/rooms/$(resource.data.activeRoomId)/members/$(uid)
+                )
+              )
             )
           )
         )
@@ -155,7 +163,6 @@ service cloud.firestore {
 
         allow update: if isAdmin() || (
           isSelf(memberUid) &&
-          isRoomMember(roomId) &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly([
             'currentLocation', 'isGpsActive', 'locationUpdatedAt', 'sosActive'
           ])
@@ -252,19 +259,29 @@ service cloud.firestore {
       allow read: if isAdmin() || (
         signedIn() && (
           resource.data.userId == request.auth.uid ||
-          isRoomMember(resource.data.roomId)
+          (resource.data.get('roomId', null) != null && isRoomMember(resource.data.roomId))
         )
       );
 
       allow create: if signedIn() &&
         request.resource.data.userId == request.auth.uid &&
         request.resource.data.jamaahId == request.auth.uid &&
-        request.resource.data.roomId is string &&
-        isRoomMember(request.resource.data.roomId) &&
-        request.resource.data.status == 'active';
+        request.resource.data.status == 'active' &&
+        (
+          request.resource.data.get('roomId', null) == null ||
+          request.resource.data.roomId == '' ||
+          (
+            request.resource.data.roomId is string &&
+            isRoomMember(request.resource.data.roomId)
+          )
+        );
 
       allow update: if isAdmin() || (
-        isRoomManager(resource.data.roomId) &&
+        signedIn() &&
+        (
+          resource.data.userId == request.auth.uid ||
+          (resource.data.get('roomId', null) != null && isRoomManager(resource.data.roomId))
+        ) &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'respondedAt', 'respondedBy', 'respondedByName',
           'resolvedAt', 'resolvedBy', 'status'

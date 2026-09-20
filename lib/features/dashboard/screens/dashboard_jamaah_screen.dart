@@ -20,7 +20,7 @@ import '../../room/widgets/active_room_card.dart';
 import '../../communication/widgets/communication_gesture_dialog.dart';
 import '../../smartband/controllers/smartband_ldr_controller.dart';
 import '../controllers/dashboard_controller.dart';
-import '../widgets/rotating_sync_button.dart';
+import '../widgets/distance_sparkline_widget.dart';
 
 class DashboardJamaahScreen extends StatelessWidget {
   const DashboardJamaahScreen({super.key});
@@ -295,8 +295,10 @@ class DashboardJamaahScreen extends StatelessWidget {
                 ),
               ),
 
-              // Sync / Refresh Location Circular Button with spinning animation
-              RotatingSyncButton(
+              // Distance-reactive sparkline wave (replaces static sync button)
+              DistanceSparklineWidget(
+                distance: jamaah.distance,
+                tooltip: 'Perbarui lokasi GPS',
                 onSync: () async {
                   await state.refreshLocation();
                   if (context.mounted) {
@@ -672,20 +674,6 @@ class DashboardJamaahScreen extends StatelessWidget {
                         ? AppColors.goldLight
                         : AppColors.espressoDark,
                     onTap: () => _showSmartBandDialog(context),
-                  ),
-                ),
-                Expanded(
-                  child: _buildCategoryItem(
-                    context: context,
-                    label: 'Panduan Doa',
-                    icon: Icons.menu_book_rounded,
-                    bgColor: isDark
-                        ? AppColors.darkSurfaceContainer
-                        : AppColors.canvasCream,
-                    iconColor: isDark
-                        ? AppColors.goldLight
-                        : AppColors.espressoDark,
-                    onTap: () => _showDoaSheet(context),
                   ),
                 ),
                 Expanded(

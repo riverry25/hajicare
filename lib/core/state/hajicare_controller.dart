@@ -937,19 +937,39 @@ class HajiCareController extends GetxController {
   // ── SOS SYSTEM (TRUE FIRESTORE & REALTIME) ──────────────────────────────────
 
   /// Triggers a real SOS event with current location to Firestore.
-  /// Enforces that Jamaah must have an active room.
+  /// Works reliably for Jamaah both within a room and in standalone emergency mode.
   Future<bool> triggerSos() async {
     final user = _firebaseAuth.currentUser;
     if (user == null) return false;
 
     try {
       final myPos = myCurrentPosition.value;
-      final roomId = activeRoomId.value;
-      final roomName =
-          activeRoom.value?.name ?? (roomId != null ? 'Rombongan' : 'Darurat');
-      final userName = _self?.name ?? user.displayName ?? 'Jamaah';
+      var roomId = activeRoomId.value?.trim();
+      if (roomId == null || roomId.isEmpty) {
+        roomId = _cachedRoomId?.trim();
+      }
+      if (roomId == null || roomId.isEmpty) {
+        try {
+          final userDoc = await _firestore
+              .collection('users')
+              .doc(user.uid)
+              .get(const GetOptions(source: Source.serverAndCache));
+          final docRoomId = (userDoc.data()?['activeRoomId'] as String?)
+              ?.trim();
+          if (docRoomId != null && docRoomId.isNotEmpty) {
+            roomId = docRoomId;
+            activeRoomId.value = docRoomId;
+            _cachedRoomId = docRoomId;
+          }
+        } catch (_) {}
+      }
 
-      if (roomId == null || roomId.isEmpty) return false;
+      final roomName =
+          activeRoom.value?.name ??
+          (roomId != null && roomId.isNotEmpty
+              ? 'Rombongan'
+              : 'Di luar rombongan');
+      final userName = _self?.name ?? user.displayName ?? 'Jamaah';
 
       await _sosService.trigger(
         userId: user.uid,
@@ -976,9 +996,13 @@ class HajiCareController extends GetxController {
   /// Resolves an active SOS event in Firestore.
   Future<bool> dismissSos(String id, {String? eventId}) async {
     try {
+      var roomId = activeRoomId.value?.trim();
+      if (roomId == null || roomId.isEmpty) {
+        roomId = _cachedRoomId?.trim();
+      }
       await _roomService.resolveSos(
         userId: id,
-        roomId: activeRoomId.value,
+        roomId: roomId,
         eventId: eventId,
         resolvedByUid: currentUid,
       );

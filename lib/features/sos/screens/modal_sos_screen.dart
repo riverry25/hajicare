@@ -49,9 +49,9 @@ class _ModalSosScreenState extends State<ModalSosScreen>
     // Auto-start countdown ONLY for Jamaah who do not already have an active SOS
     final isOfficer =
         state.role == UserRole.pendamping || state.role == UserRole.admin;
-    final hasActiveSos = state.anySosActive;
+    final isSelfSosActive = state.self.sosActive;
 
-    if (!isOfficer && !hasActiveSos) {
+    if (!isOfficer && !isSelfSosActive) {
       _startCountdown();
     }
   }
@@ -71,7 +71,6 @@ class _ModalSosScreenState extends State<ModalSosScreen>
         _countdown = i;
         if (i == 0) {
           _isCountingDown = false;
-          _sosSent = true;
           _sendSos();
         }
       });
@@ -90,6 +89,9 @@ class _ModalSosScreenState extends State<ModalSosScreen>
     final success = await state.triggerSos();
     if (mounted) {
       if (success) {
+        setState(() {
+          _sosSent = true;
+        });
         AppAlert.success(
           context,
           title: 'Sinyal SOS Terkirim!',
@@ -97,6 +99,9 @@ class _ModalSosScreenState extends State<ModalSosScreen>
               'Pendamping sudah diberi tahu. Tetap di tempat yang aman dan dekatkan ponsel Anda.',
         );
       } else {
+        setState(() {
+          _sosSent = false;
+        });
         AppAlert.error(
           context,
           title: 'SOS Belum Terkirim',
@@ -235,11 +240,9 @@ class _ModalSosScreenState extends State<ModalSosScreen>
         ],
       ),
       body: Obx(() {
-        final activeSosList = state.activeSosEvents;
-        final hasActiveSos = activeSosList.isNotEmpty;
-
-        // If Officer OR there are active SOS events from Firestore, show Responder Panel
-        if (isOfficer || hasActiveSos) {
+        // If Officer, show Responder Panel
+        if (isOfficer) {
+          final activeSosList = state.activeSosEvents;
           return _buildResponderView(
             context,
             activeSosList,
@@ -250,7 +253,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
           );
         }
 
-        // Otherwise (Jamaah in Standby), show Emergency Sender Panel
+        // Otherwise (Jamaah), show Emergency Sender Panel
         return _buildJamaahSenderView(
           context,
           isDark,
