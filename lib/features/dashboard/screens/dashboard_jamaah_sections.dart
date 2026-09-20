@@ -64,20 +64,6 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                 Expanded(
                   child: _buildCategoryItem(
                     context: context,
-                    label: 'Panduan Doa',
-                    icon: Icons.menu_book_rounded,
-                    bgColor: isDark
-                        ? AppColors.darkSurfaceContainer
-                        : AppColors.canvasCream,
-                    iconColor: isDark
-                        ? AppColors.goldLight
-                        : AppColors.espressoDark,
-                    onTap: () => _showDoaSheet(context),
-                  ),
-                ),
-                Expanded(
-                  child: _buildCategoryItem(
-                    context: context,
                     label: 'Pos Medis',
                     icon: Icons.local_hospital_rounded,
                     bgColor: isDark
