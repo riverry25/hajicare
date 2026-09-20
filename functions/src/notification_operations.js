@@ -19,7 +19,14 @@ function chunks(items, size) {
 
 async function sendNotification(db, auth, data) {
   requireAuth(auth);
-  const role = roleFromAuth(auth);
+  let role = roleFromAuth(auth);
+  if (role !== 'admin' && role !== 'pendamping') {
+    const userDoc = await db.collection('users').doc(auth.uid).get();
+    const docRole = String(userDoc.data()?.role || '').toLowerCase();
+    if (docRole === 'admin' || docRole === 'pendamping' || docRole === 'petugas') {
+      role = docRole === 'petugas' ? 'pendamping' : docRole;
+    }
+  }
   if (role !== 'admin' && role !== 'pendamping') {
     throw new BackendError('permission-denied', 'Akses pengirim notifikasi diperlukan.');
   }

@@ -412,7 +412,11 @@ class DashboardPendampingScreen extends StatelessWidget {
                       ),
                       onTap: () {
                         HapticFeedback.mediumImpact();
-                        NotificationComposerDialog.show(context);
+                        NotificationComposerDialog.show(
+                          context,
+                          initialRoomId: state.activeRoomId.value,
+                          initialRoomName: state.activeRoom.value?.name,
+                        );
                       },
                       child: Center(
                         child: Row(
@@ -893,7 +897,12 @@ class DashboardPendampingScreen extends StatelessWidget {
       child: InkWell(
         onTap: () {
           HapticFeedback.lightImpact();
-          NotificationComposerDialog.show(context);
+          final state = Get.find<HajiCareController>();
+          NotificationComposerDialog.show(
+            context,
+            initialRoomId: state.activeRoomId.value,
+            initialRoomName: state.activeRoom.value?.name,
+          );
         },
         borderRadius: BorderRadius.circular(12),
         child: Column(

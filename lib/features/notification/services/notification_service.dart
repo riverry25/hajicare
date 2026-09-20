@@ -37,16 +37,157 @@ class NotificationService {
     Map<String, dynamic>? metadata,
   }) async {
     final scopeValue = targetMaktab ?? targetKloter;
-    final result = await _backend.call('sendNotification', {
-      'title': title,
-      'message': message,
-      'scope': scope,
-      'type': type,
-      'userId': ?targetUserId,
-      'roomId': ?targetRoomId,
-      'scopeValue': ?scopeValue,
-    });
-    return (result['recipientCount'] as num).toInt();
+    try {
+      final result = await _backend.call('sendNotification', {
+        'title': title,
+        'message': message,
+        'scope': scope,
+        'type': type,
+        'userId': ?targetUserId,
+        'roomId': ?targetRoomId,
+        'scopeValue': ?scopeValue,
+      });
+      return (result['recipientCount'] as num).toInt();
+    } catch (error) {
+      debugPrint(
+        '[NotificationService] Backend sendNotification failed ($error), using direct Firestore fallback',
+      );
+      return _sendNotificationDirect(
+        title: title,
+        message: message,
+        senderUid: senderUid,
+        senderRole: senderRole,
+        senderName: senderName,
+        scope: scope,
+        targetUserId: targetUserId,
+        targetRoomId: targetRoomId,
+        targetMaktab: targetMaktab,
+        targetKloter: targetKloter,
+        type: type,
+        relatedId: relatedId,
+        metadata: metadata,
+      );
+    }
+  }
+
+  Future<int> _sendNotificationDirect({
+    required String title,
+    required String message,
+    required String senderUid,
+    required String senderRole,
+    required String senderName,
+    required String scope,
+    String? targetUserId,
+    String? targetRoomId,
+    String? targetMaktab,
+    String? targetKloter,
+    String type = 'announcement',
+    String? relatedId,
+    Map<String, dynamic>? metadata,
+  }) async {
+    final List<String> targetIds = [];
+
+    if (scope == 'user') {
+      if (targetUserId == null || targetUserId.trim().isEmpty) {
+        throw Exception('Penerima belum dipilih.');
+      }
+      targetIds.add(targetUserId.trim());
+    } else if (scope == 'room') {
+      if (targetRoomId == null || targetRoomId.trim().isEmpty) {
+        throw Exception('Rombongan belum dipilih.');
+      }
+      final membersSnap = await _firestore
+          .collection('rooms')
+          .doc(targetRoomId.trim())
+          .collection('members')
+          .get();
+      for (final doc in membersSnap.docs) {
+        final uid = doc.id.trim();
+        if (uid.isNotEmpty && uid != senderUid) {
+          targetIds.add(uid);
+        }
+      }
+    } else if (scope == 'maktab') {
+      if (targetMaktab == null || targetMaktab.trim().isEmpty) {
+        throw Exception('Maktab tujuan belum dipilih.');
+      }
+      final usersSnap = await _firestore
+          .collection('users')
+          .where('maktab', isEqualTo: targetMaktab.trim())
+          .get();
+      for (final doc in usersSnap.docs) {
+        final uid = doc.id.trim();
+        if (uid.isNotEmpty && uid != senderUid) {
+          targetIds.add(uid);
+        }
+      }
+    } else if (scope == 'kloter') {
+      if (targetKloter == null || targetKloter.trim().isEmpty) {
+        throw Exception('Kloter tujuan belum dipilih.');
+      }
+      final usersSnap = await _firestore
+          .collection('users')
+          .where('kloter', isEqualTo: targetKloter.trim())
+          .get();
+      for (final doc in usersSnap.docs) {
+        final uid = doc.id.trim();
+        if (uid.isNotEmpty && uid != senderUid) {
+          targetIds.add(uid);
+        }
+      }
+    } else {
+      // Global scope: broadcast to all active users
+      final usersSnap = await _firestore.collection('users').limit(500).get();
+      for (final doc in usersSnap.docs) {
+        final uid = doc.id.trim();
+        if (uid.isNotEmpty && uid != senderUid) {
+          targetIds.add(uid);
+        }
+      }
+    }
+
+    final uniqueTargets = targetIds.toSet().toList();
+    if (uniqueTargets.isEmpty) {
+      return 0;
+    }
+
+    const chunkSize = 400;
+    for (int i = 0; i < uniqueTargets.length; i += chunkSize) {
+      final end = (i + chunkSize > uniqueTargets.length)
+          ? uniqueTargets.length
+          : i + chunkSize;
+      final chunk = uniqueTargets.sublist(i, end);
+      final batch = _firestore.batch();
+      for (final uid in chunk) {
+        final docRef = _firestore.collection('notifications').doc();
+        batch.set(docRef, {
+          'recipientId': uid,
+          'title': title,
+          'message': message,
+          'type': type,
+          'scope': scope,
+          if (targetUserId != null && targetUserId.trim().isNotEmpty)
+            'targetUserId': targetUserId.trim(),
+          if (targetRoomId != null && targetRoomId.trim().isNotEmpty)
+            'targetRoomId': targetRoomId.trim(),
+          if (targetMaktab != null && targetMaktab.trim().isNotEmpty)
+            'targetMaktab': targetMaktab.trim(),
+          if (targetKloter != null && targetKloter.trim().isNotEmpty)
+            'targetKloter': targetKloter.trim(),
+          if (senderUid.isNotEmpty) 'senderId': senderUid,
+          if (senderName.isNotEmpty) 'senderName': senderName,
+          if (senderRole.isNotEmpty) 'senderRole': senderRole,
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+          if (relatedId != null && relatedId.trim().isNotEmpty)
+            'relatedId': relatedId.trim(),
+          'metadata': ?metadata,
+        });
+      }
+      await batch.commit();
+    }
+
+    return uniqueTargets.length;
   }
 
   /// Bounded realtime window. Older history is intentionally not loaded until

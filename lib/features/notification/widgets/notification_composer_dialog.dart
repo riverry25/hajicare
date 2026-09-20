@@ -130,6 +130,29 @@ class _NotificationComposerDialogState
     _selectedRoomName =
         widget.initialRoomName ?? controller.activeRoom.value?.name;
 
+    if ((_selectedRoomId == null || _selectedRoomId!.isEmpty) && !isAdmin) {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        FirebaseFirestore.instance
+            .collection('rooms')
+            .where('pendampingId', isEqualTo: user.uid)
+            .where('isActive', isEqualTo: true)
+            .limit(1)
+            .get()
+            .then((snap) {
+              if (snap.docs.isNotEmpty &&
+                  mounted &&
+                  (_selectedRoomId == null || _selectedRoomId!.isEmpty)) {
+                setState(() {
+                  _selectedRoomId = snap.docs.first.id;
+                  _selectedRoomName = snap.docs.first.data()['name'] as String?;
+                });
+              }
+            })
+            .catchError((_) {});
+      }
+    }
+
     // Listen to updates for live preview
     _titleController.addListener(() => setState(() {}));
     _messageController.addListener(() => setState(() {}));
