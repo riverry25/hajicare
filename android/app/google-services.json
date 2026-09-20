@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "130436723221-v7c6gv43u2o3kla92lh03tke4788lheo.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.hajicare",
+            "certificate_hash": "69234dc0543aefd670187941c86d35b0e00fdd24"
+          }
+        },
+        {
           "client_id": "130436723221-l3spcu8ngaano7f8msjsgsh1v00bmnqf.apps.googleusercontent.com",
           "client_type": 3
         }
