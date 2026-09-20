@@ -50,23 +50,22 @@ service cloud.firestore {
           'allergies', 'bloodType', 'conditions', 'currentLocation',
           'displayName', 'emergencyContact', 'isGpsActive',
           'locationUpdatedAt', 'name', 'nomorPorsi', 'porsi', 'photoUrl', 'updatedAt',
-          'email', 'normalizedEmail', 'role'
+          'email', 'normalizedEmail', 'role', 'activeRoomId'
         ]) &&
         request.resource.data.get('role', resource.data.get('role', 'jamaah')) != 'admin';
       allow delete: if false;
     }
 
     match /rooms/{roomId} {
-      allow read: if isAdmin() || isRoomMember(roomId);
-      allow write: if false;
+      allow read: if signedIn();
+      allow create: if signedIn();
+      allow update: if signedIn();
+      allow delete: if isAdmin() || (signedIn() && resource.data.createdBy == request.auth.uid);
 
       match /members/{memberUid} {
-        allow read: if isAdmin() || isRoomMember(roomId);
-        allow create, delete: if false;
-        allow update: if isSelf(memberUid) && isRoomMember(roomId) &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'currentLocation', 'isGpsActive', 'locationUpdatedAt'
-          ]);
+        allow read: if signedIn();
+        allow create, update: if isSelf(memberUid);
+        allow delete: if isSelf(memberUid) || isAdmin() || isRoomManager(roomId);
       }
     }
 
@@ -100,9 +99,10 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Server-only coordination collections. Admin SDK bypasses Security Rules.
+    // Room codes collection: allows signed-in users to lookup/create room mapping
     match /roomCodes/{code} {
-      allow read, write: if false;
+      allow read, create, update: if signedIn();
+      allow delete: if signedIn();
     }
 
     match /active_sos/{uid} {

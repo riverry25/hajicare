@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -159,13 +160,12 @@ class JoinRoomController extends GetxController {
     final roomCode = roomCodeController.text.trim().toUpperCase();
 
     if (roomCode.isEmpty) {
-      errorMessage.value = 'Masukkan 6-8 karakter kode rombongan.';
+      errorMessage.value = 'Masukkan kode rombongan.';
       _showErrorAlert(errorMessage.value!);
       return;
     }
-    if (!RegExp(r'^[A-HJ-NP-Z2-9]{6,8}$').hasMatch(roomCode)) {
-      errorMessage.value =
-          'Kode harus 6-8 karakter dan tidak memakai I, O, 0, atau 1.';
+    if (!RegExp(r'^[A-Z0-9]{4,12}$').hasMatch(roomCode)) {
+      errorMessage.value = 'Format kode rombongan tidak valid (hanya huruf dan angka).';
       _showErrorAlert(errorMessage.value!);
       return;
     }
@@ -177,7 +177,20 @@ class JoinRoomController extends GetxController {
     }
 
     final state = Get.find<HajiCareController>();
-    final roleStr = state.role == UserRole.pendamping ? 'pendamping' : 'jamaah';
+    String effectiveRole = state.role == UserRole.pendamping ? 'pendamping' : 'jamaah';
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.uid)
+          .get();
+      if (userDoc.exists) {
+        final r = (userDoc.data()?['role'] as String?)?.toLowerCase();
+        if (r == 'pendamping' || r == 'petugas') {
+          effectiveRole = 'pendamping';
+        }
+      }
+    } catch (_) {}
+
     final userName = currentUser.displayName?.trim().isNotEmpty == true
         ? currentUser.displayName!.trim()
         : (currentUser.email?.trim().isNotEmpty == true
@@ -192,10 +205,10 @@ class JoinRoomController extends GetxController {
         roomCode: roomCode,
         uid: currentUser.uid,
         userName: userName,
-        role: roleStr,
+        role: effectiveRole,
       );
 
-      await state.applyUserData(roleStr: roleStr, roomId: joinedRoom.id);
+      await state.applyUserData(roleStr: effectiveRole, roomId: joinedRoom.id);
       state.activeRoom.value = joinedRoom;
 
       isLoading.value = false;
