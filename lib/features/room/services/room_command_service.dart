@@ -90,8 +90,10 @@ class RoomCommandService {
       }
       final candidate = buffer.toString();
       try {
-        final existingCode =
-            await _firestore.collection('roomCodes').doc(candidate).get();
+        final existingCode = await _firestore
+            .collection('roomCodes')
+            .doc(candidate)
+            .get();
         if (!existingCode.exists) {
           code = candidate;
           break;
@@ -264,8 +266,10 @@ class RoomCommandService {
     // Step 1: Resolve roomId from roomCodes collection or rooms query
     String? targetRoomId;
     try {
-      final codeDoc =
-          await _firestore.collection('roomCodes').doc(cleanCode).get();
+      final codeDoc = await _firestore
+          .collection('roomCodes')
+          .doc(cleanCode)
+          .get();
       if (codeDoc.exists) {
         targetRoomId = codeDoc.data()?['roomId'] as String?;
       }
@@ -290,8 +294,10 @@ class RoomCommandService {
     }
 
     // Step 2: Fetch and validate Room
-    final roomDoc =
-        await _firestore.collection('rooms').doc(targetRoomId).get();
+    final roomDoc = await _firestore
+        .collection('rooms')
+        .doc(targetRoomId)
+        .get();
     if (!roomDoc.exists) {
       throw const RoomCommandException('Rombongan tidak ditemukan.');
     }
@@ -309,8 +315,7 @@ class RoomCommandService {
     String memberRole = 'jamaah';
 
     try {
-      final userDoc =
-          await _firestore.collection('users').doc(user.uid).get();
+      final userDoc = await _firestore.collection('users').doc(user.uid).get();
       if (userDoc.exists) {
         final uData = userDoc.data() ?? {};
         final dbRole = (uData['role'] as String?)?.toLowerCase();
@@ -357,8 +362,7 @@ class RoomCommandService {
 
     return RoomModel.fromFirestore(
       roomDoc,
-      memberCount:
-          ((roomData['memberCount'] as num?)?.toInt() ?? 0) + 1,
+      memberCount: ((roomData['memberCount'] as num?)?.toInt() ?? 0) + 1,
     );
   }
 
@@ -436,36 +440,284 @@ class RoomCommandService {
     required String roomId,
     required String email,
   }) async {
-    final result = await _backend.call('inviteJamaah', {
-      'roomId': roomId,
-      'email': email.trim().toLowerCase(),
-    });
-    final invitationId = result['invitationId'] as String?;
-    if (invitationId == null || invitationId.isEmpty) {
-      throw const RoomCommandException(
-        'Undangan berhasil dibuat tetapi ID tidak tersedia.',
+    try {
+      final result = await _backend.call('inviteJamaah', {
+        'roomId': roomId,
+        'email': email.trim().toLowerCase(),
+      });
+      final invitationId = result['invitationId'] as String?;
+      if (invitationId == null || invitationId.isEmpty) {
+        throw const RoomCommandException(
+          'Undangan berhasil dibuat tetapi ID tidak tersedia.',
+        );
+      }
+      final snapshot = await _firestore
+          .collection('invitations')
+          .doc(invitationId)
+          .get();
+      if (!snapshot.exists) {
+        throw const RoomCommandException(
+          'Undangan berhasil dibuat tetapi belum dapat dimuat.',
+        );
+      }
+      return RoomInvitationModel.fromFirestore(snapshot);
+    } catch (error) {
+      debugPrint(
+        '[RoomCommandService] Backend inviteJamaah failed ($error), using direct Firestore fallback',
       );
+      return _inviteJamaahDirect(roomId: roomId, email: email);
     }
-    final snapshot = await _firestore
-        .collection('invitations')
-        .doc(invitationId)
+  }
+
+  Future<RoomInvitationModel> _inviteJamaahDirect({
+    required String roomId,
+    required String email,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw const RoomCommandException('Pengguna belum masuk.');
+    }
+
+    final cleanEmail = email.trim().toLowerCase();
+    if (cleanEmail.isEmpty) {
+      throw const RoomCommandException('Email jamaah tidak boleh kosong.');
+    }
+
+    // Search by normalizedEmail or email
+    var userQuery = await _firestore
+        .collection('users')
+        .where('normalizedEmail', isEqualTo: cleanEmail)
+        .limit(2)
         .get();
-    if (!snapshot.exists) {
-      throw const RoomCommandException(
-        'Undangan berhasil dibuat tetapi belum dapat dimuat.',
+    if (userQuery.docs.isEmpty) {
+      userQuery = await _firestore
+          .collection('users')
+          .where('email', isEqualTo: cleanEmail)
+          .limit(2)
+          .get();
+    }
+    if (userQuery.docs.isEmpty) {
+      userQuery = await _firestore
+          .collection('users')
+          .where('email', isEqualTo: email.trim())
+          .limit(2)
+          .get();
+    }
+
+    if (userQuery.docs.isEmpty) {
+      throw RoomCommandException(
+        'Akun jamaah dengan email "$email" tidak ditemukan. Pastikan jamaah sudah mendaftar di aplikasi.',
       );
     }
-    return RoomInvitationModel.fromFirestore(snapshot);
+
+    final targetDoc = userQuery.docs.first;
+    final targetUid = targetDoc.id;
+    final targetData = targetDoc.data();
+
+    if (targetUid == user.uid) {
+      throw const RoomCommandException(
+        'Anda tidak dapat mengundang akun sendiri.',
+      );
+    }
+
+    final currentRoom = (targetData['activeRoomId'] as String?)?.trim();
+    if (currentRoom != null && currentRoom.isNotEmpty) {
+      if (currentRoom == roomId) {
+        throw const RoomCommandException(
+          'Jamaah ini sudah menjadi anggota rombongan Anda.',
+        );
+      } else {
+        throw const RoomCommandException(
+          'Jamaah ini sudah bergabung di rombongan lain.',
+        );
+      }
+    }
+
+    final roomDoc = await _firestore.collection('rooms').doc(roomId).get();
+    if (!roomDoc.exists) {
+      throw const RoomCommandException('Rombongan tidak ditemukan.');
+    }
+    final roomData = roomDoc.data() ?? {};
+    final roomName = (roomData['name'] as String?)?.trim() ?? 'Rombongan';
+    final roomCode = (roomData['code'] as String?)?.trim();
+
+    final senderName =
+        (user.displayName != null && user.displayName!.trim().isNotEmpty)
+        ? user.displayName!.trim()
+        : (user.email?.trim().isNotEmpty == true
+              ? user.email!.split('@').first
+              : 'Pendamping Rombongan');
+
+    final targetName =
+        (targetData['name'] as String?)?.trim() ??
+        (targetData['displayName'] as String?)?.trim() ??
+        cleanEmail.split('@').first;
+
+    final invitationId = '${roomId}_$targetUid';
+    final invitationRef = _firestore
+        .collection('invitations')
+        .doc(invitationId);
+    final notificationRef = _firestore
+        .collection('notifications')
+        .doc('invitation_$invitationId');
+
+    final batch = _firestore.batch();
+    batch.set(invitationRef, {
+      'roomId': roomId,
+      'roomName': roomName,
+      'roomCode': ?roomCode,
+      'fromUserId': user.uid,
+      'fromUserName': senderName,
+      'toUserId': targetUid,
+      'toUserName': targetName,
+      'toEmail': cleanEmail,
+      'toUserEmail': cleanEmail,
+      'status': 'pending',
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    batch.set(notificationRef, {
+      'title': 'Undangan Rombongan',
+      'message': '$senderName mengundang Anda bergabung ke "$roomName".',
+      'type': 'room_invitation',
+      'recipientId': targetUid,
+      'senderId': user.uid,
+      'senderRole': 'pendamping',
+      'senderName': senderName,
+      'targetRoomId': roomId,
+      'relatedId': invitationId,
+      'isRead': false,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    await batch.commit();
+
+    return RoomInvitationModel(
+      id: invitationId,
+      roomId: roomId,
+      roomName: roomName,
+      roomCode: roomCode,
+      fromUserId: user.uid,
+      fromUserName: senderName,
+      toUserId: targetUid,
+      toUserEmail: cleanEmail,
+      status: InvitationStatus.pending,
+      createdAt: DateTime.now(),
+    );
   }
 
   Future<Map<String, dynamic>> respondInvitation({
     required String invitationId,
     required String action,
-  }) {
-    return _backend.call('respondInvitation', {
-      'invitationId': invitationId,
-      'action': action,
+  }) async {
+    try {
+      return await _backend.call('respondInvitation', {
+        'invitationId': invitationId,
+        'action': action,
+      });
+    } catch (error) {
+      debugPrint(
+        '[RoomCommandService] Backend respondInvitation failed ($error), using direct Firestore fallback',
+      );
+      return _respondInvitationDirect(
+        invitationId: invitationId,
+        action: action,
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>> _respondInvitationDirect({
+    required String invitationId,
+    required String action,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw const RoomCommandException('Pengguna belum masuk.');
+    }
+
+    final invRef = _firestore.collection('invitations').doc(invitationId);
+    final invSnap = await invRef.get();
+    if (!invSnap.exists) {
+      throw const RoomCommandException('Undangan tidak ditemukan.');
+    }
+    final invData = invSnap.data()!;
+    if (invData['toUserId'] != user.uid) {
+      throw const RoomCommandException('Undangan bukan untuk akun ini.');
+    }
+    final currentStatus = (invData['status'] as String?)?.toLowerCase();
+    if (currentStatus != 'pending') {
+      throw const RoomCommandException('Undangan sudah tidak berlaku.');
+    }
+
+    if (action.toLowerCase() == 'reject') {
+      final batch = _firestore.batch();
+      batch.update(invRef, {
+        'status': 'rejected',
+        'respondedAt': FieldValue.serverTimestamp(),
+      });
+      batch.set(
+        _firestore.collection('notifications').doc('invitation_$invitationId'),
+        {'isRead': true},
+        SetOptions(merge: true),
+      );
+      await batch.commit();
+      return {'status': 'rejected'};
+    }
+
+    // Accept action
+    final roomId = (invData['roomId'] as String?)?.trim() ?? '';
+    if (roomId.isEmpty) {
+      throw const RoomCommandException(
+        'ID Rombongan pada undangan tidak valid.',
+      );
+    }
+
+    final roomRef = _firestore.collection('rooms').doc(roomId);
+    final roomSnap = await roomRef.get();
+    if (!roomSnap.exists || roomSnap.data()?['isActive'] == false) {
+      await invRef.update({
+        'status': 'expired',
+        'expiredReason': 'room_unavailable',
+        'expiredAt': FieldValue.serverTimestamp(),
+      });
+      return {'status': 'expired', 'roomId': roomId};
+    }
+
+    final userName =
+        (user.displayName != null && user.displayName!.trim().isNotEmpty)
+        ? user.displayName!.trim()
+        : (user.email?.trim().isNotEmpty == true
+              ? user.email!.split('@').first
+              : 'Jamaah');
+
+    final memberRef = roomRef.collection('members').doc(user.uid);
+    final userRef = _firestore.collection('users').doc(user.uid);
+
+    final batch = _firestore.batch();
+    batch.set(memberRef, {
+      'uid': user.uid,
+      'name': userName,
+      'role': 'jamaah',
+      'joinedAt': FieldValue.serverTimestamp(),
     });
+    batch.set(userRef, {
+      'activeRoomId': roomId,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+    batch.update(roomRef, {'memberCount': FieldValue.increment(1)});
+    batch.update(invRef, {
+      'status': 'accepted',
+      'respondedAt': FieldValue.serverTimestamp(),
+    });
+    batch.set(
+      _firestore.collection('notifications').doc('invitation_$invitationId'),
+      {'isRead': true},
+      SetOptions(merge: true),
+    );
+    await batch.commit();
+
+    return {'status': 'accepted', 'roomId': roomId};
   }
 
   Future<void> transitionSos({
@@ -473,11 +725,13 @@ class RoomCommandService {
     required String userId,
     String? eventId,
   }) {
-    return _backend.call('transitionSos', {
-      'action': action,
-      'userId': userId,
-      if (eventId != null && eventId.isNotEmpty) 'eventId': eventId,
-    }).then((_) {});
+    return _backend
+        .call('transitionSos', {
+          'action': action,
+          'userId': userId,
+          if (eventId != null && eventId.isNotEmpty) 'eventId': eventId,
+        })
+        .then((_) {});
   }
 
   Future<void> updateMemberLocation({

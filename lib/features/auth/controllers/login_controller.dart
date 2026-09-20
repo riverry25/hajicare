@@ -226,24 +226,37 @@ class LoginController extends GetxController {
     try {
       await _ensureGoogleSignInInitialized();
 
-      // Sign out terlebih dahulu agar pemilih akun Google selalu muncul
-      try {
-        await _googleSignIn.signOut();
-      } catch (_) {}
+      // CATATAN: Jangan panggil signOut() sebelum authenticate() di Credential Manager v7.
+      // signOut() menyebabkan race condition yang membuat Credential Manager
+      // melaporkan "canceled" meski user sudah memilih akun.
+
+      debugPrint('[LoginController] Memulai Google Sign-In authenticate()...');
 
       // Buka pemilih akun Google
       final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
 
-      // Ambil ID Token & Access Token Google
+      debugPrint('[LoginController] authenticate() berhasil: ${googleUser.email}');
+
+      // Di google_sign_in v7, authentication adalah getter sinkron (bukan Future).
       final GoogleSignInAuthentication googleAuth = googleUser.authentication;
 
       final idToken = googleAuth.idToken;
 
       if (idToken == null || idToken.isEmpty) {
-        throw StateError('ID Token Google tidak tersedia.');
+        // idToken bisa null jika serverClientId salah atau SHA-1 tidak terdaftar
+        // di Firebase Console. Coba refresh token sekali sebelum menyerah.
+        debugPrint(
+          '[LoginController] idToken null setelah authenticate. '
+          'Pastikan serverClientId dan SHA-1 terdaftar di Firebase Console.',
+        );
+        throw StateError(
+          'ID Token Google tidak tersedia. '
+          'Pastikan SHA-1 debug key terdaftar di Firebase Console.',
+        );
       }
 
       // Buat credential Firebase
+      // Di google_sign_in v7, accessToken tidak lagi tersedia di public API.
       final OAuthCredential credential = GoogleAuthProvider.credential(
         idToken: idToken,
       );
@@ -263,36 +276,90 @@ class LoginController extends GetxController {
       }
 
       final uid = user.uid;
+      final userEmail = user.email ?? '';
+      final displayName = user.displayName ?? 'Pengguna Google';
+      final photoUrl = user.photoURL;
 
       // Pastikan profile user tersedia di Firestore.
       final userDocRef = FirebaseFirestore.instance
           .collection('users')
           .doc(uid);
 
-      final userDoc = await userDocRef.get().timeout(
-        const Duration(seconds: 5),
-        onTimeout: () => userDocRef.get(const GetOptions(source: Source.cache)),
-      );
+      DocumentSnapshot userDoc;
+      try {
+        userDoc = await userDocRef.get().timeout(
+          const Duration(seconds: 5),
+          onTimeout: () =>
+              userDocRef.get(const GetOptions(source: Source.cache)),
+        );
+      } catch (_) {
+        // Jika Firestore offline sepenuhnya, anggap doc tidak ada
+        userDoc = await userDocRef.get(const GetOptions(source: Source.cache))
+            .catchError((_) async {
+          // Cache juga kosong; lanjutkan saja, profile akan dibuat
+          return userDocRef.get();
+        });
+      }
+
+      String chosenRole = selectedRole.value;
 
       if (!userDoc.exists) {
-        String chosenRole = selectedRole.value;
+        // Pengguna baru — tanyakan role
         if (Get.context != null) {
           final selected = await _promptRoleSelection(Get.context!);
-          if (selected != null) {
-            chosenRole = selected;
-          }
+          if (selected != null) chosenRole = selected;
         }
 
-        final displayName = user.displayName ?? 'Pengguna Google';
+        // Coba via Cloud Function dulu; jika gagal, tulis langsung ke Firestore
+        bool profileCreated = false;
+        try {
+          await TrustedBackendService().call('ensureUserProfile', {
+            'name': displayName,
+            'photoUrl': photoUrl,
+            'requestedRole': chosenRole,
+          }).timeout(const Duration(seconds: 10));
+          profileCreated = true;
+        } catch (e) {
+          debugPrint(
+            '[LoginController] ensureUserProfile CF gagal, fallback Firestore: $e',
+          );
+        }
 
-        await TrustedBackendService().call('ensureUserProfile', {
-          'name': displayName,
-          'photoUrl': user.photoURL,
-          'requestedRole': chosenRole,
-        });
+        if (!profileCreated) {
+          // Fallback: tulis langsung ke Firestore
+          final normalizedMail = userEmail.toLowerCase();
+          await userDocRef.set({
+            'uid': uid,
+            'name': displayName,
+            'displayName': displayName,
+            'email': userEmail,
+            'normalizedEmail': normalizedMail,
+            'photoUrl': photoUrl,
+            'role': chosenRole,
+            'requestedRole': chosenRole,
+            'pendampingApprovalStatus':
+                chosenRole == 'pendamping' ? 'approved' : null,
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+            'isGpsActive': false,
+          }, SetOptions(merge: true));
+        }
       } else {
-        await TrustedBackendService().call('ensureUserProfile');
+        // Pengguna lama — update profil via CF atau Firestore
+        try {
+          await TrustedBackendService().call('ensureUserProfile').timeout(
+            const Duration(seconds: 10),
+          );
+        } catch (e) {
+          debugPrint(
+            '[LoginController] ensureUserProfile CF gagal untuk user lama, '
+            'lanjut tanpa update: $e',
+          );
+          // Tidak perlu fallback — data sudah ada di Firestore
+        }
       }
+
+      if (isClosed) return;
 
       // Simpan remember me.
       final startup = Get.find<AppStartupController>();
@@ -329,16 +396,28 @@ class LoginController extends GetxController {
       );
     } on FirebaseAuthException catch (e) {
       if (isClosed) return;
-
+      debugPrint('[LoginController] FirebaseAuthException: ${e.code} — ${e.message}');
       errorMessage.value = _friendlyAuthError(e.code, e.message);
-
       _showErrorDialog(errorMessage.value!);
     } on GoogleSignInException catch (e) {
-      if (isClosed || e.code == GoogleSignInExceptionCode.canceled) return;
+      if (isClosed) return;
+      debugPrint('[LoginController] GoogleSignInException code=${e.code} desc=${e.description}');
+      // Jangan silent-return untuk SEMUA kode canceled.
+      // Jika user benar-benar memilih akun tapi canceled ter-throw,
+      // tampilkan pesan agar user tahu ada masalah konfigurasi.
+      if (e.code == GoogleSignInExceptionCode.canceled) {
+        // Tunjukkan pesan ringan — mungkin user menekan back, atau ada issue SHA-1
+        errorMessage.value =
+            'Masuk dengan Google dibatalkan. Jika Anda sudah memilih akun, '
+            'coba lagi atau restart aplikasi.';
+        _showErrorDialog(errorMessage.value!);
+        return;
+      }
       errorMessage.value = 'Gagal masuk dengan Google. Silakan coba lagi.';
       _showErrorDialog(errorMessage.value!);
-    } catch (e) {
+    } catch (e, st) {
       if (isClosed) return;
+      debugPrint('[LoginController] loginWithGoogle error: $e\n$st');
 
       final errorStr = e.toString().toLowerCase();
 
@@ -351,6 +430,9 @@ class LoginController extends GetxController {
           errorStr.contains('connection')) {
         errorMessage.value =
             'Gagal masuk dengan Google. Periksa koneksi internet Anda.';
+      } else if (errorStr.contains('sha') || errorStr.contains('id token')) {
+        errorMessage.value =
+            'Konfigurasi login Google belum lengkap. Hubungi developer.';
       } else {
         errorMessage.value = 'Gagal masuk dengan Google. Silakan coba lagi.';
       }

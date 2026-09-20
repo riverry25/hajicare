@@ -79,7 +79,8 @@ class RoomInvitationModel {
       fromUserId: data['fromUserId'] as String? ?? '',
       fromUserName: data['fromUserName'] as String? ?? 'Pendamping',
       toUserId: data['toUserId'] as String? ?? '',
-      toUserEmail: data['toUserEmail'] as String? ?? '',
+      toUserEmail:
+          data['toUserEmail'] as String? ?? (data['toEmail'] as String? ?? ''),
       status: InvitationStatus.fromString(data['status'] as String?),
       createdAt: createdAt,
       respondedAt: respondedAt,
@@ -97,6 +98,7 @@ class RoomInvitationModel {
       'fromUserName': fromUserName,
       'toUserId': toUserId,
       'toUserEmail': toUserEmail,
+      'toEmail': toUserEmail,
       'status': status.value,
       'createdAt': createdAt != null
           ? Timestamp.fromDate(createdAt!)

@@ -45,10 +45,19 @@ async function requireRoomManager(transaction, db, roomId, auth, options = {}) {
     throw new BackendError('failed-precondition', 'Rombongan tidak aktif.');
   }
 
-  if (isAdmin(auth)) {
+  let role = roleFromAuth(auth);
+  if (role !== 'admin' && role !== 'pendamping') {
+    const userSnapshot = await transaction.get(db.collection('users').doc(auth.uid));
+    const userRole = String(userSnapshot.data()?.role || '').toLowerCase();
+    if (userRole === 'admin' || userRole === 'pendamping' || userRole === 'petugas') {
+      role = userRole === 'admin' ? 'admin' : 'pendamping';
+    }
+  }
+
+  if (role === 'admin' || isAdmin(auth)) {
     return {roomRef, roomSnapshot, room, memberSnapshot: null};
   }
-  if (roleFromAuth(auth) !== 'pendamping') {
+  if (role !== 'pendamping') {
     throw new BackendError('permission-denied', 'Akses pendamping diperlukan.');
   }
 

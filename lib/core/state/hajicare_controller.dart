@@ -213,7 +213,14 @@ class HajiCareController extends GetxController {
       }
 
       if (data != null) {
-        final token = await _firebaseAuth.currentUser?.getIdTokenResult(true);
+        IdTokenResult? token;
+        try {
+          token = await _firebaseAuth.currentUser
+              ?.getIdTokenResult(true)
+              .timeout(const Duration(seconds: 5));
+        } catch (_) {
+          token = null;
+        }
         final claim = token?.claims?['role']?.toString().toLowerCase();
         // 'petugas' is treated as an alias for 'pendamping'.
         final normalizedClaim = claim == 'petugas' ? 'pendamping' : claim;

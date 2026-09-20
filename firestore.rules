@@ -70,11 +70,21 @@ service cloud.firestore {
     }
 
     match /invitations/{invitationId} {
-      allow read: if isAdmin() || (signedIn() && (
+      allow read: if signedIn() && (
+        isAdmin() ||
         resource.data.toUserId == request.auth.uid ||
         resource.data.fromUserId == request.auth.uid
-      ));
-      allow write: if false;
+      );
+      allow create: if signedIn();
+      allow update: if signedIn() && (
+        isAdmin() ||
+        resource.data.toUserId == request.auth.uid ||
+        resource.data.fromUserId == request.auth.uid
+      );
+      allow delete: if signedIn() && (
+        isAdmin() ||
+        resource.data.fromUserId == request.auth.uid
+      );
     }
 
     match /notifications/{notificationId} {

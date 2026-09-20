@@ -445,12 +445,18 @@ async function inviteJamaah(db, auth, data) {
   requireAuth(auth);
   const roomId = requiredString(data?.roomId, 'Room ID', 128);
   const email = normalizedEmail(data?.email);
-  const targets = await db
+  let targets = await db
     .collection('users')
     .where('normalizedEmail', '==', email)
-    .where('role', '==', 'jamaah')
     .limit(2)
     .get();
+  if (targets.empty) {
+    targets = await db
+      .collection('users')
+      .where('email', '==', email)
+      .limit(2)
+      .get();
+  }
   if (targets.empty) {
     throw new BackendError('not-found', 'Akun jamaah dengan email tersebut tidak ditemukan.');
   }
