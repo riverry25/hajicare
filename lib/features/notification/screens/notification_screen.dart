@@ -88,7 +88,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             child: MediaQuery(
               data: MediaQuery.of(
                 context,
-              ).copyWith(textScaler: TextScaler.noScaling),
+              ).copyWith(textScaler: MediaQuery.textScalerOf(context)),
               child: TabBar(
                 indicatorColor: AppColors.goldPrimary,
                 indicatorWeight: 3,
@@ -172,9 +172,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   Widget _buildNotificationTab(BuildContext context) {
-    final controller = Get.isRegistered<NotificationController>()
-        ? Get.find<NotificationController>()
-        : Get.put(NotificationController());
+    final controller = Get.find<NotificationController>();
 
     return Obx(() {
       final invitations = controller.pendingInvitations;
@@ -267,9 +265,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   Widget _buildInvitationCard(BuildContext context, RoomInvitationModel inv) {
-    final controller = Get.isRegistered<NotificationController>()
-        ? Get.find<NotificationController>()
-        : Get.put(NotificationController());
+    final controller = Get.find<NotificationController>();
     final isDark = AppColors.isDark(context);
     final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
     final headingColor = AppColors.textHeadingColor(context);

@@ -117,14 +117,18 @@ class PrayerTimesController extends GetxController {
   StreamSubscription<CompassEvent>? _compassSubscription;
   StreamSubscription<Position>? _positionSubscription;
   bool _hasVibrated = false;
+  int _lifecycleGeneration = 0;
+
+  bool _isCurrent(int generation) => generation == _lifecycleGeneration;
 
   @override
   void onInit() {
     super.onInit();
-    initialize();
+    unawaited(initialize());
   }
 
   Future<void> initialize() async {
+    final generation = _lifecycleGeneration;
     _initHijriDate();
     _initCompass();
 
@@ -134,6 +138,7 @@ class PrayerTimesController extends GetxController {
     // 3. Persistent cache (< 7 days)
     // 4. Unavailable ("Lokasi tidak tersedia")
     await loadInitialLocationAndSchedule();
+    if (!_isCurrent(generation)) return;
 
     _startCountdownTimer();
     _listenToLocationUpdates();
@@ -156,10 +161,12 @@ class PrayerTimesController extends GetxController {
   /// 3. Valid persistent application cache (< 7 days)
   /// 4. Unavailable ("Lokasi tidak tersedia")
   Future<void> loadInitialLocationAndSchedule() async {
+    final generation = _lifecycleGeneration;
     isLoadingLocation.value = true;
     locationErrorMessage.value = '';
 
     final locationResult = await _locationService.getCurrentPosition();
+    if (!_isCurrent(generation)) return;
 
     // Priority 1 & 2: GPS or LastKnown position from device
     if (locationResult.isSuccess && locationResult.position != null) {
@@ -169,12 +176,14 @@ class PrayerTimesController extends GetxController {
         lng: pos.longitude,
         source: locationResult.source,
       );
+      if (!_isCurrent(generation)) return;
       isLoadingLocation.value = false;
       return;
     }
 
     // Priority 3: Persistent application cache
     final cached = await _loadCachedLocation();
+    if (!_isCurrent(generation)) return;
     if (cached != null && cached.isValid) {
       locationSource.value = LocationSource.cache;
       currentLat.value = cached.latitude;
@@ -196,12 +205,14 @@ class PrayerTimesController extends GetxController {
 
   /// Manual refresh triggered by user action
   Future<void> refreshLocation() async {
+    final generation = _lifecycleGeneration;
     isLoadingLocation.value = true;
     locationErrorMessage.value = '';
 
     final result = await _locationService.getCurrentPosition(
       timeout: const Duration(seconds: 12),
     );
+    if (!_isCurrent(generation)) return;
 
     if (result.isSuccess && result.position != null) {
       await _applyLocation(
@@ -209,6 +220,7 @@ class PrayerTimesController extends GetxController {
         lng: result.position!.longitude,
         source: result.source,
       );
+      if (!_isCurrent(generation)) return;
     } else {
       if (result.state == LocationPermissionState.serviceDisabled) {
         AppAlert.warning(
@@ -255,6 +267,7 @@ class PrayerTimesController extends GetxController {
     required double lng,
     required LocationSource source,
   }) async {
+    final generation = _lifecycleGeneration;
     currentLat.value = lat;
     currentLng.value = lng;
     locationSource.value = source;
@@ -273,6 +286,7 @@ class PrayerTimesController extends GetxController {
 
     if (shouldReverseGeocode) {
       final geoResult = await _geocodingService.reverseGeocode(lat, lng);
+      if (!_isCurrent(generation)) return;
       locationName.value = geoResult.displayName;
       countryCode.value = geoResult.countryCode;
 
@@ -297,6 +311,7 @@ class PrayerTimesController extends GetxController {
           source: source,
         ),
       );
+      if (!_isCurrent(generation)) return;
     }
 
     _calculateScheduleAndQibla();
@@ -539,6 +554,7 @@ class PrayerTimesController extends GetxController {
 
   @override
   void onClose() {
+    _lifecycleGeneration++;
     _countdownTimer?.cancel();
     _compassSubscription?.cancel();
     _positionSubscription?.cancel();

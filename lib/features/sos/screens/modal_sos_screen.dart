@@ -33,9 +33,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
   @override
   void initState() {
     super.initState();
-    state = Get.isRegistered<HajiCareController>()
-        ? Get.find<HajiCareController>()
-        : Get.put(HajiCareController());
+    state = Get.find<HajiCareController>();
 
     _pulseController = AnimationController(
       vsync: this,

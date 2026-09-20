@@ -192,6 +192,11 @@ class AppStartupController extends GetxController {
   /// Resolves the user's role and activeRoom destination from Firestore or local cache.
   Future<String> resolveUserRoleDestination(String uid) async {
     try {
+      final token = await _firebaseAuth.currentUser?.getIdTokenResult(true);
+      final claimedRole = token?.claims?['role']?.toString().toLowerCase();
+      final role = claimedRole == 'admin' || claimedRole == 'pendamping'
+          ? claimedRole!
+          : 'jamaah';
       final doc = await _firestore
           .collection('users')
           .doc(uid)
@@ -200,7 +205,6 @@ class AppStartupController extends GetxController {
 
       if (doc.exists) {
         final data = doc.data();
-        final role = (data?['role'] as String?)?.toLowerCase() ?? 'jamaah';
         final activeRoomId = (data?['activeRoomId'] as String?)?.trim();
         final effectiveRoomId =
             (activeRoomId != null && activeRoomId.isNotEmpty)
@@ -245,10 +249,9 @@ class AppStartupController extends GetxController {
       final effectiveCachedRoom = (cachedRoom != null && cachedRoom.isNotEmpty)
           ? cachedRoom
           : null;
-      final cachedRole =
-          (prefs.getString(HajiCareController.keyUserRole) ?? 'jamaah')
-              .trim()
-              .toLowerCase();
+      // Offline cache must never grant a privileged dashboard. Custom claims
+      // are the authority and cannot be revalidated while this fallback runs.
+      const cachedRole = 'jamaah';
 
       if (Get.isRegistered<HajiCareController>()) {
         final hajicare = Get.find<HajiCareController>();
@@ -258,13 +261,6 @@ class AppStartupController extends GetxController {
         );
       }
 
-      if (cachedRole == 'admin') {
-        return AppRoutes.adminDashboard;
-      }
-
-      if (cachedRole == 'pendamping') {
-        return AppRoutes.dashboardPendamping;
-      }
       return AppRoutes.dashboardJamaah;
     } catch (e) {
       debugPrint('[AppStartupController] Error reading cache fallback: $e');

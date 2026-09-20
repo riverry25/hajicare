@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:hajicare/core/locales/app_localizations.dart';
 import 'package:hajicare/core/theme/app_theme.dart';
+import 'package:hajicare/features/communication/bindings/communication_binding.dart';
 import 'package:hajicare/features/communication/widgets/communication_gesture_dialog.dart';
 
 void main() {
@@ -12,6 +13,7 @@ void main() {
 
   setUp(() {
     Get.reset();
+    CommunicationBinding().dependencies();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(const MethodChannel('flutter_tts'), (
           MethodCall methodCall,

@@ -82,12 +82,19 @@ class JoinRoomController extends GetxController {
 
   /// Pendamping: Buat Room baru dengan auto-generated unique code
   Future<void> createRoom() async {
+    if (isLoading.value || isClosed) return;
     final name = createRoomNameController.text.trim();
     final maktab = createMaktabController.text.trim();
     final kloter = createKloterController.text.trim();
 
     if (name.isEmpty) {
       errorMessage.value = 'Isi nama rombongan terlebih dahulu.';
+      _showErrorAlert(errorMessage.value!);
+      return;
+    }
+    if (name.length > 100 || maktab.length > 60 || kloter.length > 60) {
+      errorMessage.value =
+          'Nama maksimal 100 karakter; maktab dan kloter maksimal 60 karakter.';
       _showErrorAlert(errorMessage.value!);
       return;
     }
@@ -145,13 +152,20 @@ class JoinRoomController extends GetxController {
 
   /// Jamaah atau Pendamping: Gabung ke room menggunakan 6-digit room code
   Future<void> joinRoom([String? explicitCode]) async {
+    if (isLoading.value || isClosed) return;
     if (explicitCode != null && explicitCode.trim().isNotEmpty) {
       roomCodeController.text = explicitCode.trim().toUpperCase();
     }
     final roomCode = roomCodeController.text.trim().toUpperCase();
 
     if (roomCode.isEmpty) {
-      errorMessage.value = 'Masukkan 6 huruf atau angka kode rombongan.';
+      errorMessage.value = 'Masukkan 6-8 karakter kode rombongan.';
+      _showErrorAlert(errorMessage.value!);
+      return;
+    }
+    if (!RegExp(r'^[A-HJ-NP-Z2-9]{6,8}$').hasMatch(roomCode)) {
+      errorMessage.value =
+          'Kode harus 6-8 karakter dan tidak memakai I, O, 0, atau 1.';
       _showErrorAlert(errorMessage.value!);
       return;
     }

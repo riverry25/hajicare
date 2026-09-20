@@ -14,7 +14,7 @@ class JoinRoomScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(JoinRoomController());
+    final controller = Get.find<JoinRoomController>();
     final isDark = AppColors.isDark(context);
     final scaffoldBg = AppColors.scaffoldColor(context);
     final cardBg = AppColors.cardBgColor(context);
@@ -252,6 +252,7 @@ class JoinRoomScreen extends StatelessWidget {
         const SizedBox(height: AppSpacing.xs),
         TextField(
           controller: controller.createRoomNameController,
+          inputFormatters: [LengthLimitingTextInputFormatter(100)],
           style: AppTypography.bodyMedium.copyWith(color: headingColor),
           decoration: InputDecoration(
             hintText: 'Contoh: Rombongan Maktab 48',
@@ -289,6 +290,7 @@ class JoinRoomScreen extends StatelessWidget {
         const SizedBox(height: AppSpacing.xs),
         TextField(
           controller: controller.createMaktabController,
+          inputFormatters: [LengthLimitingTextInputFormatter(60)],
           style: AppTypography.bodyMedium.copyWith(color: headingColor),
           decoration: InputDecoration(
             hintText: 'Contoh: Maktab 48',
@@ -323,6 +325,7 @@ class JoinRoomScreen extends StatelessWidget {
         const SizedBox(height: AppSpacing.xs),
         TextField(
           controller: controller.createKloterController,
+          inputFormatters: [LengthLimitingTextInputFormatter(60)],
           style: AppTypography.bodyMedium.copyWith(color: headingColor),
           decoration: InputDecoration(
             hintText: 'Contoh: SOC-12',
@@ -459,7 +462,7 @@ class JoinRoomScreen extends StatelessWidget {
         const SizedBox(height: AppSpacing.md),
 
         Text(
-          'Kode Room (6 Karakter)',
+          'Kode Room (6-8 Karakter)',
           style: AppTypography.labelMedium.copyWith(
             color: headingColor,
             fontWeight: FontWeight.w700,
@@ -471,7 +474,9 @@ class JoinRoomScreen extends StatelessWidget {
           maxLength: 8,
           textCapitalization: TextCapitalization.characters,
           inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
+            FilteringTextInputFormatter.allow(
+              RegExp(r'[A-HJ-NP-Za-hj-np-z2-9]'),
+            ),
             UpperCaseTextFormatter(),
           ],
           textAlign: TextAlign.center,

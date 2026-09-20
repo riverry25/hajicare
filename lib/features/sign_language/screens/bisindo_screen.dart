@@ -1,6 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -39,9 +40,7 @@ class _BisindoScreenState extends State<BisindoScreen> {
   }
 
   void _initPipeline() {
-    _inferenceService = Get.isRegistered<BisindoInferenceService>()
-        ? Get.find<BisindoInferenceService>()
-        : Get.put(BisindoInferenceService(), permanent: true);
+    _inferenceService = BisindoInferenceService();
 
     _streamBuffer = LandmarkStreamBuffer(
       inferenceService: _inferenceService,
@@ -123,10 +122,14 @@ class _BisindoScreenState extends State<BisindoScreen> {
     _cameraService.isStreamingNotifier.removeListener(_onCameraStateChanged);
     _cameraService.framesCountNotifier.removeListener(_onFramesCountChanged);
 
-    _cameraService.stopCamera();
-    _cameraService.dispose();
-    _streamBuffer.dispose();
+    unawaited(_disposePipeline());
     super.dispose();
+  }
+
+  Future<void> _disposePipeline() async {
+    await _cameraService.dispose();
+    _streamBuffer.dispose();
+    await _inferenceService.dispose();
   }
 
   Future<void> _toggleDetection() async {
@@ -151,8 +154,10 @@ class _BisindoScreenState extends State<BisindoScreen> {
 
     // 1. Check and request camera permission
     final permStatus = await _cameraService.checkPermission();
+    if (!mounted) return;
     if (permStatus != 'granted') {
       final reqResult = await _cameraService.requestPermission();
+      if (!mounted) return;
       if (reqResult != 'granted') {
         if (mounted) {
           setState(() {

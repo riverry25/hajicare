@@ -25,10 +25,7 @@ class PrayerBinding extends Bindings {
       );
     }
     if (!Get.isRegistered<PrayerTimesController>()) {
-      Get.lazyPut<PrayerTimesController>(
-        () => PrayerTimesController(),
-        fenix: true,
-      );
+      Get.lazyPut<PrayerTimesController>(() => PrayerTimesController());
     }
   }
 }

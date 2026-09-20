@@ -1,5 +1,6 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -33,9 +34,7 @@ class _BisindoCardState extends State<BisindoCard> {
   @override
   void initState() {
     super.initState();
-    _inferenceService = Get.isRegistered<BisindoInferenceService>()
-        ? Get.find<BisindoInferenceService>()
-        : Get.put(BisindoInferenceService(), permanent: true);
+    _inferenceService = BisindoInferenceService();
 
     _streamBuffer = LandmarkStreamBuffer(
       inferenceService: _inferenceService,
@@ -85,6 +84,7 @@ class _BisindoCardState extends State<BisindoCard> {
     _cameraService.isStreamingNotifier.removeListener(_onCameraStateChanged);
     _cameraService.dispose();
     _streamBuffer.dispose();
+    unawaited(_inferenceService.dispose());
     super.dispose();
   }
 

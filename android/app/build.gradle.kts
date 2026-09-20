@@ -57,6 +57,10 @@ android {
             // key.properties is absent, Gradle intentionally emits an unsigned
             // release APK that cannot be accidentally distributed as trusted.
             signingConfig = signingConfigs.findByName("release")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
 }

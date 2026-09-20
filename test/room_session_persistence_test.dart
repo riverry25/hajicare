@@ -38,7 +38,7 @@ void main() {
     );
 
     test(
-      'resolveUserRoleDestination falls back to cached room & role for Pendamping when offline',
+      'offline cache cannot grant Pendamping privileges',
       () async {
         SharedPreferences.setMockInitialValues({
           AppStartupController.keyOnboardingDone: true,
@@ -51,7 +51,7 @@ void main() {
           'test_uid_456',
         );
 
-        expect(destination, equals(AppRoutes.dashboardPendamping));
+        expect(destination, equals(AppRoutes.dashboardJamaah));
       },
     );
 
@@ -73,7 +73,7 @@ void main() {
     );
 
     test(
-      'resolveUserRoleDestination returns adminDashboard for admin role in cache',
+      'offline cache cannot grant Admin privileges',
       () async {
         SharedPreferences.setMockInitialValues({
           AppStartupController.keyOnboardingDone: true,
@@ -85,7 +85,7 @@ void main() {
           'admin_uid',
         );
 
-        expect(destination, equals(AppRoutes.adminDashboard));
+        expect(destination, equals(AppRoutes.dashboardJamaah));
       },
     );
 

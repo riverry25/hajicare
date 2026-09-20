@@ -206,6 +206,7 @@ class NotificationController extends GetxController {
     required BuildContext context,
     required RoomInvitationModel invitation,
   }) async {
+    if (processingInvitations.contains(invitation.id)) return;
     final user = _firebaseAuth.currentUser;
     if (user == null) return;
 
@@ -269,6 +270,7 @@ class NotificationController extends GetxController {
     required BuildContext context,
     required RoomInvitationModel invitation,
   }) async {
+    if (processingInvitations.contains(invitation.id)) return;
     final user = _firebaseAuth.currentUser;
     if (user == null) return;
 

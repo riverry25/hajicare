@@ -49,12 +49,14 @@ class BisindoInferenceService implements BisindoPredictor {
   final List<List<double>> _prototypes = [];
   final List<String> _labels = [];
   bool _isInitialized = false;
+  int _lifecycleGeneration = 0;
 
   bool get isInitialized => _isInitialized;
 
   /// Loads the ONNX model session and prototype database from Flutter assets.
   Future<void> initialize() async {
     if (_isInitialized) return;
+    final generation = _lifecycleGeneration;
 
     try {
       debugPrint(
@@ -104,7 +106,14 @@ class BisindoInferenceService implements BisindoPredictor {
       }
 
       // 2. Create ONNX Runtime session from asset
-      _session = await _onnxRuntime.createSessionFromAsset(kModelAssetPath);
+      final session = await _onnxRuntime.createSessionFromAsset(
+        kModelAssetPath,
+      );
+      if (generation != _lifecycleGeneration) {
+        await session.close();
+        return;
+      }
+      _session = session;
 
       _isInitialized = true;
       debugPrint(
@@ -334,6 +343,7 @@ class BisindoInferenceService implements BisindoPredictor {
 
   /// Release native ONNX session resources.
   Future<void> dispose() async {
+    _lifecycleGeneration++;
     if (_session != null) {
       try {
         await _session!.close();

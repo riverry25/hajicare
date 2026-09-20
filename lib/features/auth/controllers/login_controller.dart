@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../../core/utils/app_dialog.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/services/trusted_backend_service.dart';
 import '../../../core/state/app_startup_controller.dart';
 import '../../../core/state/hajicare_controller.dart';
 
@@ -257,23 +258,13 @@ class LoginController extends GetxController {
 
         final displayName = user.displayName ?? 'Pengguna Google';
 
-        final userPayload = <String, dynamic>{
+        await TrustedBackendService().call('ensureUserProfile', {
           'name': displayName,
-          'email': user.email ?? '',
           'photoUrl': user.photoURL,
-          'role': chosenRole,
-          'activeRoomId': null,
-          'createdAt': FieldValue.serverTimestamp(),
-        };
-
-        if (chosenRole == 'jamaah') {
-          userPayload['distance'] = 20.0;
-          userPayload['separatedMode'] = false;
-          userPayload['sosActive'] = false;
-          userPayload['shortLabel'] = displayName.split(' ').first;
-        }
-
-        await userDocRef.set(userPayload, SetOptions(merge: true));
+          'requestedRole': chosenRole,
+        });
+      } else {
+        await TrustedBackendService().call('ensureUserProfile');
       }
 
       // Simpan remember me.
