@@ -82,10 +82,14 @@ class _BisindoCardState extends State<BisindoCard> {
   void dispose() {
     _cameraService.errorNotifier.removeListener(_onCameraErrorChanged);
     _cameraService.isStreamingNotifier.removeListener(_onCameraStateChanged);
-    _cameraService.dispose();
-    _streamBuffer.dispose();
-    unawaited(_inferenceService.dispose());
+    unawaited(_disposePipeline());
     super.dispose();
+  }
+
+  Future<void> _disposePipeline() async {
+    await _cameraService.dispose();
+    _streamBuffer.dispose();
+    await _inferenceService.dispose();
   }
 
   Future<void> _initModel() async {

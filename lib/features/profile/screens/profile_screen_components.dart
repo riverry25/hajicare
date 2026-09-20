@@ -824,12 +824,12 @@ class _ProfileHeader extends StatelessWidget {
                 ),
 
                 // ── 3. Protruding Ribbon Submit Button (Slightly larger, no shadow) ──
-                Obx(() {
-                  final saving = controller.isSavingName.value;
-                  return Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Stack(
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Obx(() {
+                    final saving = controller.isSavingName.value;
+                    return Stack(
                       clipBehavior: Clip.none,
                       children: [
                         // Ribbon fold triangle at the top-right corner
@@ -893,9 +893,9 @@ class _ProfileHeader extends StatelessWidget {
                           ),
                         ),
                       ],
-                    ),
-                  );
-                }),
+                    );
+                  }),
+                ),
               ],
             ),
           ),

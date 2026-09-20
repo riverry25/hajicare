@@ -647,12 +647,12 @@ extension _ProfileScreenSections on ProfileScreen {
                 ),
 
                 // ── 3. Protruding Ribbon Submit Button (No shadow) ───────────
-                Obx(() {
-                  final saving = profileCtrl.isSavingMedical.value;
-                  return Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Stack(
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Obx(() {
+                    final saving = profileCtrl.isSavingMedical.value;
+                    return Stack(
                       clipBehavior: Clip.none,
                       children: [
                         // Ribbon fold triangle at the top-right corner
@@ -716,9 +716,9 @@ extension _ProfileScreenSections on ProfileScreen {
                           ),
                         ),
                       ],
-                    ),
-                  );
-                }),
+                    );
+                  }),
+                ),
               ],
             ),
           ),

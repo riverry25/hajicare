@@ -192,11 +192,11 @@ class AppStartupController extends GetxController {
   /// Resolves the user's role and activeRoom destination from Firestore or local cache.
   Future<String> resolveUserRoleDestination(String uid) async {
     try {
+      // 1. Try to read the role from Firebase Auth Custom Claims (most authoritative).
       final token = await _firebaseAuth.currentUser?.getIdTokenResult(true);
-      final claimedRole = token?.claims?['role']?.toString().toLowerCase();
-      final role = claimedRole == 'admin' || claimedRole == 'pendamping'
-          ? claimedRole!
-          : 'jamaah';
+      final rawClaim = token?.claims?['role']?.toString().toLowerCase();
+      final claimedRole = rawClaim == 'petugas' ? 'pendamping' : rawClaim;
+
       final doc = await _firestore
           .collection('users')
           .doc(uid)
@@ -205,6 +205,23 @@ class AppStartupController extends GetxController {
 
       if (doc.exists) {
         final data = doc.data();
+
+        // 2. If custom claim is absent, fall back to the Firestore `role` field.
+        //    Custom claim takes precedence when present.
+        final rawFirestoreRole = (data?['role'] as String?)
+            ?.trim()
+            .toLowerCase();
+        final firestoreRole = rawFirestoreRole == 'petugas'
+            ? 'pendamping'
+            : rawFirestoreRole;
+
+        final effectiveRole =
+            (claimedRole == 'admin' || claimedRole == 'pendamping')
+            ? claimedRole!
+            : (firestoreRole == 'admin' || firestoreRole == 'pendamping'
+                  ? firestoreRole!
+                  : 'jamaah');
+
         final activeRoomId = (data?['activeRoomId'] as String?)?.trim();
         final effectiveRoomId =
             (activeRoomId != null && activeRoomId.isNotEmpty)
@@ -213,21 +230,26 @@ class AppStartupController extends GetxController {
         final rawName =
             data?['name'] as String? ?? data?['displayName'] as String?;
 
+        debugPrint(
+          '[AppStartupController] Resolved role: $effectiveRole '
+          '(claim: $claimedRole, firestore: $firestoreRole)',
+        );
+
         // Immediately sync to HajiCareController if registered
         if (Get.isRegistered<HajiCareController>()) {
           final hajicare = Get.find<HajiCareController>();
           await hajicare.applyUserData(
-            roleStr: role,
+            roleStr: effectiveRole,
             roomId: effectiveRoomId,
             name: rawName,
           );
         }
 
-        if (role == 'admin') {
+        if (effectiveRole == 'admin') {
           return AppRoutes.adminDashboard;
         }
 
-        if (role == 'pendamping') {
+        if (effectiveRole == 'pendamping') {
           return AppRoutes.dashboardPendamping;
         }
 
@@ -249,8 +271,9 @@ class AppStartupController extends GetxController {
       final effectiveCachedRoom = (cachedRoom != null && cachedRoom.isNotEmpty)
           ? cachedRoom
           : null;
+
       // Offline cache must never grant a privileged dashboard. Custom claims
-      // are the authority and cannot be revalidated while this fallback runs.
+      // or Firestore are the authority and cannot be revalidated while this fallback runs.
       const cachedRole = 'jamaah';
 
       if (Get.isRegistered<HajiCareController>()) {

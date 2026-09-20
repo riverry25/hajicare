@@ -35,13 +35,10 @@ async function ensureUserProfile(db, auth, data) {
     const existing = snapshot.data() || {};
     const actualRole = trustedRole === 'admin' || trustedRole === 'pendamping'
       ? trustedRole
-      : 'jamaah';
+      : (requestedRole === 'pendamping' ? 'pendamping' : 'jamaah');
     const approvalStatus = actualRole === 'pendamping'
       ? 'approved'
-      : requestedRole === 'pendamping'
-        ? (existing.pendampingApprovalStatus === 'rejected' ? 'pending' :
-          (existing.pendampingApprovalStatus || 'pending'))
-        : null;
+      : null;
 
     const profile = {
       uid: auth.uid,

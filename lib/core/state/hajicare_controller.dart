@@ -153,7 +153,7 @@ class HajiCareController extends GetxController {
     final normalizedRole = roleStr.trim().toLowerCase();
     if (normalizedRole == 'admin') {
       _role.value = UserRole.admin;
-    } else if (normalizedRole == 'pendamping') {
+    } else if (normalizedRole == 'pendamping' || normalizedRole == 'petugas') {
       _role.value = UserRole.pendamping;
     } else {
       _role.value = UserRole.jamaah;
@@ -215,9 +215,23 @@ class HajiCareController extends GetxController {
       if (data != null) {
         final token = await _firebaseAuth.currentUser?.getIdTokenResult(true);
         final claim = token?.claims?['role']?.toString().toLowerCase();
-        final roleStr = claim == 'admin' || claim == 'pendamping'
-            ? claim!
-            : 'jamaah';
+        // 'petugas' is treated as an alias for 'pendamping'.
+        final normalizedClaim = claim == 'petugas' ? 'pendamping' : claim;
+
+        // Custom claim takes precedence; fall back to Firestore field.
+        final rawFirestoreRole = (data['role'] as String?)
+            ?.trim()
+            .toLowerCase();
+        final firestoreRole = rawFirestoreRole == 'petugas'
+            ? 'pendamping'
+            : rawFirestoreRole;
+        final roleStr =
+            (normalizedClaim == 'admin' || normalizedClaim == 'pendamping')
+            ? normalizedClaim!
+            : (firestoreRole == 'admin' || firestoreRole == 'pendamping'
+                  ? firestoreRole!
+                  : 'jamaah');
+
         final roomId = data['activeRoomId'] as String?;
         final rawName =
             data['name'] as String? ?? data['displayName'] as String?;
@@ -291,15 +305,31 @@ class HajiCareController extends GetxController {
     try {
       final token = await _firebaseAuth.currentUser?.getIdTokenResult();
       final claim = token?.claims?['role']?.toString().toLowerCase();
-      final trustedRole = claim == 'admin' || claim == 'pendamping'
-          ? claim!
-          : 'jamaah';
+      // 'petugas' is treated as an alias for 'pendamping'.
+      final normalizedClaim = claim == 'petugas' ? 'pendamping' : claim;
+      final claimRole =
+          (normalizedClaim == 'admin' || normalizedClaim == 'pendamping')
+          ? normalizedClaim
+          : null; // null means "defer to Firestore field"
+
       _userDocSub = _firestore.collection('users').doc(uid).snapshots().listen((
         doc,
       ) {
         if (!doc.exists) return;
         final data = doc.data()!;
-        final roleStr = trustedRole;
+
+        // Custom claim takes precedence; fall back to Firestore `role` field.
+        final rawFirestoreRole = (data['role'] as String?)
+            ?.trim()
+            .toLowerCase();
+        final firestoreRole = rawFirestoreRole == 'petugas'
+            ? 'pendamping'
+            : rawFirestoreRole;
+        final roleStr =
+            claimRole ??
+            (firestoreRole == 'admin' || firestoreRole == 'pendamping'
+                ? firestoreRole!
+                : 'jamaah');
 
         if (roleStr == 'admin') {
           _role.value = UserRole.admin;

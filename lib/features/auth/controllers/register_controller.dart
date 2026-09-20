@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/trusted_backend_service.dart';
 import '../../../core/state/app_startup_controller.dart';
@@ -32,54 +33,97 @@ class RegisterController extends GetxController {
     isLoading.value = true;
     errorMessage.value = null;
 
-    if (emailController.text.isEmpty ||
-        passwordController.text.isEmpty ||
-        fullNameController.text.isEmpty) {
+    final name = fullNameController.text.trim();
+    final porsi = porsiController.text.trim();
+    final email = emailController.text.trim();
+    final password = passwordController.text;
+    final chosenRole = selectedRole.value.trim().toLowerCase();
+    final effectiveRole =
+        (chosenRole == 'pendamping' || chosenRole == 'petugas')
+        ? 'pendamping'
+        : 'jamaah';
+
+    if (email.isEmpty || password.isEmpty || name.isEmpty) {
       errorMessage.value = 'Isi nama, email, dan kata sandi terlebih dahulu.';
       _showErrorSnackbar(errorMessage.value!);
       isLoading.value = false;
       return;
     }
 
+    User? newUser;
     try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text,
+      // ── Step 1: Create Firebase Auth user ───────────────────────────────
+      final credential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: password);
+      newUser = credential.user;
+
+      if (newUser == null) {
+        throw FirebaseAuthException(
+          code: 'user-not-found',
+          message: 'Gagal membuat pengguna baru.',
+        );
+      }
+
+      final uid = newUser.uid;
+
+      // Update Firebase Auth displayName
+      try {
+        await newUser.updateDisplayName(name);
+      } catch (_) {}
+
+      // ── Step 2: Direct Firestore write ──────────────────────────────────
+      // Write profile directly to Firestore so the user document is immediately
+      // created and never left in an orphaned Auth-only state.
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'uid': uid,
+        'name': name,
+        'displayName': name,
+        'email': email,
+        'normalizedEmail': email.toLowerCase(),
+        'nomorPorsi': porsi,
+        'porsi': porsi,
+        'role': effectiveRole,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'isGpsActive': false,
+      }, SetOptions(merge: true));
+      debugPrint(
+        '=== Direct Firestore write succeeded for uid: $uid, role: $effectiveRole',
       );
 
-      final profile = await TrustedBackendService().call('ensureUserProfile', {
-        'name': fullNameController.text.trim(),
-        'nomorPorsi': porsiController.text.trim(),
-        'requestedRole': selectedRole.value,
-      });
-      final effectiveRole = profile['role'] as String? ?? 'jamaah';
+      // ── Step 3: Server synchronization via Cloud Functions ──────────────
+      // Non-fatal: if functions are not deployed or cold-starting, the Firestore
+      // write in Step 2 already guarantees the account works.
+      try {
+        await TrustedBackendService().call('ensureUserProfile', {
+          'name': name,
+          'nomorPorsi': porsi,
+          'requestedRole': effectiveRole,
+        });
+        debugPrint('=== Cloud Function ensureUserProfile succeeded');
+      } catch (cfError) {
+        debugPrint(
+          '=== Cloud Function ensureUserProfile skipped/failed (non-fatal): $cfError',
+        );
+      }
 
-      // Persist onboarding status & Remember Me setting
+      // ── Step 4: Persist session & sync state ────────────────────────────
       final startup = Get.find<AppStartupController>();
       await startup.handleSuccessfulLogin(rememberMe: true);
 
-      // Pre-set user role in HajiCareController
       if (Get.isRegistered<HajiCareController>()) {
         final hajicare = Get.find<HajiCareController>();
         await hajicare.applyUserData(
           roleStr: effectiveRole,
           roomId: null,
-          name: fullNameController.text.trim(),
+          name: name,
         );
       }
 
-      // Navigate directly to respective role dashboard (basic features available without room)
+      // ── Step 5: Navigate directly to respective role dashboard ──────────
       if (effectiveRole == 'pendamping') {
         Get.offAllNamed(AppRoutes.dashboardPendamping);
       } else {
-        if (selectedRole.value == 'pendamping') {
-          AppDialog.info(
-            title: 'Menunggu Persetujuan',
-            message:
-                'Permintaan akses pendamping sudah dikirim. Untuk sementara akun menggunakan akses jamaah.',
-            okText: 'Mengerti',
-          );
-        }
         Get.offAllNamed(AppRoutes.dashboardJamaah);
       }
     } on FirebaseAuthException catch (e) {
@@ -88,6 +132,16 @@ class RegisterController extends GetxController {
       _showErrorSnackbar(errorMessage.value!);
     } catch (e, stackTrace) {
       debugPrint('=== ERROR UMUM ===: $e\n$stackTrace');
+      // If Firestore write failed completely, delete the orphaned Auth user
+      // so the user can retry registration with the same email.
+      if (newUser != null) {
+        try {
+          await newUser.delete();
+          debugPrint('=== Orphaned Auth user deleted after total failure.');
+        } catch (deleteErr) {
+          debugPrint('=== Could not delete orphaned Auth user: $deleteErr');
+        }
+      }
       errorMessage.value = 'Pendaftaran belum berhasil. Silakan coba lagi.';
       _showErrorSnackbar(errorMessage.value!);
     } finally {

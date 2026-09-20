@@ -64,12 +64,7 @@ void main() {
             shortLabel: 'Ahmad',
             distance: 30,
           ),
-          JamaahData(
-            id: 'j2',
-            name: 'Budi',
-            shortLabel: 'Budi',
-            distance: 50,
-          ),
+          JamaahData(id: 'j2', name: 'Budi', shortLabel: 'Budi', distance: 50),
         ];
 
         await tester.pumpWidget(
@@ -100,12 +95,7 @@ void main() {
             shortLabel: 'Ahmad',
             distance: 600,
           ),
-          JamaahData(
-            id: 'j2',
-            name: 'Budi',
-            shortLabel: 'Budi',
-            distance: 800,
-          ),
+          JamaahData(id: 'j2', name: 'Budi', shortLabel: 'Budi', distance: 800),
         ];
 
         for (final j in jamaahList) {

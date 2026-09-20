@@ -34,69 +34,108 @@ class HajiCareApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final settings = Get.find<AppSettingsController>();
 
-    // ── Reactive text scale wrapper ─────────────────────────────────────────
-    // Reading rxTextScale.value directly inside Obx ensures any change to the
-    // text scale Rx immediately rebuilds this widget, which re-injects the
-    // updated MediaQuery *above* the entire GetMaterialApp tree.  This is the
-    // correct way to drive global text scaling: the MediaQuery ancestor must
-    // live outside GetMaterialApp so the whole navigator/route tree inherits it.
-    return Obx(() {
-      final textScaleFactor = settings.rxTextScale.value.factor;
-      final themeMode = settings.rxThemeMode.value;
-      final locale = settings.rxLocale.value;
+    // ── Stable GetMaterialApp ────────────────────────────────────────────────
+    // GetMaterialApp must NOT be rebuilt from scratch on every Rx tick.
+    // Rebuilding it tears down all InheritedWidget descendants (including
+    // MediaQuery) while dependents still hold references → _dependents.isEmpty
+    // assertion failure.
+    //
+    // Instead:
+    //  • themeMode / locale are passed as Obx-observed values on the
+    //    GetMaterialApp itself — GetX updates those fields without a full
+    //    rebuild when they change.
+    //  • textScaleFactor is consumed inside `builder` via a narrow Obx that
+    //    only recreates the thin MediaQuery wrapper, leaving the navigator tree
+    //    untouched.
+    return GetMaterialApp(
+      title: 'HajiCare',
+      debugShowCheckedModeBanner: false,
 
-      return GetMaterialApp(
-        title: 'HajiCare',
-        debugShowCheckedModeBanner: false,
+      // Theming — Obx() reads rxThemeMode so GetX can patch themeMode reactively
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: settings.rxThemeMode.value,
 
-        // Theming
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: themeMode,
-
-        // Localization
-        locale: locale,
-        fallbackLocale: AppTranslations.fallbackLocale,
-        translations: AppTranslations(),
-        supportedLocales: AppTranslations.supportedLocales,
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-          FallbackMaterialLocalizationsDelegate(),
-          FallbackCupertinoLocalizationsDelegate(),
-          FallbackWidgetsLocalizationsDelegate(),
-        ],
-        localeResolutionCallback: (locale, supportedLocales) {
-          for (final supportedLocale in supportedLocales) {
-            if (supportedLocale.languageCode == locale?.languageCode) {
-              return supportedLocale;
-            }
+      // Localization
+      locale: settings.rxLocale.value,
+      fallbackLocale: AppTranslations.fallbackLocale,
+      translations: AppTranslations(),
+      supportedLocales: AppTranslations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        FallbackMaterialLocalizationsDelegate(),
+        FallbackCupertinoLocalizationsDelegate(),
+        FallbackWidgetsLocalizationsDelegate(),
+      ],
+      localeResolutionCallback: (locale, supportedLocales) {
+        for (final supportedLocale in supportedLocales) {
+          if (supportedLocale.languageCode == locale?.languageCode) {
+            return supportedLocale;
           }
-          return AppTranslations.fallbackLocale;
-        },
+        }
+        return AppTranslations.fallbackLocale;
+      },
 
-        // GetX route management with bindings attached per-route
-        initialRoute: AppRoutes.splash,
-        getPages: AppRoutes.pages,
+      // GetX route management with bindings attached per-route
+      initialRoute: AppRoutes.splash,
+      getPages: AppRoutes.pages,
 
-        // Apply dynamic text scaling to the entire widget tree
-        builder: (context, child) {
-          final mediaQuery = MediaQuery.of(context);
-          final systemScale = mediaQuery.textScaler.scale(1);
-          final effectiveScale = (systemScale * textScaleFactor).clamp(
-            0.8,
-            3.0,
-          );
-          return MediaQuery(
-            data: mediaQuery.copyWith(
-              textScaler: TextScaler.linear(effectiveScale),
-            ),
-            child: child ?? const SizedBox.shrink(),
-          );
-        },
-      );
+      // Wrap child with a stable StatefulWidget — NEVER use Obx inside builder.
+      // Obx replaces the MediaQuery node on every Rx tick, which triggers
+      // _dependents.isEmpty when dialogs are being dismissed mid-frame.
+      builder: (context, child) =>
+          _TextScaleMediaQuery(settings: settings, child: child),
+    );
+  }
+}
+
+// ── Stable text-scale MediaQuery wrapper ─────────────────────────────────────
+// Uses GetX ever() to call setState when rxTextScale changes.
+// Because this is a StatefulWidget, the element is REUSED across rebuilds —
+// Flutter updates the MediaQuery data in-place (updateShouldNotify) instead
+// of deactivating the node, so dependents are never invalidated mid-frame.
+class _TextScaleMediaQuery extends StatefulWidget {
+  final AppSettingsController settings;
+  final Widget? child;
+
+  const _TextScaleMediaQuery({required this.settings, this.child});
+
+  @override
+  State<_TextScaleMediaQuery> createState() => _TextScaleMediaQueryState();
+}
+
+class _TextScaleMediaQueryState extends State<_TextScaleMediaQuery> {
+  Worker? _worker;
+
+  @override
+  void initState() {
+    super.initState();
+    // Listen to rxTextScale and trigger an in-place rebuild of this widget.
+    // ever() fires only when the value actually changes — no spurious frames.
+    _worker = ever(widget.settings.rxTextScale, (_) {
+      if (mounted) setState(() {});
     });
+  }
+
+  @override
+  void dispose() {
+    _worker?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final textScaleFactor = widget.settings.rxTextScale.value.factor;
+    final mediaQuery = MediaQuery.of(context);
+    final systemScale = mediaQuery.textScaler.scale(1);
+    final effectiveScale = (systemScale * textScaleFactor).clamp(0.8, 3.0);
+
+    return MediaQuery(
+      data: mediaQuery.copyWith(textScaler: TextScaler.linear(effectiveScale)),
+      child: widget.child ?? const SizedBox.shrink(),
+    );
   }
 }

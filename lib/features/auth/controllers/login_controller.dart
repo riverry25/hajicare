@@ -122,6 +122,33 @@ class LoginController extends GetxController {
       // jika controller sudah dihancurkan.
       if (isClosed) return;
 
+      // Self-heal: ensure user doc exists in Firestore even if previous registration was interrupted
+      try {
+        final userDocRef = FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid);
+        final userDoc = await userDocRef.get().timeout(
+          const Duration(seconds: 3),
+        );
+        if (!userDoc.exists) {
+          final authUser = userCredential.user;
+          final fallbackName = authUser?.displayName ?? email.split('@').first;
+          await userDocRef.set({
+            'uid': uid,
+            'name': fallbackName,
+            'displayName': fallbackName,
+            'email': email,
+            'normalizedEmail': email.toLowerCase(),
+            'role': 'jamaah',
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+            'isGpsActive': false,
+          }, SetOptions(merge: true));
+        }
+      } catch (docErr) {
+        debugPrint('[LoginController] User doc self-heal check: $docErr');
+      }
+
       // ============================================================
       // 3. Tentukan dashboard berdasarkan role
       // ============================================================

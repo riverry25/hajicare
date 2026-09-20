@@ -38,15 +38,21 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if isSelf(uid) || isAdmin();
 
-      // Profiles are provisioned by ensureUserProfile. Clients may only edit
-      // non-authoritative personal/medical/location fields.
-      allow create: if false;
+      // Self-registration: client may create its own profile only during
+      // initial sign-up and with role 'jamaah', 'pendamping', or 'petugas'.
+      // Admin role can NEVER be created by client.
+      allow create: if isSelf(uid) &&
+        request.resource.data.get('role', 'jamaah') in ['jamaah', 'pendamping', 'petugas'];
+
+      // Clients may edit personal/medical/location fields, but never escalate to admin.
       allow update: if isSelf(uid) &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'allergies', 'bloodType', 'conditions', 'currentLocation',
           'displayName', 'emergencyContact', 'isGpsActive',
-          'locationUpdatedAt', 'name', 'photoUrl', 'updatedAt'
-        ]);
+          'locationUpdatedAt', 'name', 'nomorPorsi', 'porsi', 'photoUrl', 'updatedAt',
+          'email', 'normalizedEmail', 'role'
+        ]) &&
+        request.resource.data.get('role', resource.data.get('role', 'jamaah')) != 'admin';
       allow delete: if false;
     }
 
