@@ -995,21 +995,41 @@ class HajiCareController extends GetxController {
       if (roomId == null || roomId.isEmpty) {
         roomId = _cachedRoomId?.trim();
       }
+
+      // If eventId wasn't explicitly supplied, find it from current active SOS events
+      String? resolvedEventId = eventId;
+      if (resolvedEventId == null || resolvedEventId.isEmpty) {
+        final match = activeSosEvents.firstWhereOrNull(
+          (e) => e['userId'] == id || e['jamaahId'] == id,
+        );
+        resolvedEventId = match?['id'] as String?;
+      }
+
       await _roomService.resolveSos(
         userId: id,
         roomId: roomId,
-        eventId: eventId,
+        eventId: resolvedEventId,
         resolvedByUid: currentUid,
       );
+
       final index = jamaahList.indexWhere((j) => j.id == id);
       if (index >= 0) {
         jamaahList[index].sosActive = false;
         jamaahList[index].refresh();
       }
-      if (_self?.id == id) {
+      if (_self?.id == id || currentUid == id) {
         _self?.sosActive = false;
         _self?.refresh();
       }
+
+      // Immediately purge from active list locally for instant UI response
+      activeSosEvents.removeWhere(
+        (e) =>
+            e['userId'] == id ||
+            e['jamaahId'] == id ||
+            (resolvedEventId != null && e['id'] == resolvedEventId),
+      );
+      activeSosCount.value = activeSosEvents.length;
       jamaahList.refresh();
       return true;
     } catch (e) {

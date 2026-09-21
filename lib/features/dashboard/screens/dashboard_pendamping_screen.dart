@@ -602,16 +602,12 @@ class DashboardPendampingScreen extends StatelessWidget {
             // Monitored Pilgrims Pills
             if (state.activeRoomId.value != null &&
                 state.jamaahList.isNotEmpty) ...[
-              _sectionHeader(
-                title: 'Pantauan Jamaah',
-                subtitle: 'Daftar & status jarak anggota room',
-                actionText: 'Lihat peta',
-                onAction: () => dashboardCtrl.changeTab(1),
+              _PilgrimsPillsSection(
+                state: state,
+                dashboardCtrl: dashboardCtrl,
                 headingColor: headingColor,
                 isDark: isDark,
               ),
-              const SizedBox(height: 12),
-              _pilgrimsPills(context, state, dashboardCtrl, isDark),
               const SizedBox(height: 26),
             ],
 
@@ -670,158 +666,11 @@ class DashboardPendampingScreen extends StatelessWidget {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // MONITORED PILGRIMS PILLS
-  // ═══════════════════════════════════════════════════════════════════════════
-  Widget _pilgrimsPills(
-    BuildContext context,
-    HajiCareController state,
-    DashboardController dashboardCtrl,
-    bool isDark,
-  ) {
-    if (state.jamaahList.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Text(
-          'Belum ada jamaah terdaftar',
-          style: TextStyle(
-            color: isDark ? AppColors.darkTextBody : AppColors.textBody,
-            fontSize: 13,
-          ),
-        ),
-      );
-    }
-
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: List.generate(state.jamaahList.length, (i) {
-        final j = state.jamaahList[i];
-        final hasSos = j.sosActive;
-        final isSep = j.separatedMode;
-        final dist = j.distance;
-        final distText = dist > 0
-            ? (dist < 1000
-                  ? '${dist.round()} m'
-                  : '${(dist / 1000).toStringAsFixed(1)} km')
-            : '—';
-        final isSelected = dashboardCtrl.selectedJamaahIndex.value == i;
-
-        final Color pill = hasSos
-            ? AppColors.sosEmergency
-            : (isSep ? AppColors.statusWarning : AppColors.statusSafe);
-
-        return GestureDetector(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            dashboardCtrl.selectJamaah(i);
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: EdgeInsets.symmetric(
-              horizontal: isSelected ? 13 : 11,
-              vertical: isSelected ? 7.5 : 6.5,
-            ),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? (isDark
-                        ? AppColors.darkPrimaryContainer
-                        : AppColors.canvasCreamSubtle)
-                  : pill.withValues(alpha: isDark ? 0.15 : 0.08),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isSelected
-                    ? (isDark ? AppColors.goldLight : AppColors.espressoDark)
-                    : pill.withValues(alpha: isDark ? 0.38 : 0.28),
-                width: isSelected ? 1.8 : 1.2,
-              ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: (isDark ? Colors.black : AppColors.espressoDark)
-                            .withValues(alpha: 0.16),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 7,
-                  height: 7,
-                  decoration: BoxDecoration(
-                    color: pill,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: pill.withValues(alpha: 0.55),
-                        blurRadius: 4,
-                        spreadRadius: 1,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  j.shortLabel.isNotEmpty
-                      ? j.shortLabel
-                      : (j.name.isNotEmpty
-                            ? j.name.split(' ').first
-                            : 'Jamaah ${i + 1}'),
-                  style: TextStyle(
-                    color: isSelected
-                        ? (isDark
-                              ? AppColors.goldLight
-                              : AppColors.espressoDark)
-                        : (isDark
-                              ? AppColors.darkTextHeading
-                              : AppColors.espressoDark),
-                    fontSize: 12.5,
-                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(width: 5),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 5,
-                    vertical: 1.5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: pill.withValues(alpha: isDark ? 0.22 : 0.14),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    distText,
-                    style: TextStyle(
-                      color: pill,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.1,
-                    ),
-                  ),
-                ),
-                if (hasSos) ...[
-                  const SizedBox(width: 4),
-                  const Icon(
-                    Icons.emergency_rounded,
-                    color: AppColors.sosEmergency,
-                    size: 13,
-                  ),
-                ],
-              ],
-            ),
-          ),
-        );
-      }),
-    );
-  }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // HELPER WIDGETS
   // ═══════════════════════════════════════════════════════════════════════════
+
 
   Widget _notifButton(BuildContext context, HajiCareController state) {
     return Stack(
@@ -1088,6 +937,7 @@ class DashboardPendampingScreen extends StatelessWidget {
     required VoidCallback onAction,
     required Color headingColor,
     required bool isDark,
+    Widget? actionWidget,
   }) {
     return Padding(
       padding: const EdgeInsets.only(top: 8, bottom: 6),
@@ -1125,21 +975,25 @@ class DashboardPendampingScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          InkWell(
-            onTap: onAction,
-            borderRadius: BorderRadius.circular(8),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-              child: Text(
-                actionText,
-                style: TextStyle(
-                  color: isDark ? AppColors.goldLight : AppColors.espressoDark,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12.5,
+          if (actionWidget != null)
+            actionWidget
+          else
+            InkWell(
+              onTap: onAction,
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                child: Text(
+                  actionText,
+                  style: TextStyle(
+                    color:
+                        isDark ? AppColors.goldLight : AppColors.espressoDark,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12.5,
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -1304,6 +1158,436 @@ class DashboardPendampingScreen extends StatelessWidget {
             ],
           );
         }).toList(),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PILGRIMS PILLS SECTION  (carousel + search)
+// ═══════════════════════════════════════════════════════════════════════════
+class _PilgrimsPillsSection extends StatefulWidget {
+  const _PilgrimsPillsSection({
+    required this.state,
+    required this.dashboardCtrl,
+    required this.headingColor,
+    required this.isDark,
+  });
+
+  final HajiCareController state;
+  final DashboardController dashboardCtrl;
+  final Color headingColor;
+  final bool isDark;
+
+  @override
+  State<_PilgrimsPillsSection> createState() => _PilgrimsPillsSectionState();
+}
+
+class _PilgrimsPillsSectionState extends State<_PilgrimsPillsSection>
+    with SingleTickerProviderStateMixin {
+  bool _searchOpen = false;
+  String _query = '';
+  final TextEditingController _textCtrl = TextEditingController();
+  late final AnimationController _animCtrl;
+  late final Animation<double> _widthAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _animCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 220),
+    );
+    _widthAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic);
+  }
+
+  @override
+  void dispose() {
+    _animCtrl.dispose();
+    _textCtrl.dispose();
+    super.dispose();
+  }
+
+  void _toggleSearch() {
+    setState(() {
+      _searchOpen = !_searchOpen;
+      if (_searchOpen) {
+        _animCtrl.forward();
+      } else {
+        _animCtrl.reverse();
+        _query = '';
+        _textCtrl.clear();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.isDark;
+    final headingColor = widget.headingColor;
+    final state = widget.state;
+    final dashboardCtrl = widget.dashboardCtrl;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Section header ────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.only(top: 8, bottom: 6),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Title + subtitle
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Pantauan Jamaah',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.titleMedium.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: headingColor,
+                        fontSize: 15,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Daftar & status jarak anggota room',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.captionSmall.copyWith(
+                        color: isDark
+                            ? AppColors.darkTextBody.withValues(alpha: 0.8)
+                            : AppColors.textMuted,
+                        height: 1.3,
+                        fontSize: 11.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+
+              // Animated search field
+              SizeTransition(
+                sizeFactor: _widthAnim,
+                axis: Axis.horizontal,
+                alignment: Alignment.centerRight,
+                child: AnimatedOpacity(
+                  opacity: _searchOpen ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 180),
+                  child: SizedBox(
+                    width: 140,
+                    height: 32,
+                    child: TextField(
+                      controller: _textCtrl,
+                      autofocus: true,
+                      onChanged: (v) => setState(() => _query = v.toLowerCase()),
+                      style: TextStyle(
+                        color: isDark
+                            ? AppColors.darkTextHeading
+                            : AppColors.espressoDark,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Cari jamaah…',
+                        hintStyle: TextStyle(
+                          color: isDark
+                              ? AppColors.darkTextBody.withValues(alpha: 0.5)
+                              : AppColors.textMuted,
+                          fontSize: 12,
+                        ),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 7,
+                        ),
+                        filled: true,
+                        fillColor: isDark
+                            ? AppColors.darkSurfaceContainer
+                            : AppColors.canvasCream,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(
+                            color: isDark
+                                ? AppColors.darkOutlineVariant.withValues(
+                                    alpha: 0.5,
+                                  )
+                                : AppColors.lightCardBorder,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(
+                            color: isDark
+                                ? AppColors.darkOutlineVariant.withValues(
+                                    alpha: 0.4,
+                                  )
+                                : AppColors.lightCardBorder,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(
+                            color: isDark
+                                ? AppColors.goldLight
+                                : AppColors.espressoDark,
+                            width: 1.4,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Search icon button
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  _toggleSearch();
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.only(left: 4),
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: _searchOpen
+                        ? (isDark
+                              ? AppColors.goldLight.withValues(alpha: 0.18)
+                              : AppColors.espressoDark.withValues(alpha: 0.10))
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(9),
+                    border: _searchOpen
+                        ? Border.all(
+                            color: isDark
+                                ? AppColors.goldLight.withValues(alpha: 0.45)
+                                : AppColors.espressoDark.withValues(alpha: 0.30),
+                            width: 1.2,
+                          )
+                        : null,
+                  ),
+                  child: Icon(
+                    _searchOpen ? Icons.search_off_rounded : Icons.search_rounded,
+                    size: 18,
+                    color: isDark ? AppColors.goldLight : AppColors.espressoDark,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // ── Horizontal carousel ────────────────────────────────────
+        Obx(() {
+          final all = state.jamaahList;
+          if (all.isEmpty) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Text(
+                'Belum ada jamaah terdaftar',
+                style: TextStyle(
+                  color: isDark ? AppColors.darkTextBody : AppColors.textBody,
+                  fontSize: 13,
+                ),
+              ),
+            );
+          }
+
+          // Build filtered list preserving original indices for selectJamaah
+          final filtered = <({int idx, dynamic j})>[];
+          for (int i = 0; i < all.length; i++) {
+            final j = all[i];
+            if (_query.isEmpty) {
+              filtered.add((idx: i, j: j));
+            } else {
+              final name =
+                  (j.name as String? ?? '').toLowerCase();
+              final label =
+                  (j.shortLabel as String? ?? '').toLowerCase();
+              if (name.contains(_query) || label.contains(_query)) {
+                filtered.add((idx: i, j: j));
+              }
+            }
+          }
+
+          if (filtered.isEmpty) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Text(
+                'Tidak ada jamaah yang cocok',
+                style: TextStyle(
+                  color: isDark ? AppColors.darkTextBody : AppColors.textBody,
+                  fontSize: 13,
+                ),
+              ),
+            );
+          }
+
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            clipBehavior: Clip.none,
+            child: Row(
+              children: [
+                for (int idx = 0; idx < filtered.length; idx++) ...[
+                  if (idx > 0) const SizedBox(width: 8),
+                  _PillItem(
+                    originalIndex: filtered[idx].idx,
+                    j: filtered[idx].j,
+                    isDark: isDark,
+                    dashboardCtrl: dashboardCtrl,
+                  ),
+                ],
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
+}
+
+// ─── Single pill widget (stateless, reactive via Obx wrapper above) ─────────
+class _PillItem extends StatelessWidget {
+  const _PillItem({
+    required this.originalIndex,
+    required this.j,
+    required this.isDark,
+    required this.dashboardCtrl,
+  });
+
+  final int originalIndex;
+  final dynamic j;
+  final bool isDark;
+  final DashboardController dashboardCtrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasSos = j.sosActive as bool;
+    final isSep = j.separatedMode as bool;
+    final dist = j.distance as double;
+    final distText = dist > 0
+        ? (dist < 1000
+              ? '${dist.round()} m'
+              : '${(dist / 1000).toStringAsFixed(1)} km')
+        : '—';
+    final isSelected =
+        dashboardCtrl.selectedJamaahIndex.value == originalIndex;
+
+    final Color pill = hasSos
+        ? AppColors.sosEmergency
+        : (isSep ? AppColors.statusWarning : AppColors.statusSafe);
+
+    final name = j.shortLabel as String? ?? '';
+    final fullName = j.name as String? ?? '';
+    final label = name.isNotEmpty
+        ? name
+        : (fullName.isNotEmpty
+              ? fullName.split(' ').first
+              : 'Jamaah ${originalIndex + 1}');
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        dashboardCtrl.selectJamaah(originalIndex);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.symmetric(
+          horizontal: isSelected ? 13 : 11,
+          vertical: isSelected ? 7.5 : 6.5,
+        ),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? (isDark
+                    ? AppColors.darkPrimaryContainer
+                    : AppColors.canvasCreamSubtle)
+              : pill.withValues(alpha: isDark ? 0.15 : 0.08),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? (isDark ? AppColors.goldLight : AppColors.espressoDark)
+                : pill.withValues(alpha: isDark ? 0.38 : 0.28),
+            width: isSelected ? 1.8 : 1.2,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: (isDark ? Colors.black : AppColors.espressoDark)
+                        .withValues(alpha: 0.16),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Status dot
+            Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(
+                color: pill,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: pill.withValues(alpha: 0.55),
+                    blurRadius: 4,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 6),
+            // Name
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected
+                    ? (isDark ? AppColors.goldLight : AppColors.espressoDark)
+                    : (isDark
+                          ? AppColors.darkTextHeading
+                          : AppColors.espressoDark),
+                fontSize: 12.5,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+              ),
+            ),
+            const SizedBox(width: 5),
+            // Distance badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+              decoration: BoxDecoration(
+                color: pill.withValues(alpha: isDark ? 0.22 : 0.14),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                distText,
+                style: TextStyle(
+                  color: pill,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.1,
+                ),
+              ),
+            ),
+            if (hasSos) ...[
+              const SizedBox(width: 4),
+              const Icon(
+                Icons.emergency_rounded,
+                color: AppColors.sosEmergency,
+                size: 13,
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

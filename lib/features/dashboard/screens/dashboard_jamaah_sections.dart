@@ -78,22 +78,33 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                 Expanded(
                   child: _buildCategoryItem(
                     context: context,
-                    label: 'BISINDO',
-                    icon: Icons.sign_language_rounded,
+                    label: 'Deteksi Uang',
+                    icon: Icons.payments_rounded,
                     bgColor: isDark
                         ? AppColors.darkSurfaceContainer
                         : AppColors.canvasCream,
                     iconColor: isDark
                         ? AppColors.goldLight
                         : AppColors.espressoDark,
-                    onTap: () => Get.toNamed(AppRoutes.bisindo),
+                    onTap: () => Get.toNamed(AppRoutes.moneyRecognition),
                   ),
                 ),
               ],
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
+
+          // ── Bento Grid: Layanan & Fitur Utama Jamaah ─────────────
+          _buildJamaahBentoSection(
+            context: context,
+            state: state,
+            jamaah: jamaah,
+            isDark: isDark,
+            headingColor: headingColor,
+          ),
+
+          const SizedBox(height: 24),
 
           // ── Section 1: "Status & Peringatan" ("Bot Alert") ────────
           _buildSectionHeader(
@@ -533,6 +544,902 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
           }),
         );
       },
+    );
+  }
+
+  // ── Bento Grid: Layanan & Fitur Utama Jamaah ──────────────────────────────
+  Widget _buildJamaahBentoSection({
+    required BuildContext context,
+    required HajiCareController state,
+    required JamaahData jamaah,
+    required bool isDark,
+    required Color headingColor,
+  }) {
+    final cardBg = AppColors.cardBgColor(context);
+    final borderColor = AppColors.cardBorderColor(context);
+    final bodyColor = AppColors.textBodyColor(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section Header (Matching Reference Aesthetic)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.darkSurfaceContainerHigh
+                        : AppColors.canvasCreamSubtle,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.grid_view_rounded,
+                    size: 16,
+                    color: headingColor,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Layanan & Panduan',
+                      style: AppTypography.titleSmall.copyWith(
+                        color: headingColor,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14.5,
+                      ),
+                    ),
+                    Text(
+                      'Akses cepat kebutuhan ibadah & bantuan',
+                      style: AppTypography.captionSmall.copyWith(
+                        color: bodyColor.withValues(alpha: 0.7),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+
+        // 4 Staggered Bento Cards matching reference layout
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Left Column: BISINDO (Tall: 162) & Panduan Doa (Short: 126)
+            Expanded(
+              child: Column(
+                children: [
+                  _buildBentoFeatureCard(
+                    context: context,
+                    title: 'Bahasa Isyarat',
+                    value: 'BISINDO',
+                    subtitle: 'Buka Kamera',
+                    icon: Icons.sign_language_rounded,
+                    height: 162,
+                    isDark: isDark,
+                    cardBg: cardBg,
+                    borderColor: borderColor,
+                    headingColor: headingColor,
+                    bodyColor: bodyColor,
+                    circleBg: isDark
+                        ? AppColors.emeraldIslamic.withValues(alpha: 0.22)
+                        : AppColors.emeraldLight,
+                    iconColor: AppColors.emeraldIslamic,
+                    accentColor: AppColors.emeraldIslamic,
+                    onTap: () => Get.toNamed(AppRoutes.bisindo),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildBentoFeatureCard(
+                    context: context,
+                    title: 'Panduan Doa',
+                    value: 'Doa Haji',
+                    subtitle: 'Doa & Dzikir',
+                    icon: Icons.menu_book_rounded,
+                    height: 126,
+                    isDark: isDark,
+                    cardBg: cardBg,
+                    borderColor: borderColor,
+                    headingColor: headingColor,
+                    bodyColor: bodyColor,
+                    circleBg: isDark
+                        ? AppColors.darkSurfaceContainerHighest
+                        : AppColors.canvasCreamSubtle,
+                    iconColor: isDark
+                        ? AppColors.goldLight
+                        : AppColors.secondary,
+                    accentColor: AppColors.secondary,
+                    onTap: () => _showDoaSheet(context),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // Right Column: Guide Haji (Short: 126) & Fitur Jemput (Tall: 162)
+            Expanded(
+              child: Column(
+                children: [
+                  _buildBentoFeatureCard(
+                    context: context,
+                    title: 'Jadwal & Rukun',
+                    value: 'Guide Haji',
+                    subtitle: 'Lihat Rangkaian',
+                    icon: Icons.event_note_rounded,
+                    height: 126,
+                    isDark: isDark,
+                    cardBg: cardBg,
+                    borderColor: borderColor,
+                    headingColor: headingColor,
+                    bodyColor: bodyColor,
+                    circleBg: isDark
+                        ? AppColors.tanMedium.withValues(alpha: 0.22)
+                        : AppColors.secondaryContainer.withValues(alpha: 0.45),
+                    iconColor: isDark
+                        ? AppColors.tanLight
+                        : AppColors.espressoDark,
+                    accentColor: AppColors.tanMedium,
+                    onTap: () => _showHajiScheduleGuideSheet(context),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildBentoFeatureCard(
+                    context: context,
+                    title: 'Bantuan Jemput',
+                    value: 'Jemput Saya',
+                    subtitle: 'Kirim Lokasi',
+                    icon: Icons.hail_rounded,
+                    height: 162,
+                    isDark: isDark,
+                    cardBg: cardBg,
+                    borderColor: borderColor,
+                    headingColor: headingColor,
+                    bodyColor: bodyColor,
+                    circleBg: isDark
+                        ? const Color(0xFF3E2723)
+                        : const Color(0xFFFBE9E7),
+                    iconColor: const Color(0xFFE64A19),
+                    accentColor: const Color(0xFFD84315),
+                    onTap: () =>
+                        _showPickupRequestDialog(context, state, jamaah),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBentoFeatureCard({
+    required BuildContext context,
+    required String title,
+    required String value,
+    required String subtitle,
+    required IconData icon,
+    required double height,
+    required bool isDark,
+    required Color cardBg,
+    required Color borderColor,
+    required Color headingColor,
+    required Color bodyColor,
+    required Color circleBg,
+    required Color iconColor,
+    required Color accentColor,
+    required VoidCallback onTap,
+  }) {
+    final isTall = height > 135;
+
+    return Container(
+      height: height,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: borderColor, width: 1.0),
+        boxShadow: [
+          BoxShadow(
+            color: (isDark ? Colors.black : AppColors.espressoDark).withValues(
+              alpha: isDark ? 0.28 : 0.04,
+            ),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(24),
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onTap();
+          },
+          borderRadius: BorderRadius.circular(24),
+          splashColor: accentColor.withValues(alpha: 0.12),
+          highlightColor: accentColor.withValues(alpha: 0.06),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: isTall ? 12 : 8,
+              vertical: isTall ? 10 : 6,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: isTall ? 42 : 32,
+                  height: isTall ? 42 : 32,
+                  decoration: BoxDecoration(
+                    color: circleBg,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: (isDark ? Colors.black : iconColor).withValues(
+                          alpha: isDark ? 0.2 : 0.08,
+                        ),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(icon, size: isTall ? 20 : 16, color: iconColor),
+                ),
+                SizedBox(height: isTall ? 6 : 3),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: isTall ? 17 : 15,
+                    fontWeight: FontWeight.w900,
+                    color: headingColor,
+                    letterSpacing: -0.3,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 1.5),
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: AppTypography.captionSmall.copyWith(
+                    color: bodyColor.withValues(alpha: 0.85),
+                    fontWeight: FontWeight.w700,
+                    fontSize: isTall ? 11.5 : 10.5,
+                  ),
+                ),
+                if (isTall) ...[
+                  const SizedBox(height: 5),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(
+                        alpha: isDark ? 0.18 : 0.08,
+                      ),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.captionSmall.copyWith(
+                              color: accentColor,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 9.5,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 3),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 7.5,
+                          color: accentColor,
+                        ),
+                      ],
+                    ),
+                  ),
+                ] else ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: AppTypography.captionSmall.copyWith(
+                      color: accentColor,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 9.5,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Modal Sheet: Jadwal & Guide Ibadah Haji ────────────────────────────────
+  void _showHajiScheduleGuideSheet(BuildContext context) {
+    final isDark = AppColors.isDark(context);
+    final headingColor = AppColors.textHeadingColor(context);
+    final bodyColor = AppColors.textBodyColor(context);
+
+    final scheduleStages = [
+      {
+        'day': '8 Dzulhijjah',
+        'title': 'Hari Tarwiyah (Mina)',
+        'icon': Icons.location_city_rounded,
+        'color': AppColors.emeraldIslamic,
+        'desc':
+            'Mengenakan kain ihram dari Maktab/Hotel dengan niat haji. Bertolak ke Mina untuk bermalam (mabit) dan menunaikan shalat 5 waktu secara qashar tanpa jama\'.',
+      },
+      {
+        'day': '9 Dzulhijjah',
+        'title': 'Wukuf di Padang Arafah (Puncak Haji)',
+        'icon': Icons.wb_sunny_rounded,
+        'color': const Color(0xFFE65100),
+        'desc':
+            'Inti ibadah haji. Berada di Arafah mulai tergelincir matahari (Dzuhur) hingga terbenam. Mendengarkan khutbah wukuf, shalat jama\' qashar Dzuhur-Ashar, serta memperbanyak doa dan dzikir.',
+      },
+      {
+        'day': 'Malam 10 Dzulhijjah',
+        'title': 'Mabit di Muzdalifah',
+        'icon': Icons.nights_stay_rounded,
+        'color': const Color(0xFF5C6BC0),
+        'desc':
+            'Setelah matahari terbenam di Arafah, bertolak ke Muzdalifah. Menunaikan shalat Maghrib-Isya jama\' takhir, mabit minimal melewati tengah malam, dan mengumpulkan kerikil untuk melontar jumrah.',
+      },
+      {
+        'day': '10 Dzulhijjah',
+        'title': 'Hari Nahar (Jumrah Aqabah & Tawaf Ifadhah)',
+        'icon': Icons.flag_rounded,
+        'color': const Color(0xFFC2185B),
+        'desc':
+            'Menuju Mina untuk melempar Jumrah Aqabah (7 kerikil), menyembelih dam/hadyu, mencukur rambut (Tahallul Awal), lalu menuju Makkah untuk Tawaf Ifadhah & Sa\'i (Tahallul Tsani).',
+      },
+      {
+        'day': '11 - 13 Dzulhijjah',
+        'title': 'Hari Tasyrik di Mina',
+        'icon': Icons.alt_route_rounded,
+        'color': const Color(0xFF00897B),
+        'desc':
+            'Bermalam di Mina. Melontar 3 jumrah (Ula, Wustha, Aqabah) setiap hari setelah zawal. Boleh memilih Nafar Awal (kembali ke Makkah tgl 12 sebelum maghrib) atau Nafar Tsani (tgl 13).',
+      },
+      {
+        'day': 'Selesai / Akhir',
+        'title': 'Tawaf Wada\' (Perpisahan)',
+        'icon': Icons.mosque_rounded,
+        'color': AppColors.secondary,
+        'desc':
+            'Tawaf perpisahan mengelilingi Ka\'bah sebanyak 7 putaran sebelum jamaah meninggalkan tanah suci Makkah kembali ke tanah air atau ke Madinah.',
+      },
+    ];
+
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(AppSpacing.cardPadding),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.82,
+        ),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadius.sheet),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.darkOutlineVariant
+                      : AppColors.outlineVariant,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.tanMedium.withValues(
+                      alpha: isDark ? 0.25 : 0.12,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.calendar_month_rounded,
+                    color: AppColors.tanMedium,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Jadwal & Panduan Rukun Haji',
+                        style: AppTypography.titleMedium.copyWith(
+                          color: headingColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        'Tahapan rangkaian ibadah haji dari hari ke hari',
+                        style: AppTypography.captionSmall.copyWith(
+                          color: bodyColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            const Divider(height: 1),
+            const SizedBox(height: AppSpacing.sm),
+            Expanded(
+              child: ListView.separated(
+                itemCount: scheduleStages.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final item = scheduleStages[index];
+                  final stageColor = item['color'] as Color;
+
+                  return Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.darkSurfaceContainer
+                          : AppColors.canvasCream,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: stageColor.withValues(alpha: isDark ? 0.3 : 0.2),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 9,
+                                vertical: 3.5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: stageColor.withValues(
+                                  alpha: isDark ? 0.25 : 0.12,
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.pill,
+                                ),
+                              ),
+                              child: Text(
+                                item['day'] as String,
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: stageColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              item['icon'] as IconData,
+                              size: 18,
+                              color: stageColor,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                item['title'] as String,
+                                style: AppTypography.labelLarge.copyWith(
+                                  color: headingColor,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          item['desc'] as String,
+                          style: AppTypography.bodySmall.copyWith(
+                            color: bodyColor.withValues(alpha: 0.9),
+                            height: 1.45,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+
+  // ── Modal Sheet: Fitur Jemput Saya (Kirim Notifikasi ke Pendamping) ─────────
+  void _showPickupRequestDialog(
+    BuildContext context,
+    HajiCareController state,
+    JamaahData jamaah,
+  ) {
+    final isDark = AppColors.isDark(context);
+    final headingColor = AppColors.textHeadingColor(context);
+    final bodyColor = AppColors.textBodyColor(context);
+    final roomId = state.activeRoomId.value?.trim();
+
+    if (roomId == null || roomId.isEmpty) {
+      AppAlert.error(
+        context,
+        title: 'Belum Tergabung Rombongan',
+        message:
+            'Fitur jemput memerlukan rombongan agar pendamping Anda dapat menerima pemberitahuan. Silakan bergabung dengan rombongan terlebih dahulu.',
+        okText: 'Gabung Rombongan',
+        onOk: () => Get.toNamed(AppRoutes.joinRoom),
+      );
+      return;
+    }
+
+    final presets = [
+      'Depan Pintu Masjid',
+      'Lobi Hotel / Maktab',
+      'Halte Bus Shalawat',
+      'Area Jamarat',
+      'Terpisah dari Rombongan',
+    ];
+    String selectedPreset = presets[0];
+    final noteController = TextEditingController(text: presets[0]);
+    final isSending = false.obs;
+
+    Get.bottomSheet(
+      StatefulBuilder(
+        builder: (sheetContext, setModalState) {
+          final myPos = state.myCurrentPosition.value;
+
+          return Container(
+            padding: const EdgeInsets.all(AppSpacing.cardPadding),
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.85,
+            ),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(AppRadius.sheet),
+              ),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppColors.darkOutlineVariant
+                            : AppColors.outlineVariant,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(
+                            0xFFE64A19,
+                          ).withValues(alpha: isDark ? 0.25 : 0.12),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Icon(
+                          Icons.hail_rounded,
+                          color: Color(0xFFE64A19),
+                          size: 26,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Minta Jemput Pendamping',
+                              style: AppTypography.titleMedium.copyWith(
+                                color: headingColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'Kirim lokasi & permohonan jemput ke room',
+                              style: AppTypography.captionSmall.copyWith(
+                                color: bodyColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  const Divider(height: 1),
+                  const SizedBox(height: AppSpacing.md),
+
+                  // GPS Location card
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.darkSurfaceContainer
+                          : AppColors.canvasCream,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: AppColors.statusSafe.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.my_location_rounded,
+                          color: AppColors.statusSafe,
+                          size: 22,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                myPos != null
+                                    ? 'GPS Terdeteksi'
+                                    : 'GPS Belum Terkunci',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12.5,
+                                  color: headingColor,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                myPos != null
+                                    ? '${myPos.latitude.toStringAsFixed(5)}, ${myPos.longitude.toStringAsFixed(5)}'
+                                    : 'Pastikan izin lokasi dan GPS ponsel Anda aktif.',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: bodyColor.withValues(alpha: 0.8),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  // Quick preset chips
+                  Text(
+                    'Pilih Patokan Lokasi:',
+                    style: AppTypography.labelLarge.copyWith(
+                      color: headingColor,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: presets.map((preset) {
+                      final isSelected = selectedPreset == preset;
+                      return ChoiceChip(
+                        label: Text(preset),
+                        selected: isSelected,
+                        selectedColor: const Color(
+                          0xFFE64A19,
+                        ).withValues(alpha: isDark ? 0.35 : 0.15),
+                        backgroundColor: isDark
+                            ? AppColors.darkSurfaceContainer
+                            : AppColors.canvasCream,
+                        labelStyle: TextStyle(
+                          color: isSelected
+                              ? const Color(0xFFE64A19)
+                              : bodyColor,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                        onSelected: (selected) {
+                          if (selected) {
+                            setModalState(() {
+                              selectedPreset = preset;
+                              noteController.text = preset;
+                            });
+                          }
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  // Notes TextField
+                  Text(
+                    'Detail Patokan / Catatan:',
+                    style: AppTypography.labelLarge.copyWith(
+                      color: headingColor,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: noteController,
+                    maxLines: 2,
+                    decoration: InputDecoration(
+                      hintText:
+                          'Contoh: Di dekat Gate 1, mengenakan syal hijau...',
+                      hintStyle: TextStyle(
+                        fontSize: 12.5,
+                        color: bodyColor.withValues(alpha: 0.5),
+                      ),
+                      filled: true,
+                      fillColor: isDark
+                          ? AppColors.darkSurfaceContainer
+                          : AppColors.canvasCream,
+                      contentPadding: const EdgeInsets.all(12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? AppColors.darkCardBorder
+                              : AppColors.lightCardBorder,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Submit button
+                  Obx(
+                    () => SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE64A19),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                          ),
+                          elevation: 2,
+                        ),
+                        icon: isSending.value
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : const Icon(Icons.hail_rounded),
+                        label: Text(
+                          isSending.value
+                              ? 'Mengirim Permintaan...'
+                              : 'Kirim Permintaan Jemput',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14.5,
+                          ),
+                        ),
+                        onPressed: isSending.value
+                            ? null
+                            : () async {
+                                isSending.value = true;
+                                final noteText = noteController.text.trim();
+                                final finalNote = noteText.isNotEmpty
+                                    ? noteText
+                                    : 'Meminta bantuan penjemputan segera';
+
+                                try {
+                                  await NotificationService().sendNotification(
+                                    title: 'Permintaan Jemput: ${jamaah.name}',
+                                    message:
+                                        'Jamaah ${jamaah.name} meminta bantuan penjemputan di $finalNote.',
+                                    senderUid: state.currentUid ?? jamaah.id,
+                                    senderRole: 'jamaah',
+                                    senderName: jamaah.name,
+                                    scope: 'room',
+                                    targetRoomId: roomId,
+                                    type: 'pickup_request',
+                                    metadata: {
+                                      'latitude': myPos?.latitude,
+                                      'longitude': myPos?.longitude,
+                                      'notes': finalNote,
+                                      'senderName': jamaah.name,
+                                      if (jamaah.kloter != null)
+                                        'kloter': jamaah.kloter,
+                                      if (jamaah.maktab != null)
+                                        'maktab': jamaah.maktab,
+                                    },
+                                  );
+
+                                  if (context.mounted) {
+                                    Get.back();
+                                    AppAlert.success(
+                                      context,
+                                      title: 'Permintaan Terkirim!',
+                                      message:
+                                          'Pendamping di rombongan Anda sudah menerima pemberitahuan dan lokasi penjemputan Anda.',
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    AppAlert.error(
+                                      context,
+                                      title: 'Gagal Mengirim',
+                                      message:
+                                          'Terjadi kendala saat mengirim permintaan jemput: $e',
+                                    );
+                                  }
+                                } finally {
+                                  isSending.value = false;
+                                }
+                              },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+      isScrollControlled: true,
     );
   }
 

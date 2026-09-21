@@ -114,7 +114,7 @@ async function transitionSos(db, auth, data) {
   if (!['cancel', 'respond', 'resolve'].includes(action)) {
     throw new BackendError('invalid-argument', 'Aksi SOS tidak dikenal.');
   }
-  const requestedEventId = data?.eventId == null
+  let requestedEventId = data?.eventId == null
     ? null
     : requiredString(data.eventId, 'SOS event ID', 128);
   const ownerHint = data?.userId == null
@@ -123,6 +123,24 @@ async function transitionSos(db, auth, data) {
   if (!requestedEventId && !ownerHint) {
     throw new BackendError('invalid-argument', 'SOS event atau jamaah wajib dipilih.');
   }
+
+  if (!requestedEventId && ownerHint) {
+    const pointerSnap = await db.collection('active_sos').doc(ownerHint).get();
+    if (pointerSnap.exists && pointerSnap.data().eventId) {
+      requestedEventId = String(pointerSnap.data().eventId);
+    } else {
+      const activeEvents = await db
+        .collection('sos_events')
+        .where('userId', '==', ownerHint)
+        .where('status', 'in', ['active', 'baru', 'direspons'])
+        .limit(1)
+        .get();
+      if (!activeEvents.empty) {
+        requestedEventId = activeEvents.docs[0].id;
+      }
+    }
+  }
+
   let result;
 
   await db.runTransaction(async (transaction) => {
@@ -134,12 +152,19 @@ async function transitionSos(db, auth, data) {
     if (!eventId) {
       pointerRef = db.collection('active_sos').doc(ownerHint);
       pointerSnapshot = await transaction.get(pointerRef);
-      if (!pointerSnapshot.exists) {
-        throw new BackendError('not-found', 'SOS aktif tidak ditemukan.');
+      if (pointerSnapshot.exists) {
+        eventId = requiredString(pointerSnapshot.data().eventId, 'SOS event ID', 128);
+        eventRef = db.collection('sos_events').doc(eventId);
+        eventSnapshot = await getRequired(transaction, eventRef, 'SOS tidak ditemukan.');
+      } else {
+        const userRef = db.collection('users').doc(ownerHint);
+        transaction.set(userRef, {
+          sosActive: false,
+          updatedAt: FieldValue.serverTimestamp(),
+        }, {merge: true});
+        result = {eventId: null, status: 'cancelled'};
+        return;
       }
-      eventId = requiredString(pointerSnapshot.data().eventId, 'SOS event ID', 128);
-      eventRef = db.collection('sos_events').doc(eventId);
-      eventSnapshot = await getRequired(transaction, eventRef, 'SOS tidak ditemukan.');
     } else {
       eventRef = db.collection('sos_events').doc(eventId);
       eventSnapshot = await getRequired(transaction, eventRef, 'SOS tidak ditemukan.');
@@ -156,31 +181,38 @@ async function transitionSos(db, auth, data) {
       throw new BackendError('failed-precondition', 'Pointer SOS tidak konsisten.');
     }
     const userRef = db.collection('users').doc(ownerUid);
-    const memberRef = db.collection('rooms').doc(roomId).collection('members').doc(ownerUid);
+    const memberRef = roomId ? db.collection('rooms').doc(roomId).collection('members').doc(ownerUid) : null;
 
     if (action === 'cancel') {
       if (auth.uid !== ownerUid) {
         throw new BackendError('permission-denied', 'Hanya pemilik SOS yang dapat membatalkan.');
       }
-      if (currentStatus !== 'active' && currentStatus !== 'baru') {
-        throw new BackendError(
-          'failed-precondition',
-          'SOS hanya dapat dibatalkan sebelum direspons.',
-        );
+      if (!ACTIVE_SOS_STATUSES.has(currentStatus)) {
+        transaction.set(userRef, {
+          sosActive: false,
+          updatedAt: FieldValue.serverTimestamp(),
+        }, {merge: true});
+        if (memberRef) {
+          transaction.set(memberRef, {sosActive: false}, {merge: true});
+        }
+        result = {eventId, status: 'cancelled'};
+        return;
       }
       transaction.update(eventRef, {
         status: 'cancelled',
         cancelledAt: FieldValue.serverTimestamp(),
         cancelledBy: auth.uid,
       });
-      if (pointerSnapshot.exists && pointerSnapshot.data().eventId === eventId) {
+      if (pointerSnapshot && pointerSnapshot.exists && pointerSnapshot.data().eventId === eventId) {
         transaction.delete(pointerRef);
       }
       transaction.set(userRef, {
         sosActive: false,
         updatedAt: FieldValue.serverTimestamp(),
       }, {merge: true});
-      transaction.set(memberRef, {sosActive: false}, {merge: true});
+      if (memberRef) {
+        transaction.set(memberRef, {sosActive: false}, {merge: true});
+      }
       result = {eventId, status: 'cancelled'};
       return;
     }

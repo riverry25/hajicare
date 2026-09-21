@@ -211,6 +211,7 @@ class RoomService {
   }) => _commands.transitionSos(
     action: userId == resolvedByUid ? 'cancel' : 'resolve',
     userId: userId,
+    roomId: roomId,
     eventId: eventId,
   );
 

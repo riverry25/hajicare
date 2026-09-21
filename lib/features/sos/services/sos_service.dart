@@ -7,9 +7,12 @@ import '../../../core/services/trusted_backend_service.dart';
 /// not recorded at all.
 class SosService {
   SosService({FirebaseFirestore? firestore, TrustedBackendService? backend})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+      : _providedFirestore = firestore;
 
-  final FirebaseFirestore _firestore;
+  final FirebaseFirestore? _providedFirestore;
+
+  FirebaseFirestore get _firestore =>
+      _providedFirestore ?? FirebaseFirestore.instance;
 
 
   /// Creates the event and updates both realtime status records atomically.
