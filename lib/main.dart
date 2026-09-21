@@ -5,11 +5,11 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 
 import 'core/theme/app_theme.dart';
+import 'core/locales/app_localizations.dart';
 import 'core/routes/app_routes.dart';
 import 'core/state/app_settings_controller.dart';
 import 'core/state/app_startup_controller.dart';
 import 'core/state/hajicare_controller.dart';
-import 'core/locales/app_localizations.dart';
 import 'features/notification/controllers/notification_controller.dart';
 
 void main() async {

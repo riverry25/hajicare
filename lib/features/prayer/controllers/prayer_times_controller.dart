@@ -12,6 +12,7 @@ import '../../../core/services/app_alert_service.dart';
 import '../../../core/services/location_service.dart';
 import '../../../core/services/prayer_calculation_service.dart';
 import '../../../core/services/timezone_service.dart';
+import '../../../core/services/adhan_audio_service.dart';
 import '../models/prayer_location_data.dart';
 import '../models/prayer_schedule_item.dart';
 
@@ -21,12 +22,14 @@ class PrayerTimesController extends GetxController {
   final GeocodingService _geocodingService;
   final TimezoneService _timezoneService;
   final PrayerCalculationService _prayerCalculationService;
+  final AdhanAudioService _adhanAudioService;
 
   PrayerTimesController({
     LocationService? locationService,
     GeocodingService? geocodingService,
     TimezoneService? timezoneService,
     PrayerCalculationService? prayerCalculationService,
+    AdhanAudioService? adhanAudioService,
   }) : _locationService =
            locationService ??
            (Get.isRegistered<LocationService>()
@@ -46,7 +49,12 @@ class PrayerTimesController extends GetxController {
            prayerCalculationService ??
            (Get.isRegistered<PrayerCalculationService>()
                ? Get.find<PrayerCalculationService>()
-               : PrayerCalculationService());
+               : PrayerCalculationService()),
+       _adhanAudioService =
+           adhanAudioService ??
+           (Get.isRegistered<AdhanAudioService>()
+               ? Get.find<AdhanAudioService>()
+               : Get.put(AdhanAudioService()));
 
   // SharedPreferences Keys
   static const String _prefLatKey = 'prayer_cache_lat';
@@ -96,6 +104,14 @@ class PrayerTimesController extends GetxController {
   final nextPrayerTime = '--:--'.obs;
   final countdownText = '-- Menit -- Detik'.obs;
 
+  // Adhan Sound Preferences (prayer key -> bool)
+  final prayerSoundEnabled = <String, bool>{}.obs;
+
+  RxBool get isAdhanPlaying => _adhanAudioService.isPlaying;
+  RxString get playingPrayerName => _adhanAudioService.currentPrayerName;
+
+  String _lastPlayedAdhanKey = '';
+
   // Compass & Qibla
   final qiblaBearing = 0.0.obs;
   final deviceHeading = 0.0.obs;
@@ -131,6 +147,7 @@ class PrayerTimesController extends GetxController {
     final generation = _lifecycleGeneration;
     _initHijriDate();
     _initCompass();
+    await _loadPrayerSoundPreferences();
 
     // Priority order:
     // 1. Fresh GPS
@@ -396,36 +413,49 @@ class PrayerTimesController extends GetxController {
     }
   }
 
+  bool _isCalculatingSchedule = false;
+
   /// Recalculates prayer schedule and Qibla angle from current coordinates
   void _calculateScheduleAndQibla() {
+    if (_isCalculatingSchedule) return;
     if (currentLat.value == 0.0 && currentLng.value == 0.0) return;
 
-    final now = DateTime.now();
-    _lastScheduleCalculationDate = now;
+    _isCalculatingSchedule = true;
+    try {
+      final now = DateTime.now();
+      _lastScheduleCalculationDate = now;
 
-    final result = _prayerCalculationService.calculatePrayerSchedule(
-      latitude: currentLat.value,
-      longitude: currentLng.value,
-      countryCode: countryCode.value,
-      timezoneId: timezoneName.value,
-      date: now,
-    );
+      final result = _prayerCalculationService.calculatePrayerSchedule(
+        latitude: currentLat.value,
+        longitude: currentLng.value,
+        countryCode: countryCode.value,
+        timezoneId: timezoneName.value,
+        date: now,
+      );
 
-    prayers.assignAll(result.prayers);
-    nextPrayerName.value = result.nextPrayerName;
-    nextPrayerArabic.value = result.nextPrayerArabic;
-    _targetNextPrayerTime = result.nextPrayerTime;
-    calculationMethodName.value = result.calculationMethodName;
-    qiblaBearing.value = result.qiblaBearing;
+      prayers.assignAll(result.prayers);
+      nextPrayerName.value = result.nextPrayerName;
+      nextPrayerArabic.value = result.nextPrayerArabic;
+      _targetNextPrayerTime = result.nextPrayerTime;
+      calculationMethodName.value = result.calculationMethodName;
+      qiblaBearing.value =
+          result.qiblaBearing.isFinite && !result.qiblaBearing.isNaN
+          ? result.qiblaBearing
+          : 0.0;
 
-    nextPrayerTime.value = _timezoneService.formatTime(
-      result.nextPrayerTime,
-      timezoneId: timezoneName.value,
-      includeTimeZone: true,
-    );
+      nextPrayerTime.value = _timezoneService.formatTime(
+        result.nextPrayerTime,
+        timezoneId: timezoneName.value,
+        includeTimeZone: true,
+      );
 
-    _updateCountdownDifference();
-    _updateQiblaOffset(deviceHeading.value);
+      _updateCountdownDifference();
+      _updateQiblaOffset(deviceHeading.value);
+    } catch (e) {
+      debugPrint('[PrayerTimesController] Calculation error: $e');
+    } finally {
+      _isCalculatingSchedule = false;
+    }
   }
 
   /// Starts the 1-second periodic countdown timer.
@@ -460,8 +490,11 @@ class PrayerTimesController extends GetxController {
 
     final diff = _targetNextPrayerTime!.difference(now);
 
-    // If next prayer time has arrived or passed, recalculate full schedule
+    // If next prayer time has arrived or passed, trigger adhan & recalculate schedule
     if (diff.isNegative || diff.inSeconds <= 0) {
+      if (nextPrayerName.value.isNotEmpty && _targetNextPrayerTime != null) {
+        _triggerAdhanIfEligible(nextPrayerName.value, _targetNextPrayerTime!);
+      }
       _calculateScheduleAndQibla();
       return;
     }
@@ -513,7 +546,11 @@ class PrayerTimesController extends GetxController {
     try {
       _compassSubscription = FlutterCompass.events?.listen(
         (event) {
-          if (event.heading == null) return;
+          if (event.heading == null ||
+              event.heading!.isNaN ||
+              !event.heading!.isFinite) {
+            return;
+          }
 
           final heading = event.heading!;
           deviceHeading.value = heading;
@@ -531,8 +568,18 @@ class PrayerTimesController extends GetxController {
   }
 
   void _updateQiblaOffset(double heading) {
+    if (heading.isNaN ||
+        !heading.isFinite ||
+        qiblaBearing.value.isNaN ||
+        !qiblaBearing.value.isFinite) {
+      return;
+    }
+
     double diff = (qiblaBearing.value - heading) % 360;
     if (diff < 0) diff += 360;
+    if (diff.isNaN || !diff.isFinite) {
+      diff = 0.0;
+    }
     qiblaOffset.value = diff;
 
     // Check alignment within ±5 degrees (355° - 360° or 0° - 5°)
@@ -550,6 +597,131 @@ class PrayerTimesController extends GetxController {
     }
 
     isQiblaAligned.value = isAligned;
+  }
+
+  /// Check if adhan sound is turned on for the specified prayer
+  bool isPrayerSoundOn(String rawName) {
+    final key = _normalizePrayerKey(rawName);
+    return prayerSoundEnabled[key] ?? true;
+  }
+
+  /// Toggles adhan sound on/off for the given prayer and saves preference
+  Future<void> togglePrayerSound(String rawName) async {
+    final key = _normalizePrayerKey(rawName);
+    if (key == 'terbit' || key == 'sunrise') return;
+
+    final current = isPrayerSoundOn(key);
+    final next = !current;
+    prayerSoundEnabled[key] = next;
+
+    // If turned off while currently playing for this prayer, stop playback
+    if (!next &&
+        isAdhanPlaying.value &&
+        _normalizePrayerKey(playingPrayerName.value) == key) {
+      stopAdhan();
+    }
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('prayer_sound_$key', next);
+    } catch (e) {
+      debugPrint('[PrayerTimesController] Error saving sound preference: $e');
+    }
+  }
+
+  /// Check if at least one prayer has sound enabled
+  bool get isAnySoundOn {
+    const canonicalKeys = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya'];
+    return canonicalKeys.any((k) => isPrayerSoundOn(k));
+  }
+
+  /// Toggles all prayer sounds simultaneously (1-click master switch)
+  Future<void> toggleAllPrayerSounds() async {
+    final target = !isAnySoundOn;
+    await setAllPrayerSounds(target);
+  }
+
+  /// Sets all prayer sounds to enabled or disabled and persists state
+  Future<void> setAllPrayerSounds(bool enabled) async {
+    const canonicalKeys = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya'];
+    for (final k in canonicalKeys) {
+      prayerSoundEnabled[k] = enabled;
+    }
+
+    if (!enabled && isAdhanPlaying.value) {
+      stopAdhan();
+    }
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      for (final k in canonicalKeys) {
+        await prefs.setBool('prayer_sound_$k', enabled);
+      }
+    } catch (e) {
+      debugPrint(
+        '[PrayerTimesController] Error saving all sound preferences: $e',
+      );
+    }
+  }
+
+  /// Stop current adhan audio playback
+  void stopAdhan() {
+    _adhanAudioService.stopAdhan();
+  }
+
+  String _normalizePrayerKey(String rawName) {
+    final name = rawName.trim().toLowerCase();
+    if (name == 'subuh' || name == 'fajr') return 'subuh';
+    if (name == 'terbit' || name == 'sunrise') return 'terbit';
+    if (name == 'dzuhur' || name == 'dhuhr') return 'dzuhur';
+    if (name == 'ashar' || name == 'asr') return 'ashar';
+    if (name == 'maghrib') return 'maghrib';
+    if (name == 'isya' || name == 'isha') return 'isya';
+    return name;
+  }
+
+  Future<void> _loadPrayerSoundPreferences() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      const canonicalKeys = ['subuh', 'dzuhur', 'ashar', 'maghrib', 'isya'];
+      for (final k in canonicalKeys) {
+        final prefKey = 'prayer_sound_$k';
+        if (prefs.containsKey(prefKey)) {
+          prayerSoundEnabled[k] = prefs.getBool(prefKey) ?? true;
+        } else {
+          prayerSoundEnabled[k] = true;
+        }
+      }
+    } catch (e) {
+      debugPrint('[PrayerTimesController] Error loading sound preferences: $e');
+    }
+  }
+
+  Future<void> _triggerAdhanIfEligible(
+    String prayerName,
+    DateTime targetTime,
+  ) async {
+    final key = _normalizePrayerKey(prayerName);
+    if (key == 'terbit' || key == 'sunrise') return;
+
+    final triggerKey =
+        '${key}_${targetTime.year}_${targetTime.month}_${targetTime.day}_${targetTime.hour}_${targetTime.minute}';
+    if (_lastPlayedAdhanKey == triggerKey) {
+      return;
+    }
+
+    final now = DateTime.now();
+    // Only play if within 2 minutes of the prayer time (avoid playing stale past adhan)
+    if (now.difference(targetTime).inMinutes.abs() > 2) {
+      return;
+    }
+
+    _lastPlayedAdhanKey = triggerKey;
+
+    if (isPrayerSoundOn(key)) {
+      debugPrint('[PrayerTimesController] Triggering adhan for $prayerName');
+      unawaited(_adhanAudioService.playAdhan(prayerName: prayerName));
+    }
   }
 
   @override

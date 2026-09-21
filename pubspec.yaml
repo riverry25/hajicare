@@ -40,6 +40,8 @@ dependencies:
   flutter_onnxruntime: ^1.8.5
   url_launcher: ^6.3.2
   cloud_functions: ^6.5.0
+  audioplayers: ^6.1.2
+  flutter_local_notifications: ^22.3.1
 
 dev_dependencies:
   flutter_test:
@@ -68,3 +70,4 @@ flutter:
     - assets/models/labels.txt
     - assets/models/hajicare_encoder.onnx
     - assets/models/hajicare_prototypes.json
+    - assets/audio/

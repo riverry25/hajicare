@@ -2,12 +2,16 @@ import 'package:get/get.dart';
 import '../../../core/services/location_service.dart';
 import '../../../core/services/geocoding_service.dart';
 import '../../../core/services/timezone_service.dart';
+import '../../../core/services/adhan_audio_service.dart';
 import '../../../core/services/prayer_calculation_service.dart';
 import '../controllers/prayer_times_controller.dart';
 
 class PrayerBinding extends Bindings {
   @override
   void dependencies() {
+    if (!Get.isRegistered<AdhanAudioService>()) {
+      Get.lazyPut<AdhanAudioService>(() => AdhanAudioService());
+    }
     if (!Get.isRegistered<LocationService>()) {
       Get.lazyPut<LocationService>(() => LocationService());
     }

@@ -124,6 +124,136 @@ class PrayerTimesScreen extends StatelessWidget {
         ),
         child: Column(
           children: [
+            // ── Active Adhan Playing Banner ──────────────────────────────────
+            Obx(() {
+              if (!controller.isAdhanPlaying.value) {
+                return const SizedBox.shrink();
+              }
+              final playingName = controller.playingPrayerName.value;
+              return Container(
+                margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [AppColors.espressoDark, Color(0xFF2C241E)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  border: Border.all(color: AppColors.goldPrimary, width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.goldPrimary.withValues(alpha: 0.25),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: AppColors.goldPrimary.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.goldPrimary.withValues(alpha: 0.6),
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.volume_up_rounded,
+                        color: AppColors.goldPrimary,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.statusPositive,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  'Adzan $playingName Berkumandang',
+                                  style: AppTypography.titleSmall.copyWith(
+                                    color: AppColors.goldLight,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Syaikh Mishary Rashid Al-Afasy',
+                            style: AppTypography.captionSmall.copyWith(
+                              color: AppColors.tanLight,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => controller.stopAdhan(),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        child: Ink(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.error,
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.error.withValues(alpha: 0.35),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.volume_off_rounded,
+                                size: 16,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Matikan',
+                                style: AppTypography.captionSmall.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+
             // ── Dynamic Location & Hijri Date Bar ───────────────────────────
             Obx(
               () => Container(
@@ -391,9 +521,21 @@ class PrayerTimesScreen extends StatelessWidget {
             // ── Dynamic Qibla Compass ──────────────────────────────────────
             Obx(() {
               final isAligned = controller.isQiblaAligned.value;
-              final qiblaDeg = controller.qiblaBearing.value.toStringAsFixed(0);
-              final angleRadians =
-                  (controller.qiblaOffset.value * math.pi / 180.0);
+              final qiblaBearingVal = controller.qiblaBearing.value;
+              final safeQiblaBearing =
+                  qiblaBearingVal.isFinite && !qiblaBearingVal.isNaN
+                  ? qiblaBearingVal
+                  : 0.0;
+              final qiblaDeg = safeQiblaBearing.toStringAsFixed(0);
+
+              final offsetVal = controller.qiblaOffset.value;
+              final safeOffset = offsetVal.isFinite && !offsetVal.isNaN
+                  ? offsetVal
+                  : 0.0;
+              final rawAngle = (safeOffset * math.pi / 180.0);
+              final safeAngle = rawAngle.isFinite && !rawAngle.isNaN
+                  ? rawAngle
+                  : 0.0;
 
               return AppCard(
                 padding: const EdgeInsets.all(AppSpacing.cardPadding),
@@ -593,7 +735,7 @@ class PrayerTimesScreen extends StatelessWidget {
 
                               // Dynamic Rotating Qibla Needle
                               Transform.rotate(
-                                angle: angleRadians,
+                                angle: safeAngle,
                                 child: SizedBox(
                                   width: 150,
                                   height: 150,
@@ -711,7 +853,7 @@ class PrayerTimesScreen extends StatelessWidget {
                               child: Text(
                                 isAligned
                                     ? context.tr('qiblaAligned')
-                                    : '${context.tr('qiblaRotate')}: ${controller.qiblaOffset.value.toStringAsFixed(0)}° ${context.tr('qiblaRotateToKabah')}',
+                                    : '${context.tr('qiblaRotate')}: ${safeOffset.toStringAsFixed(0)}° ${context.tr('qiblaRotateToKabah')}',
                                 style: AppTypography.captionSmall.copyWith(
                                   color: isAligned
                                       ? AppColors.statusPositive
@@ -732,101 +874,172 @@ class PrayerTimesScreen extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
 
             // ── Full Day Dynamic Schedule ──────────────────────────────────
-            Obx(
-              () => AppCard(
-                padding: EdgeInsets.zero,
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(AppSpacing.cardPadding),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 32,
-                                  height: 32,
-                                  decoration: BoxDecoration(
-                                    color: isDark
-                                        ? AppColors.darkSurfaceContainerHigh
-                                        : AppColors.canvasCream,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Icon(
-                                    Icons.calendar_month_rounded,
-                                    color: isDark
-                                        ? AppColors.goldLight
-                                        : AppColors.espressoDark,
-                                    size: 18,
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    context
-                                            .tr('prayerScheduleSectionTitle')
-                                            .isEmpty
-                                        ? 'Jadwal 5 Waktu Sholat'
-                                        : context.tr(
-                                            'prayerScheduleSectionTitle',
-                                          ),
-                                    style: AppTypography.titleMedium.copyWith(
-                                      color: AppColors.textHeadingColor(
-                                        context,
-                                      ),
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? AppColors.darkSurfaceContainerHigh
-                                    : AppColors.canvasCream,
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.pill,
-                                ),
-                                border: Border.all(
-                                  color: AppColors.cardBorderColor(context),
-                                ),
-                              ),
-                              child: Text(
-                                controller.calculationMethodName.value,
-                                style: AppTypography.captionSmall.copyWith(
+            AppCard(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(AppSpacing.cardPadding),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
                                   color: isDark
-                                      ? AppColors.goldPrimary
-                                      : AppColors.tanMedium,
-                                  fontWeight: FontWeight.w700,
+                                      ? AppColors.darkSurfaceContainerHigh
+                                      : AppColors.canvasCream,
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                                child: Icon(
+                                  Icons.calendar_month_rounded,
+                                  color: isDark
+                                      ? AppColors.goldLight
+                                      : AppColors.espressoDark,
+                                  size: 18,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  context
+                                          .tr('prayerScheduleSectionTitle')
+                                          .isEmpty
+                                      ? 'Jadwal 5 Waktu Sholat'
+                                      : context.tr(
+                                          'prayerScheduleSectionTitle',
+                                        ),
+                                  style: AppTypography.titleMedium.copyWith(
+                                    color: AppColors.textHeadingColor(context),
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Obx(() {
+                          final isAnyOn = controller.isAnySoundOn;
+                          return Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () {
+                                controller.toggleAllPrayerSounds();
+                                final nowOn = !isAnyOn;
+                                Get.closeAllSnackbars();
+                                Get.snackbar(
+                                  nowOn
+                                      ? 'Suara Adzan Diaktifkan'
+                                      : 'Suara Adzan Dimatikan',
+                                  nowOn
+                                      ? 'Semua jadwal sholat akan mengumandangkan adzan.'
+                                      : 'Semua suara adzan dimatikan (mode hening).',
+                                  snackPosition: SnackPosition.BOTTOM,
+                                  backgroundColor: isDark
+                                      ? AppColors.darkSurfaceContainerHigh
+                                      : AppColors.espressoDark,
+                                  colorText: nowOn
+                                      ? AppColors.goldLight
+                                      : AppColors.surfaceWhite,
+                                  icon: Icon(
+                                    nowOn
+                                        ? Icons.volume_up_rounded
+                                        : Icons.volume_off_rounded,
+                                    color: nowOn
+                                        ? AppColors.goldPrimary
+                                        : AppColors.tanMedium,
+                                  ),
+                                  margin: const EdgeInsets.all(AppSpacing.md),
+                                  borderRadius: AppRadius.md,
+                                  duration: const Duration(seconds: 2),
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isAnyOn
+                                      ? (isDark
+                                            ? AppColors.goldPrimary.withValues(
+                                                alpha: 0.15,
+                                              )
+                                            : AppColors.goldLight.withValues(
+                                                alpha: 0.35,
+                                              ))
+                                      : (isDark
+                                            ? AppColors.darkSurfaceContainerHigh
+                                            : AppColors.canvasCream),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.pill,
+                                  ),
+                                  border: Border.all(
+                                    color: isAnyOn
+                                        ? AppColors.goldPrimary.withValues(
+                                            alpha: 0.6,
+                                          )
+                                        : AppColors.cardBorderColor(context),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      isAnyOn
+                                          ? Icons.volume_up_rounded
+                                          : Icons.volume_off_rounded,
+                                      size: 15,
+                                      color: isAnyOn
+                                          ? AppColors.goldPrimary
+                                          : (isDark
+                                                ? AppColors.darkTextBody
+                                                : AppColors.tanMedium),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      isAnyOn ? 'Adzan Aktif' : 'Adzan Hening',
+                                      style: AppTypography.captionSmall
+                                          .copyWith(
+                                            color: isAnyOn
+                                                ? (isDark
+                                                      ? AppColors.goldLight
+                                                      : AppColors.espressoDark)
+                                                : (isDark
+                                                      ? AppColors.darkTextBody
+                                                      : AppColors.tanMedium),
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 11,
+                                          ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
+                          );
+                        }),
+                      ],
                     ),
-                    Divider(
-                      height: 1,
-                      color: AppColors.cardBorderColor(context),
-                    ),
-                    Column(
+                  ),
+                  Divider(height: 1, color: AppColors.cardBorderColor(context)),
+                  Obx(
+                    () => Column(
                       children: controller.prayers.map((p) {
                         return _buildPrayerRow(
                           context: context,
+                          controller: controller,
                           name: p.name,
                           arabicName: p.arabicName,
                           time: p.formattedTime,
@@ -834,8 +1047,8 @@ class PrayerTimesScreen extends StatelessWidget {
                         );
                       }).toList(),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: AppConstants.space3xl),
@@ -850,62 +1063,140 @@ class PrayerTimesScreen extends StatelessWidget {
 
   Widget _buildPrayerRow({
     required BuildContext context,
+    required PrayerTimesController controller,
     required String name,
     required String arabicName,
     required String time,
     required bool isNext,
   }) {
     final isDark = AppColors.isDark(context);
+    final isTerbit =
+        name.toLowerCase() == 'terbit' || name.toLowerCase() == 'sunrise';
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: isNext
-            ? (isDark
-                  ? AppColors.darkPrimaryContainer.withValues(alpha: 0.5)
-                  : AppColors.canvasCream.withValues(alpha: 0.7))
-            : Colors.transparent,
-        border: Border(
-          bottom: BorderSide(
-            color: AppColors.cardBorderColor(context).withValues(alpha: 0.7),
+    return Obx(() {
+      final isSoundOn = controller.isPrayerSoundOn(name);
+
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: isNext
+              ? (isDark
+                    ? AppColors.darkPrimaryContainer.withValues(alpha: 0.5)
+                    : AppColors.canvasCream.withValues(alpha: 0.7))
+              : Colors.transparent,
+          border: Border(
+            bottom: BorderSide(
+              color: AppColors.cardBorderColor(context).withValues(alpha: 0.7),
+            ),
+            left: isNext
+                ? const BorderSide(color: AppColors.goldPrimary, width: 4)
+                : BorderSide.none,
           ),
-          left: isNext
-              ? const BorderSide(color: AppColors.goldPrimary, width: 4)
-              : BorderSide.none,
         ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: isNext
-                      ? (isDark
-                            ? AppColors.darkPrimaryContainer
-                            : AppColors.espressoDark)
-                      : (isDark
-                            ? AppColors.darkSurfaceContainerHigh
-                            : AppColors.canvasCream),
-                  shape: BoxShape.circle,
-                  border: isNext
-                      ? Border.all(color: AppColors.goldPrimary, width: 1.5)
-                      : null,
-                ),
-                child: Icon(
-                  isNext ? Icons.volume_up_rounded : Icons.access_time_rounded,
-                  size: 18,
-                  color: isNext
-                      ? AppColors.goldPrimary
-                      : (isDark ? AppColors.darkTextBody : AppColors.tanMedium),
+        child: Row(
+          children: [
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: isTerbit
+                    ? null
+                    : () {
+                        controller.togglePrayerSound(name);
+                        final willBeOn = !isSoundOn;
+                        Get.closeAllSnackbars();
+                        Get.snackbar(
+                          willBeOn
+                              ? 'Suara Adzan Aktif'
+                              : 'Suara Adzan Dimatikan',
+                          willBeOn
+                              ? 'Suara adzan $name akan berbunyi saat masuk waktu.'
+                              : 'Suara adzan $name tidak akan berbunyi.',
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: isDark
+                              ? AppColors.darkSurfaceContainerHigh
+                              : AppColors.espressoDark,
+                          colorText: willBeOn
+                              ? AppColors.goldLight
+                              : AppColors.surfaceWhite,
+                          icon: Icon(
+                            willBeOn
+                                ? Icons.volume_up_rounded
+                                : Icons.volume_off_rounded,
+                            color: willBeOn
+                                ? AppColors.goldPrimary
+                                : AppColors.tanMedium,
+                          ),
+                          margin: const EdgeInsets.all(AppSpacing.md),
+                          borderRadius: AppRadius.md,
+                          duration: const Duration(seconds: 2),
+                        );
+                      },
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: isTerbit
+                        ? (isDark
+                              ? AppColors.darkSurfaceContainerHigh
+                              : AppColors.canvasCream)
+                        : (isSoundOn
+                              ? (isNext
+                                    ? (isDark
+                                          ? AppColors.darkPrimaryContainer
+                                          : AppColors.espressoDark)
+                                    : (isDark
+                                          ? AppColors.goldPrimary.withValues(
+                                              alpha: 0.18,
+                                            )
+                                          : AppColors.goldLight.withValues(
+                                              alpha: 0.3,
+                                            )))
+                              : (isDark
+                                    ? AppColors.darkSurfaceContainerHigh
+                                    : AppColors.canvasCream)),
+                    shape: BoxShape.circle,
+                    border: !isTerbit && isSoundOn
+                        ? Border.all(
+                            color: AppColors.goldPrimary.withValues(
+                              alpha: isNext ? 1.0 : 0.6,
+                            ),
+                            width: 1.5,
+                          )
+                        : Border.all(
+                            color: AppColors.cardBorderColor(context),
+                            width: 1,
+                          ),
+                  ),
+                  child: Icon(
+                    isTerbit
+                        ? Icons.wb_sunny_rounded
+                        : (isSoundOn
+                              ? Icons.volume_up_rounded
+                              : Icons.volume_off_rounded),
+                    size: 18,
+                    color: isTerbit
+                        ? (isDark
+                              ? AppColors.darkTextBody
+                              : AppColors.tanMedium)
+                        : (isSoundOn
+                              ? AppColors.goldPrimary
+                              : (isDark
+                                    ? AppColors.darkTextBody.withValues(
+                                        alpha: 0.5,
+                                      )
+                                    : AppColors.tanMedium.withValues(
+                                        alpha: 0.6,
+                                      ))),
+                  ),
                 ),
               ),
-              const SizedBox(width: 12),
-              Column(
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     name,
@@ -917,7 +1208,10 @@ class PrayerTimesScreen extends StatelessWidget {
                           : AppColors.textHeadingColor(context),
                       fontWeight: isNext ? FontWeight.w800 : FontWeight.w600,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
+                  const SizedBox(height: 2),
                   Text(
                     arabicName,
                     style: AppTypography.captionSmall.copyWith(
@@ -926,52 +1220,61 @@ class PrayerTimesScreen extends StatelessWidget {
                           : AppColors.tanMedium,
                       fontWeight: FontWeight.w500,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
-            ],
-          ),
-          Row(
-            children: [
-              if (isNext) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 9,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkPrimaryContainer
-                        : AppColors.espressoDark,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                    border: Border.all(color: AppColors.goldPrimary, width: 1),
-                  ),
-                  child: Text(
-                    context.tr('prayerNextBadge').isEmpty
-                        ? 'Berikutnya'
-                        : context.tr('prayerNextBadge'),
-                    style: AppTypography.captionSmall.copyWith(
-                      color: AppColors.goldPrimary,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 10,
+            ),
+            const SizedBox(width: 8),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isNext) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.darkPrimaryContainer
+                          : AppColors.espressoDark,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      border: Border.all(
+                        color: AppColors.goldPrimary,
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      context.tr('prayerNextBadge').isEmpty
+                          ? 'Berikutnya'
+                          : context.tr('prayerNextBadge'),
+                      style: AppTypography.captionSmall.copyWith(
+                        color: AppColors.goldPrimary,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 10,
+                      ),
                     ),
                   ),
+                  const SizedBox(width: 8),
+                ],
+                Text(
+                  time,
+                  style: AppTypography.titleMedium.copyWith(
+                    color: isNext
+                        ? (isDark
+                              ? AppColors.goldLight
+                              : AppColors.espressoDark)
+                        : AppColors.textHeadingColor(context),
+                    fontWeight: isNext ? FontWeight.w800 : FontWeight.w600,
+                  ),
                 ),
-                const SizedBox(width: 10),
               ],
-              Text(
-                time,
-                style: AppTypography.titleMedium.copyWith(
-                  color: isNext
-                      ? (isDark ? AppColors.goldLight : AppColors.espressoDark)
-                      : AppColors.textHeadingColor(context),
-                  fontWeight: isNext ? FontWeight.w800 : FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
