@@ -1139,6 +1139,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
       ),
       isScrollControlled: true,
       ignoreSafeArea: false,
+      enableDrag: false,
     );
   }
 

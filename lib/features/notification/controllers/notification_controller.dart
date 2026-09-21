@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/utils/user_feedback_message.dart';
@@ -39,6 +40,7 @@ class NotificationController extends GetxController {
   StreamSubscription<List<RoomInvitationModel>>? _invitationSub;
   StreamSubscription<User?>? _authSub;
   String? _currentListeningUid;
+  bool _hasReceivedInitialNotificationSnapshot = false;
 
   @override
   void onInit() {
@@ -75,6 +77,7 @@ class NotificationController extends GetxController {
 
     stopListening();
     _currentListeningUid = uid;
+    _hasReceivedInitialNotificationSnapshot = false;
     isLoading.value = true;
     debugPrint(
       '[NotificationController] Subscribing realtime listeners for uid: $uid',
@@ -85,12 +88,26 @@ class NotificationController extends GetxController {
         .getUserNotificationsStream(uid)
         .listen(
           (items) {
+            final knownIds = notifications.map((item) => item.id).toSet();
+            final incomingMessages = _hasReceivedInitialNotificationSnapshot
+                ? items
+                      .where(
+                        (item) =>
+                            !knownIds.contains(item.id) &&
+                            (item.isCompanionMessage || item.isCompanionInfo),
+                      )
+                      .toList(growable: false)
+                : const <AppNotificationModel>[];
             notifications.assignAll(items);
             unreadCount.value = items.where((n) => !n.isRead).length;
+            _hasReceivedInitialNotificationSnapshot = true;
             isLoading.value = false;
             debugPrint(
               '[NotificationController] Received ${items.length} notifications (${unreadCount.value} unread)',
             );
+            if (incomingMessages.isNotEmpty) {
+              _showIncomingMessageAlert(incomingMessages.first);
+            }
           },
           onError: (err) {
             isLoading.value = false;
@@ -125,10 +142,46 @@ class NotificationController extends GetxController {
     _invitationSub?.cancel();
     _invitationSub = null;
     _currentListeningUid = null;
+    _hasReceivedInitialNotificationSnapshot = false;
     notifications.clear();
     pendingInvitations.clear();
     unreadCount.value = 0;
     isLoading.value = false;
+  }
+
+  void _showIncomingMessageAlert(AppNotificationModel notification) {
+    if (Get.context == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (Get.context == null) return;
+      Get.snackbar(
+        notification.isCompanionInfo
+            ? 'Informasi Baru dari Jamaah'
+            : 'Pesan Baru dari Jamaah',
+        '${notification.senderName ?? 'Jamaah'}: ${notification.message}',
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.all(14),
+        borderRadius: 16,
+        duration: const Duration(seconds: 5),
+        icon: Icon(
+          notification.isCompanionInfo
+              ? Icons.campaign_rounded
+              : Icons.chat_bubble_rounded,
+          color: Colors.white,
+        ),
+        colorText: Colors.white,
+        backgroundColor: const Color(0xFF3A2518),
+        mainButton: TextButton(
+          onPressed: () => Get.toNamed(AppRoutes.notification),
+          child: const Text(
+            'BUKA',
+            style: TextStyle(
+              color: Color(0xFFFFD180),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      );
+    });
   }
 
   // ── Notification Actions ───────────────────────────────────────────────────

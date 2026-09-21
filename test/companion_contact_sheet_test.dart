@@ -114,4 +114,18 @@ void main() {
     expect(find.byKey(const Key('companion_send_button')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('tinggi sheet ringkas dan isi tetap dapat digulir', (
+    tester,
+  ) async {
+    await tester.pumpWidget(buildApp(size: const Size(390, 800)));
+    await tester.pumpAndSettle();
+
+    final sheetHeight = tester
+        .getSize(find.byKey(const Key('companion_contact_sheet')))
+        .height;
+    expect(sheetHeight, lessThanOrEqualTo(640));
+    expect(find.byType(SingleChildScrollView), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

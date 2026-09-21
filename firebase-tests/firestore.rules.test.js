@@ -123,17 +123,50 @@ test('client cannot bypass room validation for pickup requests', async () => {
   }));
 });
 
-test('client cannot directly forge jamaah messages to pendamping', async () => {
+test('jamaah may directly notify a pendamping in the same room', async () => {
   const db = environment.authenticatedContext('jamaah').firestore();
   for (const type of ['companion_info', 'companion_message']) {
-    await assertFails(setDoc(doc(db, 'notifications', `forged-${type}`), {
+    await assertSucceeds(setDoc(doc(db, 'notifications', `valid-${type}`), {
       recipientId: 'manager',
       senderId: 'jamaah',
+      senderName: 'Jamaah',
+      senderRole: 'jamaah',
       targetRoomId: 'room-a',
-      title: 'Pesan palsu',
-      message: 'Tidak melalui backend',
+      targetUserId: 'manager',
+      scope: type == 'companion_info' ? 'all_companions' : 'user',
+      title: 'Pesan dari Jamaah',
+      message: 'Mohon bantuan pendamping.',
       type,
       isRead: false,
     }));
   }
+});
+
+test('direct pendamping notification rejects outsiders and invalid recipients', async () => {
+  const validShape = {
+    recipientId: 'manager',
+    senderId: 'attacker',
+    senderName: 'Attacker',
+    senderRole: 'jamaah',
+    targetRoomId: 'room-a',
+    targetUserId: 'manager',
+    scope: 'user',
+    title: 'Pesan dari Attacker',
+    message: 'Pesan tidak sah',
+    type: 'companion_message',
+    isRead: false,
+  };
+  const outsiderDb = environment.authenticatedContext('attacker').firestore();
+  await assertFails(setDoc(
+    doc(outsiderDb, 'notifications', 'outsider-message'),
+    validShape,
+  ));
+
+  const jamaahDb = environment.authenticatedContext('jamaah').firestore();
+  await assertFails(setDoc(doc(jamaahDb, 'notifications', 'wrong-target'), {
+    ...validShape,
+    senderId: 'jamaah',
+    recipientId: 'jamaah',
+    targetUserId: 'jamaah',
+  }));
 });

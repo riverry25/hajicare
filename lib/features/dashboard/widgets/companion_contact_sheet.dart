@@ -162,7 +162,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
       child: Container(
         key: const Key('companion_contact_sheet'),
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.sizeOf(context).height * 0.92,
+          maxHeight: MediaQuery.sizeOf(context).height * 0.80,
         ),
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
@@ -183,19 +183,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Center(
-                  child: Container(
-                    width: 48,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkOutlineVariant
-                          : AppColors.outlineVariant,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 6),
                 _buildHeader(headingColor, bodyColor),
                 const SizedBox(height: 20),
                 Text(
