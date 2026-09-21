@@ -11,6 +11,7 @@ const {initializeApp, deleteApp} = functionsRequire('firebase-admin/app');
 const {getFirestore} = functionsRequire('firebase-admin/firestore');
 const room = require('../functions/src/room_operations');
 const sos = require('../functions/src/sos_operations');
+const notification = require('../functions/src/notification_operations');
 
 let app;
 let db;
@@ -147,4 +148,53 @@ test('rejecting an invitation removes its notification', async () => {
 
   assert.equal(result.status, 'rejected');
   assert.equal((await notificationRef.get()).exists, false);
+});
+
+test('pickup request is sent only to the selected companion in the same room', async () => {
+  const created = await room.createRoom(db, manager, {name: 'room aman'});
+  await room.joinRoomByCode(db, jamaah, {roomCode: created.code});
+
+  const result = await notification.sendPickupRequest(db, jamaah, {
+    roomId: created.roomId,
+    pendampingUid: manager.uid,
+    notes: 'Depan Pintu Masjid',
+    latitude: -6.2,
+    longitude: 106.8,
+  });
+
+  assert.equal(result.recipientCount, 1);
+  assert.equal(result.pendampingUid, manager.uid);
+  const snapshot = await db.collection('notifications').doc(result.notificationId).get();
+  assert.equal(snapshot.data().recipientId, manager.uid);
+  assert.equal(snapshot.data().senderId, jamaah.uid);
+  assert.equal(snapshot.data().targetRoomId, created.roomId);
+  assert.equal(snapshot.data().type, 'pickup_request');
+});
+
+test('pickup request rejects a companion from another room', async () => {
+  const created = await room.createRoom(db, manager, {name: 'room jamaah'});
+  await room.joinRoomByCode(db, jamaah, {roomCode: created.code});
+  const otherManager = {
+    uid: 'manager-2',
+    token: {role: 'pendamping', email: 'manager2@test.dev'},
+  };
+  await db.collection('users').doc(otherManager.uid).set({
+    name: 'Manager 2',
+    email: 'manager2@test.dev',
+    normalizedEmail: 'manager2@test.dev',
+    role: 'pendamping',
+    activeRoomId: null,
+  });
+  await room.createRoom(db, otherManager, {name: 'room lain'});
+
+  await assert.rejects(
+    notification.sendPickupRequest(db, jamaah, {
+      roomId: created.roomId,
+      pendampingUid: otherManager.uid,
+      notes: 'Lobi Hotel',
+    }),
+    (error) => error.code === 'permission-denied',
+  );
+  assert.equal((await db.collection('notifications')
+    .where('type', '==', 'pickup_request').get()).empty, true);
 });

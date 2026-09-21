@@ -21,6 +21,25 @@ class NotificationService {
   TrustedBackendService get _backend =>
       _providedBackend ?? TrustedBackendService();
 
+  Future<String> sendPickupRequest({
+    required String roomId,
+    required String pendampingUid,
+    required String notes,
+    double? latitude,
+    double? longitude,
+  }) async {
+    final result = await _backend.call('sendPickupRequest', {
+      'roomId': roomId,
+      'pendampingUid': pendampingUid,
+      'notes': notes,
+      'latitude': ?latitude,
+      'longitude': ?longitude,
+    });
+    return (result['pendampingName'] as String?)?.trim().isNotEmpty == true
+        ? (result['pendampingName'] as String).trim()
+        : 'Pendamping';
+  }
+
   Future<int> sendNotification({
     required String title,
     required String message,

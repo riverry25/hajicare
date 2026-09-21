@@ -110,4 +110,116 @@ async function sendNotification(db, auth, data) {
   return {notificationId, recipientCount: uniqueTargets.length};
 }
 
-module.exports = {sendNotification};
+async function sendPickupRequest(db, auth, data) {
+  requireAuth(auth);
+  const roomId = requiredString(data?.roomId, 'ID rombongan', 128);
+  const pendampingUid = requiredString(
+    data?.pendampingUid,
+    'Pendamping tujuan',
+    128,
+  );
+  const notes = requiredString(data?.notes, 'Detail lokasi', 300);
+  const latitude = data?.latitude;
+  const longitude = data?.longitude;
+  const hasCoordinates = latitude != null || longitude != null;
+  if (hasCoordinates &&
+      (typeof latitude !== 'number' || !Number.isFinite(latitude) ||
+       typeof longitude !== 'number' || !Number.isFinite(longitude) ||
+       latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180)) {
+    throw new BackendError('invalid-argument', 'Koordinat lokasi tidak valid.');
+  }
+  if (pendampingUid === auth.uid) {
+    throw new BackendError(
+      'invalid-argument',
+      'Pendamping tujuan tidak boleh akun Anda sendiri.',
+    );
+  }
+
+  const roomRef = db.collection('rooms').doc(roomId);
+  const jamaahMemberRef = roomRef.collection('members').doc(auth.uid);
+  const pendampingMemberRef = roomRef.collection('members').doc(pendampingUid);
+  const jamaahProfileRef = db.collection('users').doc(auth.uid);
+  const pendampingProfileRef = db.collection('users').doc(pendampingUid);
+  const notificationRef = db.collection('notifications').doc();
+  let pendampingName;
+
+  await db.runTransaction(async (transaction) => {
+    const roomSnapshot = await transaction.get(roomRef);
+    if (!roomSnapshot.exists ||
+        roomSnapshot.data().isActive !== true ||
+        roomSnapshot.data().status === 'deleting') {
+      throw new BackendError('failed-precondition', 'Rombongan tidak aktif.');
+    }
+
+    const jamaahSnapshot = await transaction.get(jamaahMemberRef);
+    if (!jamaahSnapshot.exists ||
+        String(jamaahSnapshot.data().role || '').toLowerCase() !== 'jamaah') {
+      throw new BackendError(
+        'permission-denied',
+        'Anda bukan jamaah aktif pada rombongan ini.',
+      );
+    }
+
+    const pendampingSnapshot = await transaction.get(pendampingMemberRef);
+    if (!pendampingSnapshot.exists ||
+        String(pendampingSnapshot.data().role || '').toLowerCase() !== 'pendamping') {
+      throw new BackendError(
+        'permission-denied',
+        'Pendamping yang dipilih bukan anggota rombongan yang sama.',
+      );
+    }
+
+    const jamaahProfileSnapshot = await transaction.get(jamaahProfileRef);
+    const pendampingProfileSnapshot = await transaction.get(pendampingProfileRef);
+    if (!jamaahProfileSnapshot.exists ||
+        String(jamaahProfileSnapshot.data().activeRoomId || '') !== roomId) {
+      throw new BackendError(
+        'failed-precondition',
+        'Rombongan aktif jamaah sudah berubah. Muat ulang halaman.',
+      );
+    }
+    if (!pendampingProfileSnapshot.exists ||
+        String(pendampingProfileSnapshot.data().activeRoomId || '') !== roomId) {
+      throw new BackendError(
+        'failed-precondition',
+        'Pendamping yang dipilih sudah tidak aktif di rombongan yang sama.',
+      );
+    }
+
+    const jamaahName = String(
+      jamaahSnapshot.data().name || auth.token?.name || 'Jamaah',
+    ).trim();
+    pendampingName = String(
+      pendampingSnapshot.data().name || 'Pendamping',
+    ).trim();
+    transaction.create(notificationRef, {
+      recipientId: pendampingUid,
+      title: `Permintaan Jemput: ${jamaahName}`,
+      message: `Jamaah ${jamaahName} meminta bantuan penjemputan di ${notes}.`,
+      type: 'pickup_request',
+      scope: 'user',
+      targetUserId: pendampingUid,
+      targetRoomId: roomId,
+      senderId: auth.uid,
+      senderName: jamaahName,
+      senderRole: 'jamaah',
+      isRead: false,
+      createdAt: FieldValue.serverTimestamp(),
+      metadata: {
+        ...(hasCoordinates ? {latitude, longitude} : {}),
+        notes,
+        senderName: jamaahName,
+        pendampingUid,
+      },
+    });
+  });
+
+  return {
+    notificationId: notificationRef.id,
+    recipientCount: 1,
+    pendampingUid,
+    pendampingName,
+  };
+}
+
+module.exports = {sendNotification, sendPickupRequest};

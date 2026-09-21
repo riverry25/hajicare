@@ -44,6 +44,7 @@ class AppNotificationModel {
   bool get isRoomJoined => type == 'room_joined';
   bool get isRoomRemoved => type == 'room_removed';
   bool get isAnnouncement => type == 'announcement';
+  bool get isPickupRequest => type == 'pickup_request';
   bool get isSosAlert => type == 'sos_alert';
 
   factory AppNotificationModel.fromFirestore(DocumentSnapshot doc) {

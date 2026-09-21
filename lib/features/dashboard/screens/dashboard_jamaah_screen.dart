@@ -18,6 +18,7 @@ import '../../notification/services/notification_service.dart';
 import '../../prayer/controllers/prayer_times_controller.dart';
 import '../../prayer/screens/prayer_times_screen.dart';
 import '../../profile/screens/profile_screen.dart';
+import '../../room/services/room_query_service.dart';
 import '../../room/widgets/active_room_card.dart';
 import '../../communication/widgets/communication_gesture_dialog.dart';
 import '../../smartband/controllers/smartband_ldr_controller.dart';

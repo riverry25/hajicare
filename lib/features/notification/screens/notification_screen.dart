@@ -468,6 +468,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
       icon = Icons.check_circle_outline_rounded;
       iconColor = AppColors.statusPositive;
       category = 'UNDANGAN DITERIMA';
+    } else if (notif.isPickupRequest) {
+      icon = Icons.hail_rounded;
+      iconColor = AppColors.statusWarning;
+      category = 'PERMINTAAN JEMPUT';
     } else if (notif.isAnnouncement) {
       icon = Icons.campaign_rounded;
       iconColor = AppColors.goldDark;

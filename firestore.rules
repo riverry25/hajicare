@@ -93,7 +93,10 @@ service cloud.firestore {
         resource.data.recipientId == request.auth.uid ||
         resource.data.senderId == request.auth.uid
       );
-      allow create: if signedIn();
+      // Pickup requests must go through sendPickupRequest so the backend can
+      // verify that the selected companion and pilgrim share the same room.
+      allow create: if signedIn() &&
+        request.resource.data.get('type', '') != 'pickup_request';
       allow update: if signedIn() &&
         resource.data.recipientId == request.auth.uid &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);

@@ -109,3 +109,16 @@ test('notification recipient may mark read but may not alter content', async () 
   await assertSucceeds(updateDoc(doc(db, 'notifications', 'n1'), {isRead: true}));
   await assertFails(updateDoc(doc(db, 'notifications', 'n1'), {title: 'Forged'}));
 });
+
+test('client cannot bypass room validation for pickup requests', async () => {
+  const db = environment.authenticatedContext('jamaah').firestore();
+  await assertFails(setDoc(doc(db, 'notifications', 'forged-pickup'), {
+    recipientId: 'manager',
+    senderId: 'jamaah',
+    targetRoomId: 'room-a',
+    type: 'pickup_request',
+    title: 'Permintaan Jemput',
+    message: 'Jemput saya',
+    isRead: false,
+  }));
+});
