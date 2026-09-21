@@ -23,8 +23,13 @@ class BisindoScreen extends StatefulWidget {
 }
 
 class _BisindoScreenState extends State<BisindoScreen> {
-  static const _teal = Color(0xFF007C7A);
-  static const _purple = Color(0xFF6547F5);
+  // Accent alias – maps to the app's espresso brand color for this screen
+  static Color _accent(BuildContext context) => AppColors.isDark(context)
+      ? AppColors.darkPrimary
+      : AppColors.espressoDark;
+  static Color _accentGold(BuildContext context) => AppColors.isDark(context)
+      ? AppColors.accentGoldStar
+      : AppColors.goldPrimary;
 
   late final BisindoInferenceService _inferenceService;
   late final BisindoRecognitionController _recognition;
@@ -180,18 +185,18 @@ class _BisindoScreenState extends State<BisindoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkSurface : const Color(0xFFFFFCFA),
+      backgroundColor: AppColors.scaffoldColor(context),
       appBar: AppBar(
-        backgroundColor: isDark
-            ? AppColors.darkSurface
-            : const Color(0xFFFFFCFA),
+        backgroundColor: AppColors.cardBgColor(context),
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: Icon(
+            Icons.arrow_back_rounded,
+            color: AppColors.textHeadingColor(context),
+          ),
         ),
         title: Row(
           children: [
@@ -221,7 +226,7 @@ class _BisindoScreenState extends State<BisindoScreen> {
             const SizedBox(height: 14),
             _buildTokenChips(),
             const SizedBox(height: 14),
-            _buildTranscriptCard(isDark),
+            _buildTranscriptCard(),
             const SizedBox(height: 20),
             _buildControls(),
             const SizedBox(height: 16),
@@ -272,14 +277,15 @@ class _BisindoScreenState extends State<BisindoScreen> {
   }
 
   Widget _buildTokenChip(SignToken token) {
+    final accent = _accent(context);
     if (token.type == SignTokenType.space) {
       return Container(
         width: 26,
         height: 40,
         decoration: BoxDecoration(
-          color: _teal.withValues(alpha: 0.06),
+          color: accent.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _teal.withValues(alpha: 0.18)),
+          border: Border.all(color: accent.withValues(alpha: 0.18)),
         ),
       );
     }
@@ -287,24 +293,25 @@ class _BisindoScreenState extends State<BisindoScreen> {
       duration: const Duration(milliseconds: 180),
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
       decoration: BoxDecoration(
-        color: _teal.withValues(alpha: 0.08),
+        color: accent.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: _teal.withValues(alpha: 0.22)),
+        border: Border.all(color: accent.withValues(alpha: 0.22)),
       ),
       child: Text(
         token.type == SignTokenType.letter
             ? token.value.toUpperCase()
             : token.value,
         style: AppTypography.bodyMedium.copyWith(
-          color: _teal,
+          color: accent,
           fontWeight: FontWeight.w800,
         ),
       ),
     );
   }
 
-  Widget _buildTranscriptCard(bool isDark) {
+  Widget _buildTranscriptCard() {
     return Obx(() {
+      final isDark = AppColors.isDark(context);
       final ai = _recognition.aiTranscript.value;
       final raw = _recognition.rawTranscript.value;
       final display = ai.isNotEmpty
@@ -331,19 +338,24 @@ class _BisindoScreenState extends State<BisindoScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                const CircleAvatar(radius: 4, backgroundColor: _teal),
-                const SizedBox(width: 10),
-                Text(
-                  ai.isEmpty ? 'TRANSKRIPSI' : 'TRANSKRIPSI AI',
-                  style: AppTypography.captionSmall.copyWith(
-                    color: _teal,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ],
+            Builder(
+              builder: (ctx) {
+                final accent = _accent(ctx);
+                return Row(
+                  children: [
+                    CircleAvatar(radius: 4, backgroundColor: accent),
+                    const SizedBox(width: 10),
+                    Text(
+                      ai.isEmpty ? 'TRANSKRIPSI' : 'TRANSKRIPSI AI',
+                      style: AppTypography.captionSmall.copyWith(
+                        color: accent,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 14),
             Text(
@@ -360,16 +372,21 @@ class _BisindoScreenState extends State<BisindoScreen> {
             ),
             if (raw.isNotEmpty) ...[
               const SizedBox(height: 14),
-              OutlinedButton.icon(
-                onPressed: () =>
-                    _ttsService.speak(text: display, languageCode: 'id'),
-                icon: const Icon(Icons.volume_up_rounded, size: 19),
-                label: const Text('Dengarkan'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: _teal,
-                  backgroundColor: _teal.withValues(alpha: 0.06),
-                  side: BorderSide.none,
-                ),
+              Builder(
+                builder: (ctx) {
+                  final accent = _accent(ctx);
+                  return OutlinedButton.icon(
+                    onPressed: () =>
+                        _ttsService.speak(text: display, languageCode: 'id'),
+                    icon: const Icon(Icons.volume_up_rounded, size: 19),
+                    label: const Text('Dengarkan'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: accent,
+                      backgroundColor: accent.withValues(alpha: 0.06),
+                      side: BorderSide.none,
+                    ),
+                  );
+                },
               ),
             ],
             if (ai.isNotEmpty) ...[
@@ -398,7 +415,7 @@ class _BisindoScreenState extends State<BisindoScreen> {
               : _cameraService.isCameraActive
               ? Icons.stop_rounded
               : Icons.videocam_rounded,
-          color: const Color(0xFFC62828),
+          color: AppColors.sosEmergency,
           onTap: _isModelInitialized && !_isStartingCamera
               ? _toggleDetection
               : null,
@@ -407,14 +424,14 @@ class _BisindoScreenState extends State<BisindoScreen> {
         _RoundControl(
           label: 'HAPUS',
           icon: Icons.backspace_rounded,
-          color: const Color(0xFFF3A000),
+          color: AppColors.distanceWarning,
           onTap: _recognition.deleteLast,
         ),
         const SizedBox(width: 22),
         _RoundControl(
           label: 'RESET',
           icon: Icons.format_align_center_rounded,
-          color: Colors.grey.shade600,
+          color: AppColors.textMuted,
           onTap: _recognition.resetTranscript,
         ),
       ],
@@ -426,6 +443,8 @@ class _BisindoScreenState extends State<BisindoScreen> {
       final progress = _recognition.confirmationProgress.value;
       final holding =
           _recognition.recognitionState.value == SignRecognitionState.holding;
+      final accent = _accent(context);
+      final gold = _accentGold(context);
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 30),
         child: Column(
@@ -434,7 +453,7 @@ class _BisindoScreenState extends State<BisindoScreen> {
               _recognition.statusText,
               textAlign: TextAlign.center,
               style: AppTypography.bodyMedium.copyWith(
-                color: holding ? _teal : AppColors.textBodyColor(context),
+                color: holding ? accent : AppColors.textBodyColor(context),
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -444,8 +463,8 @@ class _BisindoScreenState extends State<BisindoScreen> {
               child: LinearProgressIndicator(
                 value: progress,
                 minHeight: 7,
-                backgroundColor: _teal.withValues(alpha: 0.10),
-                valueColor: const AlwaysStoppedAnimation(_teal),
+                backgroundColor: gold.withValues(alpha: 0.15),
+                valueColor: AlwaysStoppedAnimation(gold),
               ),
             ),
             const SizedBox(height: 14),
@@ -454,8 +473,8 @@ class _BisindoScreenState extends State<BisindoScreen> {
               icon: const Icon(Icons.space_bar_rounded),
               label: const Text('SPASI'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: _teal,
-                side: BorderSide(color: _teal.withValues(alpha: 0.4)),
+                foregroundColor: accent,
+                side: BorderSide(color: accent.withValues(alpha: 0.4)),
                 shape: const StadiumBorder(),
               ),
             ),
@@ -498,9 +517,11 @@ class _BisindoScreenState extends State<BisindoScreen> {
               overflow: TextOverflow.ellipsis,
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: _purple,
+              backgroundColor: AppColors.espressoDark,
               foregroundColor: Colors.white,
-              disabledBackgroundColor: _purple.withValues(alpha: 0.35),
+              disabledBackgroundColor: AppColors.espressoDark.withValues(
+                alpha: 0.3,
+              ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
               ),
@@ -556,7 +577,7 @@ class _CameraPanel extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             ColoredBox(
-              color: const Color(0xFF2B2522),
+              color: AppColors.espressoDark,
               child: isActive
                   ? const AndroidView(
                       viewType: 'com.hajicare.bisindo/camera_preview',
@@ -590,7 +611,7 @@ class _CameraPanel extends StatelessWidget {
               top: 13,
               child: _CameraBadge(
                 text: isActive ? '●  LIVE' : 'STANDBY',
-                color: isActive ? const Color(0xFF315B46) : Colors.black54,
+                color: isActive ? AppColors.emeraldIslamic : Colors.black54,
               ),
             ),
             const Positioned(
@@ -598,7 +619,7 @@ class _CameraPanel extends StatelessWidget {
               top: 13,
               child: _CameraBadge(
                 text: 'BISINDO · 100F',
-                color: Color(0xFF006D75),
+                color: AppColors.espressoDark,
               ),
             ),
             Obx(() {
@@ -615,7 +636,7 @@ class _CameraPanel extends StatelessWidget {
                     vertical: 10,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF007C7A).withValues(alpha: 0.92),
+                    color: AppColors.espressoDark.withValues(alpha: 0.92),
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: const [
                       BoxShadow(color: Colors.black26, blurRadius: 9),
@@ -670,7 +691,7 @@ class _CameraPanel extends StatelessWidget {
                             minHeight: 8,
                             backgroundColor: Colors.white24,
                             valueColor: const AlwaysStoppedAnimation(
-                              Color(0xFF43D5C7),
+                              AppColors.accentGoldStar,
                             ),
                           ),
                         ),
