@@ -50,3 +50,7 @@ exports.triggerSos = callable((auth, data) => sos.triggerSos(db, auth, data));
 exports.transitionSos = callable((auth, data) => sos.transitionSos(db, auth, data));
 exports.sendNotification = callable((auth, data) =>
   notification.sendNotification(db, auth, data));
+exports.sendPickupRequest = callable((auth, data) =>
+  notification.sendPickupRequest(db, auth, data));
+exports.sendCompanionMessage = callable((auth, data) =>
+  notification.sendCompanionMessage(db, auth, data));

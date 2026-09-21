@@ -651,7 +651,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
             ),
             const SizedBox(width: 12),
 
-            // Right Column: Guide Haji (Short: 126) & Fitur Jemput (Tall: 162)
+            // Right Column: Guide Haji & pusat komunikasi pendamping
             Expanded(
               child: Column(
                 children: [
@@ -679,10 +679,10 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   const SizedBox(height: 12),
                   _buildBentoFeatureCard(
                     context: context,
-                    title: 'Bantuan Jemput',
-                    value: 'Jemput Saya',
-                    subtitle: 'Kirim Lokasi',
-                    icon: Icons.hail_rounded,
+                    title: 'Pendamping',
+                    value: 'Hubungi',
+                    subtitle: 'Pesan & Lokasi',
+                    icon: Icons.support_agent_rounded,
                     height: 162,
                     isDark: isDark,
                     cardBg: cardBg,
@@ -694,8 +694,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                         : const Color(0xFFFBE9E7),
                     iconColor: const Color(0xFFE64A19),
                     accentColor: const Color(0xFFD84315),
-                    onTap: () =>
-                        _showPickupRequestDialog(context, state, jamaah),
+                    onTap: () => _showCompanionContactDialog(context, state),
                   ),
                 ],
               ),
@@ -1083,12 +1082,75 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     );
   }
 
+  // ── Hubungi Pendamping: informasi, pesan, dan berbagi lokasi ───────────────
+  Future<void> _showCompanionContactDialog(
+    BuildContext context,
+    HajiCareController state,
+  ) async {
+    final roomId = state.activeRoomId.value?.trim();
+    if (roomId == null || roomId.isEmpty) {
+      AppAlert.error(
+        context,
+        title: 'Belum Tergabung Rombongan',
+        message:
+            'Anda perlu bergabung dengan rombongan untuk menghubungi pendamping.',
+        okText: 'Gabung Rombongan',
+        onOk: () => Get.toNamed(AppRoutes.joinRoom),
+      );
+      return;
+    }
+
+    late final List<RoomMemberModel> pendampings;
+    try {
+      final members = await RoomQueryService()
+          .getRoomMembersStream(roomId)
+          .first;
+      pendampings = members
+          .where((member) => member.isPendamping)
+          .toList(growable: false);
+    } catch (_) {
+      if (context.mounted) {
+        AppAlert.error(
+          context,
+          title: 'Pendamping Belum Dapat Dimuat',
+          message:
+              'Daftar pendamping rombongan belum dapat dimuat. Silakan coba lagi.',
+        );
+      }
+      return;
+    }
+
+    if (!context.mounted) return;
+    if (pendampings.isEmpty) {
+      AppAlert.error(
+        context,
+        title: 'Pendamping Tidak Tersedia',
+        message:
+            'Belum ada pendamping aktif di rombongan Anda. Hubungi pengelola rombongan.',
+      );
+      return;
+    }
+
+    await Get.bottomSheet<void>(
+      CompanionContactSheet(
+        roomId: roomId,
+        pendampings: pendampings,
+        state: state,
+      ),
+      isScrollControlled: true,
+      ignoreSafeArea: false,
+      enableDrag: false,
+    );
+  }
+
   // ── Modal Sheet: Fitur Jemput Saya (Kirim Notifikasi ke Pendamping) ─────────
-  void _showPickupRequestDialog(
+  // TODO: Remove after the new Hubungi Pendamping flow has fully replaced it.
+  // ignore: unused_element
+  Future<void> _showPickupRequestDialog(
     BuildContext context,
     HajiCareController state,
     JamaahData jamaah,
-  ) {
+  ) async {
     final isDark = AppColors.isDark(context);
     final headingColor = AppColors.textHeadingColor(context);
     final bodyColor = AppColors.textBodyColor(context);
@@ -1106,6 +1168,37 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
       return;
     }
 
+    late final List<RoomMemberModel> pendampings;
+    try {
+      final members = await RoomQueryService()
+          .getRoomMembersStream(roomId)
+          .first;
+      pendampings = members
+          .where((member) => member.isPendamping)
+          .toList(growable: false);
+    } catch (_) {
+      if (context.mounted) {
+        AppAlert.error(
+          context,
+          title: 'Pendamping Belum Dapat Dimuat',
+          message:
+              'Daftar pendamping rombongan belum dapat dimuat. Silakan coba lagi.',
+        );
+      }
+      return;
+    }
+
+    if (!context.mounted) return;
+    if (pendampings.isEmpty) {
+      AppAlert.error(
+        context,
+        title: 'Pendamping Tidak Tersedia',
+        message:
+            'Belum ada pendamping aktif di rombongan Anda. Hubungi pengelola rombongan.',
+      );
+      return;
+    }
+
     final presets = [
       'Depan Pintu Masjid',
       'Lobi Hotel / Maktab',
@@ -1114,6 +1207,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
       'Terpisah dari Rombongan',
     ];
     String selectedPreset = presets[0];
+    String? selectedPendampingUid;
+    String? selectedPendampingName;
     final noteController = TextEditingController(text: presets[0]);
     final isSending = false.obs;
 
@@ -1180,7 +1275,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                               ),
                             ),
                             Text(
-                              'Kirim lokasi & permohonan jemput ke room',
+                              'Kirim lokasi ke pendamping yang Anda pilih',
                               style: AppTypography.captionSmall.copyWith(
                                 color: bodyColor,
                               ),
@@ -1192,6 +1287,62 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   ),
                   const SizedBox(height: AppSpacing.md),
                   const Divider(height: 1),
+                  const SizedBox(height: AppSpacing.md),
+
+                  Text(
+                    'Pilih Pendamping:',
+                    style: AppTypography.labelLarge.copyWith(
+                      color: headingColor,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedPendampingUid,
+                    isExpanded: true,
+                    dropdownColor: isDark
+                        ? AppColors.darkSurfaceContainer
+                        : AppColors.surfaceWhite,
+                    decoration: InputDecoration(
+                      hintText: 'Pilih pendamping tujuan',
+                      prefixIcon: const Icon(Icons.support_agent_rounded),
+                      filled: true,
+                      fillColor: isDark
+                          ? AppColors.darkSurfaceContainer
+                          : AppColors.canvasCream,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? AppColors.darkCardBorder
+                              : AppColors.lightCardBorder,
+                        ),
+                      ),
+                    ),
+                    items: pendampings
+                        .map(
+                          (pendamping) => DropdownMenuItem<String>(
+                            value: pendamping.uid,
+                            child: Text(
+                              pendamping.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        )
+                        .toList(growable: false),
+                    onChanged: isSending.value
+                        ? null
+                        : (uid) {
+                            setModalState(() {
+                              selectedPendampingUid = uid;
+                              selectedPendampingName = pendampings
+                                  .where((item) => item.uid == uid)
+                                  .firstOrNull
+                                  ?.name;
+                            });
+                          },
+                  ),
                   const SizedBox(height: AppSpacing.md),
 
                   // GPS Location card
@@ -1362,7 +1513,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                             fontSize: 14.5,
                           ),
                         ),
-                        onPressed: isSending.value
+                        onPressed:
+                            isSending.value || selectedPendampingUid == null
                             ? null
                             : () async {
                                 isSending.value = true;
@@ -1372,27 +1524,16 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                     : 'Meminta bantuan penjemputan segera';
 
                                 try {
-                                  await NotificationService().sendNotification(
-                                    title: 'Permintaan Jemput: ${jamaah.name}',
-                                    message:
-                                        'Jamaah ${jamaah.name} meminta bantuan penjemputan di $finalNote.',
-                                    senderUid: state.currentUid ?? jamaah.id,
-                                    senderRole: 'jamaah',
-                                    senderName: jamaah.name,
-                                    scope: 'room',
-                                    targetRoomId: roomId,
-                                    type: 'pickup_request',
-                                    metadata: {
-                                      'latitude': myPos?.latitude,
-                                      'longitude': myPos?.longitude,
-                                      'notes': finalNote,
-                                      'senderName': jamaah.name,
-                                      if (jamaah.kloter != null)
-                                        'kloter': jamaah.kloter,
-                                      if (jamaah.maktab != null)
-                                        'maktab': jamaah.maktab,
-                                    },
-                                  );
+                                  final recipientName =
+                                      await NotificationService()
+                                          .sendPickupRequest(
+                                            roomId: roomId,
+                                            pendampingUid:
+                                                selectedPendampingUid!,
+                                            notes: finalNote,
+                                            latitude: myPos?.latitude,
+                                            longitude: myPos?.longitude,
+                                          );
 
                                   if (context.mounted) {
                                     Get.back();
@@ -1400,7 +1541,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                       context,
                                       title: 'Permintaan Terkirim!',
                                       message:
-                                          'Pendamping di rombongan Anda sudah menerima pemberitahuan dan lokasi penjemputan Anda.',
+                                          '${selectedPendampingName ?? recipientName} sudah menerima pemberitahuan dan lokasi penjemputan Anda.',
                                     );
                                   }
                                 } catch (e) {

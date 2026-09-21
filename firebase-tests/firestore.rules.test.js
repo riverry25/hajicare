@@ -109,3 +109,64 @@ test('notification recipient may mark read but may not alter content', async () 
   await assertSucceeds(updateDoc(doc(db, 'notifications', 'n1'), {isRead: true}));
   await assertFails(updateDoc(doc(db, 'notifications', 'n1'), {title: 'Forged'}));
 });
+
+test('client cannot bypass room validation for pickup requests', async () => {
+  const db = environment.authenticatedContext('jamaah').firestore();
+  await assertFails(setDoc(doc(db, 'notifications', 'forged-pickup'), {
+    recipientId: 'manager',
+    senderId: 'jamaah',
+    targetRoomId: 'room-a',
+    type: 'pickup_request',
+    title: 'Permintaan Jemput',
+    message: 'Jemput saya',
+    isRead: false,
+  }));
+});
+
+test('jamaah may directly notify a pendamping in the same room', async () => {
+  const db = environment.authenticatedContext('jamaah').firestore();
+  for (const type of ['companion_info', 'companion_message']) {
+    await assertSucceeds(setDoc(doc(db, 'notifications', `valid-${type}`), {
+      recipientId: 'manager',
+      senderId: 'jamaah',
+      senderName: 'Jamaah',
+      senderRole: 'jamaah',
+      targetRoomId: 'room-a',
+      targetUserId: 'manager',
+      scope: type == 'companion_info' ? 'all_companions' : 'user',
+      title: 'Pesan dari Jamaah',
+      message: 'Mohon bantuan pendamping.',
+      type,
+      isRead: false,
+    }));
+  }
+});
+
+test('direct pendamping notification rejects outsiders and invalid recipients', async () => {
+  const validShape = {
+    recipientId: 'manager',
+    senderId: 'attacker',
+    senderName: 'Attacker',
+    senderRole: 'jamaah',
+    targetRoomId: 'room-a',
+    targetUserId: 'manager',
+    scope: 'user',
+    title: 'Pesan dari Attacker',
+    message: 'Pesan tidak sah',
+    type: 'companion_message',
+    isRead: false,
+  };
+  const outsiderDb = environment.authenticatedContext('attacker').firestore();
+  await assertFails(setDoc(
+    doc(outsiderDb, 'notifications', 'outsider-message'),
+    validShape,
+  ));
+
+  const jamaahDb = environment.authenticatedContext('jamaah').firestore();
+  await assertFails(setDoc(doc(jamaahDb, 'notifications', 'wrong-target'), {
+    ...validShape,
+    senderId: 'jamaah',
+    recipientId: 'jamaah',
+    targetUserId: 'jamaah',
+  }));
+});

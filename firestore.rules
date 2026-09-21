@@ -35,6 +35,34 @@ service cloud.firestore {
         ).data.role == 'pendamping';
     }
 
+    function isValidCompanionMessage() {
+      let data = request.resource.data;
+      let roomId = data.get('targetRoomId', '');
+      let recipientId = data.get('recipientId', '');
+      return signedIn() &&
+        data.get('type', '') in ['companion_info', 'companion_message'] &&
+        roomId is string && roomId.size() > 0 &&
+        recipientId is string && recipientId.size() > 0 &&
+        data.get('senderId', '') == request.auth.uid &&
+        data.get('senderRole', '') == 'jamaah' &&
+        data.get('targetUserId', '') == recipientId &&
+        data.get('scope', '') in ['user', 'all_companions'] &&
+        data.get('title', '') is string &&
+        data.get('title', '').size() > 0 &&
+        data.get('title', '').size() <= 80 &&
+        data.get('message', '') is string &&
+        data.get('message', '').size() > 0 &&
+        data.get('message', '').size() <= 500 &&
+        data.get('isRead', true) == false &&
+        get(/databases/$(database)/documents/rooms/$(roomId)).data.isActive == true &&
+        get(
+          /databases/$(database)/documents/rooms/$(roomId)/members/$(request.auth.uid)
+        ).data.role == 'jamaah' &&
+        get(
+          /databases/$(database)/documents/rooms/$(roomId)/members/$(recipientId)
+        ).data.role == 'pendamping';
+    }
+
     match /users/{uid} {
       allow read: if signedIn();
 
@@ -93,7 +121,15 @@ service cloud.firestore {
         resource.data.recipientId == request.auth.uid ||
         resource.data.senderId == request.auth.uid
       );
-      allow create: if signedIn();
+      // Companion messages prefer a trusted callable. A strictly validated
+      // direct write keeps delivery working while that callable is unavailable.
+      allow create: if signedIn() && (
+        (
+          request.resource.data.get('type', '') != 'pickup_request' &&
+          request.resource.data.get('type', '') != 'companion_info' &&
+          request.resource.data.get('type', '') != 'companion_message'
+        ) || isValidCompanionMessage()
+      );
       allow update: if signedIn() &&
         resource.data.recipientId == request.auth.uid &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);

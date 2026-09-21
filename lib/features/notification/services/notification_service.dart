@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../../core/services/trusted_backend_service.dart';
@@ -7,19 +8,216 @@ import '../models/notification_model.dart';
 class NotificationService {
   NotificationService({
     FirebaseFirestore? firestore,
+    FirebaseAuth? firebaseAuth,
     TrustedBackendService? backend,
   }) : _providedFirestore = firestore,
+       _providedFirebaseAuth = firebaseAuth,
        _providedBackend = backend;
 
   static const int historyWindow = 100;
 
   final FirebaseFirestore? _providedFirestore;
+  final FirebaseAuth? _providedFirebaseAuth;
   final TrustedBackendService? _providedBackend;
 
   FirebaseFirestore get _firestore =>
       _providedFirestore ?? FirebaseFirestore.instance;
+  FirebaseAuth get _firebaseAuth =>
+      _providedFirebaseAuth ?? FirebaseAuth.instance;
   TrustedBackendService get _backend =>
       _providedBackend ?? TrustedBackendService();
+
+  Future<String> sendPickupRequest({
+    required String roomId,
+    required String pendampingUid,
+    required String notes,
+    double? latitude,
+    double? longitude,
+  }) async {
+    final result = await _backend.call('sendPickupRequest', {
+      'roomId': roomId,
+      'pendampingUid': pendampingUid,
+      'notes': notes,
+      'latitude': ?latitude,
+      'longitude': ?longitude,
+    });
+    return (result['pendampingName'] as String?)?.trim().isNotEmpty == true
+        ? (result['pendampingName'] as String).trim()
+        : 'Pendamping';
+  }
+
+  /// Sends a chat-like message from a jamaah to one or every pendamping in
+  /// their active room. Membership and recipient roles are verified by the
+  /// trusted backend before any notification is created.
+  Future<int> sendCompanionMessage({
+    required String roomId,
+    required String message,
+    required bool sendToAll,
+    required String kind,
+    String? pendampingUid,
+    double? latitude,
+    double? longitude,
+  }) async {
+    try {
+      final result = await _backend.call('sendCompanionMessage', {
+        'roomId': roomId,
+        'message': message,
+        'sendToAll': sendToAll,
+        'kind': kind,
+        'pendampingUid': ?pendampingUid,
+        'latitude': ?latitude,
+        'longitude': ?longitude,
+      });
+      return (result['recipientCount'] as num?)?.toInt() ?? 0;
+    } catch (error, stackTrace) {
+      // Some deployments do not have the callable yet. The Firestore fallback
+      // is protected by membership-aware Security Rules and creates the same
+      // realtime notification documents consumed by pendamping devices.
+      debugPrint(
+        '[NotificationService] sendCompanionMessage callable failed: $error',
+      );
+      debugPrintStack(stackTrace: stackTrace);
+      return _sendCompanionMessageDirect(
+        roomId: roomId,
+        message: message,
+        sendToAll: sendToAll,
+        kind: kind,
+        pendampingUid: pendampingUid,
+        latitude: latitude,
+        longitude: longitude,
+      );
+    }
+  }
+
+  Future<int> _sendCompanionMessageDirect({
+    required String roomId,
+    required String message,
+    required bool sendToAll,
+    required String kind,
+    String? pendampingUid,
+    double? latitude,
+    double? longitude,
+  }) async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw Exception('Sesi masuk sudah berakhir. Silakan masuk kembali.');
+    }
+
+    final cleanRoomId = roomId.trim();
+    final cleanMessage = message.trim();
+    if (cleanRoomId.isEmpty || cleanMessage.isEmpty) {
+      throw Exception('Rombongan dan pesan wajib diisi.');
+    }
+    if (cleanMessage.length > 500) {
+      throw Exception('Pesan terlalu panjang. Maksimal 500 karakter.');
+    }
+    if (kind != 'info' && kind != 'message') {
+      throw Exception('Jenis pesan tidak valid.');
+    }
+
+    final roomRef = _firestore.collection('rooms').doc(cleanRoomId);
+    final roomSnapshot = await roomRef.get();
+    final roomData = roomSnapshot.data();
+    if (!roomSnapshot.exists ||
+        roomData?['isActive'] != true ||
+        roomData?['status'] == 'deleting') {
+      throw Exception('Rombongan sudah tidak aktif.');
+    }
+
+    final senderSnapshot = await roomRef
+        .collection('members')
+        .doc(user.uid)
+        .get();
+    final senderData = senderSnapshot.data();
+    if (!senderSnapshot.exists ||
+        senderData?['role']?.toString().toLowerCase() != 'jamaah') {
+      throw Exception('Anda bukan jamaah aktif dalam rombongan ini.');
+    }
+    final senderName = senderData?['name']?.toString().trim().isNotEmpty == true
+        ? senderData!['name'].toString().trim()
+        : (user.displayName?.trim().isNotEmpty == true
+              ? user.displayName!.trim()
+              : 'Jamaah');
+
+    final effectiveSendToAll = sendToAll || kind == 'info';
+    final targets = <({String uid, String name})>[];
+    if (effectiveSendToAll) {
+      final membersSnapshot = await roomRef.collection('members').get();
+      for (final doc in membersSnapshot.docs) {
+        final data = doc.data();
+        if (data['role']?.toString().toLowerCase() == 'pendamping' &&
+            doc.id != user.uid) {
+          final name = data['name']?.toString().trim();
+          targets.add((
+            uid: doc.id,
+            name: name == null || name.isEmpty ? 'Pendamping' : name,
+          ));
+        }
+      }
+    } else {
+      final targetUid = pendampingUid?.trim();
+      if (targetUid == null || targetUid.isEmpty || targetUid == user.uid) {
+        throw Exception('Pilih pendamping tujuan terlebih dahulu.');
+      }
+      final targetSnapshot = await roomRef
+          .collection('members')
+          .doc(targetUid)
+          .get();
+      final targetData = targetSnapshot.data();
+      if (!targetSnapshot.exists ||
+          targetData?['role']?.toString().toLowerCase() != 'pendamping') {
+        throw Exception('Pendamping tidak ditemukan dalam rombongan ini.');
+      }
+      final targetName = targetData?['name']?.toString().trim();
+      targets.add((
+        uid: targetUid,
+        name: targetName == null || targetName.isEmpty
+            ? 'Pendamping'
+            : targetName,
+      ));
+    }
+
+    if (targets.isEmpty) {
+      throw Exception('Belum ada pendamping aktif dalam rombongan ini.');
+    }
+
+    final notificationGroupId = _firestore.collection('notifications').doc().id;
+    const chunkSize = 15;
+    for (var start = 0; start < targets.length; start += chunkSize) {
+      final end = (start + chunkSize).clamp(0, targets.length);
+      final batch = _firestore.batch();
+      for (final target in targets.sublist(start, end)) {
+        batch.set(_firestore.collection('notifications').doc(), {
+          'notificationId': notificationGroupId,
+          'recipientId': target.uid,
+          'title': kind == 'info'
+              ? 'Informasi dari $senderName'
+              : 'Pesan dari $senderName',
+          'message': cleanMessage,
+          'type': kind == 'info' ? 'companion_info' : 'companion_message',
+          'scope': effectiveSendToAll ? 'all_companions' : 'user',
+          'targetUserId': target.uid,
+          'targetRoomId': cleanRoomId,
+          'senderId': user.uid,
+          'senderName': senderName,
+          'senderRole': 'jamaah',
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+          'metadata': {
+            if (latitude != null && longitude != null) ...{
+              'latitude': latitude,
+              'longitude': longitude,
+            },
+            'includesLocation': latitude != null && longitude != null,
+            'sendToAll': effectiveSendToAll,
+          },
+        });
+      }
+      await batch.commit();
+    }
+
+    return targets.length;
+  }
 
   Future<int> sendNotification({
     required String title,
@@ -196,14 +394,27 @@ class NotificationService {
     return _firestore
         .collection('notifications')
         .where('recipientId', isEqualTo: uid)
-        .orderBy('createdAt', descending: true)
-        .limit(historyWindow)
         .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map(AppNotificationModel.fromFirestore)
-              .toList(growable: false),
-        );
+        .map((snapshot) {
+          // Sorting on-device keeps realtime delivery working even when the
+          // optional composite index has not been deployed yet.
+          final items =
+              snapshot.docs
+                  .map(AppNotificationModel.fromFirestore)
+                  .toList(growable: true)
+                ..sort((a, b) {
+                  final aTime =
+                      a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+                  final bTime =
+                      b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+                  return bTime.compareTo(aTime);
+                });
+          return items.length <= historyWindow
+              ? List<AppNotificationModel>.unmodifiable(items)
+              : List<AppNotificationModel>.unmodifiable(
+                  items.take(historyWindow),
+                );
+        });
   }
 
   Future<void> markNotificationRead(String notificationId) async {
