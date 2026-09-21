@@ -165,7 +165,8 @@ class JoinRoomController extends GetxController {
       return;
     }
     if (!RegExp(r'^[A-Z0-9]{4,12}$').hasMatch(roomCode)) {
-      errorMessage.value = 'Format kode rombongan tidak valid (hanya huruf dan angka).';
+      errorMessage.value =
+          'Format kode rombongan tidak valid (hanya huruf dan angka).';
       _showErrorAlert(errorMessage.value!);
       return;
     }
@@ -177,7 +178,9 @@ class JoinRoomController extends GetxController {
     }
 
     final state = Get.find<HajiCareController>();
-    String effectiveRole = state.role == UserRole.pendamping ? 'pendamping' : 'jamaah';
+    String effectiveRole = state.role == UserRole.pendamping
+        ? 'pendamping'
+        : 'jamaah';
     try {
       final userDoc = await FirebaseFirestore.instance
           .collection('users')

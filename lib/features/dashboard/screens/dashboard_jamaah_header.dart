@@ -22,11 +22,19 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
     // Money Recognition shortcut (replaces Nomor Porsi — not available in Firebase)
 
     // Distance formatting (Promoted to Hero Display)
-    final distanceDisplay = jamaah.distance > 0
-        ? (jamaah.distance < 1000
-              ? '${jamaah.distance.round()} m'
-              : '${(jamaah.distance / 1000).toStringAsFixed(1)} km')
-        : '20 m';
+    final hasRoom =
+        (state.activeRoomId.value != null &&
+            state.activeRoomId.value!.trim().isNotEmpty) ||
+        (jamaah.activeRoomId != null && jamaah.activeRoomId!.trim().isNotEmpty);
+
+    final realDistance =
+        state.calculatedDistance.value ?? (hasRoom ? jamaah.distance : 0.0);
+
+    final distanceDisplay = (hasRoom && realDistance > 0)
+        ? (realDistance < 1000
+              ? '${realDistance.round()} m'
+              : '${(realDistance / 1000).toStringAsFixed(1)} km')
+        : '—';
 
     // Next prayer time display with timezone suffix stripped to avoid overflow
     final prayerName = prayerCtrl.nextPrayerName.value.isNotEmpty
@@ -160,9 +168,12 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Text(
-                        context.tr('officerDistance') != 'officerDistance'
-                            ? context.tr('officerDistance')
-                            : 'Jarak ke Petugas',
+                        hasRoom
+                            ? (context.tr('officerDistance') !=
+                                      'officerDistance'
+                                  ? context.tr('officerDistance')
+                                  : 'Jarak ke Petugas')
+                            : 'Belum Terhubung ke Room',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 11,
@@ -177,8 +188,10 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
               // Sync / Refresh Location Circular Button with spinning animation
               // Distance-reactive sparkline wave (replaces static sync button)
               DistanceSparklineWidget(
-                distance: jamaah.distance,
-                tooltip: 'Perbarui lokasi GPS',
+                distance: hasRoom ? realDistance : 0.0,
+                tooltip: hasRoom
+                    ? 'Perbarui lokasi GPS'
+                    : 'Belum terhubung ke room',
                 onSync: () async {
                   await state.refreshLocation();
                   if (context.mounted) {

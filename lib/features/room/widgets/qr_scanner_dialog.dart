@@ -57,7 +57,10 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
           extracted = uri.queryParameters['room']!;
         } else if (uri.pathSegments.isNotEmpty) {
           for (final seg in uri.pathSegments.reversed) {
-            final clean = seg.trim().toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
+            final clean = seg.trim().toUpperCase().replaceAll(
+              RegExp(r'[^A-Z0-9]'),
+              '',
+            );
             if (clean.length >= 6 && clean.length <= 8) {
               extracted = clean;
               break;

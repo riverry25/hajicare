@@ -568,21 +568,6 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
           children: [
             Row(
               children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkSurfaceContainerHigh
-                        : AppColors.canvasCreamSubtle,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.grid_view_rounded,
-                    size: 16,
-                    color: headingColor,
-                  ),
-                ),
                 const SizedBox(width: AppSpacing.sm),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -595,6 +580,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                         fontSize: 14.5,
                       ),
                     ),
+
                     Text(
                       'Akses cepat kebutuhan ibadah & bantuan',
                       style: AppTypography.captionSmall.copyWith(
@@ -609,7 +595,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.lg),
 
         // 4 Staggered Bento Cards matching reference layout
         Row(

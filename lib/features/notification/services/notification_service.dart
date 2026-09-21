@@ -235,4 +235,56 @@ class NotificationService {
       debugPrint('[NotificationService] mark all read failed: $error');
     }
   }
+
+  Future<void> deleteNotification(String notificationId) async {
+    try {
+      await _firestore.collection('notifications').doc(notificationId).delete();
+    } catch (error) {
+      debugPrint('[NotificationService] delete notification failed: $error');
+    }
+  }
+
+  Future<void> deleteNotificationsForInvitation({
+    required String invitationId,
+    required String uid,
+    String? roomId,
+  }) async {
+    try {
+      await _firestore
+          .collection('notifications')
+          .doc('invitation_$invitationId')
+          .delete();
+    } catch (_) {}
+
+    try {
+      final query = await _firestore
+          .collection('notifications')
+          .where('recipientId', isEqualTo: uid)
+          .where('relatedId', isEqualTo: invitationId)
+          .limit(20)
+          .get();
+      for (final doc in query.docs) {
+        await doc.reference.delete();
+      }
+    } catch (error) {
+      debugPrint(
+        '[NotificationService] deleteNotificationsForInvitation error: $error',
+      );
+    }
+
+    if (roomId != null && roomId.isNotEmpty) {
+      try {
+        final query = await _firestore
+            .collection('notifications')
+            .where('recipientId', isEqualTo: uid)
+            .where('targetRoomId', isEqualTo: roomId)
+            .where('type', isEqualTo: 'room_invitation')
+            .limit(20)
+            .get();
+        for (final doc in query.docs) {
+          await doc.reference.delete();
+        }
+      } catch (_) {}
+    }
+  }
 }

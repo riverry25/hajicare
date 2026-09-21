@@ -666,11 +666,9 @@ class DashboardPendampingScreen extends StatelessWidget {
     );
   }
 
-
   // ═══════════════════════════════════════════════════════════════════════════
   // HELPER WIDGETS
   // ═══════════════════════════════════════════════════════════════════════════
-
 
   Widget _notifButton(BuildContext context, HajiCareController state) {
     return Stack(
@@ -986,8 +984,9 @@ class DashboardPendampingScreen extends StatelessWidget {
                 child: Text(
                   actionText,
                   style: TextStyle(
-                    color:
-                        isDark ? AppColors.goldLight : AppColors.espressoDark,
+                    color: isDark
+                        ? AppColors.goldLight
+                        : AppColors.espressoDark,
                     fontWeight: FontWeight.w700,
                     fontSize: 12.5,
                   ),
@@ -1284,7 +1283,8 @@ class _PilgrimsPillsSectionState extends State<_PilgrimsPillsSection>
                     child: TextField(
                       controller: _textCtrl,
                       autofocus: true,
-                      onChanged: (v) => setState(() => _query = v.toLowerCase()),
+                      onChanged: (v) =>
+                          setState(() => _query = v.toLowerCase()),
                       style: TextStyle(
                         color: isDark
                             ? AppColors.darkTextHeading
@@ -1366,15 +1366,21 @@ class _PilgrimsPillsSectionState extends State<_PilgrimsPillsSection>
                         ? Border.all(
                             color: isDark
                                 ? AppColors.goldLight.withValues(alpha: 0.45)
-                                : AppColors.espressoDark.withValues(alpha: 0.30),
+                                : AppColors.espressoDark.withValues(
+                                    alpha: 0.30,
+                                  ),
                             width: 1.2,
                           )
                         : null,
                   ),
                   child: Icon(
-                    _searchOpen ? Icons.search_off_rounded : Icons.search_rounded,
+                    _searchOpen
+                        ? Icons.search_off_rounded
+                        : Icons.search_rounded,
                     size: 18,
-                    color: isDark ? AppColors.goldLight : AppColors.espressoDark,
+                    color: isDark
+                        ? AppColors.goldLight
+                        : AppColors.espressoDark,
                   ),
                 ),
               ),
@@ -1407,10 +1413,8 @@ class _PilgrimsPillsSectionState extends State<_PilgrimsPillsSection>
             if (_query.isEmpty) {
               filtered.add((idx: i, j: j));
             } else {
-              final name =
-                  (j.name as String? ?? '').toLowerCase();
-              final label =
-                  (j.shortLabel as String? ?? '').toLowerCase();
+              final name = (j.name as String? ?? '').toLowerCase();
+              final label = (j.shortLabel as String? ?? '').toLowerCase();
               if (name.contains(_query) || label.contains(_query)) {
                 filtered.add((idx: i, j: j));
               }
@@ -1477,8 +1481,7 @@ class _PillItem extends StatelessWidget {
               ? '${dist.round()} m'
               : '${(dist / 1000).toStringAsFixed(1)} km')
         : '—';
-    final isSelected =
-        dashboardCtrl.selectedJamaahIndex.value == originalIndex;
+    final isSelected = dashboardCtrl.selectedJamaahIndex.value == originalIndex;
 
     final Color pill = hasSos
         ? AppColors.sosEmergency

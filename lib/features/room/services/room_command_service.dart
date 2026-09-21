@@ -612,19 +612,51 @@ class RoomCommandService {
     required String action,
   }) async {
     try {
-      return await _backend.call('respondInvitation', {
+      final res = await _backend.call('respondInvitation', {
         'invitationId': invitationId,
         'action': action,
       });
+      _cleanupInvitationNotifications(invitationId);
+      return res;
     } catch (error) {
       debugPrint(
         '[RoomCommandService] Backend respondInvitation failed ($error), using direct Firestore fallback',
       );
-      return _respondInvitationDirect(
+      final res = await _respondInvitationDirect(
         invitationId: invitationId,
         action: action,
       );
+      _cleanupInvitationNotifications(invitationId);
+      return res;
     }
+  }
+
+  void _cleanupInvitationNotifications(String invitationId) {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+      _firestore
+          .collection('notifications')
+          .doc('invitation_$invitationId')
+          .delete()
+          .catchError((_) {});
+      _firestore
+          .collection('notifications')
+          .doc('invitation_accepted_$invitationId')
+          .delete()
+          .catchError((_) {});
+      _firestore
+          .collection('notifications')
+          .where('recipientId', isEqualTo: user.uid)
+          .where('relatedId', isEqualTo: invitationId)
+          .get()
+          .then((snap) {
+            for (final doc in snap.docs) {
+              doc.reference.delete().catchError((_) {});
+            }
+          })
+          .catchError((_) {});
+    } catch (_) {}
   }
 
   Future<Map<String, dynamic>> _respondInvitationDirect({
@@ -656,10 +688,8 @@ class RoomCommandService {
         'status': 'rejected',
         'respondedAt': FieldValue.serverTimestamp(),
       });
-      batch.set(
+      batch.delete(
         _firestore.collection('notifications').doc('invitation_$invitationId'),
-        {'isRead': true},
-        SetOptions(merge: true),
       );
       await batch.commit();
       return {'status': 'rejected'};
@@ -676,11 +706,16 @@ class RoomCommandService {
     final roomRef = _firestore.collection('rooms').doc(roomId);
     final roomSnap = await roomRef.get();
     if (!roomSnap.exists || roomSnap.data()?['isActive'] == false) {
-      await invRef.update({
+      final batch = _firestore.batch();
+      batch.update(invRef, {
         'status': 'expired',
         'expiredReason': 'room_unavailable',
         'expiredAt': FieldValue.serverTimestamp(),
       });
+      batch.delete(
+        _firestore.collection('notifications').doc('invitation_$invitationId'),
+      );
+      await batch.commit();
       return {'status': 'expired', 'roomId': roomId};
     }
 
@@ -710,10 +745,8 @@ class RoomCommandService {
       'status': 'accepted',
       'respondedAt': FieldValue.serverTimestamp(),
     });
-    batch.set(
+    batch.delete(
       _firestore.collection('notifications').doc('invitation_$invitationId'),
-      {'isRead': true},
-      SetOptions(merge: true),
     );
     await batch.commit();
 

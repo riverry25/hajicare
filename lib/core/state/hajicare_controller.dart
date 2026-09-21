@@ -404,6 +404,9 @@ class HajiCareController extends GetxController {
                     : 'Pendamping');
         } else if (_role.value == UserRole.jamaah) {
           _self = JamaahData.fromFirestore(doc);
+          if (effectiveRoomId == null || effectiveRoomId.isEmpty) {
+            _self!.distance = 0.0;
+          }
           if (jamaahList.isEmpty || !jamaahList.any((j) => j.id == uid)) {
             jamaahList.value = [_self!];
           }
@@ -481,6 +484,9 @@ class HajiCareController extends GetxController {
     pendampingLocationUpdatedAt.value = null;
     isPendampingGpsActive.value = false;
     calculatedDistance.value = null;
+    if (_self != null) {
+      _self!.distance = 0.0;
+    }
     if (_role.value == UserRole.pendamping) {
       for (var sub in _jamaahSubs.values) {
         sub.cancel();
@@ -488,6 +494,7 @@ class HajiCareController extends GetxController {
       _jamaahSubs.clear();
       jamaahList.clear();
     }
+    jamaahList.refresh();
   }
 
   void _listenToActiveRoom(String roomId, String currentUid) {
@@ -599,6 +606,10 @@ class HajiCareController extends GetxController {
         .listen((doc) {
           if (doc.exists) {
             _self = JamaahData.fromFirestore(doc);
+            if (activeRoomId.value == null ||
+                activeRoomId.value!.trim().isEmpty) {
+              _self!.distance = 0.0;
+            }
             if (_role.value == UserRole.jamaah) {
               final index = jamaahList.indexWhere((j) => j.id == uid);
               if (index >= 0) {
@@ -712,6 +723,16 @@ class HajiCareController extends GetxController {
   /// Recalculates real mathematical distance between users using GPS coordinates.
   void _recalculateRealDistance() {
     if (_role.value == UserRole.jamaah) {
+      final currentRoom = activeRoomId.value?.trim();
+      if (currentRoom == null || currentRoom.isEmpty) {
+        calculatedDistance.value = null;
+        if (_self != null) {
+          _self!.distance = 0.0;
+        }
+        jamaahList.refresh();
+        return;
+      }
+
       final myPos = myCurrentPosition.value;
       final pLoc = pendampingLocation.value;
 
@@ -731,6 +752,9 @@ class HajiCareController extends GetxController {
         }
       } else {
         calculatedDistance.value = null;
+        if (_self != null) {
+          _self!.distance = 0.0;
+        }
       }
       jamaahList.refresh();
     } else if (_role.value == UserRole.pendamping) {
