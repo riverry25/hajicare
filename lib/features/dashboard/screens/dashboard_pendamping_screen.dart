@@ -1421,6 +1421,18 @@ class _PilgrimsPillsSectionState extends State<_PilgrimsPillsSection>
             }
           }
 
+          // Sort so the furthest jamaah from pendamping is at the far left
+          filtered.sort((a, b) {
+            final aSos = a.j.sosActive as bool? ?? false;
+            final bSos = b.j.sosActive as bool? ?? false;
+            if (aSos != bSos) {
+              return aSos ? -1 : 1;
+            }
+            final aDist = (a.j.distance as num?)?.toDouble() ?? 0.0;
+            final bDist = (b.j.distance as num?)?.toDouble() ?? 0.0;
+            return bDist.compareTo(aDist);
+          });
+
           if (filtered.isEmpty) {
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),

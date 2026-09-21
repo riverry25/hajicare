@@ -19,6 +19,7 @@ import '../controllers/admin_room_controller.dart';
 import '../models/activity_model.dart';
 import '../models/room_model.dart';
 import '../widgets/room_qr_dialog.dart';
+import '../widgets/create_room_dialog.dart';
 import '../../notification/widgets/notification_composer_dialog.dart';
 import '../../notification/controllers/notification_controller.dart';
 

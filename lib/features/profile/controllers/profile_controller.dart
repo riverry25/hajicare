@@ -15,13 +15,15 @@ class ProfileController extends GetxController {
   final allergies = ''.obs;
   final conditions = ''.obs;
   final emergencyContact = ''.obs;
+  final passportNumber = ''.obs;
   final isSavingMedical = false.obs;
 
   bool get hasMedicalData =>
       bloodType.value.trim().isNotEmpty ||
       allergies.value.trim().isNotEmpty ||
       conditions.value.trim().isNotEmpty ||
-      emergencyContact.value.trim().isNotEmpty;
+      emergencyContact.value.trim().isNotEmpty ||
+      passportNumber.value.trim().isNotEmpty;
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
   @override
@@ -63,6 +65,10 @@ class ProfileController extends GetxController {
           allergies.value = (data['allergies'] as String?) ?? '';
           conditions.value = (data['conditions'] as String?) ?? '';
           emergencyContact.value = (data['emergencyContact'] as String?) ?? '';
+          passportNumber.value =
+              (data['passportNumber'] as String?) ??
+              (data['passport'] as String?) ??
+              '';
         }
       }
     } catch (e) {
@@ -136,6 +142,7 @@ class ProfileController extends GetxController {
     required String allergiesVal,
     required String conditionsVal,
     required String emergencyContactVal,
+    String passportNumberVal = '',
   }) async {
     final generation = _lifecycleGeneration;
     isSavingMedical.value = true;
@@ -148,6 +155,7 @@ class ProfileController extends GetxController {
         'allergies': allergiesVal.trim(),
         'conditions': conditionsVal.trim(),
         'emergencyContact': emergencyContactVal.trim(),
+        'passportNumber': passportNumberVal.trim(),
       }, SetOptions(merge: true));
       if (generation != _lifecycleGeneration) return;
 
@@ -155,6 +163,7 @@ class ProfileController extends GetxController {
       allergies.value = allergiesVal.trim();
       conditions.value = conditionsVal.trim();
       emergencyContact.value = emergencyContactVal.trim();
+      passportNumber.value = passportNumberVal.trim();
 
       debugPrint('[ProfileController] medical data updated successfully');
     } catch (e) {

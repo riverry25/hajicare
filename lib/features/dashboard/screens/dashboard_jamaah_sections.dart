@@ -1144,7 +1144,6 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
   }
 
   // ── Modal Sheet: Fitur Jemput Saya (Kirim Notifikasi ke Pendamping) ─────────
-  // TODO: Remove after the new Hubungi Pendamping flow has fully replaced it.
   // ignore: unused_element
   Future<void> _showPickupRequestDialog(
     BuildContext context,

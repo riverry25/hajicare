@@ -383,6 +383,23 @@ class NotificationController extends GetxController {
     await _notificationService.deleteNotification(notificationId);
   }
 
+  /// Soft-deletes ALL notifications for the current user.
+  ///
+  /// Best-practice pattern: each Firestore document gets the current user's
+  /// uid appended to its `deletedBy` array field. The realtime stream already
+  /// filters those documents out, so other users who have not cleared their
+  /// list will continue to see every notification unaffected.
+  Future<void> clearAllNotifications() async {
+    final uid = _currentListeningUid ?? _firebaseAuth.currentUser?.uid;
+    if (uid == null) return;
+
+    // Optimistic local clear so the UI responds instantly.
+    notifications.clear();
+    unreadCount.value = 0;
+
+    await _notificationService.clearAllNotificationsForUser(uid);
+  }
+
   void _removeResolvedInvitation(String invitationId) {
     pendingInvitations.removeWhere((item) => item.id == invitationId);
     notifications.removeWhere(

@@ -390,6 +390,10 @@ class NotificationService {
 
   /// Bounded realtime window. Older history is intentionally not loaded until
   /// the product exposes an explicit pagination affordance.
+  ///
+  /// Documents soft-deleted by this user (uid appears in the `deletedBy`
+  /// array field) are excluded from the stream so that other users who have
+  /// not deleted the notification still see it.
   Stream<List<AppNotificationModel>> getUserNotificationsStream(String uid) {
     return _firestore
         .collection('notifications')
@@ -400,6 +404,16 @@ class NotificationService {
           // optional composite index has not been deployed yet.
           final items =
               snapshot.docs
+                  .where((doc) {
+                    // Soft-delete filter: skip docs where this uid has been added
+                    // to the `deletedBy` list by a previous clearAll call.
+                    final data = doc.data();
+                    final deletedBy = data['deletedBy'];
+                    if (deletedBy is List && deletedBy.contains(uid)) {
+                      return false;
+                    }
+                    return true;
+                  })
                   .map(AppNotificationModel.fromFirestore)
                   .toList(growable: true)
                 ..sort((a, b) {
@@ -452,6 +466,46 @@ class NotificationService {
       await _firestore.collection('notifications').doc(notificationId).delete();
     } catch (error) {
       debugPrint('[NotificationService] delete notification failed: $error');
+    }
+  }
+
+  /// Soft-deletes all notifications visible to [uid] by appending [uid] to
+  /// the `deletedBy` array of every matching Firestore document.
+  ///
+  /// This is the correct multi-user pattern: the document remains intact for
+  /// any other recipient who has not yet dismissed it. The stream listener
+  /// already filters out docs whose `deletedBy` list contains the current uid.
+  Future<void> clearAllNotificationsForUser(String uid) async {
+    try {
+      // Fetch the same bounded window the stream uses.
+      final snapshot = await _firestore
+          .collection('notifications')
+          .where('recipientId', isEqualTo: uid)
+          .limit(historyWindow)
+          .get();
+      if (snapshot.docs.isEmpty) return;
+
+      // Filter out docs already soft-deleted by this user to avoid
+      // redundant writes.
+      final toUpdate = snapshot.docs.where((doc) {
+        final deletedBy = doc.data()['deletedBy'];
+        return !(deletedBy is List && deletedBy.contains(uid));
+      }).toList();
+      if (toUpdate.isEmpty) return;
+
+      const chunkSize = 400; // Firestore batch limit
+      for (var i = 0; i < toUpdate.length; i += chunkSize) {
+        final end = (i + chunkSize).clamp(0, toUpdate.length);
+        final batch = _firestore.batch();
+        for (final doc in toUpdate.sublist(i, end)) {
+          batch.update(doc.reference, {
+            'deletedBy': FieldValue.arrayUnion([uid]),
+          });
+        }
+        await batch.commit();
+      }
+    } catch (error) {
+      debugPrint('[NotificationService] clearAll failed: $error');
     }
   }
 
