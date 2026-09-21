@@ -108,6 +108,10 @@ class HajiCareController extends GetxController {
   StreamSubscription? _sosEventsSub;
   String? _sosSubscriptionScope;
 
+  /// ID of the sos_events doc created when this device triggered an SOS.
+  /// Used to push live GPS updates into the SOS event while active.
+  String? _activeSosEventId;
+
   JamaahData? _self;
 
   StreamSubscription? _authSub;
@@ -464,6 +468,9 @@ class HajiCareController extends GetxController {
             _self!.sosActive = isSelfActive;
             _self!.refresh();
           }
+          if (!isSelfActive) {
+            _activeSosEventId = null;
+          }
         }
       },
       onError: (Object error) {
@@ -606,6 +613,9 @@ class HajiCareController extends GetxController {
         .listen((doc) {
           if (doc.exists) {
             _self = JamaahData.fromFirestore(doc);
+            if (!_self!.sosActive) {
+              _activeSosEventId = null;
+            }
             if (activeRoomId.value == null ||
                 activeRoomId.value!.trim().isEmpty) {
               _self!.distance = 0.0;
@@ -696,6 +706,16 @@ class HajiCareController extends GetxController {
     _lastBroadcastPosition = pos;
 
     final geoPoint = GeoPoint(pos.latitude, pos.longitude);
+
+    // Update live SOS event location only if SOS is currently active on self
+    final sosEventId = _activeSosEventId;
+    if (sosEventId != null &&
+        sosEventId.isNotEmpty &&
+        (_self?.sosActive ?? false)) {
+      _sosService.updateSosLocation(eventId: sosEventId, location: geoPoint);
+    } else if (_self?.sosActive == false) {
+      _activeSosEventId = null;
+    }
 
     try {
       // 1. Update user doc
@@ -973,7 +993,7 @@ class HajiCareController extends GetxController {
               : 'Di luar rombongan');
       final userName = _self?.name ?? user.displayName ?? 'Jamaah';
 
-      await _sosService.trigger(
+      final eventId = await _sosService.trigger(
         userId: user.uid,
         userName: userName,
         roomId: roomId,
@@ -981,7 +1001,10 @@ class HajiCareController extends GetxController {
         location: myPos == null
             ? null
             : GeoPoint(myPos.latitude, myPos.longitude),
+        kloter: effectiveKloter,
+        maktab: effectiveMaktab,
       );
+      _activeSosEventId = eventId;
 
       if (_self != null) {
         _self!.sosActive = true;
@@ -1046,6 +1069,11 @@ class HajiCareController extends GetxController {
         _self?.refresh();
       }
 
+      // Clear local SOS event ID if we just cancelled our own SOS
+      if (id == currentUid) {
+        _activeSosEventId = null;
+      }
+
       // Immediately purge from active list locally for instant UI response
       activeSosEvents.removeWhere(
         (e) =>
@@ -1107,6 +1135,9 @@ class HajiCareController extends GetxController {
     );
     return j.name;
   }
+
+  /// Exposes the SOS service for stream access by SosAlertDetailScreen.
+  SosService get sosService => _sosService;
 
   @visibleForTesting
   void setRole(UserRole newRole) {

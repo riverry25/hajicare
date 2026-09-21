@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:geolocator/geolocator.dart';
+import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
@@ -11,7 +10,6 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_card.dart';
-import '../../map/controllers/map_controller.dart';
 
 class ModalSosScreen extends StatefulWidget {
   const ModalSosScreen({super.key});
@@ -90,12 +88,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
         setState(() {
           _sosSent = true;
         });
-        AppAlert.success(
-          context,
-          title: 'Sinyal SOS Terkirim!',
-          message:
-              'Pendamping sudah diberi tahu. Tetap di tempat yang aman dan dekatkan ponsel Anda.',
-        );
+        Get.toNamed(AppRoutes.sosScanning);
       } else {
         setState(() {
           _sosSent = false;
@@ -127,42 +120,6 @@ class _ModalSosScreenState extends State<ModalSosScreen>
     }
     if (dt == null) return 'Baru saja';
     return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} (${dt.day}/${dt.month}/${dt.year})';
-  }
-
-  String _calculateDistanceStr(dynamic location) {
-    if (location == null) return 'Koordinat tidak tersedia';
-    double? lat;
-    double? lng;
-
-    if (location is GeoPoint) {
-      lat = location.latitude;
-      lng = location.longitude;
-    } else if (location is Map) {
-      lat =
-          (location['latitude'] as num?)?.toDouble() ??
-          (location['lat'] as num?)?.toDouble();
-      lng =
-          (location['longitude'] as num?)?.toDouble() ??
-          (location['lng'] as num?)?.toDouble();
-    }
-
-    if (lat == null || lng == null) return 'Koordinat tidak tersedia';
-
-    final myPos = state.myCurrentPosition.value;
-    if (myPos == null) {
-      return 'Lat: ${lat.toStringAsFixed(4)}, Lng: ${lng.toStringAsFixed(4)}';
-    }
-
-    final meters = Geolocator.distanceBetween(
-      myPos.latitude,
-      myPos.longitude,
-      lat,
-      lng,
-    );
-    if (meters < 1000) {
-      return 'Jarak ±${meters.round()} meter dari Anda';
-    }
-    return 'Jarak ±${(meters / 1000).toStringAsFixed(1)} km dari Anda';
   }
 
   @override
@@ -412,7 +369,14 @@ class _ModalSosScreenState extends State<ModalSosScreen>
             final timeStr = _formatSosTime(
               sos['timestamp'] ?? sos['createdAt'],
             );
-            final distanceStr = _calculateDistanceStr(sos['location']);
+            final loc = sos['location'];
+            final locationLabel = () {
+              if (loc is GeoPoint) {
+                return 'Lat: ${loc.latitude.toStringAsFixed(4)}, '
+                    'Lng: ${loc.longitude.toStringAsFixed(4)}';
+              }
+              return 'Lokasi tersedia di Detail';
+            }();
 
             return Container(
               margin: const EdgeInsets.only(bottom: AppSpacing.md),
@@ -556,7 +520,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          distanceStr,
+                          locationLabel,
                           style: AppTypography.captionSmall.copyWith(
                             color: AppColors.sosEmergency,
                             fontWeight: FontWeight.bold,
@@ -584,42 +548,22 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                               elevation: 0,
                             ),
                             icon: const Icon(
-                              Icons.navigation_rounded,
+                              Icons.open_in_new_rounded,
                               size: 16,
                             ),
                             label: const Text(
-                              'Buka di Peta',
+                              'Lihat Detail',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12.5,
                               ),
                             ),
                             onPressed: () {
-                              final loc = sos['location'];
-                              LatLng? targetCoord;
-                              if (loc is GeoPoint) {
-                                targetCoord = LatLng(
-                                  loc.latitude,
-                                  loc.longitude,
-                                );
-                              } else if (loc is Map) {
-                                final lat =
-                                    (loc['latitude'] as num?)?.toDouble() ??
-                                    (loc['lat'] as num?)?.toDouble();
-                                final lng =
-                                    (loc['longitude'] as num?)?.toDouble() ??
-                                    (loc['lng'] as num?)?.toDouble();
-                                if (lat != null && lng != null) {
-                                  targetCoord = LatLng(lat, lng);
-                                }
-                              }
-
-                              Get.back(); // Close modal
-                              if (Get.isRegistered<MapController>() &&
-                                  targetCoord != null) {
-                                final mapCtrl = Get.find<MapController>();
-                                mapCtrl.animatedMove(targetCoord, 17.5);
-                              }
+                              // Pass full SOS data map to detail screen
+                              Get.toNamed(
+                                AppRoutes.sosAlertDetail,
+                                arguments: Map<String, dynamic>.from(sos),
+                              );
                             },
                           ),
                         ),
@@ -890,6 +834,26 @@ class _ModalSosScreenState extends State<ModalSosScreen>
               ),
             ),
           ] else if (isSosAlreadyActive) ...[
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1E60CC),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                ),
+                icon: const Icon(Icons.radar_rounded),
+                label: const Text(
+                  'Pantau Radar Deteksi Pendamping',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                onPressed: () => Get.toNamed(AppRoutes.sosScanning),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
             SizedBox(
               width: double.infinity,
               height: 48,

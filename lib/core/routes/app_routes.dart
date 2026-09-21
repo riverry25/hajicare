@@ -13,6 +13,8 @@ import '../../features/map/screens/interactive_map_screen.dart';
 import '../../features/map/bindings/map_binding.dart';
 import '../../features/sos/screens/modal_sos_screen.dart';
 import '../../features/sos/screens/distance_alert_screen.dart';
+import '../../features/sos/screens/sos_alert_detail_screen.dart';
+import '../../features/sos/screens/sos_companion_scanning_screen.dart';
 import '../../features/prayer/screens/prayer_times_screen.dart';
 import '../../features/prayer/bindings/prayer_binding.dart';
 import '../../features/money/screens/money_recognition_screen.dart';
@@ -67,6 +69,8 @@ class AppRoutes {
   static const String about = '/about';
   static const String smartbandLdr = '/smartband_ldr';
   static const String editRoom = '/edit_room';
+  static const String sosAlertDetail = '/sos_alert_detail';
+  static const String sosScanning = '/sos_scanning';
 
   static List<GetPage> get pages => [
     GetPage(name: splash, page: () => const SplashScreen()),
@@ -207,5 +211,7 @@ class AppRoutes {
         RoleAndRoomGuard(allowedRoles: ['pendamping']),
       ],
     ),
+    GetPage(name: sosAlertDetail, page: () => const SosAlertDetailScreen()),
+    GetPage(name: sosScanning, page: () => const SosCompanionScanningScreen()),
   ];
 }
