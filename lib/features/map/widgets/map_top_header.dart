@@ -16,6 +16,7 @@ class MapTopHeader extends StatefulWidget {
   final VoidCallback onSosPressed;
   final ValueChanged<String>? onSearchChanged;
   final VoidCallback? onClearSearch;
+  final VoidCallback? onSearchFocused;
   final TextEditingController? searchController;
   final bool isLiveTracking;
   final double gpsAccuracy;
@@ -32,6 +33,7 @@ class MapTopHeader extends StatefulWidget {
     required this.onSosPressed,
     this.onSearchChanged,
     this.onClearSearch,
+    this.onSearchFocused,
     this.searchController,
     this.isLiveTracking = false,
     this.gpsAccuracy = 0.0,
@@ -46,6 +48,7 @@ class MapTopHeader extends StatefulWidget {
 }
 
 class _MapTopHeaderState extends State<MapTopHeader> {
+  final FocusNode _focusNode = FocusNode();
   TextEditingController? _internalSearchCtrl;
   TextEditingController get _effectiveSearchCtrl =>
       widget.searchController ??
@@ -61,9 +64,16 @@ class _MapTopHeaderState extends State<MapTopHeader> {
     }
   }
 
+  void _onFocusChanged() {
+    if (_focusNode.hasFocus && _effectiveSearchCtrl.text.trim().isEmpty) {
+      widget.onSearchFocused?.call();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    _focusNode.addListener(_onFocusChanged);
     _effectiveSearchCtrl.addListener(_onSearchTextChanged);
     _hasSearchText = _effectiveSearchCtrl.text.trim().isNotEmpty;
   }
@@ -80,6 +90,8 @@ class _MapTopHeaderState extends State<MapTopHeader> {
 
   @override
   void dispose() {
+    _focusNode.removeListener(_onFocusChanged);
+    _focusNode.dispose();
     _effectiveSearchCtrl.removeListener(_onSearchTextChanged);
     _internalSearchCtrl?.dispose();
     super.dispose();
@@ -404,6 +416,12 @@ class _MapTopHeaderState extends State<MapTopHeader> {
           Expanded(
             child: TextField(
               controller: _effectiveSearchCtrl,
+              focusNode: _focusNode,
+              onTap: () {
+                if (_effectiveSearchCtrl.text.trim().isEmpty) {
+                  widget.onSearchFocused?.call();
+                }
+              },
               onChanged: widget.onSearchChanged,
               style: TextStyle(
                 color: isDark ? Colors.white : const Color(0xFF202124),

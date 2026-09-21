@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart' as fmap;
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/services/geocoding_service.dart';
@@ -16,7 +18,7 @@ import '../services/poi_service.dart';
 import '../services/route_service.dart';
 
 /// State of the location search workflow.
-enum MapSearchState { idle, loading, results, empty, error }
+enum MapSearchState { idle, loading, results, empty, error, history }
 
 /// Controller managing reactive interactive map state, camera,
 /// real geolocation with live streaming, dynamic POIs, and Room Member markers.
@@ -113,8 +115,11 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   final isBottomSheetOpen = true.obs;
 
   // ── SEARCH LOCATION STATE ──────────────────────────────────────────────────
+  static const String _searchHistoryPrefsKey = 'hajicare_map_search_history';
+  static const int _maxSearchHistory = 10;
   final searchState = MapSearchState.idle.obs;
   final searchResults = <MapSearchResult>[].obs;
+  final searchHistory = <MapSearchResult>[].obs;
   final selectedSearchResult = Rxn<MapSearchResult>();
   final searchErrorMessage = ''.obs;
   Timer? _searchDebounceTimer;
@@ -142,6 +147,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   @override
   void onInit() {
     super.onInit();
+    loadSearchHistory();
     _initRoomListener();
     _autoStartGps();
   }
@@ -581,6 +587,13 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
           if (isMapAttached) animatedMove(newCoord, 16.5);
         });
       });
+    } else if (activeRoute.isNotEmpty && _activeDestination != null) {
+      // Active navigation mode: keep camera locked on user movement
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!isClosed && isMapAttached) {
+          flutterMapController.move(newCoord, flutterMapController.camera.zoom);
+        }
+      });
     }
   }
 
@@ -852,6 +865,17 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       routeDurationSeconds.value = null;
     }
 
+    // Protection when destination is too far for walking / pedestrian network (> 100km)
+    final straightDistance = calculateDistanceMeters(start, destination);
+    if (straightDistance > 100000) {
+      if (requestId == _routeRequestId) {
+        isRouteLoading.value = false;
+        if (!isReroute) activeRoute.clear();
+        routeError.value = 'Rute langsung tidak tersedia untuk tujuan ini';
+      }
+      return;
+    }
+
     try {
       final result = await _routeService.getWalkingRoute(
         origin: start,
@@ -872,18 +896,26 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       routeDistanceMeters.value = result.distanceMeters;
       routeDurationSeconds.value = result.durationSeconds;
       if (!isReroute) {
-        _fitCameraToRoute(start, destination, result.points);
+        // Switch to live navigation mode: follow the user's movement
+        isLiveTracking.value = true;
+        final userNow = currentUserLocation.value;
+        if (userNow != null) {
+          // Defer to post-frame to avoid build-phase exceptions
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (isMapAttached) animatedMove(userNow, 17.5);
+          });
+        }
       }
     } on RouteException catch (e) {
       if (requestId != _routeRequestId) return;
       debugPrint('[ROUTE] ERROR RouteException: ${e.message}');
       if (!isReroute) activeRoute.clear();
-      routeError.value = e.message;
+      routeError.value = 'Rute langsung tidak tersedia untuk tujuan ini';
     } catch (e) {
       if (requestId != _routeRequestId) return;
       debugPrint('[ROUTE] ERROR unknown: $e');
       if (!isReroute) activeRoute.clear();
-      routeError.value = 'Terjadi kesalahan saat mencari rute';
+      routeError.value = 'Rute langsung tidak tersedia untuk tujuan ini';
     } finally {
       if (requestId == _routeRequestId) {
         isRouteLoading.value = false;
@@ -891,24 +923,8 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     }
   }
 
-  void _fitCameraToRoute(LatLng origin, LatLng dest, List<LatLng> routePoints) {
-    if (!isMapAttached) return;
 
-    final allPoints = [origin, dest, ...routePoints];
-    if (allPoints.isEmpty) return;
 
-    try {
-      final bounds = fmap.LatLngBounds.fromPoints(allPoints);
-      flutterMapController.fitCamera(
-        fmap.CameraFit.bounds(
-          bounds: bounds,
-          padding: const EdgeInsets.fromLTRB(48, 140, 48, 300),
-        ),
-      );
-    } catch (e) {
-      debugPrint('[MapController] fitCamera route error: $e');
-    }
-  }
 
   Future<void> requestRouteToMember(RoomMemberModel member) async {
     if (selectedMember.value?.uid != member.uid) {
@@ -1173,7 +1189,11 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
     final cleanQuery = query.trim();
     if (cleanQuery.isEmpty) {
-      clearSearch();
+      if (searchHistory.isNotEmpty) {
+        searchState.value = MapSearchState.history;
+      } else {
+        clearSearch();
+      }
       return;
     }
 
@@ -1212,7 +1232,17 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
           searchResults.clear();
           searchState.value = MapSearchState.empty;
         } else {
-          searchResults.assignAll(results);
+          // Sort by distance from user's current location (nearest first)
+          final sortedResults = List<MapSearchResult>.from(results);
+          final loc = userLoc;
+          if (loc != null) {
+            sortedResults.sort((a, b) {
+              final distA = calculateDistanceMeters(loc, a.coordinate);
+              final distB = calculateDistanceMeters(loc, b.coordinate);
+              return distA.compareTo(distB);
+            });
+          }
+          searchResults.assignAll(sortedResults);
           searchState.value = MapSearchState.results;
         }
       } catch (e) {
@@ -1225,9 +1255,99 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     });
   }
 
-  /// Selects a location result, dismisses dropdown, updates search marker,
-  /// and animates camera to the target coordinates.
+  /// Loads search history from local storage.
+  Future<void> loadSearchHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final rawList = prefs.getStringList(_searchHistoryPrefsKey);
+      if (rawList != null && rawList.isNotEmpty) {
+        final items = <MapSearchResult>[];
+        for (final raw in rawList) {
+          try {
+            final json = jsonDecode(raw) as Map<String, dynamic>;
+            items.add(MapSearchResult.fromJson(json));
+          } catch (e) {
+            debugPrint('[MapController] Error parsing search history item: $e');
+          }
+        }
+        searchHistory.assignAll(items);
+      }
+    } catch (e) {
+      debugPrint('[MapController] Error loading search history: $e');
+    }
+  }
+
+  /// Adds a result to local search history with deduplication and max limit.
+  Future<void> addSearchHistory(MapSearchResult result) async {
+    try {
+      searchHistory.removeWhere(
+        (item) =>
+            item.id == result.id ||
+            (item.name.toLowerCase() == result.name.toLowerCase() &&
+                calculateDistanceMeters(item.coordinate, result.coordinate) <
+                    20),
+      );
+      searchHistory.insert(0, result);
+      if (searchHistory.length > _maxSearchHistory) {
+        searchHistory.removeRange(_maxSearchHistory, searchHistory.length);
+      }
+      await _persistSearchHistory();
+    } catch (e) {
+      debugPrint('[MapController] Error saving search history: $e');
+    }
+  }
+
+  /// Removes a single item from local search history.
+  Future<void> removeSearchHistoryItem(String id) async {
+    try {
+      searchHistory.removeWhere((item) => item.id == id);
+      await _persistSearchHistory();
+      if (searchHistory.isEmpty &&
+          searchState.value == MapSearchState.history) {
+        searchState.value = MapSearchState.idle;
+      }
+    } catch (e) {
+      debugPrint('[MapController] Error removing search history item: $e');
+    }
+  }
+
+  /// Clears all items in local search history.
+  Future<void> clearSearchHistory() async {
+    try {
+      searchHistory.clear();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_searchHistoryPrefsKey);
+      if (searchState.value == MapSearchState.history) {
+        searchState.value = MapSearchState.idle;
+      }
+    } catch (e) {
+      debugPrint('[MapController] Error clearing search history: $e');
+    }
+  }
+
+  Future<void> _persistSearchHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final rawList = searchHistory
+          .map((item) => jsonEncode(item.toJson()))
+          .toList();
+      await prefs.setStringList(_searchHistoryPrefsKey, rawList);
+    } catch (e) {
+      debugPrint('[MapController] Error persisting search history: $e');
+    }
+  }
+
+  /// Displays search history if any items are available.
+  void showSearchHistory() {
+    if (searchHistory.isNotEmpty) {
+      searchState.value = MapSearchState.history;
+    }
+  }
+
+  /// Selects a location result, saves to search history, dismisses dropdown,
+  /// updates search marker, and animates camera to the target coordinates.
   void selectSearchResult(MapSearchResult result) {
+    addSearchHistory(result);
     if (_activeDestination != null &&
         calculateDistanceMeters(_activeDestination!, result.coordinate) > 2) {
       clearRoute();

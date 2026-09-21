@@ -30,7 +30,7 @@ class MapSearchDropdown extends StatelessWidget {
 
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-        constraints: const BoxConstraints(maxHeight: 260),
+        constraints: const BoxConstraints(maxHeight: 300),
         decoration: BoxDecoration(
           color: isDark
               ? AppColors.darkSurface.withValues(alpha: 0.98)
@@ -88,6 +88,8 @@ class MapSearchDropdown extends StatelessWidget {
         );
       case MapSearchState.results:
         return _buildResultsList(context, isDark);
+      case MapSearchState.history:
+        return _buildHistoryList(context, isDark);
       case MapSearchState.idle:
         return const SizedBox.shrink();
     }
@@ -158,6 +160,8 @@ class MapSearchDropdown extends StatelessWidget {
       );
     }
 
+    final userLoc = mapCtrl.currentUserLocation.value;
+
     return ListView.separated(
       padding: const EdgeInsets.symmetric(vertical: 4),
       shrinkWrap: true,
@@ -172,6 +176,14 @@ class MapSearchDropdown extends StatelessWidget {
       ),
       itemBuilder: (context, index) {
         final item = results[index];
+
+        // Compute distance label
+        String? distanceLabel;
+        if (userLoc != null) {
+          final distM = mapCtrl.calculateDistanceMeters(userLoc, item.coordinate);
+          distanceLabel = MapController.formatDistance(distM);
+        }
+
         return InkWell(
           onTap: () {
             FocusScope.of(context).unfocus();
@@ -233,18 +245,219 @@ class MapSearchDropdown extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Icon(
-                  Icons.north_west_rounded,
-                  size: 16,
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.35)
-                      : AppColors.textMuted.withValues(alpha: 0.5),
-                ),
+                // Distance badge on the right
+                if (distanceLabel != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.goldPrimary.withValues(alpha: 0.14)
+                          : AppColors.goldLight.withValues(alpha: 0.25),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    child: Text(
+                      distanceLabel,
+                      style: TextStyle(
+                        color: isDark
+                            ? AppColors.goldPrimary
+                            : AppColors.espressoDark,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  )
+                else
+                  Icon(
+                    Icons.north_west_rounded,
+                    size: 16,
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.35)
+                        : AppColors.textMuted.withValues(alpha: 0.5),
+                  ),
               ],
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildHistoryList(BuildContext context, bool isDark) {
+    final history = mapCtrl.searchHistory;
+    if (history.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header: Recent search title + Clear all button
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 10, 10, 6),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.history_rounded,
+                    size: 16,
+                    color: isDark
+                        ? AppColors.goldPrimary
+                        : AppColors.espressoDark,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Pencarian Terakhir',
+                    style: AppTypography.captionSmall.copyWith(
+                      color: isDark
+                          ? AppColors.darkTextHeading
+                          : AppColors.espressoDark,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+              InkWell(
+                onTap: () => mapCtrl.clearSearchHistory(),
+                borderRadius: BorderRadius.circular(AppRadius.xs),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  child: Text(
+                    'Hapus Semua',
+                    style: AppTypography.captionSmall.copyWith(
+                      color: isDark
+                          ? AppColors.goldLight
+                          : AppColors.goldPrimary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Divider(
+          height: 1,
+          thickness: 0.8,
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : AppColors.espressoDark.withValues(alpha: 0.06),
+        ),
+        // List of history items
+        Flexible(
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            shrinkWrap: true,
+            physics: const BouncingScrollPhysics(),
+            itemCount: history.length,
+            separatorBuilder: (context, index) => Divider(
+              height: 1,
+              thickness: 0.8,
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : AppColors.espressoDark.withValues(alpha: 0.06),
+            ),
+            itemBuilder: (context, index) {
+              final item = history[index];
+              return InkWell(
+                onTap: () {
+                  FocusScope.of(context).unfocus();
+                  onSelect(item);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.08)
+                              : AppColors.canvasCream,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.access_time_rounded,
+                          color: isDark
+                              ? Colors.white70
+                              : AppColors.espressoDark.withValues(alpha: 0.7),
+                          size: 16,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              item.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.bodySmall.copyWith(
+                                color: isDark
+                                    ? AppColors.darkTextHeading
+                                    : AppColors.espressoDark,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                            if (item.address.isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                item.address,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.captionSmall.copyWith(
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.55)
+                                      : AppColors.textMuted,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded, size: 16),
+                        color: isDark
+                            ? Colors.white38
+                            : AppColors.textMuted.withValues(alpha: 0.6),
+                        splashRadius: 16,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 28,
+                          minHeight: 28,
+                        ),
+                        tooltip: 'Hapus dari riwayat',
+                        onPressed: () =>
+                            mapCtrl.removeSearchHistoryItem(item.id),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

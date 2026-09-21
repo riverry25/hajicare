@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -14,6 +16,9 @@ class LocationDetailSheet extends StatefulWidget {
   final VoidCallback? onRoute;
   final VoidCallback? onShare;
   final VoidCallback? onClose;
+  final VoidCallback? onCenterOnDestination;
+  final LatLng? userCoordinate;
+  final Future<bool> Function(Uri uri)? uriLauncher;
   final bool isRouteLoading;
   final String? routeError;
   final double? routeDistanceMeters;
@@ -26,6 +31,9 @@ class LocationDetailSheet extends StatefulWidget {
     this.onRoute,
     this.onShare,
     this.onClose,
+    this.onCenterOnDestination,
+    this.userCoordinate,
+    this.uriLauncher,
     this.isRouteLoading = false,
     this.routeError,
     this.routeDistanceMeters,
@@ -41,6 +49,8 @@ class LocationDetailSheet extends StatefulWidget {
     double? distanceMeters,
     VoidCallback? onRoute,
     VoidCallback? onShare,
+    VoidCallback? onCenterOnDestination,
+    LatLng? userCoordinate,
   }) {
     showModalBottomSheet(
       context: context,
@@ -51,6 +61,8 @@ class LocationDetailSheet extends StatefulWidget {
         distanceMeters: distanceMeters,
         onRoute: onRoute,
         onShare: onShare,
+        onCenterOnDestination: onCenterOnDestination,
+        userCoordinate: userCoordinate,
         onClose: () => Navigator.pop(context),
       ),
     );
@@ -522,6 +534,89 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                       color: AppColors.sosEmergency,
                       isDark: isDark,
                     ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed:
+                                widget.onCenterOnDestination ??
+                                () => _dismissWithAnimation(),
+                            icon: const Icon(Icons.map_outlined, size: 16),
+                            label: const Text(
+                              'Lihat di Peta',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 10,
+                              ),
+                              foregroundColor: isDark
+                                  ? AppColors.goldLight
+                                  : AppColors.espressoDark,
+                              side: BorderSide(
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.18)
+                                    : AppColors.espressoDark.withValues(
+                                        alpha: 0.15,
+                                      ),
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => _openGoogleMaps(
+                              userCoord: widget.userCoordinate,
+                              destCoord: poi.coordinate,
+                            ),
+                            icon: const Icon(
+                              Icons.open_in_new_rounded,
+                              size: 16,
+                            ),
+                            label: const Text(
+                              'Buka di Google Maps',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 10,
+                              ),
+                              foregroundColor: isDark
+                                  ? AppColors.goldLight
+                                  : AppColors.espressoDark,
+                              side: BorderSide(
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.18)
+                                    : AppColors.espressoDark.withValues(
+                                        alpha: 0.15,
+                                      ),
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ] else if (widget.routeDistanceMeters != null) ...[
                     const SizedBox(height: 12),
                     _buildRouteMessage(
@@ -536,7 +631,7 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
 
                   const SizedBox(height: 20),
 
-                  // Actions Row: Rute Berjalan (Primary 52px) & Bagikan (Secondary)
+                  // Actions Row: Rute (Primary 52px) & Bagikan (Secondary)
                   Row(
                     children: [
                       Expanded(
@@ -564,9 +659,7 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                                         : AppColors.goldPrimary,
                                   ),
                             label: Text(
-                              widget.isRouteLoading
-                                  ? 'Mencari Rute…'
-                                  : 'Rute Jalan Kaki',
+                              widget.isRouteLoading ? 'Mencari Rute…' : 'Rute',
                               style: AppTypography.labelLarge.copyWith(
                                 color: isDark
                                     ? AppColors.espressoDark
@@ -703,5 +796,30 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
         ],
       ),
     );
+  }
+
+  Future<void> _openGoogleMaps({
+    LatLng? userCoord,
+    required LatLng destCoord,
+  }) async {
+    Uri uri;
+    if (userCoord != null) {
+      uri = Uri.parse(
+        'https://www.google.com/maps/dir/?api=1&origin=${userCoord.latitude},${userCoord.longitude}&destination=${destCoord.latitude},${destCoord.longitude}&travelmode=walking',
+      );
+    } else {
+      uri = Uri.parse(
+        'https://www.google.com/maps/search/?api=1&query=${destCoord.latitude},${destCoord.longitude}',
+      );
+    }
+    try {
+      if (widget.uriLauncher != null) {
+        await widget.uriLauncher!(uri);
+      } else {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      debugPrint('[LocationDetailSheet] Error launching Google Maps: $e');
+    }
   }
 }

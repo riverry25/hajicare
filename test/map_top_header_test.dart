@@ -66,5 +66,39 @@ void main() {
         expect(selectedIndex, 2);
       },
     );
+
+    testWidgets(
+      'Fires onSearchFocused when search field is tapped or focused while empty',
+      (tester) async {
+        bool searchFocused = false;
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Stack(
+                children: [
+                  MapTopHeader(
+                    filters: testFilters,
+                    selectedFilter: 0,
+                    onFilterSelected: (_) {},
+                    onSosPressed: () {},
+                    onSearchFocused: () => searchFocused = true,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+
+        await tester.tap(find.byType(TextField));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+
+        expect(searchFocused, isTrue);
+      },
+    );
   });
 }

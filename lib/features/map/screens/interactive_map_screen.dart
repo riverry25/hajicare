@@ -96,6 +96,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
               searchController: _searchCtrl,
               onSearchChanged: mapCtrl.onSearchQueryChanged,
               onClearSearch: () => mapCtrl.clearSearch(clearMarker: false),
+              onSearchFocused: mapCtrl.showSearchHistory,
               isLiveTracking: mapCtrl.isLiveTracking.value,
               gpsAccuracy: mapCtrl.gpsAccuracy.value,
               roomName: mapCtrl.activeRoomName.value,
@@ -109,7 +110,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
 
           // 2.5 Floating Search Dropdown Overlay
           Positioned(
-            top: MediaQuery.of(context).padding.top + 90,
+            top: MediaQuery.of(context).padding.top + 116,
             left: 0,
             right: 0,
             child: MapSearchDropdown(
@@ -179,6 +180,10 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                       debugPrint('[2] ROUTE BUTTON PRESSED');
                       mapCtrl.requestRouteToPoi(selectedPoi);
                     },
+                    onCenterOnDestination: () {
+                      mapCtrl.animatedMove(selectedPoi.coordinate, 16.5);
+                    },
+                    userCoordinate: mapCtrl.currentUserLocation.value,
                     onShare: () async {
                       final coordinate = selectedPoi.coordinate;
                       final url =

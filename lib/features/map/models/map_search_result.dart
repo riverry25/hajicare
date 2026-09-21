@@ -22,6 +22,28 @@ class MapSearchResult {
 
   LatLng get coordinate => LatLng(latitude, longitude);
 
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'address': address,
+    'latitude': latitude,
+    'longitude': longitude,
+    if (type != null) 'type': type,
+    if (category != null) 'category': category,
+  };
+
+  factory MapSearchResult.fromJson(Map<String, dynamic> json) {
+    return MapSearchResult(
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      address: json['address'] as String? ?? '',
+      latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
+      longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
+      type: json['type'] as String?,
+      category: json['category'] as String?,
+    );
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

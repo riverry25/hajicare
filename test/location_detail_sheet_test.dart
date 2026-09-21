@@ -49,7 +49,7 @@ void main() {
     expect(find.text('Situs tersedia'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
-    await tester.tap(find.text('Rute Jalan Kaki'));
+    await tester.tap(find.text('Rute'));
     await tester.tap(find.text('Bagikan'));
     expect(routeTaps, 1);
     expect(shareTaps, 1);
@@ -79,4 +79,49 @@ void main() {
     await tester.tap(find.text('Mencari Rute…'));
     expect(routeTaps, 0);
   });
+
+  testWidgets(
+    'shows clear error message and working fallback buttons when route unavailable',
+    (tester) async {
+      var centerMapTaps = 0;
+      Uri? launchedUri;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Align(
+              alignment: Alignment.bottomCenter,
+              child: LocationDetailSheet(
+                poi: poi,
+                routeError: 'Rute langsung tidak tersedia untuk tujuan ini',
+                userCoordinate: const LatLng(-6.175, 106.827),
+                onCenterOnDestination: () => centerMapTaps++,
+                uriLauncher: (uri) async {
+                  launchedUri = uri;
+                  return true;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Rute langsung tidak tersedia untuk tujuan ini'),
+        findsOneWidget,
+      );
+      expect(find.text('Lihat di Peta'), findsOneWidget);
+      expect(find.text('Buka di Google Maps'), findsOneWidget);
+
+      await tester.tap(find.text('Lihat di Peta'));
+      expect(centerMapTaps, equals(1));
+
+      await tester.tap(find.text('Buka di Google Maps'));
+      expect(launchedUri, isNotNull);
+      expect(launchedUri.toString(), contains('google.com/maps/dir/'));
+      expect(launchedUri.toString(), contains('-6.2'));
+      expect(launchedUri.toString(), contains('106.8'));
+    },
+  );
 }
