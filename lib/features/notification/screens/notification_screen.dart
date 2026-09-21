@@ -176,7 +176,16 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
     return Obx(() {
       final invitations = controller.pendingInvitations;
-      final realNotifs = controller.notifications;
+      final pendingInvitationIds = invitations.map((item) => item.id).toSet();
+      final realNotifs = controller.notifications
+          .where(
+            (item) =>
+                !item.isRoomInvitation &&
+                item.type != 'room_invitation' &&
+                (item.relatedId == null ||
+                    !pendingInvitationIds.contains(item.relatedId)),
+          )
+          .toList(growable: false);
 
       if (controller.isLoading.value &&
           realNotifs.isEmpty &&
@@ -455,6 +464,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
       icon = Icons.person_remove_rounded;
       iconColor = AppColors.error;
       category = 'DIKELUARKAN DARI ROOM';
+    } else if (notif.isRoomJoined) {
+      icon = Icons.check_circle_outline_rounded;
+      iconColor = AppColors.statusPositive;
+      category = 'UNDANGAN DITERIMA';
     } else if (notif.isAnnouncement) {
       icon = Icons.campaign_rounded;
       iconColor = AppColors.goldDark;
@@ -472,22 +485,41 @@ class _NotificationScreenState extends State<NotificationScreen> {
       category = 'UNDANGAN ROOM';
     }
 
-    return _buildNotificationCard(
-      context: context,
-      category: category,
-      icon: icon,
-      iconColor: iconColor,
-      title: notif.title,
-      message: notif.message,
-      time: notif.createdAt != null
-          ? '${notif.createdAt!.hour.toString().padLeft(2, '0')}:${notif.createdAt!.minute.toString().padLeft(2, '0')}'
-          : 'Baru saja',
-      isUnread: !notif.isRead,
-      onTap: () {
-        if (!notif.isRead && Get.isRegistered<NotificationController>()) {
-          Get.find<NotificationController>().markNotificationRead(notif.id);
+    return Dismissible(
+      key: Key('notif_${notif.id}'),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        margin: const EdgeInsets.only(bottom: AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.error,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+        ),
+        child: const Icon(Icons.delete_outline_rounded, color: Colors.white),
+      ),
+      onDismissed: (_) {
+        if (Get.isRegistered<NotificationController>()) {
+          Get.find<NotificationController>().deleteNotification(notif.id);
         }
       },
+      child: _buildNotificationCard(
+        context: context,
+        category: category,
+        icon: icon,
+        iconColor: iconColor,
+        title: notif.title,
+        message: notif.message,
+        time: notif.createdAt != null
+            ? '${notif.createdAt!.hour.toString().padLeft(2, '0')}:${notif.createdAt!.minute.toString().padLeft(2, '0')}'
+            : 'Baru saja',
+        isUnread: !notif.isRead,
+        onTap: () {
+          if (!notif.isRead && Get.isRegistered<NotificationController>()) {
+            Get.find<NotificationController>().markNotificationRead(notif.id);
+          }
+        },
+      ),
     );
   }
 

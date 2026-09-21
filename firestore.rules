@@ -50,7 +50,7 @@ service cloud.firestore {
           'allergies', 'bloodType', 'conditions', 'currentLocation',
           'displayName', 'emergencyContact', 'isGpsActive',
           'locationUpdatedAt', 'name', 'nomorPorsi', 'porsi', 'photoUrl', 'updatedAt',
-          'email', 'normalizedEmail', 'role', 'activeRoomId'
+          'email', 'normalizedEmail', 'role', 'activeRoomId', 'sosActive', 'sosTime'
         ]) &&
         request.resource.data.get('role', resource.data.get('role', 'jamaah')) != 'admin';
       allow delete: if false;
@@ -133,9 +133,9 @@ service cloud.firestore {
         ) &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'respondedAt', 'respondedBy', 'respondedByName',
-          'resolvedAt', 'resolvedBy', 'status'
+          'resolvedAt', 'resolvedBy', 'cancelledAt', 'cancelledBy', 'status'
         ]) &&
-        request.resource.data.status in ['direspons', 'selesai'] && (
+        request.resource.data.status in ['direspons', 'selesai', 'cancelled'] && (
           (
             request.resource.data.status == 'direspons' &&
             request.resource.data.respondedBy == request.auth.uid &&
@@ -143,6 +143,9 @@ service cloud.firestore {
           ) || (
             request.resource.data.status == 'selesai' &&
             request.resource.data.resolvedBy == request.auth.uid
+          ) || (
+            request.resource.data.status == 'cancelled' &&
+            request.resource.data.cancelledBy == request.auth.uid
           )
         )
       );

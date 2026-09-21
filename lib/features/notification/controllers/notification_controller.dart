@@ -224,6 +224,13 @@ class NotificationController extends GetxController {
         userName: userName,
       );
 
+      _removeResolvedInvitation(invitation.id);
+      await _notificationService.deleteNotificationsForInvitation(
+        invitationId: invitation.id,
+        uid: user.uid,
+        roomId: invitation.roomId,
+      );
+
       if (Get.isRegistered<HajiCareController>()) {
         final ctrl = Get.find<HajiCareController>();
         await ctrl.applyUserData(
@@ -242,6 +249,9 @@ class NotificationController extends GetxController {
         );
       }
     } catch (e) {
+      if (e is StaleInvitationException) {
+        _removeResolvedInvitation(invitation.id);
+      }
       if (context.mounted) {
         if (e is StaleInvitationException) {
           AppDialog.warning(
@@ -282,6 +292,13 @@ class NotificationController extends GetxController {
         uid: user.uid,
       );
 
+      _removeResolvedInvitation(invitation.id);
+      await _notificationService.deleteNotificationsForInvitation(
+        invitationId: invitation.id,
+        uid: user.uid,
+        roomId: invitation.roomId,
+      );
+
       if (context.mounted) {
         AppDialog.info(
           context: context,
@@ -304,6 +321,24 @@ class NotificationController extends GetxController {
     } finally {
       processingInvitations.remove(invitation.id);
     }
+  }
+
+  /// Deletes a specific notification from both local list and Firestore.
+  Future<void> deleteNotification(String notificationId) async {
+    notifications.removeWhere((item) => item.id == notificationId);
+    unreadCount.value = notifications.where((item) => !item.isRead).length;
+    await _notificationService.deleteNotification(notificationId);
+  }
+
+  void _removeResolvedInvitation(String invitationId) {
+    pendingInvitations.removeWhere((item) => item.id == invitationId);
+    notifications.removeWhere(
+      (item) =>
+          item.id == 'invitation_$invitationId' ||
+          item.relatedId == invitationId ||
+          (item.isRoomInvitation && item.relatedId == invitationId),
+    );
+    unreadCount.value = notifications.where((item) => !item.isRead).length;
   }
 
   @override

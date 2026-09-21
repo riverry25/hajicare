@@ -104,4 +104,47 @@ test('accepting an invitation to a deleted room expires safely', async () => {
   assert.ok(result.code === 'failed-precondition' || result.status === 'expired');
   const snapshot = await db.collection('invitations').doc(invitation.invitationId).get();
   assert.equal(snapshot.data().status, 'expired');
+  const notification = await db.collection('notifications')
+    .doc(`invitation_${invitation.invitationId}`).get();
+  assert.equal(notification.exists, false);
+});
+
+test('accepting an invitation removes its notification', async () => {
+  const created = await room.createRoom(db, manager, {name: 'room aman'});
+  const invitation = await room.inviteJamaah(db, manager, {
+    roomId: created.roomId, email: 'jamaah@test.dev',
+  });
+  const notificationRef = db.collection('notifications')
+    .doc(`invitation_${invitation.invitationId}`);
+  assert.equal((await notificationRef.get()).exists, true);
+
+  const result = await room.respondInvitation(db, jamaah, {
+    invitationId: invitation.invitationId, action: 'accept',
+  });
+
+  assert.equal(result.status, 'accepted');
+  assert.equal((await notificationRef.get()).exists, false);
+  const successNotification = await db.collection('notifications')
+    .doc(`invitation_accepted_${invitation.invitationId}`).get();
+  assert.equal(successNotification.exists, true);
+  assert.equal(successNotification.data().recipientId, jamaah.uid);
+  assert.equal(successNotification.data().type, 'room_joined');
+  assert.equal(successNotification.data().title, 'Berhasil Menerima Undangan');
+});
+
+test('rejecting an invitation removes its notification', async () => {
+  const created = await room.createRoom(db, manager, {name: 'room aman'});
+  const invitation = await room.inviteJamaah(db, manager, {
+    roomId: created.roomId, email: 'jamaah@test.dev',
+  });
+  const notificationRef = db.collection('notifications')
+    .doc(`invitation_${invitation.invitationId}`);
+  assert.equal((await notificationRef.get()).exists, true);
+
+  const result = await room.respondInvitation(db, jamaah, {
+    invitationId: invitation.invitationId, action: 'reject',
+  });
+
+  assert.equal(result.status, 'rejected');
+  assert.equal((await notificationRef.get()).exists, false);
 });

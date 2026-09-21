@@ -84,7 +84,7 @@ class _DistanceSparklineWidgetState extends State<DistanceSparklineWidget>
 
   Color get _waveColor {
     final d = widget.distance;
-    if (d <= 0) return AppColors.accentGoldStar;
+    if (d <= 0) return AppColors.goldLight.withValues(alpha: 0.7);
     if (d < 50) return const Color(0xFF6CDEA0);
     if (d < 300) return AppColors.accentGoldStar;
     if (d < 1000) return const Color(0xFFFFA040);
@@ -112,9 +112,7 @@ class _DistanceSparklineWidgetState extends State<DistanceSparklineWidget>
                     ? 0.55 +
                           0.45 *
                               (0.5 +
-                                  0.5 *
-                                      math.sin(
-                                          _syncCtrl.value * 2 * math.pi))
+                                  0.5 * math.sin(_syncCtrl.value * 2 * math.pi))
                     : 1.0;
 
                 return Opacity(
@@ -188,13 +186,17 @@ class _DistanceWavePainter extends CustomPainter {
     );
     final p2 = Offset(
       w * 0.50,
-      (midY + amplitude * 0.4 - breathe + ripple * 0.5)
-          .clamp(h * 0.05, h * 0.95),
+      (midY + amplitude * 0.4 - breathe + ripple * 0.5).clamp(
+        h * 0.05,
+        h * 0.95,
+      ),
     );
     final p3 = Offset(
       w * 0.74,
-      (midY - amplitude * 0.8 + breathe - ripple * 0.3)
-          .clamp(h * 0.05, h * 0.95),
+      (midY - amplitude * 0.8 + breathe - ripple * 0.3).clamp(
+        h * 0.05,
+        h * 0.95,
+      ),
     );
     final p4 = Offset(
       w - 4,

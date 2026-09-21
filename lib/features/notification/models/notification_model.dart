@@ -41,6 +41,7 @@ class AppNotificationModel {
   });
 
   bool get isRoomInvitation => type == 'room_invitation';
+  bool get isRoomJoined => type == 'room_joined';
   bool get isRoomRemoved => type == 'room_removed';
   bool get isAnnouncement => type == 'announcement';
   bool get isSosAlert => type == 'sos_alert';

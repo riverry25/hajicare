@@ -612,19 +612,51 @@ class RoomCommandService {
     required String action,
   }) async {
     try {
-      return await _backend.call('respondInvitation', {
+      final res = await _backend.call('respondInvitation', {
         'invitationId': invitationId,
         'action': action,
       });
+      _cleanupInvitationNotifications(invitationId);
+      return res;
     } catch (error) {
       debugPrint(
         '[RoomCommandService] Backend respondInvitation failed ($error), using direct Firestore fallback',
       );
-      return _respondInvitationDirect(
+      final res = await _respondInvitationDirect(
         invitationId: invitationId,
         action: action,
       );
+      _cleanupInvitationNotifications(invitationId);
+      return res;
     }
+  }
+
+  void _cleanupInvitationNotifications(String invitationId) {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+      _firestore
+          .collection('notifications')
+          .doc('invitation_$invitationId')
+          .delete()
+          .catchError((_) {});
+      _firestore
+          .collection('notifications')
+          .doc('invitation_accepted_$invitationId')
+          .delete()
+          .catchError((_) {});
+      _firestore
+          .collection('notifications')
+          .where('recipientId', isEqualTo: user.uid)
+          .where('relatedId', isEqualTo: invitationId)
+          .get()
+          .then((snap) {
+            for (final doc in snap.docs) {
+              doc.reference.delete().catchError((_) {});
+            }
+          })
+          .catchError((_) {});
+    } catch (_) {}
   }
 
   Future<Map<String, dynamic>> _respondInvitationDirect({
@@ -656,10 +688,8 @@ class RoomCommandService {
         'status': 'rejected',
         'respondedAt': FieldValue.serverTimestamp(),
       });
-      batch.set(
+      batch.delete(
         _firestore.collection('notifications').doc('invitation_$invitationId'),
-        {'isRead': true},
-        SetOptions(merge: true),
       );
       await batch.commit();
       return {'status': 'rejected'};
@@ -676,11 +706,16 @@ class RoomCommandService {
     final roomRef = _firestore.collection('rooms').doc(roomId);
     final roomSnap = await roomRef.get();
     if (!roomSnap.exists || roomSnap.data()?['isActive'] == false) {
-      await invRef.update({
+      final batch = _firestore.batch();
+      batch.update(invRef, {
         'status': 'expired',
         'expiredReason': 'room_unavailable',
         'expiredAt': FieldValue.serverTimestamp(),
       });
+      batch.delete(
+        _firestore.collection('notifications').doc('invitation_$invitationId'),
+      );
+      await batch.commit();
       return {'status': 'expired', 'roomId': roomId};
     }
 
@@ -710,10 +745,8 @@ class RoomCommandService {
       'status': 'accepted',
       'respondedAt': FieldValue.serverTimestamp(),
     });
-    batch.set(
+    batch.delete(
       _firestore.collection('notifications').doc('invitation_$invitationId'),
-      {'isRead': true},
-      SetOptions(merge: true),
     );
     await batch.commit();
 
@@ -723,15 +756,142 @@ class RoomCommandService {
   Future<void> transitionSos({
     required String action,
     required String userId,
+    String? roomId,
     String? eventId,
-  }) {
-    return _backend
-        .call('transitionSos', {
-          'action': action,
-          'userId': userId,
-          if (eventId != null && eventId.isNotEmpty) 'eventId': eventId,
-        })
-        .then((_) {});
+  }) async {
+    String? resolvedEventId = eventId;
+    if (resolvedEventId == null || resolvedEventId.isEmpty) {
+      try {
+        final querySnap = await _firestore
+            .collection('sos_events')
+            .where('userId', isEqualTo: userId)
+            .where('status', whereIn: const ['active', 'baru', 'direspons'])
+            .limit(1)
+            .get();
+        if (querySnap.docs.isNotEmpty) {
+          resolvedEventId = querySnap.docs.first.id;
+        }
+      } catch (e) {
+        debugPrint(
+          '[RoomCommandService] Could not resolve eventId from query: $e',
+        );
+      }
+    }
+
+    try {
+      await _backend.call('transitionSos', {
+        'action': action,
+        'userId': userId,
+        if (resolvedEventId != null && resolvedEventId.isNotEmpty)
+          'eventId': resolvedEventId,
+      });
+      return;
+    } catch (backendError) {
+      debugPrint(
+        '[RoomCommandService] Backend transitionSos failed ($backendError), using direct Firestore fallback',
+      );
+    }
+
+    final currentAuthUid = FirebaseAuth.instance.currentUser?.uid;
+    final now = FieldValue.serverTimestamp();
+
+    // 1. Reset user doc sosActive
+    try {
+      await _firestore.collection('users').doc(userId).set({
+        'sosActive': false,
+        'updatedAt': now,
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('[RoomCommandService] Fallback updating user failed: $e');
+    }
+
+    // 2. Reset room member doc if roomId available
+    String? targetRoomId = roomId;
+    if (targetRoomId == null || targetRoomId.isEmpty) {
+      try {
+        final userDoc = await _firestore.collection('users').doc(userId).get();
+        targetRoomId = userDoc.data()?['activeRoomId'] as String?;
+      } catch (_) {}
+    }
+
+    if (targetRoomId != null && targetRoomId.isNotEmpty) {
+      try {
+        await _firestore
+            .collection('rooms')
+            .doc(targetRoomId)
+            .collection('members')
+            .doc(userId)
+            .set({'sosActive': false}, SetOptions(merge: true));
+      } catch (e) {
+        debugPrint(
+          '[RoomCommandService] Fallback updating room member failed: $e',
+        );
+      }
+    }
+
+    // 3. Mark the SOS event as selesai/cancelled
+    final isCancel = action == 'cancel';
+    final targetStatus = isCancel ? 'cancelled' : 'selesai';
+    final eventUpdates = <String, dynamic>{
+      'status': targetStatus,
+      'resolvedAt': now,
+      'resolvedBy': currentAuthUid ?? userId,
+      if (isCancel) ...{
+        'cancelledAt': now,
+        'cancelledBy': currentAuthUid ?? userId,
+      },
+    };
+
+    if (resolvedEventId != null && resolvedEventId.isNotEmpty) {
+      try {
+        await _firestore
+            .collection('sos_events')
+            .doc(resolvedEventId)
+            .set(eventUpdates, SetOptions(merge: true));
+      } catch (e) {
+        debugPrint(
+          '[RoomCommandService] Fallback updating event $resolvedEventId failed: $e',
+        );
+        try {
+          await _firestore
+              .collection('sos_events')
+              .doc(resolvedEventId)
+              .update({
+                'status': 'selesai',
+                'resolvedAt': now,
+                'resolvedBy': currentAuthUid ?? userId,
+              });
+        } catch (_) {}
+      }
+    } else {
+      try {
+        final activeEvents = await _firestore
+            .collection('sos_events')
+            .where('userId', isEqualTo: userId)
+            .where('status', whereIn: const ['active', 'baru', 'direspons'])
+            .get();
+        for (final doc in activeEvents.docs) {
+          try {
+            await doc.reference.set(eventUpdates, SetOptions(merge: true));
+          } catch (_) {
+            await doc.reference.update({
+              'status': 'selesai',
+              'resolvedAt': now,
+              'resolvedBy': currentAuthUid ?? userId,
+            });
+          }
+        }
+      } catch (e) {
+        debugPrint(
+          '[RoomCommandService] Fallback searching active events failed: $e',
+        );
+      }
+    }
+
+    // 4. Safely clean up active_sos pointer if present
+    try {
+      await _firestore.collection('active_sos').doc(userId).delete();
+    } catch (_) {}
   }
 
   Future<void> updateMemberLocation({

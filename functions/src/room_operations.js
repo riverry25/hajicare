@@ -552,10 +552,8 @@ async function respondInvitation(db, auth, data) {
         status: 'rejected',
         respondedAt: FieldValue.serverTimestamp(),
       });
-      transaction.set(
+      transaction.delete(
         db.collection('notifications').doc(`invitation_${invitationId}`),
-        {isRead: true},
-        {merge: true},
       );
       result = {status: 'rejected'};
       return;
@@ -572,6 +570,9 @@ async function respondInvitation(db, auth, data) {
         expiredReason: 'room_unavailable',
         expiredAt: FieldValue.serverTimestamp(),
       });
+      transaction.delete(
+        db.collection('notifications').doc(`invitation_${invitationId}`),
+      );
       result = {status: 'expired', roomId};
       return;
     }
@@ -606,10 +607,24 @@ async function respondInvitation(db, auth, data) {
       status: 'accepted',
       respondedAt: FieldValue.serverTimestamp(),
     });
-    transaction.set(
+    transaction.delete(
       db.collection('notifications').doc(`invitation_${invitationId}`),
-      {isRead: true},
-      {merge: true},
+    );
+    transaction.set(
+      db.collection('notifications').doc(`invitation_accepted_${invitationId}`),
+      {
+        title: 'Berhasil Menerima Undangan',
+        message: `Anda berhasil bergabung ke rombongan "${invitation.roomName || roomSnapshot.data().name}".`,
+        type: 'room_joined',
+        recipientId: auth.uid,
+        senderId: invitation.fromUserId,
+        senderRole: 'pendamping',
+        senderName: invitation.fromUserName,
+        targetRoomId: roomId,
+        relatedId: invitationId,
+        isRead: false,
+        createdAt: FieldValue.serverTimestamp(),
+      },
     );
     result = {status: 'accepted', roomId};
   });
@@ -698,7 +713,7 @@ async function deleteRoom(db, auth, data) {
       .collection('invitations')
       .where('roomId', '==', roomId)
       .where('status', '==', 'pending')
-      .limit(300)
+      .limit(200)
       .get();
     if (invitations.empty) break;
     const batch = db.batch();
@@ -708,6 +723,9 @@ async function deleteRoom(db, auth, data) {
         expiredReason: 'room_deleted',
         expiredAt: FieldValue.serverTimestamp(),
       });
+      batch.delete(
+        db.collection('notifications').doc(`invitation_${invitation.id}`),
+      );
     }
     await batch.commit();
   }
