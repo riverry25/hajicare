@@ -651,7 +651,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
             ),
             const SizedBox(width: 12),
 
-            // Right Column: Guide Haji (Short: 126) & Fitur Jemput (Tall: 162)
+            // Right Column: Guide Haji & pusat komunikasi pendamping
             Expanded(
               child: Column(
                 children: [
@@ -679,10 +679,10 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   const SizedBox(height: 12),
                   _buildBentoFeatureCard(
                     context: context,
-                    title: 'Bantuan Jemput',
-                    value: 'Jemput Saya',
-                    subtitle: 'Kirim Lokasi',
-                    icon: Icons.hail_rounded,
+                    title: 'Pendamping',
+                    value: 'Hubungi',
+                    subtitle: 'Pesan & Lokasi',
+                    icon: Icons.support_agent_rounded,
                     height: 162,
                     isDark: isDark,
                     cardBg: cardBg,
@@ -694,8 +694,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                         : const Color(0xFFFBE9E7),
                     iconColor: const Color(0xFFE64A19),
                     accentColor: const Color(0xFFD84315),
-                    onTap: () =>
-                        _showPickupRequestDialog(context, state, jamaah),
+                    onTap: () => _showCompanionContactDialog(context, state),
                   ),
                 ],
               ),
@@ -1083,7 +1082,69 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     );
   }
 
+  // ── Hubungi Pendamping: informasi, pesan, dan berbagi lokasi ───────────────
+  Future<void> _showCompanionContactDialog(
+    BuildContext context,
+    HajiCareController state,
+  ) async {
+    final roomId = state.activeRoomId.value?.trim();
+    if (roomId == null || roomId.isEmpty) {
+      AppAlert.error(
+        context,
+        title: 'Belum Tergabung Rombongan',
+        message:
+            'Anda perlu bergabung dengan rombongan untuk menghubungi pendamping.',
+        okText: 'Gabung Rombongan',
+        onOk: () => Get.toNamed(AppRoutes.joinRoom),
+      );
+      return;
+    }
+
+    late final List<RoomMemberModel> pendampings;
+    try {
+      final members = await RoomQueryService()
+          .getRoomMembersStream(roomId)
+          .first;
+      pendampings = members
+          .where((member) => member.isPendamping)
+          .toList(growable: false);
+    } catch (_) {
+      if (context.mounted) {
+        AppAlert.error(
+          context,
+          title: 'Pendamping Belum Dapat Dimuat',
+          message:
+              'Daftar pendamping rombongan belum dapat dimuat. Silakan coba lagi.',
+        );
+      }
+      return;
+    }
+
+    if (!context.mounted) return;
+    if (pendampings.isEmpty) {
+      AppAlert.error(
+        context,
+        title: 'Pendamping Tidak Tersedia',
+        message:
+            'Belum ada pendamping aktif di rombongan Anda. Hubungi pengelola rombongan.',
+      );
+      return;
+    }
+
+    await Get.bottomSheet<void>(
+      CompanionContactSheet(
+        roomId: roomId,
+        pendampings: pendampings,
+        state: state,
+      ),
+      isScrollControlled: true,
+      ignoreSafeArea: false,
+    );
+  }
+
   // ── Modal Sheet: Fitur Jemput Saya (Kirim Notifikasi ke Pendamping) ─────────
+  // TODO: Remove after the new Hubungi Pendamping flow has fully replaced it.
+  // ignore: unused_element
   Future<void> _showPickupRequestDialog(
     BuildContext context,
     HajiCareController state,

@@ -198,3 +198,55 @@ test('pickup request rejects a companion from another room', async () => {
   assert.equal((await db.collection('notifications')
     .where('type', '==', 'pickup_request').get()).empty, true);
 });
+
+test('jamaah can send information to every pendamping in the same room', async () => {
+  const created = await room.createRoom(db, manager, {name: 'room aman'});
+  await room.joinRoomByCode(db, jamaah, {roomCode: created.code});
+  await db.collection('rooms').doc(created.roomId)
+    .collection('members').doc('pendamping-2').set({
+      uid: 'pendamping-2',
+      name: 'Pendamping Dua',
+      role: 'pendamping',
+    });
+
+  const result = await notification.sendCompanionMessage(db, jamaah, {
+    roomId: created.roomId,
+    kind: 'info',
+    sendToAll: true,
+    message: 'Saya menunggu di lobi hotel.',
+  });
+
+  assert.equal(result.recipientCount, 2);
+  const snapshot = await db.collection('notifications')
+    .where('notificationId', '==', result.notificationId).get();
+  assert.deepEqual(
+    new Set(snapshot.docs.map((doc) => doc.data().recipientId)),
+    new Set(['manager', 'pendamping-2']),
+  );
+  assert.ok(snapshot.docs.every((doc) => doc.data().type === 'companion_info'));
+});
+
+test('jamaah can message one selected pendamping with a shared location', async () => {
+  const created = await room.createRoom(db, manager, {name: 'room aman'});
+  await room.joinRoomByCode(db, jamaah, {roomCode: created.code});
+
+  const result = await notification.sendCompanionMessage(db, jamaah, {
+    roomId: created.roomId,
+    kind: 'message',
+    sendToAll: false,
+    pendampingUid: manager.uid,
+    message: 'Mohon jemput saya.',
+    latitude: -6.2,
+    longitude: 106.8,
+  });
+
+  assert.equal(result.recipientCount, 1);
+  const snapshot = await db.collection('notifications')
+    .where('notificationId', '==', result.notificationId).get();
+  assert.equal(snapshot.size, 1);
+  const data = snapshot.docs[0].data();
+  assert.equal(data.recipientId, manager.uid);
+  assert.equal(data.type, 'companion_message');
+  assert.equal(data.metadata.latitude, -6.2);
+  assert.equal(data.metadata.longitude, 106.8);
+});

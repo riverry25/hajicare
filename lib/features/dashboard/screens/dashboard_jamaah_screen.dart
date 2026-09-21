@@ -24,6 +24,7 @@ import '../../communication/widgets/communication_gesture_dialog.dart';
 import '../../smartband/controllers/smartband_ldr_controller.dart';
 import '../controllers/dashboard_controller.dart';
 import '../widgets/distance_sparkline_widget.dart';
+import '../widgets/companion_contact_sheet.dart';
 
 part 'dashboard_jamaah_header.dart';
 part 'dashboard_jamaah_sections.dart';

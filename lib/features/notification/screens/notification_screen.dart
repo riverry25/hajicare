@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -459,6 +461,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
     IconData icon = Icons.notifications_rounded;
     Color iconColor = AppColors.goldPrimary;
     String category = notif.type.replaceAll('_', ' ').toUpperCase();
+    final latitude = (notif.metadata?['latitude'] as num?)?.toDouble();
+    final longitude = (notif.metadata?['longitude'] as num?)?.toDouble();
+    final hasSharedLocation = latitude != null && longitude != null;
 
     if (notif.isRoomRemoved) {
       icon = Icons.person_remove_rounded;
@@ -472,6 +477,14 @@ class _NotificationScreenState extends State<NotificationScreen> {
       icon = Icons.hail_rounded;
       iconColor = AppColors.statusWarning;
       category = 'PERMINTAAN JEMPUT';
+    } else if (notif.isCompanionInfo) {
+      icon = Icons.campaign_rounded;
+      iconColor = AppColors.goldDark;
+      category = 'INFORMASI JAMAAH';
+    } else if (notif.isCompanionMessage) {
+      icon = Icons.chat_bubble_rounded;
+      iconColor = AppColors.statusPositive;
+      category = 'PESAN JAMAAH';
     } else if (notif.isAnnouncement) {
       icon = Icons.campaign_rounded;
       iconColor = AppColors.goldDark;
@@ -518,6 +531,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
             ? '${notif.createdAt!.hour.toString().padLeft(2, '0')}:${notif.createdAt!.minute.toString().padLeft(2, '0')}'
             : 'Baru saja',
         isUnread: !notif.isRead,
+        onLocationTap: hasSharedLocation
+            ? () => _openSharedLocation(context, latitude, longitude)
+            : null,
         onTap: () {
           if (!notif.isRead && Get.isRegistered<NotificationController>()) {
             Get.find<NotificationController>().markNotificationRead(notif.id);
@@ -525,6 +541,25 @@ class _NotificationScreenState extends State<NotificationScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _openSharedLocation(
+    BuildContext context,
+    double latitude,
+    double longitude,
+  ) async {
+    final uri = Uri.https('www.google.com', '/maps/search/', {
+      'api': '1',
+      'query': '$latitude,$longitude',
+    });
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && context.mounted) {
+      AppAlert.error(
+        context,
+        title: 'Peta Belum Dapat Dibuka',
+        message: 'Pastikan aplikasi peta tersedia, lalu coba lagi.',
+      );
+    }
   }
 
   Widget _buildSectionHeader(
@@ -560,6 +595,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     required String time,
     required bool isUnread,
     VoidCallback? onTap,
+    VoidCallback? onLocationTap,
   }) {
     final isDark = AppColors.isDark(context);
     final cardBg = AppColors.cardBgColor(context);
@@ -723,6 +759,42 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                       height: 1.45,
                                     ),
                                   ),
+                                  if (onLocationTap != null) ...[
+                                    const SizedBox(height: 12),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      height: 46,
+                                      child: OutlinedButton.icon(
+                                        key: const Key(
+                                          'notification_open_location_button',
+                                        ),
+                                        onPressed: onLocationTap,
+                                        icon: const Icon(
+                                          Icons.location_on_rounded,
+                                          size: 21,
+                                        ),
+                                        label: const Text(
+                                          'Buka Lokasi Jamaah',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: AppColors.statusSafe,
+                                          side: const BorderSide(
+                                            color: AppColors.statusSafe,
+                                            width: 1.5,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              13,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ],
                               ),
                             ),

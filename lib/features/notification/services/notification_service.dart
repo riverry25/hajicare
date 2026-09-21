@@ -40,6 +40,30 @@ class NotificationService {
         : 'Pendamping';
   }
 
+  /// Sends a chat-like message from a jamaah to one or every pendamping in
+  /// their active room. Membership and recipient roles are verified by the
+  /// trusted backend before any notification is created.
+  Future<int> sendCompanionMessage({
+    required String roomId,
+    required String message,
+    required bool sendToAll,
+    required String kind,
+    String? pendampingUid,
+    double? latitude,
+    double? longitude,
+  }) async {
+    final result = await _backend.call('sendCompanionMessage', {
+      'roomId': roomId,
+      'message': message,
+      'sendToAll': sendToAll,
+      'kind': kind,
+      'pendampingUid': ?pendampingUid,
+      'latitude': ?latitude,
+      'longitude': ?longitude,
+    });
+    return (result['recipientCount'] as num?)?.toInt() ?? 0;
+  }
+
   Future<int> sendNotification({
     required String title,
     required String message,

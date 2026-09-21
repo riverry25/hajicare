@@ -93,10 +93,12 @@ service cloud.firestore {
         resource.data.recipientId == request.auth.uid ||
         resource.data.senderId == request.auth.uid
       );
-      // Pickup requests must go through sendPickupRequest so the backend can
-      // verify that the selected companion and pilgrim share the same room.
+      // Jamaah-to-pendamping messages must go through trusted callables so the
+      // backend can verify that sender and recipients share the same room.
       allow create: if signedIn() &&
-        request.resource.data.get('type', '') != 'pickup_request';
+        request.resource.data.get('type', '') != 'pickup_request' &&
+        request.resource.data.get('type', '') != 'companion_info' &&
+        request.resource.data.get('type', '') != 'companion_message';
       allow update: if signedIn() &&
         resource.data.recipientId == request.auth.uid &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);

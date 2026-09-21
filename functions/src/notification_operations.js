@@ -8,6 +8,7 @@ const {optionalString, requiredString} = require('./validators');
 const CLIENT_TYPES = new Set(['announcement', 'urgent', 'info']);
 const ADMIN_SCOPES = new Set(['global', 'maktab', 'kloter', 'room', 'user']);
 const PENDAMPING_SCOPES = new Set(['room', 'user']);
+const COMPANION_MESSAGE_KINDS = new Set(['info', 'message']);
 
 function chunks(items, size) {
   const result = [];
@@ -222,4 +223,156 @@ async function sendPickupRequest(db, auth, data) {
   };
 }
 
-module.exports = {sendNotification, sendPickupRequest};
+/**
+ * Lets an active jamaah contact one or every pendamping in the same room.
+ * Recipient discovery and role checks intentionally live on the backend so a
+ * modified client cannot message arbitrary users.
+ */
+async function sendCompanionMessage(db, auth, data) {
+  requireAuth(auth);
+  const roomId = requiredString(data?.roomId, 'ID rombongan', 128);
+  const message = requiredString(data?.message, 'Pesan', 500);
+  const kind = String(data?.kind || 'message').toLowerCase();
+  if (!COMPANION_MESSAGE_KINDS.has(kind)) {
+    throw new BackendError('invalid-argument', 'Jenis pesan tidak valid.');
+  }
+
+  const requestedUid = optionalString(
+    data?.pendampingUid,
+    'Pendamping tujuan',
+    128,
+  );
+  const sendToAll = data?.sendToAll === true || kind === 'info';
+  if (!sendToAll && !requestedUid) {
+    throw new BackendError('invalid-argument', 'Pendamping tujuan wajib dipilih.');
+  }
+
+  const latitude = data?.latitude;
+  const longitude = data?.longitude;
+  const hasCoordinates = latitude != null || longitude != null;
+  if (hasCoordinates &&
+      (typeof latitude !== 'number' || !Number.isFinite(latitude) ||
+       typeof longitude !== 'number' || !Number.isFinite(longitude) ||
+       latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180)) {
+    throw new BackendError('invalid-argument', 'Koordinat lokasi tidak valid.');
+  }
+
+  const roomRef = db.collection('rooms').doc(roomId);
+  const senderMemberRef = roomRef.collection('members').doc(auth.uid);
+  const senderProfileRef = db.collection('users').doc(auth.uid);
+  let senderName = 'Jamaah';
+  let targets = [];
+
+  await db.runTransaction(async (transaction) => {
+    const roomSnapshot = await transaction.get(roomRef);
+    if (!roomSnapshot.exists ||
+        roomSnapshot.data().isActive !== true ||
+        roomSnapshot.data().status === 'deleting') {
+      throw new BackendError('failed-precondition', 'Rombongan tidak aktif.');
+    }
+
+    const senderMemberSnapshot = await transaction.get(senderMemberRef);
+    if (!senderMemberSnapshot.exists ||
+        String(senderMemberSnapshot.data().role || '').toLowerCase() !== 'jamaah') {
+      throw new BackendError(
+        'permission-denied',
+        'Anda bukan jamaah aktif pada rombongan ini.',
+      );
+    }
+
+    const senderProfileSnapshot = await transaction.get(senderProfileRef);
+    if (!senderProfileSnapshot.exists ||
+        String(senderProfileSnapshot.data().activeRoomId || '') !== roomId) {
+      throw new BackendError(
+        'failed-precondition',
+        'Rombongan aktif Anda sudah berubah. Muat ulang halaman.',
+      );
+    }
+
+    senderName = String(
+      senderMemberSnapshot.data().name || auth.token?.name || 'Jamaah',
+    ).trim();
+
+    if (sendToAll) {
+      const membersSnapshot = await transaction.get(
+        roomRef.collection('members'),
+      );
+      targets = membersSnapshot.docs
+        .filter((doc) =>
+          String(doc.data().role || '').toLowerCase() === 'pendamping' &&
+          doc.id !== auth.uid,
+        )
+        .map((doc) => ({
+          uid: doc.id,
+          name: String(doc.data().name || 'Pendamping').trim(),
+        }));
+    } else {
+      if (requestedUid === auth.uid) {
+        throw new BackendError('invalid-argument', 'Penerima tidak valid.');
+      }
+      const targetSnapshot = await transaction.get(
+        roomRef.collection('members').doc(requestedUid),
+      );
+      if (!targetSnapshot.exists ||
+          String(targetSnapshot.data().role || '').toLowerCase() !== 'pendamping') {
+        throw new BackendError(
+          'permission-denied',
+          'Pendamping yang dipilih bukan anggota rombongan yang sama.',
+        );
+      }
+      targets = [{
+        uid: requestedUid,
+        name: String(targetSnapshot.data().name || 'Pendamping').trim(),
+      }];
+    }
+  });
+
+  if (targets.length === 0) {
+    throw new BackendError(
+      'failed-precondition',
+      'Belum ada pendamping aktif di rombongan Anda.',
+    );
+  }
+
+  const notificationId = db.collection('notifications').doc().id;
+  for (const targetChunk of chunks(targets, 400)) {
+    const batch = db.batch();
+    for (const target of targetChunk) {
+      batch.create(db.collection('notifications').doc(), {
+        notificationId,
+        recipientId: target.uid,
+        title: kind === 'info'
+          ? `Informasi dari ${senderName}`
+          : `Pesan dari ${senderName}`,
+        message,
+        type: kind === 'info' ? 'companion_info' : 'companion_message',
+        scope: sendToAll ? 'all_companions' : 'user',
+        targetUserId: sendToAll ? null : target.uid,
+        targetRoomId: roomId,
+        senderId: auth.uid,
+        senderName,
+        senderRole: 'jamaah',
+        isRead: false,
+        createdAt: FieldValue.serverTimestamp(),
+        metadata: {
+          ...(hasCoordinates ? {latitude, longitude} : {}),
+          includesLocation: hasCoordinates,
+          sendToAll,
+        },
+      });
+    }
+    await batch.commit();
+  }
+
+  return {
+    notificationId,
+    recipientCount: targets.length,
+    recipientNames: targets.map((target) => target.name),
+  };
+}
+
+module.exports = {
+  sendNotification,
+  sendPickupRequest,
+  sendCompanionMessage,
+};

@@ -122,3 +122,18 @@ test('client cannot bypass room validation for pickup requests', async () => {
     isRead: false,
   }));
 });
+
+test('client cannot directly forge jamaah messages to pendamping', async () => {
+  const db = environment.authenticatedContext('jamaah').firestore();
+  for (const type of ['companion_info', 'companion_message']) {
+    await assertFails(setDoc(doc(db, 'notifications', `forged-${type}`), {
+      recipientId: 'manager',
+      senderId: 'jamaah',
+      targetRoomId: 'room-a',
+      title: 'Pesan palsu',
+      message: 'Tidak melalui backend',
+      type,
+      isRead: false,
+    }));
+  }
+});
