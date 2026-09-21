@@ -14,6 +14,7 @@ import '../../map/screens/interactive_map_screen.dart';
 import 'dart:math' as math;
 import '../../../core/services/app_alert_service.dart';
 import '../../notification/controllers/notification_controller.dart';
+import '../../notification/services/notification_service.dart';
 import '../../prayer/controllers/prayer_times_controller.dart';
 import '../../prayer/screens/prayer_times_screen.dart';
 import '../../profile/screens/profile_screen.dart';

@@ -188,6 +188,14 @@ extension _ProfileScreenSections on ProfileScreen {
                               ? profileCtrl.emergencyContact.value
                               : '-',
                         ),
+                        const Divider(height: 16),
+                        _buildMedRow(
+                          context,
+                          'Nomor Paspor',
+                          profileCtrl.passportNumber.value.isNotEmpty
+                              ? profileCtrl.passportNumber.value
+                              : '-',
+                        ),
                       ],
                     ),
                   ),
@@ -721,6 +729,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
   late final TextEditingController _allergiesCtrl;
   late final TextEditingController _conditionsCtrl;
   late final TextEditingController _emergencyContactCtrl;
+  late final TextEditingController _passportNumberCtrl;
 
   @override
   void initState() {
@@ -737,6 +746,9 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
     _emergencyContactCtrl = TextEditingController(
       text: widget.profileCtrl.emergencyContact.value,
     );
+    _passportNumberCtrl = TextEditingController(
+      text: widget.profileCtrl.passportNumber.value,
+    );
   }
 
   @override
@@ -745,6 +757,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
     _allergiesCtrl.dispose();
     _conditionsCtrl.dispose();
     _emergencyContactCtrl.dispose();
+    _passportNumberCtrl.dispose();
     super.dispose();
   }
 
@@ -756,6 +769,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
         allergiesVal: _allergiesCtrl.text.trim(),
         conditionsVal: _conditionsCtrl.text.trim(),
         emergencyContactVal: _emergencyContactCtrl.text.trim(),
+        passportNumberVal: _passportNumberCtrl.text.trim(),
       );
       if (mounted && Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
@@ -972,6 +986,16 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                       ctrl: _emergencyContactCtrl,
                       keyboardType: TextInputType.phone,
                       icon: Icons.phone_in_talk_rounded,
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Field 5: Nomor Paspor (Opsional)
+                    _buildUnderlineField(
+                      context: context,
+                      label: 'Nomor Paspor (Opsional)',
+                      hint: 'Contoh: A 1234567 / B 9876543',
+                      ctrl: _passportNumberCtrl,
+                      icon: Icons.badge_outlined,
                     ),
                     const SizedBox(height: 16),
 

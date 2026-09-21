@@ -1143,6 +1143,432 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     );
   }
 
+  // ── Modal Sheet: Fitur Jemput Saya (Kirim Notifikasi ke Pendamping) ─────────
+  // ignore: unused_element
+  Future<void> _showPickupRequestDialog(
+    BuildContext context,
+    HajiCareController state,
+    JamaahData jamaah,
+  ) async {
+    final isDark = AppColors.isDark(context);
+    final headingColor = AppColors.textHeadingColor(context);
+    final bodyColor = AppColors.textBodyColor(context);
+    final roomId = state.activeRoomId.value?.trim();
+
+    if (roomId == null || roomId.isEmpty) {
+      AppAlert.error(
+        context,
+        title: 'Belum Tergabung Rombongan',
+        message:
+            'Fitur jemput memerlukan rombongan agar pendamping Anda dapat menerima pemberitahuan. Silakan bergabung dengan rombongan terlebih dahulu.',
+        okText: 'Gabung Rombongan',
+        onOk: () => Get.toNamed(AppRoutes.joinRoom),
+      );
+      return;
+    }
+
+    late final List<RoomMemberModel> pendampings;
+    try {
+      final members = await RoomQueryService()
+          .getRoomMembersStream(roomId)
+          .first;
+      pendampings = members
+          .where((member) => member.isPendamping)
+          .toList(growable: false);
+    } catch (_) {
+      if (context.mounted) {
+        AppAlert.error(
+          context,
+          title: 'Pendamping Belum Dapat Dimuat',
+          message:
+              'Daftar pendamping rombongan belum dapat dimuat. Silakan coba lagi.',
+        );
+      }
+      return;
+    }
+
+    if (!context.mounted) return;
+    if (pendampings.isEmpty) {
+      AppAlert.error(
+        context,
+        title: 'Pendamping Tidak Tersedia',
+        message:
+            'Belum ada pendamping aktif di rombongan Anda. Hubungi pengelola rombongan.',
+      );
+      return;
+    }
+
+    final presets = [
+      'Depan Pintu Masjid',
+      'Lobi Hotel / Maktab',
+      'Halte Bus Shalawat',
+      'Area Jamarat',
+      'Terpisah dari Rombongan',
+    ];
+    String selectedPreset = presets[0];
+    String? selectedPendampingUid;
+    String? selectedPendampingName;
+    final noteController = TextEditingController(text: presets[0]);
+    final isSending = false.obs;
+
+    Get.bottomSheet(
+      StatefulBuilder(
+        builder: (sheetContext, setModalState) {
+          final myPos = state.myCurrentPosition.value;
+
+          return Container(
+            padding: const EdgeInsets.all(AppSpacing.cardPadding),
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.85,
+            ),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(AppRadius.sheet),
+              ),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppColors.darkOutlineVariant
+                            : AppColors.outlineVariant,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(
+                            0xFFE64A19,
+                          ).withValues(alpha: isDark ? 0.25 : 0.12),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Icon(
+                          Icons.hail_rounded,
+                          color: Color(0xFFE64A19),
+                          size: 26,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Minta Jemput Pendamping',
+                              style: AppTypography.titleMedium.copyWith(
+                                color: headingColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'Kirim lokasi ke pendamping yang Anda pilih',
+                              style: AppTypography.captionSmall.copyWith(
+                                color: bodyColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  const Divider(height: 1),
+                  const SizedBox(height: AppSpacing.md),
+
+                  Text(
+                    'Pilih Pendamping:',
+                    style: AppTypography.labelLarge.copyWith(
+                      color: headingColor,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedPendampingUid,
+                    isExpanded: true,
+                    dropdownColor: isDark
+                        ? AppColors.darkSurfaceContainer
+                        : AppColors.surfaceWhite,
+                    decoration: InputDecoration(
+                      hintText: 'Pilih pendamping tujuan',
+                      prefixIcon: const Icon(Icons.support_agent_rounded),
+                      filled: true,
+                      fillColor: isDark
+                          ? AppColors.darkSurfaceContainer
+                          : AppColors.canvasCream,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? AppColors.darkCardBorder
+                              : AppColors.lightCardBorder,
+                        ),
+                      ),
+                    ),
+                    items: pendampings
+                        .map(
+                          (pendamping) => DropdownMenuItem<String>(
+                            value: pendamping.uid,
+                            child: Text(
+                              pendamping.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        )
+                        .toList(growable: false),
+                    onChanged: isSending.value
+                        ? null
+                        : (uid) {
+                            setModalState(() {
+                              selectedPendampingUid = uid;
+                              selectedPendampingName = pendampings
+                                  .where((item) => item.uid == uid)
+                                  .firstOrNull
+                                  ?.name;
+                            });
+                          },
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  // GPS Location card
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.darkSurfaceContainer
+                          : AppColors.canvasCream,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: AppColors.statusSafe.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.my_location_rounded,
+                          color: AppColors.statusSafe,
+                          size: 22,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                myPos != null
+                                    ? 'GPS Terdeteksi'
+                                    : 'GPS Belum Terkunci',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12.5,
+                                  color: headingColor,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                myPos != null
+                                    ? '${myPos.latitude.toStringAsFixed(5)}, ${myPos.longitude.toStringAsFixed(5)}'
+                                    : 'Pastikan izin lokasi dan GPS ponsel Anda aktif.',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: bodyColor.withValues(alpha: 0.8),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  // Quick preset chips
+                  Text(
+                    'Pilih Patokan Lokasi:',
+                    style: AppTypography.labelLarge.copyWith(
+                      color: headingColor,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: presets.map((preset) {
+                      final isSelected = selectedPreset == preset;
+                      return ChoiceChip(
+                        label: Text(preset),
+                        selected: isSelected,
+                        selectedColor: const Color(
+                          0xFFE64A19,
+                        ).withValues(alpha: isDark ? 0.35 : 0.15),
+                        backgroundColor: isDark
+                            ? AppColors.darkSurfaceContainer
+                            : AppColors.canvasCream,
+                        labelStyle: TextStyle(
+                          color: isSelected
+                              ? const Color(0xFFE64A19)
+                              : bodyColor,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                        onSelected: (selected) {
+                          if (selected) {
+                            setModalState(() {
+                              selectedPreset = preset;
+                              noteController.text = preset;
+                            });
+                          }
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  // Notes TextField
+                  Text(
+                    'Detail Patokan / Catatan:',
+                    style: AppTypography.labelLarge.copyWith(
+                      color: headingColor,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: noteController,
+                    maxLines: 2,
+                    decoration: InputDecoration(
+                      hintText:
+                          'Contoh: Di dekat Gate 1, mengenakan syal hijau...',
+                      hintStyle: TextStyle(
+                        fontSize: 12.5,
+                        color: bodyColor.withValues(alpha: 0.5),
+                      ),
+                      filled: true,
+                      fillColor: isDark
+                          ? AppColors.darkSurfaceContainer
+                          : AppColors.canvasCream,
+                      contentPadding: const EdgeInsets.all(12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: isDark
+                              ? AppColors.darkCardBorder
+                              : AppColors.lightCardBorder,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Submit button
+                  Obx(
+                    () => SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE64A19),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                          ),
+                          elevation: 2,
+                        ),
+                        icon: isSending.value
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : const Icon(Icons.hail_rounded),
+                        label: Text(
+                          isSending.value
+                              ? 'Mengirim Permintaan...'
+                              : 'Kirim Permintaan Jemput',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14.5,
+                          ),
+                        ),
+                        onPressed:
+                            isSending.value || selectedPendampingUid == null
+                            ? null
+                            : () async {
+                                isSending.value = true;
+                                final noteText = noteController.text.trim();
+                                final finalNote = noteText.isNotEmpty
+                                    ? noteText
+                                    : 'Meminta bantuan penjemputan segera';
+
+                                try {
+                                  final recipientName =
+                                      await NotificationService()
+                                          .sendPickupRequest(
+                                            roomId: roomId,
+                                            pendampingUid:
+                                                selectedPendampingUid!,
+                                            notes: finalNote,
+                                            latitude: myPos?.latitude,
+                                            longitude: myPos?.longitude,
+                                          );
+
+                                  if (context.mounted) {
+                                    Get.back();
+                                    AppAlert.success(
+                                      context,
+                                      title: 'Permintaan Terkirim!',
+                                      message:
+                                          '${selectedPendampingName ?? recipientName} sudah menerima pemberitahuan dan lokasi penjemputan Anda.',
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    AppAlert.error(
+                                      context,
+                                      title: 'Gagal Mengirim',
+                                      message:
+                                          'Terjadi kendala saat mengirim permintaan jemput: $e',
+                                    );
+                                  }
+                                } finally {
+                                  isSending.value = false;
+                                }
+                              },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+      isScrollControlled: true,
+    );
+  }
+
   // ── Modal Sheet: Panduan Doa & Dzikir ──────────────────────────────────────
   void _showDoaSheet(BuildContext context) {
     final isDark = AppColors.isDark(context);

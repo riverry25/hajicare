@@ -137,13 +137,19 @@ class PendampingJamaahSelector extends StatelessWidget {
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-              for (int i = 0; i < jamaahList.length; i++) ...[
+              for (final entry
+                  in (jamaahList.asMap().entries.toList()..sort((a, b) {
+                    final aSos = a.value.sosActive;
+                    final bSos = b.value.sosActive;
+                    if (aSos != bSos) return aSos ? -1 : 1;
+                    return b.value.distance.compareTo(a.value.distance);
+                  }))) ...[
                 _buildJamaahPill(
                   context: context,
-                  jamaah: jamaahList[i],
-                  isActive: selectedIndex == i,
+                  jamaah: entry.value,
+                  isActive: selectedIndex == entry.key,
                   isDark: isDark,
-                  onTap: () => onSelected?.call(i),
+                  onTap: () => onSelected?.call(entry.key),
                 ),
                 const SizedBox(width: AppSpacing.sm),
               ],

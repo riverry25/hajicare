@@ -55,21 +55,36 @@ class _NotificationScreenState extends State<NotificationScreen> {
               if (!Get.isRegistered<NotificationController>()) {
                 return const SizedBox.shrink();
               }
-              final unread =
-                  Get.find<NotificationController>().unreadCount.value;
-              if (unread > 0) {
-                return IconButton(
-                  icon: const Icon(
-                    Icons.done_all_rounded,
-                    color: AppColors.goldDark,
-                    size: 22,
-                  ),
-                  tooltip: 'Tandai Semua Dibaca',
-                  onPressed: () =>
-                      Get.find<NotificationController>().markAllAsRead(),
-                );
-              }
-              return const SizedBox.shrink();
+              final ctrl = Get.find<NotificationController>();
+              final unread = ctrl.unreadCount.value;
+              final hasNotifs = ctrl.notifications.isNotEmpty;
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Tandai semua dibaca
+                  if (unread > 0)
+                    IconButton(
+                      icon: const Icon(
+                        Icons.done_all_rounded,
+                        color: AppColors.goldDark,
+                        size: 22,
+                      ),
+                      tooltip: 'Tandai Semua Dibaca',
+                      onPressed: () => ctrl.markAllAsRead(),
+                    ),
+                  // Hapus semua notifikasi (soft-delete per user)
+                  if (hasNotifs)
+                    IconButton(
+                      icon: const Icon(
+                        Icons.delete_sweep_rounded,
+                        color: AppColors.goldDark,
+                        size: 22,
+                      ),
+                      tooltip: 'Hapus Semua Notifikasi',
+                      onPressed: () => _showClearAllDialog(context, ctrl),
+                    ),
+                ],
+              );
             }),
             if (Get.isRegistered<HajiCareController>() &&
                 (Get.find<HajiCareController>().role == UserRole.admin ||
@@ -168,6 +183,124 @@ class _NotificationScreenState extends State<NotificationScreen> {
         ),
         body: TabBarView(
           children: [_buildNotificationTab(context), _buildFaqList(context)],
+        ),
+      ),
+    );
+  }
+
+  /// Tampilkan bottom-sheet konfirmasi sebelum menghapus semua notifikasi.
+  /// Penghapusan bersifat soft-delete per-user: notifikasi hanya hilang dari
+  /// daftar USER INI; pengguna lain yang belum menghapus tetap melihatnya.
+  void _showClearAllDialog(BuildContext context, NotificationController ctrl) {
+    final isDark = AppColors.isDark(context);
+    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
+    final headingColor = AppColors.textHeadingColor(context);
+    final bodyColor = AppColors.textBodyColor(context);
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: cardBg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 36),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.darkCardBorder
+                    : AppColors.lightCardBorder,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Icon
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: AppColors.error.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.delete_sweep_rounded,
+                color: AppColors.error,
+                size: 32,
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Judul
+            Text(
+              'Hapus Semua Notifikasi?',
+              style: AppTypography.headlineMd.copyWith(
+                color: headingColor,
+                fontWeight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            // Keterangan
+            Text(
+              'Semua notifikasi akan dihapus dari daftar Anda.\n'
+              'Pengguna lain yang menerima notifikasi yang sama tidak akan terpengaruh.',
+              style: AppTypography.bodySmall.copyWith(
+                color: bodyColor,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 28),
+            // Tombol aksi
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: headingColor,
+                      side: BorderSide(
+                        color: isDark
+                            ? AppColors.darkCardBorder
+                            : AppColors.lightCardBorder,
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                    ),
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    child: const Text('Batal'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                      ctrl.clearAllNotifications();
+                    },
+                    child: const Text(
+                      'Hapus Semua',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

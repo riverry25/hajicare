@@ -61,6 +61,12 @@ class JamaahData {
   bool onlineStatus;
   DateTime? _dangerStart;
 
+  final String? bloodType;
+  final String? allergies;
+  final String? conditions;
+  final String? emergencyContact;
+  final String? passportNumber;
+
   JamaahData({
     required this.id,
     required this.name,
@@ -76,6 +82,11 @@ class JamaahData {
     this.isGpsActive = false,
     this.locationUpdatedAt,
     this.onlineStatus = true,
+    this.bloodType,
+    this.allergies,
+    this.conditions,
+    this.emergencyContact,
+    this.passportNumber,
   }) : tier = _calcTier(distance);
 
   factory JamaahData.fromFirestore(DocumentSnapshot doc) {
@@ -117,11 +128,18 @@ class JamaahData {
         : name.split(' ').first;
 
     final distance = (data['distance'] as num?)?.toDouble() ?? 0.0;
-    final porsi = data['porsi'] as String?;
+    final porsi = (data['porsi'] as String?) ?? (data['nomorPorsi'] as String?);
     final kloter = data['kloter'] as String?;
     final maktab = data['maktab'] as String?;
     final activeRoomId = data['activeRoomId'] as String?;
     final loc = data['currentLocation'] as GeoPoint?;
+
+    final bloodType = data['bloodType'] as String?;
+    final allergies = data['allergies'] as String?;
+    final conditions = data['conditions'] as String?;
+    final emergencyContact = data['emergencyContact'] as String?;
+    final passportNumber =
+        (data['passportNumber'] as String?) ?? (data['passport'] as String?);
 
     DateTime? locationTime;
     if (data['locationUpdatedAt'] is Timestamp) {
@@ -148,6 +166,11 @@ class JamaahData {
       isGpsActive: isGps,
       locationUpdatedAt: locationTime,
       onlineStatus: isOnline,
+      bloodType: bloodType,
+      allergies: allergies,
+      conditions: conditions,
+      emergencyContact: emergencyContact,
+      passportNumber: passportNumber,
     );
   }
 
