@@ -357,8 +357,8 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Ink(
-          width: 46,
-          height: 46,
+          width: 48,
+          height: 48,
           decoration: BoxDecoration(
             color: bgColor,
             borderRadius: BorderRadius.circular(16),
@@ -409,8 +409,8 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
               bottom: isBottom ? const Radius.circular(16) : Radius.zero,
             ),
             child: SizedBox(
-              width: 46,
-              height: 38,
+              width: 48,
+              height: 48,
               child: Center(
                 child: Icon(
                   icon,

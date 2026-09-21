@@ -63,5 +63,7 @@
         <intent>
             <action android:name="android.speech.RecognitionService" />
         </intent>
+        <!-- Required for google_sign_in v7 Credential Manager on Android -->
+        <package android:name="com.google.android.gms" />
     </queries>
 </manifest>

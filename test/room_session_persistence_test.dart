@@ -37,23 +37,20 @@ void main() {
       },
     );
 
-    test(
-      'resolveUserRoleDestination falls back to cached room & role for Pendamping when offline',
-      () async {
-        SharedPreferences.setMockInitialValues({
-          AppStartupController.keyOnboardingDone: true,
-          HajiCareController.keyActiveRoomId: 'room_mina_48',
-          HajiCareController.keyUserRole: 'pendamping',
-        });
+    test('offline cache cannot grant Pendamping privileges', () async {
+      SharedPreferences.setMockInitialValues({
+        AppStartupController.keyOnboardingDone: true,
+        HajiCareController.keyActiveRoomId: 'room_mina_48',
+        HajiCareController.keyUserRole: 'pendamping',
+      });
 
-        final controller = Get.put(AppStartupController());
-        final destination = await controller.resolveUserRoleDestination(
-          'test_uid_456',
-        );
+      final controller = Get.put(AppStartupController());
+      final destination = await controller.resolveUserRoleDestination(
+        'test_uid_456',
+      );
 
-        expect(destination, equals(AppRoutes.dashboardPendamping));
-      },
-    );
+      expect(destination, equals(AppRoutes.dashboardJamaah));
+    });
 
     test(
       'resolveUserRoleDestination keeps basic dashboard available when Jamaah has no room',
@@ -72,22 +69,19 @@ void main() {
       },
     );
 
-    test(
-      'resolveUserRoleDestination returns adminDashboard for admin role in cache',
-      () async {
-        SharedPreferences.setMockInitialValues({
-          AppStartupController.keyOnboardingDone: true,
-          HajiCareController.keyUserRole: 'admin',
-        });
+    test('offline cache cannot grant Admin privileges', () async {
+      SharedPreferences.setMockInitialValues({
+        AppStartupController.keyOnboardingDone: true,
+        HajiCareController.keyUserRole: 'admin',
+      });
 
-        final controller = Get.put(AppStartupController());
-        final destination = await controller.resolveUserRoleDestination(
-          'admin_uid',
-        );
+      final controller = Get.put(AppStartupController());
+      final destination = await controller.resolveUserRoleDestination(
+        'admin_uid',
+      );
 
-        expect(destination, equals(AppRoutes.adminDashboard));
-      },
-    );
+      expect(destination, equals(AppRoutes.dashboardJamaah));
+    });
 
     test(
       'signOut clears cached room ID and user role from SharedPreferences',

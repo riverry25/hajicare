@@ -38,9 +38,7 @@ class _CommunicationGestureDialogState
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
     final headingColor = AppColors.textHeadingColor(context);
-    final controller = Get.isRegistered<CommunicationController>()
-        ? Get.find<CommunicationController>()
-        : Get.put(CommunicationController());
+    final controller = Get.find<CommunicationController>();
 
     final filteredPhrases = _selectedCategory == 'Semua'
         ? controller.phrases

@@ -76,6 +76,37 @@ class _NotificationComposerDialogState
   String? _selectedRoomName;
 
   bool _isSending = false;
+  Stream<QuerySnapshot<Map<String, dynamic>>>? _usersStream;
+  Stream<QuerySnapshot<Map<String, dynamic>>>? _roomsStream;
+  Stream<QuerySnapshot<Map<String, dynamic>>>? _roomMembersStream;
+  String? _roomMembersStreamRoomId;
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> get _boundedUsersStream =>
+      _usersStream ??= FirebaseFirestore.instance
+          .collection('users')
+          .limit(500)
+          .snapshots();
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> get _boundedRoomsStream =>
+      _roomsStream ??= FirebaseFirestore.instance
+          .collection('rooms')
+          .limit(200)
+          .snapshots();
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> _boundedRoomMembersStream(
+    String roomId,
+  ) {
+    if (_roomMembersStream == null || _roomMembersStreamRoomId != roomId) {
+      _roomMembersStreamRoomId = roomId;
+      _roomMembersStream = FirebaseFirestore.instance
+          .collection('rooms')
+          .doc(roomId)
+          .collection('members')
+          .limit(500)
+          .snapshots();
+    }
+    return _roomMembersStream!;
+  }
 
   @override
   void initState() {
@@ -99,6 +130,29 @@ class _NotificationComposerDialogState
     _selectedRoomName =
         widget.initialRoomName ?? controller.activeRoom.value?.name;
 
+    if ((_selectedRoomId == null || _selectedRoomId!.isEmpty) && !isAdmin) {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        FirebaseFirestore.instance
+            .collection('rooms')
+            .where('pendampingId', isEqualTo: user.uid)
+            .where('isActive', isEqualTo: true)
+            .limit(1)
+            .get()
+            .then((snap) {
+              if (snap.docs.isNotEmpty &&
+                  mounted &&
+                  (_selectedRoomId == null || _selectedRoomId!.isEmpty)) {
+                setState(() {
+                  _selectedRoomId = snap.docs.first.id;
+                  _selectedRoomName = snap.docs.first.data()['name'] as String?;
+                });
+              }
+            })
+            .catchError((_) {});
+      }
+    }
+
     // Listen to updates for live preview
     _titleController.addListener(() => setState(() {}));
     _messageController.addListener(() => setState(() {}));
@@ -114,6 +168,7 @@ class _NotificationComposerDialogState
   }
 
   Future<void> _handleSend() async {
+    if (_isSending) return;
     if (!_formKey.currentState!.validate()) return;
 
     String? targetMessage;
@@ -491,6 +546,7 @@ class _NotificationComposerDialogState
               child: IconButton(
                 tooltip: 'Tutup',
                 onPressed: onClose,
+                constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                 icon: const Icon(Icons.close_rounded),
                 color: Colors.white,
                 iconSize: 21,
@@ -1148,7 +1204,7 @@ class _NotificationComposerDialogState
     required Color bodyColor,
   }) {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance.collection('users').snapshots(),
+      stream: _boundedUsersStream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return _buildDataStateCard(
@@ -1232,7 +1288,7 @@ class _NotificationComposerDialogState
     bool resetTargetUserOnChange = true,
   }) {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance.collection('rooms').snapshots(),
+      stream: _boundedRoomsStream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return _buildDataStateCard(
@@ -1352,11 +1408,7 @@ class _NotificationComposerDialogState
           )
         else
           StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-            stream: FirebaseFirestore.instance
-                .collection('rooms')
-                .doc(_selectedRoomId)
-                .collection('members')
-                .snapshots(),
+            stream: _boundedRoomMembersStream(_selectedRoomId!),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return _buildDataStateCard(

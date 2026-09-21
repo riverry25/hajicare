@@ -29,10 +29,7 @@ class JamaahPrayerCard extends StatelessWidget {
     final headingColor = AppColors.textHeadingColor(context);
     final bodyColor = AppColors.textBodyColor(context);
 
-    // Resolve PrayerTimesController registered in DashboardBinding
-    final prayerCtrl = Get.isRegistered<PrayerTimesController>()
-        ? Get.find<PrayerTimesController>()
-        : Get.put(PrayerTimesController());
+    final prayerCtrl = Get.find<PrayerTimesController>();
 
     return Obx(() {
       final locName = prayerCtrl.locationName.value;

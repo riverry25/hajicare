@@ -24,8 +24,10 @@ class BisindoCandidate {
       'BisindoCandidate(classId: $classId, label: "$label", confidence: ${(confidence * 100).toStringAsFixed(1)}%, distance: ${distance.toStringAsFixed(3)})';
 }
 
+enum BisindoMatchQuality { strong, possible, unknown }
+
 class BisindoPrediction {
-  /// The index of the prototype class (0 to 7).
+  /// Runtime index of the winning prototype class.
   final int classId;
 
   /// The Indonesian sign label (e.g. 'Air', 'Saya', 'Terima kasih', etc.).
@@ -37,7 +39,21 @@ class BisindoPrediction {
   /// Raw Euclidean / L2 distance to the winning prototype vector.
   final double distance;
 
-  /// Ranked list of all 8 prototype candidate predictions, sorted by smallest distance first.
+  /// Whether the result passed distance, separation, and temporal checks.
+  /// Unrecognized results must be shown as guidance, not as a translated word.
+  final bool isRecognized;
+
+  /// Plain-language guidance when the result is not safe to display.
+  final String? guidance;
+
+  /// Relative separation between the best and second-best candidates.
+  final double margin;
+
+  /// Strong matches can be shown immediately. Possible matches require
+  /// temporal confirmation; unknown matches are never presented as words.
+  final BisindoMatchQuality matchQuality;
+
+  /// Ranked prototype candidates, sorted by smallest distance first.
   final List<BisindoCandidate> candidates;
 
   const BisindoPrediction({
@@ -46,9 +62,38 @@ class BisindoPrediction {
     required this.confidence,
     required this.distance,
     required this.candidates,
+    this.isRecognized = true,
+    this.guidance,
+    this.margin = 0,
+    this.matchQuality = BisindoMatchQuality.possible,
   });
 
-  /// Canonical 8 HajiCare BISINDO classes in exact prototype order:
+  BisindoPrediction copyWith({
+    int? classId,
+    String? label,
+    double? confidence,
+    double? distance,
+    List<BisindoCandidate>? candidates,
+    bool? isRecognized,
+    String? guidance,
+    double? margin,
+    BisindoMatchQuality? matchQuality,
+  }) {
+    return BisindoPrediction(
+      classId: classId ?? this.classId,
+      label: label ?? this.label,
+      confidence: confidence ?? this.confidence,
+      distance: distance ?? this.distance,
+      candidates: candidates ?? this.candidates,
+      isRecognized: isRecognized ?? this.isRecognized,
+      guidance: guidance ?? this.guidance,
+      margin: margin ?? this.margin,
+      matchQuality: matchQuality ?? this.matchQuality,
+    );
+  }
+
+  /// Classes currently bundled with HajiCare. Runtime loading is dynamic, so a
+  /// complete prototype asset can add classes without changing application code.
   /// index 0: Air
   /// index 1: Saya
   /// index 2: Terima kasih
@@ -85,6 +130,10 @@ class BisindoPrediction {
     'label': label,
     'confidence': confidence,
     'distance': distance,
+    'isRecognized': isRecognized,
+    'guidance': guidance,
+    'margin': margin,
+    'matchQuality': matchQuality.name,
     'candidates': candidates.map((c) => c.toJson()).toList(),
   };
 

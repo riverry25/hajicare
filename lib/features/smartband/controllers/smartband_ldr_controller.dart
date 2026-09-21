@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/services/app_alert_service.dart';
@@ -29,6 +30,7 @@ class SmartbandLdrController extends GetxController {
 
   // Flag untuk mendeteksi transisi perubahan status SAFE -> FIRE
   bool _previousFlameAlertTriggered = false;
+  int _connectionGeneration = 0;
 
   // Relative time updater tickers
   Timer? _tickerTimer;
@@ -227,9 +229,11 @@ class SmartbandLdrController extends GetxController {
   /// Start BLE Scanning and Connection flow
   Future<void> connectSmartband() async {
     if (isBusy) return;
+    final generation = ++_connectionGeneration;
 
     // 1. Check if Bluetooth is enabled
     final isEnabled = await _bleService.isBluetoothEnabled();
+    if (isClosed || generation != _connectionGeneration) return;
     if (!isEnabled) {
       AppAlert.warning(
         Get.context,
@@ -251,6 +255,7 @@ class SmartbandLdrController extends GetxController {
       final device = await _bleService.scanForDevice(
         timeout: const Duration(seconds: 15),
       );
+      if (isClosed || generation != _connectionGeneration) return;
 
       // 4. Update state to Connecting
       connectionState.value = SmartbandConnectionState.connecting;
@@ -262,6 +267,7 @@ class SmartbandLdrController extends GetxController {
       // 5. Connect, discover service & characteristic, subscribe
       await _bleService.connectToDevice(device);
     } catch (e) {
+      if (isClosed || generation != _connectionGeneration) return;
       connectionState.value = SmartbandConnectionState.disconnected;
       statusMessage.value = 'Gelang belum terhubung';
       receivingData.value = false;
@@ -292,8 +298,9 @@ class SmartbandLdrController extends GetxController {
 
   @override
   void onClose() {
+    _connectionGeneration++;
     _tickerTimer?.cancel();
-    _bleService.dispose();
+    unawaited(_bleService.dispose());
     super.onClose();
   }
 }

@@ -247,6 +247,7 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
             // Nama Room
             TextFormField(
               controller: _nameController,
+              inputFormatters: [LengthLimitingTextInputFormatter(100)],
               enabled: !_isSaving,
               style: TextStyle(
                 color: headingColor,
@@ -260,6 +261,8 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
               ),
               validator: (v) => (v == null || v.trim().isEmpty)
                   ? 'Nama room tidak boleh kosong'
+                  : v.trim().length > 100
+                  ? 'Nama room maksimal 100 karakter'
                   : null,
             ),
             const SizedBox(height: 24),
@@ -271,6 +274,7 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
                 Expanded(
                   child: TextFormField(
                     controller: _maktabController,
+                    inputFormatters: [LengthLimitingTextInputFormatter(60)],
                     enabled: !_isSaving,
                     style: TextStyle(
                       color: headingColor,
@@ -288,6 +292,7 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
                 Expanded(
                   child: TextFormField(
                     controller: _kloterController,
+                    inputFormatters: [LengthLimitingTextInputFormatter(60)],
                     enabled: !_isSaving,
                     style: TextStyle(
                       color: headingColor,
@@ -336,6 +341,9 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
                 final n = double.tryParse(v.trim());
                 if (n == null || n <= 0) {
                   return 'Masukkan angka positif lebih dari 0';
+                }
+                if (n > 10000) {
+                  return 'Radius aman maksimal 10.000 meter';
                 }
                 return null;
               },

@@ -283,6 +283,14 @@ class AdminRoomController extends GetxController {
       );
       return;
     }
+    if (trimmed.length > 100) {
+      AppAlert.warning(
+        context,
+        title: 'Nama Terlalu Panjang',
+        message: 'Nama rombongan maksimal 100 karakter.',
+      );
+      return;
+    }
 
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
@@ -329,6 +337,14 @@ class AdminRoomController extends GetxController {
         context,
         title: 'Perhatian',
         message: 'Isi nama rombongan terlebih dahulu.',
+      );
+      return;
+    }
+    if (trimmed.length > 100) {
+      AppAlert.warning(
+        context,
+        title: 'Nama Terlalu Panjang',
+        message: 'Nama rombongan maksimal 100 karakter.',
       );
       return;
     }

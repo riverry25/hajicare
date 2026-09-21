@@ -30,9 +30,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
   @override
   void initState() {
     super.initState();
-    controller = Get.isRegistered<AdminRoomController>()
-        ? Get.find<AdminRoomController>()
-        : Get.put(AdminRoomController());
+    controller = Get.find<AdminRoomController>();
     _searchController = TextEditingController(
       text: controller.searchQuery.value,
     );
@@ -1036,6 +1034,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                   const SizedBox(height: 6),
                   TextField(
                     controller: textCtrl,
+                    inputFormatters: [LengthLimitingTextInputFormatter(100)],
                     autofocus: true,
                     style: AppTypography.bodyMedium.copyWith(
                       color: headingColor,
@@ -1266,6 +1265,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
               const SizedBox(height: AppSpacing.lg),
               TextField(
                 controller: textCtrl,
+                inputFormatters: [LengthLimitingTextInputFormatter(100)],
                 autofocus: true,
                 style: AppTypography.bodyMedium.copyWith(color: headingColor),
                 decoration: InputDecoration(

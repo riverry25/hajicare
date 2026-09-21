@@ -33,6 +33,22 @@
       ]
     },
     {
+      "collectionGroup": "invitations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "roomId", "order": "ASCENDING"},
+        {"fieldPath": "status", "order": "ASCENDING"}
+      ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "normalizedEmail", "order": "ASCENDING"},
+        {"fieldPath": "role", "order": "ASCENDING"}
+      ]
+    },
+    {
       "collectionGroup": "users",
       "queryScope": "COLLECTION",
       "fields": [
@@ -48,6 +64,23 @@
           "fieldPath": "activeRoomId",
           "order": "ASCENDING"
         }
+      ]
+    },
+    {
+      "collectionGroup": "sos_events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "status", "order": "ASCENDING"},
+        {"fieldPath": "timestamp", "order": "DESCENDING"}
+      ]
+    },
+    {
+      "collectionGroup": "sos_events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "roomId", "order": "ASCENDING"},
+        {"fieldPath": "status", "order": "ASCENDING"},
+        {"fieldPath": "timestamp", "order": "DESCENDING"}
       ]
     }
   ],

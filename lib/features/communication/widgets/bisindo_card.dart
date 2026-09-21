@@ -1,5 +1,6 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -33,9 +34,7 @@ class _BisindoCardState extends State<BisindoCard> {
   @override
   void initState() {
     super.initState();
-    _inferenceService = Get.isRegistered<BisindoInferenceService>()
-        ? Get.find<BisindoInferenceService>()
-        : Get.put(BisindoInferenceService(), permanent: true);
+    _inferenceService = BisindoInferenceService();
 
     _streamBuffer = LandmarkStreamBuffer(
       inferenceService: _inferenceService,
@@ -48,9 +47,10 @@ class _BisindoCardState extends State<BisindoCard> {
         }
       },
       onError: (err) {
+        debugPrint('[BISINDO_CARD] Inference error: $err');
         if (mounted) {
           setState(() {
-            _errorMessage = 'Inference error: $err';
+            _errorMessage = 'Gerakan belum dapat diproses. Silakan coba lagi.';
           });
         }
       },
@@ -82,9 +82,14 @@ class _BisindoCardState extends State<BisindoCard> {
   void dispose() {
     _cameraService.errorNotifier.removeListener(_onCameraErrorChanged);
     _cameraService.isStreamingNotifier.removeListener(_onCameraStateChanged);
-    _cameraService.dispose();
-    _streamBuffer.dispose();
+    unawaited(_disposePipeline());
     super.dispose();
+  }
+
+  Future<void> _disposePipeline() async {
+    await _cameraService.dispose();
+    _streamBuffer.dispose();
+    await _inferenceService.dispose();
   }
 
   Future<void> _initModel() async {
@@ -123,6 +128,21 @@ class _BisindoCardState extends State<BisindoCard> {
         _isStartingCamera = true;
         _errorMessage = null;
       });
+
+      var permission = await _cameraService.checkPermission();
+      if (permission != 'granted') {
+        permission = await _cameraService.requestPermission();
+      }
+      if (permission != 'granted') {
+        if (mounted) {
+          setState(() {
+            _isStartingCamera = false;
+            _errorMessage =
+                'Izinkan akses kamera agar penerjemah BISINDO dapat digunakan.';
+          });
+        }
+        return;
+      }
 
       final success = await _cameraService.startCamera();
       if (mounted) {
@@ -166,6 +186,7 @@ class _BisindoCardState extends State<BisindoCard> {
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
     final isCameraActive = _cameraService.isCameraActive;
+    final isRecognitionConfirmed = _latestPrediction?.isRecognized == true;
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.lg),
@@ -331,7 +352,9 @@ class _BisindoCardState extends State<BisindoCard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'HASIL DETEKSI ISYARAT',
+                          isRecognitionConfirmed
+                              ? 'HASIL DETEKSI ISYARAT'
+                              : 'GERAKAN BELUM DIKENALI',
                           style: AppTypography.captionSmall.copyWith(
                             color: AppColors.goldPrimary,
                             fontWeight: FontWeight.w700,
@@ -341,7 +364,9 @@ class _BisindoCardState extends State<BisindoCard> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          _latestPrediction!.label,
+                          isRecognitionConfirmed
+                              ? _latestPrediction!.label
+                              : 'Silakan ulangi perlahan',
                           style: AppTypography.displayMedium.copyWith(
                             color: AppColors.textHeadingColor(context),
                             fontWeight: FontWeight.w900,
@@ -351,60 +376,36 @@ class _BisindoCardState extends State<BisindoCard> {
                       ],
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.goldPrimary,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                    ),
-                    child: Text(
-                      '${(_latestPrediction!.confidence * 100).toStringAsFixed(0)}%',
-                      style: AppTypography.titleMedium.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
+                  if (isRecognitionConfirmed)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.goldPrimary,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      child: Text(
+                        'Stabil',
+                        style: AppTypography.titleMedium.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
 
-            // Top candidates chips
-            Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              children: _latestPrediction!.candidates.take(4).map((c) {
-                final isTop = c.classId == _latestPrediction!.classId;
-                return Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isTop
-                        ? AppColors.goldPrimary.withValues(alpha: 0.15)
-                        : (isDark
-                              ? AppColors.darkSurfaceContainer
-                              : AppColors.canvasCream),
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                  child: Text(
-                    '${c.label} (${(c.confidence * 100).toStringAsFixed(0)}%)',
-                    style: AppTypography.captionSmall.copyWith(
-                      color: isTop
-                          ? AppColors.goldPrimary
-                          : AppColors.textMuted,
-                      fontWeight: isTop ? FontWeight.w700 : FontWeight.w500,
-                      fontSize: 10,
-                    ),
-                  ),
-                );
-              }).toList(),
+            Text(
+              _latestPrediction!.guidance ??
+                  'Pastikan bahu dan tangan terlihat di dalam kamera.',
+              style: AppTypography.captionSmall.copyWith(
+                color: AppColors.textMuted,
+              ),
             ),
             const SizedBox(height: AppSpacing.md),
           ],
@@ -483,10 +484,7 @@ class _BisindoCardState extends State<BisindoCard> {
                         color: AppColors.goldPrimary,
                       ),
                     )
-                  : const Icon(
-                      Icons.play_circle_outline_rounded,
-                      size: 16,
-                    ),
+                  : const Icon(Icons.play_circle_outline_rounded, size: 16),
               label: Text(
                 _isTesting
                     ? 'Menjalankan Self-Test...'

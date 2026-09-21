@@ -1,0 +1,20 @@
+{
+  "name": "hajicare-functions",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "check": "node --check index.js && node --check src/authorization.js && node --check src/errors.js && node --check src/notification_operations.js && node --check src/profile_operations.js && node --check src/room_operations.js && node --check src/sos_operations.js && node --check src/validators.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "firebase-admin": "14.4.0",
+    "firebase-functions": "7.4.0"
+  },
+  "overrides": {
+    "uuid": "11.1.1"
+  }
+}

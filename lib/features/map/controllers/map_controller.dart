@@ -84,7 +84,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   StreamSubscription<Position?>? _statePositionSub;
   StreamSubscription<List<RoomMemberModel>>? _roomMembersSub;
   Worker? _roomWorker;
+  Worker? _safeRadiusWorker;
   AnimationController? _moveAnimCtrl;
+  int _lifecycleGeneration = 0;
 
   // Realtime location throttle trackers (Foreground-only, dual-gate)
   DateTime? _lastFirestoreWriteTime;
@@ -246,7 +248,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     if (Get.isRegistered<HajiCareController>()) {
       final state = Get.find<HajiCareController>();
       safeRadiusMeters.value = state.safeRadiusMeters.value;
-      ever<double>(state.safeRadiusMeters, (r) {
+      _safeRadiusWorker = ever<double>(state.safeRadiusMeters, (r) {
         safeRadiusMeters.value = r;
       });
       _roomWorker = ever<String?>(state.activeRoomId, (roomId) {
@@ -406,6 +408,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   // ── GPS AUTO-START & FOREGROUND STREAMING ──────────────────────────────────
 
   Future<void> _autoStartGps() async {
+    final generation = _lifecycleGeneration;
     isLocationLoading.value = true;
     locationError.value = null;
 
@@ -422,6 +425,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (isClosed || generation != _lifecycleGeneration) return;
       if (!serviceEnabled) {
         locationError.value = 'Lokasi ponsel belum aktif';
         isLocationLoading.value = false;
@@ -436,8 +440,10 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       }
 
       var permission = await Geolocator.checkPermission();
+      if (isClosed || generation != _lifecycleGeneration) return;
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
+        if (isClosed || generation != _lifecycleGeneration) return;
         if (permission == LocationPermission.denied) {
           locationError.value = 'Izin lokasi belum diberikan';
           isLocationLoading.value = false;
@@ -477,6 +483,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
           timeLimit: Duration(seconds: 10),
         ),
       );
+      if (isClosed || generation != _lifecycleGeneration) return;
 
       if (Get.isRegistered<HajiCareController>()) {
         final state = Get.find<HajiCareController>();
@@ -568,6 +575,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     if (!_initialMoveDone) {
       _initialMoveDone = true;
       Future.delayed(const Duration(milliseconds: 300), () {
+        if (isClosed) return;
         // Defer to post-frame to avoid MapControllerImpl notifications during build
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (isMapAttached) animatedMove(newCoord, 16.5);
@@ -1264,12 +1272,14 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
   @override
   void onClose() {
+    _lifecycleGeneration++;
     _searchDebounceTimer?.cancel();
     _moveAnimCtrl?.dispose();
     _nativePositionSub?.cancel();
     _statePositionSub?.cancel();
     _roomMembersSub?.cancel();
     _roomWorker?.dispose();
+    _safeRadiusWorker?.dispose();
     _poiRequestId++;
     _poiService.dispose();
     flutterMapController.dispose();

@@ -3,9 +3,11 @@ import 'package:get/get.dart';
 /// Controller managing the dashboard navigation tabs and selected jamaah for pendamping.
 class DashboardController extends GetxController {
   final currentIndex = 0.obs;
+  final visitedTabs = <int>{0}.obs;
   final selectedJamaahIndex = 0.obs;
 
   void changeTab(int index) {
+    visitedTabs.add(index);
     currentIndex.value = index;
   }
 

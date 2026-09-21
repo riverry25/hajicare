@@ -18,6 +18,8 @@ class BisindoCameraLandmarkService {
 
   StreamSubscription<dynamic>? _eventSubscription;
   bool _isCameraActive = false;
+  bool _isDisposed = false;
+  int _generation = 0;
   String? _lastError;
   int _receivedFramesCount = 0;
 
@@ -59,11 +61,16 @@ class BisindoCameraLandmarkService {
 
   /// Starts the native Android camera stream and subscribes to MediaPipe landmark events.
   Future<bool> startCamera() async {
+    if (_isDisposed) return false;
     if (_isCameraActive) return true;
+    final generation = ++_generation;
 
     try {
       _lastError = null;
       errorNotifier.value = null;
+      streamBuffer.clear();
+      _receivedFramesCount = 0;
+      framesCountNotifier.value = 0;
 
       // 1. Subscribe to landmark stream
       _eventSubscription = _eventChannel.receiveBroadcastStream().listen(
@@ -76,16 +83,39 @@ class BisindoCameraLandmarkService {
       final bool? success = await _methodChannel.invokeMethod<bool>(
         'startCamera',
       );
+      if (_isDisposed || generation != _generation) {
+        await _eventSubscription?.cancel();
+        _eventSubscription = null;
+        if (success == true) {
+          try {
+            await _methodChannel.invokeMethod<bool>('stopCamera');
+          } catch (_) {}
+        }
+        return false;
+      }
       _isCameraActive = success == true;
       isStreamingNotifier.value = _isCameraActive;
+
+      if (!_isCameraActive) {
+        await _eventSubscription?.cancel();
+        _eventSubscription = null;
+        _lastError = 'Kamera belum dapat digunakan. Silakan coba lagi.';
+        errorNotifier.value = _lastError;
+      }
 
       debugPrint('[BISINDO_CAMERA] started');
       return _isCameraActive;
     } catch (e) {
       _isCameraActive = false;
-      isStreamingNotifier.value = false;
-      _lastError = 'Gagal memulai kamera: $e';
-      errorNotifier.value = _lastError;
+      if (!_isDisposed && generation == _generation) {
+        isStreamingNotifier.value = false;
+      }
+      await _eventSubscription?.cancel();
+      _eventSubscription = null;
+      _lastError = 'Kamera belum dapat digunakan. Silakan coba lagi.';
+      if (!_isDisposed && generation == _generation) {
+        errorNotifier.value = _lastError;
+      }
       debugPrint('[BISINDO_CAMERA] startCamera error: $e');
       return false;
     }
@@ -93,15 +123,23 @@ class BisindoCameraLandmarkService {
 
   /// Stops the native camera stream and unbinds CameraX.
   Future<void> stopCamera() async {
-    if (!_isCameraActive) return;
-
+    final generation = ++_generation;
     try {
       await _eventSubscription?.cancel();
       _eventSubscription = null;
 
-      await _methodChannel.invokeMethod<bool>('stopCamera');
+      if (_isCameraActive) {
+        await _methodChannel.invokeMethod<bool>('stopCamera');
+      }
       _isCameraActive = false;
-      isStreamingNotifier.value = false;
+      if (!_isDisposed && generation == _generation) {
+        isStreamingNotifier.value = false;
+      }
+      streamBuffer.clear();
+      _receivedFramesCount = 0;
+      if (!_isDisposed && generation == _generation) {
+        framesCountNotifier.value = 0;
+      }
       debugPrint('[BISINDO_CAMERA] camera stopped');
     } catch (e) {
       debugPrint('[BISINDO_CAMERA] stopCamera error: $e');
@@ -110,6 +148,7 @@ class BisindoCameraLandmarkService {
 
   /// Handles incoming landmark frames from native Android MediaPipe.
   void _onLandmarkEvent(dynamic event) {
+    if (_isDisposed) return;
     if (event is! Map) return;
 
     final rawLandmarks = event['landmarks'];
@@ -167,13 +206,25 @@ class BisindoCameraLandmarkService {
   }
 
   void _onStreamError(dynamic error) {
+    if (_isDisposed) return;
     _lastError = error.toString();
     errorNotifier.value = _lastError;
     debugPrint('[BISINDO_CAMERA] Stream error: $error');
   }
 
-  void dispose() {
-    stopCamera();
+  Future<void> dispose() async {
+    if (_isDisposed) return;
+    _isDisposed = true;
+    _generation++;
+    await _eventSubscription?.cancel();
+    _eventSubscription = null;
+    if (_isCameraActive) {
+      try {
+        await _methodChannel.invokeMethod<bool>('stopCamera');
+      } catch (_) {}
+    }
+    _isCameraActive = false;
+    streamBuffer.clear();
     isStreamingNotifier.dispose();
     errorNotifier.dispose();
     framesCountNotifier.dispose();

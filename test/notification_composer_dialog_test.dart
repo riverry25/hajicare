@@ -99,9 +99,7 @@ void main() {
   testWidgets('tombol tetap muat pada layar sempit dan teks besar', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      buildApp(size: const Size(300, 520), textScale: 1.6),
-    );
+    await tester.pumpWidget(buildApp(size: const Size(300, 520), textScale: 2));
     await tester.pumpAndSettle();
 
     final sendRect = tester.getRect(

@@ -15,9 +15,7 @@ class CommunicationScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.isRegistered<CommunicationController>()
-        ? Get.find<CommunicationController>()
-        : Get.put(CommunicationController());
+    final controller = Get.find<CommunicationController>();
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldColor(context),

@@ -86,9 +86,17 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
     final kloter = _kloterCtrl.text.trim();
     final radius = double.tryParse(_radiusCtrl.text.trim());
 
-    if (radius == null || radius <= 0) {
+    if (name.length > 100 || maktab.length > 60 || kloter.length > 60) {
       setState(
-        () => _inputError = 'Jarak aman harus berupa angka lebih dari 0 meter.',
+        () => _inputError =
+            'Nama maksimal 100 karakter; maktab dan kloter maksimal 60 karakter.',
+      );
+      return;
+    }
+
+    if (radius == null || radius <= 0 || radius > 10000) {
+      setState(
+        () => _inputError = 'Jarak aman harus antara 1 dan 10.000 meter.',
       );
       return;
     }
@@ -437,6 +445,9 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
                         hint: 'Contoh: Rombongan Maktab 10',
                         controller: _nameCtrl,
                         prefixIcon: Icons.meeting_room_outlined,
+                        inputFormatters: [
+                          LengthLimitingTextInputFormatter(100),
+                        ],
                         textCapitalization: TextCapitalization.words,
                         onChanged: (_) {
                           if (_inputError != null) {
@@ -456,6 +467,9 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
                               hint: '10 / Maktab 10',
                               controller: _maktabCtrl,
                               prefixIcon: Icons.apartment_rounded,
+                              inputFormatters: [
+                                LengthLimitingTextInputFormatter(60),
+                              ],
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -465,6 +479,9 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
                               hint: '14 JKS',
                               controller: _kloterCtrl,
                               prefixIcon: Icons.flight_takeoff_rounded,
+                              inputFormatters: [
+                                LengthLimitingTextInputFormatter(60),
+                              ],
                             ),
                           ),
                         ],

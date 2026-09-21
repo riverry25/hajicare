@@ -15,8 +15,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
 
   @override
   Widget build(BuildContext context) {
-    // Ensure controller is registered if not passed via GetPage binding
-    final ctrl = Get.put(SmartbandLdrController());
+    final ctrl = controller;
     final scaffoldBg = AppColors.scaffoldColor(context);
 
     return Scaffold(

@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hajicare/features/sign_language/models/bisindo_prediction.dart';
 import 'package:hajicare/features/sign_language/services/bisindo_preprocessor.dart';
+import 'package:hajicare/features/sign_language/services/bisindo_inference_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -105,124 +106,138 @@ void main() {
       expect(avgMidY, closeTo(0.0, 1e-4));
     });
 
-    test('Golden Validation: Preprocessing parity matches Python reference pipeline', () {
-      // Deterministic synthetic input [T=50, 543, 3] with non-trivial values
-      const int tFrames = 50;
-      final List<List<List<double>>> input = List.generate(tFrames, (t) {
-        return List.generate(543, (idx) {
-          final x = 0.2 + 0.001 * idx + 0.005 * t;
-          final y = 0.3 + 0.0008 * idx - 0.003 * t;
-          final z = 0.01 * idx;
-          return [x, y, z];
+    test(
+      'Golden Validation: Preprocessing parity matches Python reference pipeline',
+      () {
+        // Deterministic synthetic input [T=50, 543, 3] with non-trivial values
+        const int tFrames = 50;
+        final List<List<List<double>>> input = List.generate(tFrames, (t) {
+          return List.generate(543, (idx) {
+            final x = 0.2 + 0.001 * idx + 0.005 * t;
+            final y = 0.3 + 0.0008 * idx - 0.003 * t;
+            final z = 0.01 * idx;
+            return [x, y, z];
+          });
         });
-      });
 
-      // 1. Compute ground-truth Python reference manually step-by-step
-      // The 27 indices in the 543 holistic format
-      const holistic27 = [
-        0, 2, 5, 11, 12, 13, 14, // Body 7
-        501, 505, 506, 509, 510, 513, 514, 517, 518, 521, // Left hand 10
-        522, 526, 527, 530, 531, 534, 535, 538, 539, 542, // Right hand 10
-      ];
+        // 1. Compute ground-truth Python reference manually step-by-step
+        // The 27 indices in the 543 holistic format
+        const holistic27 = [
+          0, 2, 5, 11, 12, 13, 14, // Body 7
+          501, 505, 506, 509, 510, 513, 514, 517, 518, 521, // Left hand 10
+          522, 526, 527, 530, 531, 534, 535, 538, 539, 542, // Right hand 10
+        ];
 
-      // Extract 27 keypoints [T, 27, 2]
-      final ref27 = List.generate(tFrames, (t) {
-        return List.generate(27, (v) {
-          final hIdx = holistic27[v];
-          return [input[t][hIdx][0], input[t][hIdx][1]];
+        // Extract 27 keypoints [T, 27, 2]
+        final ref27 = List.generate(tFrames, (t) {
+          return List.generate(27, (v) {
+            final hIdx = holistic27[v];
+            return [input[t][hIdx][0], input[t][hIdx][1]];
+          });
         });
-      });
 
-      // Compute clip-level center and scale (left shoulder=11->index 3, right shoulder=12->index 4)
-      double sumMidX = 0.0;
-      double sumMidY = 0.0;
-      double sumDist = 0.0;
+        // Compute clip-level center and scale (left shoulder=11->index 3, right shoulder=12->index 4)
+        double sumMidX = 0.0;
+        double sumMidY = 0.0;
+        double sumDist = 0.0;
 
-      for (int t = 0; t < tFrames; t++) {
-        final p1 = ref27[t][3]; // left shoulder
-        final p2 = ref27[t][4]; // right shoulder
-        final midX = (p1[0] + p2[0]) / 2.0;
-        final midY = (p1[1] + p2[1]) / 2.0;
-        final dx = p1[0] - p2[0];
-        final dy = p1[1] - p2[1];
-        final dist = math.sqrt(dx * dx + dy * dy);
+        for (int t = 0; t < tFrames; t++) {
+          final p1 = ref27[t][3]; // left shoulder
+          final p2 = ref27[t][4]; // right shoulder
+          final midX = (p1[0] + p2[0]) / 2.0;
+          final midY = (p1[1] + p2[1]) / 2.0;
+          final dx = p1[0] - p2[0];
+          final dy = p1[1] - p2[1];
+          final dist = math.sqrt(dx * dx + dy * dy);
 
-        sumMidX += midX;
-        sumMidY += midY;
-        sumDist += dist;
-      }
-
-      final refCenterX = sumMidX / tFrames;
-      final refCenterY = sumMidY / tFrames;
-      final refMeanDist = sumDist / tFrames;
-      final refScale = 1.0 / refMeanDist;
-
-      // Build expected [1, 2, 100, 27] Float32 tensor
-      final expectedTensor = Float32List(1 * 2 * 100 * 27);
-      for (int t = 0; t < tFrames; t++) {
-        for (int v = 0; v < 27; v++) {
-          final normX = (ref27[t][v][0] - refCenterX) * refScale;
-          final normY = (ref27[t][v][1] - refCenterY) * refScale;
-
-          final xIdx = (0 * 100 + t) * 27 + v;
-          final yIdx = (1 * 100 + t) * 27 + v;
-
-          expectedTensor[xIdx] = normX;
-          expectedTensor[yIdx] = normY;
+          sumMidX += midX;
+          sumMidY += midY;
+          sumDist += dist;
         }
-      }
 
-      // 2. Run actual Dart BisindoPreprocessor
-      final actualTensor = BisindoPreprocessor.processRawLandmarks(input);
+        final refCenterX = sumMidX / tFrames;
+        final refCenterY = sumMidY / tFrames;
+        final refMeanDist = sumDist / tFrames;
+        final refScale = 1.0 / refMeanDist;
 
-      // 3. Compare shape
-      expect(actualTensor.length, equals(expectedTensor.length));
-      expect(actualTensor.length, equals(5400));
+        // Build expected [1, 2, 100, 27] Float32 tensor
+        final expectedTensor = Float32List(1 * 2 * 100 * 27);
+        for (int t = 0; t < tFrames; t++) {
+          for (int v = 0; v < 27; v++) {
+            final normX = (ref27[t][v][0] - refCenterX) * refScale;
+            final normY = (ref27[t][v][1] - refCenterY) * refScale;
 
-      // 4. Compare statistics: min, max, mean, max absolute difference
-      double refMin = expectedTensor[0];
-      double refMax = expectedTensor[0];
-      double refSum = 0.0;
+            final xIdx = (0 * 100 + t) * 27 + v;
+            final yIdx = (1 * 100 + t) * 27 + v;
 
-      double actMin = actualTensor[0];
-      double actMax = actualTensor[0];
-      double actSum = 0.0;
-
-      double maxAbsDiff = 0.0;
-
-      for (int i = 0; i < 5400; i++) {
-        final refVal = expectedTensor[i];
-        final actVal = actualTensor[i];
-
-        if (refVal < refMin) refMin = refVal;
-        if (refVal > refMax) refMax = refVal;
-        refSum += refVal;
-
-        if (actVal < actMin) actMin = actVal;
-        if (actVal > actMax) actMax = actVal;
-        actSum += actVal;
-
-        final diff = (actVal - refVal).abs();
-        if (diff > maxAbsDiff) {
-          maxAbsDiff = diff;
+            expectedTensor[xIdx] = normX;
+            expectedTensor[yIdx] = normY;
+          }
         }
-      }
 
-      final refMean = refSum / 5400;
-      final actMean = actSum / 5400;
+        // 2. Run actual Dart BisindoPreprocessor
+        final actualTensor = BisindoPreprocessor.processRawLandmarks(input);
 
-      // Verify numerical parity
-      expect(maxAbsDiff, lessThan(1e-5), reason: 'Max absolute difference must be negligible');
-      expect(actMin, closeTo(refMin, 1e-5), reason: 'Min values must match');
-      expect(actMax, closeTo(refMax, 1e-5), reason: 'Max values must match');
-      expect(actMean, closeTo(refMean, 1e-5), reason: 'Mean values must match');
+        // 3. Compare shape
+        expect(actualTensor.length, equals(expectedTensor.length));
+        expect(actualTensor.length, equals(5400));
 
-      // Sample index checks
-      expect(actualTensor[0], closeTo(expectedTensor[0], 1e-5));
-      expect(actualTensor[26], closeTo(expectedTensor[26], 1e-5));
-      expect(actualTensor[2700], closeTo(expectedTensor[2700], 1e-5)); // Channel 1, frame 0, kp 0
-      expect(actualTensor[5399], equals(0.0)); // Padded zone
-    });
+        // 4. Compare statistics: min, max, mean, max absolute difference
+        double refMin = expectedTensor[0];
+        double refMax = expectedTensor[0];
+        double refSum = 0.0;
+
+        double actMin = actualTensor[0];
+        double actMax = actualTensor[0];
+        double actSum = 0.0;
+
+        double maxAbsDiff = 0.0;
+
+        for (int i = 0; i < 5400; i++) {
+          final refVal = expectedTensor[i];
+          final actVal = actualTensor[i];
+
+          if (refVal < refMin) refMin = refVal;
+          if (refVal > refMax) refMax = refVal;
+          refSum += refVal;
+
+          if (actVal < actMin) actMin = actVal;
+          if (actVal > actMax) actMax = actVal;
+          actSum += actVal;
+
+          final diff = (actVal - refVal).abs();
+          if (diff > maxAbsDiff) {
+            maxAbsDiff = diff;
+          }
+        }
+
+        final refMean = refSum / 5400;
+        final actMean = actSum / 5400;
+
+        // Verify numerical parity
+        expect(
+          maxAbsDiff,
+          lessThan(1e-5),
+          reason: 'Max absolute difference must be negligible',
+        );
+        expect(actMin, closeTo(refMin, 1e-5), reason: 'Min values must match');
+        expect(actMax, closeTo(refMax, 1e-5), reason: 'Max values must match');
+        expect(
+          actMean,
+          closeTo(refMean, 1e-5),
+          reason: 'Mean values must match',
+        );
+
+        // Sample index checks
+        expect(actualTensor[0], closeTo(expectedTensor[0], 1e-5));
+        expect(actualTensor[26], closeTo(expectedTensor[26], 1e-5));
+        expect(
+          actualTensor[2700],
+          closeTo(expectedTensor[2700], 1e-5),
+        ); // Channel 1, frame 0, kp 0
+        expect(actualTensor[5399], equals(0.0)); // Padded zone
+      },
+    );
   });
 
   group('BISINDO Prototype Assets & Math Tests', () {
@@ -328,6 +343,33 @@ void main() {
       expect(prediction.label, equals('Terima kasih'));
       expect(prediction.distance, equals(0.0));
       expect(prediction.confidence, greaterThan(0.99));
+    });
+
+    test('Rejects distant or ambiguous prototype matches', () {
+      expect(
+        BisindoInferenceService.isReliableMatch(
+          winnerDistance: 13.7,
+          runnerUpDistance: 15.2,
+          nearestPrototypeDistance: 4,
+        ),
+        isFalse,
+      );
+      expect(
+        BisindoInferenceService.isReliableMatch(
+          winnerDistance: 2,
+          runnerUpDistance: 2.05,
+          nearestPrototypeDistance: 8,
+        ),
+        isFalse,
+      );
+      expect(
+        BisindoInferenceService.isReliableMatch(
+          winnerDistance: 2,
+          runnerUpDistance: 3,
+          nearestPrototypeDistance: 8,
+        ),
+        isTrue,
+      );
     });
 
     test('ONNX model asset exists and has valid size', () {
