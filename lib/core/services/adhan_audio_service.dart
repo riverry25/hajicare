@@ -26,15 +26,15 @@ class AdhanAudioService extends GetxService {
   void onInit() {
     super.onInit();
     instance = this;
-    initPlayer();
     AdhanNotificationService.globalStopAdhanCallback = stopAdhan;
     _notificationService.initialize(onStopAdhan: stopAdhan);
   }
 
   @protected
   void initPlayer() {
+    if (_player != null) return;
     try {
-      _player ??= AudioPlayer();
+      _player = AudioPlayer();
       _player?.setReleaseMode(ReleaseMode.stop);
 
       // Listen for completion
@@ -62,6 +62,7 @@ class AdhanAudioService extends GetxService {
   /// Other canonical prayers (Dzuhur, Ashar, Maghrib, Isya) use regular adhan.
   Future<void> playAdhan({required String prayerName}) async {
     try {
+      initPlayer();
       await stopAdhan();
 
       final isFajr =
