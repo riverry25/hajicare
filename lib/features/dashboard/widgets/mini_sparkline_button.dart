@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../core/locales/app_localizations.dart';
 import '../../../core/models/jamaah_data.dart';
 import '../../../core/theme/app_colors.dart';
 
@@ -153,6 +154,9 @@ class _MiniSparklineButtonState extends State<MiniSparklineButton>
                         pulsePhase: _pulseCtrl.value,
                         syncPhase: _isSyncing ? _syncCtrl.value : 0.0,
                         isSyncing: _isSyncing,
+                        syncLabel: context.tr('dashboard.syncShort'),
+                        groupLabel: context.tr('dashboard.groupShort'),
+                        safeLabel: context.tr('dashboard.safe'),
                       ),
                     ),
                   );
@@ -178,6 +182,9 @@ class _SparklineWavePainter extends CustomPainter {
   final double pulsePhase;
   final double syncPhase;
   final bool isSyncing;
+  final String syncLabel;
+  final String groupLabel;
+  final String safeLabel;
 
   const _SparklineWavePainter({
     required this.waveColor,
@@ -186,6 +193,9 @@ class _SparklineWavePainter extends CustomPainter {
     required this.pulsePhase,
     required this.syncPhase,
     required this.isSyncing,
+    required this.syncLabel,
+    required this.groupLabel,
+    required this.safeLabel,
   });
 
   @override
@@ -352,11 +362,11 @@ class _SparklineWavePainter extends CustomPainter {
     String secondaryText;
 
     if (isSyncing) {
-      primaryText = 'Sync';
+      primaryText = syncLabel;
       secondaryText = '...';
     } else if (jamaahList == null || jamaahList!.isEmpty) {
       primaryText = '—';
-      secondaryText = ' Rombongan';
+      secondaryText = ' $groupLabel';
     } else {
       final safeCount = jamaahList!
           .where((j) => j.tier == DistanceTier.aman)
@@ -364,10 +374,10 @@ class _SparklineWavePainter extends CustomPainter {
       final total = jamaahList!.length;
       if (safeCount == total) {
         primaryText = '100%';
-        secondaryText = ' Aman';
+        secondaryText = ' $safeLabel';
       } else {
         primaryText = '$safeCount/$total';
-        secondaryText = ' Aman';
+        secondaryText = ' $safeLabel';
       }
     }
 
@@ -409,5 +419,8 @@ class _SparklineWavePainter extends CustomPainter {
       oldDelegate.pulsePhase != pulsePhase ||
       oldDelegate.syncPhase != syncPhase ||
       oldDelegate.isSyncing != isSyncing ||
+      oldDelegate.syncLabel != syncLabel ||
+      oldDelegate.groupLabel != groupLabel ||
+      oldDelegate.safeLabel != safeLabel ||
       oldDelegate.jamaahList?.length != jamaahList?.length;
 }

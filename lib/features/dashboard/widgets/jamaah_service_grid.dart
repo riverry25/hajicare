@@ -8,7 +8,7 @@ import '../../../../core/state/app_settings_controller.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
+import '../presentation/dashboard_typography.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../controllers/dashboard_controller.dart';
 
@@ -66,15 +66,15 @@ class JamaahServiceGrid extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Gelang Pintar Haji',
-                        style: AppTypography.titleMedium.copyWith(
+                        context.tr('dashboard.connectBandTitle'),
+                        style: DashboardTypography.titleMedium.copyWith(
                           color: headingColor,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
-                        'Buka halaman sensor untuk memeriksa koneksi gelang',
-                        style: AppTypography.caption.copyWith(
+                        context.tr('dashboard.connectBandSub'),
+                        style: DashboardTypography.caption.copyWith(
                           color: AppColors.statusSafe,
                           fontWeight: FontWeight.w600,
                         ),
@@ -128,7 +128,7 @@ class JamaahServiceGrid extends StatelessWidget {
                   Get.toNamed(AppRoutes.smartbandLdr);
                 },
                 icon: const Icon(Icons.bluetooth_searching_rounded),
-                label: const Text('Hubungkan Gelang'),
+                label: Text(context.tr('dashboard.connectBand')),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryContainer,
                   foregroundColor: AppColors.surfaceWhite,
@@ -153,8 +153,8 @@ class JamaahServiceGrid extends StatelessWidget {
                   color: AppColors.accentGoldStar,
                 ),
                 label: Text(
-                  'Buka Detail Sensor',
-                  style: AppTypography.button.copyWith(
+                  context.tr('dashboard.openSensorDetails'),
+                  style: DashboardTypography.button.copyWith(
                     color: isDark
                         ? AppColors.darkTextHeading
                         : AppColors.espressoDark,
@@ -211,7 +211,7 @@ class JamaahServiceGrid extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             value,
-            style: AppTypography.titleMedium.copyWith(
+            style: DashboardTypography.titleMedium.copyWith(
               color: headingColor,
               fontWeight: FontWeight.w700,
             ),
@@ -219,7 +219,7 @@ class JamaahServiceGrid extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             label,
-            style: AppTypography.caption.copyWith(color: bodyColor),
+            style: DashboardTypography.caption.copyWith(color: bodyColor),
             textAlign: TextAlign.center,
           ),
         ],
@@ -231,8 +231,7 @@ class JamaahServiceGrid extends StatelessWidget {
     AppAlert.info(
       context,
       title: context.tr('dashboard.contactCompanion'),
-      message:
-          'Nomor petugas belum tersimpan di aplikasi. Hubungi pendamping rombongan Anda. Jika keadaan mendesak, gunakan tombol SOS.',
+      message: context.tr('dashboard.officerPhoneMissing'),
     );
   }
 
@@ -298,7 +297,7 @@ class JamaahServiceGrid extends StatelessWidget {
             Expanded(
               child: Text(
                 context.tr('independentServices'),
-                style: AppTypography.titleLarge.copyWith(
+                style: DashboardTypography.titleLarge.copyWith(
                   color: headingColor,
                   fontWeight: FontWeight.bold,
                 ),
@@ -317,7 +316,7 @@ class JamaahServiceGrid extends StatelessWidget {
               ),
               child: Text(
                 context.tr('easyTouch'),
-                style: AppTypography.captionSmall.copyWith(
+                style: DashboardTypography.captionSmall.copyWith(
                   color: isDark ? AppColors.goldLight : AppColors.espressoDark,
                   fontWeight: FontWeight.w700,
                 ),
@@ -403,7 +402,7 @@ class JamaahServiceGrid extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: AppTypography.titleMedium.copyWith(
+                style: DashboardTypography.titleMedium.copyWith(
                   color: headingColor,
                   fontWeight: FontWeight.w700,
                 ),
@@ -413,7 +412,7 @@ class JamaahServiceGrid extends StatelessWidget {
               const SizedBox(height: 3),
               Text(
                 subtitle,
-                style: AppTypography.caption.copyWith(color: bodyColor),
+                style: DashboardTypography.caption.copyWith(color: bodyColor),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),

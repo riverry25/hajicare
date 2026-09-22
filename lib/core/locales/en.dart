@@ -1,4 +1,8 @@
+import 'dashboard_translations.dart';
+
 const Map<String, String> enTranslations = {
+  ...dashboardEnTranslations,
+  ...adminDashboardEnTranslations,
   'aboutApp': 'About the App',
   'aboutDescription':
       'HajiCare is here to accompany your Hajj pilgrimage with technology that is friendly, safe, and easy to use. We are committed to ensuring that every pilgrim, especially the elderly and those with disabilities, can perform their worship comfortably and safely.',

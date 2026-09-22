@@ -1,4 +1,4 @@
-﻿part of 'admin_dashboard_screen.dart';
+part of 'admin_dashboard_screen.dart';
 
 extension _AdminDashboardPendampingSheet on _AdminDashboardHome {
   void _showAllPendampingSheet(
@@ -73,18 +73,22 @@ extension _AdminDashboardPendampingSheet on _AdminDashboardHome {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'PENDAMPING',
-                                  style: AppTypography.titleMedium.copyWith(
-                                    color: headingColor,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.5,
-                                  ),
+                                  context.tr('adminDashboard.companionsUpper'),
+                                  style: DashboardTypography.titleMedium
+                                      .copyWith(
+                                        color: headingColor,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
+                                      ),
                                 ),
                                 Text(
-                                  '${allPendamping.length} petugas aktif terdaftar',
-                                  style: AppTypography.captionSmall.copyWith(
-                                    color: bodyColor.withValues(alpha: 0.7),
-                                  ),
+                                  context.tr('adminDashboard.activeOfficers', {
+                                    'count': allPendamping.length,
+                                  }),
+                                  style: DashboardTypography.captionSmall
+                                      .copyWith(
+                                        color: bodyColor.withValues(alpha: 0.7),
+                                      ),
                                 ),
                               ],
                             ),
@@ -113,10 +117,9 @@ extension _AdminDashboardPendampingSheet on _AdminDashboardHome {
                                   ),
                                   const SizedBox(height: AppSpacing.sm),
                                   Text(
-                                    'Belum ada petugas pendamping terdaftar.',
-                                    style: AppTypography.bodySmall.copyWith(
-                                      color: bodyColor,
-                                    ),
+                                    context.tr('adminDashboard.noCompanion'),
+                                    style: DashboardTypography.bodySmall
+                                        .copyWith(color: bodyColor),
                                   ),
                                 ],
                               ),
@@ -131,7 +134,7 @@ extension _AdminDashboardPendampingSheet on _AdminDashboardHome {
                                 final name =
                                     (p['name'] ??
                                             p['displayName'] ??
-                                            'Pendamping')
+                                            context.tr('room.roleCompanion'))
                                         .toString();
                                 final activeRoomId =
                                     p['activeRoomId'] as String?;
@@ -143,7 +146,10 @@ extension _AdminDashboardPendampingSheet on _AdminDashboardHome {
                                       )
                                     : null;
                                 final roomName =
-                                    room?.name ?? 'Belum mengelola room';
+                                    room?.name ??
+                                    context.tr(
+                                      'adminDashboard.notManagingRoom',
+                                    );
                                 final jamaahCount = activeRoomId != null
                                     ? controller.getRoomJamaahCount(
                                         activeRoomId,
@@ -195,8 +201,9 @@ extension _AdminDashboardPendampingSheet on _AdminDashboardHome {
                                           AppAlert.info(
                                             context,
                                             title: name,
-                                            message:
-                                                'Petugas ini belum ditugaskan ke room manapun.',
+                                            message: context.tr(
+                                              'adminDashboard.officerNoRoom',
+                                            ),
                                           );
                                         }
                                       },
@@ -249,7 +256,7 @@ extension _AdminDashboardPendampingSheet on _AdminDashboardHome {
                                                       Expanded(
                                                         child: Text(
                                                           name,
-                                                          style: AppTypography
+                                                          style: DashboardTypography
                                                               .titleSmall
                                                               .copyWith(
                                                                 color:
@@ -322,9 +329,13 @@ extension _AdminDashboardPendampingSheet on _AdminDashboardHome {
                                                             ),
                                                             Text(
                                                               isOnline
-                                                                  ? 'Aktif'
-                                                                  : 'Offline',
-                                                              style: AppTypography
+                                                                  ? context.tr(
+                                                                      'adminDashboard.active',
+                                                                    )
+                                                                  : context.tr(
+                                                                      'adminDashboard.offline',
+                                                                    ),
+                                                              style: DashboardTypography
                                                                   .captionSmall
                                                                   .copyWith(
                                                                     color:
@@ -348,7 +359,7 @@ extension _AdminDashboardPendampingSheet on _AdminDashboardHome {
                                                   const SizedBox(height: 2),
                                                   Text(
                                                     roomName,
-                                                    style: AppTypography
+                                                    style: DashboardTypography
                                                         .captionSmall
                                                         .copyWith(
                                                           color: bodyColor
@@ -364,8 +375,11 @@ extension _AdminDashboardPendampingSheet on _AdminDashboardHome {
                                                   if (jamaahCount != null) ...[
                                                     const SizedBox(height: 4),
                                                     Text(
-                                                      '$jamaahCount Jamaah dipantau',
-                                                      style: AppTypography
+                                                      context.tr(
+                                                        'adminDashboard.pilgrimsMonitored',
+                                                        {'count': jamaahCount},
+                                                      ),
+                                                      style: DashboardTypography
                                                           .captionSmall
                                                           .copyWith(
                                                             color: primaryColor,

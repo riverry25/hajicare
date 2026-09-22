@@ -36,7 +36,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                 Expanded(
                   child: _buildCategoryItem(
                     context: context,
-                    label: 'Komunikasi Cepat',
+                    label: context.tr('dashboard.quickComm'),
                     icon: Icons.record_voice_over_rounded,
                     bgColor: isDark
                         ? AppColors.darkSurfaceContainer
@@ -50,7 +50,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                 Expanded(
                   child: _buildCategoryItem(
                     context: context,
-                    label: 'Smart Band',
+                    label: context.tr('dashboard.smartband'),
                     icon: Icons.watch_rounded,
                     bgColor: isDark
                         ? AppColors.darkSurfaceContainer
@@ -64,7 +64,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                 Expanded(
                   child: _buildCategoryItem(
                     context: context,
-                    label: 'Pos Medis',
+                    label: context.tr('dashboard.medicalPost'),
                     icon: Icons.local_hospital_rounded,
                     bgColor: isDark
                         ? AppColors.darkSurfaceContainer
@@ -78,7 +78,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                 Expanded(
                   child: _buildCategoryItem(
                     context: context,
-                    label: 'Deteksi Uang',
+                    label: context.tr('dashboard.moneyDetection'),
                     icon: Icons.payments_rounded,
                     bgColor: isDark
                         ? AppColors.darkSurfaceContainer
@@ -110,7 +110,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
           _buildSectionHeader(
             title: context.tr('dashboard.statusAndAlert'),
             subtitle: context.tr('dashboard.gpsMonitoringSub'),
-            actionText: 'Lihat peta',
+            actionText: context.tr('dashboard.viewMap'),
             onAction: () => dashboardCtrl.changeTab(1),
             headingColor: headingColor,
             isDark: isDark,
@@ -124,7 +124,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
           _buildSectionHeader(
             title: context.tr('dashboard.roomAndMaktab'),
             subtitle: context.tr('dashboard.hotelRoomSub'),
-            actionText: 'Kelola',
+            actionText: context.tr('dashboard.manage'),
             onAction: () {
               if (state.activeRoomId.value != null) {
                 Get.toNamed(
@@ -147,7 +147,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
           _buildSectionHeader(
             title: context.tr('dashboard.worshipTips'),
             subtitle: context.tr('dashboard.worshipTipsSub'),
-            actionText: 'Lihat semua',
+            actionText: context.tr('dashboard.viewAll'),
             onAction: () => Get.toNamed(AppRoutes.hajjDua),
             headingColor: headingColor,
             isDark: isDark,
@@ -252,7 +252,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.titleMedium.copyWith(
+                  style: DashboardTypography.titleMedium.copyWith(
                     fontWeight: FontWeight.w800,
                     color: headingColor,
                     fontSize: 15,
@@ -263,7 +263,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.captionSmall.copyWith(
+                  style: DashboardTypography.captionSmall.copyWith(
                     color: isDark
                         ? AppColors.darkTextBody.withValues(alpha: 0.8)
                         : AppColors.textMuted,
@@ -340,9 +340,9 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Peringatan Terpisah!',
-                    style: TextStyle(
+                  Text(
+                    context.tr('dashboard.separationWarning'),
+                    style: const TextStyle(
                       color: AppColors.sosEmergency,
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
@@ -350,7 +350,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    'Jarak Anda jauh dari rombongan. Segera buka peta untuk kembali ke rombongan.',
+                    context.tr('dashboard.separationWarningDesc'),
                     style: TextStyle(
                       color: isDark ? Colors.white70 : const Color(0xFF7A1C24),
                       fontSize: 12,
@@ -422,7 +422,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Kondisi Terkoneksi & Aman',
+                  context.tr('dashboard.connectedSafe'),
                   style: TextStyle(
                     color: headingColor,
                     fontSize: 14,
@@ -431,7 +431,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  'GPS aktif dengan radius aman. Terhubung dengan posko kloter secara real-time.',
+                  context.tr('dashboard.connectedSafeDesc'),
                   style: TextStyle(
                     color: isDark ? AppColors.darkTextBody : AppColors.textBody,
                     fontSize: 12,
@@ -501,7 +501,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Tips Menghadapi Cuaca Panas',
+                  context.tr('dashboard.hotWeatherTip'),
                   style: TextStyle(
                     color: headingColor,
                     fontSize: 14,
@@ -510,7 +510,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Jaga asupan cairan air zam-zam dan gunakan payung peneduh saat beraktivitas di siang hari.',
+                  context.tr('dashboard.hotWeatherTipDesc'),
                   style: TextStyle(
                     color: isDark ? AppColors.darkTextBody : AppColors.textBody,
                     fontSize: 12,
@@ -573,8 +573,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Layanan & Panduan',
-                      style: AppTypography.titleSmall.copyWith(
+                      context.tr('dashboard.servicesAndGuides'),
+                      style: DashboardTypography.titleSmall.copyWith(
                         color: headingColor,
                         fontWeight: FontWeight.w800,
                         fontSize: 14.5,
@@ -582,8 +582,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                     ),
 
                     Text(
-                      'Akses cepat kebutuhan ibadah & bantuan',
-                      style: AppTypography.captionSmall.copyWith(
+                      context.tr('dashboard.servicesAndGuidesSub'),
+                      style: DashboardTypography.captionSmall.copyWith(
                         color: bodyColor.withValues(alpha: 0.7),
                         fontWeight: FontWeight.w700,
                         fontSize: 11,
@@ -609,7 +609,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                     context: context,
                     title: context.tr('dashboard.signLanguage'),
                     value: 'BISINDO',
-                    subtitle: 'Buka Kamera',
+                    subtitle: context.tr('dashboard.openCamera'),
                     icon: Icons.sign_language_rounded,
                     height: 162,
                     isDark: isDark,
@@ -658,8 +658,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   _buildBentoFeatureCard(
                     context: context,
                     title: context.tr('dashboard.scheduleAndPillars'),
-                    value: 'Guide Haji',
-                    subtitle: 'Lihat Rangkaian',
+                    value: context.tr('dashboard.hajjGuide'),
+                    subtitle: context.tr('dashboard.viewSeries'),
                     icon: Icons.event_note_rounded,
                     height: 126,
                     isDark: isDark,
@@ -680,8 +680,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   _buildBentoFeatureCard(
                     context: context,
                     title: context.tr('dashboard.companion'),
-                    value: 'Hubungi',
-                    subtitle: 'Pesan & Lokasi',
+                    value: context.tr('dashboard.contactCompanion'),
+                    subtitle: context.tr('dashboard.messageAndLocation'),
                     icon: Icons.support_agent_rounded,
                     height: 162,
                     isDark: isDark,
@@ -799,7 +799,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
-                  style: AppTypography.captionSmall.copyWith(
+                  style: DashboardTypography.captionSmall.copyWith(
                     color: bodyColor.withValues(alpha: 0.85),
                     fontWeight: FontWeight.w700,
                     fontSize: isTall ? 11.5 : 10.5,
@@ -826,7 +826,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                             subtitle,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: AppTypography.captionSmall.copyWith(
+                            style: DashboardTypography.captionSmall.copyWith(
                               color: accentColor,
                               fontWeight: FontWeight.w800,
                               fontSize: 9.5,
@@ -849,7 +849,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
-                    style: AppTypography.captionSmall.copyWith(
+                    style: DashboardTypography.captionSmall.copyWith(
                       color: accentColor,
                       fontWeight: FontWeight.w700,
                       fontSize: 9.5,
@@ -872,52 +872,46 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
     final scheduleStages = [
       {
-        'day': '8 Dzulhijjah',
-        'title': 'Hari Tarwiyah (Mina)',
+        'day': context.tr('dashboard.stageTarwiyahDay'),
+        'title': context.tr('dashboard.stageTarwiyahTitle'),
         'icon': Icons.location_city_rounded,
         'color': AppColors.emeraldIslamic,
-        'desc':
-            'Mengenakan kain ihram dari Maktab/Hotel dengan niat haji. Bertolak ke Mina untuk bermalam (mabit) dan menunaikan shalat 5 waktu secara qashar tanpa jama\'.',
+        'desc': context.tr('dashboard.stageTarwiyahDesc'),
       },
       {
-        'day': '9 Dzulhijjah',
-        'title': 'Wukuf di Padang Arafah (Puncak Haji)',
+        'day': context.tr('dashboard.stageArafahDay'),
+        'title': context.tr('dashboard.stageArafahTitle'),
         'icon': Icons.wb_sunny_rounded,
         'color': const Color(0xFFE65100),
-        'desc':
-            'Inti ibadah haji. Berada di Arafah mulai tergelincir matahari (Dzuhur) hingga terbenam. Mendengarkan khutbah wukuf, shalat jama\' qashar Dzuhur-Ashar, serta memperbanyak doa dan dzikir.',
+        'desc': context.tr('dashboard.stageArafahDesc'),
       },
       {
-        'day': 'Malam 10 Dzulhijjah',
-        'title': 'Mabit di Muzdalifah',
+        'day': context.tr('dashboard.stageMuzdalifahDay'),
+        'title': context.tr('dashboard.stageMuzdalifahTitle'),
         'icon': Icons.nights_stay_rounded,
         'color': const Color(0xFF5C6BC0),
-        'desc':
-            'Setelah matahari terbenam di Arafah, bertolak ke Muzdalifah. Menunaikan shalat Maghrib-Isya jama\' takhir, mabit minimal melewati tengah malam, dan mengumpulkan kerikil untuk melontar jumrah.',
+        'desc': context.tr('dashboard.stageMuzdalifahDesc'),
       },
       {
-        'day': '10 Dzulhijjah',
-        'title': 'Hari Nahar (Jumrah Aqabah & Tawaf Ifadhah)',
+        'day': context.tr('dashboard.stageNaharDay'),
+        'title': context.tr('dashboard.stageNaharTitle'),
         'icon': Icons.flag_rounded,
         'color': const Color(0xFFC2185B),
-        'desc':
-            'Menuju Mina untuk melempar Jumrah Aqabah (7 kerikil), menyembelih dam/hadyu, mencukur rambut (Tahallul Awal), lalu menuju Makkah untuk Tawaf Ifadhah & Sa\'i (Tahallul Tsani).',
+        'desc': context.tr('dashboard.stageNaharDesc'),
       },
       {
-        'day': '11 - 13 Dzulhijjah',
-        'title': 'Hari Tasyrik di Mina',
+        'day': context.tr('dashboard.stageTasyrikDay'),
+        'title': context.tr('dashboard.stageTasyrikTitle'),
         'icon': Icons.alt_route_rounded,
         'color': const Color(0xFF00897B),
-        'desc':
-            'Bermalam di Mina. Melontar 3 jumrah (Ula, Wustha, Aqabah) setiap hari setelah zawal. Boleh memilih Nafar Awal (kembali ke Makkah tgl 12 sebelum maghrib) atau Nafar Tsani (tgl 13).',
+        'desc': context.tr('dashboard.stageTasyrikDesc'),
       },
       {
-        'day': 'Selesai / Akhir',
-        'title': 'Tawaf Wada\' (Perpisahan)',
+        'day': context.tr('dashboard.stageWadaDay'),
+        'title': context.tr('dashboard.stageWadaTitle'),
         'icon': Icons.mosque_rounded,
         'color': AppColors.secondary,
-        'desc':
-            'Tawaf perpisahan mengelilingi Ka\'bah sebanyak 7 putaran sebelum jamaah meninggalkan tanah suci Makkah kembali ke tanah air atau ke Madinah.',
+        'desc': context.tr('dashboard.stageWadaDesc'),
       },
     ];
 
@@ -972,15 +966,15 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Jadwal & Panduan Rukun Haji',
-                        style: AppTypography.titleMedium.copyWith(
+                        context.tr('dashboard.hajjStagesTitle'),
+                        style: DashboardTypography.titleMedium.copyWith(
                           color: headingColor,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
-                        'Tahapan rangkaian ibadah haji dari hari ke hari',
-                        style: AppTypography.captionSmall.copyWith(
+                        context.tr('dashboard.hajjStagesSub'),
+                        style: DashboardTypography.captionSmall.copyWith(
                           color: bodyColor,
                         ),
                       ),
@@ -1053,7 +1047,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                             Expanded(
                               child: Text(
                                 item['title'] as String,
-                                style: AppTypography.labelLarge.copyWith(
+                                style: DashboardTypography.labelLarge.copyWith(
                                   color: headingColor,
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -1064,7 +1058,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                         const SizedBox(height: 6),
                         Text(
                           item['desc'] as String,
-                          style: AppTypography.bodySmall.copyWith(
+                          style: DashboardTypography.bodySmall.copyWith(
                             color: bodyColor.withValues(alpha: 0.9),
                             height: 1.45,
                           ),
@@ -1091,10 +1085,9 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     if (roomId == null || roomId.isEmpty) {
       AppAlert.error(
         context,
-        title: 'Belum Tergabung Rombongan',
-        message:
-            'Anda perlu bergabung dengan rombongan untuk menghubungi pendamping.',
-        okText: 'Gabung Rombongan',
+        title: context.tr('dashboard.notInRoom'),
+        message: context.tr('dashboard.notInRoomContactDesc'),
+        okText: context.tr('dashboard.joinGroup'),
         onOk: () => Get.toNamed(AppRoutes.joinRoom),
       );
       return;
@@ -1112,9 +1105,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
       if (context.mounted) {
         AppAlert.error(
           context,
-          title: 'Pendamping Belum Dapat Dimuat',
-          message:
-              'Daftar pendamping rombongan belum dapat dimuat. Silakan coba lagi.',
+          title: context.tr('dashboard.companionLoadFailed'),
+          message: context.tr('dashboard.companionLoadFailedDesc'),
         );
       }
       return;
@@ -1125,8 +1117,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
       AppAlert.error(
         context,
         title: context.tr('dashboard.companionUnavailable'),
-        message:
-            'Belum ada pendamping aktif di rombongan Anda. Hubungi pengelola rombongan.',
+        message: context.tr('dashboard.noActiveCompanion'),
       );
       return;
     }
@@ -1158,10 +1149,9 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     if (roomId == null || roomId.isEmpty) {
       AppAlert.error(
         context,
-        title: 'Belum Tergabung Rombongan',
-        message:
-            'Fitur jemput memerlukan rombongan agar pendamping Anda dapat menerima pemberitahuan. Silakan bergabung dengan rombongan terlebih dahulu.',
-        okText: 'Gabung Rombongan',
+        title: context.tr('dashboard.notInRoom'),
+        message: context.tr('dashboard.pickupRequiresRoom'),
+        okText: context.tr('dashboard.joinGroup'),
         onOk: () => Get.toNamed(AppRoutes.joinRoom),
       );
       return;
@@ -1179,9 +1169,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
       if (context.mounted) {
         AppAlert.error(
           context,
-          title: 'Pendamping Belum Dapat Dimuat',
-          message:
-              'Daftar pendamping rombongan belum dapat dimuat. Silakan coba lagi.',
+          title: context.tr('dashboard.companionLoadFailed'),
+          message: context.tr('dashboard.companionLoadFailedDesc'),
         );
       }
       return;
@@ -1192,18 +1181,17 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
       AppAlert.error(
         context,
         title: context.tr('dashboard.companionUnavailable'),
-        message:
-            'Belum ada pendamping aktif di rombongan Anda. Hubungi pengelola rombongan.',
+        message: context.tr('dashboard.noActiveCompanion'),
       );
       return;
     }
 
     final presets = [
-      'Depan Pintu Masjid',
-      'Lobi Hotel / Maktab',
-      'Halte Bus Shalawat',
-      'Area Jamarat',
-      'Terpisah dari Rombongan',
+      context.tr('dashboard.pickupMosqueDoor'),
+      context.tr('dashboard.pickupHotelLobby'),
+      context.tr('dashboard.pickupBusStop'),
+      context.tr('dashboard.pickupJamarat'),
+      context.tr('dashboard.pickupSeparated'),
     ];
     String selectedPreset = presets[0];
     String? selectedPendampingUid;
@@ -1267,15 +1255,15 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Minta Jemput Pendamping',
-                              style: AppTypography.titleMedium.copyWith(
+                              context.tr('dashboard.requestPickup'),
+                              style: DashboardTypography.titleMedium.copyWith(
                                 color: headingColor,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             Text(
-                              'Kirim lokasi ke pendamping yang Anda pilih',
-                              style: AppTypography.captionSmall.copyWith(
+                              context.tr('dashboard.requestPickupSub'),
+                              style: DashboardTypography.captionSmall.copyWith(
                                 color: bodyColor,
                               ),
                             ),
@@ -1289,8 +1277,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   const SizedBox(height: AppSpacing.md),
 
                   Text(
-                    'Pilih Pendamping:',
-                    style: AppTypography.labelLarge.copyWith(
+                    context.tr('dashboard.companionLabel'),
+                    style: DashboardTypography.labelLarge.copyWith(
                       color: headingColor,
                       fontWeight: FontWeight.w700,
                     ),
@@ -1303,7 +1291,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                         ? AppColors.darkSurfaceContainer
                         : AppColors.surfaceWhite,
                     decoration: InputDecoration(
-                      hintText: 'Pilih pendamping tujuan',
+                      hintText: context.tr('dashboard.selectTargetCompanion'),
                       prefixIcon: const Icon(Icons.support_agent_rounded),
                       filled: true,
                       fillColor: isDark
@@ -1370,8 +1358,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                             children: [
                               Text(
                                 myPos != null
-                                    ? 'GPS Terdeteksi'
-                                    : 'GPS Belum Terkunci',
+                                    ? context.tr('dashboard.gpsDetected')
+                                    : context.tr('dashboard.gpsNotLocked'),
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 12.5,
@@ -1382,7 +1370,9 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                               Text(
                                 myPos != null
                                     ? '${myPos.latitude.toStringAsFixed(5)}, ${myPos.longitude.toStringAsFixed(5)}'
-                                    : 'Pastikan izin lokasi dan GPS ponsel Anda aktif.',
+                                    : context.tr(
+                                        'dashboard.enableLocationPermission',
+                                      ),
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: bodyColor.withValues(alpha: 0.8),
@@ -1398,8 +1388,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
                   // Quick preset chips
                   Text(
-                    'Pilih Patokan Lokasi:',
-                    style: AppTypography.labelLarge.copyWith(
+                    context.tr('dashboard.locationReference'),
+                    style: DashboardTypography.labelLarge.copyWith(
                       color: headingColor,
                       fontWeight: FontWeight.w700,
                     ),
@@ -1443,8 +1433,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
                   // Notes TextField
                   Text(
-                    'Detail Patokan / Catatan:',
-                    style: AppTypography.labelLarge.copyWith(
+                    context.tr('dashboard.locationNotes'),
+                    style: DashboardTypography.labelLarge.copyWith(
                       color: headingColor,
                       fontWeight: FontWeight.w700,
                     ),
@@ -1454,8 +1444,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                     controller: noteController,
                     maxLines: 2,
                     decoration: InputDecoration(
-                      hintText:
-                          'Contoh: Di dekat Gate 1, mengenakan syal hijau...',
+                      hintText: context.tr('dashboard.locationNotesHint'),
                       hintStyle: TextStyle(
                         fontSize: 12.5,
                         color: bodyColor.withValues(alpha: 0.5),
@@ -1505,8 +1494,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                             : const Icon(Icons.hail_rounded),
                         label: Text(
                           isSending.value
-                              ? 'Mengirim Permintaan...'
-                              : 'Kirim Permintaan Jemput',
+                              ? context.tr('dashboard.sendingRequest')
+                              : context.tr('dashboard.sendPickupRequest'),
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 14.5,
@@ -1520,7 +1509,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                 final noteText = noteController.text.trim();
                                 final finalNote = noteText.isNotEmpty
                                     ? noteText
-                                    : 'Meminta bantuan penjemputan segera';
+                                    : context.tr('dashboard.pickupDefaultNote');
 
                                 try {
                                   final recipientName =
@@ -1538,18 +1527,26 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                     Get.back();
                                     AppAlert.success(
                                       context,
-                                      title: 'Permintaan Terkirim!',
-                                      message:
-                                          '${selectedPendampingName ?? recipientName} sudah menerima pemberitahuan dan lokasi penjemputan Anda.',
+                                      title: context.tr(
+                                        'dashboard.requestSent',
+                                      ),
+                                      message: context
+                                          .tr('dashboard.requestSentDesc', {
+                                            'name':
+                                                selectedPendampingName ??
+                                                recipientName,
+                                          }),
                                     );
                                   }
                                 } catch (e) {
                                   if (context.mounted) {
                                     AppAlert.error(
                                       context,
-                                      title: 'Gagal Mengirim',
-                                      message:
-                                          'Terjadi kendala saat mengirim permintaan jemput: $e',
+                                      title: context.tr('dashboard.sendError'),
+                                      message: context.tr(
+                                        'dashboard.pickupSendError',
+                                        {'error': e},
+                                      ),
                                     );
                                   }
                                 } finally {
@@ -1621,15 +1618,15 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Layanan Pos Medis Haji',
-                        style: AppTypography.titleLarge.copyWith(
+                        context.tr('dashboard.medicalService'),
+                        style: DashboardTypography.titleLarge.copyWith(
                           color: headingColor,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
-                        'Bantuan Medis Darurat & Maktab',
-                        style: AppTypography.caption.copyWith(
+                        context.tr('dashboard.medicalServiceSub'),
+                        style: DashboardTypography.caption.copyWith(
                           color: isDark
                               ? AppColors.darkTextBody
                               : AppColors.textBody,
@@ -1647,11 +1644,11 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                 backgroundColor: Color(0xFFFFECEF),
                 child: Icon(Icons.phone_rounded, color: AppColors.sosEmergency),
               ),
-              title: const Text(
-                'Call Center Darurat Saudi: 997',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              title: Text(
+                context.tr('dashboard.saudiEmergencyCall'),
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              subtitle: const Text('Ambulans & Paramedis Resmi Arab Saudi'),
+              subtitle: Text(context.tr('dashboard.saudiEmergencyCallSub')),
             ),
             ListTile(
               contentPadding: EdgeInsets.zero,
@@ -1662,11 +1659,11 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   color: Color(0xFF15803D),
                 ),
               ),
-              title: const Text(
-                'Klinik Kesehatan Haji Indonesia (KKHI)',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              title: Text(
+                context.tr('dashboard.kkhi'),
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              subtitle: const Text('Tersedia 24 Jam di Daker Makkah & Madinah'),
+              subtitle: Text(context.tr('dashboard.kkhiSub')),
             ),
             const SizedBox(height: AppSpacing.lg),
             SizedBox(
@@ -1681,9 +1678,9 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   ),
                 ),
                 icon: const Icon(Icons.emergency_rounded),
-                label: const Text(
-                  'Buka Menu Darurat SOS',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                label: Text(
+                  context.tr('dashboard.openEmergencyMenu'),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 onPressed: () {
                   Get.back();
@@ -1759,7 +1756,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                       .clamp(0.1, 1.0);
                   final displayStatus = lightStatus != '-'
                       ? lightStatus
-                      : 'Terang';
+                      : context.tr('dashboard.bright');
 
                   return SingleChildScrollView(
                     physics: const ClampingScrollPhysics(),
@@ -1769,8 +1766,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                       children: [
                         // Title & Subtitle
                         Text(
-                          'Pantauan Smartband',
-                          style: AppTypography.titleMedium.copyWith(
+                          context.tr('dashboard.smartbandMonitoring'),
+                          style: DashboardTypography.titleMedium.copyWith(
                             color: headingColor,
                             fontWeight: FontWeight.w800,
                             fontSize: 17.5,
@@ -1779,8 +1776,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          'Telemetri sensor lingkungan & kondisi fisik real-time.',
-                          style: AppTypography.bodySmall.copyWith(
+                          context.tr('dashboard.smartbandMonitoringSub'),
+                          style: DashboardTypography.bodySmall.copyWith(
                             color: isDark
                                 ? Colors.white70
                                 : const Color(0xFF64748B),
@@ -1823,7 +1820,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              'Sensor LDR',
+                                              context.tr('dashboard.ldrSensor'),
                                               style: TextStyle(
                                                 color: isDark
                                                     ? Colors.white60
@@ -1938,7 +1935,9 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              'Flame Sensor',
+                                              context.tr(
+                                                'dashboard.flameSensor',
+                                              ),
                                               style: TextStyle(
                                                 color: isDark
                                                     ? Colors.white60
@@ -1967,7 +1966,13 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                                   size: 15,
                                                 ),
                                                 Text(
-                                                  isFlame ? 'API!' : 'Normal',
+                                                  isFlame
+                                                      ? context.tr(
+                                                          'dashboard.fireDetected',
+                                                        )
+                                                      : context.tr(
+                                                          'dashboard.normal',
+                                                        ),
                                                   style: TextStyle(
                                                     color: isFlame
                                                         ? AppColors.sosEmergency
@@ -2002,8 +2007,12 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                                   ),
                                                   child: Text(
                                                     isFlame
-                                                        ? 'Evakuasi'
-                                                        : 'Aman',
+                                                        ? context.tr(
+                                                            'dashboard.evacuate',
+                                                          )
+                                                        : context.tr(
+                                                            'dashboard.safe',
+                                                          ),
                                                     style: TextStyle(
                                                       color: isFlame
                                                           ? AppColors
@@ -2062,7 +2071,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        'LDR Level',
+                                        context.tr('dashboard.ldrLevel'),
                                         style: TextStyle(
                                           color: isDark
                                               ? Colors.white60
@@ -2098,7 +2107,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                             Expanded(
                               child: _buildLinearMetricColumn(
                                 context: context,
-                                title: 'Detak Jantung',
+                                title: context.tr('dashboard.heartRate'),
                                 valueText: '76 bpm',
                                 progress: 0.65,
                                 barColor: isDark
@@ -2112,7 +2121,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                             Expanded(
                               child: _buildLinearMetricColumn(
                                 context: context,
-                                title: 'Suhu Badan',
+                                title: context.tr('dashboard.bodyTemperature'),
                                 valueText: '36.6 °C',
                                 progress: 0.72,
                                 barColor: isDark
@@ -2126,7 +2135,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                             Expanded(
                               child: _buildLinearMetricColumn(
                                 context: context,
-                                title: 'Baterai Band',
+                                title: context.tr('dashboard.bandBattery'),
                                 valueText: '88% BLE',
                                 progress: 0.88,
                                 barColor: isDark
@@ -2162,9 +2171,9 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                 Get.toNamed(AppRoutes.smartbandLdr);
                               },
                               icon: const Icon(Icons.tune_rounded, size: 16),
-                              label: const Text(
-                                'Detail Sensor',
-                                style: TextStyle(
+                              label: Text(
+                                context.tr('dashboard.sensorDetails'),
+                                style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 12.5,
                                 ),
@@ -2274,9 +2283,9 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            const Text(
-                              'TELEMETRI SMARTBAND',
-                              style: TextStyle(
+                            Text(
+                              context.tr('dashboard.bandTelemetry'),
+                              style: const TextStyle(
                                 color: AppColors.goldLight,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
@@ -2317,11 +2326,11 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                           Navigator.of(ctx).pop();
                           HapticFeedback.lightImpact();
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
+                            SnackBar(
                               content: Text(
-                                'Sinyal panggil terkirim! Gelang pintar bergetar.',
+                                context.tr('dashboard.bandSignalSent'),
                               ),
-                              duration: Duration(seconds: 2),
+                              duration: const Duration(seconds: 2),
                               behavior: SnackBarBehavior.floating,
                             ),
                           );
@@ -2346,18 +2355,18 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                             horizontal: 20,
                             vertical: 13.5,
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.vibration_rounded,
                                 size: 16,
                                 color: Colors.white,
                               ),
-                              SizedBox(width: 6),
+                              const SizedBox(width: 6),
                               Text(
-                                'GETARKAN',
-                                style: TextStyle(
+                                context.tr('dashboard.vibrate'),
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w900,
                                   fontSize: 12.5,

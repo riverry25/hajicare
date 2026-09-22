@@ -8,7 +8,7 @@ import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
+import '../presentation/dashboard_typography.dart';
 import '../../../core/utils/user_feedback_message.dart';
 import '../../notification/services/notification_service.dart';
 
@@ -47,11 +47,11 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
   NotificationService get _notificationService =>
       widget.notificationService ?? NotificationService();
 
-  static const _quickMessages = [
-    'Mohon hubungi saya',
-    'Saya menunggu di lokasi ini',
-    'Saya terpisah dari rombongan',
-    'Mohon bantuan penjemputan',
+  List<String> get _quickMessages => [
+    context.tr('dashboard.quickMessageCallMe'),
+    context.tr('dashboard.quickMessageWaiting'),
+    context.tr('dashboard.quickMessageSeparated'),
+    context.tr('dashboard.quickMessagePickup'),
   ];
 
   @override
@@ -91,8 +91,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
         AppAlert.warning(
           context,
           title: context.tr('dashboard.locationNotFound'),
-          message:
-              'Nyalakan GPS dan izinkan akses lokasi, lalu tekan tombol lokasi sekali lagi.',
+          message: context.tr('dashboard.enableGpsAccess'),
         );
       }
       return;
@@ -109,7 +108,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
       AppAlert.warning(
         context,
         title: context.tr('dashboard.selectCompanion'),
-        message: 'Pilih satu pendamping atau pilih Semua Pendamping.',
+        message: context.tr('dashboard.selectRecipientWarning'),
       );
       return;
     }
@@ -131,10 +130,14 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
       AppAlert.success(
         context,
         title: _kind == CompanionContactKind.info
-            ? 'Informasi Terkirim'
-            : 'Pesan Terkirim',
-        message:
-            'Sudah diterima oleh $recipientCount pendamping${_includeLocation ? ' beserta lokasi Anda' : ''}.',
+            ? context.tr('dashboard.infoSent')
+            : context.tr('dashboard.messageSent'),
+        message: context.tr('dashboard.messageSentDesc', {
+          'count': recipientCount,
+          'location': _includeLocation
+              ? context.tr('dashboard.withYourLocation')
+              : '',
+        }),
       );
     } catch (error) {
       if (!mounted) return;
@@ -143,7 +146,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
         title: context.tr('dashboard.sendFailed'),
         message: UserFeedbackMessage.from(
           error,
-          fallback: 'Pesan belum dapat dikirim. Silakan coba lagi.',
+          fallback: context.tr('dashboard.messageSendFallback'),
         ),
       );
     } finally {
@@ -188,8 +191,8 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                 _buildHeader(headingColor, bodyColor),
                 const SizedBox(height: 20),
                 Text(
-                  'Apa yang ingin Anda kirim?',
-                  style: AppTypography.labelLarge.copyWith(
+                  context.tr('dashboard.whatToSend'),
+                  style: DashboardTypography.labelLarge.copyWith(
                     color: headingColor,
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
@@ -227,8 +230,8 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                 _buildRecipientSection(isDark, headingColor, bodyColor),
                 const SizedBox(height: 22),
                 Text(
-                  'Tulis pesan Anda',
-                  style: AppTypography.labelLarge.copyWith(
+                  context.tr('dashboard.writeMessage'),
+                  style: DashboardTypography.labelLarge.copyWith(
                     color: headingColor,
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
@@ -273,13 +276,13 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                     ),
                   ),
                   validator: (value) => value == null || value.trim().isEmpty
-                      ? 'Tuliskan pesan terlebih dahulu.'
+                      ? context.tr('dashboard.writeMessageFirst')
                       : null,
                 ),
                 if (_kind == CompanionContactKind.message) ...[
                   const SizedBox(height: 8),
                   Text(
-                    'Pesan cepat (ketuk untuk memilih):',
+                    context.tr('dashboard.quickMessages'),
                     style: TextStyle(
                       color: bodyColor,
                       fontSize: 13,
@@ -343,12 +346,12 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                         : const Icon(Icons.send_rounded, size: 23),
                     label: Text(
                       _isSending
-                          ? 'Sedang Mengirim...'
+                          ? context.tr('dashboard.sending')
                           : _kind == CompanionContactKind.info
-                          ? 'Kirim ke Semua Pendamping'
+                          ? context.tr('dashboard.sendAllCompanions')
                           : _sendToAll
-                          ? 'Kirim ke Semua Pendamping'
-                          : 'Kirim Pesan',
+                          ? context.tr('dashboard.sendAllCompanions')
+                          : context.tr('dashboard.sendMessage'),
                     ),
                   ),
                 ),
@@ -356,7 +359,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                 Center(
                   child: TextButton(
                     onPressed: _isSending ? null : Get.back,
-                    child: const Text('Batal'),
+                    child: Text(context.tr('cancel')),
                   ),
                 ),
               ],
@@ -389,8 +392,8 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Hubungi Pendamping',
-                style: AppTypography.titleMedium.copyWith(
+                context.tr('dashboard.contactCompanion'),
+                style: DashboardTypography.titleMedium.copyWith(
                   color: headingColor,
                   fontSize: 21,
                   fontWeight: FontWeight.w800,
@@ -398,7 +401,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
               ),
               const SizedBox(height: 3),
               Text(
-                'Kirim pesan, informasi, atau lokasi Anda',
+                context.tr('dashboard.contactCompanionSub'),
                 style: TextStyle(color: bodyColor, fontSize: 14, height: 1.3),
               ),
             ],
@@ -491,8 +494,10 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
     if (_kind == CompanionContactKind.info) {
       return _recipientSummary(
         icon: Icons.groups_rounded,
-        title: 'Penerima: Semua Pendamping',
-        subtitle: '${widget.pendampings.length} pendamping dalam rombongan',
+        title: context.tr('dashboard.recipientAllCompanions'),
+        subtitle: context.tr('dashboard.companionsInGroup', {
+          'count': widget.pendampings.length,
+        }),
         isDark: isDark,
         headingColor: headingColor,
         bodyColor: bodyColor,
@@ -503,8 +508,8 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Kirim kepada siapa?',
-          style: AppTypography.labelLarge.copyWith(
+          context.tr('dashboard.sendToWhom'),
+          style: DashboardTypography.labelLarge.copyWith(
             color: headingColor,
             fontSize: 16,
             fontWeight: FontWeight.w800,
@@ -535,7 +540,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                   key: const Key('recipient_one'),
                   value: false,
                   title: Text(
-                    'Satu Pendamping',
+                    context.tr('dashboard.oneCompanion'),
                     style: TextStyle(
                       color: headingColor,
                       fontSize: 16,
@@ -543,7 +548,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                     ),
                   ),
                   subtitle: Text(
-                    'Pilih nama pendamping',
+                    context.tr('dashboard.chooseCompanionName'),
                     style: TextStyle(color: bodyColor, fontSize: 13),
                   ),
                   secondary: const Icon(Icons.person_rounded),
@@ -554,7 +559,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                   key: const Key('recipient_all'),
                   value: true,
                   title: Text(
-                    'Semua Pendamping',
+                    context.tr('dashboard.allCompanions'),
                     style: TextStyle(
                       color: headingColor,
                       fontSize: 16,
@@ -562,7 +567,9 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                     ),
                   ),
                   subtitle: Text(
-                    '${widget.pendampings.length} pendamping akan menerima pesan',
+                    context.tr('dashboard.allCompanionsReceive', {
+                      'count': widget.pendampings.length,
+                    }),
                     style: TextStyle(color: bodyColor, fontSize: 13),
                   ),
                   secondary: const Icon(Icons.groups_rounded),
@@ -583,8 +590,8 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                 : AppColors.surfaceWhite,
             style: TextStyle(color: headingColor, fontSize: 17),
             decoration: InputDecoration(
-              labelText: 'Nama pendamping',
-              hintText: 'Ketuk untuk memilih',
+              labelText: context.tr('dashboard.companionName'),
+              hintText: context.tr('dashboard.tapToSelect'),
               prefixIcon: const Icon(Icons.support_agent_rounded, size: 27),
               filled: true,
               fillColor: isDark
@@ -617,7 +624,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
               if (_kind == CompanionContactKind.message &&
                   !_sendToAll &&
                   value == null) {
-                return 'Pilih nama pendamping.';
+                return context.tr('dashboard.chooseCompanionValidation');
               }
               return null;
             },
@@ -690,8 +697,8 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Bagikan lokasi Anda? (opsional)',
-          style: AppTypography.labelLarge.copyWith(
+          context.tr('dashboard.shareLocationOptional'),
+          style: DashboardTypography.labelLarge.copyWith(
             color: headingColor,
             fontSize: 16,
             fontWeight: FontWeight.w800,
@@ -702,8 +709,8 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
           button: true,
           toggled: active,
           label: active
-              ? 'Lokasi disertakan. Ketuk untuk tidak menyertakan lokasi.'
-              : 'Lokasi belum disertakan. Ketuk untuk menyertakan lokasi.',
+              ? context.tr('dashboard.locationIncluded')
+              : context.tr('dashboard.locationNotIncluded'),
           child: InkWell(
             key: const Key('companion_location_button'),
             onTap: _isFindingLocation || _isSending ? null : _toggleLocation,
@@ -763,10 +770,10 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                       children: [
                         Text(
                           _isFindingLocation
-                              ? 'Mencari lokasi...'
+                              ? context.tr('dashboard.findingLocation')
                               : active
-                              ? 'Lokasi Akan Dikirim'
-                              : 'Tekan untuk Kirim Lokasi',
+                              ? context.tr('dashboard.locationWillBeSent')
+                              : context.tr('dashboard.tapToSendLocation'),
                           style: TextStyle(
                             color: headingColor,
                             fontSize: 17,
@@ -776,10 +783,10 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                         const SizedBox(height: 4),
                         Text(
                           active
-                              ? 'Pendamping akan menerima titik GPS Anda.'
+                              ? context.tr('dashboard.gpsPointWillBeSent')
                               : hasGps
-                              ? 'GPS sudah ditemukan. Lokasi belum disertakan.'
-                              : 'Pastikan GPS ponsel aktif, lalu tekan tombol ini.',
+                              ? context.tr('dashboard.gpsFoundNotIncluded')
+                              : context.tr('dashboard.enableGpsAccess'),
                           style: TextStyle(
                             color: bodyColor,
                             fontSize: 13,
@@ -802,7 +809,9 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                     child: Text(
-                      active ? 'AKTIF' : 'MATI',
+                      active
+                          ? context.tr('dashboard.activeUpper')
+                          : context.tr('dashboard.offUpper'),
                       style: TextStyle(
                         color: active ? Colors.white : bodyColor,
                         fontSize: 11,
@@ -822,7 +831,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
             const SizedBox(width: 5),
             Expanded(
               child: Text(
-                'Lokasi hanya dikirim jika status tombol menunjukkan AKTIF.',
+                context.tr('dashboard.locationOnlyWhenActive'),
                 style: TextStyle(color: bodyColor, fontSize: 12.5),
               ),
             ),

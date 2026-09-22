@@ -16,7 +16,7 @@ class AppTranslations extends Translations {
 
   static const fallbackLocale = Locale('id');
 
-  static const Map<String, Map<String, String>> translationKeys = {
+  static final Map<String, Map<String, String>> translationKeys = {
     'id': idTranslations,
     'jv': jvTranslations,
     'su': suTranslations,

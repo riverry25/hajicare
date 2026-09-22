@@ -10,7 +10,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_sizes.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
+import '../presentation/dashboard_typography.dart';
 import '../../../../core/widgets/animated_ping_dot.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../room/widgets/jamaah_detail_sheet.dart';
@@ -32,11 +32,13 @@ class PendampingRadarCard extends StatelessWidget {
     }
   }
 
-  String _formatTimestamp(DateTime? dt) {
-    if (dt == null) return 'Menunggu...';
+  String _formatTimestamp(BuildContext context, DateTime? dt) {
+    if (dt == null) return context.tr('dashboard.waiting');
     final diff = DateTime.now().difference(dt);
-    if (diff.inSeconds < 30) return 'Baru saja';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} mnt lalu';
+    if (diff.inSeconds < 30) return context.tr('dashboard.justNow');
+    if (diff.inMinutes < 60) {
+      return context.tr('dashboard.minutesAgo', {'minutes': diff.inMinutes});
+    }
     return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 
@@ -105,23 +107,25 @@ class PendampingRadarCard extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.md),
               Text(
-                'Atur Radius Batas Aman Jamaah',
-                style: AppTypography.titleMedium.copyWith(
+                context.tr('dashboard.safeRadiusTitle'),
+                style: DashboardTypography.titleMedium.copyWith(
                   color: headingColor,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
-                'Peringatan getar & notifikasi akan aktif jika jamaah berada di luar radius ini.',
-                style: AppTypography.captionSmall.copyWith(color: bodyColor),
+                context.tr('dashboard.safeRadiusDesc'),
+                style: DashboardTypography.captionSmall.copyWith(
+                  color: bodyColor,
+                ),
               ),
               const SizedBox(height: AppSpacing.md),
 
               // ── Preset chips ─────────────────────────────────────────────
               Text(
-                'Pilih Preset',
-                style: AppTypography.caption.copyWith(
+                context.tr('dashboard.choosePreset'),
+                style: DashboardTypography.caption.copyWith(
                   color: bodyColor,
                   fontWeight: FontWeight.w600,
                 ),
@@ -151,7 +155,7 @@ class PendampingRadarCard extends StatelessWidget {
                       );
                     }),
                     ChoiceChip(
-                      label: const Text('Custom'),
+                      label: Text(context.tr('dashboard.custom')),
                       selected: isCustom,
                       selectedColor: isDark
                           ? AppColors.darkPrimaryContainer
@@ -167,8 +171,8 @@ class PendampingRadarCard extends StatelessWidget {
 
               // ── Custom input field ────────────────────────────────────────
               Text(
-                'Atau masukkan radius sendiri (meter)',
-                style: AppTypography.caption.copyWith(
+                context.tr('dashboard.customRadius'),
+                style: DashboardTypography.caption.copyWith(
                   color: bodyColor,
                   fontWeight: FontWeight.w600,
                 ),
@@ -179,16 +183,16 @@ class PendampingRadarCard extends StatelessWidget {
                   controller: customCtrl,
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  style: AppTypography.titleMedium.copyWith(
+                  style: DashboardTypography.titleMedium.copyWith(
                     color: headingColor,
                   ),
                   decoration: InputDecoration(
                     hintText: context.tr('dashboard.sampleRadius'),
-                    hintStyle: AppTypography.captionSmall.copyWith(
+                    hintStyle: DashboardTypography.captionSmall.copyWith(
                       color: bodyColor,
                     ),
-                    suffixText: 'meter',
-                    suffixStyle: AppTypography.caption.copyWith(
+                    suffixText: context.tr('dashboard.meterUnit'),
+                    suffixStyle: DashboardTypography.caption.copyWith(
                       color: bodyColor,
                     ),
                     errorText: customError.value.isEmpty
@@ -261,17 +265,20 @@ class PendampingRadarCard extends StatelessWidget {
                   onPressed: () async {
                     final text = customCtrl.text.trim();
                     if (text.isEmpty) {
-                      customError.value =
-                          'Masukkan angka radius terlebih dahulu.';
+                      customError.value = context.tr(
+                        'dashboard.radiusRequired',
+                      );
                       return;
                     }
                     final parsed = int.tryParse(text);
                     if (parsed == null || parsed <= 0) {
-                      customError.value = 'Radius harus lebih dari 0.';
+                      customError.value = context.tr(
+                        'dashboard.radiusPositive',
+                      );
                       return;
                     }
                     if (parsed > 5000) {
-                      customError.value = 'Radius maksimum adalah 5000 meter.';
+                      customError.value = context.tr('dashboard.radiusMax');
                       return;
                     }
                     final success =
@@ -282,23 +289,23 @@ class PendampingRadarCard extends StatelessWidget {
                         AppAlert.success(
                           context,
                           title: context.tr('dashboard.safeDistanceUpdated'),
-                          message:
-                              'Batas aman $parsed meter sudah diterapkan untuk rombongan.',
+                          message: context.tr('dashboard.radiusApplied', {
+                            'meters': parsed,
+                          }),
                         );
                       } else {
                         AppAlert.error(
                           context,
                           title: context.tr('dashboard.safeDistanceFailed'),
-                          message:
-                              'Periksa internet, lalu coba simpan sekali lagi.',
-                          okText: 'Coba Lagi',
+                          message: context.tr('dashboard.saveRetry'),
+                          okText: context.tr('common.tryAgain'),
                         );
                       }
                     }
                   },
                   child: Text(
-                    'Terapkan Radius',
-                    style: AppTypography.labelLarge.copyWith(
+                    context.tr('dashboard.applyRadius'),
+                    style: DashboardTypography.labelLarge.copyWith(
                       color: isDark
                           ? AppColors.darkPrimary
                           : AppColors.surfaceWhite,
@@ -361,16 +368,16 @@ class PendampingRadarCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Radar Pemantauan Jamaah',
-                          style: AppTypography.titleMedium.copyWith(
+                          context.tr('dashboard.pilgrimRadar'),
+                          style: DashboardTypography.titleMedium.copyWith(
                             color: headingColor,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          'Fitur pemantauan jarak real-time, batas radius aman, dan tracking jamaah memerlukan Room aktif.',
-                          style: AppTypography.bodySmall.copyWith(
+                          context.tr('dashboard.pilgrimRadarNeedsRoom'),
+                          style: DashboardTypography.bodySmall.copyWith(
                             color: bodyColor,
                           ),
                         ),
@@ -386,9 +393,12 @@ class PendampingRadarCard extends StatelessWidget {
                 child: ElevatedButton.icon(
                   onPressed: () => Get.toNamed(AppRoutes.joinRoom),
                   icon: const Icon(Icons.meeting_room_outlined, size: 20),
-                  label: const Text(
-                    'Buat / Gabung Room untuk Mengaktifkan',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  label: Text(
+                    context.tr('dashboard.createOrJoinRoom'),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: isDark
@@ -414,7 +424,8 @@ class PendampingRadarCard extends StatelessWidget {
       final hasSignal = jamaah.currentLocation != null && jamaah.isGpsActive;
       final roomId = state.activeRoomId.value ?? '';
       final roomName =
-          state.activeRoom.value?.capitalizedName ?? 'Room Pemantauan';
+          state.activeRoom.value?.capitalizedName ??
+          context.tr('dashboard.monitoringRoom');
       final roomCode = state.activeRoom.value?.code ?? '';
 
       return Container(
@@ -538,9 +549,9 @@ class PendampingRadarCard extends StatelessWidget {
                                       size: 7,
                                     ),
                                     const SizedBox(width: 6),
-                                    const Text(
-                                      'RADAR AKTIF',
-                                      style: TextStyle(
+                                    Text(
+                                      context.tr('dashboard.radarActive'),
+                                      style: const TextStyle(
                                         color: AppColors.goldLight,
                                         fontSize: 10,
                                         fontWeight: FontWeight.w800,
@@ -603,7 +614,9 @@ class PendampingRadarCard extends StatelessWidget {
                                               context,
                                               jamaah.tier,
                                             ).toUpperCase()
-                                          : 'MENUNGGU',
+                                          : context.tr(
+                                              'dashboard.waitingUpper',
+                                            ),
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 11,
@@ -709,8 +722,12 @@ class PendampingRadarCard extends StatelessWidget {
                                         Expanded(
                                           child: Text(
                                             jamaah.isGpsActive
-                                                ? 'GPS Terkoneksi • Sinyal Stabil'
-                                                : 'GPS Terputus • Menunggu Sinyal',
+                                                ? context.tr(
+                                                    'dashboard.gpsStable',
+                                                  )
+                                                : context.tr(
+                                                    'dashboard.gpsDisconnected',
+                                                  ),
                                             style: TextStyle(
                                               color: Colors.white.withValues(
                                                 alpha: 0.85,
@@ -773,14 +790,15 @@ class PendampingRadarCard extends StatelessWidget {
                                   hasSignal
                                       ? _formatDistanceValue(jamaah.distance)
                                       : '--',
-                                  style: AppTypography.displayLarge.copyWith(
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.w800,
-                                    color: hasSignal
-                                        ? jamaah.tier.color
-                                        : headingColor,
-                                    height: 1.1,
-                                  ),
+                                  style: DashboardTypography.displayLarge
+                                      .copyWith(
+                                        fontSize: 32,
+                                        fontWeight: FontWeight.w800,
+                                        color: hasSignal
+                                            ? jamaah.tier.color
+                                            : headingColor,
+                                        height: 1.1,
+                                      ),
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
@@ -790,17 +808,18 @@ class PendampingRadarCard extends StatelessWidget {
                                           jamaah.distance,
                                         )
                                       : context.tr('meterUnit'),
-                                  style: AppTypography.titleMedium.copyWith(
-                                    color: bodyColor,
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                                  style: DashboardTypography.titleMedium
+                                      .copyWith(
+                                        color: bodyColor,
+                                        fontWeight: FontWeight.w700,
+                                      ),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Jarak Real-Time Saat Ini',
-                              style: AppTypography.captionSmall.copyWith(
+                              context.tr('dashboard.realtimeDistance'),
+                              style: DashboardTypography.captionSmall.copyWith(
                                 color: bodyColor.withValues(alpha: 0.75),
                                 fontSize: 11,
                               ),
@@ -840,7 +859,7 @@ class PendampingRadarCard extends StatelessWidget {
                           children: [
                             Text(
                               context.tr('maxLimit'),
-                              style: AppTypography.captionSmall.copyWith(
+                              style: DashboardTypography.captionSmall.copyWith(
                                 color: bodyColor.withValues(alpha: 0.75),
                                 fontSize: 10,
                               ),
@@ -850,7 +869,7 @@ class PendampingRadarCard extends StatelessWidget {
                               safeRadius >= 1000
                                   ? '${_formatDistanceValue(safeRadius)} ${_formatDistanceUnit(context, safeRadius)}'
                                   : '${safeRadius.toInt()} ${context.tr('meterUnit')}',
-                              style: AppTypography.labelLarge.copyWith(
+                              style: DashboardTypography.labelLarge.copyWith(
                                 color: headingColor,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -886,7 +905,7 @@ class PendampingRadarCard extends StatelessWidget {
                     children: [
                       Text(
                         '0 m',
-                        style: AppTypography.captionSmall.copyWith(
+                        style: DashboardTypography.captionSmall.copyWith(
                           color: bodyColor.withValues(alpha: 0.6),
                           fontSize: 10.5,
                         ),
@@ -913,9 +932,11 @@ class PendampingRadarCard extends StatelessWidget {
                             hasSignal
                                 ? (jamaah.distance <= safeRadius
                                       ? '${((jamaah.distance / safeRadius) * 100).toInt()}% ${context.tr('fromRadiusLimit')}'
-                                      : 'Di luar radius aman')
-                                : 'Menunggu GPS...',
-                            style: AppTypography.captionSmall.copyWith(
+                                      : context.tr(
+                                          'dashboard.outsideSafeRadius',
+                                        ))
+                                : context.tr('dashboard.waitingGps'),
+                            style: DashboardTypography.captionSmall.copyWith(
                               fontSize: 10.5,
                               color: hasSignal
                                   ? (jamaah.distance <= safeRadius
@@ -937,7 +958,7 @@ class PendampingRadarCard extends StatelessWidget {
                         safeRadius >= 1000
                             ? '${_formatDistanceValue(safeRadius)} km'
                             : '${safeRadius.toInt()} m',
-                        style: AppTypography.captionSmall.copyWith(
+                        style: DashboardTypography.captionSmall.copyWith(
                           color: bodyColor.withValues(alpha: 0.6),
                           fontSize: 10.5,
                           fontWeight: FontWeight.w600,
@@ -1004,7 +1025,9 @@ class PendampingRadarCard extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                jamaah.isGpsActive ? 'GPS Aktif' : 'GPS Mati',
+                                jamaah.isGpsActive
+                                    ? context.tr('dashboard.gpsActive')
+                                    : context.tr('dashboard.gpsInactive'),
                                 style: TextStyle(
                                   color: jamaah.isGpsActive
                                       ? (isDark
@@ -1070,7 +1093,10 @@ class PendampingRadarCard extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                _formatTimestamp(jamaah.locationUpdatedAt),
+                                _formatTimestamp(
+                                  context,
+                                  jamaah.locationUpdatedAt,
+                                ),
                                 style: TextStyle(
                                   color: headingColor,
                                   fontSize: 11,

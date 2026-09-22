@@ -1,4 +1,4 @@
-﻿part of 'admin_dashboard_screen.dart';
+part of 'admin_dashboard_screen.dart';
 
 extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
   void _showAlertCenterSheet(
@@ -84,20 +84,29 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'ALERT CENTER',
-                                  style: AppTypography.titleMedium.copyWith(
-                                    color: headingColor,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.5,
-                                  ),
+                                  context.tr('adminDashboard.alertCenterUpper'),
+                                  style: DashboardTypography.titleMedium
+                                      .copyWith(
+                                        color: headingColor,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
+                                      ),
                                 ),
                                 Text(
                                   hasActiveAlerts
-                                      ? '${activeSosList.length + attentionList.length} kondisi perlu perhatian'
-                                      : 'Semua sistem aman & terkendali',
-                                  style: AppTypography.captionSmall.copyWith(
-                                    color: bodyColor.withValues(alpha: 0.7),
-                                  ),
+                                      ? context.tr(
+                                          'adminDashboard.conditionsNeedAttention',
+                                          {
+                                            'count':
+                                                activeSosList.length +
+                                                attentionList.length,
+                                          },
+                                        )
+                                      : context.tr('adminDashboard.systemSafe'),
+                                  style: DashboardTypography.captionSmall
+                                      .copyWith(
+                                        color: bodyColor.withValues(alpha: 0.7),
+                                      ),
                                 ),
                               ],
                             ),
@@ -156,19 +165,25 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                   ),
                                   const SizedBox(height: AppSpacing.md),
                                   Text(
-                                    'Tidak ada alert aktif',
-                                    style: AppTypography.titleSmall.copyWith(
-                                      color: headingColor,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                    ),
+                                    context.tr('adminDashboard.noActiveAlert'),
+                                    style: DashboardTypography.titleSmall
+                                        .copyWith(
+                                          color: headingColor,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
+                                        ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Semua kondisi jamaah saat ini aman.',
-                                    style: AppTypography.bodySmall.copyWith(
-                                      color: bodyColor.withValues(alpha: 0.8),
+                                    context.tr(
+                                      'adminDashboard.allPilgrimsSafe',
                                     ),
+                                    style: DashboardTypography.bodySmall
+                                        .copyWith(
+                                          color: bodyColor.withValues(
+                                            alpha: 0.8,
+                                          ),
+                                        ),
                                     textAlign: TextAlign.center,
                                   ),
                                 ],
@@ -180,8 +195,8 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                           // 1. PRIORITAS TINGGI (SOS)
                           if (activeSosList.isNotEmpty) ...[
                             Text(
-                              'PRIORITAS TINGGI',
-                              style: AppTypography.captionSmall.copyWith(
+                              context.tr('adminDashboard.highPriority'),
+                              style: DashboardTypography.captionSmall.copyWith(
                                 color: AppColors.sosEmergency,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 0.6,
@@ -189,8 +204,12 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                             ),
                             const SizedBox(height: AppSpacing.xs + 2),
                             ...activeSosList.map((sos) {
-                              final userName = sos['userName'] ?? 'Jamaah';
-                              final roomName = sos['roomName'] ?? 'Room';
+                              final userName =
+                                  sos['userName'] ??
+                                  context.tr('room.roleJamaah');
+                              final roomName =
+                                  sos['roomName'] ??
+                                  context.tr('adminDashboard.room');
                               final timestamp =
                                   (sos['timestamp'] ?? sos['createdAt'])
                                       as Timestamp?;
@@ -200,7 +219,7 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                         timestamp.toDate(),
                                       ),
                                     )
-                                  : 'Baru saja';
+                                  : context.tr('dashboard.justNow');
 
                               return Container(
                                 margin: const EdgeInsets.only(
@@ -274,7 +293,8 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                           ),
                                           Text(
                                             timeAgo,
-                                            style: AppTypography.captionSmall
+                                            style: DashboardTypography
+                                                .captionSmall
                                                 .copyWith(
                                                   color: bodyColor.withValues(
                                                     alpha: 0.65,
@@ -287,7 +307,7 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                       const SizedBox(height: 8),
                                       Text(
                                         userName,
-                                        style: AppTypography.titleSmall
+                                        style: DashboardTypography.titleSmall
                                             .copyWith(
                                               color: headingColor,
                                               fontWeight: FontWeight.bold,
@@ -296,11 +316,12 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                       ),
                                       Text(
                                         roomName,
-                                        style: AppTypography.bodySmall.copyWith(
-                                          color: bodyColor.withValues(
-                                            alpha: 0.75,
-                                          ),
-                                        ),
+                                        style: DashboardTypography.bodySmall
+                                            .copyWith(
+                                              color: bodyColor.withValues(
+                                                alpha: 0.75,
+                                              ),
+                                            ),
                                       ),
                                       const SizedBox(height: 12),
                                       InkWell(
@@ -320,8 +341,8 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                                 MainAxisAlignment.spaceBetween,
                                             children: [
                                               Text(
-                                                'Lihat di Peta',
-                                                style: AppTypography
+                                                context.tr('room.viewOnMap'),
+                                                style: DashboardTypography
                                                     .captionSmall
                                                     .copyWith(
                                                       color: AppColors
@@ -351,8 +372,8 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                           // 2. PERLU PERHATIAN (Stale location / GPS inactive)
                           if (attentionList.isNotEmpty) ...[
                             Text(
-                              'PERLU PERHATIAN',
-                              style: AppTypography.captionSmall.copyWith(
+                              context.tr('adminDashboard.needsAttention'),
+                              style: DashboardTypography.captionSmall.copyWith(
                                 color: AppColors.distanceWarning,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 0.6,
@@ -361,7 +382,9 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                             const SizedBox(height: AppSpacing.xs + 2),
                             ...attentionList.map((j) {
                               final name =
-                                  (j['name'] ?? j['displayName'] ?? 'Jamaah')
+                                  (j['name'] ??
+                                          j['displayName'] ??
+                                          context.tr('room.roleJamaah'))
                                       .toString();
                               final room = controller.rooms.firstWhereOrNull(
                                 (r) => r.id == j['activeRoomId'],
@@ -376,7 +399,7 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                   ? _formatMinutesAgo(
                                       DateTime.now().difference(timestamp),
                                     )
-                                  : 'Belum update';
+                                  : context.tr('adminDashboard.notUpdated');
 
                               return Container(
                                 margin: const EdgeInsets.only(
@@ -449,8 +472,10 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                                   ),
                                                   const SizedBox(width: 4),
                                                   Text(
-                                                    'Lokasi Tidak Diperbarui',
-                                                    style: AppTypography
+                                                    context.tr(
+                                                      'adminDashboard.locationNotUpdated',
+                                                    ),
+                                                    style: DashboardTypography
                                                         .captionSmall
                                                         .copyWith(
                                                           color: AppColors
@@ -464,7 +489,7 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                               ),
                                               Text(
                                                 timeAgo,
-                                                style: AppTypography
+                                                style: DashboardTypography
                                                     .captionSmall
                                                     .copyWith(
                                                       color: bodyColor
@@ -488,7 +513,7 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                                   children: [
                                                     Text(
                                                       name,
-                                                      style: AppTypography
+                                                      style: DashboardTypography
                                                           .titleSmall
                                                           .copyWith(
                                                             color: headingColor,
@@ -502,7 +527,7 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                                     ),
                                                     Text(
                                                       roomName,
-                                                      style: AppTypography
+                                                      style: DashboardTypography
                                                           .captionSmall
                                                           .copyWith(
                                                             color: bodyColor
@@ -540,8 +565,8 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                           if (resolvedList.isNotEmpty) ...[
                             const SizedBox(height: AppSpacing.xs),
                             Text(
-                              'Riwayat Terakhir',
-                              style: AppTypography.captionSmall.copyWith(
+                              context.tr('adminDashboard.lastHistory'),
+                              style: DashboardTypography.captionSmall.copyWith(
                                 color: headingColor,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12,
@@ -563,7 +588,9 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                               ),
                               child: Column(
                                 children: resolvedList.map((res) {
-                                  final name = res['userName'] ?? 'Jamaah';
+                                  final name =
+                                      res['userName'] ??
+                                      context.tr('room.roleJamaah');
                                   final resTime =
                                       (res['resolvedAt'] ?? res['timestamp'])
                                           as Timestamp?;
@@ -573,7 +600,7 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                             resTime.toDate(),
                                           ),
                                         )
-                                      : 'Selesai';
+                                      : context.tr('adminDashboard.completed');
 
                                   return Padding(
                                     padding: const EdgeInsets.symmetric(
@@ -589,8 +616,12 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                         const SizedBox(width: 8),
                                         Expanded(
                                           child: Text(
-                                            'SOS selesai ($name)',
-                                            style: AppTypography.captionSmall
+                                            context.tr(
+                                              'adminDashboard.sosResolved',
+                                              {'name': name},
+                                            ),
+                                            style: DashboardTypography
+                                                .captionSmall
                                                 .copyWith(
                                                   color: headingColor,
                                                   fontSize: 11.5,
@@ -601,7 +632,8 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                         ),
                                         Text(
                                           timeAgo,
-                                          style: AppTypography.captionSmall
+                                          style: DashboardTypography
+                                              .captionSmall
                                               .copyWith(
                                                 color: bodyColor.withValues(
                                                   alpha: 0.65,
@@ -631,9 +663,17 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
   }
 
   static String _formatMinutesAgo(Duration diff) {
-    if (diff.inSeconds < 60) return 'Baru saja';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} mnt lalu';
-    if (diff.inHours < 24) return '${diff.inHours} jam lalu';
-    return '${diff.inDays} hari lalu';
+    if (diff.inSeconds < 60) return AppTranslations.tr('dashboard.justNow');
+    if (diff.inMinutes < 60) {
+      return AppTranslations.tr('dashboard.minutesAgo', {
+        'minutes': diff.inMinutes,
+      });
+    }
+    if (diff.inHours < 24) {
+      return AppTranslations.tr('adminDashboard.hoursAgo', {
+        'hours': diff.inHours,
+      });
+    }
+    return AppTranslations.tr('adminDashboard.daysAgo', {'days': diff.inDays});
   }
 }

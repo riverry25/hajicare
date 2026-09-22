@@ -4,7 +4,7 @@ import '../../../../core/locales/app_translations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
+import '../presentation/dashboard_typography.dart';
 import '../../../../core/widgets/app_card.dart';
 import 'package:hajicare/features/prayer/controllers/prayer_times_controller.dart';
 import 'package:hajicare/features/prayer/models/prayer_schedule_item.dart';
@@ -39,7 +39,7 @@ class JamaahPrayerCard extends StatelessWidget {
       final qiblaDeg = prayerCtrl.qiblaBearing.value;
       final nextName = prayerCtrl.nextPrayerName.value.isNotEmpty
           ? prayerCtrl.nextPrayerName.value
-          : 'Subuh';
+          : context.tr('subuh');
       final nextTime = prayerCtrl.nextPrayerTime.value;
       final countdown = prayerCtrl.countdownText.value;
 
@@ -81,7 +81,7 @@ class JamaahPrayerCard extends StatelessWidget {
                           displayCity.isNotEmpty
                               ? '${context.tr('prayerScheduleTitle')} • ${displayCity.toUpperCase()}'
                               : context.tr('prayerScheduleTitle'),
-                          style: AppTypography.captionSmall.copyWith(
+                          style: DashboardTypography.captionSmall.copyWith(
                             color: isDark
                                 ? AppColors.darkPrimary
                                 : AppColors.espressoDark,
@@ -125,7 +125,7 @@ class JamaahPrayerCard extends StatelessWidget {
                         qiblaDeg > 0
                             ? '${context.tr('qiblaDegree')} ${qiblaDeg.toStringAsFixed(0)}°'
                             : '${context.tr('qiblaDegree')} --°',
-                        style: AppTypography.captionSmall.copyWith(
+                        style: DashboardTypography.captionSmall.copyWith(
                           color: headingColor,
                           fontWeight: FontWeight.w700,
                         ),
@@ -159,7 +159,7 @@ class JamaahPrayerCard extends StatelessWidget {
                       children: [
                         Text(
                           context.tr('nextPrayerLabel'),
-                          style: AppTypography.caption.copyWith(
+                          style: DashboardTypography.caption.copyWith(
                             color: bodyColor,
                           ),
                           maxLines: 1,
@@ -173,14 +173,14 @@ class JamaahPrayerCard extends StatelessWidget {
                           children: [
                             Text(
                               _localizedPrayerName(context, nextName),
-                              style: AppTypography.displayMedium.copyWith(
+                              style: DashboardTypography.displayMedium.copyWith(
                                 color: headingColor,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
                             Text(
                               nextTime,
-                              style: AppTypography.titleMedium.copyWith(
+                              style: DashboardTypography.titleMedium.copyWith(
                                 color: isDark
                                     ? AppColors.accentGoldStar
                                     : AppColors.tanMedium,
@@ -207,7 +207,7 @@ class JamaahPrayerCard extends StatelessWidget {
                       ),
                       child: Text(
                         '${context.tr('inCountdownPrefix')} $countdown',
-                        style: AppTypography.captionSmall.copyWith(
+                        style: DashboardTypography.captionSmall.copyWith(
                           color: isDark
                               ? AppColors.darkPrimary
                               : AppColors.surfaceWhite,
@@ -331,7 +331,7 @@ class JamaahPrayerCard extends StatelessWidget {
         children: [
           Text(
             name,
-            style: AppTypography.captionSmall.copyWith(
+            style: DashboardTypography.captionSmall.copyWith(
               color: isActive ? AppColors.accentGoldStar : bodyColor,
               fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
             ),
@@ -342,7 +342,7 @@ class JamaahPrayerCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             time,
-            style: AppTypography.captionSmall.copyWith(
+            style: DashboardTypography.captionSmall.copyWith(
               color: isActive ? AppColors.surfaceWhite : headingColor,
               fontWeight: FontWeight.bold,
             ),

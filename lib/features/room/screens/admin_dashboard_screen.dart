@@ -9,7 +9,7 @@ import '../../../core/services/app_alert_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../dashboard/presentation/dashboard_typography.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
 import '../../dashboard/controllers/dashboard_controller.dart';
@@ -45,28 +45,31 @@ class AdminDashboardScreen extends StatelessWidget {
     final dashboardCtrl = Get.find<DashboardController>();
     final controller = Get.find<AdminRoomController>();
 
-    return Obx(() {
-      return Scaffold(
-        backgroundColor: AppColors.scaffoldColor(context),
-        extendBody: true,
-        body: IndexedStack(
-          index: dashboardCtrl.currentIndex.value,
-          children: [
-            _AdminDashboardHome(
-              controller: controller,
-              dashboardCtrl: dashboardCtrl,
-            ),
-            const InteractiveMapScreen(showBottomNav: false),
-            const PrayerTimesScreen(showBottomNav: false),
-            const ProfileScreen(showBottomNav: false),
-          ],
-        ),
-        bottomNavigationBar: HajiCareBottomNavBar(
-          currentIndex: dashboardCtrl.currentIndex.value,
-          onTap: dashboardCtrl.changeTab,
-        ),
-      );
-    });
+    return Theme(
+      data: DashboardTypography.applyTo(Theme.of(context)),
+      child: Obx(() {
+        return Scaffold(
+          backgroundColor: AppColors.scaffoldColor(context),
+          extendBody: true,
+          body: IndexedStack(
+            index: dashboardCtrl.currentIndex.value,
+            children: [
+              _AdminDashboardHome(
+                controller: controller,
+                dashboardCtrl: dashboardCtrl,
+              ),
+              const InteractiveMapScreen(showBottomNav: false),
+              const PrayerTimesScreen(showBottomNav: false),
+              const ProfileScreen(showBottomNav: false),
+            ],
+          ),
+          bottomNavigationBar: HajiCareBottomNavBar(
+            currentIndex: dashboardCtrl.currentIndex.value,
+            onTap: dashboardCtrl.changeTab,
+          ),
+        );
+      }),
+    );
   }
 }
 
@@ -140,8 +143,8 @@ class _AdminDashboardHome extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Hello, Admin!',
-                  style: AppTypography.titleMedium.copyWith(
+                  context.tr('adminDashboard.greeting'),
+                  style: DashboardTypography.titleMedium.copyWith(
                     color: headingColor,
                     fontWeight: FontWeight.w800,
                     fontSize: 16.5,
@@ -149,8 +152,8 @@ class _AdminDashboardHome extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'HajiCare Command Center',
-                  style: AppTypography.captionSmall.copyWith(
+                  context.tr('adminDashboard.commandCenter'),
+                  style: DashboardTypography.captionSmall.copyWith(
                     color: bodyColor.withValues(alpha: 0.75),
                     fontWeight: FontWeight.w600,
                     fontSize: 11,
@@ -173,7 +176,7 @@ class _AdminDashboardHome extends StatelessWidget {
                 color: headingColor,
                 size: 21,
               ),
-              tooltip: 'Kirim Notifikasi / Siaran',
+              tooltip: context.tr('adminDashboard.sendBroadcastTooltip'),
               onPressed: () => NotificationComposerDialog.show(context),
             ),
           ),
@@ -195,7 +198,7 @@ class _AdminDashboardHome extends StatelessWidget {
                     color: headingColor,
                     size: 21,
                   ),
-                  tooltip: 'Notifikasi',
+                  tooltip: context.tr('adminDashboard.notifications'),
                   onPressed: () => Get.toNamed(AppRoutes.notification),
                 ),
                 Obx(() {
@@ -239,7 +242,7 @@ class _AdminDashboardHome extends StatelessWidget {
                 color: AppColors.error,
                 size: 20,
               ),
-              tooltip: 'Keluar Admin',
+              tooltip: context.tr('adminDashboard.logout'),
               onPressed: () => controller.promptSignOut(context),
             ),
           ),
@@ -256,8 +259,10 @@ class _AdminDashboardHome extends StatelessWidget {
                 CircularProgressIndicator(color: primaryColor, strokeWidth: 3),
                 const SizedBox(height: AppSpacing.md),
                 Text(
-                  'Memuat Command Center...',
-                  style: AppTypography.bodySmall.copyWith(color: bodyColor),
+                  context.tr('adminDashboard.loading'),
+                  style: DashboardTypography.bodySmall.copyWith(
+                    color: bodyColor,
+                  ),
                 ),
               ],
             ),
@@ -332,22 +337,10 @@ class _AdminDashboardHome extends StatelessWidget {
   }
 
   // 1. Hero progress card
-  String _getMonthName(int month) {
-    const months = [
-      'Januari',
-      'Februari',
-      'Maret',
-      'April',
-      'Mei',
-      'Juni',
-      'Juli',
-      'Agustus',
-      'September',
-      'Oktober',
-      'November',
-      'Desember',
-    ];
-    return (month >= 1 && month <= 12) ? months[month - 1] : '';
+  String _getMonthName(BuildContext context, int month) {
+    return month >= 1 && month <= 12
+        ? context.tr('adminDashboard.month$month')
+        : '';
   }
 
   // 5. Room monitoring section

@@ -1,4 +1,4 @@
-﻿part of 'admin_dashboard_screen.dart';
+part of 'admin_dashboard_screen.dart';
 
 extension _AdminDashboardActiveRoomsSheet on _AdminDashboardHome {
   void _showActiveRoomsSheet(
@@ -76,18 +76,23 @@ extension _AdminDashboardActiveRoomsSheet on _AdminDashboardHome {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'ROOM AKTIF',
-                                  style: AppTypography.titleMedium.copyWith(
-                                    color: headingColor,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.5,
-                                  ),
+                                  context.tr('adminDashboard.activeRoomsUpper'),
+                                  style: DashboardTypography.titleMedium
+                                      .copyWith(
+                                        color: headingColor,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
+                                      ),
                                 ),
                                 Text(
-                                  '${activeRooms.length} room aktif beroperasi',
-                                  style: AppTypography.captionSmall.copyWith(
-                                    color: bodyColor.withValues(alpha: 0.7),
+                                  context.tr(
+                                    'adminDashboard.activeRoomsCount',
+                                    {'count': activeRooms.length},
                                   ),
+                                  style: DashboardTypography.captionSmall
+                                      .copyWith(
+                                        color: bodyColor.withValues(alpha: 0.7),
+                                      ),
                                 ),
                               ],
                             ),
@@ -116,10 +121,11 @@ extension _AdminDashboardActiveRoomsSheet on _AdminDashboardHome {
                                   ),
                                   const SizedBox(height: AppSpacing.sm),
                                   Text(
-                                    'Tidak ada room aktif saat ini.',
-                                    style: AppTypography.bodySmall.copyWith(
-                                      color: bodyColor,
+                                    context.tr(
+                                      'adminDashboard.noActiveRoomsNow',
                                     ),
+                                    style: DashboardTypography.bodySmall
+                                        .copyWith(color: bodyColor),
                                   ),
                                 ],
                               ),
@@ -200,7 +206,7 @@ extension _AdminDashboardActiveRoomsSheet on _AdminDashboardHome {
                                                 Expanded(
                                                   child: Text(
                                                     room.name,
-                                                    style: AppTypography
+                                                    style: DashboardTypography
                                                         .titleSmall
                                                         .copyWith(
                                                           color: headingColor,
@@ -255,8 +261,10 @@ extension _AdminDashboardActiveRoomsSheet on _AdminDashboardHome {
                                                       ),
                                                       const SizedBox(width: 4),
                                                       Text(
-                                                        'Aktif',
-                                                        style: AppTypography
+                                                        context.tr(
+                                                          'adminDashboard.active',
+                                                        ),
+                                                        style: DashboardTypography
                                                             .captionSmall
                                                             .copyWith(
                                                               color: AppColors
@@ -276,8 +284,15 @@ extension _AdminDashboardActiveRoomsSheet on _AdminDashboardHome {
 
                                             // Middle: Count
                                             Text(
-                                              '$jCount Jamaah - $pCount Pendamping',
-                                              style: AppTypography.bodySmall
+                                              context.tr(
+                                                'adminDashboard.memberCounts',
+                                                {
+                                                  'jamaah': jCount,
+                                                  'pendamping': pCount,
+                                                },
+                                              ),
+                                              style: DashboardTypography
+                                                  .bodySmall
                                                   .copyWith(
                                                     color: bodyColor.withValues(
                                                       alpha: 0.85,
@@ -294,8 +309,11 @@ extension _AdminDashboardActiveRoomsSheet on _AdminDashboardHome {
                                                       .spaceBetween,
                                               children: [
                                                 Text(
-                                                  'Kode: ${room.code}',
-                                                  style: AppTypography
+                                                  context.tr(
+                                                    'adminDashboard.codeValue',
+                                                    {'code': room.code},
+                                                  ),
+                                                  style: DashboardTypography
                                                       .captionSmall
                                                       .copyWith(
                                                         color: headingColor,

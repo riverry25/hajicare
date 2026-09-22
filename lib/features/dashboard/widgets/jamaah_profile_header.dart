@@ -6,7 +6,7 @@ import '../../../../core/state/hajicare_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
+import '../presentation/dashboard_typography.dart';
 import '../../../../core/widgets/animated_ping_dot.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_status_badge.dart';
@@ -55,7 +55,7 @@ class JamaahProfileHeader extends StatelessWidget {
               const SizedBox(height: AppSpacing.md),
               Text(
                 context.tr('selectTextSizeTitle'),
-                style: AppTypography.titleLarge.copyWith(
+                style: DashboardTypography.titleLarge.copyWith(
                   color: headingColor,
                   fontWeight: FontWeight.bold,
                 ),
@@ -107,7 +107,7 @@ class JamaahProfileHeader extends StatelessWidget {
                               const SizedBox(width: AppSpacing.md),
                               Text(
                                 scale.label,
-                                style: AppTypography.bodyMedium.copyWith(
+                                style: DashboardTypography.bodyMedium.copyWith(
                                   color: headingColor,
                                   fontWeight: isSelected
                                       ? FontWeight.bold
@@ -118,7 +118,7 @@ class JamaahProfileHeader extends StatelessWidget {
                           ),
                           Text(
                             '${(scale.factor * 100).toStringAsFixed(0)}%',
-                            style: AppTypography.captionSmall.copyWith(
+                            style: DashboardTypography.captionSmall.copyWith(
                               color: isDark
                                   ? AppColors.darkTextBody
                                   : AppColors.textBody,
@@ -206,7 +206,7 @@ class JamaahProfileHeader extends StatelessWidget {
                           Flexible(
                             child: Text(
                               userName,
-                              style: AppTypography.titleLarge.copyWith(
+                              style: DashboardTypography.titleLarge.copyWith(
                                 color: headingColor,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -226,7 +226,7 @@ class JamaahProfileHeader extends StatelessWidget {
                       if (kloterText.isNotEmpty && maktabText.isNotEmpty)
                         Text(
                           '$kloterText • $maktabText',
-                          style: AppTypography.caption.copyWith(
+                          style: DashboardTypography.caption.copyWith(
                             color: bodyColor,
                           ),
                           maxLines: 1,
@@ -235,7 +235,7 @@ class JamaahProfileHeader extends StatelessWidget {
                       else if (kloterText.isNotEmpty || maktabText.isNotEmpty)
                         Text(
                           kloterText.isNotEmpty ? kloterText : maktabText,
-                          style: AppTypography.caption.copyWith(
+                          style: DashboardTypography.caption.copyWith(
                             color: bodyColor,
                           ),
                           maxLines: 1,
@@ -245,7 +245,7 @@ class JamaahProfileHeader extends StatelessWidget {
                           state.activeRoom.value!.name.isNotEmpty)
                         Text(
                           state.activeRoom.value!.name,
-                          style: AppTypography.caption.copyWith(
+                          style: DashboardTypography.caption.copyWith(
                             color: bodyColor,
                           ),
                           maxLines: 1,
@@ -287,13 +287,13 @@ class JamaahProfileHeader extends StatelessWidget {
                     child: RichText(
                       text: TextSpan(
                         text: context.tr('connectedWith'),
-                        style: AppTypography.caption.copyWith(
+                        style: DashboardTypography.caption.copyWith(
                           color: headingColor,
                         ),
                         children: [
                           TextSpan(
                             text: state.pendampingName.value,
-                            style: AppTypography.captionSmall.copyWith(
+                            style: DashboardTypography.captionSmall.copyWith(
                               color: isDark
                                   ? AppColors.accentGoldStar
                                   : AppColors.primaryContainer,

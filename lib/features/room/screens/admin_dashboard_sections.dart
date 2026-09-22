@@ -14,8 +14,8 @@ extension _AdminDashboardSections on _AdminDashboardHome {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Aksi Cepat',
-          style: AppTypography.titleMedium.copyWith(
+          context.tr('adminDashboard.quickActions'),
+          style: DashboardTypography.titleMedium.copyWith(
             color: headingColor,
             fontWeight: FontWeight.bold,
           ),
@@ -77,8 +77,10 @@ extension _AdminDashboardSections on _AdminDashboardHome {
               child: _QuickActionButton(
                 label: context.tr('room.alertCenter'),
                 subtitle: activeSos > 0
-                    ? '$activeSos SOS aktif'
-                    : 'Pusat notifikasi',
+                    ? context.tr('adminDashboard.activeSosCount', {
+                        'count': activeSos,
+                      })
+                    : context.tr('adminDashboard.notificationCenter'),
                 icon: Icons.notification_important_rounded,
                 color: activeSos > 0
                     ? AppColors.sosEmergency
@@ -164,8 +166,8 @@ extension _AdminDashboardSections on _AdminDashboardHome {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Room Pantau',
-              style: AppTypography.titleMedium.copyWith(
+              context.tr('adminDashboard.monitoringRooms'),
+              style: DashboardTypography.titleMedium.copyWith(
                 color: headingColor,
                 fontWeight: FontWeight.bold,
               ),
@@ -176,9 +178,12 @@ extension _AdminDashboardSections on _AdminDashboardHome {
                 foregroundColor: primaryColor,
                 padding: const EdgeInsets.symmetric(horizontal: 8),
               ),
-              icon: const Text(
-                'Lihat Semua',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              icon: Text(
+                context.tr('dashboard.viewAll'),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
               ),
               label: const Icon(Icons.arrow_forward_ios_rounded, size: 12),
               onPressed: () => Get.toNamed(AppRoutes.adminRooms),
@@ -220,8 +225,8 @@ extension _AdminDashboardSections on _AdminDashboardHome {
                     const SizedBox(height: AppSpacing.md),
 
                     Text(
-                      'Belum Ada Room Pantau Aktif',
-                      style: AppTypography.titleSmall.copyWith(
+                      context.tr('adminDashboard.noActiveRoom'),
+                      style: DashboardTypography.titleSmall.copyWith(
                         color: headingColor,
                         fontWeight: FontWeight.bold,
                       ),
@@ -230,9 +235,11 @@ extension _AdminDashboardSections on _AdminDashboardHome {
                     const SizedBox(height: 4),
 
                     Text(
-                      'Buat room baru untuk mulai memantau jamaah dan koordinasi pendamping maktab.',
+                      context.tr('adminDashboard.noActiveRoomDesc'),
                       textAlign: TextAlign.center,
-                      style: AppTypography.bodySmall.copyWith(color: bodyColor),
+                      style: DashboardTypography.bodySmall.copyWith(
+                        color: bodyColor,
+                      ),
                     ),
 
                     const SizedBox(height: AppSpacing.lg),
@@ -250,9 +257,9 @@ extension _AdminDashboardSections on _AdminDashboardHome {
                         elevation: 2,
                       ),
                       icon: const Icon(Icons.add_rounded, size: 20),
-                      label: const Text(
-                        'Buat Room Baru',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                      label: Text(
+                        context.tr('adminDashboard.createRoom'),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       onPressed: () =>
                           _showCreateRoomSheet(context, controller),
@@ -347,8 +354,8 @@ extension _AdminDashboardSections on _AdminDashboardHome {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Aktivitas Terbaru',
-                          style: AppTypography.titleMedium.copyWith(
+                          context.tr('adminDashboard.recentActivity'),
+                          style: DashboardTypography.titleMedium.copyWith(
                             color: headingColor,
                             fontWeight: FontWeight.bold,
                           ),
@@ -366,13 +373,19 @@ extension _AdminDashboardSections on _AdminDashboardHome {
                             Expanded(
                               child: Text(
                                 sortedActivities.isEmpty
-                                    ? 'Realtime - Pemantauan aktif'
-                                    : 'Realtime - ${sortedActivities.length} aktivitas',
-                                style: AppTypography.captionSmall.copyWith(
-                                  color: bodyColor.withValues(alpha: 0.75),
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 11,
-                                ),
+                                    ? context.tr(
+                                        'adminDashboard.realtimeActive',
+                                      )
+                                    : context.tr(
+                                        'adminDashboard.realtimeCount',
+                                        {'count': sortedActivities.length},
+                                      ),
+                                style: DashboardTypography.captionSmall
+                                    .copyWith(
+                                      color: bodyColor.withValues(alpha: 0.75),
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 11,
+                                    ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -392,9 +405,12 @@ extension _AdminDashboardSections on _AdminDashboardHome {
                 foregroundColor: primaryColor,
                 padding: const EdgeInsets.symmetric(horizontal: 8),
               ),
-              icon: const Text(
-                'Lihat Semua',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              icon: Text(
+                context.tr('dashboard.viewAll'),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
               ),
               label: const Icon(Icons.arrow_forward_ios_rounded, size: 11),
               onPressed: () => _showAllActivitiesSheet(
@@ -447,17 +463,17 @@ extension _AdminDashboardSections on _AdminDashboardHome {
                     ),
                     const SizedBox(height: AppSpacing.md),
                     Text(
-                      'Semua Kondisi Terkendali',
-                      style: AppTypography.titleSmall.copyWith(
+                      context.tr('adminDashboard.allControlled'),
+                      style: DashboardTypography.titleSmall.copyWith(
                         color: headingColor,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Belum ada insiden darurat, mutasi kamar, atau perubahan operasional tercatat hari ini.',
+                      context.tr('adminDashboard.noIncident'),
                       textAlign: TextAlign.center,
-                      style: AppTypography.bodySmall.copyWith(
+                      style: DashboardTypography.bodySmall.copyWith(
                         color: bodyColor.withValues(alpha: 0.85),
                         fontSize: 12.5,
                         height: 1.4,
@@ -487,8 +503,8 @@ extension _AdminDashboardSections on _AdminDashboardHome {
                           ),
                           const SizedBox(width: 5),
                           Text(
-                            'Sinkronisasi Cloud Firestore Aktif',
-                            style: AppTypography.captionSmall.copyWith(
+                            context.tr('adminDashboard.firestoreActive'),
+                            style: DashboardTypography.captionSmall.copyWith(
                               color: bodyColor.withValues(alpha: 0.8),
                               fontWeight: FontWeight.w600,
                               fontSize: 10.5,
@@ -562,8 +578,12 @@ extension _AdminDashboardSections on _AdminDashboardHome {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Lihat ${sortedActivities.length - previewActivities.length} aktivitas lainnya',
-                            style: AppTypography.captionSmall.copyWith(
+                            context.tr('adminDashboard.moreActivities', {
+                              'count':
+                                  sortedActivities.length -
+                                  previewActivities.length,
+                            }),
+                            style: DashboardTypography.captionSmall.copyWith(
                               color: primaryColor,
                               fontWeight: FontWeight.w700,
                               fontSize: 12,

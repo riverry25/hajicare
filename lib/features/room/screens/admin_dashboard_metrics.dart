@@ -79,9 +79,11 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                       const SizedBox(width: 6),
                       Text(
                         hasSos
-                            ? '$activeSos SOS PERLU TINDAKAN'
-                            : 'Command Center Aman',
-                        style: AppTypography.captionSmall.copyWith(
+                            ? context.tr('adminDashboard.sosNeedsAction', {
+                                'count': activeSos,
+                              })
+                            : context.tr('adminDashboard.safeCommandCenter'),
+                        style: DashboardTypography.captionSmall.copyWith(
                           color: hasSos
                               ? const Color(0xFFFF8080)
                               : (isDark
@@ -107,8 +109,8 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                     ),
                     const SizedBox(width: 5),
                     Text(
-                      'Live Sync',
-                      style: AppTypography.captionSmall.copyWith(
+                      context.tr('adminDashboard.liveSync'),
+                      style: DashboardTypography.captionSmall.copyWith(
                         color: subtextColor,
                         fontWeight: FontWeight.w700,
                         fontSize: 11,
@@ -131,7 +133,7 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                     Text(
                       '$safePercentage%',
                       style: TextStyle(
-                        fontFamily: 'PlusJakartaSans',
+                        fontFamily: DashboardTypography.headingFontFamily,
                         fontSize: 42,
                         fontWeight: FontWeight.w900,
                         height: 1.0,
@@ -153,8 +155,8 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            '${DateTime.now().day} ${_getMonthName(DateTime.now().month)}',
-                            style: AppTypography.captionSmall.copyWith(
+                            '${DateTime.now().day} ${_getMonthName(context, DateTime.now().month)}',
+                            style: DashboardTypography.captionSmall.copyWith(
                               color: textColor,
                               fontWeight: FontWeight.w700,
                               fontSize: 11.5,
@@ -210,7 +212,7 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                               ),
                             ),
                             Text(
-                              'Room Aktif',
+                              context.tr('adminDashboard.activeRoom'),
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
@@ -284,8 +286,8 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Status & Koordinasi',
-                      style: AppTypography.titleSmall.copyWith(
+                      context.tr('adminDashboard.statusCoordination'),
+                      style: DashboardTypography.titleSmall.copyWith(
                         color: headingColor,
                         fontWeight: FontWeight.w800,
                         fontSize: 14.5,
@@ -293,9 +295,11 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                     ),
                     Text(
                       hasSos
-                          ? '$activeSos SOS Memerlukan Tindakan Segera'
-                          : 'Kondisi Seluruh Room Aman & Normal',
-                      style: AppTypography.captionSmall.copyWith(
+                          ? context.tr('adminDashboard.sosUrgent', {
+                              'count': activeSos,
+                            })
+                          : context.tr('adminDashboard.allRoomsSafe'),
+                      style: DashboardTypography.captionSmall.copyWith(
                         color: hasSos
                             ? AppColors.sosEmergency
                             : bodyColor.withValues(alpha: 0.7),
@@ -348,9 +352,9 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                 children: [
                   _buildMetricBentoCard(
                     context: context,
-                    title: 'Jamaah',
+                    title: context.tr('room.roleJamaah'),
                     value: '$totalJamaah',
-                    subtitle: 'Data Jamaah',
+                    subtitle: context.tr('adminDashboard.pilgrimData'),
                     icon: Icons.groups_rounded,
                     height: 162,
                     isDark: isDark,
@@ -376,9 +380,9 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                   const SizedBox(height: 12),
                   _buildMetricBentoCard(
                     context: context,
-                    title: 'Room',
+                    title: context.tr('adminDashboard.room'),
                     value: '$activeRooms',
-                    subtitle: 'Room Aktif',
+                    subtitle: context.tr('adminDashboard.activeRoom'),
                     icon: Icons.meeting_room_rounded,
                     height: 126,
                     isDark: isDark,
@@ -414,9 +418,9 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                 children: [
                   _buildMetricBentoCard(
                     context: context,
-                    title: 'Petugas',
+                    title: context.tr('adminDashboard.officer'),
                     value: '$totalPendamping',
-                    subtitle: 'Siaga Maktab',
+                    subtitle: context.tr('room.officerDuty'),
                     icon: Icons.badge_rounded,
                     height: 126,
                     isDark: isDark,
@@ -444,9 +448,13 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                   const SizedBox(height: 12),
                   _buildMetricBentoCard(
                     context: context,
-                    title: 'Pusat Alert',
+                    title: context.tr('adminDashboard.alertCenter'),
                     value: '$activeSos',
-                    subtitle: hasSos ? '$activeSos Perlu Aksi' : 'Kondisi Aman',
+                    subtitle: hasSos
+                        ? context.tr('adminDashboard.needsAction', {
+                            'count': activeSos,
+                          })
+                        : context.tr('adminDashboard.safeCondition'),
                     icon: hasSos
                         ? Icons.warning_amber_rounded
                         : Icons.health_and_safety_rounded,
@@ -600,7 +608,7 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
-                  style: AppTypography.captionSmall.copyWith(
+                  style: DashboardTypography.captionSmall.copyWith(
                     color: isAlert ? AppColors.sosEmergency : headingColor,
                     fontWeight: FontWeight.w800,
                     fontSize: isTall ? 12.5 : 11.0,
@@ -628,7 +636,7 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                             subtitle,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: AppTypography.captionSmall.copyWith(
+                            style: DashboardTypography.captionSmall.copyWith(
                               color: isAlert
                                   ? AppColors.sosEmergency
                                   : accentColor,
@@ -653,7 +661,7 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
-                    style: AppTypography.captionSmall.copyWith(
+                    style: DashboardTypography.captionSmall.copyWith(
                       color: bodyColor.withValues(alpha: 0.65),
                       fontWeight: FontWeight.w600,
                       fontSize: 9.5,

@@ -8,7 +8,7 @@ import '../../../../core/state/hajicare_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
+import '../presentation/dashboard_typography.dart';
 import 'package:vibration/vibration.dart';
 
 class JamaahSosBanner extends StatelessWidget {
@@ -33,20 +33,20 @@ class JamaahSosBanner extends StatelessWidget {
           if (success) {
             final companion = state.pendampingName.value.isNotEmpty
                 ? state.pendampingName.value
-                : 'Pendamping';
+                : context.tr('dashboard.officerFallback');
             AppAlert.success(
               context,
               title: context.tr('dashboard.sosSignalSent'),
-              message:
-                  '$companion sudah diberi tahu. Tetap di tempat yang aman dan dekatkan ponsel Anda.',
+              message: context.tr('dashboard.sosNotifyCompanion', {
+                'name': companion,
+              }),
             );
           } else {
             AppAlert.error(
               context,
               title: context.tr('dashboard.sosSendFailed'),
-              message:
-                  'Periksa internet, lalu tekan tombol SOS lagi. Jika keadaan mendesak, segera minta bantuan orang terdekat.',
-              okText: 'Coba Lagi',
+              message: context.tr('dashboard.sosRetryDesc'),
+              okText: context.tr('common.tryAgain'),
             );
           }
         }
@@ -103,16 +103,16 @@ class JamaahSosBanner extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Tombol Darurat SOS',
-                        style: AppTypography.titleMedium.copyWith(
+                        context.tr('dashboard.sosButton'),
+                        style: DashboardTypography.titleMedium.copyWith(
                           color: headingColor,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        'SOS memberi tahu pendamping beserta lokasi Anda. Bergabunglah dengan rombongan terlebih dahulu.',
-                        style: AppTypography.bodySmall.copyWith(
+                        context.tr('dashboard.sosNeedsRoom'),
+                        style: DashboardTypography.bodySmall.copyWith(
                           color: bodyColor,
                         ),
                       ),
@@ -128,9 +128,12 @@ class JamaahSosBanner extends StatelessWidget {
               child: ElevatedButton.icon(
                 onPressed: () => Get.toNamed(AppRoutes.joinRoom),
                 icon: const Icon(Icons.meeting_room_outlined, size: 20),
-                label: const Text(
-                  'Gabung Rombongan',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                label: Text(
+                  context.tr('dashboard.joinGroup'),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: isDark
@@ -218,7 +221,7 @@ class JamaahSosBanner extends StatelessWidget {
                         children: [
                           Text(
                             context.tr('sosButtonTitle'),
-                            style: AppTypography.titleLarge.copyWith(
+                            style: DashboardTypography.titleLarge.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 0.5,
@@ -227,7 +230,7 @@ class JamaahSosBanner extends StatelessWidget {
                           const SizedBox(height: 1),
                           Text(
                             context.tr('sosButtonSubtitle'),
-                            style: AppTypography.caption.copyWith(
+                            style: DashboardTypography.caption.copyWith(
                               color: Colors.white.withValues(alpha: 0.92),
                             ),
                           ),
@@ -259,8 +262,8 @@ class JamaahSosBanner extends StatelessWidget {
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
-                  'Lokasi Anda akan dikirim kepada pendamping rombongan',
-                  style: AppTypography.caption.copyWith(
+                  context.tr('dashboard.locationSentToCompanion'),
+                  style: DashboardTypography.caption.copyWith(
                     color: bodyColor,
                     fontWeight: FontWeight.w500,
                   ),

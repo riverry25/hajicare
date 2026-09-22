@@ -89,17 +89,18 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                               ),
                               child: Text(
                                 _activityTypeName(act.type),
-                                style: AppTypography.captionSmall.copyWith(
-                                  color: act.color,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 10.5,
-                                ),
+                                style: DashboardTypography.captionSmall
+                                    .copyWith(
+                                      color: act.color,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 10.5,
+                                    ),
                               ),
                             ),
                             const Spacer(),
                             Text(
                               act.timeAgo,
-                              style: AppTypography.captionSmall.copyWith(
+                              style: DashboardTypography.captionSmall.copyWith(
                                 color: bodyColor.withValues(alpha: 0.7),
                                 fontSize: 11,
                               ),
@@ -109,7 +110,7 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                         const SizedBox(height: 3),
                         Text(
                           act.title,
-                          style: AppTypography.titleMedium.copyWith(
+                          style: DashboardTypography.titleMedium.copyWith(
                             color: headingColor,
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
@@ -147,7 +148,7 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                     const SizedBox(width: 8),
                     Text(
                       _formatFullDate(act.timestamp),
-                      style: AppTypography.captionSmall.copyWith(
+                      style: DashboardTypography.captionSmall.copyWith(
                         color: bodyColor,
                         fontWeight: FontWeight.w600,
                         fontSize: 11.5,
@@ -160,8 +161,8 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
 
               // Description Box
               Text(
-                'Keterangan Aktivitas',
-                style: AppTypography.captionSmall.copyWith(
+                context.tr('adminDashboard.activityDetails'),
+                style: DashboardTypography.captionSmall.copyWith(
                   color: bodyColor.withValues(alpha: 0.8),
                   fontWeight: FontWeight.bold,
                   fontSize: 11,
@@ -185,8 +186,8 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                 child: Text(
                   act.description.isNotEmpty
                       ? act.description
-                      : 'Tidak ada rincian tambahan untuk peristiwa ini.',
-                  style: AppTypography.bodySmall.copyWith(
+                      : context.tr('adminDashboard.noActivityDetails'),
+                  style: DashboardTypography.bodySmall.copyWith(
                     color: headingColor,
                     height: 1.45,
                     fontSize: 13,
@@ -198,8 +199,8 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
               if (act.roomName != null || matchingRoom != null) ...[
                 const SizedBox(height: AppSpacing.md),
                 Text(
-                  'Ruang Pantau Terkait',
-                  style: AppTypography.captionSmall.copyWith(
+                  context.tr('adminDashboard.relatedRoom'),
+                  style: DashboardTypography.captionSmall.copyWith(
                     color: bodyColor.withValues(alpha: 0.8),
                     fontWeight: FontWeight.bold,
                     fontSize: 11,
@@ -238,8 +239,8 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                             Text(
                               act.roomName ??
                                   matchingRoom?.name ??
-                                  'Room Pantau',
-                              style: AppTypography.titleSmall.copyWith(
+                                  context.tr('adminDashboard.monitoringRooms'),
+                              style: DashboardTypography.titleSmall.copyWith(
                                 color: headingColor,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 13.5,
@@ -247,13 +248,14 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                             ),
                             if (matchingRoom != null)
                               Text(
-                                'Status: ${matchingRoom.isActive ? "Aktif Dipantau" : "Non-Aktif"}',
-                                style: AppTypography.captionSmall.copyWith(
-                                  color: matchingRoom.isActive
-                                      ? AppColors.statusSafe
-                                      : bodyColor.withValues(alpha: 0.7),
-                                  fontSize: 10.5,
-                                ),
+                                '${context.tr('adminDashboard.status')}: ${matchingRoom.isActive ? context.tr('adminDashboard.monitoredActive') : context.tr('adminDashboard.inactive')}',
+                                style: DashboardTypography.captionSmall
+                                    .copyWith(
+                                      color: matchingRoom.isActive
+                                          ? AppColors.statusSafe
+                                          : bodyColor.withValues(alpha: 0.7),
+                                      fontSize: 10.5,
+                                    ),
                               ),
                           ],
                         ),
@@ -277,9 +279,9 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                             ),
                           ),
                           icon: const Icon(Icons.open_in_new_rounded, size: 14),
-                          label: const Text(
-                            'Buka Room',
-                            style: TextStyle(
+                          label: Text(
+                            context.tr('adminDashboard.openRoom'),
+                            style: const TextStyle(
                               fontSize: 11.5,
                               fontWeight: FontWeight.bold,
                             ),
@@ -324,8 +326,8 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Pelaksana / Terkait: ',
-                        style: AppTypography.captionSmall.copyWith(
+                        '${context.tr('adminDashboard.actor')} ',
+                        style: DashboardTypography.captionSmall.copyWith(
                           color: bodyColor.withValues(alpha: 0.7),
                           fontSize: 11,
                         ),
@@ -333,7 +335,7 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                       Expanded(
                         child: Text(
                           '${act.userName ?? 'User'} ${act.role != null ? "(${act.role})" : ""}',
-                          style: AppTypography.captionSmall.copyWith(
+                          style: DashboardTypography.captionSmall.copyWith(
                             color: headingColor,
                             fontWeight: FontWeight.bold,
                             fontSize: 11.5,
@@ -365,9 +367,9 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text(
-                    'Tutup',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  child: Text(
+                    context.tr('common.close'),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -450,19 +452,28 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Riwayat Aktivitas Lengkap',
-                                style: AppTypography.titleMedium.copyWith(
+                                context.tr(
+                                  'adminDashboard.fullActivityHistory',
+                                ),
+                                style: DashboardTypography.titleMedium.copyWith(
                                   color: headingColor,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               Obx(
                                 () => Text(
-                                  '${controller.paginatedActivities.length} aktivitas termuat (batch 10/halaman)',
-                                  style: AppTypography.captionSmall.copyWith(
-                                    color: bodyColor.withValues(alpha: 0.7),
-                                    fontWeight: FontWeight.w500,
+                                  context.tr(
+                                    'adminDashboard.activitiesLoaded',
+                                    {
+                                      'count':
+                                          controller.paginatedActivities.length,
+                                    },
                                   ),
+                                  style: DashboardTypography.captionSmall
+                                      .copyWith(
+                                        color: bodyColor.withValues(alpha: 0.7),
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                 ),
                               ),
                             ],
@@ -527,7 +538,7 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                         child: Row(
                           children: [
                             _buildModalFilterChip(
-                              'Semua',
+                              context.tr('adminDashboard.all'),
                               activeFilter == 'Semua',
                               primaryColor,
                               headingColor,
@@ -541,7 +552,7 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                             ),
                             const SizedBox(width: 6),
                             _buildModalFilterChip(
-                              'Darurat / SOS',
+                              context.tr('adminDashboard.emergencyFilter'),
                               activeFilter == 'Darurat',
                               AppColors.sosEmergency,
                               headingColor,
@@ -555,7 +566,7 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                             ),
                             const SizedBox(width: 6),
                             _buildModalFilterChip(
-                              'Room Pantau',
+                              context.tr('adminDashboard.monitoringRooms'),
                               activeFilter == 'Kamar',
                               primaryColor,
                               headingColor,
@@ -569,7 +580,7 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                             ),
                             const SizedBox(width: 6),
                             _buildModalFilterChip(
-                              'Anggota',
+                              context.tr('adminDashboard.members'),
                               activeFilter == 'Anggota',
                               AppColors.statusSafe,
                               headingColor,
@@ -601,10 +612,9 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                                   ),
                                   const SizedBox(height: AppSpacing.md),
                                   Text(
-                                    'Memuat 10 riwayat terbaru...',
-                                    style: AppTypography.captionSmall.copyWith(
-                                      color: bodyColor,
-                                    ),
+                                    context.tr('adminDashboard.loadingHistory'),
+                                    style: DashboardTypography.captionSmall
+                                        .copyWith(color: bodyColor),
                                   ),
                                 ],
                               ),
@@ -649,19 +659,23 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                                   ),
                                   const SizedBox(height: AppSpacing.sm),
                                   Text(
-                                    'Tidak Ada Aktivitas Sesuai Filter',
-                                    style: AppTypography.titleSmall.copyWith(
-                                      color: headingColor,
-                                      fontWeight: FontWeight.bold,
+                                    context.tr(
+                                      'adminDashboard.noFilteredActivity',
                                     ),
+                                    style: DashboardTypography.titleSmall
+                                        .copyWith(
+                                          color: headingColor,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Belum ada data aktivitas atau coba ubah kata kunci pencarian.',
-                                    textAlign: TextAlign.center,
-                                    style: AppTypography.captionSmall.copyWith(
-                                      color: bodyColor,
+                                    context.tr(
+                                      'adminDashboard.noActivityFilterDesc',
                                     ),
+                                    textAlign: TextAlign.center,
+                                    style: DashboardTypography.captionSmall
+                                        .copyWith(color: bodyColor),
                                   ),
                                 ],
                               ),
@@ -717,8 +731,11 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                                           ),
                                           const SizedBox(width: 10),
                                           Text(
-                                            'Memuat 10 riwayat berikutnya...',
-                                            style: AppTypography.captionSmall
+                                            context.tr(
+                                              'adminDashboard.loadingHistory',
+                                            ),
+                                            style: DashboardTypography
+                                                .captionSmall
                                                 .copyWith(color: bodyColor),
                                           ),
                                         ],
@@ -755,9 +772,9 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                                           Icons.expand_more_rounded,
                                           size: 18,
                                         ),
-                                        label: const Text(
-                                          'Muat 10 Riwayat Berikutnya',
-                                          style: TextStyle(
+                                        label: Text(
+                                          context.tr('adminDashboard.loadMore'),
+                                          style: const TextStyle(
                                             fontSize: 12,
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -775,8 +792,10 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                                   ),
                                   child: Center(
                                     child: Text(
-                                      '--- Semua riwayat telah ditampilkan ---',
-                                      style: AppTypography.captionSmall
+                                      context.tr(
+                                        'adminDashboard.allHistoryShown',
+                                      ),
+                                      style: DashboardTypography.captionSmall
                                           .copyWith(
                                             color: bodyColor.withValues(
                                               alpha: 0.5,
@@ -854,7 +873,7 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
         ),
         child: Text(
           label,
-          style: AppTypography.captionSmall.copyWith(
+          style: DashboardTypography.captionSmall.copyWith(
             color: isSelected
                 ? activeColor
                 : headingColor.withValues(alpha: 0.8),
@@ -869,41 +888,27 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
   static String _activityTypeName(ActivityType type) {
     switch (type) {
       case ActivityType.roomCreated:
-        return 'Room Dibuat';
+        return AppTranslations.tr('adminDashboard.activityRoomCreated');
       case ActivityType.roomActivated:
-        return 'Room Diaktifkan';
+        return AppTranslations.tr('adminDashboard.activityRoomActivated');
       case ActivityType.roomDeactivated:
-        return 'Room Dinonaktifkan';
+        return AppTranslations.tr('adminDashboard.activityRoomDeactivated');
       case ActivityType.roomUpdated:
-        return 'Room Diperbarui';
+        return AppTranslations.tr('adminDashboard.activityRoomUpdated');
       case ActivityType.memberJoined:
-        return 'Anggota Masuk';
+        return AppTranslations.tr('adminDashboard.activityMemberJoined');
       case ActivityType.memberLeft:
-        return 'Anggota Keluar';
+        return AppTranslations.tr('adminDashboard.activityMemberLeft');
       case ActivityType.sosActive:
-        return 'Peringatan Darurat SOS';
+        return AppTranslations.tr('adminDashboard.activitySos');
       case ActivityType.unknown:
-        return 'Aktivitas Operasional';
+        return AppTranslations.tr('adminDashboard.activityOperational');
     }
   }
 
   static String _formatFullDate(DateTime dt) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'Mei',
-      'Jun',
-      'Jul',
-      'Agu',
-      'Sep',
-      'Okt',
-      'Nov',
-      'Des',
-    ];
     final day = dt.day.toString().padLeft(2, '0');
-    final month = months[dt.month - 1];
+    final month = AppTranslations.tr('adminDashboard.shortMonth${dt.month}');
     final year = dt.year;
     final hour = dt.hour.toString().padLeft(2, '0');
     final minute = dt.minute.toString().padLeft(2, '0');

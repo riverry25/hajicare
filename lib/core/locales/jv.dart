@@ -1,4 +1,7 @@
-const Map<String, String> jvTranslations = {
+import 'dashboard_translations.dart';
+
+final Map<String, String> jvTranslations = {
+  ...dashboardJvTranslations,
   'aboutApp': 'Babagan Aplikasi',
   'aboutDescription':
       'HajiCare rawuh kangge ndampingi lampah ibadah haji panjenengan kanthi teknologi ingkang ramah, aman, lan gampil dipun ginakaken.',

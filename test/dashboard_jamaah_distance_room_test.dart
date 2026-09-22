@@ -27,6 +27,7 @@ void main() {
     return GetMaterialApp(
       theme: AppTheme.lightTheme,
       locale: const Locale('id', 'ID'),
+      supportedLocales: AppTranslations.supportedLocales,
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,

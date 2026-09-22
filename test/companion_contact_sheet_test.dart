@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
+import 'package:hajicare/core/locales/app_localizations.dart';
 import 'package:hajicare/core/state/hajicare_controller.dart';
 import 'package:hajicare/features/dashboard/widgets/companion_contact_sheet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,6 +22,14 @@ void main() {
 
   Widget buildApp({Size size = const Size(390, 844), double textScale = 1}) {
     return MaterialApp(
+      locale: const Locale('id'),
+      supportedLocales: AppTranslations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       home: MediaQuery(
         data: MediaQueryData(
           size: size,

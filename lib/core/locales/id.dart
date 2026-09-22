@@ -1,4 +1,8 @@
+import 'dashboard_translations.dart';
+
 const Map<String, String> idTranslations = {
+  ...dashboardIdTranslations,
+  ...adminDashboardIdTranslations,
   'aboutApp': 'Tentang Aplikasi',
   'aboutDescription':
       'HajiCare hadir untuk mendampingi perjalanan ibadah haji Anda dengan teknologi yang ramah, aman, dan mudah digunakan. Kami berkomitmen untuk memastikan setiap jamaah, terutama lansia dan penyandang disabilitas, dapat menjalankan ibadah dengan nyaman dan terlindungi.',

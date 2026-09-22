@@ -76,7 +76,7 @@ class _QuickActionButton extends StatelessWidget {
                         label,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTypography.titleSmall.copyWith(
+                        style: DashboardTypography.titleSmall.copyWith(
                           color: headingColor,
                           fontWeight: FontWeight.bold,
                           fontSize: 13.5,
@@ -86,7 +86,7 @@ class _QuickActionButton extends StatelessWidget {
                         subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTypography.captionSmall.copyWith(
+                        style: DashboardTypography.captionSmall.copyWith(
                           color: headingColor.withValues(alpha: 0.65),
                           fontSize: 10.5,
                         ),
@@ -406,8 +406,16 @@ class _RoomPantauCard extends StatelessWidget {
                                         const SizedBox(width: 4),
                                         Text(
                                           room.isActive
-                                              ? (hasSos ? 'SOS Aktif' : 'Aktif')
-                                              : 'Nonaktif',
+                                              ? (hasSos
+                                                    ? context.tr(
+                                                        'adminDashboard.sosActive',
+                                                      )
+                                                    : context.tr(
+                                                        'adminDashboard.active',
+                                                      ))
+                                              : context.tr(
+                                                  'adminDashboard.inactive',
+                                                ),
                                           style: TextStyle(
                                             color: room.isActive
                                                 ? (hasSos
@@ -423,7 +431,9 @@ class _RoomPantauCard extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    'Kode: ${room.code}',
+                                    context.tr('adminDashboard.codeValue', {
+                                      'code': room.code,
+                                    }),
                                     style: TextStyle(
                                       color: subtextColor,
                                       fontWeight: FontWeight.w700,
@@ -450,13 +460,15 @@ class _RoomPantauCard extends StatelessWidget {
                       children: [
                         _BentoChip(
                           icon: Icons.groups_rounded,
-                          label: '$jamaahCount Jamaah',
+                          label:
+                              '$jamaahCount ${context.tr('room.roleJamaah')}',
                           isDark: isDark,
                           textColor: headingColor,
                         ),
                         _BentoChip(
                           icon: Icons.shield_rounded,
-                          label: '$pendampingCount Pendamping',
+                          label:
+                              '$pendampingCount ${context.tr('room.roleCompanion')}',
                           isDark: isDark,
                           textColor: headingColor,
                         ),
@@ -484,7 +496,10 @@ class _RoomPantauCard extends StatelessWidget {
                           children: [
                             _CircleActionButton(
                               icon: Icons.copy_rounded,
-                              tooltip: 'Salin Kode (${room.code})',
+                              tooltip: context.tr(
+                                'adminDashboard.copyCodeTooltip',
+                                {'code': room.code},
+                              ),
                               isDark: isDark,
                               iconColor: actionIconColor,
                               onTap: () {
@@ -494,15 +509,17 @@ class _RoomPantauCard extends StatelessWidget {
                                 AppAlert.info(
                                   context,
                                   title: context.tr('room.codeCopied'),
-                                  message:
-                                      'Kode rombongan "${room.code}" sudah disalin dan siap ditempel.',
+                                  message: context.tr(
+                                    'adminDashboard.codeCopiedDesc',
+                                    {'code': room.code},
+                                  ),
                                 );
                               },
                             ),
                             const SizedBox(width: 8),
                             _CircleActionButton(
                               icon: Icons.qr_code_2_rounded,
-                              tooltip: 'Lihat QR Code',
+                              tooltip: context.tr('adminDashboard.viewQr'),
                               isDark: isDark,
                               iconColor: actionIconColor,
                               onTap: () =>
@@ -511,7 +528,9 @@ class _RoomPantauCard extends StatelessWidget {
                             const SizedBox(width: 8),
                             _CircleActionButton(
                               icon: Icons.radar_rounded,
-                              tooltip: 'Pantau Radar',
+                              tooltip: context.tr(
+                                'adminDashboard.monitorRadar',
+                              ),
                               isDark: isDark,
                               iconColor: actionIconColor,
                               onTap: onTap,
@@ -534,7 +553,7 @@ class _RoomPantauCard extends StatelessWidget {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    'Pantau Ruangan',
+                                    context.tr('adminDashboard.monitorRoom'),
                                     style: TextStyle(
                                       fontSize: 12.5,
                                       fontWeight: FontWeight.w900,
@@ -811,9 +830,9 @@ class _ActivityFeedTile extends StatelessWidget {
                                 AppRadius.pill,
                               ),
                             ),
-                            child: const Text(
-                              'DARURAT',
-                              style: TextStyle(
+                            child: Text(
+                              context.tr('adminDashboard.emergencyUpper'),
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.w800,
@@ -825,7 +844,7 @@ class _ActivityFeedTile extends StatelessWidget {
                         Expanded(
                           child: Text(
                             activity.title,
-                            style: AppTypography.titleSmall.copyWith(
+                            style: DashboardTypography.titleSmall.copyWith(
                               color: isSos
                                   ? (isDark
                                         ? const Color(0xFFFF6B6B)
@@ -850,7 +869,7 @@ class _ActivityFeedTile extends StatelessWidget {
                             const SizedBox(width: 3),
                             Text(
                               activity.timeAgo,
-                              style: AppTypography.captionSmall.copyWith(
+                              style: DashboardTypography.captionSmall.copyWith(
                                 color: bodyColor.withValues(alpha: 0.75),
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
@@ -865,7 +884,7 @@ class _ActivityFeedTile extends StatelessWidget {
                     // Description
                     Text(
                       activity.description,
-                      style: AppTypography.bodySmall.copyWith(
+                      style: DashboardTypography.bodySmall.copyWith(
                         color: bodyColor,
                         height: 1.38,
                         fontSize: 12.5,
@@ -910,11 +929,12 @@ class _ActivityFeedTile extends StatelessWidget {
                                   const SizedBox(width: 4),
                                   Text(
                                     activity.roomName!,
-                                    style: AppTypography.captionSmall.copyWith(
-                                      color: bodyColor,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 10.5,
-                                    ),
+                                    style: DashboardTypography.captionSmall
+                                        .copyWith(
+                                          color: bodyColor,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 10.5,
+                                        ),
                                   ),
                                 ],
                               ),
@@ -948,11 +968,12 @@ class _ActivityFeedTile extends StatelessWidget {
                                   Text(
                                     '${activity.userName ?? ""}${activity.role != null ? " (${activity.role})" : ""}'
                                         .trim(),
-                                    style: AppTypography.captionSmall.copyWith(
-                                      color: bodyColor,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 10.5,
-                                    ),
+                                    style: DashboardTypography.captionSmall
+                                        .copyWith(
+                                          color: bodyColor,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 10.5,
+                                        ),
                                   ),
                                 ],
                               ),
@@ -1064,8 +1085,16 @@ class _HeroGaugePainter extends CustomPainter {
 }
 
 String _formatMinutesAgo(Duration diff) {
-  if (diff.inSeconds < 60) return 'Baru saja';
-  if (diff.inMinutes < 60) return '${diff.inMinutes} mnt lalu';
-  if (diff.inHours < 24) return '${diff.inHours} jam lalu';
-  return '${diff.inDays} hari lalu';
+  if (diff.inSeconds < 60) return AppTranslations.tr('dashboard.justNow');
+  if (diff.inMinutes < 60) {
+    return AppTranslations.tr('dashboard.minutesAgo', {
+      'minutes': diff.inMinutes,
+    });
+  }
+  if (diff.inHours < 24) {
+    return AppTranslations.tr('adminDashboard.hoursAgo', {
+      'hours': diff.inHours,
+    });
+  }
+  return AppTranslations.tr('adminDashboard.daysAgo', {'days': diff.inDays});
 }

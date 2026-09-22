@@ -7,7 +7,7 @@ import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_typography.dart';
+import '../presentation/dashboard_typography.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
 import '../../map/controllers/map_controller.dart';
 import '../../map/screens/interactive_map_screen.dart';
@@ -31,33 +31,36 @@ class DashboardPendampingScreen extends StatelessWidget {
     final dashboardCtrl = Get.find<DashboardController>();
     final state = Get.find<HajiCareController>();
 
-    return Scaffold(
-      backgroundColor: AppColors.scaffoldColor(context),
-      extendBody: true,
-      body: Obx(
-        () => IndexedStack(
-          index: dashboardCtrl.currentIndex.value,
-          children: [
-            _buildHome(context, state, dashboardCtrl),
-            if (dashboardCtrl.visitedTabs.contains(1))
-              const InteractiveMapScreen(showBottomNav: false)
-            else
-              const SizedBox.shrink(),
-            if (dashboardCtrl.visitedTabs.contains(2))
-              const PrayerTimesScreen(showBottomNav: false)
-            else
-              const SizedBox.shrink(),
-            if (dashboardCtrl.visitedTabs.contains(3))
-              const ProfileScreen(showBottomNav: false)
-            else
-              const SizedBox.shrink(),
-          ],
+    return Theme(
+      data: DashboardTypography.applyTo(Theme.of(context)),
+      child: Scaffold(
+        backgroundColor: AppColors.scaffoldColor(context),
+        extendBody: true,
+        body: Obx(
+          () => IndexedStack(
+            index: dashboardCtrl.currentIndex.value,
+            children: [
+              _buildHome(context, state, dashboardCtrl),
+              if (dashboardCtrl.visitedTabs.contains(1))
+                const InteractiveMapScreen(showBottomNav: false)
+              else
+                const SizedBox.shrink(),
+              if (dashboardCtrl.visitedTabs.contains(2))
+                const PrayerTimesScreen(showBottomNav: false)
+              else
+                const SizedBox.shrink(),
+              if (dashboardCtrl.visitedTabs.contains(3))
+                const ProfileScreen(showBottomNav: false)
+              else
+                const SizedBox.shrink(),
+            ],
+          ),
         ),
-      ),
-      bottomNavigationBar: Obx(
-        () => HajiCareBottomNavBar(
-          currentIndex: dashboardCtrl.currentIndex.value,
-          onTap: dashboardCtrl.changeTab,
+        bottomNavigationBar: Obx(
+          () => HajiCareBottomNavBar(
+            currentIndex: dashboardCtrl.currentIndex.value,
+            onTap: dashboardCtrl.changeTab,
+          ),
         ),
       ),
     );
@@ -80,8 +83,9 @@ class DashboardPendampingScreen extends StatelessWidget {
       AppAlert.warning(
         context,
         title: context.tr('dashboard.locationUnavailable'),
-        message:
-            'Lokasi ${jamaah.name} belum tersedia atau GPS jamaah belum aktif.',
+        message: context.tr('dashboard.locationUnavailableFor', {
+          'name': jamaah.name,
+        }),
       );
     }
   }
@@ -150,7 +154,7 @@ class DashboardPendampingScreen extends StatelessWidget {
         ? state.pendampingName.value
         : (state.self.name.trim().isNotEmpty
               ? state.self.name.trim()
-              : 'Pendamping');
+              : context.tr('dashboard.officerFallback'));
     final initialLetter = displayName.isNotEmpty
         ? displayName[0].toUpperCase()
         : 'P';
@@ -161,14 +165,16 @@ class DashboardPendampingScreen extends StatelessWidget {
 
     final prayerName = prayerCtrl.nextPrayerName.value.isNotEmpty
         ? prayerCtrl.nextPrayerName.value
-        : 'Ashar';
+        : context.tr('ashar');
     final cleanTime =
         (prayerCtrl.nextPrayerTime.value.isNotEmpty
                 ? prayerCtrl.nextPrayerTime.value
                 : '15:20')
             .split(' ')
             .first;
-    final gpsDisplay = state.isMyGpsActive.value ? 'GPS Aktif' : 'GPS Mati';
+    final gpsDisplay = state.isMyGpsActive.value
+        ? context.tr('dashboard.gpsActive')
+        : context.tr('dashboard.gpsInactive');
 
     return Container(
       width: double.infinity,
@@ -282,7 +288,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.only(bottom: 6),
                           child: Text(
-                            'jamaah',
+                            context.tr('room.roleJamaah').toLowerCase(),
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.6),
                               fontSize: 14,
@@ -314,9 +320,9 @@ class DashboardPendampingScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 5),
-                          const Text(
-                            'Jamaah Terpantau',
-                            style: TextStyle(
+                          Text(
+                            context.tr('dashboard.monitoredPilgrims'),
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -334,7 +340,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                 height: 84,
                 waveColor: AppColors.accentGoldStar,
                 jamaahList: state.jamaahList,
-                tooltip: 'Sinkronisasi Data Rombongan & Lokasi',
+                tooltip: context.tr('dashboard.syncGroupTooltip'),
                 onSync: () async {
                   final success = await state.refreshLocation();
                   state.jamaahList.refresh();
@@ -343,8 +349,8 @@ class DashboardPendampingScreen extends StatelessWidget {
                       SnackBar(
                         content: Text(
                           success
-                              ? 'Data rombongan & lokasi jamaah berhasil disinkronkan.'
-                              : 'Pembaruan selesai. Pastikan GPS ponsel aktif untuk pemetaan real-time.',
+                              ? context.tr('dashboard.syncSuccess')
+                              : context.tr('dashboard.syncFinishedGpsHint'),
                         ),
                         duration: const Duration(seconds: 3),
                         behavior: SnackBarBehavior.floating,
@@ -416,22 +422,26 @@ class DashboardPendampingScreen extends StatelessWidget {
                           autoRoute: false,
                         );
                       },
-                      child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(
+                          children: [
+                            const Icon(
                               Icons.north_west_rounded,
                               color: Colors.white,
                               size: 16,
                             ),
-                            SizedBox(width: 7),
-                            Text(
-                              'Lacak Jamaah',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
+                            const SizedBox(width: 7),
+                            Expanded(
+                              child: Text(
+                                context.tr('dashboard.trackPilgrim'),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
                           ],
@@ -460,20 +470,24 @@ class DashboardPendampingScreen extends StatelessWidget {
                           initialRoomName: state.activeRoom.value?.name,
                         );
                       },
-                      child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Text(
-                              'Broadcast Notif',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                context.tr('dashboard.broadcastNotification'),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
-                            SizedBox(width: 7),
-                            Icon(
+                            const SizedBox(width: 7),
+                            const Icon(
                               Icons.north_east_rounded,
                               color: Colors.white,
                               size: 16,
@@ -562,10 +576,9 @@ class DashboardPendampingScreen extends StatelessWidget {
                         AppAlert.warning(
                           context,
                           title: context.tr('dashboard.noGroupYet'),
-                          message:
-                              'Pilih atau buat rombongan terlebih dahulu sebelum mengundang jamaah.',
+                          message: context.tr('dashboard.selectOrCreateRoom'),
                           onOk: () => Get.toNamed(AppRoutes.joinRoom),
-                          okText: 'Kelola Rombongan',
+                          okText: context.tr('dashboard.manageRoom'),
                         );
                       }
                     },
@@ -596,7 +609,7 @@ class DashboardPendampingScreen extends StatelessWidget {
               _sectionHeader(
                 title: context.tr('dashboard.emergencyStatus'),
                 subtitle: context.tr('dashboard.sosSeparatedSub'),
-                actionText: 'Lihat peta',
+                actionText: context.tr('dashboard.viewMap'),
                 onAction: () {
                   final target =
                       state.jamaahList.firstWhereOrNull(
@@ -615,9 +628,8 @@ class DashboardPendampingScreen extends StatelessWidget {
                   onDismissSos: (jamaahId) async {
                     AppAlert.confirm(
                       context,
-                      title: 'Akhiri Darurat SOS',
-                      message:
-                          'Apakah situasi darurat jamaah sudah teratasi? Sinyal SOS akan dinonaktifkan.',
+                      title: context.tr('dashboard.endSos'),
+                      message: context.tr('dashboard.endSosConfirm'),
                       confirmText: context.tr('dashboard.yesEndSos'),
                       cancelText: context.tr('common.cancel'),
                       onConfirm: () async {
@@ -627,15 +639,14 @@ class DashboardPendampingScreen extends StatelessWidget {
                             AppAlert.success(
                               context,
                               title: context.tr('dashboard.sosEnded'),
-                              message: 'Sinyal darurat sudah dinonaktifkan.',
+                              message: context.tr('dashboard.sosDisabled'),
                             );
                           } else {
                             AppAlert.error(
                               context,
                               title: context.tr('dashboard.sosEndFailed'),
-                              message:
-                                  'Periksa internet, lalu coba akhiri SOS sekali lagi.',
-                              okText: 'Coba Lagi',
+                              message: context.tr('dashboard.sosEndRetry'),
+                              okText: context.tr('common.tryAgain'),
                             );
                           }
                         }
@@ -666,7 +677,7 @@ class DashboardPendampingScreen extends StatelessWidget {
               _sectionHeader(
                 title: context.tr('dashboard.positionDetail'),
                 subtitle: context.tr('dashboard.positionDetailSub'),
-                actionText: 'Buka navigasi',
+                actionText: context.tr('dashboard.openNavigation'),
                 onAction: () =>
                     _trackJamaahOnMap(context, selectedJamaah, autoRoute: true),
                 headingColor: headingColor,
@@ -688,7 +699,7 @@ class DashboardPendampingScreen extends StatelessWidget {
             _sectionHeader(
               title: context.tr('dashboard.roomAndMaktab'),
               subtitle: context.tr('dashboard.hotelRoomSub'),
-              actionText: 'Kelola',
+              actionText: context.tr('dashboard.manage'),
               onAction: () => state.activeRoomId.value != null
                   ? Get.toNamed(
                       AppRoutes.roomDetail,
@@ -707,13 +718,13 @@ class DashboardPendampingScreen extends StatelessWidget {
             _sectionHeader(
               title: context.tr('dashboard.taskGuidance'),
               subtitle: context.tr('dashboard.taskGuidanceSub'),
-              actionText: 'Selengkapnya',
+              actionText: context.tr('dashboard.moreDetails'),
               onAction: () {},
               headingColor: headingColor,
               isDark: isDark,
             ),
             const SizedBox(height: 12),
-            _tipsCard(isDark, headingColor),
+            _tipsCard(context, isDark, headingColor),
           ],
         );
       }),
@@ -822,16 +833,16 @@ class DashboardPendampingScreen extends StatelessWidget {
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Icon(
+                children: [
+                  const Icon(
                     Icons.campaign_rounded,
                     color: AppColors.goldLight,
                     size: 13,
                   ),
-                  SizedBox(width: 4),
+                  const SizedBox(width: 4),
                   Text(
-                    'Broadcast',
-                    style: TextStyle(
+                    context.tr('dashboard.broadcast'),
+                    style: const TextStyle(
                       color: AppColors.goldLight,
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -843,7 +854,7 @@ class DashboardPendampingScreen extends StatelessWidget {
             ),
             const SizedBox(height: 3),
             Text(
-              'Kirim Notif',
+              context.tr('dashboard.sendNotification'),
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.65),
                 fontSize: 11,
@@ -1004,7 +1015,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.titleMedium.copyWith(
+                  style: DashboardTypography.titleMedium.copyWith(
                     fontWeight: FontWeight.w800,
                     color: headingColor,
                     fontSize: 15,
@@ -1015,7 +1026,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                   subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.captionSmall.copyWith(
+                  style: DashboardTypography.captionSmall.copyWith(
                     color: isDark
                         ? AppColors.darkTextBody.withValues(alpha: 0.8)
                         : AppColors.textMuted,
@@ -1087,7 +1098,9 @@ class DashboardPendampingScreen extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              '${state.separatedJamaahName} terdeteksi jauh dari rombongan. Segera cek posisi di peta.',
+              context.tr('dashboard.separatedPilgrimDesc', {
+                'name': state.separatedJamaahName,
+              }),
               style: TextStyle(
                 color: isDark ? AppColors.statusWarning : AppColors.secondary,
                 fontSize: 12,
@@ -1101,7 +1114,7 @@ class DashboardPendampingScreen extends StatelessWidget {
     );
   }
 
-  Widget _tipsCard(bool isDark, Color headingColor) {
+  Widget _tipsCard(BuildContext context, bool isDark, Color headingColor) {
     final cardBg = isDark
         ? AppColors.darkSurfaceContainer
         : AppColors.surfaceWhite;
@@ -1109,18 +1122,18 @@ class DashboardPendampingScreen extends StatelessWidget {
     final tips = [
       (
         Icons.groups_rounded,
-        'Absensi Rutin',
-        'Cek kehadiran jamaah minimal 3× sehari: subuh, zuhur, dan isya.',
+        context.tr('dashboard.attendanceTip'),
+        context.tr('dashboard.attendanceTipDesc'),
       ),
       (
         Icons.local_hospital_rounded,
-        'Kondisi Kesehatan',
-        'Pantau jamaah lanjut usia dan yang memiliki riwayat penyakit kronis.',
+        context.tr('dashboard.healthTip'),
+        context.tr('dashboard.healthTipDesc'),
       ),
       (
         Icons.wifi_tethering_rounded,
-        'Koneksi GPS',
-        'Pastikan jamaah mengaktifkan GPS agar posisi terpantau secara real-time.',
+        context.tr('dashboard.gpsTip'),
+        context.tr('dashboard.gpsTipDesc'),
       ),
     ];
 
@@ -1296,10 +1309,10 @@ class _PilgrimsPillsSectionState extends State<_PilgrimsPillsSection>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Pantauan Jamaah',
+                      context.tr('dashboard.pilgrimMonitoring'),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.titleMedium.copyWith(
+                      style: DashboardTypography.titleMedium.copyWith(
                         fontWeight: FontWeight.w800,
                         color: headingColor,
                         fontSize: 15,
@@ -1307,10 +1320,10 @@ class _PilgrimsPillsSectionState extends State<_PilgrimsPillsSection>
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Daftar & status jarak anggota room',
+                      context.tr('dashboard.pilgrimMonitoringSub'),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.captionSmall.copyWith(
+                      style: DashboardTypography.captionSmall.copyWith(
                         color: isDark
                             ? AppColors.darkTextBody.withValues(alpha: 0.8)
                             : AppColors.textMuted,
@@ -1327,7 +1340,7 @@ class _PilgrimsPillsSectionState extends State<_PilgrimsPillsSection>
               SizeTransition(
                 sizeFactor: _widthAnim,
                 axis: Axis.horizontal,
-                axisAlignment: 1.0,
+                alignment: Alignment.centerRight,
                 child: AnimatedOpacity(
                   opacity: _searchOpen ? 1.0 : 0.0,
                   duration: const Duration(milliseconds: 180),
@@ -1347,7 +1360,7 @@ class _PilgrimsPillsSectionState extends State<_PilgrimsPillsSection>
                         fontWeight: FontWeight.w600,
                       ),
                       decoration: InputDecoration(
-                        hintText: 'Cari jamaah…',
+                        hintText: context.tr('dashboard.searchPilgrim'),
                         hintStyle: TextStyle(
                           color: isDark
                               ? AppColors.darkTextBody.withValues(alpha: 0.5)
@@ -1451,7 +1464,7 @@ class _PilgrimsPillsSectionState extends State<_PilgrimsPillsSection>
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Text(
-                'Belum ada jamaah terdaftar',
+                context.tr('dashboard.noRegisteredPilgrims'),
                 style: TextStyle(
                   color: isDark ? AppColors.darkTextBody : AppColors.textBody,
                   fontSize: 13,
@@ -1491,7 +1504,7 @@ class _PilgrimsPillsSectionState extends State<_PilgrimsPillsSection>
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Text(
-                'Tidak ada jamaah yang cocok',
+                context.tr('dashboard.noMatchingPilgrims'),
                 style: TextStyle(
                   color: isDark ? AppColors.darkTextBody : AppColors.textBody,
                   fontSize: 13,
@@ -1559,7 +1572,7 @@ class _PillItem extends StatelessWidget {
         ? name
         : (fullName.isNotEmpty
               ? fullName.split(' ').first
-              : 'Jamaah ${originalIndex + 1}');
+              : '${context.tr('room.roleJamaah')} ${originalIndex + 1}');
 
     return GestureDetector(
       onTap: () {

@@ -1,4 +1,7 @@
-const Map<String, String> suTranslations = {
+import 'dashboard_translations.dart';
+
+final Map<String, String> suTranslations = {
+  ...dashboardSuTranslations,
   'aboutApp': 'Ngeunaan Aplikasi',
   'aboutDescription':
       'HajiCare hadir pikeun ngadampingi perjalanan ibadah haji Anjeun sareng téknologi nu ramah, aman, sareng gampang digunakeun.',

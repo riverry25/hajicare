@@ -14,7 +14,9 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
     // Formatting Firebase Data
     final displayName = jamaah.name.trim().isNotEmpty
         ? jamaah.name.trim()
-        : (jamaah.shortLabel.isNotEmpty ? jamaah.shortLabel : 'Jamaah Haji');
+        : (jamaah.shortLabel.isNotEmpty
+              ? jamaah.shortLabel
+              : context.tr('dashboard.pilgrimFallback'));
     final initialLetter = displayName.isNotEmpty
         ? displayName[0].toUpperCase()
         : 'J';
@@ -39,14 +41,16 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
     // Next prayer time display with timezone suffix stripped to avoid overflow
     final prayerName = prayerCtrl.nextPrayerName.value.isNotEmpty
         ? prayerCtrl.nextPrayerName.value
-        : 'Ashar';
+        : context.tr('ashar');
     final rawPrayerTime = prayerCtrl.nextPrayerTime.value.isNotEmpty
         ? prayerCtrl.nextPrayerTime.value
         : '15:20';
     final cleanPrayerTime = rawPrayerTime.split(' ').first;
 
     // Location / GPS status
-    final gpsDisplay = jamaah.isGpsActive ? 'Aktif (GPS)' : 'Terhubung';
+    final gpsDisplay = jamaah.isGpsActive
+        ? context.tr('dashboard.gpsActive')
+        : context.tr('dashboard.gpsConnected');
 
     return Container(
       width: double.infinity,
@@ -100,7 +104,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Ahlan wa Sahlan,',
+                      context.tr('dashboard.greeting'),
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.72),
                         fontSize: 12.5,
@@ -121,7 +125,10 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Kloter ${jamaah.kloter ?? '12'} • Maktab ${jamaah.maktab ?? '48'}',
+                      context.tr('dashboard.groupIdentity', {
+                        'kloter': jamaah.kloter ?? '12',
+                        'maktab': jamaah.maktab ?? '48',
+                      }),
                       style: const TextStyle(
                         color: AppColors.goldLight,
                         fontSize: 11.5,
@@ -169,11 +176,8 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                       ),
                       child: Text(
                         hasRoom
-                            ? (context.tr('officerDistance') !=
-                                      'officerDistance'
-                                  ? context.tr('officerDistance')
-                                  : 'Jarak ke Petugas')
-                            : 'Belum Terhubung ke Room',
+                            ? context.tr('dashboard.officerDistance')
+                            : context.tr('dashboard.notConnectedToRoom'),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 11,
@@ -190,17 +194,15 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
               DistanceSparklineWidget(
                 distance: hasRoom ? realDistance : 0.0,
                 tooltip: hasRoom
-                    ? 'Perbarui lokasi GPS'
-                    : 'Belum terhubung ke room',
+                    ? context.tr('dashboard.refreshGps')
+                    : context.tr('dashboard.notConnectedToRoom'),
                 onSync: () async {
                   await state.refreshLocation();
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          context.tr('locationRefreshed') != 'locationRefreshed'
-                              ? context.tr('locationRefreshed')
-                              : 'Lokasi GPS berhasil diperbarui',
+                          context.tr('dashboard.locationRefreshed'),
                         ),
                         duration: const Duration(seconds: 2),
                         behavior: SnackBarBehavior.floating,
@@ -265,16 +267,16 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                       child: Center(
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(
+                          children: [
+                            const Icon(
                               Icons.north_west_rounded,
                               color: Colors.white,
                               size: 16,
                             ),
-                            SizedBox(width: 7),
+                            const SizedBox(width: 7),
                             Text(
-                              'Lacak Petugas',
-                              style: TextStyle(
+                              context.tr('dashboard.trackOfficer'),
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
@@ -309,17 +311,17 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                       child: Center(
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
-                          children: const [
+                          children: [
                             Text(
-                              'Bantuan Darurat',
-                              style: TextStyle(
+                              context.tr('dashboard.emergencyHelp'),
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
-                            SizedBox(width: 7),
-                            Icon(
+                            const SizedBox(width: 7),
+                            const Icon(
                               Icons.north_east_rounded,
                               color: Colors.white,
                               size: 16,
@@ -442,16 +444,16 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Icon(
+                children: [
+                  const Icon(
                     Icons.camera_alt_rounded,
                     color: AppColors.goldLight,
                     size: 13,
                   ),
-                  SizedBox(width: 4),
+                  const SizedBox(width: 4),
                   Text(
-                    'Scan Riyal',
-                    style: TextStyle(
+                    context.tr('dashboard.scanRiyal'),
+                    style: const TextStyle(
                       color: AppColors.goldLight,
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -463,7 +465,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
             ),
             const SizedBox(height: 3),
             Text(
-              'Kenali Uang',
+              context.tr('dashboard.recognizeMoney'),
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.65),
                 fontSize: 11,

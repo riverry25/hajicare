@@ -8,7 +8,7 @@ import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
+import '../presentation/dashboard_typography.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
 import '../../../core/widgets/ribbon_fold_painter.dart';
 import '../../map/screens/interactive_map_screen.dart';
@@ -40,33 +40,36 @@ class DashboardJamaahScreen extends StatelessWidget {
     final state = Get.find<HajiCareController>();
     final prayerCtrl = Get.find<PrayerTimesController>();
 
-    return Scaffold(
-      backgroundColor: AppColors.scaffoldColor(context),
-      extendBody: true,
-      body: Obx(
-        () => IndexedStack(
-          index: dashboardCtrl.currentIndex.value,
-          children: [
-            _buildJamaahHome(context, state, dashboardCtrl, prayerCtrl),
-            if (dashboardCtrl.visitedTabs.contains(1))
-              const InteractiveMapScreen(showBottomNav: false)
-            else
-              const SizedBox.shrink(),
-            if (dashboardCtrl.visitedTabs.contains(2))
-              const PrayerTimesScreen(showBottomNav: false)
-            else
-              const SizedBox.shrink(),
-            if (dashboardCtrl.visitedTabs.contains(3))
-              const ProfileScreen(showBottomNav: false)
-            else
-              const SizedBox.shrink(),
-          ],
+    return Theme(
+      data: DashboardTypography.applyTo(Theme.of(context)),
+      child: Scaffold(
+        backgroundColor: AppColors.scaffoldColor(context),
+        extendBody: true,
+        body: Obx(
+          () => IndexedStack(
+            index: dashboardCtrl.currentIndex.value,
+            children: [
+              _buildJamaahHome(context, state, dashboardCtrl, prayerCtrl),
+              if (dashboardCtrl.visitedTabs.contains(1))
+                const InteractiveMapScreen(showBottomNav: false)
+              else
+                const SizedBox.shrink(),
+              if (dashboardCtrl.visitedTabs.contains(2))
+                const PrayerTimesScreen(showBottomNav: false)
+              else
+                const SizedBox.shrink(),
+              if (dashboardCtrl.visitedTabs.contains(3))
+                const ProfileScreen(showBottomNav: false)
+              else
+                const SizedBox.shrink(),
+            ],
+          ),
         ),
-      ),
-      bottomNavigationBar: Obx(
-        () => HajiCareBottomNavBar(
-          currentIndex: dashboardCtrl.currentIndex.value,
-          onTap: dashboardCtrl.changeTab,
+        bottomNavigationBar: Obx(
+          () => HajiCareBottomNavBar(
+            currentIndex: dashboardCtrl.currentIndex.value,
+            onTap: dashboardCtrl.changeTab,
+          ),
         ),
       ),
     );

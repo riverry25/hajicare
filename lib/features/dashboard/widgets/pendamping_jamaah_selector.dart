@@ -4,7 +4,7 @@ import '../../../../core/state/hajicare_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
+import '../presentation/dashboard_typography.dart';
 import '../../room/widgets/jamaah_detail_sheet.dart';
 
 class PendampingJamaahSelector extends StatelessWidget {
@@ -49,7 +49,7 @@ class PendampingJamaahSelector extends StatelessWidget {
               children: [
                 Text(
                   context.tr('monitoredPilgrims'),
-                  style: AppTypography.titleMedium.copyWith(
+                  style: DashboardTypography.titleMedium.copyWith(
                     color: headingColor,
                     fontWeight: FontWeight.bold,
                   ),
@@ -73,8 +73,8 @@ class PendampingJamaahSelector extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    '${jamaahList.length} Jamaah',
-                    style: AppTypography.captionSmall.copyWith(
+                    '${jamaahList.length} ${context.tr('room.roleJamaah')}',
+                    style: DashboardTypography.captionSmall.copyWith(
                       color: isDark
                           ? AppColors.goldLight
                           : AppColors.espressoDark,
@@ -118,8 +118,8 @@ class PendampingJamaahSelector extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'Radar Terhubung',
-                    style: AppTypography.captionSmall.copyWith(
+                    context.tr('dashboard.radarConnected'),
+                    style: DashboardTypography.captionSmall.copyWith(
                       color: isDark
                           ? const Color(0xFF81C784)
                           : const Color(0xFF2E7D32),
@@ -163,7 +163,8 @@ class PendampingJamaahSelector extends StatelessWidget {
   void _openJamaahDetail(BuildContext context, JamaahData jamaah) {
     final roomId = state.activeRoomId.value ?? '';
     final roomName =
-        state.activeRoom.value?.capitalizedName ?? 'Room Pemantauan';
+        state.activeRoom.value?.capitalizedName ??
+        context.tr('dashboard.monitoringRoom');
     final roomCode = state.activeRoom.value?.code ?? '';
     JamaahDetailSheet.show(
       context,
@@ -294,7 +295,7 @@ class PendampingJamaahSelector extends StatelessWidget {
                   children: [
                     Text(
                       jamaah.shortLabel,
-                      style: AppTypography.labelLarge.copyWith(
+                      style: DashboardTypography.labelLarge.copyWith(
                         color: headingColor,
                         fontWeight: isActive
                             ? FontWeight.w800
@@ -341,7 +342,7 @@ class PendampingJamaahSelector extends StatelessWidget {
                     const SizedBox(width: 5),
                     Text(
                       '${_localizedTierLabel(context, jamaah.tier)} • $distance',
-                      style: AppTypography.captionSmall.copyWith(
+                      style: DashboardTypography.captionSmall.copyWith(
                         color: isActive ? jamaah.tier.color : bodyColor,
                         fontWeight: FontWeight.w600,
                       ),

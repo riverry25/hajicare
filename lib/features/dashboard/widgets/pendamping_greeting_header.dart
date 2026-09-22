@@ -5,7 +5,7 @@ import '../../../../core/state/hajicare_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
+import '../presentation/dashboard_typography.dart';
 
 class PendampingGreetingHeader extends StatelessWidget {
   final HajiCareState state;
@@ -20,7 +20,9 @@ class PendampingGreetingHeader extends StatelessWidget {
 
     return Obx(() {
       final pName = state.pendampingName.value.trim();
-      final shortName = pName.isNotEmpty ? pName.split(' ')[0] : 'Pendamping';
+      final shortName = pName.isNotEmpty
+          ? pName.split(' ')[0]
+          : context.tr('dashboard.officerFallback');
 
       final rawKloter = state.effectiveKloter?.trim();
       final rawMaktab = state.effectiveMaktab?.trim();
@@ -138,7 +140,7 @@ class PendampingGreetingHeader extends StatelessWidget {
                           child: Text(
                             groupInfo.isNotEmpty
                                 ? groupInfo
-                                : 'Rombongan Belum Diatur',
+                                : context.tr('dashboard.noGroupYet'),
                             style: TextStyle(
                               color: isDark
                                   ? AppColors.goldLight
@@ -160,7 +162,7 @@ class PendampingGreetingHeader extends StatelessWidget {
             // ── Greeting Title ──
             Text(
               '${context.tr('pendampingGreeting')}, $shortName',
-              style: AppTypography.headlineLarge.copyWith(
+              style: DashboardTypography.headlineLarge.copyWith(
                 color: headingColor,
                 fontWeight: FontWeight.w800,
                 fontSize: 22,
@@ -174,7 +176,7 @@ class PendampingGreetingHeader extends StatelessWidget {
             // ── Subtitle Description ──
             Text(
               context.tr('pendampingSubtitleDesc'),
-              style: AppTypography.bodySmall.copyWith(
+              style: DashboardTypography.bodySmall.copyWith(
                 color: bodyColor.withValues(alpha: 0.85),
                 fontSize: 13,
                 height: 1.4,

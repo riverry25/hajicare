@@ -8,7 +8,7 @@ import '../../../../core/state/hajicare_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
+import '../presentation/dashboard_typography.dart';
 import '../../../../core/widgets/app_card.dart';
 import 'package:vibration/vibration.dart';
 
@@ -33,7 +33,7 @@ class PendampingSosBanner extends StatelessWidget {
   Widget _buildActiveSos(BuildContext context) {
     Vibration.vibrate();
 
-    String sosName = 'Jamaah';
+    String sosName = context.tr('room.roleJamaah');
     String sosUserId = '';
     String? sosEventId;
     String? roomInfo;
@@ -42,7 +42,7 @@ class PendampingSosBanner extends StatelessWidget {
       final firstSos = state.activeSosEvents.first;
       sosName = (firstSos['userName'] as String?)?.trim().isNotEmpty == true
           ? (firstSos['userName'] as String).trim()
-          : 'Jamaah';
+          : context.tr('room.roleJamaah');
       sosUserId =
           firstSos['userId'] as String? ??
           firstSos['jamaahId'] as String? ??
@@ -100,7 +100,7 @@ class PendampingSosBanner extends StatelessWidget {
                       children: [
                         Text(
                           context.tr('sosEmergencyActive'),
-                          style: AppTypography.titleMedium.copyWith(
+                          style: DashboardTypography.titleMedium.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 0.3,
@@ -134,7 +134,7 @@ class PendampingSosBanner extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       '$sosName ${context.tr('sosNeedsImmediateHelp')}',
-                      style: AppTypography.bodySmall.copyWith(
+                      style: DashboardTypography.bodySmall.copyWith(
                         color: Colors.white.withValues(alpha: 0.95),
                       ),
                     ),
@@ -163,9 +163,9 @@ class PendampingSosBanner extends StatelessWidget {
                       ),
                       elevation: 0,
                     ),
-                    label: const Text(
-                      'Tinjau Darurat',
-                      style: TextStyle(
+                    label: Text(
+                      context.tr('dashboard.reviewEmergency'),
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                       ),
@@ -194,7 +194,7 @@ class PendampingSosBanner extends StatelessWidget {
                     ),
                     child: Text(
                       context.tr('endSos'),
-                      style: AppTypography.labelLarge.copyWith(
+                      style: DashboardTypography.labelLarge.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
                       ),
@@ -248,7 +248,7 @@ class PendampingSosBanner extends StatelessWidget {
                     Flexible(
                       child: Text(
                         context.tr('sosStatusStandby'),
-                        style: AppTypography.titleMedium.copyWith(
+                        style: DashboardTypography.titleMedium.copyWith(
                           color: headingColor,
                           fontWeight: FontWeight.bold,
                         ),
@@ -272,7 +272,7 @@ class PendampingSosBanner extends StatelessWidget {
                       ),
                       child: Text(
                         context.tr('sosStandbyBadge'),
-                        style: AppTypography.captionSmall.copyWith(
+                        style: DashboardTypography.captionSmall.copyWith(
                           color: isDark
                               ? AppColors.goldLight
                               : AppColors.onSecondaryContainer,
@@ -285,7 +285,9 @@ class PendampingSosBanner extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   context.tr('sosStandbyDesc'),
-                  style: AppTypography.bodySmall.copyWith(color: bodyColor),
+                  style: DashboardTypography.bodySmall.copyWith(
+                    color: bodyColor,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 Wrap(
@@ -379,8 +381,8 @@ class PendampingSosBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Uji Sinyal Alarm Berjalan',
-                  style: AppTypography.titleMedium.copyWith(
+                  context.tr('dashboard.alarmTestRunning'),
+                  style: DashboardTypography.titleMedium.copyWith(
                     fontWeight: FontWeight.w800,
                     color: isDark
                         ? AppColors.darkTextHeading
@@ -391,8 +393,8 @@ class PendampingSosBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Uji bunyi dan getar pada ponsel ini sudah selesai.',
-                  style: AppTypography.bodySmall.copyWith(
+                  context.tr('dashboard.alarmTestDone'),
+                  style: DashboardTypography.bodySmall.copyWith(
                     color: isDark ? AppColors.darkTextBody : AppColors.textBody,
                     height: 1.45,
                   ),
@@ -412,9 +414,9 @@ class PendampingSosBanner extends StatelessWidget {
                       Icons.check_circle_outline_rounded,
                       size: 18,
                     ),
-                    label: const Text(
-                      'Selesai Uji Coba',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                    label: Text(
+                      context.tr('dashboard.finishTest'),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.espressoDark,
@@ -503,16 +505,16 @@ class PendampingSosBanner extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Pusat Tanggap Darurat',
-                          style: AppTypography.titleMedium.copyWith(
+                          context.tr('dashboard.emergencyResponseCenter'),
+                          style: DashboardTypography.titleMedium.copyWith(
                             color: headingColor,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Akses cepat nomor darurat & pemantauan krisis',
-                          style: AppTypography.captionSmall.copyWith(
+                          context.tr('dashboard.emergencyResponseCenterSub'),
+                          style: DashboardTypography.captionSmall.copyWith(
                             color: bodyColor,
                           ),
                         ),
@@ -524,7 +526,7 @@ class PendampingSosBanner extends StatelessWidget {
               const SizedBox(height: 20),
               _buildHotlineCard(
                 ctx,
-                title: 'Hotline Krisis Kemenag RI',
+                title: context.tr('dashboard.hotlineKemenag'),
                 number: '800-119-999',
                 icon: Icons.support_agent_rounded,
                 isDark: isDark,
@@ -534,7 +536,7 @@ class PendampingSosBanner extends StatelessWidget {
               const SizedBox(height: 10),
               _buildHotlineCard(
                 ctx,
-                title: 'Ambulans Arab Saudi (Red Crescent)',
+                title: context.tr('dashboard.redCrescent'),
                 number: '997',
                 icon: Icons.medical_services_rounded,
                 isDark: isDark,
@@ -544,7 +546,7 @@ class PendampingSosBanner extends StatelessWidget {
               const SizedBox(height: 10),
               _buildHotlineCard(
                 ctx,
-                title: 'Polisi Darurat Arab Saudi',
+                title: context.tr('dashboard.saudiPolice'),
                 number: '911',
                 icon: Icons.local_police_rounded,
                 isDark: isDark,
@@ -561,9 +563,12 @@ class PendampingSosBanner extends StatelessWidget {
                     Get.toNamed(AppRoutes.modalSos);
                   },
                   icon: const Icon(Icons.emergency_rounded, size: 20),
-                  label: const Text(
-                    'Buka Panel Darurat SOS',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  label: Text(
+                    context.tr('dashboard.openEmergencyPanel'),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.sosEmergency,
@@ -637,7 +642,9 @@ class PendampingSosBanner extends StatelessWidget {
               HapticFeedback.lightImpact();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Nomor $number sudah disalin.'),
+                  content: Text(
+                    context.tr('dashboard.numberCopied', {'number': number}),
+                  ),
                   duration: const Duration(seconds: 2),
                   behavior: SnackBarBehavior.floating,
                 ),
@@ -657,16 +664,16 @@ class PendampingSosBanner extends StatelessWidget {
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Icon(
+                children: [
+                  const Icon(
                     Icons.copy_rounded,
                     size: 14,
                     color: AppColors.espressoDark,
                   ),
-                  SizedBox(width: 4),
+                  const SizedBox(width: 4),
                   Text(
-                    'Salin',
-                    style: TextStyle(
+                    context.tr('dashboard.copy'),
+                    style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       color: AppColors.espressoDark,
@@ -714,7 +721,7 @@ class PendampingSosBanner extends StatelessWidget {
               const SizedBox(width: 5),
               Text(
                 label,
-                style: AppTypography.caption.copyWith(
+                style: DashboardTypography.caption.copyWith(
                   color: fg,
                   fontWeight: FontWeight.w700,
                 ),

@@ -1,4 +1,4 @@
-﻿part of 'admin_dashboard_screen.dart';
+part of 'admin_dashboard_screen.dart';
 
 extension _AdminDashboardJamaahSheet on _AdminDashboardHome {
   void _showAllJamaahSheet(
@@ -93,16 +93,25 @@ extension _AdminDashboardJamaahSheet on _AdminDashboardHome {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'TOTAL JAMAAH',
-                                      style: AppTypography.titleMedium.copyWith(
-                                        color: headingColor,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 0.5,
+                                      context.tr(
+                                        'adminDashboard.totalPilgrimsUpper',
                                       ),
+                                      style: DashboardTypography.titleMedium
+                                          .copyWith(
+                                            color: headingColor,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 0.5,
+                                          ),
                                     ),
                                     Text(
-                                      '${filtered.length} dari ${allJamaah.length} jamaah terdaftar',
-                                      style: AppTypography.captionSmall
+                                      context.tr(
+                                        'adminDashboard.registeredPilgrims',
+                                        {
+                                          'shown': filtered.length,
+                                          'total': allJamaah.length,
+                                        },
+                                      ),
+                                      style: DashboardTypography.captionSmall
                                           .copyWith(
                                             color: bodyColor.withValues(
                                               alpha: 0.7,
@@ -180,11 +189,15 @@ extension _AdminDashboardJamaahSheet on _AdminDashboardHome {
                                       const SizedBox(height: AppSpacing.sm),
                                       Text(
                                         searchQuery.isEmpty
-                                            ? 'Belum ada data jamaah terdaftar.'
-                                            : 'Tidak ada jamaah yang cocok dengan "$searchQuery".',
-                                        style: AppTypography.bodySmall.copyWith(
-                                          color: bodyColor,
-                                        ),
+                                            ? context.tr(
+                                                'adminDashboard.noPilgrimData',
+                                              )
+                                            : context.tr(
+                                                'adminDashboard.noSearchResult',
+                                                {'query': searchQuery},
+                                              ),
+                                        style: DashboardTypography.bodySmall
+                                            .copyWith(color: bodyColor),
                                         textAlign: TextAlign.center,
                                       ),
                                     ],
@@ -200,14 +213,17 @@ extension _AdminDashboardJamaahSheet on _AdminDashboardHome {
                                     final name =
                                         (j['name'] ??
                                                 j['displayName'] ??
-                                                'Jamaah')
+                                                context.tr('room.roleJamaah'))
                                             .toString();
                                     final room = controller.rooms
                                         .firstWhereOrNull(
                                           (r) => r.id == j['activeRoomId'],
                                         );
                                     final roomName =
-                                        room?.name ?? 'Belum terdaftar di room';
+                                        room?.name ??
+                                        context.tr(
+                                          'adminDashboard.notRegisteredRoom',
+                                        );
                                     final isSos = j['sosActive'] == true;
                                     final isGps = j['isGpsActive'] == true;
                                     final locUpdatedAt =
@@ -222,29 +238,36 @@ extension _AdminDashboardJamaahSheet on _AdminDashboardHome {
 
                                     if (isSos) {
                                       dotColor = AppColors.sosEmergency;
-                                      statusLabel = '* SOS Aktif';
+                                      statusLabel =
+                                          '• ${context.tr('adminDashboard.sosActive')}';
                                     } else if (locUpdatedAt != null) {
                                       final diff = DateTime.now().difference(
                                         locUpdatedAt,
                                       );
                                       if (diff.inMinutes <= 5 || isGps) {
                                         dotColor = AppColors.statusSafe;
-                                        statusLabel = '* Online';
+                                        statusLabel =
+                                            '• ${context.tr('adminDashboard.online')}';
                                       } else {
                                         dotColor = const Color(
                                           0xFFF57C00,
                                         ); // Amber (stale location)
-                                        statusLabel =
-                                            'Lokasi terakhir ${_formatMinutesAgo(diff)}';
+                                        statusLabel = context.tr(
+                                          'adminDashboard.lastLocation',
+                                          {'time': _formatMinutesAgo(diff)},
+                                        );
                                       }
                                     } else if (isGps) {
                                       dotColor = AppColors.statusSafe;
-                                      statusLabel = '* Online';
+                                      statusLabel =
+                                          '• ${context.tr('adminDashboard.online')}';
                                     } else {
                                       dotColor = bodyColor.withValues(
                                         alpha: 0.5,
                                       );
-                                      statusLabel = 'Offline';
+                                      statusLabel = context.tr(
+                                        'adminDashboard.offline',
+                                      );
                                     }
 
                                     return Container(
@@ -295,8 +318,9 @@ extension _AdminDashboardJamaahSheet on _AdminDashboardHome {
                                               AppAlert.info(
                                                 context,
                                                 title: name,
-                                                message:
-                                                    'Jamaah ini belum terdaftar di dalam room manapun.',
+                                                message: context.tr(
+                                                  'adminDashboard.pilgrimNoRoom',
+                                                ),
                                               );
                                             }
                                           },
@@ -334,7 +358,7 @@ extension _AdminDashboardJamaahSheet on _AdminDashboardHome {
                                                     children: [
                                                       Text(
                                                         name,
-                                                        style: AppTypography
+                                                        style: DashboardTypography
                                                             .titleSmall
                                                             .copyWith(
                                                               color:
@@ -351,7 +375,7 @@ extension _AdminDashboardJamaahSheet on _AdminDashboardHome {
                                                       const SizedBox(height: 2),
                                                       Text(
                                                         roomName,
-                                                        style: AppTypography
+                                                        style: DashboardTypography
                                                             .captionSmall
                                                             .copyWith(
                                                               color: bodyColor
@@ -367,15 +391,18 @@ extension _AdminDashboardJamaahSheet on _AdminDashboardHome {
                                                       const SizedBox(height: 3),
                                                       Text(
                                                         statusLabel,
-                                                        style: AppTypography
-                                                            .captionSmall
-                                                            .copyWith(
-                                                              color: dotColor,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w600,
-                                                              fontSize: 10.5,
-                                                            ),
+                                                        style:
+                                                            DashboardTypography
+                                                                .captionSmall
+                                                                .copyWith(
+                                                                  color:
+                                                                      dotColor,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                  fontSize:
+                                                                      10.5,
+                                                                ),
                                                       ),
                                                     ],
                                                   ),
