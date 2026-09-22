@@ -4,8 +4,10 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
+import '../models/bisindo_mode.dart';
 import '../models/bisindo_prediction.dart';
 import '../models/sign_token.dart';
+import '../services/bisindo_tts_service.dart';
 
 enum SignRecognitionState {
   idle,
@@ -16,7 +18,8 @@ enum SignRecognitionState {
 }
 
 class BisindoRecognitionConfig {
-  final double minimumConfidence;
+  final double minimumConfidenceWord;
+  final double minimumConfidenceAlphabet;
   final Duration confirmationDuration;
   final Duration predictionInterval;
   final int predictionWindowSize;
@@ -29,34 +32,39 @@ class BisindoRecognitionConfig {
   final Duration confirmedDisplayDuration;
 
   const BisindoRecognitionConfig({
-    // The bundled score is an 8-way distance softmax, not a calibrated
-    // probability. Open-set distance/margin checks still have to pass first.
-    this.minimumConfidence = 0.75,
-    this.confirmationDuration = const Duration(milliseconds: 1200),
+    double? minimumConfidence,
+    double? minimumConfidenceWord,
+    double? minimumConfidenceAlphabet,
+    this.confirmationDuration = const Duration(milliseconds: 950),
     this.predictionInterval = const Duration(milliseconds: 100),
-    this.predictionWindowSize = 6,
-    this.minimumStableRatio = 0.80,
-    this.releaseConfidence = 0.55,
+    this.predictionWindowSize = 5,
+    this.minimumStableRatio = 0.75,
+    this.releaseConfidence = 0.45,
     this.releaseDuration = const Duration(milliseconds: 300),
-    this.duplicateCooldown = const Duration(milliseconds: 600),
+    this.duplicateCooldown = const Duration(milliseconds: 900),
     this.handPresenceTimeout = const Duration(milliseconds: 450),
     this.predictionFreshness = const Duration(milliseconds: 350),
     this.confirmedDisplayDuration = const Duration(milliseconds: 300),
-  }) : assert(minimumConfidence >= 0 && minimumConfidence <= 1),
-       assert(releaseConfidence >= 0 && releaseConfidence <= 1),
+  }) : minimumConfidenceWord =
+           minimumConfidenceWord ?? minimumConfidence ?? 0.70,
+       minimumConfidenceAlphabet =
+           minimumConfidenceAlphabet ?? minimumConfidence ?? 0.65,
        assert(predictionWindowSize > 0),
        assert(minimumStableRatio > 0 && minimumStableRatio <= 1);
+
+  double get minimumConfidence => minimumConfidenceWord;
 }
 
 typedef BisindoAiProcessor = Future<String> Function(String rawTranscript);
 
-/// Owns temporal recognition, release locking, and transcript composition.
-/// It is deliberately independent of the camera and ONNX implementation.
+/// Manages reactive state, mode switching (Word vs. Alphabet), gesture hold
+/// stabilization, duplicate prevention, and Indonesian Text-to-Speech.
 class BisindoRecognitionController extends GetxController {
   final BisindoRecognitionConfig config;
   final SignLabelParser labelParser;
   final SignTokenComposer tokenComposer;
   final BisindoAiProcessor? aiProcessor;
+  final BisindoTtsService ttsService;
   final bool autoTick;
 
   BisindoRecognitionController({
@@ -64,19 +72,34 @@ class BisindoRecognitionController extends GetxController {
     this.labelParser = const SignLabelParser(),
     this.tokenComposer = const SignTokenComposer(),
     this.aiProcessor,
+    BisindoTtsService? ttsService,
     this.autoTick = true,
-  });
+  }) : ttsService = ttsService ?? BisindoTtsService();
 
+  // Mode Selection: Unified (1 input gabungan kata & huruf), KATA, atau HURUF
+  final selectedMode = BisindoMode.unified.obs;
+
+  // Camera & Detection States
+  final isCameraActive = false.obs;
+  final isCameraReady = false.obs;
+  final isDetecting = false.obs;
+  final isHandDetected = false.obs;
+
+  // Recognition States
   final recognitionState = SignRecognitionState.idle.obs;
   final currentCandidate = RxnString();
+  final detectedLabel = ''.obs;
   final candidateConfidence = 0.0.obs;
+  final confidence = 0.0.obs;
   final confirmationProgress = 0.0.obs;
+  final holdProgress = 0.0.obs;
+
+  // Tokens & Output Text
   final tokens = <SignToken>[].obs;
   final rawTranscript = ''.obs;
   final aiTranscript = ''.obs;
-  final isHandDetected = false.obs;
-  final isCameraActive = false.obs;
   final isSendingToAi = false.obs;
+  final isSpeaking = false.obs;
 
   final List<String?> _predictionWindow = <String?>[];
   Timer? _ticker;
@@ -97,44 +120,55 @@ class BisindoRecognitionController extends GetxController {
 
   String get statusText {
     if (!isCameraActive.value) return 'Mulai kamera untuk mendeteksi isyarat';
-    if (!isHandDetected.value) return 'Tunjukkan 1 tangan ke kamera';
+    if (!isHandDetected.value) {
+      return 'Arahkan tangan ke kamera untuk mendeteksi';
+    }
     switch (recognitionState.value) {
       case SignRecognitionState.idle:
-        return 'Lakukan satu isyarat dengan jelas';
+        return 'Lakukan isyarat kata atau bentuk huruf';
       case SignRecognitionState.candidate:
-        return 'Pastikan gerakan tetap stabil';
+        return 'Mendeteksi isyarat...';
       case SignRecognitionState.holding:
-        return 'Tahan posisi...';
+        return 'Tahan sebentar: ${currentCandidate.value?.toUpperCase() ?? ''}';
       case SignRecognitionState.confirmed:
-        return '✓ ${currentCandidate.value ?? ''} terdeteksi';
+        return '✓ ${currentCandidate.value?.toUpperCase() ?? ''} terkonfirmasi';
       case SignRecognitionState.waitingForRelease:
-        return 'Ubah atau lepaskan posisi tangan';
+        return 'Lepaskan tangan atau ubah isyarat';
     }
   }
 
   @override
   void onInit() {
     super.onInit();
+    ttsService.initialize();
     if (autoTick) {
       _ticker = Timer.periodic(const Duration(milliseconds: 50), (_) => tick());
     }
   }
 
+  void setMode(BisindoMode newMode) {
+    if (_isClosed || selectedMode.value == newMode) return;
+    selectedMode.value = newMode;
+    _resetRecognition(clearLock: true);
+    debugPrint('[BISINDO] Mode changed to: ${newMode.label}');
+  }
+
   void setCameraActive(bool active, {DateTime? now}) {
     if (_isClosed) return;
     isCameraActive.value = active;
+    isCameraReady.value = active;
     if (!active) {
+      isDetecting.value = false;
       _resetRecognition(clearLock: true);
       isHandDetected.value = false;
       _lastHandSeenAt = null;
       _lastStrongPredictionAt = null;
     } else {
+      isDetecting.value = true;
       _lastHandSeenAt = now ?? DateTime.now();
     }
   }
 
-  /// The native stream only emits a frame when pose and at least one hand are
-  /// present, so frame activity is the pipeline's hand-presence signal.
   void registerHandFrame({DateTime? now}) {
     if (_isClosed || !isCameraActive.value) return;
     isHandDetected.value = true;
@@ -145,11 +179,27 @@ class BisindoRecognitionController extends GetxController {
     if (_isClosed || !isCameraActive.value) return;
     final timestamp = now ?? DateTime.now();
     registerHandFrame(now: timestamp);
-    candidateConfidence.value = prediction.confidence.clamp(0.0, 1.0);
+
+    final conf = prediction.confidence.clamp(0.0, 1.0);
+    candidateConfidence.value = conf;
+    confidence.value = conf;
+
+    final double minConf;
+    if (selectedMode.value.isUnified) {
+      minConf = prediction.label.length == 1
+          ? config.minimumConfidenceAlphabet
+          : config.minimumConfidenceWord;
+    } else if (selectedMode.value.isWord) {
+      minConf = config.minimumConfidenceWord;
+    } else {
+      minConf = config.minimumConfidenceAlphabet;
+    }
 
     final passesFilter =
         prediction.isRecognized &&
-        prediction.confidence >= config.minimumConfidence;
+        prediction.label.isNotEmpty &&
+        prediction.confidence >= minConf;
+
     if (!passesFilter) {
       _addWindowSample(null);
       if (_lockedLabel != null &&
@@ -164,18 +214,20 @@ class BisindoRecognitionController extends GetxController {
     }
 
     currentCandidate.value = prediction.label;
+    detectedLabel.value = prediction.label;
     _lastStrongPredictionAt = timestamp;
     _addWindowSample(prediction.label);
     final stableLabel = _stableLabel();
 
     if (kDebugMode) {
       debugPrint(
-        '[BISINDO] prediction=${prediction.label} '
-        'confidence=${prediction.confidence.toStringAsFixed(2)} '
+        '[BISINDO] candidate=${prediction.label} '
+        'conf=${(prediction.confidence * 100).toStringAsFixed(1)}% '
         'stable=${stableLabel ?? '-'}',
       );
     }
 
+    // Handle locked label (duplicate prevention)
     if (_lockedLabel != null) {
       if (stableLabel != null && stableLabel != _lockedLabel) {
         if (_advanceRelease(timestamp, clearPredictionWindow: false)) {
@@ -271,6 +323,17 @@ class BisindoRecognitionController extends GetxController {
     _lastStrongPredictionAt = null;
   }
 
+  Future<void> speakTranscript() async {
+    final text = rawTranscript.value.trim();
+    if (text.isEmpty) return;
+    isSpeaking.value = true;
+    try {
+      await ttsService.speak(text);
+    } finally {
+      if (!_isClosed) isSpeaking.value = false;
+    }
+  }
+
   Future<bool> sendToAi() async {
     final input = rawTranscript.value.trim();
     if (input.isEmpty || aiProcessor == null || isSendingToAi.value) {
@@ -308,7 +371,9 @@ class BisindoRecognitionController extends GetxController {
     _holdingLabel = label;
     _holdStartedAt = now;
     currentCandidate.value = label;
+    detectedLabel.value = label;
     confirmationProgress.value = 0;
+    holdProgress.value = 0;
     recognitionState.value = SignRecognitionState.holding;
     if (kDebugMode) debugPrint('[BISINDO] holding=$label progress=0.00');
   }
@@ -319,7 +384,9 @@ class BisindoRecognitionController extends GetxController {
     if (started == null || label == null || _lockedLabel != null) return;
     final durationMs = math.max(1, config.confirmationDuration.inMilliseconds);
     final progress = now.difference(started).inMilliseconds / durationMs;
-    confirmationProgress.value = progress.clamp(0.0, 1.0);
+    final clamped = progress.clamp(0.0, 1.0);
+    confirmationProgress.value = clamped;
+    holdProgress.value = clamped;
     if (progress >= 1) _commit(label, now);
   }
 
@@ -343,8 +410,9 @@ class BisindoRecognitionController extends GetxController {
     _holdingLabel = null;
     _holdStartedAt = null;
     confirmationProgress.value = 1;
+    holdProgress.value = 1;
     recognitionState.value = SignRecognitionState.confirmed;
-    if (kDebugMode) debugPrint('[BISINDO] confirmed=$label');
+    if (kDebugMode) debugPrint('[BISINDO] confirmed=$label -> committed');
   }
 
   bool _advanceRelease(DateTime now, {bool clearPredictionWindow = true}) {
@@ -358,6 +426,7 @@ class BisindoRecognitionController extends GetxController {
     _confirmedAt = null;
     if (clearPredictionWindow) _predictionWindow.clear();
     confirmationProgress.value = 0;
+    holdProgress.value = 0;
     recognitionState.value = SignRecognitionState.idle;
     return true;
   }
@@ -366,7 +435,11 @@ class BisindoRecognitionController extends GetxController {
     _holdingLabel = null;
     _holdStartedAt = null;
     confirmationProgress.value = 0;
-    if (!keepCandidate) currentCandidate.value = null;
+    holdProgress.value = 0;
+    if (!keepCandidate) {
+      currentCandidate.value = null;
+      detectedLabel.value = '';
+    }
     if (_lockedLabel == null) {
       recognitionState.value = SignRecognitionState.idle;
     }
@@ -376,6 +449,7 @@ class BisindoRecognitionController extends GetxController {
     _predictionWindow.clear();
     _cancelHold(keepCandidate: false);
     candidateConfidence.value = 0;
+    confidence.value = 0;
     _releaseStartedAt = null;
     _confirmedAt = null;
     if (clearLock) _lockedLabel = null;
@@ -392,6 +466,7 @@ class BisindoRecognitionController extends GetxController {
     _isClosed = true;
     _ticker?.cancel();
     _ticker = null;
+    ttsService.dispose();
     super.onClose();
   }
 }

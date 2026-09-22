@@ -39,6 +39,7 @@ void feedStable(
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late BisindoRecognitionController controller;
   late DateTime origin;
 

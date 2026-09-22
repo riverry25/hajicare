@@ -42,6 +42,7 @@ dependencies:
   cloud_functions: ^6.5.0
   audioplayers: ^6.1.2
   flutter_local_notifications: ^22.3.1
+  tflite_flutter: ^0.11.0
 
 dev_dependencies:
   flutter_test:
@@ -70,6 +71,12 @@ flutter:
     - assets/models/labels.txt
     - assets/models/hajicare_encoder.onnx
     - assets/models/hajicare_prototypes.json
+    - assets/models/bisindo_wl_model.tflite
+    - assets/models/bisindo_wl_labels.json
+    - assets/models/bisindo_alphabet_model_f32.tflite
+    - assets/models/bisindo_alphabet_labels.json
+    - assets/models/sibi_alphabet_model_f32.tflite
+    - assets/models/sibi_alphabet_labels.json
     - assets/audio/
   fonts:
     - family: Poppins

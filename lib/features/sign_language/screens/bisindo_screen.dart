@@ -1,4 +1,3 @@
-import '../../../core/locales/app_localizations.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -8,14 +7,13 @@ import 'package:get/get.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../translator/services/tts_service.dart';
 import '../controllers/bisindo_recognition_controller.dart';
 import '../models/sign_token.dart';
 import '../services/bisindo_camera_landmark_service.dart';
 import '../services/bisindo_inference_service.dart';
 import '../services/landmark_stream_buffer.dart';
 
-/// Realtime BISINDO sequence recognition and structured transcript screen.
+/// Realtime BISINDO Sign Language to Text and Speech screen.
 class BisindoScreen extends StatefulWidget {
   const BisindoScreen({super.key});
 
@@ -24,7 +22,6 @@ class BisindoScreen extends StatefulWidget {
 }
 
 class _BisindoScreenState extends State<BisindoScreen> {
-  // Accent alias – maps to the app's espresso brand color for this screen
   static Color _accent(BuildContext context) => AppColors.isDark(context)
       ? AppColors.darkPrimary
       : AppColors.espressoDark;
@@ -36,7 +33,6 @@ class _BisindoScreenState extends State<BisindoScreen> {
   late final BisindoRecognitionController _recognition;
   late final LandmarkStreamBuffer _streamBuffer;
   late final BisindoCameraLandmarkService _cameraService;
-  late final TtsService _ttsService;
 
   bool _isModelInitialized = false;
   bool _isStartingCamera = false;
@@ -48,12 +44,11 @@ class _BisindoScreenState extends State<BisindoScreen> {
     super.initState();
     _inferenceService = Get.find<BisindoInferenceService>();
     _recognition = Get.find<BisindoRecognitionController>();
-    _ttsService = TtsService();
     _streamBuffer = LandmarkStreamBuffer(
       inferenceService: _inferenceService,
-      windowSize: 100,
+      windowSize: 30,
       throttleDuration: _recognition.config.predictionInterval,
-      minimumFrames: 30,
+      minimumWordFrames: 30,
       onPrediction: _recognition.handlePrediction,
       onError: _onInferenceError,
     );
@@ -68,13 +63,17 @@ class _BisindoScreenState extends State<BisindoScreen> {
     try {
       await _inferenceService.initialize();
       if (!mounted) return;
-      setState(() => _isModelInitialized = true);
-    } catch (error) {
-      debugPrint('[BISINDO_UI] Model initialization error: $error');
+      setState(() {
+        _isModelInitialized = true;
+        _errorMessage = null;
+      });
+      debugPrint('[BISINDO_UI] Model successfully initialized');
+    } catch (error, stack) {
+      debugPrint('[BISINDO_UI] Model initialization error: $error\n$stack');
       if (!mounted) return;
       setState(() {
-        _errorMessage =
-            'Penerjemah BISINDO belum siap. Tutup halaman lalu coba lagi.';
+        _isModelInitialized = false;
+        _errorMessage = 'Inisialisasi model: $error';
       });
     }
   }
@@ -106,7 +105,7 @@ class _BisindoScreenState extends State<BisindoScreen> {
   }
 
   Future<void> _toggleDetection() async {
-    if (_isStartingCamera || !_isModelInitialized) return;
+    if (_isStartingCamera) return;
     if (_cameraService.isCameraActive) {
       await _cameraService.stopCamera();
       _recognition.setCameraActive(false);
@@ -117,6 +116,15 @@ class _BisindoScreenState extends State<BisindoScreen> {
       _isStartingCamera = true;
       _errorMessage = null;
     });
+
+    if (!_isModelInitialized) {
+      try {
+        await _inferenceService.initialize();
+        _isModelInitialized = true;
+      } catch (e) {
+        debugPrint('[BISINDO_UI] Model init retry error in toggle: $e');
+      }
+    }
 
     var permission = await _cameraService.checkPermission();
     if (!mounted) return;
@@ -143,36 +151,11 @@ class _BisindoScreenState extends State<BisindoScreen> {
     });
   }
 
-  Future<void> _sendToAi() async {
-    if (_recognition.rawTranscript.value.trim().isEmpty) {
-      _showMessage('Belum ada hasil isyarat untuk dikirim.');
-      return;
-    }
-    try {
-      final sent = await _recognition.sendToAi();
-      if (!sent && mounted) {
-        _showMessage(
-          'Layanan AI belum dikonfigurasi. Hasil mentah tetap tersimpan.',
-        );
-      }
-    } catch (error) {
-      debugPrint('[BISINDO_AI] request error: $error');
-      if (mounted) _showMessage('AI belum dapat memproses teks saat ini.');
-    }
-  }
-
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
-  }
-
   @override
   void dispose() {
     _cameraService.errorNotifier.removeListener(_onCameraErrorChanged);
     _cameraService.isStreamingNotifier.removeListener(_onCameraStateChanged);
     _cameraService.framesCountNotifier.removeListener(_onLandmarkFrame);
-    _ttsService.dispose();
     unawaited(_disposePipeline());
     super.dispose();
   }
@@ -204,7 +187,7 @@ class _BisindoScreenState extends State<BisindoScreen> {
             const Text('🤟', style: TextStyle(fontSize: 22)),
             const SizedBox(width: 9),
             Text(
-              'Isyarat ke Teks',
+              'BISINDO Translator',
               style: AppTypography.titleMedium.copyWith(
                 color: AppColors.textHeadingColor(context),
                 fontWeight: FontWeight.w800,
@@ -218,27 +201,41 @@ class _BisindoScreenState extends State<BisindoScreen> {
         child: ListView(
           padding: const EdgeInsets.only(bottom: 28),
           children: [
+            // Camera Preview Card
             _CameraPanel(
               isActive: _cameraService.isCameraActive,
               recognition: _recognition,
             ),
             if (_errorMessage != null) _buildErrorCard(),
             if (_isPermissionDenied) _buildPermissionAction(),
-            const SizedBox(height: 14),
-            _buildTokenChips(),
-            const SizedBox(height: 14),
-            _buildTranscriptCard(),
-            const SizedBox(height: 20),
-            _buildControls(),
+
             const SizedBox(height: 16),
-            _buildRecognitionStatus(),
+
+            // Unified Result Card with Individual Gesture Boxes (sesuai Gambar 3)
+            _buildUnifiedResultCard(),
+
             const SizedBox(height: 18),
-            _buildAiButton(),
-            const SizedBox(height: 12),
+
+            // Hold Stabilization & Progress Indicator
+            _buildRecognitionStatus(),
+
+            const SizedBox(height: 18),
+
+            // Action Buttons (MULAI/STOP, HAPUS, SPASI, RESET)
+            _buildControls(),
+
+            const SizedBox(height: 18),
+
+            // Primary Indonesian Speech Button (UCAPKAN)
+            _buildSpeakButton(),
+
+            const SizedBox(height: 14),
+
+            // Footnote info
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
-                'Model lokal saat ini mengenali 8 isyarat kata. Dukungan alfabet aktif otomatis saat label LETTER_A–LETTER_Z tersedia di model.',
+                'Arahkan tangan ke kamera untuk mendeteksi kata dan huruf BISINDO secara langsung.',
                 textAlign: TextAlign.center,
                 style: AppTypography.captionSmall.copyWith(
                   color: AppColors.textSecondaryColor(context),
@@ -252,153 +249,261 @@ class _BisindoScreenState extends State<BisindoScreen> {
     );
   }
 
-  Widget _buildTokenChips() {
-    return Obx(() {
-      final items = _recognition.tokens;
-      return Container(
-        constraints: const BoxConstraints(minHeight: 48),
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        alignment: Alignment.center,
-        child: items.isEmpty
-            ? Text(
-                'Hasil terkonfirmasi akan muncul di sini',
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.textSecondaryColor(context),
-                  fontStyle: FontStyle.italic,
-                ),
-              )
-            : Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 7,
-                runSpacing: 7,
-                children: items.map(_buildTokenChip).toList(),
-              ),
-      );
-    });
-  }
-
-  Widget _buildTokenChip(SignToken token) {
-    final accent = _accent(context);
-    if (token.type == SignTokenType.space) {
-      return Container(
-        width: 26,
-        height: 40,
-        decoration: BoxDecoration(
-          color: accent.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: accent.withValues(alpha: 0.18)),
-        ),
-      );
-    }
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-      decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: accent.withValues(alpha: 0.22)),
-      ),
-      child: Text(
-        token.type == SignTokenType.letter
-            ? token.value.toUpperCase()
-            : token.value,
-        style: AppTypography.bodyMedium.copyWith(
-          color: accent,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTranscriptCard() {
+  Widget _buildUnifiedResultCard() {
     return Obx(() {
       final isDark = AppColors.isDark(context);
-      final ai = _recognition.aiTranscript.value;
+      final items = _recognition.tokens;
       final raw = _recognition.rawTranscript.value;
-      final display = ai.isNotEmpty
-          ? ai
-          : raw.isNotEmpty
-          ? raw
-          : 'Mulai isyarat untuk melihat terjemahan...';
+
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 20),
-        padding: const EdgeInsets.all(20),
-        constraints: const BoxConstraints(minHeight: 136),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkSurfaceContainer : Colors.white,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.cardBorderColor(context)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.035),
-              blurRadius: 18,
-              offset: const Offset(0, 5),
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Builder(
-              builder: (ctx) {
-                final accent = _accent(ctx);
-                return Row(
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
                   children: [
-                    CircleAvatar(radius: 4, backgroundColor: accent),
-                    const SizedBox(width: 10),
+                    const CircleAvatar(
+                      radius: 4,
+                      backgroundColor: AppColors.emeraldIslamic,
+                    ),
+                    const SizedBox(width: 8),
                     Text(
-                      ai.isEmpty ? 'TRANSKRIPSI' : 'TRANSKRIPSI AI',
+                      'HASIL TERJEMAHAN ISYARAT',
                       style: AppTypography.captionSmall.copyWith(
-                        color: accent,
+                        color: AppColors.emeraldIslamic,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 1.2,
                       ),
                     ),
                   ],
-                );
-              },
+                ),
+                if (items.isNotEmpty)
+                  Text(
+                    '${items.length} Gerakan',
+                    style: AppTypography.captionSmall.copyWith(
+                      color: AppColors.textSecondaryColor(context),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 14),
-            Text(
-              display,
-              style: raw.isEmpty
-                  ? AppTypography.bodyMedium.copyWith(
-                      color: AppColors.textSecondaryColor(context),
-                      fontStyle: FontStyle.italic,
+
+            // Horizontal boxes container (Kotak-kotak hasil gesture sesuai Gambar 3)
+            Container(
+              width: double.infinity,
+              constraints: const BoxConstraints(minHeight: 52),
+              alignment: Alignment.centerLeft,
+              child: items.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Text(
+                          'Mulai isyarat untuk melihat kotak hasil terjemahan...',
+                          style: AppTypography.bodySmall.copyWith(
+                            color: AppColors.textSecondaryColor(context),
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
                     )
-                  : AppTypography.titleLarge.copyWith(
-                      color: AppColors.textHeadingColor(context),
-                      fontWeight: FontWeight.w800,
+                  : SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: items.map(_buildGestureBox).toList(),
+                      ),
                     ),
             ),
+
             if (raw.isNotEmpty) ...[
-              const SizedBox(height: 14),
-              Builder(
-                builder: (ctx) {
-                  final accent = _accent(ctx);
-                  return OutlinedButton.icon(
-                    onPressed: () =>
-                        _ttsService.speak(text: display, languageCode: 'id'),
-                    icon: const Icon(Icons.volume_up_rounded, size: 19),
-                    label: const Text('Dengarkan'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: accent,
-                      backgroundColor: accent.withValues(alpha: 0.06),
-                      side: BorderSide.none,
+              const SizedBox(height: 12),
+              Divider(
+                color: (isDark ? Colors.white : Colors.black).withValues(
+                  alpha: 0.08,
+                ),
+                height: 1,
+              ),
+              const SizedBox(height: 10),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Text(
+                      raw,
+                      style: AppTypography.titleMedium.copyWith(
+                        color: AppColors.textHeadingColor(context),
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  );
-                },
+                  ),
+                  TextButton.icon(
+                    onPressed: _recognition.speakTranscript,
+                    icon: const Icon(Icons.volume_up_rounded, size: 18),
+                    label: const Text('Dengarkan'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: _accent(context),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
-            if (ai.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                'Hasil mentah: $raw',
-                style: AppTypography.captionSmall.copyWith(
-                  color: AppColors.textSecondaryColor(context),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _buildGestureBox(SignToken token) {
+    final isDark = AppColors.isDark(context);
+
+    if (token.type == SignTokenType.space) {
+      return Container(
+        margin: const EdgeInsets.only(right: 8),
+        width: 38,
+        height: 44,
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.06)
+              : const Color(0xFFF1F6F4),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isDark ? Colors.white24 : const Color(0xFFC7E2D8),
+            width: 1.2,
+          ),
+        ),
+        child: Center(
+          child: Text(
+            '␣',
+            style: TextStyle(
+              fontSize: 16,
+              color: AppColors.textSecondaryColor(context),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      );
+    }
+
+    final isLetter = token.type == SignTokenType.letter;
+    final text = isLetter ? token.value.toUpperCase() : token.value;
+
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      padding: EdgeInsets.symmetric(
+        horizontal: isLetter ? 14 : 16,
+        vertical: 10,
+      ),
+      constraints: const BoxConstraints(minHeight: 44),
+      decoration: BoxDecoration(
+        color: isDark
+            ? AppColors.emeraldIslamic.withValues(alpha: 0.15)
+            : const Color(0xFFF0F8F5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark
+              ? AppColors.emeraldIslamic.withValues(alpha: 0.45)
+              : const Color(0xFFB5DEC8),
+          width: 1.3,
+        ),
+      ),
+      child: Center(
+        child: Text(
+          text,
+          style: TextStyle(
+            color: isDark ? AppColors.goldLight : const Color(0xFF0F5A47),
+            fontSize: isLetter ? 17 : 15,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.3,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecognitionStatus() {
+    return Obx(() {
+      final progress = _recognition.holdProgress.value;
+      final holding =
+          _recognition.recognitionState.value == SignRecognitionState.holding;
+      final confirmed =
+          _recognition.recognitionState.value == SignRecognitionState.confirmed;
+      final gold = _accentGold(context);
+
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 28),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (holding)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation(gold),
+                      ),
+                    ),
+                  ),
+                Flexible(
+                  child: Text(
+                    _recognition.statusText,
+                    textAlign: TextAlign.center,
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: confirmed
+                          ? AppColors.emeraldIslamic
+                          : holding
+                          ? gold
+                          : AppColors.textBodyColor(context),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 7,
+                backgroundColor: gold.withValues(alpha: 0.15),
+                valueColor: AlwaysStoppedAnimation(
+                  confirmed ? AppColors.emeraldIslamic : gold,
                 ),
               ),
-            ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Tahan gerakan ±${_recognition.config.confirmationDuration.inMilliseconds} ms hingga penuh',
+              style: AppTypography.captionSmall.copyWith(
+                color: AppColors.textSecondaryColor(context),
+                fontSize: 10,
+              ),
+            ),
           ],
         ),
       );
@@ -409,6 +514,7 @@ class _BisindoScreenState extends State<BisindoScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
+        // MULAI / STOP Camera
         _RoundControl(
           label: _cameraService.isCameraActive ? 'STOP' : 'MULAI',
           icon: _isStartingCamera
@@ -416,22 +522,35 @@ class _BisindoScreenState extends State<BisindoScreen> {
               : _cameraService.isCameraActive
               ? Icons.stop_rounded
               : Icons.videocam_rounded,
-          color: AppColors.sosEmergency,
-          onTap: _isModelInitialized && !_isStartingCamera
-              ? _toggleDetection
-              : null,
+          color: _cameraService.isCameraActive
+              ? AppColors.sosEmergency
+              : AppColors.emeraldIslamic,
+          onTap: !_isStartingCamera ? _toggleDetection : null,
         ),
-        const SizedBox(width: 22),
+        const SizedBox(width: 20),
+
+        // HAPUS (Backspace)
         _RoundControl(
-          label: context.tr('sign.delete'),
+          label: 'HAPUS',
           icon: Icons.backspace_rounded,
           color: AppColors.distanceWarning,
           onTap: _recognition.deleteLast,
         ),
-        const SizedBox(width: 22),
+        const SizedBox(width: 20),
+
+        // SPASI (Space)
         _RoundControl(
-          label: context.tr('sign.reset'),
-          icon: Icons.format_align_center_rounded,
+          label: 'SPASI',
+          icon: Icons.space_bar_rounded,
+          color: _accent(context),
+          onTap: _recognition.insertSpace,
+        ),
+        const SizedBox(width: 20),
+
+        // RESET (Clear all)
+        _RoundControl(
+          label: 'RESET',
+          icon: Icons.refresh_rounded,
           color: AppColors.textMuted,
           onTap: _recognition.resetTranscript,
         ),
@@ -439,71 +558,19 @@ class _BisindoScreenState extends State<BisindoScreen> {
     );
   }
 
-  Widget _buildRecognitionStatus() {
+  Widget _buildSpeakButton() {
     return Obx(() {
-      final progress = _recognition.confirmationProgress.value;
-      final holding =
-          _recognition.recognitionState.value == SignRecognitionState.holding;
+      final raw = _recognition.rawTranscript.value.trim();
+      final isSpeaking = _recognition.isSpeaking.value;
       final accent = _accent(context);
-      final gold = _accentGold(context);
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 30),
-        child: Column(
-          children: [
-            Text(
-              _recognition.statusText,
-              textAlign: TextAlign.center,
-              style: AppTypography.bodyMedium.copyWith(
-                color: holding ? accent : AppColors.textBodyColor(context),
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 10),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 7,
-                backgroundColor: gold.withValues(alpha: 0.15),
-                valueColor: AlwaysStoppedAnimation(gold),
-              ),
-            ),
-            const SizedBox(height: 14),
-            OutlinedButton.icon(
-              onPressed: _recognition.insertSpace,
-              icon: const Icon(Icons.space_bar_rounded),
-              label: const Text('SPASI'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: accent,
-                side: BorderSide(color: accent.withValues(alpha: 0.4)),
-                shape: const StadiumBorder(),
-              ),
-            ),
-            const SizedBox(height: 5),
-            Text(
-              'Auto-konfirmasi setelah stabil ±${_recognition.config.confirmationDuration.inMilliseconds} ms',
-              style: AppTypography.captionSmall.copyWith(
-                color: AppColors.textSecondaryColor(context),
-              ),
-            ),
-          ],
-        ),
-      );
-    });
-  }
 
-  Widget _buildAiButton() {
-    return Obx(() {
-      final raw = _recognition.rawTranscript.value;
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 30),
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         child: SizedBox(
-          height: 56,
+          height: 54,
           child: ElevatedButton.icon(
-            onPressed: raw.isEmpty || _recognition.isSendingToAi.value
-                ? null
-                : _sendToAi,
-            icon: _recognition.isSendingToAi.value
+            onPressed: raw.isEmpty ? null : _recognition.speakTranscript,
+            icon: isSpeaking
                 ? const SizedBox.square(
                     dimension: 20,
                     child: CircularProgressIndicator(
@@ -511,24 +578,26 @@ class _BisindoScreenState extends State<BisindoScreen> {
                       color: Colors.white,
                     ),
                   )
-                : const Icon(Icons.auto_awesome_rounded),
+                : const Icon(Icons.record_voice_over_rounded, size: 22),
             label: Text(
-              raw.isEmpty ? 'Kirim ke AI' : 'Kirim ke AI  [$raw]',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              isSpeaking
+                  ? 'Sedang Membaca...'
+                  : raw.isEmpty
+                  ? 'UCAPKAN (TEKS KOSONG)'
+                  : '🔊 UCAPKAN HASIL',
+              style: AppTypography.bodyMedium.copyWith(
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.5,
+              ),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.espressoDark,
+              backgroundColor: accent,
               foregroundColor: Colors.white,
-              disabledBackgroundColor: AppColors.espressoDark.withValues(
-                alpha: 0.3,
-              ),
+              disabledBackgroundColor: accent.withValues(alpha: 0.3),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
-              textStyle: AppTypography.bodyMedium.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+              elevation: 2,
             ),
           ),
         ),
@@ -603,10 +672,20 @@ class _CameraPanel extends StatelessWidget {
                               fontWeight: FontWeight.w700,
                             ),
                           ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Tekan tombol MULAI di bawah',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.6),
+                              fontSize: 12,
+                            ),
+                          ),
                         ],
                       ),
                     ),
             ),
+
+            // Live status badge
             Positioned(
               left: 14,
               top: 13,
@@ -615,58 +694,97 @@ class _CameraPanel extends StatelessWidget {
                 color: isActive ? AppColors.emeraldIslamic : Colors.black54,
               ),
             ),
-            const Positioned(
-              left: 95,
-              top: 13,
-              child: _CameraBadge(
-                text: 'BISINDO · 100F',
-                color: AppColors.espressoDark,
-              ),
-            ),
+
+            // Candidate label HUD overlay on camera preview (matching Image 3)
             Obx(() {
               final label = recognition.currentCandidate.value;
-              if (label == null) return const SizedBox.shrink();
+              if (label == null || label.isEmpty) {
+                return const SizedBox.shrink();
+              }
               final state = recognition.recognitionState.value;
               final confirmed = state == SignRecognitionState.confirmed;
+              final holding = state == SignRecognitionState.holding;
+              final progress = recognition.holdProgress.value;
+              final conf = (recognition.candidateConfidence.value * 100)
+                  .round();
+              final isSingleChar = label.length == 1;
+
               return Positioned(
-                right: 15,
-                top: 14,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.espressoDark.withValues(alpha: 0.92),
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: const [
-                      BoxShadow(color: Colors.black26, blurRadius: 9),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        '${confirmed ? '✓ ' : ''}${label.toUpperCase()}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 21,
-                        ),
+                right: 20,
+                bottom: 26,
+                child: AnimatedScale(
+                  scale: confirmed ? 1.08 : 1.0,
+                  duration: const Duration(milliseconds: 160),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isSingleChar ? 22 : 18,
+                      vertical: isSingleChar ? 16 : 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0D6B58),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: confirmed
+                            ? AppColors.accentGoldStar
+                            : Colors.white.withValues(alpha: 0.35),
+                        width: confirmed ? 2.5 : 1.2,
                       ),
-                      Text(
-                        '${(recognition.candidateConfidence.value * 100).round()}%',
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 11,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.45),
+                          blurRadius: 14,
+                          offset: const Offset(0, 4),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '${confirmed ? '✓ ' : ''}${isSingleChar ? label.toUpperCase() : label}',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: isSingleChar ? 34 : 20,
+                            height: 1.1,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          '$conf%',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.8),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        if (holding && progress > 0) ...[
+                          const SizedBox(height: 6),
+                          SizedBox(
+                            width: isSingleChar ? 36 : 64,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: progress,
+                                minHeight: 4,
+                                backgroundColor: Colors.white24,
+                                valueColor: const AlwaysStoppedAnimation(
+                                  AppColors.accentGoldStar,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
               );
             }),
+
+            // Hold gesture progress overlay
             Obx(() {
-              final progress = recognition.confirmationProgress.value;
+              final progress = recognition.holdProgress.value;
               if (progress <= 0 ||
                   recognition.recognitionState.value !=
                       SignRecognitionState.holding) {
@@ -679,7 +797,7 @@ class _CameraPanel extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.62),
+                    color: Colors.black.withValues(alpha: 0.65),
                     borderRadius: BorderRadius.circular(13),
                   ),
                   child: Row(
@@ -765,8 +883,8 @@ class _RoundControl extends StatelessWidget {
           onTap: onTap,
           customBorder: const CircleBorder(),
           child: Container(
-            width: 60,
-            height: 60,
+            width: 58,
+            height: 58,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: color.withValues(alpha: onTap == null ? 0.06 : 0.10),

@@ -1,0 +1,38 @@
+{
+  "label_to_index": {
+    "air": 0,
+    "belajar": 1,
+    "hari": 2,
+    "maaf": 3,
+    "makan": 4,
+    "saya": 5,
+    "terima_kasih": 6,
+    "tuli": 7
+  },
+  "index_to_label": {
+    "0": "air",
+    "1": "belajar",
+    "2": "hari",
+    "3": "maaf",
+    "4": "makan",
+    "5": "saya",
+    "6": "terima_kasih",
+    "7": "tuli"
+  },
+  "num_classes": 8,
+  "labels": [
+    "air",
+    "belajar",
+    "hari",
+    "maaf",
+    "makan",
+    "saya",
+    "terima_kasih",
+    "tuli"
+  ],
+  "feature_dim": 100,
+  "sequence_len": 30,
+  "dataset": "WL-BISINDO",
+  "normalization": "nose-centered + per-sequence std",
+  "temporal_total": 300
+}

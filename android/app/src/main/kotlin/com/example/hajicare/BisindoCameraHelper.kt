@@ -304,16 +304,15 @@ class BisindoCameraHelper(
         val left = handFrame.left
         val right = handFrame.right
 
-        // The encoder relies on shoulders for normalization and on at least one
-        // hand for the sign itself. Partial packets create convincing but false
-        // predictions, so they must not reach Flutter.
-        if (pose == null || pose.size < 33 || (left == null && right == null)) {
-            Log.d(TAG, "Dropped incomplete frame timestamp=$timestamp")
+        // Require at least one hand to be visible for sign language recognition.
+        // Even if pose is partially occluded in selfie view, emit the frame so
+        // alphabet and gestures reach Flutter without being discarded.
+        if (left == null && right == null) {
             return
         }
 
         lastEmittedTimestamp = timestamp
-        assembleAndEmitLandmarks(pose, left, right)
+        assembleAndEmitLandmarks(pose ?: emptyList(), left, right)
     }
 
     private fun trimPendingFrames() {

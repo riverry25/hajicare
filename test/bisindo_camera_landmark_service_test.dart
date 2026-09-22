@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hajicare/features/sign_language/models/bisindo_mode.dart';
 import 'package:hajicare/features/sign_language/models/bisindo_prediction.dart';
 import 'package:hajicare/features/sign_language/services/bisindo_inference_service.dart';
 import 'package:hajicare/features/sign_language/services/bisindo_preprocessor.dart';
@@ -96,6 +97,7 @@ void main() {
     );
 
     test('Does not infer before minimum frame count', () async {
+      buffer.setMode(BisindoMode.word);
       final frame = List.generate(543, (i) => [0.1, 0.2, 0.0]);
       for (int i = 0; i < 29; i++) {
         buffer.addFrame(frame);
