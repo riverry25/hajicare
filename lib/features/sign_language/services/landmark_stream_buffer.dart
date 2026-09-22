@@ -20,7 +20,7 @@ class LandmarkStreamBuffer {
   final ValueChanged<BisindoPrediction>? onPrediction;
   final ValueChanged<Object>? onError;
 
-  BisindoMode _mode = BisindoMode.unified;
+  BisindoMode _mode = BisindoMode.alphabet;
   final List<List<List<double>>> _frameBuffer = [];
   bool _isInferring = false;
   DateTime _lastInferenceTime = DateTime.fromMillisecondsSinceEpoch(0);
@@ -30,12 +30,14 @@ class LandmarkStreamBuffer {
   LandmarkStreamBuffer({
     required this.inferenceService,
     this.windowSize = 30,
+    BisindoMode initialMode = BisindoMode.alphabet,
     this.throttleDuration = const Duration(milliseconds: 100),
     int? minimumFrames,
     int? minimumWordFrames,
     this.onPrediction,
     this.onError,
-  }) : minimumWordFrames = minimumWordFrames ?? minimumFrames ?? 30,
+  }) : _mode = initialMode,
+       minimumWordFrames = minimumWordFrames ?? minimumFrames ?? 30,
        assert((minimumWordFrames ?? minimumFrames ?? 30) > 0),
        assert(throttleDuration >= Duration.zero);
 
@@ -56,7 +58,7 @@ class LandmarkStreamBuffer {
     _receivedFrameCount++;
     _frameBuffer.add(frameLandmarks);
 
-    final maxBuffer = _mode.isAlphabet ? 5 : windowSize;
+    final maxBuffer = windowSize;
     if (_frameBuffer.length > maxBuffer) {
       _frameBuffer.removeAt(0);
     }

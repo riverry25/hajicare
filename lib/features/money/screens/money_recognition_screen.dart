@@ -88,6 +88,14 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
         ),
       );
 
+      if (loaded) {
+        debugPrint('[RIYAL] Riyal model ready ✅');
+        debugPrint('[RIYAL] model = $_modelAssetPath');
+        debugPrint('[RIYAL] input = [1, 640, 640, 3], input type = float32');
+        debugPrint('[RIYAL] output = [1, 300, 6], output type = float32');
+        debugPrint('[RIYAL] labels = 14 (assets/models/labels.txt)');
+      }
+
       if (mounted) {
         setState(() {
           _isModelLoaded = loaded;

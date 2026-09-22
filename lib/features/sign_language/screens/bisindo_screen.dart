@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_typography.dart';
 import '../controllers/bisindo_recognition_controller.dart';
+import '../models/bisindo_mode.dart';
 import '../models/sign_token.dart';
 import '../services/bisindo_camera_landmark_service.dart';
 import '../services/bisindo_inference_service.dart';
@@ -167,6 +168,38 @@ class _BisindoScreenState extends State<BisindoScreen> {
     await _inferenceService.dispose();
   }
 
+  void _onModeChanged(BisindoMode newMode) {
+    if (_recognition.selectedMode.value == newMode) return;
+    _recognition.setMode(newMode);
+    _streamBuffer.setMode(newMode);
+    setState(() {});
+  }
+
+  Widget _buildModeChip(String label, bool isSelected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.emeraldIslamic : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected
+                ? Colors.white
+                : AppColors.textSecondaryColor(context),
+            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+            fontSize: 12,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -195,6 +228,32 @@ class _BisindoScreenState extends State<BisindoScreen> {
             ),
           ],
         ),
+        actions: [
+          Obx(() {
+            final isAlphabet = _recognition.selectedMode.value.isAlphabet;
+            return Container(
+              margin: const EdgeInsets.only(right: 14),
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                color: (AppColors.isDark(context) ? Colors.white : Colors.black)
+                    .withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.cardBorderColor(context)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildModeChip('HURUF', isAlphabet, () {
+                    _onModeChanged(BisindoMode.alphabet);
+                  }),
+                  _buildModeChip('KATA', !isAlphabet, () {
+                    _onModeChanged(BisindoMode.word);
+                  }),
+                ],
+              ),
+            );
+          }),
+        ],
       ),
       body: SafeArea(
         top: false,
@@ -689,10 +748,15 @@ class _CameraPanel extends StatelessWidget {
             Positioned(
               left: 14,
               top: 13,
-              child: _CameraBadge(
-                text: isActive ? '●  LIVE' : 'STANDBY',
-                color: isActive ? AppColors.emeraldIslamic : Colors.black54,
-              ),
+              child: Obx(() {
+                final modeLabel = recognition.selectedMode.value.label;
+                return _CameraBadge(
+                  text: isActive
+                      ? '●  LIVE ($modeLabel)'
+                      : 'STANDBY ($modeLabel)',
+                  color: isActive ? AppColors.emeraldIslamic : Colors.black54,
+                );
+              }),
             ),
 
             // Candidate label HUD overlay on camera preview (matching Image 3)

@@ -121,10 +121,10 @@ void main() {
       controller.onClose();
     });
 
-    test('Default mode is UNIFIED and can switch modes', () {
-      expect(controller.selectedMode.value, equals(BisindoMode.unified));
-      controller.setMode(BisindoMode.alphabet);
+    test('Default mode is ALPHABET and can switch to WORD', () {
       expect(controller.selectedMode.value, equals(BisindoMode.alphabet));
+      controller.setMode(BisindoMode.word);
+      expect(controller.selectedMode.value, equals(BisindoMode.word));
       expect(
         controller.recognitionState.value,
         equals(SignRecognitionState.idle),
