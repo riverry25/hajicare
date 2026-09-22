@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../../../core/locales/app_localizations.dart';
+import '../../../core/locales/app_translations.dart';
 import '../../../core/utils/app_dialog.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/services/trusted_backend_service.dart';
@@ -82,7 +84,7 @@ class LoginController extends GetxController {
     final shouldRemember = rememberMe.value;
 
     if (email.isEmpty || password.isEmpty) {
-      errorMessage.value = 'Harap isi email dan kata sandi terlebih dahulu.';
+      errorMessage.value = AppTranslations.tr('auth.errorFillEmailPassword');
       _showErrorSnackbar(errorMessage.value!);
       return;
     }
@@ -104,7 +106,7 @@ class LoginController extends GetxController {
 
       if (uid == null) {
         if (!isClosed) {
-          errorMessage.value = 'Data pengguna tidak ditemukan.';
+          errorMessage.value = AppTranslations.tr('auth.errorUserNotFound');
           _showErrorSnackbar(errorMessage.value!);
         }
         return;
@@ -178,9 +180,9 @@ class LoginController extends GetxController {
       }
 
       AppDialog.success(
-        title: 'Berhasil Masuk',
-        message: 'Selamat datang kembali di HajiCare.',
-        okText: 'Lanjut',
+        title: AppTranslations.tr('auth.loginSuccessTitle'),
+        message: AppTranslations.tr('auth.loginSuccessMessage'),
+        okText: AppTranslations.tr('next'),
         onOk: navigate,
         autoDismissDuration: const Duration(milliseconds: 1500),
         onDismiss: navigate,
@@ -194,8 +196,7 @@ class LoginController extends GetxController {
     } catch (e) {
       if (isClosed) return;
 
-      errorMessage.value =
-          'Terjadi kesalahan saat masuk. Silakan coba beberapa saat lagi.';
+      errorMessage.value = AppTranslations.tr('auth.loginGeneralError');
 
       _showErrorSnackbar(errorMessage.value!);
     } finally {
@@ -208,9 +209,9 @@ class LoginController extends GetxController {
   void _showErrorSnackbar(String msg) {
     if (isClosed) return;
     AppDialog.error(
-      title: 'Belum Bisa Masuk',
+      title: AppTranslations.tr('auth.loginFailedTitle'),
       message: msg,
-      okText: 'Coba Lagi',
+      okText: AppTranslations.tr('auth.tryAgain'),
     );
   }
 
@@ -235,7 +236,9 @@ class LoginController extends GetxController {
       // Buka pemilih akun Google
       final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
 
-      debugPrint('[LoginController] authenticate() berhasil: ${googleUser.email}');
+      debugPrint(
+        '[LoginController] authenticate() berhasil: ${googleUser.email}',
+      );
 
       // Di google_sign_in v7, authentication adalah getter sinkron (bukan Future).
       final GoogleSignInAuthentication googleAuth = googleUser.authentication;
@@ -294,11 +297,12 @@ class LoginController extends GetxController {
         );
       } catch (_) {
         // Jika Firestore offline sepenuhnya, anggap doc tidak ada
-        userDoc = await userDocRef.get(const GetOptions(source: Source.cache))
+        userDoc = await userDocRef
+            .get(const GetOptions(source: Source.cache))
             .catchError((_) async {
-          // Cache juga kosong; lanjutkan saja, profile akan dibuat
-          return userDocRef.get();
-        });
+              // Cache juga kosong; lanjutkan saja, profile akan dibuat
+              return userDocRef.get();
+            });
       }
 
       String chosenRole = selectedRole.value;
@@ -313,11 +317,13 @@ class LoginController extends GetxController {
         // Coba via Cloud Function dulu; jika gagal, tulis langsung ke Firestore
         bool profileCreated = false;
         try {
-          await TrustedBackendService().call('ensureUserProfile', {
-            'name': displayName,
-            'photoUrl': photoUrl,
-            'requestedRole': chosenRole,
-          }).timeout(const Duration(seconds: 10));
+          await TrustedBackendService()
+              .call('ensureUserProfile', {
+                'name': displayName,
+                'photoUrl': photoUrl,
+                'requestedRole': chosenRole,
+              })
+              .timeout(const Duration(seconds: 10));
           profileCreated = true;
         } catch (e) {
           debugPrint(
@@ -337,8 +343,9 @@ class LoginController extends GetxController {
             'photoUrl': photoUrl,
             'role': chosenRole,
             'requestedRole': chosenRole,
-            'pendampingApprovalStatus':
-                chosenRole == 'pendamping' ? 'approved' : null,
+            'pendampingApprovalStatus': chosenRole == 'pendamping'
+                ? 'approved'
+                : null,
             'createdAt': FieldValue.serverTimestamp(),
             'updatedAt': FieldValue.serverTimestamp(),
             'isGpsActive': false,
@@ -347,9 +354,9 @@ class LoginController extends GetxController {
       } else {
         // Pengguna lama — update profil via CF atau Firestore
         try {
-          await TrustedBackendService().call('ensureUserProfile').timeout(
-            const Duration(seconds: 10),
-          );
+          await TrustedBackendService()
+              .call('ensureUserProfile')
+              .timeout(const Duration(seconds: 10));
         } catch (e) {
           debugPrint(
             '[LoginController] ensureUserProfile CF gagal untuk user lama, '
@@ -387,7 +394,7 @@ class LoginController extends GetxController {
       }
 
       AppDialog.success(
-        title: 'Selamat Datang!',
+        title: AppTranslations.tr('auth.welcomeAlertTitle'),
         message: 'Anda berhasil masuk dengan Google.',
         okText: 'Masuk Sekarang',
         onOk: navigateGoogle,
@@ -396,12 +403,16 @@ class LoginController extends GetxController {
       );
     } on FirebaseAuthException catch (e) {
       if (isClosed) return;
-      debugPrint('[LoginController] FirebaseAuthException: ${e.code} — ${e.message}');
+      debugPrint(
+        '[LoginController] FirebaseAuthException: ${e.code} — ${e.message}',
+      );
       errorMessage.value = _friendlyAuthError(e.code, e.message);
       _showErrorDialog(errorMessage.value!);
     } on GoogleSignInException catch (e) {
       if (isClosed) return;
-      debugPrint('[LoginController] GoogleSignInException code=${e.code} desc=${e.description}');
+      debugPrint(
+        '[LoginController] GoogleSignInException code=${e.code} desc=${e.description}',
+      );
       // Jangan silent-return untuk SEMUA kode canceled.
       // Jika user benar-benar memilih akun tapi canceled ter-throw,
       // tampilkan pesan agar user tahu ada masalah konfigurasi.
@@ -486,7 +497,7 @@ class LoginController extends GetxController {
   void _showErrorDialog(String message) {
     if (isClosed) return;
     AppDialog.error(
-      title: 'Belum Bisa Masuk',
+      title: AppTranslations.tr('auth.cannotLoginAlertTitle'),
       message: message,
       okText: 'Coba Lagi',
     );

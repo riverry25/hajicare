@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/routes/app_routes.dart';
@@ -160,8 +161,10 @@ class DistanceAlertScreen extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 4),
-                        const AppStatusBadge(
-                          label: '45m melebihi batas aman',
+                        AppStatusBadge(
+                          label: context.tr('sos.distanceExceeded', {
+                            'distance': 45,
+                          }),
                           statusType: AppStatusType.danger,
                         ),
                       ],

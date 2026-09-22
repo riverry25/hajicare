@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../core/locales/app_translations.dart';
@@ -66,7 +67,7 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
       Navigator.of(context).pop(); // Close modal dialog
 
       AppDialog.success(
-        title: 'Undangan Terkirim',
+        title: context.tr('room.invitationSent'),
         message:
             'Undangan sudah dikirim ke "$email". Jamaah dapat menerima atau menolak undangan tersebut.',
       );
@@ -76,7 +77,7 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
 
       AppDialog.error(
         context: context,
-        title: 'Undangan Belum Terkirim',
+        title: context.tr('room.invitationFailed'),
         message: UserFeedbackMessage.from(
           e,
           fallback:
@@ -180,7 +181,7 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
                           fontWeight: FontWeight.w600,
                         ),
                         decoration: InputDecoration(
-                          hintText: 'contoh: jamaah@gmail.com',
+                          hintText: context.tr('room.sampleEmailHint'),
                           hintStyle: TextStyle(
                             color: isDark
                                 ? Colors.white38

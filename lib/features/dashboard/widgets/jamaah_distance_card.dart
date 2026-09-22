@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
@@ -287,8 +288,8 @@ class JamaahDistanceCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xs),
-                const AppStatusBadge(
-                  label: 'Menunggu',
+                AppStatusBadge(
+                  label: context.tr('dashboard.waiting'),
                   statusType: AppStatusType.warning,
                   icon: Icons.hourglass_top_rounded,
                 ),

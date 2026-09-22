@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
@@ -303,7 +304,7 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
     if (phone == null || phone.trim().isEmpty) {
       AppAlert.warning(
         context,
-        title: 'Kontak Tidak Tersedia',
+        title: context.tr('sos.contactUnavailable'),
         message: 'Nomor telepon pendamping belum terdaftar di sistem.',
       );
       return;
@@ -316,7 +317,7 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
       if (!mounted) return;
       AppAlert.error(
         context,
-        title: 'Gagal Melakukan Panggilan',
+        title: context.tr('sos.callFailed'),
         message: 'Tidak dapat membuka aplikasi telepon untuk nomor $phone.',
       );
     }

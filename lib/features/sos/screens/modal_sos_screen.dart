@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -95,7 +96,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
         });
         AppAlert.error(
           context,
-          title: 'SOS Belum Terkirim',
+          title: context.tr('sos.failedToSend'),
           message:
               'Periksa internet, lalu tekan tombol SOS lagi. Jika keadaan mendesak, segera minta bantuan orang terdekat.',
           okText: 'Coba Lagi',
@@ -595,11 +596,11 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                             onPressed: () {
                               AppAlert.confirm(
                                 context,
-                                title: 'Selesaikan Darurat SOS?',
+                                title: context.tr('sos.completeDialogTitle'),
                                 message:
                                     'Apakah situasi darurat untuk "$userName" sudah berhasil ditangani?',
-                                confirmText: 'Ya, Selesaikan',
-                                cancelText: 'Batal',
+                                confirmText: context.tr('sos.yesComplete'),
+                                cancelText: context.tr('common.cancel'),
                                 onConfirm: () async {
                                   final success = await state.dismissSos(
                                     userId,
@@ -609,14 +610,16 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                                     if (success) {
                                       AppAlert.success(
                                         context,
-                                        title: 'SOS Selesai',
+                                        title: context.tr('sos.completed'),
                                         message:
                                             'Panggilan SOS untuk "$userName" sudah diakhiri.',
                                       );
                                     } else {
                                       AppAlert.error(
                                         context,
-                                        title: 'Status Belum Diubah',
+                                        title: context.tr(
+                                          'sos.statusNotChanged',
+                                        ),
                                         message:
                                             'Periksa internet, lalu coba akhiri SOS sekali lagi.',
                                         okText: 'Coba Lagi',
@@ -883,13 +886,13 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                       if (success) {
                         AppAlert.success(
                           context,
-                          title: 'Sinyal SOS Dinonaktifkan',
+                          title: context.tr('sos.signalDisabled'),
                           message: 'Status darurat Anda sudah diakhiri.',
                         );
                       } else {
                         AppAlert.error(
                           context,
-                          title: 'SOS Belum Dinonaktifkan',
+                          title: context.tr('sos.signalDisableFailed'),
                           message:
                               'Periksa internet, lalu coba akhiri SOS sekali lagi.',
                           okText: 'Coba Lagi',

@@ -74,18 +74,14 @@ class ProfileScreen extends StatelessWidget {
                   horizontal: AppSpacing.screenEdgeGutter,
                 ),
                 child: _SettingsGroup(
-                  title: context.tr('accountData').isEmpty
-                      ? 'Data Jamaah & Rombongan'
-                      : context.tr('accountData'),
+                  title: context.tr('profile.groupAccountData'),
                   titleColor: AppColors.tanMedium,
                   cardBg: cardBg,
                   children: [
                     _SettingsTile(
                       icon: Icons.medical_information_rounded,
-                      label: context.tr('medicalData').isEmpty
-                          ? 'Data Medis & Riwayat'
-                          : context.tr('medicalData'),
-                      trailingLabel: 'Lihat',
+                      label: context.tr('profile.medicalData'),
+                      trailingLabel: context.tr('profile.view'),
                       cardBg: cardBg,
                       headingColor: headingColor,
                       bodyColor: bodyColor,
@@ -94,10 +90,10 @@ class ProfileScreen extends StatelessWidget {
                     _DividerThin(),
                     _SettingsTile(
                       icon: Icons.groups_rounded,
-                      label: context.tr('manageCompanion').isEmpty
-                          ? 'Kontak Pendamping & Room'
-                          : context.tr('manageCompanion'),
-                      trailingLabel: state?.activeRoom.value?.name ?? 'Aktif',
+                      label: context.tr('profile.manageCompanion'),
+                      trailingLabel:
+                          state?.activeRoom.value?.name ??
+                          context.tr('profile.active'),
                       cardBg: cardBg,
                       headingColor: headingColor,
                       bodyColor: bodyColor,
@@ -113,17 +109,13 @@ class ProfileScreen extends StatelessWidget {
                   horizontal: AppSpacing.screenEdgeGutter,
                 ),
                 child: _SettingsGroup(
-                  title: context.tr('accessibilitySettings').isEmpty
-                      ? 'Aksesibilitas'
-                      : context.tr('accessibilitySettings'),
+                  title: context.tr('profile.accessibility'),
                   titleColor: AppColors.tanMedium,
                   cardBg: cardBg,
                   children: [
                     _SettingsTile(
                       icon: Icons.text_fields_rounded,
-                      label: context.tr('textSize').isEmpty
-                          ? 'Ukuran Teks'
-                          : context.tr('textSize'),
+                      label: context.tr('profile.textSize'),
                       trailingLabel: settings.currentTextScale.label,
                       cardBg: cardBg,
                       headingColor: headingColor,
@@ -140,17 +132,13 @@ class ProfileScreen extends StatelessWidget {
                   horizontal: AppSpacing.screenEdgeGutter,
                 ),
                 child: _SettingsGroup(
-                  title: context.tr('preferenceSettings').isEmpty
-                      ? 'Preferensi & Tampilan'
-                      : context.tr('preferenceSettings'),
+                  title: context.tr('profile.preferencesAndDisplay'),
                   titleColor: AppColors.tanMedium,
                   cardBg: cardBg,
                   children: [
                     _SettingsTile(
                       icon: Icons.language_rounded,
-                      label: context.tr('language').isEmpty
-                          ? 'Bahasa Aplikasi'
-                          : context.tr('language'),
+                      label: context.tr('profile.language'),
                       trailingLabel: settings.localeName,
                       cardBg: cardBg,
                       headingColor: headingColor,
@@ -160,9 +148,7 @@ class ProfileScreen extends StatelessWidget {
                     _DividerThin(),
                     _SettingsTile(
                       icon: Icons.brightness_6_rounded,
-                      label: context.tr('theme').isEmpty
-                          ? 'Tema Tampilan'
-                          : context.tr('theme'),
+                      label: context.tr('profile.theme'),
                       trailingLabel: settings.themeModeName,
                       cardBg: cardBg,
                       headingColor: headingColor,
@@ -179,17 +165,13 @@ class ProfileScreen extends StatelessWidget {
                   horizontal: AppSpacing.screenEdgeGutter,
                 ),
                 child: _SettingsGroup(
-                  title: context.tr('otherSettings').isEmpty
-                      ? 'Bantuan & Informasi'
-                      : context.tr('otherSettings'),
+                  title: context.tr('profile.helpAndInfo'),
                   titleColor: AppColors.tanMedium,
                   cardBg: cardBg,
                   children: [
                     _SettingsTile(
                       icon: Icons.help_outline_rounded,
-                      label: context.tr('helpCenter').isEmpty
-                          ? 'Pusat Bantuan & FAQ'
-                          : context.tr('helpCenter'),
+                      label: context.tr('profile.helpCenter'),
                       cardBg: cardBg,
                       headingColor: headingColor,
                       bodyColor: bodyColor,
@@ -198,9 +180,7 @@ class ProfileScreen extends StatelessWidget {
                     _DividerThin(),
                     _SettingsTile(
                       icon: Icons.info_outline_rounded,
-                      label: context.tr('aboutApp').isEmpty
-                          ? 'Tentang HajiCare'
-                          : context.tr('aboutApp'),
+                      label: context.tr('profile.aboutApp'),
                       trailingLabel: AppConstants.appVersion,
                       cardBg: cardBg,
                       headingColor: headingColor,
@@ -216,11 +196,7 @@ class ProfileScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.screenEdgeGutter,
                 ),
-                child: _LogoutButton(
-                  label: context.tr('logout').isEmpty
-                      ? 'Keluar dari Akun'
-                      : context.tr('logout'),
-                ),
+                child: _LogoutButton(label: context.tr('profile.logout')),
               ),
               const SizedBox(height: AppSpacing.md),
             ],

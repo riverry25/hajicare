@@ -114,7 +114,7 @@ class OnboardingScreen extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      'Lewati',
+                      context.tr('onboarding.skip'),
                       style: AppTypography.bodySmall.copyWith(
                         color: AppColors.textBody,
                         fontWeight: FontWeight.w700,
@@ -252,7 +252,10 @@ class OnboardingScreen extends StatelessWidget {
                         const SizedBox(width: 6),
                         Flexible(
                           child: Text(
-                            'Langkah ${ctrl.currentPage.value + 1} dari $_totalPages • Menuju Perjalanan Aman Anda',
+                            context.tr('onboarding.stepProgress', {
+                              'current': ctrl.currentPage.value + 1,
+                              'total': _totalPages,
+                            }),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             textAlign: TextAlign.center,

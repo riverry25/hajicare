@@ -1,3 +1,4 @@
+import '../../../core/locales/app_translations.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -150,7 +151,7 @@ class SmartbandLdrController extends GetxController {
         _previousFlameAlertTriggered = true;
         AppAlert.warning(
           Get.context,
-          title: 'Peringatan Api',
+          title: AppTranslations.tr('smartband.fireAlert'),
           message:
               'Sensor mendeteksi indikasi api di sekitar Anda! Harap waspada dan segera periksa kondisi sekitar.',
           okText: 'Mengerti',
@@ -237,7 +238,7 @@ class SmartbandLdrController extends GetxController {
     if (!isEnabled) {
       AppAlert.warning(
         Get.context,
-        title: 'Bluetooth Tidak Aktif',
+        title: AppTranslations.tr('smartband.bluetoothInactive'),
         message:
             'Silakan aktifkan Bluetooth pada perangkat Anda untuk menghubungkan gelang.',
       );
@@ -275,7 +276,7 @@ class SmartbandLdrController extends GetxController {
 
       AppAlert.error(
         Get.context,
-        title: 'Gelang Belum Terhubung',
+        title: AppTranslations.tr('smartband.bandNotConnected'),
         message: UserFeedbackMessage.from(
           e,
           fallback:

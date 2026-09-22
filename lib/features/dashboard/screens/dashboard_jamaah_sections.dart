@@ -108,8 +108,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
           // ── Section 1: "Status & Peringatan" ("Bot Alert") ────────
           _buildSectionHeader(
-            title: 'Status & Peringatan',
-            subtitle: 'Koneksi GPS & pemantauan rombongan',
+            title: context.tr('dashboard.statusAndAlert'),
+            subtitle: context.tr('dashboard.gpsMonitoringSub'),
             actionText: 'Lihat peta',
             onAction: () => dashboardCtrl.changeTab(1),
             headingColor: headingColor,
@@ -122,8 +122,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
           // ── Section 2: "Kamar & Maktab" ───────────────────────────
           _buildSectionHeader(
-            title: 'Kamar & Maktab',
-            subtitle: 'Informasi room & rombongan hotel',
+            title: context.tr('dashboard.roomAndMaktab'),
+            subtitle: context.tr('dashboard.hotelRoomSub'),
             actionText: 'Kelola',
             onAction: () {
               if (state.activeRoomId.value != null) {
@@ -145,8 +145,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
           // ── Section 3: "Tips & Panduan Ibadah" ("News and Updates")
           _buildSectionHeader(
-            title: 'Tips & Panduan Ibadah',
-            subtitle: 'Doa harian, rukun & info penting',
+            title: context.tr('dashboard.worshipTips'),
+            subtitle: context.tr('dashboard.worshipTipsSub'),
             actionText: 'Lihat semua',
             onAction: () => _showDoaSheet(context),
             headingColor: headingColor,
@@ -607,7 +607,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                 children: [
                   _buildBentoFeatureCard(
                     context: context,
-                    title: 'Bahasa Isyarat',
+                    title: context.tr('dashboard.signLanguage'),
                     value: 'BISINDO',
                     subtitle: 'Buka Kamera',
                     icon: Icons.sign_language_rounded,
@@ -627,7 +627,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   const SizedBox(height: 12),
                   _buildBentoFeatureCard(
                     context: context,
-                    title: 'Panduan Doa',
+                    title: context.tr('dashboard.prayerGuide'),
                     value: 'Doa Haji',
                     subtitle: 'Doa & Dzikir',
                     icon: Icons.menu_book_rounded,
@@ -657,7 +657,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                 children: [
                   _buildBentoFeatureCard(
                     context: context,
-                    title: 'Jadwal & Rukun',
+                    title: context.tr('dashboard.scheduleAndPillars'),
                     value: 'Guide Haji',
                     subtitle: 'Lihat Rangkaian',
                     icon: Icons.event_note_rounded,
@@ -679,7 +679,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   const SizedBox(height: 12),
                   _buildBentoFeatureCard(
                     context: context,
-                    title: 'Pendamping',
+                    title: context.tr('dashboard.companion'),
                     value: 'Hubungi',
                     subtitle: 'Pesan & Lokasi',
                     icon: Icons.support_agent_rounded,
@@ -1124,7 +1124,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     if (pendampings.isEmpty) {
       AppAlert.error(
         context,
-        title: 'Pendamping Tidak Tersedia',
+        title: context.tr('dashboard.companionUnavailable'),
         message:
             'Belum ada pendamping aktif di rombongan Anda. Hubungi pengelola rombongan.',
       );
@@ -1191,7 +1191,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     if (pendampings.isEmpty) {
       AppAlert.error(
         context,
-        title: 'Pendamping Tidak Tersedia',
+        title: context.tr('dashboard.companionUnavailable'),
         message:
             'Belum ada pendamping aktif di rombongan Anda. Hubungi pengelola rombongan.',
       );

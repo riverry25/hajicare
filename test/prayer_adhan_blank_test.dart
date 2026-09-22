@@ -109,9 +109,11 @@ void main() {
 
       await tester.pumpWidget(
         GetMaterialApp(
+          locale: const Locale('id'),
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: ThemeMode.light,
+          supportedLocales: AppTranslations.supportedLocales,
           localizationsDelegates: const [
             AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,

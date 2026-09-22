@@ -10,15 +10,19 @@ class ProfileController extends GetxController {
   final displayName = ''.obs;
   final isSavingName = false.obs;
 
-  // ── Medical & Emergency Data ───────────────────────────────────────────────
+  // ── Medical & Emergency & Identification Data ─────────────────────────────
   final bloodType = ''.obs;
   final allergies = ''.obs;
   final conditions = ''.obs;
   final emergencyContact = ''.obs;
   final passportNumber = ''.obs;
+  final nik = ''.obs;
+  final nomorPorsi = ''.obs;
   final isSavingMedical = false.obs;
 
   bool get hasMedicalData =>
+      nik.value.trim().isNotEmpty ||
+      nomorPorsi.value.trim().isNotEmpty ||
       bloodType.value.trim().isNotEmpty ||
       allergies.value.trim().isNotEmpty ||
       conditions.value.trim().isNotEmpty ||
@@ -30,6 +34,10 @@ class ProfileController extends GetxController {
   void onInit() {
     super.onInit();
     _loadUserData(_lifecycleGeneration);
+  }
+
+  Future<void> reloadUserData() async {
+    await _loadUserData(_lifecycleGeneration);
   }
 
   Future<void> _loadUserData(int generation) async {
@@ -68,6 +76,11 @@ class ProfileController extends GetxController {
           passportNumber.value =
               (data['passportNumber'] as String?) ??
               (data['passport'] as String?) ??
+              '';
+          nik.value = (data['nik'] as String?)?.trim() ?? '';
+          nomorPorsi.value =
+              ((data['nomorPorsi'] as String?) ?? (data['porsi'] as String?))
+                  ?.trim() ??
               '';
         }
       }
@@ -136,13 +149,15 @@ class ProfileController extends GetxController {
     }
   }
 
-  // ── Update medical data ───────────────────────────────────────────────────
+  // ── Update medical & identity data ─────────────────────────────────────────
   Future<void> updateMedicalData({
     required String bloodTypeVal,
     required String allergiesVal,
     required String conditionsVal,
     required String emergencyContactVal,
     String passportNumberVal = '',
+    String nikVal = '',
+    String nomorPorsiVal = '',
   }) async {
     final generation = _lifecycleGeneration;
     isSavingMedical.value = true;
@@ -150,22 +165,39 @@ class ProfileController extends GetxController {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('User not authenticated');
 
+      final trimmedBlood = bloodTypeVal.trim();
+      final trimmedAllergies = allergiesVal.trim();
+      final trimmedConditions = conditionsVal.trim();
+      final trimmedContact = emergencyContactVal.trim();
+      final trimmedPassport = passportNumberVal.trim();
+      final trimmedNik = nikVal.trim();
+      final trimmedPorsi = nomorPorsiVal.trim();
+
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-        'bloodType': bloodTypeVal.trim(),
-        'allergies': allergiesVal.trim(),
-        'conditions': conditionsVal.trim(),
-        'emergencyContact': emergencyContactVal.trim(),
-        'passportNumber': passportNumberVal.trim(),
+        'bloodType': trimmedBlood,
+        'allergies': trimmedAllergies,
+        'conditions': trimmedConditions,
+        'emergencyContact': trimmedContact,
+        'passportNumber': trimmedPassport,
+        'passport': trimmedPassport,
+        'nik': trimmedNik,
+        'nomorPorsi': trimmedPorsi,
+        'porsi': trimmedPorsi,
+        'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
       if (generation != _lifecycleGeneration) return;
 
-      bloodType.value = bloodTypeVal.trim();
-      allergies.value = allergiesVal.trim();
-      conditions.value = conditionsVal.trim();
-      emergencyContact.value = emergencyContactVal.trim();
-      passportNumber.value = passportNumberVal.trim();
+      bloodType.value = trimmedBlood;
+      allergies.value = trimmedAllergies;
+      conditions.value = trimmedConditions;
+      emergencyContact.value = trimmedContact;
+      passportNumber.value = trimmedPassport;
+      nik.value = trimmedNik;
+      nomorPorsi.value = trimmedPorsi;
 
-      debugPrint('[ProfileController] medical data updated successfully');
+      debugPrint(
+        '[ProfileController] profile & medical data updated successfully',
+      );
     } catch (e) {
       debugPrint('[ProfileController] updateMedicalData error: $e');
       rethrow;

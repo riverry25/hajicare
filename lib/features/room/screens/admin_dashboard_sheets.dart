@@ -1,4 +1,4 @@
-﻿part of 'admin_dashboard_screen.dart';
+part of 'admin_dashboard_screen.dart';
 
 extension _AdminDashboardActivitySheets on _AdminDashboardHome {
   void _showActivityDetailSheet(
@@ -494,7 +494,9 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                         child: TextField(
                           style: TextStyle(color: headingColor, fontSize: 13),
                           decoration: InputDecoration(
-                            hintText: 'Cari aktivitas, kamar, atau jamaah...',
+                            hintText: context.tr(
+                              'room.searchActivityOrPilgrim',
+                            ),
                             hintStyle: TextStyle(
                               color: bodyColor.withValues(alpha: 0.6),
                               fontSize: 13,

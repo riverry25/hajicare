@@ -180,7 +180,10 @@ class MapSearchDropdown extends StatelessWidget {
         // Compute distance label
         String? distanceLabel;
         if (userLoc != null) {
-          final distM = mapCtrl.calculateDistanceMeters(userLoc, item.coordinate);
+          final distM = mapCtrl.calculateDistanceMeters(
+            userLoc,
+            item.coordinate,
+          );
           distanceLabel = MapController.formatDistance(distM);
         }
 

@@ -66,6 +66,7 @@ class JamaahData {
   final String? conditions;
   final String? emergencyContact;
   final String? passportNumber;
+  final String? nik;
 
   JamaahData({
     required this.id,
@@ -87,6 +88,7 @@ class JamaahData {
     this.conditions,
     this.emergencyContact,
     this.passportNumber,
+    this.nik,
   }) : tier = _calcTier(distance);
 
   factory JamaahData.fromFirestore(DocumentSnapshot doc) {
@@ -140,6 +142,7 @@ class JamaahData {
     final emergencyContact = data['emergencyContact'] as String?;
     final passportNumber =
         (data['passportNumber'] as String?) ?? (data['passport'] as String?);
+    final nik = (data['nik'] as String?)?.trim();
 
     DateTime? locationTime;
     if (data['locationUpdatedAt'] is Timestamp) {
@@ -171,6 +174,7 @@ class JamaahData {
       conditions: conditions,
       emergencyContact: emergencyContact,
       passportNumber: passportNumber,
+      nik: nik,
     );
   }
 
@@ -186,6 +190,9 @@ class JamaahData {
       if (locationUpdatedAt != null)
         'locationUpdatedAt': Timestamp.fromDate(locationUpdatedAt!),
       'onlineStatus': onlineStatus,
+      if (nik != null && nik!.isNotEmpty) 'nik': nik,
+      if (porsi != null && porsi!.isNotEmpty) 'porsi': porsi,
+      if (porsi != null && porsi!.isNotEmpty) 'nomorPorsi': porsi,
     };
   }
 

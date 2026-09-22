@@ -1,3 +1,4 @@
+import '../../../core/locales/app_translations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -219,9 +220,10 @@ class JoinRoomController extends GetxController {
       if (Get.context != null) {
         AppAlert.success(
           Get.context,
-          title: 'Berhasil Bergabung',
-          message:
-              'Anda sudah bergabung dengan rombongan "${joinedRoom.name}".',
+          title: AppTranslations.tr('room.joinedSuccess'),
+          message: AppTranslations.tr('room.joinedSuccessDesc', {
+            'name': joinedRoom.name,
+          }),
         );
       }
 
@@ -234,8 +236,7 @@ class JoinRoomController extends GetxController {
       isLoading.value = false;
       errorMessage.value = UserFeedbackMessage.from(
         e,
-        fallback:
-            'Belum dapat bergabung. Periksa kode rombongan, lalu coba lagi.',
+        fallback: AppTranslations.tr('room.joinFailedFallback'),
       );
       _showErrorAlert(errorMessage.value!);
     }
@@ -261,9 +262,9 @@ class JoinRoomController extends GetxController {
     if (Get.context != null) {
       AppAlert.error(
         Get.context!,
-        title: 'Belum Berhasil',
+        title: AppTranslations.tr('room.roomCreateFailed'),
         message: msg,
-        okText: 'Coba Lagi',
+        okText: AppTranslations.tr('common.tryAgain'),
       );
     }
   }

@@ -130,7 +130,7 @@ extension _AdminDashboardJamaahSheet on _AdminDashboardHome {
                             });
                           },
                           decoration: InputDecoration(
-                            hintText: 'Cari jamaah atau maktab...',
+                            hintText: context.tr('room.searchJamaahOrMaktab'),
                             prefixIcon: Icon(
                               Icons.search_rounded,
                               color: bodyColor.withValues(alpha: 0.6),

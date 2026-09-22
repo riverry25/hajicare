@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -188,7 +189,7 @@ class _NotificationComposerDialogState
     if (targetMessage != null) {
       AppAlert.warning(
         context,
-        title: 'Penerima Belum Dipilih',
+        title: context.tr('notification.recipientNotSelected'),
         message: targetMessage,
       );
       return;
@@ -199,7 +200,7 @@ class _NotificationComposerDialogState
     if (user == null) {
       AppAlert.error(
         context,
-        title: 'Silakan Masuk Kembali',
+        title: context.tr('notification.pleaseRelogin'),
         message: 'Waktu masuk Anda sudah berakhir. Silakan masuk kembali.',
       );
       return;
@@ -238,7 +239,7 @@ class _NotificationComposerDialogState
       Navigator.of(context).pop();
 
       AppDialog.success(
-        title: 'Pesan Terkirim',
+        title: context.tr('notification.messageSent'),
         message: 'Pesan sudah dikirim kepada $recipientCount orang.',
       );
     } catch (e) {
@@ -246,7 +247,7 @@ class _NotificationComposerDialogState
       setState(() => _isSending = false);
       AppDialog.error(
         context: context,
-        title: 'Pesan Belum Terkirim',
+        title: context.tr('notification.messageSendFailed'),
         message: UserFeedbackMessage.from(
           e,
           fallback: 'Pesan belum terkirim. Periksa isinya, lalu coba lagi.',
@@ -348,7 +349,9 @@ class _NotificationComposerDialogState
                               const SizedBox(height: 20),
                               _buildSectionTitle(
                                 icon: Icons.people_alt_outlined,
-                                title: 'Pilih Penerima',
+                                title: context.tr(
+                                  'notification.selectRecipient',
+                                ),
                                 headingColor: headingColor,
                               ),
                               const SizedBox(height: 10),
@@ -371,7 +374,9 @@ class _NotificationComposerDialogState
                               const SizedBox(height: AppSpacing.xl),
                               _buildSectionTitle(
                                 icon: Icons.label_outline_rounded,
-                                title: 'Kategori Pesan',
+                                title: context.tr(
+                                  'notification.messageCategory',
+                                ),
                                 headingColor: headingColor,
                               ),
                               const SizedBox(height: 10),
@@ -379,7 +384,7 @@ class _NotificationComposerDialogState
                               const SizedBox(height: AppSpacing.xl),
                               _buildSectionTitle(
                                 icon: Icons.edit_note_rounded,
-                                title: 'Tulis Pesan',
+                                title: context.tr('notification.writeMessage'),
                                 headingColor: headingColor,
                               ),
                               const SizedBox(height: 8),
@@ -398,7 +403,9 @@ class _NotificationComposerDialogState
                                 decoration: _underlineInputDecoration(
                                   isDark: isDark,
                                   primaryColor: primaryColor,
-                                  hintText: 'Misalnya: Waktu Berkumpul',
+                                  hintText: context.tr(
+                                    'notification.sampleTitle',
+                                  ),
                                 ).copyWith(counterText: ''),
                                 validator: (value) =>
                                     value == null || value.trim().isEmpty
@@ -963,7 +970,7 @@ class _NotificationComposerDialogState
       case 'maktab':
         return _buildGroupPicker(
           field: 'maktab',
-          label: 'Pilih maktab tujuan *',
+          label: context.tr('notification.selectTargetMaktab'),
           emptyMessage: 'Belum ada maktab yang dapat dipilih.',
           controller: _maktabController,
           icon: Icons.apartment_rounded,
@@ -976,7 +983,7 @@ class _NotificationComposerDialogState
       case 'kloter':
         return _buildGroupPicker(
           field: 'kloter',
-          label: 'Pilih kloter tujuan *',
+          label: context.tr('notification.selectTargetKloter'),
           emptyMessage: 'Belum ada kloter yang dapat dipilih.',
           controller: _kloterController,
           icon: Icons.groups_rounded,

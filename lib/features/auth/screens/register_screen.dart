@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/locales/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -44,7 +45,7 @@ class RegisterScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Buat Akun HajiCare',
+                          context.tr('auth.registerScreenTitle'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTypography.titleLarge.copyWith(
@@ -54,7 +55,7 @@ class RegisterScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          'Lengkapi data untuk memulai perjalanan Anda',
+                          context.tr('auth.registerScreenSubtitle'),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: AppTypography.captionSmall.copyWith(
@@ -148,7 +149,7 @@ class RegisterScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Teman Perjalanan Ibadah Anda',
+                            context.tr('auth.travelFriendTitle'),
                             style: AppTypography.bodyMedium.copyWith(
                               color: AppColors.canvasCream,
                               fontWeight: FontWeight.w800,
@@ -156,7 +157,7 @@ class RegisterScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 5),
                           Text(
-                            'Daftar sekali untuk mendapatkan pengalaman HajiCare yang aman, terpantau, dan inklusif.',
+                            context.tr('auth.travelFriendDesc'),
                             style: AppTypography.captionSmall.copyWith(
                               color: AppColors.canvasCream.withValues(
                                 alpha: 0.85,
@@ -178,8 +179,8 @@ class RegisterScreen extends StatelessWidget {
               // ============================================================
               _SectionHeader(
                 icon: Icons.people_outline_rounded,
-                title: 'Saya mendaftar sebagai',
-                subtitle: 'Pilih peran yang paling sesuai dengan Anda',
+                title: context.tr('auth.registerAs'),
+                subtitle: context.tr('auth.chooseRoleSubtitle'),
               ),
 
               const SizedBox(height: AppSpacing.md),
@@ -189,8 +190,8 @@ class RegisterScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: _RegisterRoleCard(
-                        title: 'Jamaah',
-                        subtitle: 'Haji & Umrah',
+                        title: context.tr('roleJamaah'),
+                        subtitle: context.tr('auth.roleHajjUmrah'),
                         icon: Icons.person_outline_rounded,
                         selected: controller.selectedRole.value == 'jamaah',
                         onTap: () => controller.setRole('jamaah'),
@@ -201,8 +202,8 @@ class RegisterScreen extends StatelessWidget {
 
                     Expanded(
                       child: _RegisterRoleCard(
-                        title: 'Pendamping',
-                        subtitle: 'Keluarga / Muthawif',
+                        title: context.tr('auth.roleCompanion'),
+                        subtitle: context.tr('auth.roleFamilyMuthawif'),
                         icon: Icons.health_and_safety_outlined,
                         selected: controller.selectedRole.value == 'pendamping',
                         onTap: () => controller.setRole('pendamping'),
@@ -219,8 +220,8 @@ class RegisterScreen extends StatelessWidget {
               // ============================================================
               _SectionHeader(
                 icon: Icons.badge_outlined,
-                title: 'Data Diri',
-                subtitle: 'Gunakan data sesuai identitas resmi Anda',
+                title: context.tr('auth.personalData'),
+                subtitle: context.tr('auth.personalDataDesc'),
               ),
 
               const SizedBox(height: AppSpacing.md),
@@ -229,13 +230,16 @@ class RegisterScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const _FieldLabel(label: 'Nama Lengkap', required: true),
+                    _FieldLabel(
+                      label: context.tr('fullNameLabel'),
+                      required: true,
+                    ),
 
                     const SizedBox(height: 8),
 
                     AppTextField(
                       controller: controller.fullNameController,
-                      hintText: 'Contoh: Ahmad Dahlan',
+                      hintText: context.tr('auth.fullNameHint'),
                       prefixIcon: const Icon(
                         Icons.person_outline_rounded,
                         color: AppColors.tanMedium,
@@ -248,9 +252,9 @@ class RegisterScreen extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const Expanded(
+                        Expanded(
                           child: _FieldLabel(
-                            label: 'Nomor Porsi Haji / NIK',
+                            label: context.tr('auth.porsiOrNikLabel'),
                             required: false,
                           ),
                         ),
@@ -270,7 +274,7 @@ class RegisterScreen extends StatelessWidget {
                             ),
                           ),
                           child: Text(
-                            'Opsional',
+                            context.tr('common.optional'),
                             style: AppTypography.captionSmall.copyWith(
                               color: AppColors.tanMedium,
                               fontWeight: FontWeight.w700,
@@ -284,7 +288,7 @@ class RegisterScreen extends StatelessWidget {
 
                     AppTextField(
                       controller: controller.porsiController,
-                      hintText: 'Masukkan nomor porsi atau NIK',
+                      hintText: context.tr('auth.porsiOrNikHint'),
                       keyboardType: TextInputType.number,
                       prefixIcon: const Icon(
                         Icons.credit_card_outlined,
@@ -306,7 +310,7 @@ class RegisterScreen extends StatelessWidget {
                         const SizedBox(width: 7),
                         Expanded(
                           child: Text(
-                            'Data ini membantu HajiCare mengaitkan rombongan dan maktab secara akurat.',
+                            context.tr('auth.porsiOrNikInfo'),
                             style: AppTypography.captionSmall.copyWith(
                               color: AppColors.textMuted,
                               height: 1.35,
@@ -326,8 +330,8 @@ class RegisterScreen extends StatelessWidget {
               // ============================================================
               _SectionHeader(
                 icon: Icons.lock_outline_rounded,
-                title: 'Informasi Akun',
-                subtitle: 'Gunakan email aktif dan kata sandi yang aman',
+                title: context.tr('auth.accountInfo'),
+                subtitle: context.tr('auth.accountInfoDesc'),
               ),
 
               const SizedBox(height: AppSpacing.md),
@@ -336,13 +340,16 @@ class RegisterScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const _FieldLabel(label: 'Email Aktif', required: true),
+                    _FieldLabel(
+                      label: context.tr('auth.activeEmail'),
+                      required: true,
+                    ),
 
                     const SizedBox(height: 8),
 
                     AppTextField(
                       controller: controller.emailController,
-                      hintText: 'nama@email.com',
+                      hintText: context.tr('auth.emailHint'),
                       keyboardType: TextInputType.emailAddress,
                       prefixIcon: const Icon(
                         Icons.email_outlined,
@@ -353,14 +360,17 @@ class RegisterScreen extends StatelessWidget {
 
                     const SizedBox(height: AppSpacing.lg),
 
-                    const _FieldLabel(label: 'Kata Sandi', required: true),
+                    _FieldLabel(
+                      label: context.tr('auth.password'),
+                      required: true,
+                    ),
 
                     const SizedBox(height: 8),
 
                     Obx(
                       () => AppTextField(
                         controller: controller.passwordController,
-                        hintText: 'Minimal 6 karakter',
+                        hintText: context.tr('auth.passwordMin6Hint'),
                         obscureText: controller.obscurePassword.value,
                         prefixIcon: const Icon(
                           Icons.lock_outline_rounded,
@@ -369,8 +379,8 @@ class RegisterScreen extends StatelessWidget {
                         ),
                         suffixIcon: IconButton(
                           tooltip: controller.obscurePassword.value
-                              ? 'Tampilkan kata sandi'
-                              : 'Sembunyikan kata sandi',
+                              ? context.tr('auth.showPassword')
+                              : context.tr('auth.hidePassword'),
                           icon: Icon(
                             controller.obscurePassword.value
                                 ? Icons.visibility_outlined
@@ -396,7 +406,7 @@ class RegisterScreen extends StatelessWidget {
                         const SizedBox(width: 7),
                         Expanded(
                           child: Text(
-                            'Gunakan kombinasi minimal 6 karakter agar akun tetap aman.',
+                            context.tr('auth.passwordMin6Desc'),
                             style: AppTypography.captionSmall.copyWith(
                               color: AppColors.textMuted,
                               height: 1.35,
@@ -420,8 +430,8 @@ class RegisterScreen extends StatelessWidget {
                   height: 54,
                   child: PillButton(
                     label: controller.isLoading.value
-                        ? 'Mendaftarkan Akun...'
-                        : 'Buat Akun Sekarang',
+                        ? context.tr('auth.registering')
+                        : context.tr('auth.createAccountNow'),
                     icon: controller.isLoading.value
                         ? null
                         : Icons.arrow_forward_rounded,
@@ -460,7 +470,7 @@ class RegisterScreen extends StatelessWidget {
 
                     Expanded(
                       child: Text(
-                        'Informasi pribadi Anda terenkripsi dan hanya digunakan untuk kebutuhan navigasi & keselamatan ibadah.',
+                        context.tr('auth.privacyNote'),
                         style: AppTypography.captionSmall.copyWith(
                           color: AppColors.textMuted,
                           height: 1.4,
@@ -487,13 +497,13 @@ class RegisterScreen extends StatelessWidget {
                     child: RichText(
                       textAlign: TextAlign.center,
                       text: TextSpan(
-                        text: 'Sudah memiliki akun? ',
+                        text: context.tr('auth.alreadyHaveAccount'),
                         style: AppTypography.bodyMedium.copyWith(
                           color: AppColors.textBodyColor(context),
                         ),
                         children: [
                           TextSpan(
-                            text: 'Masuk sekarang',
+                            text: context.tr('auth.loginNow'),
                             style: AppTypography.bodyMedium.copyWith(
                               color: AppColors.espressoDark,
                               fontWeight: FontWeight.w800,
@@ -514,7 +524,7 @@ class RegisterScreen extends StatelessWidget {
               // Bottom Brandmark
               Center(
                 child: Text(
-                  'HajiCare • Aman • Terhubung • Khusyuk',
+                  context.tr('auth.taglineFull'),
                   textAlign: TextAlign.center,
                   style: AppTypography.captionSmall.copyWith(
                     color: AppColors.tanMedium.withValues(alpha: 0.8),

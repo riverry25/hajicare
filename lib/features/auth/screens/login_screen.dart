@@ -125,7 +125,7 @@ class LoginScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 5),
                         Text(
-                          'Aman & Resmi',
+                          context.tr('auth.officialSafe'),
                           style: AppTypography.captionSmall.copyWith(
                             color: AppColors.statusPositive,
                             fontWeight: FontWeight.w700,
@@ -231,7 +231,7 @@ class LoginScreen extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    'Teman Perjalanan Jamaah (Demo)',
+                                    context.tr('auth.demoBadge'),
                                     style: AppTypography.captionSmall.copyWith(
                                       color: AppColors.canvasCream,
                                       fontWeight: FontWeight.w700,
@@ -250,7 +250,7 @@ class LoginScreen extends StatelessWidget {
                             text: TextSpan(
                               children: [
                                 TextSpan(
-                                  text: 'Selamat datang,\n',
+                                  text: context.tr('auth.welcomeHeading'),
                                   style: AppTypography.displayMedium.copyWith(
                                     color: AppColors.canvasCream,
                                     fontWeight: FontWeight.w500,
@@ -258,7 +258,7 @@ class LoginScreen extends StatelessWidget {
                                   ),
                                 ),
                                 TextSpan(
-                                  text: 'Ahlan wa Sahlan.',
+                                  text: context.tr('auth.welcomeGreeting'),
                                   style: AppTypography.displayMedium.copyWith(
                                     color: AppColors.goldPrimary,
                                     fontWeight: FontWeight.w800,
@@ -275,7 +275,7 @@ class LoginScreen extends StatelessWidget {
                           ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 360),
                             child: Text(
-                              'Satu tempat untuk mendampingi perjalanan ibadah Anda tetap aman, terhubung, dan khusyuk.',
+                              context.tr('auth.welcomeDesc'),
                               style: AppTypography.bodyMedium.copyWith(
                                 color: AppColors.canvasCream.withValues(
                                   alpha: 0.85,
@@ -289,20 +289,20 @@ class LoginScreen extends StatelessWidget {
 
                           // Mini feature tags
                           Row(
-                            children: const [
+                            children: [
                               _WelcomeFeature(
                                 icon: Icons.shield_outlined,
-                                label: 'Aman',
+                                label: context.tr('auth.featureSafe'),
                               ),
-                              SizedBox(width: 8),
+                              const SizedBox(width: 8),
                               _WelcomeFeature(
                                 icon: Icons.people_outline_rounded,
-                                label: 'Terhubung',
+                                label: context.tr('auth.featureConnected'),
                               ),
-                              SizedBox(width: 8),
+                              const SizedBox(width: 8),
                               _WelcomeFeature(
                                 icon: Icons.accessibility_new_rounded,
-                                label: 'Inklusif',
+                                label: context.tr('auth.featureInclusive'),
                               ),
                             ],
                           ),
@@ -363,7 +363,7 @@ class LoginScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Masuk ke Akun',
+                              context.tr('auth.loginCardTitle'),
                               style: AppTypography.titleMedium.copyWith(
                                 color: AppColors.textHeadingColor(context),
                                 fontWeight: FontWeight.w800,
@@ -371,7 +371,7 @@ class LoginScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Gunakan email yang sudah terdaftar',
+                              context.tr('auth.loginCardSubtitle'),
                               style: AppTypography.captionSmall.copyWith(
                                 color: AppColors.textMuted,
                               ),
@@ -385,7 +385,7 @@ class LoginScreen extends StatelessWidget {
 
                     // EMAIL FIELD
                     Text(
-                      'Email',
+                      context.tr('auth.email'),
                       style: AppTypography.bodyMedium.copyWith(
                         color: AppColors.textHeadingColor(context),
                         fontWeight: FontWeight.w700,
@@ -396,7 +396,7 @@ class LoginScreen extends StatelessWidget {
 
                     AppTextField(
                       controller: controller.emailController,
-                      hintText: 'nama@email.com',
+                      hintText: context.tr('auth.emailHint'),
                       keyboardType: TextInputType.emailAddress,
                       prefixIcon: const Icon(
                         Icons.email_outlined,
@@ -412,7 +412,7 @@ class LoginScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Kata Sandi / PIN',
+                          context.tr('auth.password'),
                           style: AppTypography.bodyMedium.copyWith(
                             color: AppColors.textHeadingColor(context),
                             fontWeight: FontWeight.w700,
@@ -424,7 +424,7 @@ class LoginScreen extends StatelessWidget {
                             // Forgot password hook
                           },
                           child: Text(
-                            'Lupa kata sandi?',
+                            context.tr('auth.forgotPassword'),
                             style: AppTypography.captionSmall.copyWith(
                               color: AppColors.secondary,
                               fontWeight: FontWeight.w700,
@@ -439,7 +439,7 @@ class LoginScreen extends StatelessWidget {
                     Obx(
                       () => AppTextField(
                         controller: controller.passwordController,
-                        hintText: 'Masukkan PIN / kata sandi',
+                        hintText: context.tr('auth.passwordHint'),
                         obscureText: controller.obscurePassword.value,
                         prefixIcon: const Icon(
                           Icons.lock_outline_rounded,
@@ -449,8 +449,8 @@ class LoginScreen extends StatelessWidget {
                         suffixIcon: IconButton(
                           splashRadius: 20,
                           tooltip: controller.obscurePassword.value
-                              ? 'Tampilkan kata sandi'
-                              : 'Sembunyikan kata sandi',
+                              ? context.tr('auth.showPassword')
+                              : context.tr('auth.hidePassword'),
                           icon: Icon(
                             controller.obscurePassword.value
                                 ? Icons.visibility_outlined
@@ -492,7 +492,7 @@ class LoginScreen extends StatelessWidget {
                               !controller.rememberMe.value,
                             ),
                             child: Text(
-                              'Ingat saya di perangkat ini',
+                              context.tr('auth.rememberMe'),
                               style: AppTypography.caption.copyWith(
                                 color: AppColors.textBodyColor(context),
                                 fontWeight: FontWeight.w500,
@@ -512,10 +512,8 @@ class LoginScreen extends StatelessWidget {
                         height: 54,
                         child: PillButton(
                           label: controller.isLoading.value
-                              ? 'Memproses Masuk...'
-                              : (context.tr('btnLogin').isEmpty
-                                    ? 'Masuk ke Aplikasi'
-                                    : context.tr('btnLogin')),
+                              ? context.tr('auth.loginLoading')
+                              : context.tr('auth.loginBtn'),
                           icon: Icons.arrow_forward_rounded,
                           onPressed: controller.isLoading.value
                               ? null
@@ -538,7 +536,7 @@ class LoginScreen extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           child: Text(
-                            'atau',
+                            context.tr('auth.orDivider'),
                             style: AppTypography.captionSmall.copyWith(
                               color: AppColors.tanMedium,
                               fontWeight: FontWeight.w600,
@@ -593,7 +591,7 @@ class LoginScreen extends StatelessWidget {
                                     const _GoogleLogo(size: 20),
                                     const SizedBox(width: 10),
                                     Text(
-                                      'Masuk dengan Google',
+                                      context.tr('auth.googleSignIn'),
                                       style: AppTypography.bodyMedium.copyWith(
                                         color: AppColors.espressoDark,
                                         fontWeight: FontWeight.w700,
@@ -624,13 +622,13 @@ class LoginScreen extends StatelessWidget {
                     child: RichText(
                       textAlign: TextAlign.center,
                       text: TextSpan(
-                        text: 'Belum memiliki akun? ',
+                        text: '${context.tr('auth.noAccount')} ',
                         style: AppTypography.bodyMedium.copyWith(
                           color: AppColors.textBodyColor(context),
                         ),
                         children: [
                           TextSpan(
-                            text: 'Daftar sekarang',
+                            text: context.tr('auth.registerNow'),
                             style: AppTypography.bodyMedium.copyWith(
                               color: AppColors.espressoDark,
                               fontWeight: FontWeight.w800,
@@ -687,7 +685,7 @@ class LoginScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Butuh bantuan masuk?',
+                            context.tr('auth.helpTitle'),
                             style: AppTypography.captionSmall.copyWith(
                               color: AppColors.textHeadingColor(context),
                               fontWeight: FontWeight.w800,
@@ -695,7 +693,7 @@ class LoginScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Petugas Maktab & Pos Kesehatan siap memandu.',
+                            context.tr('auth.helpSubtitle'),
                             style: AppTypography.captionSmall.copyWith(
                               color: AppColors.textMuted,
                             ),
@@ -727,7 +725,7 @@ class LoginScreen extends StatelessWidget {
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
-                      'Kerahasiaan data jamaah terenkripsi dan terlindungi',
+                      context.tr('auth.encryptedNote'),
                       textAlign: TextAlign.center,
                       style: AppTypography.captionSmall.copyWith(
                         color: AppColors.tanMedium,
@@ -749,7 +747,7 @@ class LoginScreen extends StatelessWidget {
                     color: AppColors.goldPrimary,
                   ),
                   label: Text(
-                    'Masuk Mode Pengujian (Demo Jamaah)',
+                    context.tr('auth.demoModeBtn'),
                     style: AppTypography.captionSmall.copyWith(
                       color: AppColors.espressoDark,
                       fontWeight: FontWeight.w700,

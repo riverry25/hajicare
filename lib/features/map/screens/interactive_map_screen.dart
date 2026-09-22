@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -39,19 +40,40 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
   late final TextEditingController _searchCtrl;
   late final MapController _mapController;
 
-  static const List<FilterChipItem> _filters = [
+  List<FilterChipItem> _getFilters(BuildContext context) => [
     FilterChipItem(
-      label: 'Semua',
+      label: context.tr('maps.all'),
       icon: Icons.grid_view_rounded,
       isDefault: true,
     ),
-    FilterChipItem(label: 'Jamaah', icon: Icons.person_rounded),
-    FilterChipItem(label: 'Pendamping', icon: Icons.shield_rounded),
-    FilterChipItem(label: 'Posko Medis', icon: Icons.medical_services_rounded),
-    FilterChipItem(label: 'Toilet & Wudhu', icon: Icons.wc_rounded),
-    FilterChipItem(label: 'Maktab', icon: Icons.holiday_village_rounded),
-    FilterChipItem(label: 'Pos Pantau', icon: Icons.flag_rounded),
-    FilterChipItem(label: 'Hotel', icon: Icons.hotel_rounded),
+    FilterChipItem(
+      label: context.tr('maps.pilgrims'),
+      icon: Icons.person_rounded,
+    ),
+    FilterChipItem(
+      label: context.tr('maps.companions'),
+      icon: Icons.shield_rounded,
+    ),
+    FilterChipItem(
+      label: context.tr('maps.medicalPostPoi'),
+      icon: Icons.medical_services_rounded,
+    ),
+    FilterChipItem(
+      label: context.tr('maps.toiletAndWudhu'),
+      icon: Icons.wc_rounded,
+    ),
+    FilterChipItem(
+      label: context.tr('maps.maktabPoi'),
+      icon: Icons.holiday_village_rounded,
+    ),
+    FilterChipItem(
+      label: context.tr('maps.guardPost'),
+      icon: Icons.flag_rounded,
+    ),
+    FilterChipItem(
+      label: context.tr('maps.hotelPoi'),
+      icon: Icons.hotel_rounded,
+    ),
   ];
 
   @override
@@ -89,7 +111,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
           // 2. Top Header with live GPS tracking status, room status, legend, and filter chips
           Obx(
             () => MapTopHeader(
-              filters: _filters,
+              filters: _getFilters(context),
               selectedFilter: mapCtrl.selectedFilter.value,
               onFilterSelected: mapCtrl.selectFilter,
               onSosPressed: () => Get.toNamed(AppRoutes.modalSos),
@@ -101,7 +123,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
               gpsAccuracy: mapCtrl.gpsAccuracy.value,
               roomName: mapCtrl.activeRoomName.value,
               memberSummary: mapCtrl.roomMembers.isNotEmpty
-                  ? '${mapCtrl.jamaahMembers.length} Jamaah · ${mapCtrl.pendampingMembers.length} Pendamping'
+                  ? '${mapCtrl.jamaahMembers.length} ${context.tr('maps.pilgrims')} · ${mapCtrl.pendampingMembers.length} ${context.tr('maps.companions')}'
                   : null,
               nearestInfo: mapCtrl.nearestMemberInfo,
               onRoomTap: mapCtrl.openBottomSheet,
@@ -195,7 +217,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                       if (context.mounted) {
                         AppAlert.success(
                           context,
-                          title: 'Lokasi Disalin',
+                          title: context.tr('maps.locationCopied'),
                           message: 'Tautan lokasi siap dibagikan.',
                         );
                       }
@@ -217,6 +239,22 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                   ? mapCtrl.backToMembersList
                   : null,
               activeJamaah: mapCtrl.selectedJamaah.value,
+              onCenterOnMember: () {
+                final m = mapCtrl.selectedMember.value;
+                if (m?.hasLocation == true) {
+                  mapCtrl.animatedMove(
+                    LatLng(m!.latitude!, m.longitude!),
+                    17.0,
+                  );
+                } else if (mapCtrl.selectedJamaah.value?.currentLocation !=
+                    null) {
+                  final loc = mapCtrl.selectedJamaah.value!.currentLocation!;
+                  mapCtrl.animatedMove(
+                    LatLng(loc.latitude, loc.longitude),
+                    17.0,
+                  );
+                }
+              },
               onNavigate: () {
                 debugPrint('[2] ROUTE BUTTON PRESSED');
                 if (mapCtrl.selectedMember.value != null) {
@@ -242,7 +280,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                 if (coordinate == null) {
                   AppAlert.warning(
                     context,
-                    title: 'Lokasi Belum Tersedia',
+                    title: context.tr('maps.locationUnavailable'),
                     message:
                         'Tunggu sampai lokasi jamaah muncul, lalu coba lagi.',
                   );
@@ -255,7 +293,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                 if (context.mounted) {
                   AppAlert.success(
                     context,
-                    title: 'Lokasi Disalin',
+                    title: context.tr('maps.locationCopied'),
                     message:
                         'Tautan lokasi sudah disalin dan siap ditempel ke pesan.',
                   );
@@ -264,7 +302,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
               onCall: () {
                 AppAlert.info(
                   context,
-                  title: 'Nomor Telepon Belum Tersedia',
+                  title: context.tr('maps.phoneUnavailable'),
                   message:
                       'Nomor telepon jamaah belum tersimpan. Hubungi pendamping melalui rombongan.',
                 );
@@ -616,8 +654,12 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
       mapController: mapCtrl.flutterMapController,
       options: fmap.MapOptions(
         initialCenter:
-            mapCtrl.currentUserLocation.value ?? MapController.defaultMinaBase,
-        initialZoom: 16.5,
+            mapCtrl.pendingFocusCoordinate ??
+            mapCtrl.currentUserLocation.value ??
+            MapController.defaultMinaBase,
+        initialZoom: mapCtrl.pendingFocusCoordinate != null
+            ? (mapCtrl.pendingFocusZoom ?? 17.0)
+            : 16.5,
         minZoom: 11.0,
         maxZoom: 19.0,
         onMapReady: mapCtrl.handleMapReady,
@@ -930,7 +972,11 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
 
     final isDark = AppColors.isDark(context);
     final currentUid = mapCtrl.currentUserId;
-    final members = mapCtrl.filteredMembers;
+    final members = List<RoomMemberModel>.from(mapCtrl.filteredMembers);
+    if (mapCtrl.selectedMember.value != null &&
+        !members.any((m) => m.uid == mapCtrl.selectedMember.value!.uid)) {
+      members.add(mapCtrl.selectedMember.value!);
+    }
     final markers = <fmap.Marker>[];
 
     for (final member in members) {
@@ -945,7 +991,9 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
       }
 
       final coord = LatLng(member.latitude!, member.longitude!);
-      final isSelected = mapCtrl.selectedMember.value?.uid == member.uid;
+      final isSelected =
+          mapCtrl.selectedMember.value?.uid == member.uid ||
+          mapCtrl.selectedJamaah.value?.id == member.uid;
       final isPendamping = member.isPendamping;
       final markerColor = isPendamping
           ? AppColors.goldPrimary
@@ -1095,7 +1143,9 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
 
     return list.map((jamaah) {
       final coord = mapCtrl.getJamaahCoordinate(jamaah);
-      final isSelected = mapCtrl.selectedJamaah.value?.id == jamaah.id;
+      final isSelected =
+          mapCtrl.selectedJamaah.value?.id == jamaah.id ||
+          mapCtrl.selectedMember.value?.uid == jamaah.id;
 
       return fmap.Marker(
         point: coord,
@@ -1414,7 +1464,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
   void _showSmartBandDialog(BuildContext context, HajiCareController state) {
     AppAlert.info(
       context,
-      title: 'Gelang Belum Terhubung',
+      title: context.tr('maps.bandDisconnected'),
       message:
           'Hubungkan gelang pintar milik ${state.self.name}, lalu coba lagi.',
     );

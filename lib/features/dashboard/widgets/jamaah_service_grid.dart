@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/locales/app_translations.dart';
@@ -90,7 +91,7 @@ class JamaahServiceGrid extends StatelessWidget {
                   child: _buildMetricTile(
                     context: context,
                     icon: Icons.battery_charging_full_rounded,
-                    label: 'Baterai',
+                    label: context.tr('dashboard.battery'),
                     value: '-',
                     color: AppColors.statusSafe,
                   ),
@@ -100,7 +101,7 @@ class JamaahServiceGrid extends StatelessWidget {
                   child: _buildMetricTile(
                     context: context,
                     icon: Icons.favorite_rounded,
-                    label: 'Detak Jantung',
+                    label: context.tr('dashboard.heartRate'),
                     value: '-',
                     color: AppColors.sosEmergency,
                   ),
@@ -110,7 +111,7 @@ class JamaahServiceGrid extends StatelessWidget {
                   child: _buildMetricTile(
                     context: context,
                     icon: Icons.directions_walk_rounded,
-                    label: 'Langkah',
+                    label: context.tr('dashboard.steps'),
                     value: '-',
                     color: AppColors.goldPrimary,
                   ),
@@ -364,7 +365,7 @@ class JamaahServiceGrid extends StatelessWidget {
   void _showOfficerCallDialog(BuildContext context) {
     AppAlert.info(
       context,
-      title: 'Hubungi Pendamping',
+      title: context.tr('dashboard.contactCompanion'),
       message:
           'Nomor petugas belum tersimpan di aplikasi. Hubungi pendamping rombongan Anda. Jika keadaan mendesak, gunakan tombol SOS.',
     );

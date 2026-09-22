@@ -73,8 +73,9 @@ void main() {
       // Sparkline should receive distance 0.0
       final sparklineFinder = find.byType(DistanceSparklineWidget);
       expect(sparklineFinder, findsOneWidget);
-      final sparklineWidget =
-          tester.widget<DistanceSparklineWidget>(sparklineFinder);
+      final sparklineWidget = tester.widget<DistanceSparklineWidget>(
+        sparklineFinder,
+      );
       expect(sparklineWidget.distance, 0.0);
     },
   );
@@ -111,8 +112,9 @@ void main() {
       // Sparkline should receive distance 45.0
       final sparklineFinder = find.byType(DistanceSparklineWidget);
       expect(sparklineFinder, findsOneWidget);
-      final sparklineWidget =
-          tester.widget<DistanceSparklineWidget>(sparklineFinder);
+      final sparklineWidget = tester.widget<DistanceSparklineWidget>(
+        sparklineFinder,
+      );
       expect(sparklineWidget.distance, 45.0);
     },
   );

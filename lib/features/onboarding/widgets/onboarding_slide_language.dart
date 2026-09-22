@@ -1,3 +1,4 @@
+import '../../../../core/locales/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/state/app_settings_controller.dart';
@@ -11,14 +12,6 @@ class OnboardingSlideLanguage extends StatelessWidget {
   final int activeIndex;
 
   const OnboardingSlideLanguage({super.key, this.activeIndex = 0});
-
-  // locale code, display title, subtitle, type badge
-  static const List<(String, String, String, String)> _languages = [
-    ('id', 'Indonesia', 'Baku & Lengkap', 'Bahasa Utama'),
-    ('jv', 'Basa Jawi', 'Unggah-ungguh', 'Daerah'),
-    ('su', 'Basa Sunda', 'Lemes & Santun', 'Daerah'),
-    ('en', 'English', 'Global Standard', 'Global'),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -39,10 +32,10 @@ class OnboardingSlideLanguage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const OnboardingHeroBanner(
-              badgeText: 'Akses Ramah Lansia',
-              stageText: 'TAHAP 1 DARI 3',
-              title: 'Pilih Bahasa Kenyamanan',
+            OnboardingHeroBanner(
+              badgeText: context.tr('onboarding.elderlyAccess'),
+              stageText: context.tr('onboardingStage1'),
+              title: context.tr('onboarding.chooseLanguageTitle'),
               icon: Icons.mosque,
             ),
 
@@ -57,21 +50,21 @@ class OnboardingSlideLanguage extends StatelessWidget {
               ),
               child: _buildStepper(
                 activeIndex: activeIndex,
-                label: '1 DARI 3 TAHAP AWAL',
+                label: context.tr('onboarding.stage1Of3'),
               ),
             ),
 
             const SizedBox(height: AppSpacing.lg),
 
             // Section intro header
-            _buildLanguageHeader(),
+            _buildLanguageHeader(context),
 
             const SizedBox(height: AppSpacing.lg),
 
             Padding(
               padding: const EdgeInsets.only(left: 5),
               child: Text(
-                'Pilih bahasa yang paling mudah dipahami untuk kenyamanan ibadah dan komunikasi darurat Anda.',
+                context.tr('onboarding.chooseLanguageDesc'),
                 style: AppTypography.bodySmall.copyWith(
                   color: AppColors.textBody,
                 ),
@@ -84,8 +77,35 @@ class OnboardingSlideLanguage extends StatelessWidget {
             Obx(() {
               final currentCode = settings.currentLocale.languageCode;
 
+              final languages = [
+                (
+                  'id',
+                  'Indonesia',
+                  context.tr('onboarding.indonesiaSubtitle'),
+                  context.tr('onboarding.mainLanguage'),
+                ),
+                (
+                  'jv',
+                  'Basa Jawi',
+                  context.tr('onboarding.jawiSubtitle'),
+                  context.tr('onboarding.regionalLanguage'),
+                ),
+                (
+                  'su',
+                  'Basa Sunda',
+                  context.tr('onboarding.sundaSubtitle'),
+                  context.tr('onboarding.regionalLanguage'),
+                ),
+                (
+                  'en',
+                  'English',
+                  context.tr('onboarding.englishSubtitle'),
+                  context.tr('onboarding.globalLanguage'),
+                ),
+              ];
+
               return GridView.builder(
-                itemCount: _languages.length,
+                itemCount: languages.length,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -95,7 +115,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
                   childAspectRatio: 1.35,
                 ),
                 itemBuilder: (context, index) {
-                  final lang = _languages[index];
+                  final lang = languages[index];
                   final isSelected = currentCode == lang.$1;
 
                   return _buildLanguageCard(
@@ -134,7 +154,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
 
                   Expanded(
                     child: Text(
-                      'Ukuran teks dan panduan audio akan otomatis disesuaikan dengan bahasa yang dipilih.',
+                      context.tr('onboarding.audioGuideHint'),
                       style: AppTypography.bodySmall.copyWith(
                         color: AppColors.espressoDark.withValues(alpha: 0.5),
                       ),
@@ -191,7 +211,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
     );
   }
 
-  Widget _buildLanguageHeader() {
+  Widget _buildLanguageHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -221,7 +241,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Bahasa Pengantar',
+                  context.tr('onboarding.introTitle'),
                   style: AppTypography.titleLarge.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppColors.espressoDark,
@@ -231,7 +251,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
                 const SizedBox(height: 4),
 
                 Text(
-                  'Pilih bahasa yang paling mudah dipahami selama ibadah.',
+                  context.tr('onboarding.introDesc'),
                   style: AppTypography.bodySmall.copyWith(
                     color: AppColors.espressoDark.withValues(alpha: 0.5),
                   ),

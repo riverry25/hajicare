@@ -1,3 +1,4 @@
+import '../../../../core/locales/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -27,10 +28,10 @@ class OnboardingSlideAccessibility extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const OnboardingHeroBanner(
-              badgeText: 'Aksesibilitas Ramah Lansia & Disabilitas',
-              stageText: 'TAHAP 3 DARI 3',
-              title: 'Mudah Diakses Siapa Saja',
+            OnboardingHeroBanner(
+              badgeText: context.tr('onboarding.accessSlideBadge'),
+              stageText: context.tr('onboardingStage3'),
+              title: context.tr('onboarding.accessSlideTitle'),
               icon: Icons.accessibility_new,
               height: 180,
             ),
@@ -45,16 +46,16 @@ class OnboardingSlideAccessibility extends StatelessWidget {
               ),
               child: _buildStepper(
                 activeIndex: activeIndex,
-                label: '3 DARI 3 TAHAP AWAL',
+                label: context.tr('onboarding.stage3Of3'),
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
 
             // Section intro header
-            _buildAccessibilityHeader(),
+            _buildAccessibilityHeader(context),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'Bantuan cerdas deteksi uang riyal dan komunikasi suara & isyarat untuk kelancaran ibadah jamaah lansia dan berkebutuhan khusus.',
+              context.tr('onboarding.accessIntro'),
               style: AppTypography.bodySmall.copyWith(
                 color: AppColors.textBody,
               ),
@@ -64,19 +65,17 @@ class OnboardingSlideAccessibility extends StatelessWidget {
             // Feature Card 1: Scan Uang Riyal
             _buildSlide3FeatureCard(
               icon: Icons.payments_outlined,
-              title: 'Scan Uang Riyal',
-              description:
-                  'Arahkan kamera ke lembaran riyal, nominal langsung terdeteksi dan dibacakan otomatis via suara (Text-to-Speech).',
+              title: context.tr('onboarding.scanRiyal'),
+              description: context.tr('onboarding.scanRiyalDesc'),
             ),
             const SizedBox(height: AppSpacing.md),
 
             // Feature Card 2: Komunikasi & Isyarat
             _buildSlide3FeatureCard(
               icon: Icons.mic_outlined,
-              title: 'Komunikasi & Isyarat',
-              description:
-                  'Konversi bicara ke teks besar serta ungkapan darurat cepat (Tolong, Sakit, Air) yang mudah dimengerti warga lokal.',
-              badgeText: 'SUARA & TEKS',
+              title: context.tr('onboarding.commGestures'),
+              description: context.tr('onboarding.commGesturesDesc'),
+              badgeText: context.tr('onboarding.voiceAndText'),
             ),
 
             const SizedBox(height: AppSpacing.lg),
@@ -102,7 +101,7 @@ class OnboardingSlideAccessibility extends StatelessWidget {
 
                   Expanded(
                     child: Text(
-                      'Text-to-Speech dan bantuan suara siap digunakan untuk membantu jamaah selama perjalanan ibadah.',
+                      context.tr('onboarding.ttsReady'),
                       style: AppTypography.bodySmall.copyWith(
                         color: AppColors.textBody,
                         fontWeight: FontWeight.w500,
@@ -154,7 +153,7 @@ class OnboardingSlideAccessibility extends StatelessWidget {
     );
   }
 
-  Widget _buildAccessibilityHeader() {
+  Widget _buildAccessibilityHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -184,7 +183,7 @@ class OnboardingSlideAccessibility extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Fitur Kemudahan',
+                  context.tr('onboarding.accessFeaturesHeader'),
                   style: AppTypography.titleLarge.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppColors.espressoDark.withValues(alpha: 0.8),
@@ -194,7 +193,7 @@ class OnboardingSlideAccessibility extends StatelessWidget {
                 const SizedBox(height: 4),
 
                 Text(
-                  'Membantu jamaah lansia dan disabilitas beribadah lebih nyaman.',
+                  context.tr('onboarding.accessFeaturesSub'),
                   style: AppTypography.bodySmall.copyWith(
                     color: AppColors.espressoDark.withValues(alpha: 0.5),
                   ),

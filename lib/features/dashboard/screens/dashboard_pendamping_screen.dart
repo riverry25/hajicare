@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -8,6 +9,7 @@ import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
+import '../../map/controllers/map_controller.dart';
 import '../../map/screens/interactive_map_screen.dart';
 import '../../notification/controllers/notification_controller.dart';
 import '../../notification/widgets/notification_composer_dialog.dart';
@@ -59,6 +61,29 @@ class DashboardPendampingScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _trackJamaahOnMap(
+    BuildContext context,
+    JamaahData jamaah, {
+    bool autoRoute = false,
+  }) {
+    final dashboardCtrl = Get.find<DashboardController>();
+    dashboardCtrl.changeTab(1);
+
+    if (Get.isRegistered<MapController>()) {
+      final mapCtrl = Get.find<MapController>();
+      mapCtrl.focusOnJamaah(jamaah, autoRoute: autoRoute);
+    }
+
+    if (jamaah.currentLocation == null) {
+      AppAlert.warning(
+        context,
+        title: context.tr('dashboard.locationUnavailable'),
+        message:
+            'Lokasi ${jamaah.name} belum tersedia atau GPS jamaah belum aktif.',
+      );
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -342,9 +367,12 @@ class DashboardPendampingScreen extends StatelessWidget {
               _broadcastChip(context),
               _metricCol(
                 value: '$prayerName $cleanTime',
-                label: 'Jadwal Salat',
+                label: context.tr('dashboard.prayerSchedule'),
               ),
-              _metricCol(value: gpsDisplay, label: 'Status Lokasi'),
+              _metricCol(
+                value: gpsDisplay,
+                label: context.tr('dashboard.locationStatus'),
+              ),
             ],
           ),
 
@@ -372,7 +400,21 @@ class DashboardPendampingScreen extends StatelessWidget {
                       ),
                       onTap: () {
                         HapticFeedback.selectionClick();
-                        dashboardCtrl.changeTab(1);
+                        final currentSelected =
+                            (state.jamaahList.isNotEmpty &&
+                                state.jamaahList.length >
+                                    dashboardCtrl.selectedJamaahIndex.value)
+                            ? state.jamaahList[dashboardCtrl
+                                  .selectedJamaahIndex
+                                  .value]
+                            : (state.jamaahList.isNotEmpty
+                                  ? state.jamaahList.first
+                                  : state.self);
+                        _trackJamaahOnMap(
+                          context,
+                          currentSelected,
+                          autoRoute: false,
+                        );
                       },
                       child: Center(
                         child: Row(
@@ -497,7 +539,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                 children: [
                   _iconItem(
                     context: context,
-                    label: 'Kelola Room',
+                    label: context.tr('dashboard.manageRoom'),
                     icon: Icons.meeting_room_rounded,
                     isDark: isDark,
                     onTap: () => state.activeRoomId.value != null
@@ -509,7 +551,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                   ),
                   _iconItem(
                     context: context,
-                    label: 'Undang Jamaah',
+                    label: context.tr('dashboard.invitePilgrim'),
                     icon: Icons.person_add_alt_1_rounded,
                     isDark: isDark,
                     onTap: () {
@@ -519,7 +561,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                       } else {
                         AppAlert.warning(
                           context,
-                          title: 'Belum Ada Rombongan',
+                          title: context.tr('dashboard.noGroupYet'),
                           message:
                               'Pilih atau buat rombongan terlebih dahulu sebelum mengundang jamaah.',
                           onOk: () => Get.toNamed(AppRoutes.joinRoom),
@@ -530,14 +572,14 @@ class DashboardPendampingScreen extends StatelessWidget {
                   ),
                   _iconItem(
                     context: context,
-                    label: 'Jadwal Salat',
+                    label: context.tr('dashboard.prayerSchedule'),
                     icon: Icons.access_time_rounded,
                     isDark: isDark,
                     onTap: () => dashboardCtrl.changeTab(2),
                   ),
                   _iconItem(
                     context: context,
-                    label: 'Darurat SOS',
+                    label: context.tr('dashboard.emergencySos'),
                     icon: Icons.emergency_rounded,
                     isDark: isDark,
                     iconColor: AppColors.sosEmergency,
@@ -552,10 +594,17 @@ class DashboardPendampingScreen extends StatelessWidget {
             // Status Darurat (only when active)
             if (state.anySosActive || state.anyJamaahSeparated) ...[
               _sectionHeader(
-                title: 'Status Darurat',
-                subtitle: 'Peringatan SOS & jamaah terpisah',
+                title: context.tr('dashboard.emergencyStatus'),
+                subtitle: context.tr('dashboard.sosSeparatedSub'),
                 actionText: 'Lihat peta',
-                onAction: () => dashboardCtrl.changeTab(1),
+                onAction: () {
+                  final target =
+                      state.jamaahList.firstWhereOrNull(
+                        (j) => j.sosActive || j.separatedMode,
+                      ) ??
+                      selectedJamaah;
+                  _trackJamaahOnMap(context, target, autoRoute: false);
+                },
                 headingColor: headingColor,
                 isDark: isDark,
               ),
@@ -569,21 +618,21 @@ class DashboardPendampingScreen extends StatelessWidget {
                       title: 'Akhiri Darurat SOS',
                       message:
                           'Apakah situasi darurat jamaah sudah teratasi? Sinyal SOS akan dinonaktifkan.',
-                      confirmText: 'Ya, Akhiri SOS',
-                      cancelText: 'Batal',
+                      confirmText: context.tr('dashboard.yesEndSos'),
+                      cancelText: context.tr('common.cancel'),
                       onConfirm: () async {
                         final success = await state.dismissSos(jamaahId);
                         if (context.mounted) {
                           if (success) {
                             AppAlert.success(
                               context,
-                              title: 'SOS Diakhiri',
+                              title: context.tr('dashboard.sosEnded'),
                               message: 'Sinyal darurat sudah dinonaktifkan.',
                             );
                           } else {
                             AppAlert.error(
                               context,
-                              title: 'SOS Belum Diakhiri',
+                              title: context.tr('dashboard.sosEndFailed'),
                               message:
                                   'Periksa internet, lalu coba akhiri SOS sekali lagi.',
                               okText: 'Coba Lagi',
@@ -615,25 +664,30 @@ class DashboardPendampingScreen extends StatelessWidget {
             if (state.activeRoomId.value != null &&
                 state.jamaahList.isNotEmpty) ...[
               _sectionHeader(
-                title: 'Detail Posisi',
-                subtitle: 'Arah navigasi ke jamaah terpilih',
+                title: context.tr('dashboard.positionDetail'),
+                subtitle: context.tr('dashboard.positionDetailSub'),
                 actionText: 'Buka navigasi',
-                onAction: () => dashboardCtrl.changeTab(1),
+                onAction: () =>
+                    _trackJamaahOnMap(context, selectedJamaah, autoRoute: true),
                 headingColor: headingColor,
                 isDark: isDark,
               ),
               const SizedBox(height: 12),
               PendampingRadarCard(
                 jamaah: selectedJamaah,
-                onTrackMap: () => dashboardCtrl.changeTab(1),
+                onTrackMap: () => _trackJamaahOnMap(
+                  context,
+                  selectedJamaah,
+                  autoRoute: false,
+                ),
               ),
               const SizedBox(height: 26),
             ],
 
             // Kamar & Maktab
             _sectionHeader(
-              title: 'Kamar & Maktab',
-              subtitle: 'Pengaturan room & kode pemantauan',
+              title: context.tr('dashboard.roomAndMaktab'),
+              subtitle: context.tr('dashboard.hotelRoomSub'),
               actionText: 'Kelola',
               onAction: () => state.activeRoomId.value != null
                   ? Get.toNamed(
@@ -651,8 +705,8 @@ class DashboardPendampingScreen extends StatelessWidget {
 
             // Tips
             _sectionHeader(
-              title: 'Tips & Panduan Tugas',
-              subtitle: 'Pedoman dan checklist muthawif',
+              title: context.tr('dashboard.taskGuidance'),
+              subtitle: context.tr('dashboard.taskGuidanceSub'),
               actionText: 'Selengkapnya',
               onAction: () {},
               headingColor: headingColor,

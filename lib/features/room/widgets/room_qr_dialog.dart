@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -102,7 +103,7 @@ class RoomQrDialog extends StatelessWidget {
     Clipboard.setData(ClipboardData(text: effectiveRoomCode));
     AppAlert.success(
       context,
-      title: 'Kode Disalin',
+      title: context.tr('room.codeCopied'),
       message: 'Kode rombongan "$effectiveRoomCode" sudah disalin.',
     );
   }
@@ -114,7 +115,7 @@ class RoomQrDialog extends StatelessWidget {
     Clipboard.setData(ClipboardData(text: shareText));
     AppAlert.success(
       context,
-      title: 'Teks Undangan Disalin',
+      title: context.tr('room.invitationCopied'),
       message:
           'Teks undangan sudah disalin dan siap ditempel ke WhatsApp atau grup.',
     );

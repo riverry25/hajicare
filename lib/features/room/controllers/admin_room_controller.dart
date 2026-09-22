@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -278,16 +279,16 @@ class AdminRoomController extends GetxController {
     if (trimmed.isEmpty) {
       AppAlert.warning(
         context,
-        title: 'Perhatian',
-        message: 'Isi nama rombongan terlebih dahulu.',
+        title: context.tr('room.attention'),
+        message: context.tr('room.emptyRoomName'),
       );
       return;
     }
     if (trimmed.length > 100) {
       AppAlert.warning(
         context,
-        title: 'Nama Terlalu Panjang',
-        message: 'Nama rombongan maksimal 100 karakter.',
+        title: context.tr('room.nameTooLong'),
+        message: context.tr('room.nameMax100'),
       );
       return;
     }
@@ -305,19 +306,21 @@ class AdminRoomController extends GetxController {
         Navigator.of(context).pop(); // Close creation modal/sheet
         AppAlert.success(
           context,
-          title: 'Rombongan Berhasil Dibuat',
-          message:
-              'Rombongan "${newRoom.name}" dibuat dengan kode ${newRoom.code}.',
+          title: context.tr('room.roomCreated'),
+          message: context.tr('room.roomCreatedDesc', {
+            'name': newRoom.name,
+            'code': newRoom.code,
+          }),
         );
       }
     } catch (e) {
       if (context.mounted) {
         AppAlert.error(
           context,
-          title: 'Belum Berhasil',
+          title: context.tr('room.roomCreateFailed'),
           message: UserFeedbackMessage.from(
             e,
-            fallback: 'Rombongan belum dapat dibuat. Silakan coba lagi.',
+            fallback: context.tr('room.createFailedFallback'),
           ),
         );
       }
@@ -335,16 +338,16 @@ class AdminRoomController extends GetxController {
     if (trimmed.isEmpty) {
       AppAlert.warning(
         context,
-        title: 'Perhatian',
-        message: 'Isi nama rombongan terlebih dahulu.',
+        title: context.tr('room.attention'),
+        message: context.tr('room.emptyRoomName'),
       );
       return;
     }
     if (trimmed.length > 100) {
       AppAlert.warning(
         context,
-        title: 'Nama Terlalu Panjang',
-        message: 'Nama rombongan maksimal 100 karakter.',
+        title: context.tr('room.nameTooLong'),
+        message: context.tr('room.nameMax100'),
       );
       return;
     }
@@ -354,18 +357,18 @@ class AdminRoomController extends GetxController {
       if (context.mounted) {
         AppAlert.success(
           context,
-          title: 'Nama Berhasil Diubah',
-          message: 'Nama rombongan sekarang "$trimmed".',
+          title: context.tr('room.roomNameChanged'),
+          message: context.tr('room.roomNameChangedDesc', {'name': trimmed}),
         );
       }
     } catch (e) {
       if (context.mounted) {
         AppAlert.error(
           context,
-          title: 'Nama Belum Diubah',
+          title: context.tr('room.roomNameChangeFailed'),
           message: UserFeedbackMessage.from(
             e,
-            fallback: 'Nama rombongan belum dapat diubah. Silakan coba lagi.',
+            fallback: context.tr('room.roomNameChangeFailedFallback'),
           ),
         );
       }
@@ -376,11 +379,10 @@ class AdminRoomController extends GetxController {
     if (room.isActive) {
       AppAlert.confirm(
         context,
-        title: 'Nonaktifkan Rombongan?',
-        message:
-            'Rombongan "${room.name}" akan dinonaktifkan sementara. Anggota tidak dapat bergabung selama dinonaktifkan.',
-        confirmText: 'Nonaktifkan',
-        cancelText: 'Batal',
+        title: context.tr('room.deactivateRoomTitle'),
+        message: context.tr('room.deactivateRoomDesc', {'name': room.name}),
+        confirmText: context.tr('room.deactivate'),
+        cancelText: context.tr('common.cancel'),
         isDestructive: true,
         onConfirm: () => _executeToggleRoomStatus(context, room.id, true),
       );
@@ -400,18 +402,18 @@ class AdminRoomController extends GetxController {
       if (context.mounted) {
         AppAlert.success(
           context,
-          title: 'Status Diperbarui',
-          message: 'Rombongan berhasil $label.',
+          title: context.tr('room.statusUpdated'),
+          message: context.tr('room.statusUpdatedDesc', {'status': label}),
         );
       }
     } catch (e) {
       if (context.mounted) {
         AppAlert.error(
           context,
-          title: 'Status Belum Diubah',
+          title: context.tr('room.statusUpdateFailed'),
           message: UserFeedbackMessage.from(
             e,
-            fallback: 'Status rombongan belum dapat diubah. Silakan coba lagi.',
+            fallback: context.tr('room.statusChangeFailedFallback'),
           ),
         );
       }
@@ -421,11 +423,10 @@ class AdminRoomController extends GetxController {
   void promptDeleteRoom(BuildContext context, RoomModel room) {
     AppAlert.confirm(
       context,
-      title: 'Hapus Rombongan?',
-      message:
-          'Semua anggota akan keluar dari rombongan "${room.name}". Rombongan yang dihapus tidak dapat dikembalikan.',
-      confirmText: 'Hapus',
-      cancelText: 'Batal',
+      title: context.tr('room.deleteRoomTitle'),
+      message: context.tr('room.deleteRoomDesc', {'name': room.name}),
+      confirmText: context.tr('room.delete'),
+      cancelText: context.tr('common.cancel'),
       isDestructive: true,
       onConfirm: () async {
         try {
@@ -433,18 +434,18 @@ class AdminRoomController extends GetxController {
           if (context.mounted) {
             AppAlert.success(
               context,
-              title: 'Rombongan Dihapus',
-              message: 'Rombongan "${room.name}" telah dihapus.',
+              title: context.tr('room.roomDeleted'),
+              message: context.tr('room.roomDeletedDesc', {'name': room.name}),
             );
           }
         } catch (e) {
           if (context.mounted) {
             AppAlert.error(
               context,
-              title: 'Belum Dapat Dihapus',
+              title: context.tr('room.deleteFailed'),
               message: UserFeedbackMessage.from(
                 e,
-                fallback: 'Rombongan belum dapat dihapus. Silakan coba lagi.',
+                fallback: context.tr('room.deleteFailedFallback'),
               ),
             );
           }
@@ -456,10 +457,10 @@ class AdminRoomController extends GetxController {
   void promptSignOut(BuildContext context) {
     AppAlert.confirm(
       context,
-      title: 'Keluar dari Admin?',
-      message: 'Anda akan keluar dari sesi administrator Command Center.',
-      confirmText: 'Keluar',
-      cancelText: 'Batal',
+      title: context.tr('room.exitAdminTitle'),
+      message: context.tr('room.exitAdminDesc'),
+      confirmText: context.tr('common.logout'),
+      cancelText: context.tr('common.cancel'),
       isDestructive: true,
       onConfirm: () async {
         try {

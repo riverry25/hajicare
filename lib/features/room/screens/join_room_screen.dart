@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -149,7 +150,7 @@ class JoinRoomScreen extends StatelessWidget {
                           children: [
                             Expanded(
                               child: _ModeTabButton(
-                                label: 'Buat Room',
+                                label: context.tr('room.createRoomBtn'),
                                 icon: Icons.add_business_rounded,
                                 isSelected: controller.selectedMode.value == 0,
                                 primaryColor: primaryColor,
@@ -160,7 +161,7 @@ class JoinRoomScreen extends StatelessWidget {
                             ),
                             Expanded(
                               child: _ModeTabButton(
-                                label: 'Gabung Room',
+                                label: context.tr('room.joinRoomTitle'),
                                 icon: Icons.login_rounded,
                                 isSelected: controller.selectedMode.value == 1,
                                 primaryColor: primaryColor,

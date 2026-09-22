@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../core/locales/app_translations.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/trusted_backend_service.dart';
 import '../../../core/state/app_startup_controller.dart';
@@ -44,7 +45,7 @@ class RegisterController extends GetxController {
         : 'jamaah';
 
     if (email.isEmpty || password.isEmpty || name.isEmpty) {
-      errorMessage.value = 'Isi nama, email, dan kata sandi terlebih dahulu.';
+      errorMessage.value = AppTranslations.tr('auth.errFillAllRegister');
       _showErrorSnackbar(errorMessage.value!);
       isLoading.value = false;
       return;
@@ -60,7 +61,7 @@ class RegisterController extends GetxController {
       if (newUser == null) {
         throw FirebaseAuthException(
           code: 'user-not-found',
-          message: 'Gagal membuat pengguna baru.',
+          message: AppTranslations.tr('auth.errCreateUserFailed'),
         );
       }
 
@@ -142,7 +143,7 @@ class RegisterController extends GetxController {
           debugPrint('=== Could not delete orphaned Auth user: $deleteErr');
         }
       }
-      errorMessage.value = 'Pendaftaran belum berhasil. Silakan coba lagi.';
+      errorMessage.value = AppTranslations.tr('auth.errRegisterFailed');
       _showErrorSnackbar(errorMessage.value!);
     } finally {
       isLoading.value = false;
@@ -152,25 +153,25 @@ class RegisterController extends GetxController {
   String _friendlyRegisterError(String code, [String? message]) {
     switch (code) {
       case 'email-already-in-use':
-        return 'Email ini sudah terdaftar. Silakan masuk atau gunakan email lain.';
+        return AppTranslations.tr('auth.errEmailAlreadyInUse');
       case 'weak-password':
-        return 'Kata sandi terlalu lemah. Gunakan minimal 6 karakter.';
+        return AppTranslations.tr('auth.errWeakPassword');
       case 'invalid-email':
-        return 'Penulisan email belum benar. Periksa kembali email Anda.';
+        return AppTranslations.tr('auth.errInvalidEmailRegister');
       case 'operation-not-allowed':
-        return 'Pendaftaran akun sedang dinonaktifkan.';
+        return AppTranslations.tr('auth.errRegisterDisabled');
       case 'network-request-failed':
-        return 'Sambungan internet bermasalah. Periksa internet, lalu coba lagi.';
+        return AppTranslations.tr('auth.errNetworkFailed');
       default:
-        return 'Pendaftaran gagal. Periksa kembali data yang Anda masukkan.';
+        return AppTranslations.tr('auth.errRegisterGeneral');
     }
   }
 
   void _showErrorSnackbar(String msg) {
     AppDialog.error(
-      title: 'Pendaftaran Belum Berhasil',
+      title: AppTranslations.tr('auth.registerFailedTitle'),
       message: msg,
-      okText: 'Coba Lagi',
+      okText: AppTranslations.tr('auth.tryAgain'),
     );
   }
 

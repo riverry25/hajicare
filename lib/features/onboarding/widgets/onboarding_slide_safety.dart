@@ -1,3 +1,4 @@
+import '../../../../core/locales/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -27,10 +28,10 @@ class OnboardingSlideSafety extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const OnboardingHeroBanner(
-              badgeText: 'Sistem Keselamatan Jamaah',
-              stageText: 'TAHAP 2 DARI 3',
-              title: 'Jaga Jarak Aman & Terpantau',
+            OnboardingHeroBanner(
+              badgeText: context.tr('onboarding.safetySystemBadge'),
+              stageText: context.tr('onboardingStage2'),
+              title: context.tr('onboarding.safetySlideTitle'),
               icon: Icons.shield,
             ),
 
@@ -45,22 +46,21 @@ class OnboardingSlideSafety extends StatelessWidget {
               ),
               child: _buildStepper(
                 activeIndex: activeIndex,
-                label: '2 DARI 3 TAHAP AWAL',
+                label: context.tr('onboarding.stage2Of3'),
               ),
             ),
 
             const SizedBox(height: AppSpacing.xl),
 
-            _buildSectionHeader(),
+            _buildSectionHeader(context),
 
             const SizedBox(height: AppSpacing.lg),
 
             _buildFeatureCard(
               icon: Icons.near_me,
-              title: 'Pendamping Aman',
-              description:
-                  'Pantau rombongan secara real-time dan terima peringatan otomatis saat terpisah melebihi batas aman.',
-              badgeText: 'Radar Aktif',
+              title: context.tr('onboarding.safeCompanion'),
+              description: context.tr('onboarding.safeCompanionDesc'),
+              badgeText: context.tr('onboarding.radarActive'),
               badgeColor: AppColors.espressoDark,
               badgeBgColor: AppColors.canvasCream,
             ),
@@ -69,10 +69,9 @@ class OnboardingSlideSafety extends StatelessWidget {
 
             _buildFeatureCard(
               icon: Icons.map,
-              title: 'Peta Terpadu & SOS',
-              description:
-                  'Temukan pos kesehatan, hotel, dan hubungi bantuan darurat hanya dengan satu sentuhan.',
-              badgeText: 'SOS 24 Jam',
+              title: context.tr('onboarding.integratedMapSos'),
+              description: context.tr('onboarding.integratedMapSosDesc'),
+              badgeText: context.tr('onboarding.sos24h'),
               badgeColor: AppColors.sosEmergency,
               badgeBgColor: AppColors.sosEmergency.withValues(alpha: .08),
               isSosBadge: true,
@@ -82,24 +81,23 @@ class OnboardingSlideSafety extends StatelessWidget {
 
             _buildFeatureCard(
               icon: Icons.accessibility_new,
-              title: 'Ramah Jamaah Lansia',
-              description:
-                  'Ukuran tombol besar, kontras tinggi, dan mudah digunakan di bawah terik matahari.',
-              badgeText: 'Ramah Lansia',
+              title: context.tr('onboarding.elderlyFriendly'),
+              description: context.tr('onboarding.elderlyFriendlyDesc'),
+              badgeText: context.tr('onboarding.elderlyFriendly'),
               badgeColor: AppColors.espressoDark,
               badgeBgColor: AppColors.canvasCream,
             ),
 
             const SizedBox(height: AppSpacing.xl),
 
-            _buildSafetyFooter(),
+            _buildSafetyFooter(context),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSectionHeader() {
+  Widget _buildSectionHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
@@ -128,7 +126,7 @@ class OnboardingSlideSafety extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Fitur Keselamatan Jamaah',
+                  context.tr('onboarding.safetyFeaturesHeader'),
                   style: AppTypography.titleLarge.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppColors.espressoDark.withValues(alpha: 0.8),
@@ -138,7 +136,7 @@ class OnboardingSlideSafety extends StatelessWidget {
                 const SizedBox(height: 4),
 
                 Text(
-                  'Teknologi pendampingan cerdas agar jamaah tetap aman dan terhubung selama ibadah.',
+                  context.tr('onboarding.safetyFeaturesSub'),
                   style: AppTypography.bodySmall.copyWith(
                     color: AppColors.espressoDark.withValues(alpha: 0.5),
                   ),
@@ -273,7 +271,7 @@ class OnboardingSlideSafety extends StatelessWidget {
     );
   }
 
-  Widget _buildSafetyFooter() {
+  Widget _buildSafetyFooter(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
@@ -295,7 +293,7 @@ class OnboardingSlideSafety extends StatelessWidget {
 
           Expanded(
             child: Text(
-              'Notifikasi getar dan suara otomatis aktif untuk membantu jamaah tetap aman selama perjalanan.',
+              context.tr('onboarding.safetyFooterNote'),
               style: AppTypography.bodySmall.copyWith(
                 color: AppColors.espressoDark.withValues(alpha: 0.5),
               ),

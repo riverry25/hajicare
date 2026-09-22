@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -89,7 +90,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
       if (!_includeLocation) {
         AppAlert.warning(
           context,
-          title: 'Lokasi Belum Ditemukan',
+          title: context.tr('dashboard.locationNotFound'),
           message:
               'Nyalakan GPS dan izinkan akses lokasi, lalu tekan tombol lokasi sekali lagi.',
         );
@@ -107,7 +108,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
     if (!sendToAll && _selectedPendampingUid == null) {
       AppAlert.warning(
         context,
-        title: 'Pilih Pendamping',
+        title: context.tr('dashboard.selectCompanion'),
         message: 'Pilih satu pendamping atau pilih Semua Pendamping.',
       );
       return;
@@ -139,7 +140,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
       if (!mounted) return;
       AppAlert.error(
         context,
-        title: 'Belum Berhasil Dikirim',
+        title: context.tr('dashboard.sendFailed'),
         message: UserFeedbackMessage.from(
           error,
           fallback: 'Pesan belum dapat dikirim. Silakan coba lagi.',
@@ -201,8 +202,8 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                       child: _kindCard(
                         kind: CompanionContactKind.message,
                         icon: Icons.chat_bubble_rounded,
-                        title: 'Kirim Pesan',
-                        subtitle: 'Seperti chat',
+                        title: context.tr('dashboard.sendMessage'),
+                        subtitle: context.tr('dashboard.sendMessageSub'),
                         isDark: isDark,
                         headingColor: headingColor,
                         bodyColor: bodyColor,
@@ -213,8 +214,8 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                       child: _kindCard(
                         kind: CompanionContactKind.info,
                         icon: Icons.campaign_rounded,
-                        title: 'Beri Informasi',
-                        subtitle: 'Ke semua pendamping',
+                        title: context.tr('dashboard.giveInfo'),
+                        subtitle: context.tr('dashboard.giveInfoSub'),
                         isDark: isDark,
                         headingColor: headingColor,
                         bodyColor: bodyColor,
@@ -243,7 +244,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                   textCapitalization: TextCapitalization.sentences,
                   style: TextStyle(color: headingColor, fontSize: 17),
                   decoration: InputDecoration(
-                    hintText: 'Contoh: Saya menunggu di depan pintu masjid.',
+                    hintText: context.tr('dashboard.messageSampleHint'),
                     hintStyle: TextStyle(
                       color: bodyColor.withValues(alpha: 0.68),
                       fontSize: 15,

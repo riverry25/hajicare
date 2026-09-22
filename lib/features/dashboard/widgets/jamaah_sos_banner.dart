@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/locales/app_translations.dart';
@@ -35,14 +36,14 @@ class JamaahSosBanner extends StatelessWidget {
                 : 'Pendamping';
             AppAlert.success(
               context,
-              title: 'Sinyal Darurat Terkirim',
+              title: context.tr('dashboard.sosSignalSent'),
               message:
                   '$companion sudah diberi tahu. Tetap di tempat yang aman dan dekatkan ponsel Anda.',
             );
           } else {
             AppAlert.error(
               context,
-              title: 'SOS Belum Terkirim',
+              title: context.tr('dashboard.sosSendFailed'),
               message:
                   'Periksa internet, lalu tekan tombol SOS lagi. Jika keadaan mendesak, segera minta bantuan orang terdekat.',
               okText: 'Coba Lagi',

@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -375,7 +376,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             category: 'PERINGATAN CUACA',
             icon: Icons.wb_sunny_rounded,
             iconColor: const Color(0xFFE65100),
-            title: 'Himbauan Gelombang Panas Makkah',
+            title: context.tr('notification.heatwaveAdvisory'),
             message:
                 'Suhu di sekitar Masjidil Haram mencapai 45°C. Jamaah diimbau memperbanyak minum air zamzam, memakai payung, dan menghindari paparan langsung.',
             time: 'Hari ini',
@@ -386,7 +387,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             category: 'JADWAL KLOTER',
             icon: Icons.directions_bus_rounded,
             iconColor: AppColors.goldDark,
-            title: 'Jadwal Bus Shalawat Rute Syisyah',
+            title: context.tr('notification.busScheduleInfo'),
             message:
                 'Bus Shalawat rute nomor 3 (Syisyah - Terminal Syib Amir) beroperasi normal dengan interval tiap 10 menit.',
             time: 'Hari ini',
@@ -397,7 +398,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             category: 'PANDUAN IBADAH',
             icon: Icons.menu_book_rounded,
             iconColor: const Color(0xFF0D7C66),
-            title: 'Materi Manasik Tambahan Siap Dibaca',
+            title: context.tr('notification.additionalManasikInfo'),
             message:
                 'Doa-doa tawaf dan sa\'i serta tips menjaga stamina selama di Mina telah ditambahkan ke panduan.',
             time: 'Kemarin',
@@ -689,7 +690,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     if (!opened && context.mounted) {
       AppAlert.error(
         context,
-        title: 'Peta Belum Dapat Dibuka',
+        title: context.tr('notification.mapOpenFailed'),
         message: 'Pastikan aplikasi peta tersedia, lalu coba lagi.',
       );
     }

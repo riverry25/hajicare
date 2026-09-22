@@ -762,7 +762,7 @@ class _ContactSupportSection extends StatelessWidget {
       if (!context.mounted) return;
       AppAlert.info(
         context,
-        title: 'Alamat Email Disalin',
+        title: context.tr('help.emailCopied'),
         message:
             'Aplikasi email belum dapat dibuka. Alamat ${supportService.supportEmail} sudah disalin dan siap ditempel.',
         okText: 'Mengerti',
@@ -772,7 +772,7 @@ class _ContactSupportSection extends StatelessWidget {
 
     AppAlert.warning(
       context,
-      title: 'Kontak Belum Tersedia',
+      title: context.tr('help.contactUnavailable'),
       message: 'Silakan minta bantuan pendamping rombongan Anda.',
     );
   }
@@ -787,7 +787,7 @@ class _ContactSupportSection extends StatelessWidget {
     if (!context.mounted) return;
     AppAlert.info(
       context,
-      title: 'Nomor WhatsApp Disalin',
+      title: context.tr('help.waCopied'),
       message:
           'WhatsApp belum dapat dibuka. Nomor dukungan sudah disalin dan siap ditempel.',
       okText: 'Mengerti',

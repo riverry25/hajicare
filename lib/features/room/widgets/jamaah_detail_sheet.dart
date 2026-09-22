@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -68,12 +69,14 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
   String? _emergencyContact;
   String? _porsi;
   String? _passportNumber;
+  String? _nik;
   bool _isMedicalExpanded = true;
 
   @override
   void initState() {
     super.initState();
     _porsi = widget.jamaah.porsi;
+    _nik = widget.jamaah.nik;
     _bloodType = widget.jamaah.bloodType;
     _allergies = widget.jamaah.allergies;
     _conditions = widget.jamaah.conditions;
@@ -104,6 +107,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                 ((data['passportNumber'] as String?) ??
                         (data['passport'] as String?))
                     ?.trim();
+            _nik = (data['nik'] as String?)?.trim();
             _isLoadingUserData = false;
           });
           return;
@@ -157,11 +161,12 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
 
     AppAlert.confirm(
       context,
-      title: 'Keluarkan Jamaah?',
-      message:
-          'Jamaah ini akan dikeluarkan dari rombongan dan tidak lagi dapat dipantau oleh pendamping.',
-      confirmText: 'Keluarkan',
-      cancelText: 'Batal',
+      title: context.tr('room.removeMemberTitle'),
+      message: context.tr('room.removeConfirmMsg', {
+        'name': widget.jamaah.name,
+      }),
+      confirmText: context.tr('room.removeAction'),
+      cancelText: context.tr('common.cancel'),
       isDestructive: true,
       onConfirm: () async {
         setState(() => _isRemoving = true);
@@ -179,9 +184,11 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
 
           AppAlert.success(
             context,
-            title: 'Jamaah Dikeluarkan',
-            message:
-                '${widget.jamaah.name} sudah dikeluarkan dari rombongan "${widget.roomName}".',
+            title: context.tr('room.memberRemoved'),
+            message: context.tr('room.memberRemovedDesc', {
+              'name': widget.jamaah.name,
+              'room': widget.roomName,
+            }),
           );
           widget.onRemoved?.call();
         } catch (e) {
@@ -189,7 +196,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
           setState(() => _isRemoving = false);
           AppAlert.error(
             context,
-            title: 'Belum Dapat Dikeluarkan',
+            title: context.tr('room.memberRemoveFailed'),
             message: UserFeedbackMessage.from(
               e,
               fallback: 'Jamaah belum dapat dikeluarkan. Silakan coba lagi.',
@@ -747,15 +754,22 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                         children: [
                           _buildMedicalInfoRow(
                             context: context,
+                            icon: Icons.credit_card_rounded,
+                            label: context.tr('profile.nik'),
+                            value: _formatValue(_nik),
+                          ),
+                          const Divider(height: 8),
+                          _buildMedicalInfoRow(
+                            context: context,
                             icon: Icons.confirmation_number_outlined,
-                            label: 'Nomor Porsi',
+                            label: context.tr('profile.portionNumber'),
                             value: _formatValue(_porsi),
                           ),
                           const Divider(height: 8),
                           _buildMedicalInfoRow(
                             context: context,
                             icon: Icons.badge_outlined,
-                            label: 'Nomor Paspor',
+                            label: context.tr('profile.passportNumber'),
                             value: _formatValue(_passportNumber),
                           ),
                           const Divider(height: 8),
@@ -763,7 +777,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                             context: context,
                             icon: Icons.bloodtype_rounded,
                             iconColor: AppColors.sosEmergency,
-                            label: 'Golongan Darah',
+                            label: context.tr('profile.bloodType'),
                             value: _formatValue(_bloodType),
                           ),
                           const Divider(height: 8),
@@ -771,7 +785,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                             context: context,
                             icon: Icons.warning_amber_rounded,
                             iconColor: AppColors.statusWarning,
-                            label: 'Riwayat Alergi',
+                            label: context.tr('profile.allergyHistory'),
                             value: _formatValue(_allergies),
                           ),
                           const Divider(height: 8),
@@ -779,7 +793,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                             context: context,
                             icon: Icons.healing_rounded,
                             iconColor: primaryColor,
-                            label: 'Kondisi Khusus',
+                            label: context.tr('profile.specialConditions'),
                             value: _formatValue(_conditions),
                           ),
                           const Divider(height: 8),
@@ -787,7 +801,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                             context: context,
                             icon: Icons.phone_in_talk_rounded,
                             iconColor: AppColors.statusSafe,
-                            label: 'Kontak Darurat',
+                            label: context.tr('profile.emergencyContact'),
                             value: _formatValue(_emergencyContact),
                             isLast: true,
                           ),

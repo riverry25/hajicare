@@ -175,9 +175,9 @@ class HajiCareBottomNavBar extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: 'Penerjemah HajiCare',
+      label: context.tr('translator.title'),
       child: Tooltip(
-        message: 'Penerjemah Suara (Voice Translator)',
+        message: context.tr('translator.tooltip'),
         child: Container(
           width: 65,
           height: 65,

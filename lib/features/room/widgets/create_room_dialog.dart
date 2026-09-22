@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -167,7 +168,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
                           ),
                           decoration: InputDecoration(
                             counterText: '',
-                            hintText: 'Misal: Maktab 48 Kloter 12',
+                            hintText: context.tr('room.sampleGroupHint'),
                             hintStyle: TextStyle(
                               color: isDarkDialog
                                   ? Colors.white38

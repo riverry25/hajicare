@@ -1,3 +1,4 @@
+import '../../../core/locales/app_translations.dart';
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -296,7 +297,7 @@ class NotificationController extends GetxController {
       if (context.mounted) {
         AppDialog.success(
           context: context,
-          title: 'Undangan Diterima!',
+          title: AppTranslations.tr('notification.invitationAccepted'),
           message:
               'Anda sudah bergabung dengan rombongan “${invitation.roomName}”.',
         );
@@ -309,13 +310,13 @@ class NotificationController extends GetxController {
         if (e is StaleInvitationException) {
           AppDialog.warning(
             context: context,
-            title: 'Undangan Tidak Berlaku',
+            title: AppTranslations.tr('notification.invitationInvalid'),
             message: 'Rombongan ini sudah tidak tersedia.',
           );
         } else {
           AppDialog.error(
             context: context,
-            title: 'Belum Dapat Bergabung',
+            title: AppTranslations.tr('notification.joinFailed'),
             message: UserFeedbackMessage.from(
               e,
               fallback: 'Undangan belum dapat diterima. Silakan coba lagi.',
@@ -355,7 +356,7 @@ class NotificationController extends GetxController {
       if (context.mounted) {
         AppDialog.info(
           context: context,
-          title: 'Undangan Ditolak',
+          title: AppTranslations.tr('notification.invitationRejected'),
           message:
               'Anda tidak bergabung dengan rombongan “${invitation.roomName}”.',
         );
@@ -364,7 +365,7 @@ class NotificationController extends GetxController {
       if (context.mounted) {
         AppDialog.error(
           context: context,
-          title: 'Pilihan Belum Disimpan',
+          title: AppTranslations.tr('notification.choiceNotSaved'),
           message: UserFeedbackMessage.from(
             e,
             fallback: 'Pilihan belum dapat disimpan. Silakan coba lagi.',

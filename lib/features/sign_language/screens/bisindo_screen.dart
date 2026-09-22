@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -422,14 +423,14 @@ class _BisindoScreenState extends State<BisindoScreen> {
         ),
         const SizedBox(width: 22),
         _RoundControl(
-          label: 'HAPUS',
+          label: context.tr('sign.delete'),
           icon: Icons.backspace_rounded,
           color: AppColors.distanceWarning,
           onTap: _recognition.deleteLast,
         ),
         const SizedBox(width: 22),
         _RoundControl(
-          label: 'RESET',
+          label: context.tr('sign.reset'),
           icon: Icons.format_align_center_rounded,
           color: AppColors.textMuted,
           onTap: _recognition.resetTranscript,

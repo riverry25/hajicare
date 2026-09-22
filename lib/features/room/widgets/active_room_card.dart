@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -617,7 +618,7 @@ class ActiveRoomCard extends StatelessWidget {
                         Clipboard.setData(ClipboardData(text: roomCode));
                         AppAlert.info(
                           context,
-                          title: 'Kode Disalin',
+                          title: context.tr('room.codeCopied'),
                           message: 'Kode rombongan $roomCode sudah disalin.',
                         );
                       },
@@ -1153,7 +1154,7 @@ class ActiveRoomCard extends StatelessWidget {
                           if (context.mounted) {
                             AppAlert.success(
                               context,
-                              title: 'Rombongan Dihapus',
+                              title: context.tr('room.roomDeleted'),
                               message:
                                   'Rombongan "${room.name}" sudah dihapus.',
                             );
@@ -1165,7 +1166,7 @@ class ActiveRoomCard extends StatelessWidget {
                           if (context.mounted) {
                             AppAlert.error(
                               context,
-                              title: 'Belum Dapat Dihapus',
+                              title: context.tr('room.deleteFailed'),
                               message: UserFeedbackMessage.from(
                                 e,
                                 fallback:

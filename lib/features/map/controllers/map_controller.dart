@@ -1,3 +1,4 @@
+import '../../../core/locales/app_translations.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -72,6 +73,10 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   final currentUserLocation = Rxn<LatLng>();
   final isLocationLoading = false.obs;
   final locationError = RxnString();
+
+  // Pending focus coordinate and zoom for map initialization/transitions
+  LatLng? pendingFocusCoordinate;
+  double? pendingFocusZoom;
 
   // Active navigation tracking
   LatLng? _activeDestination;
@@ -223,6 +228,17 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     if (poiQueryCenter.value == null && !isPoiLoading.value) {
       refreshNearbyPois(camera.center);
     }
+    if (pendingFocusCoordinate != null) {
+      final target = pendingFocusCoordinate!;
+      final zoom = pendingFocusZoom ?? 17.0;
+      pendingFocusCoordinate = null;
+      pendingFocusZoom = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (isMapAttached) {
+          animatedMove(target, zoom);
+        }
+      });
+    }
   }
 
   Future<void> searchThisArea() async {
@@ -297,6 +313,15 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
             (members) {
               roomMembers.value = members;
               isRoomMembersLoading.value = false;
+              if (selectedMember.value != null) {
+                final currentUid = selectedMember.value!.uid;
+                final updated = members.firstWhereOrNull(
+                  (m) => m.uid == currentUid,
+                );
+                if (updated != null) {
+                  selectedMember.value = updated;
+                }
+              }
             },
             onError: (e) {
               debugPrint('[MapController] watchRoomMembers error: $e');
@@ -437,7 +462,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
         isLocationLoading.value = false;
         AppAlert.warning(
           Get.context,
-          title: 'Lokasi Ponsel Belum Aktif',
+          title: AppTranslations.tr('maps.phoneGpsInactive'),
           message: 'Aktifkan lokasi ponsel agar posisi Anda terlihat di peta.',
           okText: 'Buka Pengaturan',
           onOk: () => Geolocator.openLocationSettings(),
@@ -455,7 +480,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
           isLocationLoading.value = false;
           AppAlert.warning(
             Get.context,
-            title: 'Izin Lokasi Diperlukan',
+            title: AppTranslations.tr('maps.locationPermissionRequired'),
             message:
                 'Izinkan HajiCare memakai lokasi agar posisi Anda terlihat di peta.',
           );
@@ -468,7 +493,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
         isLocationLoading.value = false;
         AppAlert.warning(
           Get.context,
-          title: 'Buka Pengaturan Lokasi',
+          title: AppTranslations.tr('maps.openLocationSettings'),
           message:
               'Izin lokasi belum diberikan. Buka pengaturan, lalu izinkan akses lokasi untuk HajiCare.',
           okText: 'Buka Pengaturan',
@@ -761,29 +786,30 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     animatedMove(poi.coordinate, 17.5);
   }
 
-  Future<void> selectMember(RoomMemberModel member) async {
-    debugPrint('[SELECT] member = ${member.name}');
-    final hasUserLoc = currentUserLocation.value != null;
-    final hasDestLoc = member.hasLocation;
-    debugPrint('[SELECT] currentLocation available = $hasUserLoc');
-    debugPrint('[SELECT] destination available = $hasDestLoc');
-
+  Future<void> focusOnMember(
+    RoomMemberModel member, {
+    bool autoRoute = false,
+  }) async {
+    debugPrint('[FOCUS] member = ${member.name}');
+    selectedFilter.value = 0;
     isBottomSheetOpen.value = true;
     selectedMember.value = member;
     selectedPoi.value = null;
-    selectedJamaah.value = null;
 
     if (member.hasLocation) {
       final target = LatLng(member.latitude!, member.longitude!);
-      animatedMove(target, 17.0);
+      focusCoordinate(target, destZoom: 17.0);
     }
 
-    if (hasUserLoc && hasDestLoc) {
+    final hasUserLoc = currentUserLocation.value != null;
+    final hasDestLoc = member.hasLocation;
+
+    if (autoRoute && hasUserLoc && hasDestLoc) {
       debugPrint('[ROUTE] automatic request started');
       await requestRouteToMember(member);
     } else {
       clearRoute();
-      if (!hasUserLoc) {
+      if (!hasUserLoc && autoRoute) {
         routeError.value = 'Lokasi Anda belum ditemukan';
       } else if (!hasDestLoc) {
         routeError.value = 'Lokasi anggota belum tersedia';
@@ -791,31 +817,39 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     }
   }
 
-  Future<void> selectJamaah(JamaahData jamaah) async {
-    debugPrint('[SELECT] member = ${jamaah.name}');
-    final hasUserLoc = currentUserLocation.value != null;
-    final hasDestLoc = jamaah.currentLocation != null;
-    debugPrint('[SELECT] currentLocation available = $hasUserLoc');
-    debugPrint('[SELECT] destination available = $hasDestLoc');
-
-    isBottomSheetOpen.value = true;
+  Future<void> focusOnJamaah(
+    JamaahData jamaah, {
+    bool autoRoute = false,
+  }) async {
+    debugPrint('[FOCUS] jamaah = ${jamaah.name}');
+    selectedFilter.value = 0;
     selectedJamaah.value = jamaah;
-    selectedPoi.value = null;
-    selectedMember.value = null;
-    final targetCoord = getJamaahCoordinate(jamaah);
-    animatedMove(targetCoord, 17.0);
 
-    if (hasUserLoc && hasDestLoc) {
-      debugPrint('[ROUTE] automatic request started');
-      await requestRouteToJamaah(jamaah);
-    } else {
-      clearRoute();
-      if (!hasUserLoc) {
-        routeError.value = 'Lokasi Anda belum ditemukan';
-      } else if (!hasDestLoc) {
-        routeError.value = 'Lokasi jamaah belum tersedia';
-      }
-    }
+    RoomMemberModel? member;
+    try {
+      member = roomMembers.firstWhereOrNull((m) => m.uid == jamaah.id);
+    } catch (_) {}
+
+    member ??= RoomMemberModel(
+      uid: jamaah.id,
+      name: jamaah.name,
+      role: 'jamaah',
+      currentLocation: jamaah.currentLocation,
+      locationUpdatedAt: jamaah.locationUpdatedAt,
+    );
+
+    await focusOnMember(member, autoRoute: autoRoute);
+  }
+
+  Future<void> selectMember(
+    RoomMemberModel member, {
+    bool autoRoute = true,
+  }) async {
+    await focusOnMember(member, autoRoute: autoRoute);
+  }
+
+  Future<void> selectJamaah(JamaahData jamaah, {bool autoRoute = true}) async {
+    await focusOnJamaah(jamaah, autoRoute: autoRoute);
   }
 
   bool get hasActiveRoute => activeRoute.isNotEmpty;
@@ -848,6 +882,14 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     LatLng destination, {
     bool isReroute = false,
   }) async {
+    if (currentUserLocation.value == null &&
+        Get.isRegistered<HajiCareController>()) {
+      final state = Get.find<HajiCareController>();
+      if (state.myCurrentPosition.value != null) {
+        final pos = state.myCurrentPosition.value!;
+        currentUserLocation.value = LatLng(pos.latitude, pos.longitude);
+      }
+    }
     final start = currentUserLocation.value;
     if (start == null) {
       if (!isReroute) clearRoute();
@@ -922,9 +964,6 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       }
     }
   }
-
-
-
 
   Future<void> requestRouteToMember(RoomMemberModel member) async {
     if (selectedMember.value?.uid != member.uid) {
@@ -1077,6 +1116,18 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     }
   }
 
+  void focusCoordinate(LatLng coordinate, {double destZoom = 17.0}) {
+    pendingFocusCoordinate = coordinate;
+    pendingFocusZoom = destZoom;
+    if (isMapAttached) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (isMapAttached) {
+          animatedMove(coordinate, destZoom);
+        }
+      });
+    }
+  }
+
   void animatedMove(LatLng destLocation, double destZoom) {
     if (!isMapAttached) return;
 
@@ -1165,7 +1216,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       if (Get.context != null) {
         AppAlert.info(
           Get.context,
-          title: 'Tampilan Peta Diubah',
+          title: AppTranslations.tr('maps.mapViewChanged'),
           message: 'Peta sederhana sedang digunakan.',
         );
       }
@@ -1174,7 +1225,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       if (Get.context != null) {
         AppAlert.info(
           Get.context,
-          title: 'Tampilan Peta Diubah',
+          title: AppTranslations.tr('maps.mapViewChanged'),
           message: 'Peta berwarna sedang digunakan.',
         );
       }

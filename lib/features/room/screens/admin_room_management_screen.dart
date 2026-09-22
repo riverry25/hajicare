@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -109,8 +110,8 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
     return Scaffold(
       backgroundColor: scaffoldBg,
       appBar: HajiCareHeader(
-        title: 'Kelola Room Pantau',
-        subtitle: 'Delegasi & Monitoring Maktab Jamaah',
+        title: context.tr('room.manageTrackingRoom'),
+        subtitle: context.tr('room.manageTrackingRoomSub'),
         icon: Icons.meeting_room_rounded,
         showBackButton: true,
         actions: [
@@ -323,7 +324,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
               children: [
                 Expanded(
                   child: _buildSummaryMetricItem(
-                    label: 'Total Room',
+                    label: context.tr('room.totalRooms'),
                     value: '$totalRooms',
                     caption: '$activeRooms Aktif',
                     icon: Icons.meeting_room_outlined,
@@ -342,7 +343,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                 ),
                 Expanded(
                   child: _buildSummaryMetricItem(
-                    label: 'Jamaah Pantau',
+                    label: context.tr('room.pilgrimsMonitored'),
                     value: '$totalJamaah',
                     caption: 'Terdaftar',
                     icon: Icons.groups_rounded,
@@ -526,7 +527,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
           setState(() {});
         },
         decoration: InputDecoration(
-          hintText: 'Cari nama room atau 6-digit kode...',
+          hintText: context.tr('room.searchRoomOrCode'),
           hintStyle: AppTypography.bodySmall.copyWith(
             color: bodyColor.withValues(alpha: 0.55),
           ),
@@ -1151,8 +1152,8 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
 
                 _ActionItemTile(
                   icon: Icons.open_in_new_rounded,
-                  title: 'Buka Ruang Pantau & Anggota',
-                  subtitle: 'Pantau posisi live jamaah dan pendamping',
+                  title: context.tr('room.openMonitorRoom'),
+                  subtitle: context.tr('room.openMonitorRoomSub'),
                   color: primaryColor,
                   headingColor: headingColor,
                   bodyColor: bodyColor,
@@ -1165,7 +1166,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                 ),
                 _ActionItemTile(
                   icon: Icons.qr_code_2_rounded,
-                  title: 'Lihat QR Code Room',
+                  title: context.tr('room.viewQrCode'),
                   subtitle:
                       'Tampilkan QR Code untuk dipindai jamaah/pendamping',
                   color: primaryColor,
@@ -1179,7 +1180,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                 _ActionItemTile(
                   icon: Icons.copy_rounded,
                   title: 'Salin Kode Undangan (${room.code})',
-                  subtitle: 'Bagikan kode ke jamaah agar dapat bergabung',
+                  subtitle: context.tr('room.shareCodeSub'),
                   color: headingColor,
                   headingColor: headingColor,
                   bodyColor: bodyColor,
@@ -1188,7 +1189,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                     Clipboard.setData(ClipboardData(text: room.code));
                     AppAlert.info(
                       context,
-                      title: 'Kode Disalin',
+                      title: context.tr('room.codeCopied'),
                       message:
                           'Kode rombongan "${room.code}" sudah disalin dan siap ditempel.',
                     );
@@ -1196,8 +1197,8 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                 ),
                 _ActionItemTile(
                   icon: Icons.edit_outlined,
-                  title: 'Ubah Nama Ruang',
-                  subtitle: 'Perbarui label maktab atau kelompok',
+                  title: context.tr('room.renameRoom'),
+                  subtitle: context.tr('room.renameRoomSub'),
                   color: headingColor,
                   headingColor: headingColor,
                   bodyColor: bodyColor,
@@ -1228,8 +1229,8 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                 ),
                 _ActionItemTile(
                   icon: Icons.delete_outline_rounded,
-                  title: 'Hapus Ruang Pantau',
-                  subtitle: 'Hapus permanen room dan daftar delegasi anggota',
+                  title: context.tr('room.deleteMonitorRoom'),
+                  subtitle: context.tr('room.deleteMonitorRoomSub'),
                   color: AppColors.error,
                   headingColor: AppColors.error,
                   bodyColor: bodyColor,
@@ -1656,7 +1657,7 @@ class _RoomManagementCard extends StatelessWidget {
                           Clipboard.setData(ClipboardData(text: room.code));
                           AppAlert.info(
                             context,
-                            title: 'Kode Disalin',
+                            title: context.tr('room.codeCopied'),
                             message:
                                 'Kode rombongan "${room.code}" sudah disalin dan siap ditempel.',
                           );

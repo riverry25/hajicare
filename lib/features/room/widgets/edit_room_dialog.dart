@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -186,7 +187,7 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
       if (mounted) {
         AppAlert.success(
           context,
-          title: 'Perubahan Disimpan',
+          title: context.tr('room.changesSaved'),
           message: 'Pengaturan rombongan "$name" sudah diperbarui.',
         );
       }
@@ -441,8 +442,8 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
 
                       // Field: Nama Room
                       buildUnderlineInput(
-                        label: 'Nama Room / Rombongan *',
-                        hint: 'Contoh: Rombongan Maktab 10',
+                        label: context.tr('room.roomNameField'),
+                        hint: context.tr('room.sampleMaktab10'),
                         controller: _nameCtrl,
                         prefixIcon: Icons.meeting_room_outlined,
                         inputFormatters: [
@@ -490,7 +491,7 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
 
                       // Field: Radius Aman
                       buildUnderlineInput(
-                        label: 'Batas Radius Aman (Meter) *',
+                        label: context.tr('room.safeRadiusLimit'),
                         hint: '200',
                         suffix: 'meter',
                         controller: _radiusCtrl,

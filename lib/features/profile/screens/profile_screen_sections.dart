@@ -58,7 +58,7 @@ extension _ProfileScreenSections on ProfileScreen {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Data Medis & Riwayat Jamaah',
+                            context.tr('medical.sheetTitle'),
                             style: AppTypography.titleMedium.copyWith(
                               color: headingColor,
                               fontWeight: FontWeight.w800,
@@ -66,7 +66,7 @@ extension _ProfileScreenSections on ProfileScreen {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Digunakan saat penanganan darurat di Posko PPIH',
+                            context.tr('medical.sheetSubtitle'),
                             style: AppTypography.captionSmall.copyWith(
                               color: isDark
                                   ? AppColors.darkTextBody
@@ -101,7 +101,7 @@ extension _ProfileScreenSections on ProfileScreen {
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          'Data Medis Masih Kosong',
+                          context.tr('medical.emptyTitle'),
                           style: AppTypography.titleSmall.copyWith(
                             color: headingColor,
                             fontWeight: FontWeight.bold,
@@ -109,7 +109,7 @@ extension _ProfileScreenSections on ProfileScreen {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Anda belum mengisi data medis pribadi. Lengkapi golongan darah, riwayat alergi, kondisi khusus, dan kontak darurat untuk kesiapsiagaan.',
+                          context.tr('medical.emptyDesc'),
                           textAlign: TextAlign.center,
                           style: AppTypography.captionSmall.copyWith(
                             color: bodyColor,
@@ -133,7 +133,6 @@ extension _ProfileScreenSections on ProfileScreen {
                         elevation: 0,
                       ),
                       onPressed: () {
-                        Navigator.of(context).pop();
                         _showEditMedicalDialog(context, profileCtrl);
                       },
                       icon: const Icon(Icons.edit_note_rounded, size: 20),
@@ -157,6 +156,22 @@ extension _ProfileScreenSections on ProfileScreen {
                     ),
                     child: Column(
                       children: [
+                        _buildMedRow(
+                          context,
+                          'NIK',
+                          profileCtrl.nik.value.isNotEmpty
+                              ? profileCtrl.nik.value
+                              : '-',
+                        ),
+                        const Divider(height: 16),
+                        _buildMedRow(
+                          context,
+                          'Nomor Porsi',
+                          profileCtrl.nomorPorsi.value.isNotEmpty
+                              ? profileCtrl.nomorPorsi.value
+                              : '-',
+                        ),
+                        const Divider(height: 16),
                         _buildMedRow(
                           context,
                           'Golongan Darah',
@@ -215,7 +230,6 @@ extension _ProfileScreenSections on ProfileScreen {
                             minimumSize: const Size(0, 48),
                           ),
                           onPressed: () {
-                            Navigator.of(context).pop();
                             _showEditMedicalDialog(context, profileCtrl);
                           },
                           icon: const Icon(Icons.edit_rounded, size: 18),
@@ -725,6 +739,8 @@ class _EditMedicalDialog extends StatefulWidget {
 }
 
 class _EditMedicalDialogState extends State<_EditMedicalDialog> {
+  late final TextEditingController _nikCtrl;
+  late final TextEditingController _nomorPorsiCtrl;
   late final TextEditingController _bloodTypeCtrl;
   late final TextEditingController _allergiesCtrl;
   late final TextEditingController _conditionsCtrl;
@@ -734,6 +750,10 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
   @override
   void initState() {
     super.initState();
+    _nikCtrl = TextEditingController(text: widget.profileCtrl.nik.value);
+    _nomorPorsiCtrl = TextEditingController(
+      text: widget.profileCtrl.nomorPorsi.value,
+    );
     _bloodTypeCtrl = TextEditingController(
       text: widget.profileCtrl.bloodType.value,
     );
@@ -753,6 +773,8 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
 
   @override
   void dispose() {
+    _nikCtrl.dispose();
+    _nomorPorsiCtrl.dispose();
     _bloodTypeCtrl.dispose();
     _allergiesCtrl.dispose();
     _conditionsCtrl.dispose();
@@ -763,6 +785,31 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
 
   Future<void> _submit() async {
     if (widget.profileCtrl.isSavingMedical.value) return;
+
+    final nikText = _nikCtrl.text.trim();
+    if (nikText.isNotEmpty) {
+      if (!RegExp(r'^\d{16}$').hasMatch(nikText)) {
+        AppAlert.warning(
+          context,
+          title: context.tr('medical.nikInvalidTitle'),
+          message: context.tr('medical.nikInvalidMsg'),
+        );
+        return;
+      }
+    }
+
+    final porsiText = _nomorPorsiCtrl.text.trim();
+    if (porsiText.isNotEmpty) {
+      if (!RegExp(r'^\d{10}$').hasMatch(porsiText)) {
+        AppAlert.warning(
+          context,
+          title: context.tr('medical.porsiInvalidTitle'),
+          message: context.tr('medical.porsiInvalidMsg'),
+        );
+        return;
+      }
+    }
+
     try {
       await widget.profileCtrl.updateMedicalData(
         bloodTypeVal: _bloodTypeCtrl.text.trim(),
@@ -770,6 +817,8 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
         conditionsVal: _conditionsCtrl.text.trim(),
         emergencyContactVal: _emergencyContactCtrl.text.trim(),
         passportNumberVal: _passportNumberCtrl.text.trim(),
+        nikVal: nikText,
+        nomorPorsiVal: porsiText,
       );
       if (mounted && Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
@@ -778,17 +827,17 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
       if (rootCtx != null && rootCtx.mounted) {
         AppAlert.success(
           rootCtx,
-          title: 'Data Medis Disimpan',
-          message: 'Data medis Anda sudah diperbarui.',
+          title: rootCtx.tr('medical.saveSuccessTitle'),
+          message: rootCtx.tr('medical.saveSuccessMsg'),
         );
       }
     } catch (_) {
       if (mounted) {
         AppAlert.error(
           context,
-          title: 'Data Belum Disimpan',
-          message: 'Periksa internet, lalu coba simpan sekali lagi.',
-          okText: 'Coba Lagi',
+          title: context.tr('medical.saveErrorTitle'),
+          message: context.tr('medical.saveErrorMsg'),
+          okText: context.tr('common.tryAgain'),
         );
       }
     }
@@ -886,7 +935,10 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
       elevation: 0,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 400, maxHeight: 620),
+        constraints: BoxConstraints(
+          maxWidth: 400,
+          maxHeight: (MediaQuery.sizeOf(context).height * 0.85).clamp(500, 680),
+        ),
         child: Stack(
           clipBehavior: Clip.none,
           alignment: Alignment.topCenter,
@@ -925,7 +977,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                   children: [
                     // Title
                     Text(
-                      'Kelola Data Medis',
+                      'Kelola Data Jamaah & Medis',
                       style: AppTypography.titleMedium.copyWith(
                         color: headingColor,
                         fontWeight: FontWeight.w800,
@@ -937,7 +989,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
 
                     // Subtitle
                     Text(
-                      'Informasi kesehatan pribadi Jamaah untuk pertolongan pertama darurat.',
+                      'Informasi identitas jamaah dan kesehatan pribadi untuk kesiapsiagaan.',
                       style: AppTypography.bodySmall.copyWith(
                         color: AppColors.textBodyColor(
                           context,
@@ -948,10 +1000,32 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                     ),
                     const SizedBox(height: 14),
 
+                    // Field: NIK
+                    _buildUnderlineField(
+                      context: context,
+                      label: context.tr('medical.nikLabel'),
+                      hint: context.tr('medical.nikHint'),
+                      ctrl: _nikCtrl,
+                      keyboardType: TextInputType.number,
+                      icon: Icons.credit_card_rounded,
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Field: Nomor Porsi
+                    _buildUnderlineField(
+                      context: context,
+                      label: context.tr('medical.porsiLabel'),
+                      hint: context.tr('medical.porsiHint'),
+                      ctrl: _nomorPorsiCtrl,
+                      keyboardType: TextInputType.number,
+                      icon: Icons.confirmation_number_outlined,
+                    ),
+                    const SizedBox(height: 14),
+
                     // Field 1: Golongan Darah
                     _buildUnderlineField(
                       context: context,
-                      label: 'Golongan Darah',
+                      label: context.tr('profile.bloodType'),
                       hint: 'Contoh: O Rhesus (+), A (+), B (+)',
                       ctrl: _bloodTypeCtrl,
                       icon: Icons.bloodtype_rounded,
@@ -961,8 +1035,8 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                     // Field 2: Riwayat Alergi
                     _buildUnderlineField(
                       context: context,
-                      label: 'Riwayat Alergi Obat / Makanan',
-                      hint: 'Contoh: Alergi penisilin, udang, dsb.',
+                      label: context.tr('medical.allergiesLabel'),
+                      hint: context.tr('medical.allergiesHint'),
                       ctrl: _allergiesCtrl,
                       icon: Icons.warning_amber_rounded,
                     ),
@@ -971,8 +1045,8 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                     // Field 3: Kondisi Khusus
                     _buildUnderlineField(
                       context: context,
-                      label: 'Kondisi Khusus / Riwayat Penyakit',
-                      hint: 'Contoh: Hipertensi, Diabetes, Asma',
+                      label: context.tr('medical.conditionsLabel'),
+                      hint: context.tr('medical.conditionsHint'),
                       ctrl: _conditionsCtrl,
                       icon: Icons.healing_rounded,
                     ),
@@ -981,8 +1055,8 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                     // Field 4: Kontak Darurat
                     _buildUnderlineField(
                       context: context,
-                      label: 'Nomor Kontak Darurat (Keluarga)',
-                      hint: 'Contoh: 0812-3456-7890 (Anak / Pasangan)',
+                      label: context.tr('medical.emergencyContactLabel'),
+                      hint: context.tr('medical.emergencyContactHint'),
                       ctrl: _emergencyContactCtrl,
                       keyboardType: TextInputType.phone,
                       icon: Icons.phone_in_talk_rounded,
@@ -992,8 +1066,8 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                     // Field 5: Nomor Paspor (Opsional)
                     _buildUnderlineField(
                       context: context,
-                      label: 'Nomor Paspor (Opsional)',
-                      hint: 'Contoh: A 1234567 / B 9876543',
+                      label: context.tr('medical.passportLabel'),
+                      hint: context.tr('medical.passportHint'),
                       ctrl: _passportNumberCtrl,
                       icon: Icons.badge_outlined,
                     ),

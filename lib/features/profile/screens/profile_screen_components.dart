@@ -24,8 +24,8 @@ class _ProfileHeader extends StatelessWidget {
         ? 'Paspor: Indonesia'
         : 'Paspor: Indonesia';
     final roleLabel = state?.role == UserRole.pendamping
-        ? 'Pendamping'
-        : 'Jamaah Haji';
+        ? context.tr('auth.rolePendamping')
+        : context.tr('auth.roleJamaah');
     final kloterStr = state?.effectiveKloter;
     final maktabStr = state?.effectiveMaktab;
 
@@ -34,420 +34,420 @@ class _ProfileHeader extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(top: bannerProtrude),
-        child: Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.topCenter,
-          children: [
-            // ── 1. Main Card Container (Tailwind Card Body) ──────────────
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(
-                20,
-                (bannerHeight - bannerProtrude) + 18,
-                20,
-                20,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.topCenter,
+        children: [
+          // ── 1. Main Card Container (Tailwind Card Body) ──────────────
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(
+              20,
+              (bannerHeight - bannerProtrude) + 18,
+              20,
+              20,
+            ),
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: AppColors.cardBorderColor(context),
+                width: 1.2,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.35)
+                      : AppColors.espressoDark.withValues(alpha: 0.07),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Display Name (Large & Bold title like Image 2)
+                Obx(
+                  () => Text(
+                    controller.displayName.value.isNotEmpty
+                        ? controller.displayName.value
+                        : context.tr('profile.defaultUser'),
+                    style: AppTypography.titleLarge.copyWith(
+                      color: headingColor,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 20,
+                      letterSpacing: -0.3,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(height: 4),
+
+                // Email
+                if (controller.safeEmail.isNotEmpty)
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.mail_outline_rounded,
+                        size: 14,
+                        color: bodyColor.withValues(alpha: 0.75),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          controller.safeEmail,
+                          style: AppTypography.bodySmall.copyWith(
+                            color: bodyColor,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w400,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                const SizedBox(height: 14),
+
+                // Tag Chips Row
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: [
+                    _TagChip(
+                      icon: Icons.badge_rounded,
+                      label: porsiText,
+                      isDark: isDark,
+                      isPrimary: false,
+                    ),
+                    if (kloterStr != null &&
+                        kloterStr.isNotEmpty &&
+                        kloterStr != '-')
+                      _TagChip(
+                        icon: Icons.flight_takeoff_rounded,
+                        label: kloterStr.toLowerCase().startsWith('kloter')
+                            ? kloterStr
+                            : 'Kloter $kloterStr',
+                        isDark: isDark,
+                        isPrimary: false,
+                      ),
+                    if (maktabStr != null &&
+                        maktabStr.isNotEmpty &&
+                        maktabStr != '-')
+                      _TagChip(
+                        icon: Icons.hotel_rounded,
+                        label: maktabStr.toLowerCase().startsWith('maktab')
+                            ? maktabStr
+                            : 'Maktab $maktabStr',
+                        isDark: isDark,
+                        isPrimary: false,
+                      ),
+                  ],
+                ),
+
+                const SizedBox(height: 18),
+
+                // Action Button: "Ubah Profil" (styled like "READ MORE" button in Image 2)
+                SizedBox(
+                  width: double.infinity,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _showEditNameDialog(context),
+                      borderRadius: BorderRadius.circular(14),
+                      child: Ink(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 13,
+                          horizontal: 18,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: isDark
+                                ? [AppColors.goldPrimary, AppColors.goldDark]
+                                : [AppColors.primary, AppColors.espressoDark],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(
+                              color:
+                                  (isDark
+                                          ? AppColors.goldPrimary
+                                          : AppColors.primary)
+                                      .withValues(alpha: 0.28),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.edit_rounded,
+                              size: 16,
+                              color: isDark ? Colors.black : Colors.white,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Ubah Profil',
+                              style: TextStyle(
+                                color: isDark ? Colors.black : Colors.white,
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ── 2. Elevated Floating Top Banner (Image 1 & 2 inspired) ──
+          Positioned(
+            top: -bannerProtrude,
+            left: 12,
+            right: 12,
+            height: bannerHeight,
+            child: Container(
+              clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
-                color: cardBg,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: AppColors.cardBorderColor(context),
-                  width: 1.2,
+                borderRadius: BorderRadius.circular(20),
+                gradient: LinearGradient(
+                  colors: isDark
+                      ? [
+                          AppColors.darkPrimaryContainer,
+                          AppColors.espressoDark,
+                          const Color(0xFF160E09),
+                        ]
+                      : [
+                          AppColors.primary,
+                          AppColors.espressoDark,
+                          const Color(0xFF23160D),
+                        ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: isDark
-                        ? Colors.black.withValues(alpha: 0.35)
-                        : AppColors.espressoDark.withValues(alpha: 0.07),
-                    blurRadius: 20,
+                    color: (isDark ? Colors.black : AppColors.espressoDark)
+                        .withValues(alpha: 0.35),
+                    blurRadius: 18,
                     offset: const Offset(0, 8),
                   ),
                 ],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Stack(
                 children: [
-                  // Display Name (Large & Bold title like Image 2)
-                  Obx(
-                    () => Text(
-                      controller.displayName.value.isNotEmpty
-                          ? controller.displayName.value
-                          : 'Pengguna HajiCare',
-                      style: AppTypography.titleLarge.copyWith(
-                        color: headingColor,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 20,
-                        letterSpacing: -0.3,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-
-                  // Email
-                  if (controller.safeEmail.isNotEmpty)
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.mail_outline_rounded,
-                          size: 14,
-                          color: bodyColor.withValues(alpha: 0.75),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            controller.safeEmail,
-                            style: AppTypography.bodySmall.copyWith(
-                              color: bodyColor,
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w400,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                  const SizedBox(height: 14),
-
-                  // Tag Chips Row
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 6,
-                    children: [
-                      _TagChip(
-                        icon: Icons.badge_rounded,
-                        label: porsiText,
-                        isDark: isDark,
-                        isPrimary: false,
-                      ),
-                      if (kloterStr != null &&
-                          kloterStr.isNotEmpty &&
-                          kloterStr != '-')
-                        _TagChip(
-                          icon: Icons.flight_takeoff_rounded,
-                          label: kloterStr.toLowerCase().startsWith('kloter')
-                              ? kloterStr
-                              : 'Kloter $kloterStr',
-                          isDark: isDark,
-                          isPrimary: false,
-                        ),
-                      if (maktabStr != null &&
-                          maktabStr.isNotEmpty &&
-                          maktabStr != '-')
-                        _TagChip(
-                          icon: Icons.hotel_rounded,
-                          label: maktabStr.toLowerCase().startsWith('maktab')
-                              ? maktabStr
-                              : 'Maktab $maktabStr',
-                          isDark: isDark,
-                          isPrimary: false,
-                        ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  // Action Button: "Ubah Profil" (styled like "READ MORE" button in Image 2)
-                  SizedBox(
-                    width: double.infinity,
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () => _showEditNameDialog(context),
-                        borderRadius: BorderRadius.circular(14),
-                        child: Ink(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 13,
-                            horizontal: 18,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: isDark
-                                  ? [AppColors.goldPrimary, AppColors.goldDark]
-                                  : [AppColors.primary, AppColors.espressoDark],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(14),
-                            boxShadow: [
-                              BoxShadow(
-                                color:
-                                    (isDark
-                                            ? AppColors.goldPrimary
-                                            : AppColors.primary)
-                                        .withValues(alpha: 0.28),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.edit_rounded,
-                                size: 16,
-                                color: isDark ? Colors.black : Colors.white,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Ubah Profil',
-                                style: TextStyle(
-                                  color: isDark ? Colors.black : Colors.white,
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.3,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // ── 2. Elevated Floating Top Banner (Image 1 & 2 inspired) ──
-            Positioned(
-              top: -bannerProtrude,
-              left: 12,
-              right: 12,
-              height: bannerHeight,
-              child: Container(
-                clipBehavior: Clip.antiAlias,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  gradient: LinearGradient(
-                    colors: isDark
-                        ? [
-                            AppColors.darkPrimaryContainer,
-                            AppColors.espressoDark,
-                            const Color(0xFF160E09),
-                          ]
-                        : [
-                            AppColors.primary,
-                            AppColors.espressoDark,
-                            const Color(0xFF23160D),
-                          ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: (isDark ? Colors.black : AppColors.espressoDark)
-                          .withValues(alpha: 0.35),
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Stack(
-                  children: [
-                    // 3D Concentric Ripples in top-right (Image 1 reference!)
-                    Positioned(
-                      top: -45,
-                      right: -45,
-                      child: SizedBox(
-                        width: 220,
-                        height: 220,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            // Outer ripple ring
-                            Container(
-                              width: 210,
-                              height: 210,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.05),
-                                  width: 1.5,
-                                ),
-                              ),
-                            ),
-                            // Mid ripple ring 2
-                            Container(
-                              width: 160,
-                              height: 160,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white.withValues(alpha: 0.03),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.07),
-                                  width: 1.5,
-                                ),
-                              ),
-                            ),
-                            // Mid ripple ring 1
-                            Container(
-                              width: 110,
-                              height: 110,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white.withValues(alpha: 0.05),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.10),
-                                  width: 1.5,
-                                ),
-                              ),
-                            ),
-                            // Inner ripple
-                            Container(
-                              width: 65,
-                              height: 65,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white.withValues(alpha: 0.08),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.14),
-                                  width: 1.5,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    // Glossy Glass Arc Highlight across top (Image 1 reference!)
-                    Positioned(
-                      top: -50,
-                      left: -30,
-                      right: -30,
-                      height: 110,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: const BorderRadius.vertical(
-                            bottom: Radius.elliptical(260, 90),
-                          ),
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.white.withValues(alpha: 0.16),
-                              Colors.white.withValues(alpha: 0.0),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // Content inside Banner: Avatar + Greeting + Top-Right Glassmorphic Badge
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                  // 3D Concentric Ripples in top-right (Image 1 reference!)
+                  Positioned(
+                    top: -45,
+                    right: -45,
+                    child: SizedBox(
+                      width: 220,
+                      height: 220,
+                      child: Stack(
+                        alignment: Alignment.center,
                         children: [
-                          // Avatar with Camera icon & gold border
-                          Obx(
-                            () => _InitialsAvatar(
-                              initials: controller.initials,
-                              isDark: isDark,
-                              onCameraTap: () => _showEditNameDialog(context),
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-
-                          // Title / Greeting beside Avatar
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.verified_rounded,
-                                      size: 14,
-                                      color: AppColors.accentGoldStar,
-                                    ),
-                                    const SizedBox(width: 5),
-                                    const Text(
-                                      'Kartu Jamaah',
-                                      style: TextStyle(
-                                        color: AppColors.goldLight,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 0.8,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 3),
-                                Obx(
-                                  () => Text(
-                                    controller.displayName.value.isNotEmpty
-                                        ? controller.displayName.value
-                                        : 'Pengguna',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: -0.2,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          // Top-Right Glassmorphic Badge (Like "UI" badge in Image 1!)
+                          // Outer ripple ring
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
+                            width: 210,
+                            height: 210,
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(12),
+                              shape: BoxShape.circle,
                               border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.22),
-                                width: 1.1,
+                                color: Colors.white.withValues(alpha: 0.05),
+                                width: 1.5,
                               ),
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.statusSafe,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  roleLabel,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
+                          ),
+                          // Mid ripple ring 2
+                          Container(
+                            width: 160,
+                            height: 160,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.03),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.07),
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                          // Mid ripple ring 1
+                          Container(
+                            width: 110,
+                            height: 110,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.05),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.10),
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                          // Inner ripple
+                          Container(
+                            width: 65,
+                            height: 65,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.08),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.14),
+                                width: 1.5,
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+
+                  // Glossy Glass Arc Highlight across top (Image 1 reference!)
+                  Positioned(
+                    top: -50,
+                    left: -30,
+                    right: -30,
+                    height: 110,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: const BorderRadius.vertical(
+                          bottom: Radius.elliptical(260, 90),
+                        ),
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.16),
+                            Colors.white.withValues(alpha: 0.0),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Content inside Banner: Avatar + Greeting + Top-Right Glassmorphic Badge
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Avatar with Camera icon & gold border
+                        Obx(
+                          () => _InitialsAvatar(
+                            initials: controller.initials,
+                            isDark: isDark,
+                            onCameraTap: () => _showEditNameDialog(context),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+
+                        // Title / Greeting beside Avatar
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.verified_rounded,
+                                    size: 14,
+                                    color: AppColors.accentGoldStar,
+                                  ),
+                                  const SizedBox(width: 5),
+                                  const Text(
+                                    'Kartu Jamaah',
+                                    style: TextStyle(
+                                      color: AppColors.goldLight,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 3),
+                              Obx(
+                                () => Text(
+                                  controller.displayName.value.isNotEmpty
+                                      ? controller.displayName.value
+                                      : 'Pengguna',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.2,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Top-Right Glassmorphic Badge (Like "UI" badge in Image 1!)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.22),
+                              width: 1.1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.statusSafe,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                roleLabel,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
   }
 
   void _showEditNameDialog(BuildContext context) {
@@ -467,10 +467,7 @@ class _EditNameDialog extends StatefulWidget {
   final ProfileController controller;
   final bool isDark;
 
-  const _EditNameDialog({
-    required this.controller,
-    required this.isDark,
-  });
+  const _EditNameDialog({required this.controller, required this.isDark});
 
   @override
   State<_EditNameDialog> createState() => _EditNameDialogState();
@@ -498,7 +495,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
     if (widget.controller.isSavingName.value) return;
     final input = _nameCtrl.text.trim();
     if (input.isEmpty) {
-      setState(() => _inputError = 'Nama tidak boleh kosong');
+      setState(() => _inputError = context.tr('profile.nameCannotBeEmpty'));
       return;
     }
     setState(() => _inputError = null);
@@ -512,17 +509,19 @@ class _EditNameDialogState extends State<_EditNameDialog> {
       if (rootCtx != null && rootCtx.mounted) {
         AppAlert.success(
           rootCtx,
-          title: 'Nama Berhasil Diubah',
-          message: 'Nama Anda sekarang "$input".',
+          title: rootCtx.tr('profile.nameChangedSuccess'),
+          message: rootCtx.tr('profile.nameChangedSuccessDesc', {
+            'name': input,
+          }),
         );
       }
     } catch (_) {
       if (mounted) {
         AppAlert.error(
           context,
-          title: 'Nama Belum Diubah',
-          message: 'Periksa internet, lalu coba simpan sekali lagi.',
-          okText: 'Coba Lagi',
+          title: context.tr('profile.nameChangedError'),
+          message: context.tr('medical.saveErrorMsg'),
+          okText: context.tr('common.tryAgain'),
         );
       }
     }
@@ -542,10 +541,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      insetPadding: const EdgeInsets.symmetric(
-        horizontal: 24,
-        vertical: 24,
-      ),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 380),
         child: Stack(
@@ -628,7 +624,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                           ),
                           decoration: InputDecoration(
                             counterText: '',
-                            hintText: 'Nama lengkap Anda',
+                            hintText: context.tr('profile.yourFullName'),
                             hintStyle: TextStyle(
                               color: isDarkDialog
                                   ? Colors.white38
@@ -673,13 +669,12 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                                 width: 1.4,
                               ),
                             ),
-                            focusedErrorBorder:
-                                const UnderlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: AppColors.sosEmergency,
-                                    width: 1.8,
-                                  ),
-                                ),
+                            focusedErrorBorder: const UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: AppColors.sosEmergency,
+                                width: 1.8,
+                              ),
+                            ),
                             suffixIconConstraints: const BoxConstraints(
                               minWidth: 28,
                               minHeight: 28,
@@ -715,9 +710,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                             foregroundColor: isDarkDialog
                                 ? Colors.white60
                                 : const Color(0xFF8C7A6B),
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 4,
-                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 4),
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
@@ -786,9 +779,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                         height: 70,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppColors.goldPrimary.withValues(
-                            alpha: 0.12,
-                          ),
+                          color: AppColors.goldPrimary.withValues(alpha: 0.12),
                         ),
                       ),
                     ),
@@ -800,9 +791,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                         height: 65,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppColors.goldPrimary.withValues(
-                            alpha: 0.08,
-                          ),
+                          color: AppColors.goldPrimary.withValues(alpha: 0.08),
                         ),
                       ),
                     ),
@@ -819,12 +808,8 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                               shape: BoxShape.circle,
                               gradient: LinearGradient(
                                 colors: [
-                                  AppColors.goldPrimary.withValues(
-                                    alpha: 0.25,
-                                  ),
-                                  AppColors.goldPrimary.withValues(
-                                    alpha: 0.08,
-                                  ),
+                                  AppColors.goldPrimary.withValues(alpha: 0.25),
+                                  AppColors.goldPrimary.withValues(alpha: 0.08),
                                 ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
@@ -1279,10 +1264,9 @@ class _LogoutButton extends StatelessWidget {
             AppDialog.confirm(
               context: context,
               title: label,
-              message:
-                  'Apakah Anda yakin ingin keluar? Anda perlu login kembali untuk mengakses data room rombongan.',
-              confirmText: 'Ya, Keluar',
-              cancelText: 'Batal',
+              message: context.tr('profile.logoutConfirm'),
+              confirmText: context.tr('profile.logoutConfirmAction'),
+              cancelText: context.tr('common.cancel'),
               confirmColor: AppColors.sosEmergency,
               isDestructive: true,
               onConfirm: () async {

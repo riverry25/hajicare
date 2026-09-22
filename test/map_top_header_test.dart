@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hajicare/core/locales/app_localizations.dart';
 import 'package:hajicare/core/models/filter_chip_item.dart';
 import 'package:hajicare/features/map/widgets/map_top_header.dart';
 
@@ -22,6 +24,17 @@ void main() {
 
         await tester.pumpWidget(
           MaterialApp(
+            locale: const Locale('id'),
+            supportedLocales: AppTranslations.supportedLocales,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              FallbackMaterialLocalizationsDelegate(),
+              FallbackCupertinoLocalizationsDelegate(),
+              FallbackWidgetsLocalizationsDelegate(),
+            ],
             home: Scaffold(
               body: Stack(
                 children: [
@@ -42,7 +55,10 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
 
         // Check search hint
-        expect(find.text('Search Location...'), findsOneWidget);
+        expect(
+          find.text('Cari maktab, posko medis, atau tenda...'),
+          findsOneWidget,
+        );
 
         // Check Google Maps style Pin icon and Mic icon
         expect(find.byIcon(Icons.location_on_rounded), findsOneWidget);

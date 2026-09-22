@@ -122,7 +122,7 @@ class CommunicationScreen extends StatelessWidget {
           // 1. Darurat & Kesehatan
           _buildCategoryHeader(
             context,
-            title: 'Darurat & Kesehatan',
+            title: context.tr('comm.emergencyAndHealth'),
             icon: Icons.health_and_safety_rounded,
             badgeColor: AppColors.sosEmergency,
           ),
@@ -136,7 +136,7 @@ class CommunicationScreen extends StatelessWidget {
           // 2. Arah & Lokasi
           _buildCategoryHeader(
             context,
-            title: 'Arah & Lokasi',
+            title: context.tr('comm.directionAndLocation'),
             icon: Icons.near_me_rounded,
             badgeColor: AppColors.goldPrimary,
           ),
@@ -150,7 +150,7 @@ class CommunicationScreen extends StatelessWidget {
           // 3. Umum
           _buildCategoryHeader(
             context,
-            title: 'Percakapan Umum',
+            title: context.tr('comm.generalConversation'),
             icon: Icons.chat_bubble_outline_rounded,
             badgeColor: AppColors.tanMedium,
           ),

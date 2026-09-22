@@ -27,8 +27,8 @@ extension _AdminDashboardSections on _AdminDashboardHome {
           children: [
             Expanded(
               child: _QuickActionButton(
-                label: 'Buat Room',
-                subtitle: 'Grup/Kloter baru',
+                label: context.tr('room.createRoomBtn'),
+                subtitle: context.tr('room.newGroupOrKloter'),
                 icon: Icons.add_business_rounded,
                 color: isDark ? AppColors.tanLight : AppColors.secondary,
                 cardBg: isDark
@@ -44,8 +44,8 @@ extension _AdminDashboardSections on _AdminDashboardHome {
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: _QuickActionButton(
-                label: 'Kelola Jamaah',
-                subtitle: 'Daftar semua room',
+                label: context.tr('room.managePilgrims'),
+                subtitle: context.tr('room.allRoomsList'),
                 icon: Icons.manage_accounts_rounded,
                 color: AppColors.statusSafe,
                 cardBg: cardBg,
@@ -62,8 +62,8 @@ extension _AdminDashboardSections on _AdminDashboardHome {
           children: [
             Expanded(
               child: _QuickActionButton(
-                label: 'Pantau Map',
-                subtitle: 'Lokasi & perimeter',
+                label: context.tr('room.monitorMap'),
+                subtitle: context.tr('room.locationAndPerimeter'),
                 icon: Icons.map_rounded,
                 color: AppColors.secondary,
                 cardBg: cardBg,
@@ -75,7 +75,7 @@ extension _AdminDashboardSections on _AdminDashboardHome {
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: _QuickActionButton(
-                label: 'Pusat Alert',
+                label: context.tr('room.alertCenter'),
                 subtitle: activeSos > 0
                     ? '$activeSos SOS aktif'
                     : 'Pusat notifikasi',
@@ -118,8 +118,8 @@ extension _AdminDashboardSections on _AdminDashboardHome {
           children: [
             Expanded(
               child: _QuickActionButton(
-                label: 'Kirim Siaran',
-                subtitle: 'Notifikasi broadcast',
+                label: context.tr('room.sendBroadcast'),
+                subtitle: context.tr('room.broadcastSub'),
                 icon: Icons.campaign_rounded,
                 color: AppColors.distanceWarning,
                 cardBg: cardBg,
@@ -131,8 +131,8 @@ extension _AdminDashboardSections on _AdminDashboardHome {
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: _QuickActionButton(
-                label: 'Perimeter Radar',
-                subtitle: 'Radius aman jamaah',
+                label: context.tr('room.perimeterRadar'),
+                subtitle: context.tr('room.safeRadiusSub'),
                 icon: Icons.radar_rounded,
                 color: AppColors.emeraldIslamic,
                 cardBg: cardBg,

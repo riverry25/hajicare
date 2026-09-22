@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -182,7 +183,7 @@ class PendampingRadarCard extends StatelessWidget {
                     color: headingColor,
                   ),
                   decoration: InputDecoration(
-                    hintText: 'Contoh: 250',
+                    hintText: context.tr('dashboard.sampleRadius'),
                     hintStyle: AppTypography.captionSmall.copyWith(
                       color: bodyColor,
                     ),
@@ -280,14 +281,14 @@ class PendampingRadarCard extends StatelessWidget {
                       if (success) {
                         AppAlert.success(
                           context,
-                          title: 'Jarak Aman Diperbarui',
+                          title: context.tr('dashboard.safeDistanceUpdated'),
                           message:
                               'Batas aman $parsed meter sudah diterapkan untuk rombongan.',
                         );
                       } else {
                         AppAlert.error(
                           context,
-                          title: 'Jarak Aman Belum Diubah',
+                          title: context.tr('dashboard.safeDistanceFailed'),
                           message:
                               'Periksa internet, lalu coba simpan sekali lagi.',
                           okText: 'Coba Lagi',

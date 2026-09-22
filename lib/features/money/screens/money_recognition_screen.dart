@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -691,7 +692,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
 
             // Large Shutter Button for Elderly Usability
             Semantics(
-              label: 'Ambil Foto Uang Riyal',
+              label: context.tr('money.captureRiyal'),
               button: true,
               child: GestureDetector(
                 onTap: _captureAndAnalyze,

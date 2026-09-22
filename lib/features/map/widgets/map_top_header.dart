@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -429,7 +430,7 @@ class _MapTopHeaderState extends State<MapTopHeader> {
                 fontWeight: FontWeight.w500,
               ),
               decoration: InputDecoration(
-                hintText: 'Search Location...',
+                hintText: context.tr('maps.searchPlaceholder'),
                 hintStyle: TextStyle(
                   color: isDark
                       ? Colors.white.withValues(alpha: 0.45)

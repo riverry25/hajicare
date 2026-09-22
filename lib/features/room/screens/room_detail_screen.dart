@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +13,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/user_feedback_message.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../dashboard/controllers/dashboard_controller.dart';
+import '../../map/controllers/map_controller.dart';
 import '../controllers/admin_room_controller.dart';
 import '../services/room_service.dart';
 import '../widgets/edit_room_dialog.dart';
@@ -300,11 +302,11 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     HapticFeedback.mediumImpact();
     AppAlert.confirm(
       context,
-      title: 'Hapus Rombongan?',
+      title: context.tr('room.deleteRoomTitle'),
       message:
           'Rombongan "${room.name}" akan dihapus dan semua anggota akan dikeluarkan. Tindakan ini tidak dapat dibatalkan.',
-      confirmText: 'Hapus Rombongan',
-      cancelText: 'Batal',
+      confirmText: context.tr('room.delete'),
+      cancelText: context.tr('common.cancel'),
       isDestructive: true,
       onConfirm: () async {
         try {
@@ -330,7 +332,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
           if (context.mounted) {
             AppAlert.success(
               context,
-              title: 'Rombongan Dihapus',
+              title: context.tr('room.roomDeleted'),
               message: 'Rombongan "${room.name}" sudah dihapus.',
             );
             await hajiCare?.leaveRoom();
@@ -340,7 +342,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
           if (context.mounted) {
             AppAlert.error(
               context,
-              title: 'Belum Dapat Dihapus',
+              title: context.tr('room.deleteFailed'),
               message: UserFeedbackMessage.from(
                 e,
                 fallback: 'Rombongan belum dapat dihapus. Silakan coba lagi.',
@@ -698,7 +700,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                       );
                                       AppAlert.success(
                                         context,
-                                        title: 'Kode Disalin',
+                                        title: context.tr('room.codeCopied'),
                                         message:
                                             'Kode rombongan "${room.code}" sudah disalin.',
                                       );
@@ -1077,7 +1079,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                           children: [
                             Expanded(
                               child: _buildStatSummaryItem(
-                                label: 'Total Anggota',
+                                label: context.tr('room.totalMembers'),
                                 value: '$_totalCount',
                                 color: headingColor,
                               ),
@@ -1386,7 +1388,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                     fontSize: 13.5,
                   ),
                   decoration: InputDecoration(
-                    hintText: 'Cari nama atau peran anggota...',
+                    hintText: context.tr('room.searchMember'),
                     hintStyle: AppTypography.bodyMedium.copyWith(
                       color: bodyColor.withValues(alpha: 0.5),
                       fontSize: 13,
@@ -2087,7 +2089,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
                 _buildModalInfoTile(
                   icon: Icons.access_time_rounded,
-                  label: 'Status Kehadiran',
+                  label: context.tr('room.attendanceStatus'),
                   value: member.getLocationStatus(),
                   color: primaryColor,
                   headingColor: headingColor,
@@ -2096,7 +2098,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                 const SizedBox(height: 10),
                 _buildModalInfoTile(
                   icon: Icons.calendar_today_rounded,
-                  label: 'Tanggal Bergabung',
+                  label: context.tr('room.joinDate'),
                   value: member.joinedAt != null
                       ? _formatDate(member.joinedAt)
                       : 'Tidak diketahui',
@@ -2108,7 +2110,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                   const SizedBox(height: 10),
                   _buildModalInfoTile(
                     icon: Icons.location_on_rounded,
-                    label: 'Koordinat Lokasi',
+                    label: context.tr('room.locationCoordinates'),
                     value:
                         '${member.latitude!.toStringAsFixed(5)}, ${member.longitude!.toStringAsFixed(5)}',
                     color: primaryColor,
@@ -2128,6 +2130,12 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                             Navigator.pop(ctx);
                             if (Get.isRegistered<DashboardController>()) {
                               Get.find<DashboardController>().changeTab(1);
+                              if (Get.isRegistered<MapController>()) {
+                                Get.find<MapController>().focusOnMember(
+                                  member,
+                                  autoRoute: false,
+                                );
+                              }
                               Get.back();
                             }
                           },
@@ -2232,10 +2240,10 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     HapticFeedback.mediumImpact();
     AppAlert.confirm(
       context,
-      title: 'Keluarkan Jamaah?',
+      title: context.tr('room.removeMemberTitle'),
       message: 'Keluarkan "${member.name}" dari rombongan ini?',
-      confirmText: 'Keluarkan',
-      cancelText: 'Batal',
+      confirmText: context.tr('room.removeAction'),
+      cancelText: context.tr('common.cancel'),
       isDestructive: true,
       onConfirm: () async {
         try {
@@ -2256,7 +2264,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
           if (context.mounted) {
             AppAlert.success(
               context,
-              title: 'Jamaah Dikeluarkan',
+              title: context.tr('room.memberRemoved'),
               message: '${member.name} sudah dikeluarkan dari rombongan.',
             );
           }
@@ -2264,7 +2272,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
           if (context.mounted) {
             AppAlert.error(
               context,
-              title: 'Belum Dapat Dikeluarkan',
+              title: context.tr('room.memberRemoveFailed'),
               message: UserFeedbackMessage.from(
                 e,
                 fallback: 'Jamaah belum dapat dikeluarkan. Silakan coba lagi.',

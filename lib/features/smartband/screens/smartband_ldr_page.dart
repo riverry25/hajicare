@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_colors.dart';
@@ -20,9 +21,9 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
 
     return Scaffold(
       backgroundColor: scaffoldBg,
-      appBar: const HajiCareHeader(
-        title: 'Gelang Pintar Haji',
-        subtitle: 'Prototype BLE • Sensor LDR & Flame',
+      appBar: HajiCareHeader(
+        title: context.tr('smartband.hajjSmartband'),
+        subtitle: context.tr('smartband.blePrototype'),
         icon: Icons.watch_rounded,
         showBackButton: true,
       ),

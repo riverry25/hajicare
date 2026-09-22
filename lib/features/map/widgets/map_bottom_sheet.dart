@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../../core/state/hajicare_state.dart';
@@ -26,6 +27,8 @@ class MapBottomSheet extends StatefulWidget {
   final String? routeError;
   final VoidCallback? onRetryRoute;
 
+  final VoidCallback? onCenterOnMember;
+
   final double bottomOffset;
 
   const MapBottomSheet({
@@ -41,6 +44,7 @@ class MapBottomSheet extends StatefulWidget {
     this.onNavigate,
     this.onShareLocation,
     this.onCall,
+    this.onCenterOnMember,
     this.isRouteLoading = false,
     this.routeDistanceMeters,
     this.routeDurationSeconds,
@@ -81,6 +85,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
   int? get routeDurationSeconds => widget.routeDurationSeconds;
   String? get routeError => widget.routeError;
   VoidCallback? get onRetryRoute => widget.onRetryRoute;
+  VoidCallback? get onCenterOnMember => widget.onCenterOnMember;
   double get bottomOffset => widget.bottomOffset;
 
   @override
@@ -207,6 +212,18 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     final isDark = AppColors.isDark(context);
     final opacity = (1.0 - (_dragOffset / 280.0)).clamp(0.0, 1.0);
 
+    final effectiveMember =
+        selectedMember ??
+        (activeJamaah != null
+            ? RoomMemberModel(
+                uid: activeJamaah!.id,
+                name: activeJamaah!.name,
+                role: 'jamaah',
+                currentLocation: activeJamaah!.currentLocation,
+                locationUpdatedAt: activeJamaah!.locationUpdatedAt,
+              )
+            : null);
+
     return Positioned(
       left: AppSpacing.md,
       right: AppSpacing.md,
@@ -274,8 +291,8 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                         ),
                       ),
 
-                      if (selectedMember != null)
-                        _buildSelectedMemberDetail(context, selectedMember!)
+                      if (effectiveMember != null)
+                        _buildSelectedMemberDetail(context, effectiveMember)
                       else if (roomMembers != null && roomMembers!.isNotEmpty)
                         _buildRoomMembersList(context, roomMembers!)
                       else
@@ -346,6 +363,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
             children: [
               GestureDetector(
                 behavior: HitTestBehavior.translucent,
+                onTap: onCenterOnMember,
                 onVerticalDragUpdate: _onVerticalDragUpdate,
                 onVerticalDragEnd: _onVerticalDragEnd,
                 onVerticalDragCancel: _onVerticalDragCancel,
@@ -641,7 +659,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
             child: _buildRouteMetric(
               context: context,
               icon: Icons.near_me_rounded,
-              label: 'Langsung',
+              label: context.tr('maps.direct'),
               value: directDist,
             ),
           ),
@@ -654,7 +672,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
             child: _buildRouteMetric(
               context: context,
               icon: Icons.directions_walk_rounded,
-              label: 'Jalan Kaki',
+              label: context.tr('maps.walking'),
               value: _formatDistance(routeDistanceMeters!),
             ),
           ),
@@ -667,7 +685,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
             child: _buildRouteMetric(
               context: context,
               icon: Icons.timer_outlined,
-              label: 'Estimasi',
+              label: context.tr('maps.estimate'),
               value: _formatDuration(routeDurationSeconds!),
             ),
           ),
@@ -955,7 +973,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                           color: AppColors.textHeadingColor(context),
                         ),
                         decoration: InputDecoration(
-                          hintText: 'Cari nama atau status...',
+                          hintText: context.tr('maps.searchNameOrStatus'),
                           hintStyle: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w400,

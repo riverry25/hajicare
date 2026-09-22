@@ -226,9 +226,12 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
               _buildMoneyRecognitionMetric(context),
               _buildMetricColumn(
                 value: '$prayerName $cleanPrayerTime',
-                label: 'Jadwal Salat',
+                label: context.tr('dashboard.prayerSchedule'),
               ),
-              _buildMetricColumn(value: gpsDisplay, label: 'Status Lokasi'),
+              _buildMetricColumn(
+                value: gpsDisplay,
+                label: context.tr('dashboard.locationStatus'),
+              ),
             ],
           ),
 

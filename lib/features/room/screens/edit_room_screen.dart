@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -93,7 +94,7 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
         Get.back(result: true);
         AppAlert.success(
           context,
-          title: 'Perubahan Disimpan',
+          title: context.tr('room.changesSaved'),
           message: 'Pengaturan rombongan "$name" sudah diperbarui.',
         );
       }
@@ -255,7 +256,7 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
                 fontWeight: FontWeight.w600,
               ),
               decoration: dec(
-                label: 'Nama Room / Rombongan *',
+                label: context.tr('room.roomNameField'),
                 hint: 'Contoh: Rombongan Maktab 48 Kloter 12',
                 prefix: const Icon(Icons.meeting_room_outlined, size: 20),
               ),
@@ -329,7 +330,7 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
                 fontWeight: FontWeight.w600,
               ),
               decoration: dec(
-                label: 'Batas Radius Aman *',
+                label: context.tr('room.safeRadiusLimit'),
                 hint: '200',
                 suffix: 'meter',
                 prefix: const Icon(Icons.radar_rounded, size: 20),

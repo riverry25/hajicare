@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -44,45 +45,45 @@ class _QuickPhrase {
   });
 }
 
-const List<_QuickPhrase> _kQuickPhrases = [
+List<_QuickPhrase> _getQuickPhrases(BuildContext context) => [
   _QuickPhrase(
-    label: 'Tersesat',
+    label: context.tr('translator.lostPhrase'),
     idText: 'Tolong, saya tersesat dan butuh bantuan',
     arText: 'من فضلك، لقد ضللت طريقي وأحتاج إلى مساعدة',
     icon: '🆘',
   ),
   _QuickPhrase(
-    label: 'Pintu Keluar',
+    label: context.tr('translator.exitPhrase'),
     idText: 'Di mana pintu keluar Masjidil Haram?',
     arText: 'أين مخرج المسجد الحرام؟',
     icon: '🕋',
   ),
   _QuickPhrase(
-    label: 'Medis / Dokter',
+    label: context.tr('translator.medicalPhrase'),
     idText: 'Saya merasa sakit dan butuh dokter',
     arText: 'أشعر بالمرض وأحتاج إلى طبيب',
     icon: '🩺',
   ),
   _QuickPhrase(
-    label: 'Toilet / Wudhu',
+    label: context.tr('translator.toiletPhrase'),
     idText: 'Di mana toilet dan tempat wudhu terdekat?',
     arText: 'أين أقرب دورة مياه ومكان للوضوء؟',
     icon: '🚾',
   ),
   _QuickPhrase(
-    label: 'Air Zamzam',
+    label: context.tr('translator.zamzamPhrase'),
     idText: 'Di mana tempat minum air Zamzam?',
     arText: 'أين مكان شرب ماء زمزم؟',
     icon: '💧',
   ),
   _QuickPhrase(
-    label: 'Tanya Harga',
+    label: context.tr('translator.pricePhrase'),
     idText: 'Berapa harga barang ini?',
     arText: 'بكم هذا؟',
     icon: '🏷️',
   ),
   _QuickPhrase(
-    label: 'Taksi ke Hotel',
+    label: context.tr('translator.taxiPhrase'),
     idText: 'Tolong antar saya ke hotel ini',
     arText: 'من فضلك خذني إلى هذا الفندق',
     icon: '🚕',
@@ -218,7 +219,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
 
     setState(() {
       _isTranslating = true;
-      _statusMessage = 'Menerjemahkan…';
+      _statusMessage = AppTranslations.tr('translator.translating');
     });
 
     try {
@@ -246,8 +247,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
       if (mounted) {
         setState(() {
           _isTranslating = false;
-          _statusMessage =
-              'Terjemahan belum berhasil. Periksa internet, lalu coba lagi.';
+          _statusMessage = AppTranslations.tr('translator.translationError');
         });
       }
     }
@@ -287,7 +287,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
     Clipboard.setData(ClipboardData(text: _resultText.trim()));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Teks terjemahan sudah disalin dan siap ditempel.'),
+        content: Text(context.tr('translator.copiedReady')),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -390,7 +390,9 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                     horizontal: AppSpacing.screenEdgeGutter,
                   ),
                   child: Text(
-                    isSource ? 'Pilih Bahasa Asal' : 'Pilih Bahasa Tujuan',
+                    isSource
+                        ? context.tr('translator.selectSourceLang')
+                        : context.tr('translator.selectTargetLang'),
                     style: AppTypography.titleMedium.copyWith(
                       color: headingColor,
                       fontWeight: FontWeight.w700,
@@ -500,14 +502,14 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Penerjemah HajiCare',
+                          context.tr('translator.title'),
                           style: AppTypography.titleMedium.copyWith(
                             color: headingColor,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                         Text(
-                          'Terjemahan Suara & Teks Haji/Umrah',
+                          context.tr('translator.subtitle'),
                           style: AppTypography.captionSmall.copyWith(
                             color: bodyColor.withValues(alpha: 0.7),
                           ),
@@ -518,7 +520,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                   IconButton(
                     icon: Icon(Icons.close_rounded, color: bodyColor),
                     onPressed: () => Navigator.of(context).pop(),
-                    tooltip: 'Tutup',
+                    tooltip: context.tr('common.close'),
                   ),
                 ],
               ),
@@ -748,7 +750,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
           Expanded(
             child: Text(
               _speechMessage ??
-                  (isListening ? 'Mendengarkan... Silakan bicara' : ''),
+                  (isListening ? context.tr('translator.listeningPrompt') : ''),
               style: AppTypography.captionSmall.copyWith(
                 color: isListening ? AppColors.sosEmergency : bodyColor,
                 fontWeight: isListening ? FontWeight.w600 : FontWeight.w500,
@@ -801,7 +803,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
               height: 1.35,
             ),
             decoration: InputDecoration(
-              hintText: 'Ketik teks atau gunakan tombol mikrofon…',
+              hintText: context.tr('translator.typeOrMicPrompt'),
               hintStyle: AppTypography.bodyMedium.copyWith(
                 color: bodyColor.withValues(alpha: 0.45),
               ),
@@ -843,7 +845,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'Hapus',
+                          context.tr('translator.clear'),
                           style: AppTypography.captionSmall.copyWith(
                             color: bodyColor.withValues(alpha: 0.6),
                           ),
@@ -928,7 +930,9 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
           Row(
             children: [
               Text(
-                'Terjemahan (${_targetLanguage.name})',
+                context.tr('translator.translationResult', {
+                  'lang': _targetLanguage.name,
+                }),
                 style: AppTypography.captionSmall.copyWith(
                   color: primaryColor,
                   fontWeight: FontWeight.w700,
@@ -958,7 +962,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                     child: Text(
                       _statusMessage.isNotEmpty
                           ? _statusMessage
-                          : 'Sedang menerjemahkan…',
+                          : context.tr('translator.translating'),
                       style: AppTypography.bodyMedium.copyWith(
                         color: bodyColor.withValues(alpha: 0.7),
                         fontStyle: FontStyle.italic,
@@ -972,7 +976,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                     child: Text(
                       hasResult
                           ? _resultText
-                          : 'Hasil terjemahan akan tampil di sini…',
+                          : context.tr('translator.outputPlaceholder'),
                       textDirection: (hasResult && isArabic)
                           ? TextDirection.rtl
                           : TextDirection.ltr,
@@ -1007,7 +1011,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                     color: bodyColor.withValues(alpha: 0.75),
                     size: 20,
                   ),
-                  tooltip: 'Salin Teks',
+                  tooltip: context.tr('translator.copyTooltip'),
                   onPressed: _copyResult,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(
@@ -1074,7 +1078,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
             ),
             const SizedBox(width: 6),
             Text(
-              'Frasa Penting Haji & Umrah',
+              context.tr('translator.quickPhrasesTitle'),
               style: AppTypography.labelLarge.copyWith(
                 color: headingColor,
                 fontWeight: FontWeight.w700,
@@ -1088,10 +1092,10 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
-            itemCount: _kQuickPhrases.length,
+            itemCount: _getQuickPhrases(context).length,
             separatorBuilder: (context, index) => const SizedBox(width: 8),
             itemBuilder: (context, index) {
-              final phrase = _kQuickPhrases[index];
+              final phrase = _getQuickPhrases(context)[index];
               return InkWell(
                 onTap: () => _applyQuickPhrase(phrase),
                 borderRadius: BorderRadius.circular(AppRadius.pill),

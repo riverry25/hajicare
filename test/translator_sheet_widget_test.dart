@@ -23,6 +23,8 @@ void main() {
       (tester) async {
         await tester.pumpWidget(
           MaterialApp(
+            locale: const Locale('id'),
+            supportedLocales: AppTranslations.supportedLocales,
             theme: AppTheme.lightTheme,
             localizationsDelegates: const [
               AppLocalizations.delegate,

@@ -1,3 +1,4 @@
+import '../../../core/locales/app_translations.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_compass/flutter_compass.dart';
@@ -242,7 +243,7 @@ class PrayerTimesController extends GetxController {
       if (result.state == LocationPermissionState.serviceDisabled) {
         AppAlert.warning(
           Get.context,
-          title: 'Lokasi Ponsel Belum Aktif',
+          title: AppTranslations.tr('prayer.phoneGpsInactive'),
           message:
               'Aktifkan lokasi ponsel agar jadwal salat sesuai tempat Anda berada.',
           okText: 'Buka Pengaturan',
@@ -251,7 +252,7 @@ class PrayerTimesController extends GetxController {
       } else if (result.state == LocationPermissionState.deniedForever) {
         AppAlert.warning(
           Get.context,
-          title: 'Izin Lokasi Diperlukan',
+          title: AppTranslations.tr('prayer.locationPermissionRequired'),
           message:
               'Buka pengaturan, lalu izinkan HajiCare memakai lokasi ponsel.',
           okText: 'Buka Pengaturan',
@@ -261,7 +262,7 @@ class PrayerTimesController extends GetxController {
           result.errorMessage!.isNotEmpty) {
         AppAlert.error(
           Get.context,
-          title: 'Lokasi Belum Ditemukan',
+          title: AppTranslations.tr('prayer.locationNotFound'),
           message: result.errorMessage!,
           okText: 'Coba Lagi',
         );

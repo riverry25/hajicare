@@ -493,7 +493,7 @@ class _RoomPantauCard extends StatelessWidget {
                                 );
                                 AppAlert.info(
                                   context,
-                                  title: 'Kode Disalin',
+                                  title: context.tr('room.codeCopied'),
                                   message:
                                       'Kode rombongan "${room.code}" sudah disalin dan siap ditempel.',
                                 );

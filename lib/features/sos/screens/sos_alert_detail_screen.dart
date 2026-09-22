@@ -1,3 +1,4 @@
+import '../../../core/locales/app_localizations.dart';
 import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
@@ -169,7 +170,7 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
     if (target == null) {
       AppAlert.warning(
         context,
-        title: 'Lokasi Belum Tersedia',
+        title: context.tr('maps.locationUnavailable'),
         message: 'Posisi jamaah belum dikirimkan. Coba lagi sebentar.',
       );
       return;
@@ -230,24 +231,24 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
 
     AppAlert.confirm(
       context,
-      title: 'Selesaikan SOS?',
+      title: context.tr('sos.completeDialogTitle'),
       message: 'Apakah situasi darurat untuk "$name" sudah ditangani?',
-      confirmText: 'Ya, Selesaikan',
-      cancelText: 'Batal',
+      confirmText: context.tr('sos.yesComplete'),
+      cancelText: context.tr('common.cancel'),
       onConfirm: () async {
         final success = await _state.dismissSos(userId, eventId: _eventId);
         if (mounted) {
           if (success) {
             AppAlert.success(
               context,
-              title: 'SOS Diselesaikan',
+              title: context.tr('sos.completed'),
               message: 'Panggilan SOS untuk "$name" telah diakhiri.',
             );
             Get.back();
           } else {
             AppAlert.error(
               context,
-              title: 'Gagal Menyelesaikan',
+              title: context.tr('sos.statusNotChanged'),
               message: 'Periksa koneksi internet, lalu coba lagi.',
               okText: 'Coba Lagi',
             );
@@ -402,7 +403,7 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                 const Divider(height: 20),
                 _InfoRow(
                   icon: Icons.fingerprint_rounded,
-                  label: 'ID Jamaah',
+                  label: context.tr('sos.pilgrimId'),
                   value: userId,
                   color: bodyColor,
                   headingColor: headingColor,
@@ -410,7 +411,7 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                 const SizedBox(height: 8),
                 _InfoRow(
                   icon: Icons.flight_rounded,
-                  label: 'Kloter',
+                  label: context.tr('sos.kloterLabel'),
                   value: (kloter != null && kloter.isNotEmpty) ? kloter : '-',
                   color: bodyColor,
                   headingColor: headingColor,
@@ -418,7 +419,7 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                 const SizedBox(height: 8),
                 _InfoRow(
                   icon: Icons.holiday_village_rounded,
-                  label: 'Maktab',
+                  label: context.tr('sos.maktabLabel'),
                   value: (maktab != null && maktab.isNotEmpty) ? maktab : '-',
                   color: bodyColor,
                   headingColor: headingColor,
@@ -426,7 +427,7 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                 const SizedBox(height: 8),
                 _InfoRow(
                   icon: Icons.access_time_rounded,
-                  label: 'Waktu SOS',
+                  label: context.tr('sos.sosTime'),
                   value: timeStr,
                   color: bodyColor,
                   headingColor: headingColor,
@@ -473,7 +474,7 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                           );
                           AppAlert.success(
                             context,
-                            title: 'Koordinat Disalin',
+                            title: context.tr('sos.coordinatesCopied'),
                             message: 'Koordinat GPS jamaah sudah disalin.',
                           );
                         },

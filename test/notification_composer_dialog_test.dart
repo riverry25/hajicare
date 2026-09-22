@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
+import 'package:hajicare/core/locales/app_localizations.dart';
 import 'package:hajicare/core/state/hajicare_controller.dart';
 import 'package:hajicare/features/notification/widgets/notification_composer_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -41,6 +43,17 @@ void main() {
     String? initialTargetUserName,
   }) {
     return MaterialApp(
+      locale: const Locale('id'),
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        FallbackMaterialLocalizationsDelegate(),
+        FallbackCupertinoLocalizationsDelegate(),
+        FallbackWidgetsLocalizationsDelegate(),
+      ],
+      supportedLocales: AppTranslations.supportedLocales,
       home: MediaQuery(
         data: MediaQueryData(
           size: size,
