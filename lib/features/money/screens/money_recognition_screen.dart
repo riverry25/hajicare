@@ -260,6 +260,19 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
     }
   }
 
+  Future<void> _toggleVoice() async {
+    final bool shouldEnableVoice = !_ttsService.isVoiceEnabled;
+
+    setState(() {
+      _ttsService.isVoiceEnabled = shouldEnableVoice;
+    });
+
+    // Muting must also silence an announcement that is already playing.
+    if (!shouldEnableVoice) {
+      await _ttsService.stop();
+    }
+  }
+
   void _onTapToFocus(TapDownDetails details) {
     if (_mode != RecognitionMode.camera) return;
 
@@ -378,155 +391,104 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
       child: Container(
         padding: EdgeInsets.fromLTRB(
           AppSpacing.screenEdgeGutter,
-          topPadding + AppSpacing.sm,
+          topPadding + AppSpacing.md,
           AppSpacing.screenEdgeGutter,
-          AppSpacing.md,
+          AppSpacing.xl,
         ),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Colors.black.withValues(alpha: 0.88),
-              Colors.black.withValues(alpha: 0.40),
+              Colors.black.withValues(alpha: 0.72),
+              Colors.black.withValues(alpha: 0.26),
               Colors.transparent,
             ],
           ),
         ),
         child: Row(
           children: [
-            // Back Button
-            Material(
-              color: Colors.black.withValues(alpha: 0.55),
-              shape: const CircleBorder(),
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: () => Get.back(),
-                child: const SizedBox(
-                  width: 46,
-                  height: 46,
-                  child: Icon(
-                    Icons.arrow_back_rounded,
-                    color: Colors.white,
-                    size: 22,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-
-            // Screen Title
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Deteksi Uang Riyal',
+                    'Pindai Uang',
                     style: AppTypography.titleLarge.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
+                      fontSize: 20,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Arahkan kamera & tekan tombol foto',
+                    'Kenali nominal Riyal dengan kamera',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: AppTypography.captionSmall.copyWith(
-                      color: AppColors.canvasCream.withValues(alpha: 0.85),
-                      fontWeight: FontWeight.w500,
+                      color: Colors.white.withValues(alpha: 0.78),
                     ),
                   ),
                 ],
               ),
             ),
+            const SizedBox(width: AppSpacing.sm),
 
-            // Sound Toggle (Large touch target)
-            Material(
-              color: _ttsService.isVoiceEnabled
-                  ? AppColors.goldPrimary.withValues(alpha: 0.3)
-                  : Colors.black.withValues(alpha: 0.55),
-              shape: CircleBorder(
-                side: BorderSide(
-                  color: _ttsService.isVoiceEnabled
-                      ? AppColors.goldPrimary
-                      : Colors.white24,
-                  width: 1.5,
-                ),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: () {
-                  setState(() {
-                    _ttsService.isVoiceEnabled = !_ttsService.isVoiceEnabled;
-                  });
-                },
-                child: SizedBox(
-                  width: 46,
-                  height: 46,
-                  child: Icon(
-                    _ttsService.isVoiceEnabled
-                        ? Icons.volume_up_rounded
-                        : Icons.volume_off_rounded,
-                    color: _ttsService.isVoiceEnabled
-                        ? AppColors.goldPrimary
-                        : Colors.white60,
-                    size: 22,
-                  ),
-                ),
-              ),
+            _buildRoundCameraControl(
+              icon: _ttsService.isVoiceEnabled
+                  ? Icons.volume_up_rounded
+                  : Icons.volume_off_rounded,
+              label: _ttsService.isVoiceEnabled
+                  ? 'Matikan suara'
+                  : 'Aktifkan suara',
+              onTap: _toggleVoice,
+              isActive: _ttsService.isVoiceEnabled,
             ),
-            const SizedBox(width: AppSpacing.xs),
-
-            // Torch Toggle
-            Material(
-              color: _isTorchOn
-                  ? AppColors.goldPrimary
-                  : Colors.black.withValues(alpha: 0.55),
-              shape: CircleBorder(
-                side: BorderSide(
-                  color: _isTorchOn ? AppColors.goldPrimary : Colors.white24,
-                  width: 1.5,
-                ),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: _toggleTorch,
-                child: SizedBox(
-                  width: 46,
-                  height: 46,
-                  child: Icon(
-                    _isTorchOn
-                        ? Icons.flash_on_rounded
-                        : Icons.flash_off_rounded,
-                    color: _isTorchOn ? AppColors.espressoDark : Colors.white,
-                    size: 22,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.xs),
-
-            // Switch Camera
-            Material(
-              color: Colors.black.withValues(alpha: 0.55),
-              shape: const CircleBorder(
-                side: BorderSide(color: Colors.white24, width: 1.5),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: _switchCamera,
-                child: const SizedBox(
-                  width: 46,
-                  height: 46,
-                  child: Icon(
-                    Icons.flip_camera_ios_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-              ),
+            const SizedBox(width: AppSpacing.sm),
+            _buildRoundCameraControl(
+              icon: Icons.close_rounded,
+              label: 'Tutup pemindai uang',
+              onTap: Get.back,
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRoundCameraControl({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    bool isActive = false,
+    double size = 48,
+  }) {
+    return Semantics(
+      label: label,
+      button: true,
+      child: Material(
+        color: isActive
+            ? AppColors.goldPrimary.withValues(alpha: 0.24)
+            : Colors.black.withValues(alpha: 0.38),
+        shape: CircleBorder(
+          side: BorderSide(
+            color: isActive
+                ? AppColors.goldPrimary.withValues(alpha: 0.9)
+                : Colors.white.withValues(alpha: 0.22),
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox.square(
+            dimension: size,
+            child: Icon(
+              icon,
+              color: isActive ? AppColors.goldPrimary : Colors.white,
+              size: size * 0.48,
+            ),
+          ),
         ),
       ),
     );
@@ -535,57 +497,24 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
   Widget _buildViewfinderGuide() {
     return IgnorePointer(
       child: Center(
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 90),
-          width: 320,
-          height: 240,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.35),
-              width: 1.5,
-            ),
-          ),
-          child: Stack(
-            children: [
-              _cornerMarker(Alignment.topLeft),
-              _cornerMarker(Alignment.topRight),
-              _cornerMarker(Alignment.bottomLeft),
-              _cornerMarker(Alignment.bottomRight),
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.65),
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                    border: Border.all(
-                      color: AppColors.goldPrimary.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.payments_outlined,
-                        color: AppColors.goldPrimary,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Arahkan uang ke area ini',
-                        style: AppTypography.captionSmall.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
+        child: FractionallySizedBox(
+          widthFactor: 0.84,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 380),
+            child: AspectRatio(
+              aspectRatio: 1.5,
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 42),
+                child: Stack(
+                  children: [
+                    _cornerMarker(Alignment.topLeft),
+                    _cornerMarker(Alignment.topRight),
+                    _cornerMarker(Alignment.bottomLeft),
+                    _cornerMarker(Alignment.bottomRight),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -645,7 +574,11 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
   }
 
   Widget _buildCameraBottomBar() {
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final mediaQuery = MediaQuery.of(context);
+    final bottomPadding = mediaQuery.padding.bottom;
+    final bool isCompactHeight = mediaQuery.size.height < 600;
+    final double shutterSize = isCompactHeight ? 70 : 82;
+    final double sideControlSize = isCompactHeight ? 48 : 54;
 
     return Positioned(
       bottom: 0,
@@ -654,17 +587,17 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
       child: Container(
         padding: EdgeInsets.fromLTRB(
           AppSpacing.screenEdgeGutter,
-          AppSpacing.lg,
+          isCompactHeight ? AppSpacing.lg : AppSpacing.xxxl,
           AppSpacing.screenEdgeGutter,
-          bottomPadding + AppSpacing.md,
+          bottomPadding + (isCompactHeight ? AppSpacing.sm : AppSpacing.lg),
         ),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.bottomCenter,
             end: Alignment.topCenter,
             colors: [
-              Colors.black.withValues(alpha: 0.95),
-              Colors.black.withValues(alpha: 0.60),
+              Colors.black.withValues(alpha: 0.90),
+              Colors.black.withValues(alpha: 0.50),
               Colors.transparent,
             ],
           ),
@@ -672,79 +605,88 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Instruction
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-              ),
-              child: Text(
-                'Letakkan lembaran uang SAR, lalu tekan tombol foto di bawah',
-                textAlign: TextAlign.center,
-                style: AppTypography.captionSmall.copyWith(
-                  color: Colors.white.withValues(alpha: 0.9),
-                  fontWeight: FontWeight.w600,
+            if (!isCompactHeight) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.38),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.16),
+                  ),
+                ),
+                child: Text(
+                  'Posisikan seluruh uang di dalam bingkai',
+                  textAlign: TextAlign.center,
+                  style: AppTypography.captionSmall.copyWith(
+                    color: Colors.white.withValues(alpha: 0.92),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
+              const SizedBox(height: AppSpacing.md),
+            ],
+            Text(
+              'PINDAI UANG',
+              style: AppTypography.captionSmall.copyWith(
+                color: AppColors.goldPrimary,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.2,
+              ),
             ),
-            const SizedBox(height: 18),
-
-            // Large Shutter Button for Elderly Usability
-            Semantics(
-              label: context.tr('money.captureRiyal'),
-              button: true,
-              child: GestureDetector(
-                onTap: _captureAndAnalyze,
-                child: Container(
-                  width: 86,
-                  height: 86,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.goldPrimary, width: 4),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.goldPrimary.withValues(alpha: 0.35),
-                        blurRadius: 16,
-                        spreadRadius: 2,
-                      ),
-                    ],
+            const SizedBox(height: AppSpacing.md),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 380),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildRoundCameraControl(
+                    icon: _isTorchOn
+                        ? Icons.flash_on_rounded
+                        : Icons.flash_off_rounded,
+                    label: _isTorchOn ? 'Matikan lampu' : 'Nyalakan lampu',
+                    onTap: _toggleTorch,
+                    isActive: _isTorchOn,
+                    size: sideControlSize,
                   ),
-                  child: Center(
-                    child: Container(
-                      width: 70,
-                      height: 70,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 8,
-                            offset: Offset(0, 2),
+                  Semantics(
+                    label: context.tr('money.captureRiyal'),
+                    button: true,
+                    child: GestureDetector(
+                      onTap: _captureAndAnalyze,
+                      child: Container(
+                        width: shutterSize,
+                        height: shutterSize,
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 3),
+                          color: Colors.black.withValues(alpha: 0.16),
+                        ),
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white,
                           ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.camera_alt_rounded,
-                          color: AppColors.espressoDark,
-                          size: 34,
+                          child: const Icon(
+                            Icons.document_scanner_rounded,
+                            color: AppColors.espressoDark,
+                            size: 30,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            Text(
-              'Pindai Uang',
-              style: AppTypography.bodyLarge.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.2,
+                  _buildRoundCameraControl(
+                    icon: Icons.cameraswitch_rounded,
+                    label: 'Ganti kamera',
+                    onTap: _switchCamera,
+                    size: sideControlSize,
+                  ),
+                ],
               ),
             ),
           ],
@@ -825,6 +767,9 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
     final topPadding = MediaQuery.of(context).padding.top;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     final bool hasDetections = _capturedDetections.isNotEmpty;
+    final Color voiceControlColor = _ttsService.isVoiceEnabled
+        ? AppColors.goldPrimary
+        : Colors.white38;
 
     final double aspectRatio =
         (_capturedImageSize != null && _capturedImageSize!.height > 0)
@@ -865,27 +810,30 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                     ),
                   ),
                 ),
-                // Speaker Button to repeat TTS
+                // Keep the same mute state and behavior as the camera screen.
                 Container(
                   decoration: BoxDecoration(
                     color: AppColors.surfaceWhite.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: AppColors.goldPrimary.withValues(alpha: 0.4),
+                      color: _ttsService.isVoiceEnabled
+                          ? AppColors.goldPrimary.withValues(alpha: 0.55)
+                          : Colors.white24,
                     ),
                   ),
                   child: IconButton(
-                    icon: const Icon(
-                      Icons.volume_up_rounded,
-                      color: AppColors.goldPrimary,
+                    icon: Icon(
+                      _ttsService.isVoiceEnabled
+                          ? Icons.volume_up_rounded
+                          : Icons.volume_off_rounded,
+                      color: _ttsService.isVoiceEnabled
+                          ? AppColors.goldPrimary
+                          : Colors.white60,
                     ),
-                    tooltip: 'Bacakan Ulang',
-                    onPressed: () {
-                      _ttsService.speakResults(
-                        _capturedDetections,
-                        _totalAmount,
-                      );
-                    },
+                    tooltip: _ttsService.isVoiceEnabled
+                        ? 'Matikan suara'
+                        : 'Aktifkan suara',
+                    onPressed: _toggleVoice,
                   ),
                 ),
               ],
@@ -1183,28 +1131,38 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                           height: 54,
                           child: OutlinedButton.icon(
                             style: OutlinedButton.styleFrom(
-                              side: const BorderSide(
-                                color: AppColors.goldPrimary,
+                              side: BorderSide(
+                                color: voiceControlColor,
                                 width: 1.5,
                               ),
-                              foregroundColor: AppColors.goldPrimary,
+                              foregroundColor: voiceControlColor,
+                              disabledForegroundColor: voiceControlColor,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(
                                   AppRadius.pill,
                                 ),
                               ),
                             ),
-                            onPressed: () {
-                              _ttsService.speakResults(
-                                _capturedDetections,
-                                _totalAmount,
-                              );
-                            },
-                            icon: const Icon(Icons.volume_up_rounded, size: 22),
+                            onPressed: _ttsService.isVoiceEnabled
+                                ? () {
+                                    _ttsService.speakResults(
+                                      _capturedDetections,
+                                      _totalAmount,
+                                    );
+                                  }
+                                : null,
+                            icon: Icon(
+                              _ttsService.isVoiceEnabled
+                                  ? Icons.volume_up_rounded
+                                  : Icons.volume_off_rounded,
+                              size: 22,
+                            ),
                             label: Text(
-                              'Bacakan Suara',
+                              _ttsService.isVoiceEnabled
+                                  ? 'Bacakan Suara'
+                                  : 'Suara Mati',
                               style: AppTypography.labelLarge.copyWith(
-                                color: AppColors.goldPrimary,
+                                color: voiceControlColor,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),

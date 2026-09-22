@@ -1,5 +1,6 @@
-import '../../../core/locales/app_localizations.dart';
+import 'dart:async';
 import 'dart:ui' as ui;
+import '../../../core/locales/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart' as fmap;
@@ -76,10 +77,14 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
     ),
   ];
 
+  Timer? _mapIdleTimer;
+  bool _isMapInteracting = false;
+
   @override
   void initState() {
     super.initState();
     _searchCtrl = TextEditingController();
+    _searchCtrl.addListener(_onSearchTextUpdated);
     _mapController = Get.find<MapController>();
     _pulseController = AnimationController(
       vsync: this,
@@ -87,8 +92,35 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
     )..repeat(reverse: true);
   }
 
+  void _onSearchTextUpdated() {
+    if (mounted) setState(() {});
+  }
+
+  void _onUserMapInteraction() {
+    _mapIdleTimer?.cancel();
+    if (!_isMapInteracting) {
+      setState(() {
+        _isMapInteracting = true;
+      });
+    }
+    // Collapse member panel back to compact mode when map is moving
+    if (_mapController.isBottomSheetOpen.value &&
+        _mapController.selectedPoi.value == null) {
+      _mapController.closeBottomSheet();
+    }
+    _mapIdleTimer = Timer(const Duration(milliseconds: 1500), () {
+      if (mounted) {
+        setState(() {
+          _isMapInteracting = false;
+        });
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _mapIdleTimer?.cancel();
+    _searchCtrl.removeListener(_onSearchTextUpdated);
     _searchCtrl.dispose();
     _pulseController.dispose();
     super.dispose();
@@ -105,64 +137,10 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
-          // 1. Core Interactive Map Layer
+          // 1. Core Interactive Map Layer (Layer Peta)
           RepaintBoundary(child: _buildInteractiveMap(state, mapCtrl)),
 
-          // 2. Top Header with live GPS tracking status, room status, legend, and filter chips
-          Obx(
-            () => MapTopHeader(
-              filters: _getFilters(context),
-              selectedFilter: mapCtrl.selectedFilter.value,
-              onFilterSelected: mapCtrl.selectFilter,
-              onSosPressed: () => Get.toNamed(AppRoutes.modalSos),
-              searchController: _searchCtrl,
-              onSearchChanged: mapCtrl.onSearchQueryChanged,
-              onClearSearch: () => mapCtrl.clearSearch(clearMarker: false),
-              onSearchFocused: mapCtrl.showSearchHistory,
-              isLiveTracking: mapCtrl.isLiveTracking.value,
-              gpsAccuracy: mapCtrl.gpsAccuracy.value,
-              roomName: mapCtrl.activeRoomName.value,
-              memberSummary: mapCtrl.roomMembers.isNotEmpty
-                  ? '${mapCtrl.jamaahMembers.length} ${context.tr('maps.pilgrims')} · ${mapCtrl.pendampingMembers.length} ${context.tr('maps.companions')}'
-                  : null,
-              nearestInfo: mapCtrl.nearestMemberInfo,
-              onRoomTap: mapCtrl.openBottomSheet,
-            ),
-          ),
-
-          // 2.5 Floating Search Dropdown Overlay
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 116,
-            left: 0,
-            right: 0,
-            child: MapSearchDropdown(
-              mapCtrl: mapCtrl,
-              onSelect: (result) {
-                _searchCtrl.text = result.name;
-                mapCtrl.selectSearchResult(result);
-              },
-            ),
-          ),
-
-          Obx(() => _buildPoiStatusOverlay(context, mapCtrl)),
-
-          // 3. Floating Quick Action Controls (Compass, MyLocation, Zoom In/Out, Focus All, Layers, Band)
-          Obx(
-            () => MapFloatingControls(
-              compassRotation: mapCtrl.compassRotation.value,
-              isLocationLoading: mapCtrl.isLocationLoading.value,
-              isLiveTracking: mapCtrl.isLiveTracking.value,
-              onCompassTap: mapCtrl.resetCompass,
-              onLocationTap: mapCtrl.focusToMe,
-              onFitAllTap: mapCtrl.focusToAllMembers,
-              onLayersTap: mapCtrl.toggleMapTileLayer,
-              onBandTap: () => _showSmartBandDialog(context, state),
-              onZoomInTap: mapCtrl.zoomIn,
-              onZoomOutTap: mapCtrl.zoomOut,
-            ),
-          ),
-
-          // 4. Dynamic Contextual Bottom Sheets
+          // 2. Dynamic Contextual Bottom Sheets & Compact Member Pill (Panel Anggota & Pendamping)
           Obx(() {
             final bottomPadding = MediaQuery.of(context).padding.bottom;
             final sheetBottomOffset = widget.showBottomNav
@@ -170,9 +148,15 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                 : (AppSpacing.md + bottomPadding);
 
             if (!mapCtrl.isBottomSheetOpen.value) {
-              return _CollapsedMemberBar(
+              final isSearchActive =
+                  mapCtrl.searchState.value != MapSearchState.idle ||
+                  _searchCtrl.text.trim().isNotEmpty;
+              final isPillVisible = !_isMapInteracting && !isSearchActive;
+
+              return _CompactMemberPill(
                 mapCtrl: mapCtrl,
                 sheetBottomOffset: sheetBottomOffset,
+                isVisible: isPillVisible,
               );
             }
 
@@ -310,6 +294,67 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
               bottomOffset: sheetBottomOffset,
             );
           }),
+
+          // 3. POI Status Overlay
+          Obx(() => _buildPoiStatusOverlay(context, mapCtrl)),
+
+          // 4. Floating Quick Action Controls (Hamburger, Compass, MyLocation, Zoom In/Out, Focus All, Layers, Band)
+          Obx(() {
+            final isSearchActive =
+                mapCtrl.searchState.value != MapSearchState.idle ||
+                _searchCtrl.text.trim().isNotEmpty;
+            final showHamburger = !_isMapInteracting && !isSearchActive;
+
+            return MapFloatingControls(
+              isVisible: showHamburger,
+              compassRotation: mapCtrl.compassRotation.value,
+              isLocationLoading: mapCtrl.isLocationLoading.value,
+              isLiveTracking: mapCtrl.isLiveTracking.value,
+              onCompassTap: mapCtrl.resetCompass,
+              onLocationTap: mapCtrl.focusToMe,
+              onFitAllTap: mapCtrl.focusToAllMembers,
+              onLayersTap: mapCtrl.toggleMapTileLayer,
+              onBandTap: () => _showSmartBandDialog(context, state),
+              onZoomInTap: mapCtrl.zoomIn,
+              onZoomOutTap: mapCtrl.zoomOut,
+            );
+          }),
+
+          // 5. Top Header with live GPS tracking status, room status, legend, and filter chips
+          Obx(
+            () => MapTopHeader(
+              filters: _getFilters(context),
+              selectedFilter: mapCtrl.selectedFilter.value,
+              onFilterSelected: mapCtrl.selectFilter,
+              onSosPressed: () => Get.toNamed(AppRoutes.modalSos),
+              searchController: _searchCtrl,
+              onSearchChanged: mapCtrl.onSearchQueryChanged,
+              onClearSearch: () => mapCtrl.clearSearch(clearMarker: false),
+              onSearchFocused: mapCtrl.showSearchHistory,
+              isLiveTracking: mapCtrl.isLiveTracking.value,
+              gpsAccuracy: mapCtrl.gpsAccuracy.value,
+              roomName: mapCtrl.activeRoomName.value,
+              memberSummary: mapCtrl.roomMembers.isNotEmpty
+                  ? '${mapCtrl.jamaahMembers.length} ${context.tr('maps.pilgrims')} · ${mapCtrl.pendampingMembers.length} ${context.tr('maps.companions')}'
+                  : null,
+              nearestInfo: mapCtrl.nearestMemberInfo,
+              onRoomTap: mapCtrl.openBottomSheet,
+            ),
+          ),
+
+          // 6. Floating Search Dropdown Overlay (Always on top of all other controls)
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 116,
+            left: 0,
+            right: 0,
+            child: MapSearchDropdown(
+              mapCtrl: mapCtrl,
+              onSelect: (result) {
+                _searchCtrl.text = result.name;
+                mapCtrl.selectSearchResult(result);
+              },
+            ),
+          ),
         ],
       ),
       bottomNavigationBar: widget.showBottomNav
@@ -322,244 +367,171 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
           : null,
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // COLLAPSED DYNAMIC PEEK BAR
-  // ---------------------------------------------------------------------------
 }
 
 // ---------------------------------------------------------------------------
-// COLLAPSED DYNAMIC PEEK BAR (WITH DRAG-UP & TAP TO OPEN)
+// COMPACT FLOATING MEMBER PILL (TAP / SWIPE UP TO OPEN FULL PANEL)
 // ---------------------------------------------------------------------------
 
-class _CollapsedMemberBar extends StatefulWidget {
+class _CompactMemberPill extends StatelessWidget {
   final MapController mapCtrl;
   final double sheetBottomOffset;
+  final bool isVisible;
 
-  const _CollapsedMemberBar({
+  const _CompactMemberPill({
     required this.mapCtrl,
     required this.sheetBottomOffset,
+    this.isVisible = true,
   });
-
-  @override
-  State<_CollapsedMemberBar> createState() => _CollapsedMemberBarState();
-}
-
-class _CollapsedMemberBarState extends State<_CollapsedMemberBar>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animCtrl;
-  Animation<double>? _slideAnim;
-  double _dragUpOffset = 0.0;
-
-  @override
-  void initState() {
-    super.initState();
-    _animCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 220),
-    );
-    // Smooth entrance glide up from +28px to 0.0
-    _dragUpOffset = 28.0;
-    _slideAnim = Tween<double>(begin: 28.0, end: 0.0).animate(
-      CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic),
-    )..addListener(_onAnimTick);
-    _animCtrl.forward();
-  }
-
-  void _onAnimTick() {
-    if (mounted && _slideAnim != null) {
-      setState(() {
-        _dragUpOffset = _slideAnim!.value;
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _slideAnim?.removeListener(_onAnimTick);
-    _animCtrl.dispose();
-    super.dispose();
-  }
-
-  void _springBackAnimation() {
-    if (_dragUpOffset == 0.0) return;
-    final startOffset = _dragUpOffset;
-    _slideAnim?.removeListener(_onAnimTick);
-    _animCtrl.duration = const Duration(milliseconds: 180);
-    _slideAnim = Tween<double>(begin: startOffset, end: 0.0).animate(
-      CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic),
-    )..addListener(_onAnimTick);
-    _animCtrl.reset();
-    _animCtrl.forward();
-  }
-
-  void _onVerticalDragUpdate(DragUpdateDetails details) {
-    if (_animCtrl.isAnimating) _animCtrl.stop();
-    if (details.primaryDelta != null) {
-      setState(() {
-        _dragUpOffset = (_dragUpOffset + details.primaryDelta!).clamp(
-          -70.0,
-          15.0,
-        );
-      });
-    }
-  }
-
-  void _onVerticalDragEnd(DragEndDetails details) {
-    final velocity = details.primaryVelocity ?? 0.0;
-    if (_dragUpOffset < -25.0 || velocity < -180.0) {
-      widget.mapCtrl.openBottomSheet();
-    } else {
-      _springBackAnimation();
-    }
-  }
-
-  void _onVerticalDragCancel() {
-    _springBackAnimation();
-  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
-    final count = widget.mapCtrl.filteredMembers.length;
-    final roleFilter = widget.mapCtrl.selectedRoleFilter.value;
+    final count = mapCtrl.filteredMembers.length;
+    final roleFilter = mapCtrl.selectedRoleFilter.value;
     final label = roleFilter == 1
-        ? '$count Jamaah'
+        ? '$count ${context.tr('maps.pilgrims')}'
         : roleFilter == 2
-        ? '$count Pendamping'
+        ? '$count ${context.tr('maps.companions')}'
         : '$count Anggota & Pendamping';
 
     return Positioned(
-      left: AppSpacing.md,
-      right: AppSpacing.md,
-      bottom: widget.sheetBottomOffset,
+      left: 0,
+      right: 0,
+      bottom: sheetBottomOffset,
       child: RepaintBoundary(
-        child: Opacity(
-          opacity: (1.0 - (_dragUpOffset.abs() / 140.0)).clamp(0.0, 1.0),
-          child: Transform.translate(
-            offset: Offset(0, _dragUpOffset),
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: widget.mapCtrl.openBottomSheet,
-              onVerticalDragUpdate: _onVerticalDragUpdate,
-              onVerticalDragEnd: _onVerticalDragEnd,
-              onVerticalDragCancel: _onVerticalDragCancel,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkSurface
-                      : AppColors.surfaceWhite,
-                  borderRadius: BorderRadius.circular(AppRadius.xl),
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.08)
-                        : AppColors.espressoDark.withValues(alpha: 0.06),
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(
-                        alpha: isDark ? 0.25 : 0.08,
-                      ),
-                      blurRadius: 16,
-                      spreadRadius: 0,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: AppColors.goldPrimary.withValues(
-                          alpha: isDark ? 0.25 : 0.16,
-                        ),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.groups_rounded,
-                        color: isDark
-                            ? AppColors.goldPrimary
-                            : AppColors.espressoDark,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            label,
-                            style: AppTypography.titleSmall.copyWith(
-                              color: isDark
-                                  ? Colors.white
-                                  : AppColors.espressoDark,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Tarik ke atas atau ketuk untuk detail',
-                            style: AppTypography.captionSmall.copyWith(
-                              color: isDark
-                                  ? Colors.white60
-                                  : AppColors.textBody,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
+        child: AnimatedOpacity(
+          opacity: isVisible ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+          child: IgnorePointer(
+            ignoring: !isVisible,
+            child: Center(
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onVerticalDragEnd: (details) {
+                  final v = details.primaryVelocity ?? 0.0;
+                  if (v < -120.0) {
+                    mapCtrl.openBottomSheet();
+                  }
+                },
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: mapCtrl.openBottomSheet,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(10, 6, 12, 6),
                       decoration: BoxDecoration(
                         color: isDark
-                            ? AppColors.darkSurfaceContainer
-                            : AppColors.canvasCream,
+                            ? AppColors.darkSurface.withValues(alpha: 0.95)
+                            : AppColors.surfaceWhite.withValues(alpha: 0.95),
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                         border: Border.all(
                           color: isDark
-                              ? AppColors.goldPrimary.withValues(alpha: 0.3)
-                              : AppColors.espressoDark.withValues(alpha: 0.1),
-                          width: 1,
+                              ? Colors.white.withValues(alpha: 0.12)
+                              : AppColors.goldLight.withValues(alpha: 0.45),
+                          width: 1.2,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(
+                              alpha: isDark ? 0.35 : 0.10,
+                            ),
+                            blurRadius: 14,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            'Buka',
-                            style: TextStyle(
+                          // Left Icon Badge
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: AppColors.goldPrimary.withValues(
+                                alpha: isDark ? 0.25 : 0.16,
+                              ),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.groups_rounded,
                               color: isDark
                                   ? AppColors.goldPrimary
                                   : AppColors.espressoDark,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
+                              size: 16,
                             ),
                           ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.keyboard_arrow_up_rounded,
-                            color: isDark
-                                ? AppColors.goldPrimary
-                                : AppColors.espressoDark,
-                            size: 16,
+                          const SizedBox(width: 8),
+
+                          // Dynamic Label
+                          Text(
+                            label,
+                            style: TextStyle(
+                              color: isDark
+                                  ? Colors.white
+                                  : AppColors.espressoDark,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+
+                          // Compact "Buka ▲" badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? AppColors.darkSurfaceContainer
+                                  : AppColors.canvasCream,
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                              border: Border.all(
+                                color: isDark
+                                    ? AppColors.goldPrimary.withValues(
+                                        alpha: 0.3,
+                                      )
+                                    : AppColors.goldPrimary.withValues(
+                                        alpha: 0.25,
+                                      ),
+                                width: 0.8,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Buka',
+                                  style: TextStyle(
+                                    color: isDark
+                                        ? AppColors.goldPrimary
+                                        : AppColors.espressoDark,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                const SizedBox(width: 2),
+                                Icon(
+                                  Icons.keyboard_arrow_up_rounded,
+                                  color: isDark
+                                      ? AppColors.goldPrimary
+                                      : AppColors.espressoDark,
+                                  size: 14,
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -664,6 +636,9 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
         maxZoom: 19.0,
         onMapReady: mapCtrl.handleMapReady,
         onPositionChanged: (camera, hasGesture) {
+          if (hasGesture) {
+            _onUserMapInteraction();
+          }
           mapCtrl.onMapPositionChanged(
             camera.center,
             camera.zoom,

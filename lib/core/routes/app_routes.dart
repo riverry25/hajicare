@@ -38,6 +38,7 @@ import '../../features/smartband/screens/smartband_ldr_page.dart';
 import '../../features/smartband/bindings/smartband_ldr_binding.dart';
 import '../../features/sign_language/screens/bisindo_screen.dart';
 import '../../features/sign_language/bindings/bisindo_binding.dart';
+import '../../features/hajj_dua/presentation/screens/hajj_dua_screen.dart';
 import 'role_and_room_guard.dart';
 
 class AppRoutes {
@@ -63,6 +64,7 @@ class AppRoutes {
   static const String money = '/money';
   static const String communication = '/communication';
   static const String bisindo = '/bisindo';
+  static const String hajjDua = '/hajj_dua';
   static const String profile = '/profile';
   static const String notification = '/notification';
   static const String helpCenter = '/help';
@@ -187,6 +189,7 @@ class AppRoutes {
       page: () => const BisindoScreen(),
       binding: BisindoBinding(),
     ),
+    GetPage(name: hajjDua, page: () => const HajjDuaScreen()),
     GetPage(
       name: profile,
       page: () => const ProfileScreen(),

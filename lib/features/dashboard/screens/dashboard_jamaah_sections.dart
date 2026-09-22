@@ -148,7 +148,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
             title: context.tr('dashboard.worshipTips'),
             subtitle: context.tr('dashboard.worshipTipsSub'),
             actionText: 'Lihat semua',
-            onAction: () => _showDoaSheet(context),
+            onAction: () => Get.toNamed(AppRoutes.hajjDua),
             headingColor: headingColor,
             isDark: isDark,
           ),
@@ -644,7 +644,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                         ? AppColors.goldLight
                         : AppColors.secondary,
                     accentColor: AppColors.secondary,
-                    onTap: () => _showDoaSheet(context),
+                    onTap: () => Get.toNamed(AppRoutes.hajjDua),
                   ),
                 ],
               ),
@@ -1564,131 +1564,6 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
             ),
           );
         },
-      ),
-      isScrollControlled: true,
-    );
-  }
-
-  // ── Modal Sheet: Panduan Doa & Dzikir ──────────────────────────────────────
-  void _showDoaSheet(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
-
-    final doas = [
-      {
-        'title': 'Bacaan Talbiyah',
-        'arabic':
-            'لَبَّيْكَ اللَّهُمَّ لَبَّيْكَ، لَبَّيْكَ لاَ شَرِيكَ لَكَ لَبَّيْكَ',
-        'latin':
-            'Labbaikallaahumma labbaik, labbaika laa syariika laka labbaik...',
-        'arti': 'Aku penuhi panggilan-Mu ya Allah, aku penuhi panggilan-Mu...',
-      },
-      {
-        'title': 'Doa Tawaf (Antara Rukun Yamani & Hajar Aswad)',
-        'arabic':
-            'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ',
-        'latin':
-            'Rabbanaa aatinaa fid dunyaa hasanah wa fil aakhirati hasanah wa qinaa \'adzaaban naar',
-        'arti':
-            'Ya Tuhan kami, berilah kami kebaikan di dunia dan kebaikan di akhirat dan lindungilah kami dari azab neraka.',
-      },
-      {
-        'title': 'Doa Masuk Masjidil Haram',
-        'arabic': 'اللَّهُمَّ افْتَحْ لِي أَبْوَابَ رَحْمَتِكَ',
-        'latin': 'Allaahummaftah lii abwaaba rahmatik',
-        'arti': 'Ya Allah, bukalah pintu-pintu rahmat-Mu untukku.',
-      },
-    ];
-
-    Get.bottomSheet(
-      Container(
-        padding: const EdgeInsets.all(AppSpacing.cardPadding),
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.75,
-        ),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(AppRadius.sheet),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkOutlineVariant
-                      : AppColors.outlineVariant,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                ),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              'Doa & Dzikir Ibadah Haji',
-              style: AppTypography.titleLarge.copyWith(
-                color: headingColor,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Expanded(
-              child: ListView.separated(
-                itemCount: doas.length,
-                separatorBuilder: (_, _) => const Divider(height: 24),
-                itemBuilder: (context, i) {
-                  final item = doas[i];
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item['title']!,
-                        style: AppTypography.titleMedium.copyWith(
-                          color: isDark
-                              ? AppColors.goldLight
-                              : AppColors.espressoDark,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          item['arabic']!,
-                          textAlign: TextAlign.right,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            height: 1.8,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        item['latin']!,
-                        style: AppTypography.bodySmall.copyWith(
-                          color: bodyColor,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Artinya: "${item['arti']}"',
-                        style: AppTypography.caption.copyWith(color: bodyColor),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
       ),
       isScrollControlled: true,
     );
