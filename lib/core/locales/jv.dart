@@ -912,7 +912,84 @@ const Map<String, String> jvTranslations = {
   'serviceMoneyTitle': 'Pindai Dhuwit Riyal',
   'servicePilgrimBand': 'Jamaah & Gelang',
   'servicePilgrimBandSub': 'Status batere & sensor nadi',
-  'servicePrayerSubtitle': 'Donga Tawaf, Sai Tulisan Gedhe + Swara',
+  'servicePrayerSubtitle': 'Pandhuan donga lan dzikir ibadah haji',
+  'hajjDuaTitle': 'Donga & Dzikir Ibadah Haji',
+  'hajjDuaDashboardCardValue': 'Donga Haji',
+  'hajjDuaGuideTitle': 'Pandhuan Donga & Dzikir Ibadah Haji',
+  'hajjDuaGuideDescription':
+      'Temokake wacan adhedhasar tahapan ibadah. Wacan iki minangka pandhuan lan ora kabeh wajib utawa tetep.',
+  'hajjDuaSearchHint': 'Goleki donga, tahapan, teges, utawa transliterasi...',
+  'hajjDuaStagesTitle': 'Tahapan Ibadah',
+  'hajjDuaStagesSubtitle': 'Pilih tahapan kanggo mbukak pandhuan wacan.',
+  'hajjDuaSearchResults': 'Asil panelusuran',
+  'hajjDuaSearchSummary': 'Ditemokake {categories} kategori lan {duas} wacan.',
+  'hajjDuaCategorySection': 'Kategori',
+  'hajjDuaPrayerSection': 'Wacan',
+  'hajjDuaNoSearchResult': 'Ora ana asil kanggo “{query}”',
+  'hajjDuaNoSearchHelp':
+      'Coba tembung tawaf, talbiyah, Masjidil Haram, utawa Hajar Aswad.',
+  'hajjDuaBack': 'Bali',
+  'hajjDuaClearSearch': 'Busak panelusuran',
+  'hajjDuaCount': '{count} wacan',
+  'hajjDuaAvailableCount': '{count} wacan kasedhiya',
+  'hajjDuaCategorySemantics': '{category}, {count} wacan kasedhiya',
+  'hajjDuaGuidanceWarning':
+      'Wacan ing bagean iki minangka pandhuan. Aja nganggep saben wacan minangka donga wajib utawa wacan tetep saben tahapan.',
+  'hajjDuaVerifyingTitle': 'Isi lagi diverifikasi',
+  'hajjDuaVerifyingMessage':
+      'Durung ana teks wacan kanthi sumber sing bisa ditampilake kanggo kategori iki.',
+  'hajjDuaArabicSemantics': 'Teks Arab',
+  'hajjDuaTransliteration': 'LATIN / TRANSLITERASI',
+  'hajjDuaMeaning': 'TEGES',
+  'hajjDuaInformation': 'Katrangan',
+  'hajjDuaVerificationRequired': 'Sumber kudu diverifikasi',
+  'hajjDuaSource': 'Sumber',
+  'hajjDuaSourceUnknown': 'Sumber wacan durung kacathet ing data aplikasi.',
+  'hajjDuaCopy': 'Salin wacan',
+  'hajjDuaCopied': '{title} wis disalin.',
+  'hajjDuaCategoryIhramTitle': 'Ihram & Talbiyah',
+  'hajjDuaCategoryIhramDescription':
+      'Pandhuan wacan nalika miwiti ihram, maca Talbiyah, lan sajrone lelungan.',
+  'hajjDuaCategoryMasjidTitle': 'Mlebu Masjidil Haram',
+  'hajjDuaCategoryMasjidDescription':
+      'Wacan sing bisa diwaca nalika mlebu masjid lan nyedhaki Ka\'bah.',
+  'hajjDuaCategoryTawafTitle': 'Thawaf',
+  'hajjDuaCategoryTawafDescription':
+      'Wacan lan dzikir sing bisa diwaca sajrone rangkaian thawaf.',
+  'hajjDuaCategorySaiTitle': "Sa'i",
+  'hajjDuaCategorySaiDescription':
+      'Pandhuan wacan nalika mlaku antarane Shafa lan Marwah.',
+  'hajjDuaCategoryArafahTitle': 'Wukuf ing Arafah',
+  'hajjDuaCategoryArafahDescription':
+      'Pandhuan kanggo nambah donga lan maneka warna dzikir nalika wukuf.',
+  'hajjDuaCategoryMuzdalifahTitle': 'Muzdalifah',
+  'hajjDuaCategoryMuzdalifahDescription':
+      'Pandhuan dzikir lan donga nalika ana ing Muzdalifah menyang Mina.',
+  'hajjDuaCategoryMinaTitle': 'Mina & Jamarat',
+  'hajjDuaCategoryMinaDescription':
+      'Pandhuan wacan nalika ana ing Mina lan nglakoni rangkaian jamarat.',
+  'hajjDuaCategoryTahallulTitle': 'Tahallul',
+  'hajjDuaCategoryTahallulDescription':
+      'Pandhuan wacan gegayutan karo tahallul sawise rangkaian ibadah.',
+  'hajjDuaCategoryGeneralTitle': 'Donga Umum',
+  'hajjDuaCategoryGeneralDescription':
+      'Kumpulan donga kanggo kabutuhan pribadi, kulawarga, lan kabecikan umum.',
+  'hajjDuaTalbiyahTitle': 'Wacan Talbiyah',
+  'hajjDuaTalbiyahSubtitle': 'Dzikir lan wacan sajrone ihram',
+  'hajjDuaMasjidTitle': 'Donga Mlebu Masjidil Haram',
+  'hajjDuaMasjidSubtitle': 'Wacan nalika mlebu masjid',
+  'hajjDuaRukunYamaniTitle': 'Antarane Rukun Yamani lan Hajar Aswad',
+  'hajjDuaRukunYamaniSubtitle': 'Wacan sing bisa diwaca sajrone thawaf',
+  'hajjDuaExistingContentDescription':
+      'Teks iki saka implementasi Hajicare sadurunge lan durung duwe sumber sing kacathet.',
+  'hajjDuaRukunYamaniDescription':
+      'Ora ana donga tetep sing ditampilake kanggo saben puteran. Wacan iki minangka pandhuan sing bisa diwaca.',
+  'hajjDuaTalbiyahVerificationNote':
+      'Kelengkapan teks lan rujukan kudu dipriksa dening panelaah agama.',
+  'hajjDuaMasjidVerificationNote':
+      'Transliterasi lan rujukan kudu diverifikasi dening panelaah agama.',
+  'hajjDuaReferenceMissingNote':
+      'Rujukan durung kacathet ing implementasi sadurunge.',
   'servicePrayerTitle': 'Donga & Manasik',
   'serviceScheduleAgenda': 'Jadwal & Agenda',
   'serviceScheduleAgendaSub': 'Wektu Jamarat & titik kumpul',

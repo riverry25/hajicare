@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/locales/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../../data/hajj_dua_repository.dart';
 import '../../models/hajj_dua_category.dart';
+import '../hajj_dua_typography.dart';
 import '../widgets/dua_card.dart';
 
 class HajjDuaCategoryScreen extends StatelessWidget {
@@ -33,12 +34,15 @@ class HajjDuaCategoryScreen extends StatelessWidget {
         leading: IconButton(
           onPressed: Get.back,
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          tooltip: 'Kembali',
+          tooltip: context.tr('hajjDuaBack'),
         ),
         title: Text(
-          category.title,
+          context.tr(category.titleKey),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
+          style: HajjDuaTypography.appBarTitle.copyWith(
+            color: AppColors.textHeadingColor(context),
+          ),
         ),
       ),
       body: SafeArea(
@@ -61,8 +65,8 @@ class HajjDuaCategoryScreen extends StatelessWidget {
                   _EmptyCategoryState(category: category)
                 else ...[
                   Text(
-                    '${duas.length} bacaan',
-                    style: AppTypography.labelLarge.copyWith(
+                    context.tr('hajjDuaCount', {'count': duas.length}),
+                    style: HajjDuaTypography.caption.copyWith(
                       color: AppColors.textSecondaryColor(context),
                     ),
                   ),
@@ -107,18 +111,16 @@ class _CategoryIntroduction extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            category.title,
-            style: AppTypography.displayMedium.copyWith(
+            context.tr(category.titleKey),
+            style: HajjDuaTypography.screenTitle.copyWith(
               color: AppColors.textHeadingColor(context),
-              fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            category.description,
-            style: AppTypography.bodyMedium.copyWith(
+            context.tr(category.descriptionKey),
+            style: HajjDuaTypography.body.copyWith(
               color: AppColors.textBodyColor(context),
-              height: 1.6,
             ),
           ),
           const SizedBox(height: AppSpacing.md),
@@ -133,8 +135,8 @@ class _CategoryIntroduction extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
-                  'Bacaan di bagian ini adalah panduan. Jangan menganggap setiap bacaan sebagai doa wajib atau bacaan tetap untuk setiap tahapan.',
-                  style: AppTypography.bodySmall.copyWith(
+                  context.tr('hajjDuaGuidanceWarning'),
+                  style: HajjDuaTypography.caption.copyWith(
                     color: AppColors.textBodyColor(context),
                   ),
                 ),
@@ -174,18 +176,17 @@ class _EmptyCategoryState extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            'Konten sedang diverifikasi',
+            context.tr('hajjDuaVerifyingTitle'),
             textAlign: TextAlign.center,
-            style: AppTypography.titleMedium.copyWith(
+            style: HajjDuaTypography.cardTitle.copyWith(
               color: AppColors.textHeadingColor(context),
-              fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            'Belum ada teks bacaan bersumber yang dapat ditampilkan untuk kategori ini. Struktur kategori tetap tersedia agar konten dapat ditambahkan setelah ditelaah.',
+            context.tr('hajjDuaVerifyingMessage'),
             textAlign: TextAlign.center,
-            style: AppTypography.bodyMedium.copyWith(
+            style: HajjDuaTypography.body.copyWith(
               color: AppColors.textBodyColor(context),
             ),
           ),

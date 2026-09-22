@@ -894,7 +894,85 @@ const Map<String, String> enTranslations = {
   'serviceMoneyTitle': 'Scan Saudi Riyals',
   'servicePilgrimBand': 'Pilgrims & Bands',
   'servicePilgrimBandSub': 'Battery status & pulse sensor',
-  'servicePrayerSubtitle': 'Tawaf, Sai Prayers with Audio',
+  'servicePrayerSubtitle': 'Hajj dua and dhikr guide',
+  'hajjDuaTitle': 'Hajj Dua & Dhikr',
+  'hajjDuaDashboardCardValue': 'Hajj Duas',
+  'hajjDuaGuideTitle': 'Hajj Dua & Dhikr Guide',
+  'hajjDuaGuideDescription':
+      'Find readings by stage of worship. They are presented as guidance and are not all mandatory or fixed readings.',
+  'hajjDuaSearchHint': 'Search dua, stage, meaning, or transliteration...',
+  'hajjDuaStagesTitle': 'Hajj Stages',
+  'hajjDuaStagesSubtitle': 'Choose a stage to open its reading guide.',
+  'hajjDuaSearchResults': 'Search results',
+  'hajjDuaSearchSummary': '{categories} categories and {duas} readings found.',
+  'hajjDuaCategorySection': 'Categories',
+  'hajjDuaPrayerSection': 'Readings',
+  'hajjDuaNoSearchResult': 'No results for “{query}”',
+  'hajjDuaNoSearchHelp':
+      'Try terms such as tawaf, talbiyah, Masjid al-Haram, or Hajar Aswad.',
+  'hajjDuaBack': 'Back',
+  'hajjDuaClearSearch': 'Clear search',
+  'hajjDuaCount': '{count} readings',
+  'hajjDuaAvailableCount': '{count} readings available',
+  'hajjDuaCategorySemantics': '{category}, {count} readings available',
+  'hajjDuaGuidanceWarning':
+      'The readings in this section are guidance. Do not consider every reading mandatory or fixed for each stage.',
+  'hajjDuaVerifyingTitle': 'Content under review',
+  'hajjDuaVerifyingMessage':
+      'No sourced reading is currently available for this category.',
+  'hajjDuaArabicSemantics': 'Arabic text',
+  'hajjDuaTransliteration': 'LATIN / TRANSLITERATION',
+  'hajjDuaMeaning': 'MEANING',
+  'hajjDuaInformation': 'Information',
+  'hajjDuaVerificationRequired': 'Source verification required',
+  'hajjDuaSource': 'Source',
+  'hajjDuaSourceUnknown':
+      'The source has not been recorded in the application data.',
+  'hajjDuaCopy': 'Copy reading',
+  'hajjDuaCopied': '{title} copied.',
+  'hajjDuaCategoryIhramTitle': 'Ihram & Talbiyah',
+  'hajjDuaCategoryIhramDescription':
+      'Reading guidance for entering ihram, reciting the Talbiyah, and travelling.',
+  'hajjDuaCategoryMasjidTitle': 'Entering Masjid al-Haram',
+  'hajjDuaCategoryMasjidDescription':
+      'Readings that may be recited when entering the mosque and approaching the Kaaba.',
+  'hajjDuaCategoryTawafTitle': 'Tawaf',
+  'hajjDuaCategoryTawafDescription':
+      'Readings and dhikr that may be recited throughout Tawaf.',
+  'hajjDuaCategorySaiTitle': "Sa'i",
+  'hajjDuaCategorySaiDescription':
+      'Reading guidance for the journey between Shafa and Marwah.',
+  'hajjDuaCategoryArafahTitle': 'Standing at Arafah',
+  'hajjDuaCategoryArafahDescription':
+      'Guidance for increasing dua and varied dhikr during the standing.',
+  'hajjDuaCategoryMuzdalifahTitle': 'Muzdalifah',
+  'hajjDuaCategoryMuzdalifahDescription':
+      'Dhikr and dua guidance while in Muzdalifah and travelling to Mina.',
+  'hajjDuaCategoryMinaTitle': 'Mina & Jamarat',
+  'hajjDuaCategoryMinaDescription':
+      'Reading guidance while in Mina and during the Jamarat rites.',
+  'hajjDuaCategoryTahallulTitle': 'Tahallul',
+  'hajjDuaCategoryTahallulDescription':
+      'Reading guidance related to Tahallul after the rites.',
+  'hajjDuaCategoryGeneralTitle': 'General Duas',
+  'hajjDuaCategoryGeneralDescription':
+      'Duas for personal needs, family, and general wellbeing.',
+  'hajjDuaTalbiyahTitle': 'Talbiyah',
+  'hajjDuaTalbiyahSubtitle': 'Dhikr and reading during Ihram',
+  'hajjDuaMasjidTitle': 'Dua When Entering Masjid al-Haram',
+  'hajjDuaMasjidSubtitle': 'Reading when entering the mosque',
+  'hajjDuaRukunYamaniTitle': 'Between the Yemeni Corner and Hajar Aswad',
+  'hajjDuaRukunYamaniSubtitle': 'A reading that may be recited during Tawaf',
+  'hajjDuaExistingContentDescription':
+      'This text comes from the previous Hajicare implementation and has no recorded source.',
+  'hajjDuaRukunYamaniDescription':
+      'No fixed prayer is shown for each circuit. This reading is presented as optional guidance.',
+  'hajjDuaTalbiyahVerificationNote':
+      'A religious reviewer must verify the completeness of the text and its reference.',
+  'hajjDuaMasjidVerificationNote':
+      'A religious reviewer must verify the transliteration and reference.',
+  'hajjDuaReferenceMissingNote':
+      'The previous implementation did not record a reference.',
   'servicePrayerTitle': 'Prayers & Manasik',
   'serviceScheduleAgenda': 'Schedule & Agenda',
   'serviceScheduleAgendaSub': 'Jamarat timing & meeting points',

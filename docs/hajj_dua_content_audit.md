@@ -13,11 +13,11 @@ Tanggal audit: 22 September 2026
 
 ## Audit per bacaan
 
-| Judul | Kategori | Sumber saat ini | Sumber diketahui | Arab | Transliterasi | Arti Indonesia | Status |
-|---|---|---|---|---|---|---|---|
-| Bacaan Talbiyah | Ihram & Talbiyah | Implementasi dashboard lama | Tidak | Ada | Ada, tetapi berakhir dengan elipsis | Ada, tetapi berakhir dengan elipsis | Perlu verifikasi kelengkapan teks, transliterasi, arti, dan rujukan |
-| Doa Masuk Masjidil Haram | Masuk Masjidil Haram | Implementasi dashboard lama | Tidak | Ada | Ada | Ada | Perlu verifikasi transliterasi dan rujukan |
-| Antara Rukun Yamani dan Hajar Aswad | Thawaf | Implementasi dashboard lama | Tidak | Ada | Ada | Ada | Perlu verifikasi rujukan dan penempatan konteks |
+| Kategori | Judul | Arab | Transliterasi | Arti ID | Arti EN/JV/SU | Sumber | Duplikat | Placeholder | Status verifikasi |
+|---|---|---|---|---|---|---|---|---|---|
+| Ihram & Talbiyah | Bacaan Talbiyah | Ada | Ada, tetapi berakhir dengan elipsis | Ada, tetapi berakhir dengan elipsis | Belum ada; fallback ke ID | Tidak ada | Tidak | Tidak | `existing-unverified`, `missing-source` |
+| Masuk Masjidil Haram | Doa Masuk Masjidil Haram | Ada | Ada | Ada | Belum ada; fallback ke ID | Tidak ada | Tidak | Tidak | `existing-unverified`, `missing-source` |
+| Thawaf | Antara Rukun Yamani dan Hajar Aswad | Ada | Ada | Ada | Belum ada; fallback ke ID | Tidak ada | Tidak | Tidak | `existing-unverified`, `missing-source` |
 
 ## Kategori tanpa teks terverifikasi
 
@@ -30,7 +30,15 @@ Kategori berikut telah disiapkan dalam struktur navigasi, tetapi sengaja belum d
 - Tahallul
 - Doa Umum
 
-UI menampilkan status "Konten sedang diverifikasi" untuk kategori tersebut. Hal ini mencegah aplikasi mengarang teks Arab, transliterasi, arti, hadis, ayat, atau hukum agama.
+Kategori tersebut tidak ditampilkan pada layar utama sampai memiliki sedikitnya satu entri yang dapat digunakan. Model kategorinya tetap tersedia untuk audit dan pengembangan berikutnya. Layar placeholder tidak dapat dicapai melalui navigasi pengguna normal.
+
+## Localization dan tipografi
+
+- UI memakai sistem `AppTranslations`/`context.tr` Hajicare untuk bahasa Indonesia, Inggris, Jawa, dan Sunda.
+- Teks Arab kanonik tidak dilokalkan atau diubah ketika bahasa UI berganti.
+- Arti yang belum tersedia pada locale lain memakai fallback arti Indonesia, bukan terjemahan buatan.
+- Judul memakai Poppins, teks pendukung memakai Montserrat, dan teks Arab memakai Noto Naskh Arabic.
+- Ketiga keluarga font dibundel di `assets/fonts` agar tidak membutuhkan jaringan saat runtime.
 
 ## Keputusan keamanan konten
 

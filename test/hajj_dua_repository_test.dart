@@ -27,9 +27,25 @@ void main() {
       for (final dua in allDuas) {
         expect(dua.arabic.trim(), isNotEmpty);
         expect(dua.transliteration?.trim(), isNotEmpty);
-        expect(dua.translation?.trim(), isNotEmpty);
+        expect(dua.translationFor('id')?.trim(), isNotEmpty);
+        expect(dua.translationFor('en'), dua.translationFor('id'));
         expect(dua.requiresSourceVerification, isTrue);
       }
+    });
+
+    test('only categories with usable entries are exposed to the UI', () {
+      final availableStages = repository.getAvailableCategories().map(
+        (category) => category.stage,
+      );
+
+      expect(
+        availableStages,
+        orderedEquals([
+          HajjDuaStage.ihram,
+          HajjDuaStage.masjidAlHaram,
+          HajjDuaStage.tawaf,
+        ]),
+      );
     });
 
     test(
@@ -42,13 +58,14 @@ void main() {
           repository.searchCategories('zamzam').single.stage,
           HajjDuaStage.tawaf,
         );
+        expect(repository.searchCategories('orang tua'), isEmpty);
+        expect(repository.searchCategories('arafah'), isEmpty);
         expect(
-          repository.searchCategories('orang tua').single.stage,
-          HajjDuaStage.general,
-        );
-        expect(
-          repository.searchCategories('arafah').single.stage,
-          HajjDuaStage.arafah,
+          repository
+              .searchDuas('Entering Masjid', languageCode: 'en')
+              .single
+              .stage,
+          HajjDuaStage.masjidAlHaram,
         );
       },
     );

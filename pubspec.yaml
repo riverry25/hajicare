@@ -71,3 +71,20 @@ flutter:
     - assets/models/hajicare_encoder.onnx
     - assets/models/hajicare_prototypes.json
     - assets/audio/
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 700
+    - family: Montserrat
+      fonts:
+        - asset: assets/fonts/Montserrat-Variable.ttf
+        - asset: assets/fonts/Montserrat-Italic-Variable.ttf
+          style: italic
+    - family: NotoNaskhArabic
+      fonts:
+        - asset: assets/fonts/NotoNaskhArabic-Variable.ttf

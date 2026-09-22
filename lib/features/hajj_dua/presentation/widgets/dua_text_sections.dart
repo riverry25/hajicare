@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/locales/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
+import '../hajj_dua_typography.dart';
 
 class ArabicDuaText extends StatelessWidget {
   final String text;
@@ -12,17 +13,14 @@ class ArabicDuaText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: 'Teks Arab',
+      label: context.tr('hajjDuaArabicSemantics'),
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: SelectableText(
           text,
           textAlign: TextAlign.right,
-          style: TextStyle(
+          style: HajjDuaTypography.arabic.copyWith(
             color: AppColors.textHeadingColor(context),
-            fontSize: 28,
-            fontWeight: FontWeight.w600,
-            height: 2.0,
           ),
         ),
       ),
@@ -38,13 +36,11 @@ class TransliterationText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _LabeledTextSection(
-      label: 'LATIN / TRANSLITERASI',
+      label: context.tr('hajjDuaTransliteration'),
       child: SelectableText(
         text,
-        style: AppTypography.bodyLarge.copyWith(
+        style: HajjDuaTypography.transliteration.copyWith(
           color: AppColors.textBodyColor(context),
-          fontStyle: FontStyle.italic,
-          height: 1.65,
         ),
       ),
     );
@@ -59,12 +55,11 @@ class TranslationText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _LabeledTextSection(
-      label: 'ARTI',
+      label: context.tr('hajjDuaMeaning'),
       child: SelectableText(
         text,
-        style: AppTypography.bodyMedium.copyWith(
+        style: HajjDuaTypography.translation.copyWith(
           color: AppColors.textBodyColor(context),
-          height: 1.65,
         ),
       ),
     );
@@ -86,7 +81,7 @@ class _LabeledTextSection extends StatelessWidget {
       children: [
         Text(
           label,
-          style: AppTypography.captionSmall.copyWith(
+          style: HajjDuaTypography.metadataLabel.copyWith(
             color: isDark ? AppColors.goldLight : AppColors.goldDark,
             fontWeight: FontWeight.w800,
             letterSpacing: 0.8,

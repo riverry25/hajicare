@@ -628,8 +628,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   _buildBentoFeatureCard(
                     context: context,
                     title: context.tr('dashboard.prayerGuide'),
-                    value: 'Doa Haji',
-                    subtitle: 'Doa & Dzikir',
+                    value: context.tr('hajjDuaDashboardCardValue'),
+                    subtitle: context.tr('dashboard.prayerAndDhikr'),
                     icon: Icons.menu_book_rounded,
                     height: 126,
                     isDark: isDark,

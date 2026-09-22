@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../core/locales/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../models/hajj_dua.dart';
+import '../hajj_dua_typography.dart';
 import 'dua_text_sections.dart';
 
 class DuaCard extends StatelessWidget {
@@ -16,14 +17,28 @@ class DuaCard extends StatelessWidget {
   const DuaCard({super.key, required this.dua, this.initiallyExpanded = false});
 
   Future<void> _copyDua(BuildContext context) async {
-    await Clipboard.setData(ClipboardData(text: dua.toClipboardText()));
+    final languageCode = Localizations.localeOf(context).languageCode;
+    final localizedTitle = context.tr(dua.titleKey);
+    await Clipboard.setData(
+      ClipboardData(
+        text: dua.toClipboardText(
+          localizedTitle: localizedTitle,
+          meaningLabel: context.tr('hajjDuaMeaning'),
+          languageCode: languageCode,
+          sourceLabel: context.tr('hajjDuaSource'),
+        ),
+      ),
+    );
     if (!context.mounted) return;
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text('${dua.title} sudah disalin.'),
+          content: Text(
+            context.tr('hajjDuaCopied', {'title': localizedTitle}),
+            style: HajjDuaTypography.body.copyWith(color: Colors.white),
+          ),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
           shape: RoundedRectangleBorder(
@@ -37,6 +52,8 @@ class DuaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
     final accentColor = isDark ? AppColors.goldLight : AppColors.goldDark;
+    final languageCode = Localizations.localeOf(context).languageCode;
+    final localizedTranslation = dua.translationFor(languageCode);
 
     return AppCard(
       padding: EdgeInsets.zero,
@@ -57,19 +74,18 @@ class DuaCard extends StatelessWidget {
         shape: const Border(),
         collapsedShape: const Border(),
         title: Text(
-          dua.title,
-          style: AppTypography.titleMedium.copyWith(
+          context.tr(dua.titleKey),
+          style: HajjDuaTypography.cardTitle.copyWith(
             color: AppColors.textHeadingColor(context),
-            fontWeight: FontWeight.w800,
           ),
         ),
-        subtitle: dua.subtitle == null
+        subtitle: dua.subtitleKey == null
             ? null
             : Padding(
                 padding: const EdgeInsets.only(top: AppSpacing.xs),
                 child: Text(
-                  dua.subtitle!,
-                  style: AppTypography.caption.copyWith(
+                  context.tr(dua.subtitleKey!),
+                  style: HajjDuaTypography.caption.copyWith(
                     color: AppColors.textBodyColor(context),
                   ),
                 ),
@@ -85,48 +101,45 @@ class DuaCard extends StatelessWidget {
               text: dua.transliteration!,
             ),
           ],
-          if (dua.translation?.trim().isNotEmpty ?? false) ...[
+          if (localizedTranslation?.trim().isNotEmpty ?? false) ...[
             const SizedBox(height: AppSpacing.lg),
             TranslationText(
               key: Key('translation_${dua.id}'),
-              text: dua.translation!,
+              text: localizedTranslation!,
             ),
           ],
-          if (dua.description?.trim().isNotEmpty ?? false) ...[
+          if (dua.descriptionKey != null) ...[
             const SizedBox(height: AppSpacing.lg),
-            _InformationBox(
-              icon: Icons.info_outline_rounded,
-              title: 'Keterangan',
-              message: dua.description!,
-              color: AppColors.secondary,
+            _PlainInformation(
+              title: context.tr('hajjDuaInformation'),
+              message: context.tr(dua.descriptionKey!),
             ),
           ],
           if (dua.requiresSourceVerification) ...[
-            const SizedBox(height: AppSpacing.md),
-            _InformationBox(
-              icon: Icons.fact_check_outlined,
-              title: 'Perlu verifikasi sumber',
-              message:
-                  dua.notes ??
-                  'Sumber bacaan belum dicantumkan pada data aplikasi.',
-              color: AppColors.distanceWarning,
+            const SizedBox(height: AppSpacing.lg),
+            _VerificationNotice(
+              title: context.tr('hajjDuaVerificationRequired'),
+              message: dua.notesKey == null
+                  ? context.tr('hajjDuaSourceUnknown')
+                  : context.tr(dua.notesKey!),
             ),
           ] else if (dua.source?.trim().isNotEmpty ?? false) ...[
-            const SizedBox(height: AppSpacing.md),
-            _InformationBox(
-              icon: Icons.menu_book_outlined,
-              title: 'Sumber',
+            const SizedBox(height: AppSpacing.lg),
+            _PlainInformation(
+              title: context.tr('hajjDuaSource'),
               message: dua.source!,
-              color: AppColors.statusPositive,
             ),
           ],
           const SizedBox(height: AppSpacing.lg),
           Align(
-            alignment: Alignment.centerLeft,
+            alignment: AlignmentDirectional.centerStart,
             child: OutlinedButton.icon(
               onPressed: () => _copyDua(context),
               icon: const Icon(Icons.copy_rounded, size: 19),
-              label: const Text('Salin bacaan'),
+              label: Text(
+                context.tr('hajjDuaCopy'),
+                style: HajjDuaTypography.button,
+              ),
             ),
           ),
         ],
@@ -135,21 +148,45 @@ class DuaCard extends StatelessWidget {
   }
 }
 
-class _InformationBox extends StatelessWidget {
-  final IconData icon;
+class _PlainInformation extends StatelessWidget {
   final String title;
   final String message;
-  final Color color;
 
-  const _InformationBox({
-    required this.icon,
-    required this.title,
-    required this.message,
-    required this.color,
-  });
+  const _PlainInformation({required this.title, required this.message});
 
   @override
   Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: HajjDuaTypography.metadataLabel.copyWith(
+            color: AppColors.textSecondaryColor(context),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          message,
+          style: HajjDuaTypography.body.copyWith(
+            color: AppColors.textBodyColor(context),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _VerificationNotice extends StatelessWidget {
+  final String title;
+  final String message;
+
+  const _VerificationNotice({required this.title, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    const color = AppColors.distanceWarning;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -161,7 +198,7 @@ class _InformationBox extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 21),
+          const Icon(Icons.fact_check_outlined, color: color, size: 21),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
@@ -169,15 +206,15 @@ class _InformationBox extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: AppTypography.labelLarge.copyWith(
+                  style: HajjDuaTypography.cardTitle.copyWith(
                     color: AppColors.textHeadingColor(context),
-                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   message,
-                  style: AppTypography.bodySmall.copyWith(
+                  style: HajjDuaTypography.caption.copyWith(
                     color: AppColors.textBodyColor(context),
                   ),
                 ),

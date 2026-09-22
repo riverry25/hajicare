@@ -3,46 +3,56 @@ import 'hajj_dua_category.dart';
 class HajjDua {
   final String id;
   final HajjDuaStage stage;
-  final String title;
-  final String? subtitle;
+  final String titleKey;
+  final String? subtitleKey;
   final String arabic;
   final String? transliteration;
-  final String? translation;
-  final String? description;
+  final Map<String, String> translations;
+  final String? descriptionKey;
   final String? source;
   final String? sourceUrl;
   final int order;
   final bool isRecommended;
   final bool requiresSourceVerification;
-  final String? notes;
+  final String? notesKey;
   final List<String> keywords;
 
   const HajjDua({
     required this.id,
     required this.stage,
-    required this.title,
+    required this.titleKey,
     required this.arabic,
     required this.order,
-    this.subtitle,
+    this.subtitleKey,
     this.transliteration,
-    this.translation,
-    this.description,
+    this.translations = const {},
+    this.descriptionKey,
     this.source,
     this.sourceUrl,
     this.isRecommended = false,
     this.requiresSourceVerification = true,
-    this.notes,
+    this.notesKey,
     this.keywords = const [],
   });
 
-  String toClipboardText() {
+  String? translationFor(String languageCode) {
+    return translations[languageCode] ?? translations['id'];
+  }
+
+  String toClipboardText({
+    required String localizedTitle,
+    required String meaningLabel,
+    required String languageCode,
+    required String sourceLabel,
+  }) {
+    final localizedTranslation = translationFor(languageCode);
     return [
-      title,
+      localizedTitle,
       arabic,
       if (transliteration?.trim().isNotEmpty ?? false) transliteration!.trim(),
-      if (translation?.trim().isNotEmpty ?? false)
-        'Artinya: ${translation!.trim()}',
-      if (source?.trim().isNotEmpty ?? false) 'Sumber: ${source!.trim()}',
+      if (localizedTranslation?.trim().isNotEmpty ?? false)
+        '$meaningLabel: ${localizedTranslation!.trim()}',
+      if (source?.trim().isNotEmpty ?? false) '$sourceLabel: ${source!.trim()}',
     ].join('\n\n');
   }
 }

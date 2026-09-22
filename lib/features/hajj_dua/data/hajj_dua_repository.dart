@@ -1,3 +1,4 @@
+import '../../../core/locales/app_translations.dart';
 import '../models/hajj_dua.dart';
 import '../models/hajj_dua_category.dart';
 import 'hajj_dua_data.dart';
@@ -18,6 +19,12 @@ class HajjDuaRepository {
     return List.unmodifiable(categories);
   }
 
+  List<HajjDuaCategory> getAvailableCategories() {
+    return getCategories()
+        .where((category) => countForStage(category.stage) > 0)
+        .toList(growable: false);
+  }
+
   HajjDuaCategory? categoryFor(HajjDuaStage stage) {
     for (final category in _categories) {
       if (category.stage == stage) return category;
@@ -34,15 +41,18 @@ class HajjDuaRepository {
   int countForStage(HajjDuaStage stage) =>
       _duas.where((dua) => dua.stage == stage).length;
 
-  List<HajjDuaCategory> searchCategories(String query) {
+  List<HajjDuaCategory> searchCategories(
+    String query, {
+    String languageCode = 'id',
+  }) {
     final normalizedQuery = _normalize(query);
-    if (normalizedQuery.isEmpty) return getCategories();
+    if (normalizedQuery.isEmpty) return getAvailableCategories();
 
-    return getCategories()
+    return getAvailableCategories()
         .where((category) {
           final searchableText = [
-            category.title,
-            category.description,
+            AppTranslations.translate(category.titleKey, languageCode),
+            AppTranslations.translate(category.descriptionKey, languageCode),
             ...category.keywords,
           ].join(' ').toLowerCase();
           return searchableText.contains(normalizedQuery);
@@ -50,19 +60,23 @@ class HajjDuaRepository {
         .toList(growable: false);
   }
 
-  List<HajjDua> searchDuas(String query) {
+  List<HajjDua> searchDuas(String query, {String languageCode = 'id'}) {
     final normalizedQuery = _normalize(query);
     if (normalizedQuery.isEmpty) return const [];
 
     final results = _duas.where((dua) {
       final category = categoryFor(dua.stage);
       final searchableText = [
-        dua.title,
-        dua.subtitle ?? '',
+        AppTranslations.translate(dua.titleKey, languageCode),
+        if (dua.subtitleKey != null)
+          AppTranslations.translate(dua.subtitleKey!, languageCode),
+        dua.arabic,
         dua.transliteration ?? '',
-        dua.translation ?? '',
-        dua.description ?? '',
-        category?.title ?? '',
+        ...dua.translations.values,
+        if (dua.descriptionKey != null)
+          AppTranslations.translate(dua.descriptionKey!, languageCode),
+        if (category != null)
+          AppTranslations.translate(category.titleKey, languageCode),
         ...dua.keywords,
       ].join(' ').toLowerCase();
       return searchableText.contains(normalizedQuery);

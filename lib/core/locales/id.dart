@@ -901,7 +901,84 @@ const Map<String, String> idTranslations = {
   'serviceMoneyTitle': 'Pindai Uang Riyal',
   'servicePilgrimBand': 'Jamaah & Gelang',
   'servicePilgrimBandSub': 'Status baterai & sensor nadi',
-  'servicePrayerSubtitle': 'Doa Tawaf, Sai Huruf Besar + Audio',
+  'servicePrayerSubtitle': 'Panduan doa & dzikir ibadah haji',
+  'hajjDuaTitle': 'Doa & Dzikir Ibadah Haji',
+  'hajjDuaDashboardCardValue': 'Doa Haji',
+  'hajjDuaGuideTitle': 'Panduan Doa & Dzikir Ibadah Haji',
+  'hajjDuaGuideDescription':
+      'Temukan bacaan berdasarkan tahapan ibadah. Bacaan ditampilkan sebagai panduan dan tidak seluruhnya merupakan bacaan wajib atau bacaan tetap.',
+  'hajjDuaSearchHint': 'Cari doa, tahap, arti, atau transliterasi...',
+  'hajjDuaStagesTitle': 'Tahapan Ibadah',
+  'hajjDuaStagesSubtitle': 'Pilih tahap untuk membuka panduan bacaan.',
+  'hajjDuaSearchResults': 'Hasil pencarian',
+  'hajjDuaSearchSummary': '{categories} kategori dan {duas} bacaan ditemukan.',
+  'hajjDuaCategorySection': 'Kategori',
+  'hajjDuaPrayerSection': 'Bacaan',
+  'hajjDuaNoSearchResult': 'Belum ada hasil untuk “{query}”',
+  'hajjDuaNoSearchHelp':
+      'Coba kata seperti tawaf, talbiyah, Masjidil Haram, atau Hajar Aswad.',
+  'hajjDuaBack': 'Kembali',
+  'hajjDuaClearSearch': 'Hapus pencarian',
+  'hajjDuaCount': '{count} bacaan',
+  'hajjDuaAvailableCount': '{count} bacaan tersedia',
+  'hajjDuaCategorySemantics': '{category}, {count} bacaan tersedia',
+  'hajjDuaGuidanceWarning':
+      'Bacaan di bagian ini adalah panduan. Jangan menganggap setiap bacaan sebagai doa wajib atau bacaan tetap untuk setiap tahapan.',
+  'hajjDuaVerifyingTitle': 'Konten sedang diverifikasi',
+  'hajjDuaVerifyingMessage':
+      'Belum ada teks bacaan bersumber yang dapat ditampilkan untuk kategori ini.',
+  'hajjDuaArabicSemantics': 'Teks Arab',
+  'hajjDuaTransliteration': 'LATIN / TRANSLITERASI',
+  'hajjDuaMeaning': 'ARTI',
+  'hajjDuaInformation': 'Keterangan',
+  'hajjDuaVerificationRequired': 'Perlu verifikasi sumber',
+  'hajjDuaSource': 'Sumber',
+  'hajjDuaSourceUnknown': 'Sumber bacaan belum dicantumkan pada data aplikasi.',
+  'hajjDuaCopy': 'Salin bacaan',
+  'hajjDuaCopied': '{title} sudah disalin.',
+  'hajjDuaCategoryIhramTitle': 'Ihram & Talbiyah',
+  'hajjDuaCategoryIhramDescription':
+      'Panduan bacaan ketika memulai ihram, bertalbiyah, dan selama perjalanan.',
+  'hajjDuaCategoryMasjidTitle': 'Masuk Masjidil Haram',
+  'hajjDuaCategoryMasjidDescription':
+      'Bacaan yang dapat dibaca ketika memasuki masjid dan mendekati Ka\'bah.',
+  'hajjDuaCategoryTawafTitle': 'Thawaf',
+  'hajjDuaCategoryTawafDescription':
+      'Bacaan dan dzikir yang dapat dibaca selama rangkaian thawaf.',
+  'hajjDuaCategorySaiTitle': "Sa'i",
+  'hajjDuaCategorySaiDescription':
+      'Panduan bacaan sepanjang perjalanan antara Shafa dan Marwah.',
+  'hajjDuaCategoryArafahTitle': 'Wukuf di Arafah',
+  'hajjDuaCategoryArafahDescription':
+      'Panduan memperbanyak doa dan beragam dzikir selama wukuf.',
+  'hajjDuaCategoryMuzdalifahTitle': 'Muzdalifah',
+  'hajjDuaCategoryMuzdalifahDescription':
+      'Panduan dzikir dan doa selama berada di Muzdalifah menuju Mina.',
+  'hajjDuaCategoryMinaTitle': 'Mina & Jamarat',
+  'hajjDuaCategoryMinaDescription':
+      'Panduan bacaan saat berada di Mina dan menjalani rangkaian jamarat.',
+  'hajjDuaCategoryTahallulTitle': 'Tahallul',
+  'hajjDuaCategoryTahallulDescription':
+      'Panduan bacaan terkait tahallul setelah rangkaian ibadah.',
+  'hajjDuaCategoryGeneralTitle': 'Doa Umum',
+  'hajjDuaCategoryGeneralDescription':
+      'Kumpulan doa untuk kebutuhan pribadi, keluarga, dan kebaikan umum.',
+  'hajjDuaTalbiyahTitle': 'Bacaan Talbiyah',
+  'hajjDuaTalbiyahSubtitle': 'Dzikir dan bacaan selama ihram',
+  'hajjDuaMasjidTitle': 'Doa Masuk Masjidil Haram',
+  'hajjDuaMasjidSubtitle': 'Bacaan ketika memasuki masjid',
+  'hajjDuaRukunYamaniTitle': 'Antara Rukun Yamani dan Hajar Aswad',
+  'hajjDuaRukunYamaniSubtitle': 'Bacaan yang dapat dibaca selama thawaf',
+  'hajjDuaExistingContentDescription':
+      'Teks ini berasal dari implementasi Hajicare sebelumnya dan belum memiliki sumber yang dicantumkan.',
+  'hajjDuaRukunYamaniDescription':
+      'Tidak ada doa tetap yang ditampilkan untuk setiap putaran. Bacaan ini diposisikan sebagai panduan yang dapat dibaca.',
+  'hajjDuaTalbiyahVerificationNote':
+      'Perlu pemeriksaan kelengkapan teks dan rujukan oleh penelaah agama.',
+  'hajjDuaMasjidVerificationNote':
+      'Perlu verifikasi transliterasi dan rujukan oleh penelaah agama.',
+  'hajjDuaReferenceMissingNote':
+      'Rujukan belum dicantumkan pada implementasi sebelumnya.',
   'servicePrayerTitle': 'Doa & Manasik',
   'serviceScheduleAgenda': 'Jadwal & Agenda',
   'serviceScheduleAgendaSub': 'Waktu Jamarat & titik kumpul',

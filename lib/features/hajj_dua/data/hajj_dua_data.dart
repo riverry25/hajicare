@@ -1,28 +1,25 @@
 import '../models/hajj_dua.dart';
 import '../models/hajj_dua_category.dart';
 
-/// Offline category structure for the Hajj dua and dhikr guide.
 const List<HajjDuaCategory> hajjDuaCategories = [
   HajjDuaCategory(
     stage: HajjDuaStage.ihram,
-    title: 'Ihram & Talbiyah',
-    description:
-        'Panduan bacaan ketika memulai ihram, bertalbiyah, dan selama perjalanan.',
+    titleKey: 'hajjDuaCategoryIhramTitle',
+    descriptionKey: 'hajjDuaCategoryIhramDescription',
     order: 1,
     keywords: ['niat', 'talbiyah', 'perjalanan', 'ihram', 'umrah'],
   ),
   HajjDuaCategory(
     stage: HajjDuaStage.masjidAlHaram,
-    title: 'Masuk Masjidil Haram',
-    description:
-        'Bacaan yang dapat dibaca ketika memasuki masjid dan mendekati Ka\'bah.',
+    titleKey: 'hajjDuaCategoryMasjidTitle',
+    descriptionKey: 'hajjDuaCategoryMasjidDescription',
     order: 2,
     keywords: ['masjid', 'kabah', "ka'bah", 'masjidil haram'],
   ),
   HajjDuaCategory(
     stage: HajjDuaStage.tawaf,
-    title: 'Thawaf',
-    description: 'Bacaan dan dzikir yang dapat dibaca selama rangkaian thawaf.',
+    titleKey: 'hajjDuaCategoryTawafTitle',
+    descriptionKey: 'hajjDuaCategoryTawafDescription',
     order: 3,
     keywords: [
       'tawaf',
@@ -35,15 +32,15 @@ const List<HajjDuaCategory> hajjDuaCategories = [
   ),
   HajjDuaCategory(
     stage: HajjDuaStage.sai,
-    title: "Sa'i",
-    description: 'Panduan bacaan sepanjang perjalanan antara Shafa dan Marwah.',
+    titleKey: 'hajjDuaCategorySaiTitle',
+    descriptionKey: 'hajjDuaCategorySaiDescription',
     order: 4,
     keywords: ['sai', "sa'i", 'shafa', 'safa', 'marwah', 'pilar hijau'],
   ),
   HajjDuaCategory(
     stage: HajjDuaStage.arafah,
-    title: 'Wukuf di Arafah',
-    description: 'Panduan memperbanyak doa dan beragam dzikir selama wukuf.',
+    titleKey: 'hajjDuaCategoryArafahTitle',
+    descriptionKey: 'hajjDuaCategoryArafahDescription',
     order: 5,
     keywords: [
       'arafah',
@@ -57,32 +54,29 @@ const List<HajjDuaCategory> hajjDuaCategories = [
   ),
   HajjDuaCategory(
     stage: HajjDuaStage.muzdalifah,
-    title: 'Muzdalifah',
-    description:
-        'Panduan dzikir dan doa selama berada di Muzdalifah menuju Mina.',
+    titleKey: 'hajjDuaCategoryMuzdalifahTitle',
+    descriptionKey: 'hajjDuaCategoryMuzdalifahDescription',
     order: 6,
     keywords: ['muzdalifah', 'mabit', 'mina', 'talbiyah'],
   ),
   HajjDuaCategory(
     stage: HajjDuaStage.mina,
-    title: 'Mina & Jamarat',
-    description:
-        'Panduan bacaan saat berada di Mina dan menjalani rangkaian jamarat.',
+    titleKey: 'hajjDuaCategoryMinaTitle',
+    descriptionKey: 'hajjDuaCategoryMinaDescription',
     order: 7,
     keywords: ['mina', 'jamarat', 'jumrah', 'takbir', 'melontar'],
   ),
   HajjDuaCategory(
     stage: HajjDuaStage.tahallul,
-    title: 'Tahallul',
-    description: 'Panduan bacaan terkait tahallul setelah rangkaian ibadah.',
+    titleKey: 'hajjDuaCategoryTahallulTitle',
+    descriptionKey: 'hajjDuaCategoryTahallulDescription',
     order: 8,
     keywords: ['tahallul', 'cukur', 'rambut'],
   ),
   HajjDuaCategory(
     stage: HajjDuaStage.general,
-    title: 'Doa Umum',
-    description:
-        'Kumpulan doa untuk kebutuhan pribadi, keluarga, dan kebaikan umum.',
+    titleKey: 'hajjDuaCategoryGeneralTitle',
+    descriptionKey: 'hajjDuaCategoryGeneralDescription',
     order: 9,
     keywords: [
       'ampunan',
@@ -97,59 +91,58 @@ const List<HajjDuaCategory> hajjDuaCategories = [
   ),
 ];
 
-/// These are the only prayer texts found in the previous implementation.
-/// Their wording is preserved verbatim and their provenance remains flagged
-/// until a trusted reviewer supplies a source.
+/// Only content found in the previous implementation is retained here.
+/// Canonical Arabic and transliteration stay independent from localized UI.
 const List<HajjDua> hajjDuas = [
   HajjDua(
     id: 'talbiyah_existing',
     stage: HajjDuaStage.ihram,
-    title: 'Bacaan Talbiyah',
-    subtitle: 'Dzikir dan bacaan selama ihram',
+    titleKey: 'hajjDuaTalbiyahTitle',
+    subtitleKey: 'hajjDuaTalbiyahSubtitle',
     arabic:
         'لَبَّيْكَ اللَّهُمَّ لَبَّيْكَ، لَبَّيْكَ لاَ شَرِيكَ لَكَ لَبَّيْكَ',
     transliteration:
         'Labbaikallaahumma labbaik, labbaika laa syariika laka labbaik...',
-    translation: 'Aku penuhi panggilan-Mu ya Allah, aku penuhi panggilan-Mu...',
-    description:
-        'Teks ini berasal dari implementasi Hajicare sebelumnya dan belum memiliki sumber yang dicantumkan.',
+    translations: {
+      'id': 'Aku penuhi panggilan-Mu ya Allah, aku penuhi panggilan-Mu...',
+    },
+    descriptionKey: 'hajjDuaExistingContentDescription',
     order: 1,
     isRecommended: true,
-    notes:
-        'Perlu pemeriksaan kelengkapan teks dan rujukan oleh penelaah agama.',
+    notesKey: 'hajjDuaTalbiyahVerificationNote',
     keywords: ['ihram', 'talbiyah', 'labbaik', 'perjalanan'],
   ),
   HajjDua(
     id: 'masuk_masjid_existing',
     stage: HajjDuaStage.masjidAlHaram,
-    title: 'Doa Masuk Masjidil Haram',
-    subtitle: 'Bacaan ketika memasuki masjid',
+    titleKey: 'hajjDuaMasjidTitle',
+    subtitleKey: 'hajjDuaMasjidSubtitle',
     arabic: 'اللَّهُمَّ افْتَحْ لِي أَبْوَابَ رَحْمَتِكَ',
     transliteration: 'Allaahummaftah lii abwaaba rahmatik',
-    translation: 'Ya Allah, bukalah pintu-pintu rahmat-Mu untukku.',
-    description:
-        'Teks ini berasal dari implementasi Hajicare sebelumnya dan belum memiliki sumber yang dicantumkan.',
+    translations: {'id': 'Ya Allah, bukalah pintu-pintu rahmat-Mu untukku.'},
+    descriptionKey: 'hajjDuaExistingContentDescription',
     order: 1,
     isRecommended: true,
-    notes: 'Perlu verifikasi transliterasi dan rujukan oleh penelaah agama.',
+    notesKey: 'hajjDuaMasjidVerificationNote',
     keywords: ['masjid', 'masjidil haram', 'rahmat'],
   ),
   HajjDua(
     id: 'rukun_yamani_existing',
     stage: HajjDuaStage.tawaf,
-    title: 'Antara Rukun Yamani dan Hajar Aswad',
-    subtitle: 'Bacaan yang dapat dibaca selama thawaf',
+    titleKey: 'hajjDuaRukunYamaniTitle',
+    subtitleKey: 'hajjDuaRukunYamaniSubtitle',
     arabic:
         'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ',
     transliteration:
         "Rabbanaa aatinaa fid dunyaa hasanah wa fil aakhirati hasanah wa qinaa 'adzaaban naar",
-    translation:
-        'Ya Tuhan kami, berilah kami kebaikan di dunia dan kebaikan di akhirat dan lindungilah kami dari azab neraka.',
-    description:
-        'Tidak ada doa tetap yang ditampilkan untuk setiap putaran. Bacaan ini diposisikan sebagai panduan yang dapat dibaca.',
+    translations: {
+      'id':
+          'Ya Tuhan kami, berilah kami kebaikan di dunia dan kebaikan di akhirat dan lindungilah kami dari azab neraka.',
+    },
+    descriptionKey: 'hajjDuaRukunYamaniDescription',
     order: 1,
     isRecommended: true,
-    notes: 'Rujukan belum dicantumkan pada implementasi sebelumnya.',
+    notesKey: 'hajjDuaReferenceMissingNote',
     keywords: [
       'tawaf',
       'thawaf',

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/locales/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../../data/hajj_dua_repository.dart';
 import '../../models/hajj_dua.dart';
 import '../../models/hajj_dua_category.dart';
+import '../hajj_dua_typography.dart';
 import '../widgets/dua_card.dart';
 import '../widgets/dua_category_card.dart';
 import 'hajj_dua_category_screen.dart';
@@ -40,15 +41,11 @@ class _HajjDuaScreenState extends State<HajjDuaScreen> {
     _updateQuery('');
   }
 
-  void _openCategory(
-    HajjDuaCategory category, {
-    String? initiallyExpandedDuaId,
-  }) {
+  void _openCategory(HajjDuaCategory category) {
     Get.to(
       () => HajjDuaCategoryScreen(
         category: category,
         repository: widget.repository,
-        initiallyExpandedDuaId: initiallyExpandedDuaId,
       ),
     );
   }
@@ -56,10 +53,17 @@ class _HajjDuaScreenState extends State<HajjDuaScreen> {
   @override
   Widget build(BuildContext context) {
     final scaffoldColor = AppColors.scaffoldColor(context);
+    final languageCode = Localizations.localeOf(context).languageCode;
     final categories = _query.isEmpty
-        ? widget.repository.getCategories()
-        : widget.repository.searchCategories(_query);
-    final matchingDuas = widget.repository.searchDuas(_query);
+        ? widget.repository.getAvailableCategories()
+        : widget.repository.searchCategories(
+            _query,
+            languageCode: languageCode,
+          );
+    final matchingDuas = widget.repository.searchDuas(
+      _query,
+      languageCode: languageCode,
+    );
 
     return Scaffold(
       backgroundColor: scaffoldColor,
@@ -68,12 +72,15 @@ class _HajjDuaScreenState extends State<HajjDuaScreen> {
         leading: IconButton(
           onPressed: Get.back,
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          tooltip: 'Kembali',
+          tooltip: context.tr('hajjDuaBack'),
         ),
-        title: const Text(
-          'Doa & Dzikir Ibadah Haji',
+        title: Text(
+          context.tr('hajjDuaTitle'),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
+          style: HajjDuaTypography.appBarTitle.copyWith(
+            color: AppColors.textHeadingColor(context),
+          ),
         ),
       ),
       body: SafeArea(
@@ -98,8 +105,14 @@ class _HajjDuaScreenState extends State<HajjDuaScreen> {
                   controller: _searchController,
                   onChanged: _updateQuery,
                   textInputAction: TextInputAction.search,
+                  style: HajjDuaTypography.body.copyWith(
+                    color: AppColors.textHeadingColor(context),
+                  ),
                   decoration: InputDecoration(
-                    hintText: 'Cari doa, tahap, arti, atau transliterasi...',
+                    hintText: context.tr('hajjDuaSearchHint'),
+                    hintStyle: HajjDuaTypography.body.copyWith(
+                      color: AppColors.textSecondaryColor(context),
+                    ),
                     prefixIcon: const Icon(Icons.search_rounded),
                     suffixIcon: _query.isEmpty
                         ? null
@@ -107,7 +120,7 @@ class _HajjDuaScreenState extends State<HajjDuaScreen> {
                             key: const Key('clear_hajj_dua_search'),
                             onPressed: _clearSearch,
                             icon: const Icon(Icons.close_rounded),
-                            tooltip: 'Hapus pencarian',
+                            tooltip: context.tr('hajjDuaClearSearch'),
                           ),
                   ),
                 ),
@@ -149,8 +162,8 @@ class _GuideHeader extends StatelessWidget {
           colors: isDark
               ? const [AppColors.espressoDark, AppColors.primary]
               : const [AppColors.primary, AppColors.espressoMedium],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(
@@ -175,18 +188,14 @@ class _GuideHeader extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            'Panduan Doa & Dzikir Ibadah Haji',
-            style: AppTypography.displayMedium.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-            ),
+            context.tr('hajjDuaGuideTitle'),
+            style: HajjDuaTypography.screenTitle.copyWith(color: Colors.white),
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            'Temukan bacaan berdasarkan tahapan ibadah. Bacaan ditampilkan sebagai panduan dan tidak seluruhnya merupakan bacaan wajib atau bacaan tetap.',
-            style: AppTypography.bodyMedium.copyWith(
+            context.tr('hajjDuaGuideDescription'),
+            style: HajjDuaTypography.body.copyWith(
               color: Colors.white.withValues(alpha: 0.86),
-              height: 1.55,
             ),
           ),
         ],
@@ -198,11 +207,7 @@ class _GuideHeader extends StatelessWidget {
 class _CategorySection extends StatelessWidget {
   final List<HajjDuaCategory> categories;
   final HajjDuaRepository repository;
-  final void Function(
-    HajjDuaCategory category, {
-    String? initiallyExpandedDuaId,
-  })
-  onCategoryTap;
+  final ValueChanged<HajjDuaCategory> onCategoryTap;
 
   const _CategorySection({
     required this.categories,
@@ -216,8 +221,8 @@ class _CategorySection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const _SectionTitle(
-          title: 'Tahapan Ibadah',
-          subtitle: 'Pilih tahap untuk membuka panduan bacaan.',
+          titleKey: 'hajjDuaStagesTitle',
+          subtitleKey: 'hajjDuaStagesSubtitle',
         ),
         const SizedBox(height: AppSpacing.md),
         LayoutBuilder(
@@ -231,8 +236,8 @@ class _CategorySection extends StatelessWidget {
               spacing: AppSpacing.md,
               runSpacing: AppSpacing.md,
               children: categories
-                  .map((category) {
-                    return SizedBox(
+                  .map(
+                    (category) => SizedBox(
                       width: cardWidth,
                       child: DuaCategoryCard(
                         key: Key('category_${category.stage.name}'),
@@ -240,8 +245,8 @@ class _CategorySection extends StatelessWidget {
                         duaCount: repository.countForStage(category.stage),
                         onTap: () => onCategoryTap(category),
                       ),
-                    );
-                  })
+                    ),
+                  )
                   .toList(growable: false),
             );
           },
@@ -256,11 +261,7 @@ class _SearchResults extends StatelessWidget {
   final List<HajjDuaCategory> categories;
   final List<HajjDua> duas;
   final HajjDuaRepository repository;
-  final void Function(
-    HajjDuaCategory category, {
-    String? initiallyExpandedDuaId,
-  })
-  onCategoryTap;
+  final ValueChanged<HajjDuaCategory> onCategoryTap;
 
   const _SearchResults({
     required this.query,
@@ -280,19 +281,16 @@ class _SearchResults extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionTitle(
-          title: 'Hasil pencarian',
-          subtitle:
-              '${categories.length} kategori dan ${duas.length} bacaan ditemukan.',
+          titleKey: 'hajjDuaSearchResults',
+          subtitleKey: 'hajjDuaSearchSummary',
+          subtitleParams: {
+            'categories': categories.length,
+            'duas': duas.length,
+          },
         ),
         if (categories.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.lg),
-          Text(
-            'Kategori',
-            style: AppTypography.titleMedium.copyWith(
-              color: AppColors.textHeadingColor(context),
-              fontWeight: FontWeight.w800,
-            ),
-          ),
+          _SubsectionTitle(label: context.tr('hajjDuaCategorySection')),
           const SizedBox(height: AppSpacing.sm),
           ...categories.map(
             (category) => Padding(
@@ -308,13 +306,7 @@ class _SearchResults extends StatelessWidget {
         ],
         if (duas.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.md),
-          Text(
-            'Bacaan',
-            style: AppTypography.titleMedium.copyWith(
-              color: AppColors.textHeadingColor(context),
-              fontWeight: FontWeight.w800,
-            ),
-          ),
+          _SubsectionTitle(label: context.tr('hajjDuaPrayerSection')),
           const SizedBox(height: AppSpacing.sm),
           ...duas.map(
             (dua) => Padding(
@@ -329,10 +321,15 @@ class _SearchResults extends StatelessWidget {
 }
 
 class _SectionTitle extends StatelessWidget {
-  final String title;
-  final String subtitle;
+  final String titleKey;
+  final String subtitleKey;
+  final Map<String, dynamic>? subtitleParams;
 
-  const _SectionTitle({required this.title, required this.subtitle});
+  const _SectionTitle({
+    required this.titleKey,
+    required this.subtitleKey,
+    this.subtitleParams,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -340,20 +337,35 @@ class _SectionTitle extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          title,
-          style: AppTypography.titleLarge.copyWith(
+          context.tr(titleKey),
+          style: HajjDuaTypography.sectionTitle.copyWith(
             color: AppColors.textHeadingColor(context),
-            fontWeight: FontWeight.w800,
           ),
         ),
         const SizedBox(height: 2),
         Text(
-          subtitle,
-          style: AppTypography.bodySmall.copyWith(
+          context.tr(subtitleKey, subtitleParams),
+          style: HajjDuaTypography.caption.copyWith(
             color: AppColors.textBodyColor(context),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _SubsectionTitle extends StatelessWidget {
+  final String label;
+
+  const _SubsectionTitle({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: HajjDuaTypography.cardTitle.copyWith(
+        color: AppColors.textHeadingColor(context),
+      ),
     );
   }
 }
@@ -386,18 +398,17 @@ class _EmptySearchState extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            'Belum ada hasil untuk “$query”',
+            context.tr('hajjDuaNoSearchResult', {'query': query}),
             textAlign: TextAlign.center,
-            style: AppTypography.titleMedium.copyWith(
+            style: HajjDuaTypography.cardTitle.copyWith(
               color: AppColors.textHeadingColor(context),
-              fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            'Coba kata seperti tawaf, talbiyah, zamzam, Arafah, atau orang tua.',
+            context.tr('hajjDuaNoSearchHelp'),
             textAlign: TextAlign.center,
-            style: AppTypography.bodyMedium.copyWith(
+            style: HajjDuaTypography.body.copyWith(
               color: AppColors.textBodyColor(context),
             ),
           ),

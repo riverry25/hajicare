@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/locales/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../models/hajj_dua_category.dart';
+import '../hajj_dua_typography.dart';
 
 class DuaCategoryCard extends StatelessWidget {
   final HajjDuaCategory category;
@@ -23,10 +24,14 @@ class DuaCategoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
     final accentColor = isDark ? AppColors.goldLight : AppColors.espressoDark;
+    final categoryTitle = context.tr(category.titleKey);
 
     return Semantics(
       button: true,
-      label: '${category.title}, $duaCount bacaan tersedia',
+      label: context.tr('hajjDuaCategorySemantics', {
+        'category': categoryTitle,
+        'count': duaCount,
+      }),
       child: AppCard(
         onTap: onTap,
         padding: const EdgeInsets.all(AppSpacing.lg),
@@ -48,31 +53,27 @@ class DuaCategoryCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    category.title,
-                    style: AppTypography.titleMedium.copyWith(
+                    categoryTitle,
+                    style: HajjDuaTypography.cardTitle.copyWith(
                       color: AppColors.textHeadingColor(context),
-                      fontWeight: FontWeight.w800,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    category.description,
+                    context.tr(category.descriptionKey),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.bodySmall.copyWith(
+                    style: HajjDuaTypography.caption.copyWith(
                       color: AppColors.textBodyColor(context),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
-                    duaCount > 0
-                        ? '$duaCount bacaan tersedia'
-                        : 'Konten menunggu verifikasi',
-                    style: AppTypography.captionSmall.copyWith(
+                    context.tr('hajjDuaAvailableCount', {'count': duaCount}),
+                    style: HajjDuaTypography.metadataLabel.copyWith(
                       color: duaCount > 0
                           ? AppColors.statusPositive
                           : AppColors.textSecondaryColor(context),
-                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ],
