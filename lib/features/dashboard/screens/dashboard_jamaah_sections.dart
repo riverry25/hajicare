@@ -1743,20 +1743,31 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   ],
                 ),
                 child: Obx(() {
-                  final ldrVal = ldrCtrl.ldrValue.value;
-                  final isFlame = ldrCtrl.flameDetected.value;
                   final isConnected = ldrCtrl.isConnected;
-                  final lightStatus = ldrCtrl.lightStatus;
+                  final isAvailable = ldrCtrl.isSensorAvailable.value;
+                  final temp = ldrCtrl.temperature.value;
+                  final hum = ldrCtrl.humidity.value;
+                  final hi = ldrCtrl.heatIndex.value;
+                  final statusLabel = ldrCtrl.environmentStatusLabel;
+                  final statusColor = ldrCtrl.environmentStatusColor;
+                  final statusIcon = ldrCtrl.environmentStatusIcon;
 
-                  // Safe fallback readings if not yet connected to physical hardware
-                  final displayLdr = isConnected && ldrVal > 0
-                      ? ldrVal
-                      : (ldrVal > 0 ? ldrVal : 820);
-                  final displayBrightnessPct = ((4095 - displayLdr) / 4095.0)
-                      .clamp(0.1, 1.0);
-                  final displayStatus = lightStatus != '-'
-                      ? lightStatus
-                      : context.tr('dashboard.bright');
+                  final displayTemp = isConnected && isAvailable && temp != null
+                      ? '${temp.round()} °C'
+                      : (temp != null ? '${temp.round()} °C' : '32 °C');
+                  final displayHum = isConnected && isAvailable && hum != null
+                      ? '${hum.round()} %'
+                      : (hum != null ? '${hum.round()} %' : '70 %');
+                  final displayHi = isConnected && isAvailable && hi != null
+                      ? hi
+                      : (hi ?? 37.0);
+                  final displayStatus = isConnected && isAvailable
+                      ? statusLabel
+                      : (statusLabel != '-' ? statusLabel : 'Panas');
+                  final displayGaugePct = ((displayHi - 20.0) / 30.0).clamp(
+                    0.1,
+                    1.0,
+                  );
 
                   return SingleChildScrollView(
                     physics: const ClampingScrollPhysics(),
@@ -1776,7 +1787,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          context.tr('dashboard.smartbandMonitoringSub'),
+                          'Telemetri sensor lingkungan DHT11 & kondisi fisik.',
                           style: DashboardTypography.bodySmall.copyWith(
                             color: isDark
                                 ? Colors.white70
@@ -1791,12 +1802,12 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            // Left: Stacked Sensor LDR & Flame Sensor
+                            // Left: Stacked Suhu Lingkungan & Kelembapan
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // 1. Sensor LDR Item
+                                  // 1. Suhu Lingkungan Item
                                   Row(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.center,
@@ -1820,7 +1831,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              context.tr('dashboard.ldrSensor'),
+                                              'Suhu Lingkungan',
                                               style: TextStyle(
                                                 color: isDark
                                                     ? Colors.white60
@@ -1836,32 +1847,18 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                               spacing: 5,
                                               runSpacing: 2,
                                               children: [
-                                                Icon(
-                                                  Icons.wb_sunny_rounded,
-                                                  color: isDark
-                                                      ? AppColors.goldLight
-                                                      : AppColors.primaryGold,
+                                                const Icon(
+                                                  Icons.thermostat_rounded,
+                                                  color: Color(0xFFE11D48),
                                                   size: 15,
                                                 ),
                                                 Text(
-                                                  '$displayLdr',
+                                                  displayTemp,
                                                   style: TextStyle(
                                                     color: headingColor,
                                                     fontSize: 15,
                                                     fontWeight: FontWeight.w800,
                                                     letterSpacing: -0.3,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  'Lux',
-                                                  style: TextStyle(
-                                                    color: isDark
-                                                        ? Colors.white54
-                                                        : const Color(
-                                                            0xFF94A3B8,
-                                                          ),
-                                                    fontSize: 10.5,
-                                                    fontWeight: FontWeight.w600,
                                                   ),
                                                 ),
                                                 Container(
@@ -1871,32 +1868,37 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                                         vertical: 1.5,
                                                       ),
                                                   decoration: BoxDecoration(
-                                                    color:
-                                                        (isDark
-                                                                ? AppColors
-                                                                      .goldLight
-                                                                : AppColors
-                                                                      .primaryGold)
-                                                            .withValues(
-                                                              alpha: isDark
-                                                                  ? 0.25
-                                                                  : 0.14,
-                                                            ),
+                                                    color: statusColor
+                                                        .withValues(
+                                                          alpha: isDark
+                                                              ? 0.25
+                                                              : 0.14,
+                                                        ),
                                                     borderRadius:
                                                         BorderRadius.circular(
                                                           4,
                                                         ),
                                                   ),
-                                                  child: Text(
-                                                    displayStatus,
-                                                    style: TextStyle(
-                                                      color: isDark
-                                                          ? AppColors.goldLight
-                                                          : AppColors.goldDark,
-                                                      fontSize: 10,
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                    ),
+                                                  child: Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      Icon(
+                                                        statusIcon,
+                                                        color: statusColor,
+                                                        size: 11,
+                                                      ),
+                                                      const SizedBox(width: 3),
+                                                      Text(
+                                                        displayStatus,
+                                                        style: TextStyle(
+                                                          color: statusColor,
+                                                          fontSize: 10,
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                        ),
+                                                      ),
+                                                    ],
                                                   ),
                                                 ),
                                               ],
@@ -1909,7 +1911,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
                                   const SizedBox(height: 14),
 
-                                  // 2. Flame Sensor Item
+                                  // 2. Kelembapan Item
                                   Row(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.center,
@@ -1918,11 +1920,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                         width: 3.5,
                                         height: 36,
                                         decoration: BoxDecoration(
-                                          color: isFlame
-                                              ? AppColors.sosEmergency
-                                              : (isDark
-                                                    ? AppColors.darkSecondary
-                                                    : AppColors.tanMedium),
+                                          color: const Color(0xFF0284C7),
                                           borderRadius: BorderRadius.circular(
                                             2,
                                           ),
@@ -1935,9 +1933,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              context.tr(
-                                                'dashboard.flameSensor',
-                                              ),
+                                              'Kelembapan Udara',
                                               style: TextStyle(
                                                 color: isDark
                                                     ? Colors.white60
@@ -1953,76 +1949,18 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                               spacing: 5,
                                               runSpacing: 2,
                                               children: [
-                                                Icon(
-                                                  Icons
-                                                      .local_fire_department_rounded,
-                                                  color: isFlame
-                                                      ? AppColors.sosEmergency
-                                                      : (isDark
-                                                            ? AppColors
-                                                                  .darkSecondary
-                                                            : AppColors
-                                                                  .tanMedium),
+                                                const Icon(
+                                                  Icons.water_drop_rounded,
+                                                  color: Color(0xFF0284C7),
                                                   size: 15,
                                                 ),
                                                 Text(
-                                                  isFlame
-                                                      ? context.tr(
-                                                          'dashboard.fireDetected',
-                                                        )
-                                                      : context.tr(
-                                                          'dashboard.normal',
-                                                        ),
+                                                  displayHum,
                                                   style: TextStyle(
-                                                    color: isFlame
-                                                        ? AppColors.sosEmergency
-                                                        : headingColor,
+                                                    color: headingColor,
                                                     fontSize: 15,
                                                     fontWeight: FontWeight.w800,
                                                     letterSpacing: -0.3,
-                                                  ),
-                                                ),
-                                                Container(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 5,
-                                                        vertical: 1.5,
-                                                      ),
-                                                  decoration: BoxDecoration(
-                                                    color:
-                                                        (isFlame
-                                                                ? AppColors
-                                                                      .sosEmergency
-                                                                : AppColors
-                                                                      .statusSafe)
-                                                            .withValues(
-                                                              alpha: isDark
-                                                                  ? 0.25
-                                                                  : 0.12,
-                                                            ),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          4,
-                                                        ),
-                                                  ),
-                                                  child: Text(
-                                                    isFlame
-                                                        ? context.tr(
-                                                            'dashboard.evacuate',
-                                                          )
-                                                        : context.tr(
-                                                            'dashboard.safe',
-                                                          ),
-                                                    style: TextStyle(
-                                                      color: isFlame
-                                                          ? AppColors
-                                                                .sosEmergency
-                                                          : AppColors
-                                                                .statusSafe,
-                                                      fontSize: 10,
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                    ),
                                                   ),
                                                 ),
                                               ],
@@ -2038,13 +1976,13 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
                             const SizedBox(width: 10),
 
-                            // Right: Circular Arc Progress Ring Gauge
+                            // Right: Circular Arc Progress Ring Gauge for Heat Index
                             SizedBox(
                               width: 100,
                               height: 100,
                               child: CustomPaint(
                                 painter: _CircularGaugePainter(
-                                  progress: displayBrightnessPct,
+                                  progress: displayGaugePct,
                                   trackColor: isDark
                                       ? AppColors.darkSurfaceContainerHighest
                                       : AppColors.canvasCreamSubtle,
@@ -2060,7 +1998,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
-                                        '$displayLdr',
+                                        '${displayHi.round()}°',
                                         style: TextStyle(
                                           color: headingColor,
                                           fontSize: 20,
@@ -2071,7 +2009,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        context.tr('dashboard.ldrLevel'),
+                                        'Heat Index',
                                         style: TextStyle(
                                           color: isDark
                                               ? Colors.white60

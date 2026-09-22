@@ -36,7 +36,6 @@ class _BisindoScreenState extends State<BisindoScreen> {
   bool _isLoading = false;
   String? _errorMessage;
 
-
   @override
   void initState() {
     super.initState();
@@ -142,8 +141,12 @@ class _BisindoScreenState extends State<BisindoScreen> {
         ),
         title: Row(
           children: [
-            const Text('??', style: TextStyle(fontSize: 22)),
-            const SizedBox(width: 9),
+            Icon(
+              Icons.sign_language_rounded,
+              color: AppColors.textHeadingColor(context),
+              size: 24,
+            ),
+            const SizedBox(width: 10),
             Text(
               'BISINDO Translator',
               style: AppTypography.titleMedium.copyWith(
@@ -244,7 +247,8 @@ class _BisindoScreenState extends State<BisindoScreen> {
               left: 14,
               top: 13,
               child: _CameraBadge(
-                text: _isCameraActive ? '?  LIVE' : 'STANDBY',
+                text: _isCameraActive ? 'LIVE' : 'STANDBY',
+                isLive: _isCameraActive,
                 color: _isCameraActive
                     ? AppColors.emeraldIslamic
                     : Colors.black54,
@@ -298,14 +302,27 @@ class _BisindoScreenState extends State<BisindoScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          '${confirmed ? "? " : ""}${isSingleChar ? label.toUpperCase() : label}',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                            fontSize: isSingleChar ? 34 : 20,
-                            height: 1.1,
-                          ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (confirmed) ...[
+                              const Icon(
+                                Icons.check_circle_rounded,
+                                color: AppColors.accentGoldStar,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 5),
+                            ],
+                            Text(
+                              isSingleChar ? label.toUpperCase() : label,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                fontSize: isSingleChar ? 34 : 20,
+                                height: 1.1,
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 3),
                         Text(
@@ -530,13 +547,10 @@ class _BisindoScreenState extends State<BisindoScreen> {
           ),
         ),
         child: Center(
-          child: Text(
-            '?',
-            style: TextStyle(
-              fontSize: 16,
-              color: AppColors.textSecondaryColor(context),
-              fontWeight: FontWeight.w600,
-            ),
+          child: Icon(
+            Icons.space_bar_rounded,
+            size: 20,
+            color: AppColors.textSecondaryColor(context),
           ),
         ),
       );
@@ -715,7 +729,7 @@ class _BisindoScreenState extends State<BisindoScreen> {
                   ? 'Sedang Membaca...'
                   : raw.isEmpty
                   ? 'UCAPKAN (TEKS KOSONG)'
-                  : '?? UCAPKAN HASIL',
+                  : 'UCAPKAN HASIL',
               style: AppTypography.bodyMedium.copyWith(
                 fontWeight: FontWeight.w800,
                 letterSpacing: 0.5,
@@ -755,8 +769,13 @@ class _BisindoScreenState extends State<BisindoScreen> {
 class _CameraBadge extends StatelessWidget {
   final String text;
   final Color color;
+  final bool isLive;
 
-  const _CameraBadge({required this.text, required this.color});
+  const _CameraBadge({
+    required this.text,
+    required this.color,
+    this.isLive = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -766,14 +785,30 @@ class _CameraBadge extends StatelessWidget {
         color: color.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.7,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isLive) ...[
+            Container(
+              width: 6,
+              height: 6,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 5),
+          ],
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.7,
+            ),
+          ),
+        ],
       ),
     );
   }
