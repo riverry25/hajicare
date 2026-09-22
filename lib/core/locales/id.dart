@@ -362,7 +362,7 @@ const Map<String, String> idTranslations = {
   'serviceBandTitle': 'Gelang Pintar',
   'serviceBandSubtitle': 'Periksa koneksi dan sensor gelang',
   'servicePrayerTitle': 'Doa & Manasik',
-  'servicePrayerSubtitle': 'Doa Tawaf, Sai Huruf Besar + Audio',
+  'servicePrayerSubtitle': 'Panduan doa & dzikir ibadah haji',
   'serviceCallTitle': 'Panggilan Petugas',
   'serviceCallSubtitle': 'Petunjuk meminta bantuan pendamping',
 

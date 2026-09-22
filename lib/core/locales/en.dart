@@ -359,7 +359,7 @@ const Map<String, String> enTranslations = {
   'serviceBandTitle': 'Smart Band',
   'serviceBandSubtitle': 'Check band connection and sensors',
   'servicePrayerTitle': 'Prayers & Manasik',
-  'servicePrayerSubtitle': 'Tawaf, Sai Prayers with Audio',
+  'servicePrayerSubtitle': 'Hajj dua and dhikr guide',
   'serviceCallTitle': 'Call Officers',
   'serviceCallSubtitle': 'Phone Maktab & Kloter Post',
 

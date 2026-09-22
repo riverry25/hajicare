@@ -364,7 +364,7 @@ const Map<String, String> jvTranslations = {
   'serviceBandTitle': 'Gelang Pinter',
   'serviceBandSubtitle': 'Priksa sambungan lan sensor gelang',
   'servicePrayerTitle': 'Donga & Manasik',
-  'servicePrayerSubtitle': 'Donga Tawaf, Sai Tulisan Gedhe + Swara',
+  'servicePrayerSubtitle': 'Panduan donga & dzikir ibadah haji',
   'serviceCallTitle': 'Telpon Petugas',
   'serviceCallSubtitle': 'Telpon Pos Maktab & Kloter',
 
