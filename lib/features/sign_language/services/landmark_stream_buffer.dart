@@ -30,7 +30,7 @@ class LandmarkStreamBuffer {
   LandmarkStreamBuffer({
     required this.inferenceService,
     this.windowSize = 30,
-    BisindoMode initialMode = BisindoMode.alphabet,
+    BisindoMode initialMode = BisindoMode.unified,
     this.throttleDuration = const Duration(milliseconds: 100),
     int? minimumFrames,
     int? minimumWordFrames,

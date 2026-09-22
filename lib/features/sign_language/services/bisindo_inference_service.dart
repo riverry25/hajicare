@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 
 import '../models/bisindo_mode.dart';
@@ -24,13 +25,15 @@ abstract interface class BisindoPredictor {
 ///    - Shape: [1, 30, 300] -> [1, 8]
 ///
 /// Complete isolation:
+/// - When mode is UNIFIED, seamlessly recognizes both alphabet and words without manual switching.
+///   Static hand postures are directed to Alphabet; dynamic motion signs are evaluated for Words.
 /// - When mode is ALPHABET, only Alphabet interpreter runs. Word model NEVER runs.
 /// - When mode is WORD, only Word interpreter runs. Alphabet model NEVER runs.
 class BisindoInferenceService implements BisindoPredictor {
   final BisindoAlphabetInferenceService alphabetService;
   final BisindoWordInferenceService wordService;
 
-  BisindoMode currentMode = BisindoMode.alphabet;
+  BisindoMode currentMode = BisindoMode.unified;
 
   BisindoInferenceService({
     BisindoAlphabetInferenceService? alphabetService,
@@ -79,14 +82,97 @@ class BisindoInferenceService implements BisindoPredictor {
     }
   }
 
-  /// Strict mode routing:
-  /// - In ALPHABET mode: ONLY runs alphabetService. Never produces a word label.
-  /// - In WORD mode: ONLY runs wordService. Never produces an alphabet label.
+  /// Calculates average hand/wrist displacement between consecutive frames.
+  /// Dynamic word signs have active trajectories (> 0.015), while fingerspelling
+  /// alphabet signs are held steadily (< 0.015).
+  static double _calculateHandMotion(List<List<List<double>>> sequence) {
+    if (sequence.length < 2) return 0.0;
+    double displacement = 0.0;
+    int count = 0;
+    for (int i = 1; i < sequence.length; i++) {
+      final prev = sequence[i - 1];
+      final curr = sequence[i];
+      for (final idx in [15, 16, 501, 522]) {
+        if (idx < prev.length && idx < curr.length) {
+          final p = prev[idx];
+          final c = curr[idx];
+          if (p.length >= 2 && c.length >= 2) {
+            final dx = c[0] - p[0];
+            final dy = c[1] - p[1];
+            displacement += math.sqrt(dx * dx + dy * dy);
+            count++;
+          }
+        }
+      }
+    }
+    return count > 0 ? (displacement / count) : 0.0;
+  }
+
+  /// Unified prediction intelligently combining Alphabet and Word models.
+  Future<BisindoPrediction> _predictUnified(
+    List<List<List<double>>> landmarks,
+  ) async {
+    if (landmarks.isEmpty) {
+      return const BisindoPrediction(
+        classId: -1,
+        label: '',
+        confidence: 0.0,
+        distance: 1.0,
+        candidates: [],
+        isRecognized: false,
+      );
+    }
+
+    // 1. Evaluate alphabet on the latest frame
+    final alphaPred = alphabetService.predict(landmarks.last);
+
+    // 2. If buffer does not have enough frames for word sequence, return alphabet
+    if (landmarks.length < 15) {
+      return alphaPred;
+    }
+
+    // 3. Compute dynamic hand motion across the sequence
+    final motion = _calculateHandMotion(landmarks);
+
+    // If hands are static / holding a hand posture, the sign is fingerspelling (alphabet).
+    // Word model must NOT trigger when hands are static, preventing "U -> MAAF" false positives.
+    if (motion < 0.015) {
+      return alphaPred;
+    }
+
+    // 4. Dynamic motion detected: evaluate word sequence
+    final wordPred = wordService.predict(landmarks);
+
+    // 5. Arbitration:
+    // If the word model is strongly confident with dynamic motion, it is a word gesture!
+    if (wordPred.isRecognized && wordPred.confidence >= 0.75) {
+      return wordPred;
+    }
+
+    // Otherwise, if alphabet is recognized, prefer alphabet
+    if (alphaPred.isRecognized) {
+      return alphaPred;
+    }
+
+    // Fall back to word prediction if recognized with moderate confidence
+    if (wordPred.isRecognized) {
+      return wordPred;
+    }
+
+    return alphaPred;
+  }
+
+  /// Mode routing:
+  /// - UNIFIED mode: Seamlessly detects both alphabet letters and dynamic words.
+  /// - ALPHABET mode: ONLY runs alphabetService. Never produces a word label.
+  /// - WORD mode: ONLY runs wordService. Never produces an alphabet label.
   @override
   Future<BisindoPrediction> predictFromLandmarks(
     List<List<List<double>>> landmarks,
   ) async {
-    if (currentMode == BisindoMode.alphabet) {
+    if (currentMode == BisindoMode.unified) {
+      return _predictUnified(landmarks);
+    } else if (currentMode == BisindoMode.alphabet) {
       if (landmarks.isEmpty) {
         return const BisindoPrediction(
           classId: -1,

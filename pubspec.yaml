@@ -77,6 +77,8 @@ flutter:
     - assets/models/bisindo_alphabet_labels.json
     - assets/models/sibi_alphabet_model_f32.tflite
     - assets/models/sibi_alphabet_labels.json
+    - assets/models/fix_model/best.tflite
+    - assets/models/fix_model/label.txt
     - assets/audio/
   fonts:
     - family: Poppins

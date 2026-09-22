@@ -76,8 +76,8 @@ class BisindoRecognitionController extends GetxController {
     this.autoTick = true,
   }) : ttsService = ttsService ?? BisindoTtsService();
 
-  // Mode Selection: HURUF (alphabet) atau KATA (word)
-  final selectedMode = BisindoMode.alphabet.obs;
+  // Mode Selection: UNIFIED (gabungan huruf & kata), HURUF, atau KATA
+  final selectedMode = BisindoMode.unified.obs;
 
   // Camera & Detection States
   final isCameraActive = false.obs;
