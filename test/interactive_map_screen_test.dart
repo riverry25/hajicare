@@ -7,6 +7,8 @@ import 'package:hajicare/core/locales/app_localizations.dart';
 import 'package:hajicare/core/state/app_settings_controller.dart';
 import 'package:hajicare/core/state/hajicare_controller.dart';
 import 'package:hajicare/core/theme/app_theme.dart';
+import 'package:hajicare/core/widgets/bottom_nav_bar.dart';
+import 'package:hajicare/features/dashboard/controllers/dashboard_controller.dart';
 import 'package:hajicare/features/map/bindings/map_binding.dart';
 import 'package:hajicare/features/map/controllers/map_controller.dart';
 import 'package:hajicare/features/map/screens/interactive_map_screen.dart';
@@ -148,6 +150,70 @@ void main() {
           polylineLayer.polylines.first.color,
           equals(const Color(0xFF1E60CC)),
         );
+      },
+    );
+
+    testWidgets(
+      'InteractiveMapScreen bottom navigation bar switches dashboard tabs',
+      (tester) async {
+        tester.view.physicalSize = const Size(1080, 2400);
+        tester.view.devicePixelRatio = 2.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        Get.put(AppSettingsController(), permanent: true);
+        Get.put(HajiCareController(), permanent: true);
+        final dashCtrl = Get.put(DashboardController(), permanent: true);
+        MapBinding().dependencies();
+
+        await tester.pumpWidget(
+          GetMaterialApp(
+            theme: AppTheme.lightTheme,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('id'),
+            home: const InteractiveMapScreen(showBottomNav: true),
+          ),
+        );
+
+        await tester.pump();
+
+        // Bottom nav bar is rendered
+        expect(find.byType(HajiCareBottomNavBar), findsOneWidget);
+
+        // Tap Jadwal Salat (tab 2)
+        await tester.tap(
+          find.descendant(
+            of: find.byType(HajiCareBottomNavBar),
+            matching: find.byIcon(Icons.schedule_rounded),
+          ),
+        );
+        await tester.pump();
+        expect(dashCtrl.currentIndex.value, equals(2));
+
+        // Tap Profil (tab 3)
+        await tester.tap(
+          find.descendant(
+            of: find.byType(HajiCareBottomNavBar),
+            matching: find.byIcon(Icons.person_rounded),
+          ),
+        );
+        await tester.pump();
+        expect(dashCtrl.currentIndex.value, equals(3));
+
+        // Tap Beranda (tab 0)
+        await tester.tap(
+          find.descendant(
+            of: find.byType(HajiCareBottomNavBar),
+            matching: find.byIcon(Icons.home_rounded),
+          ),
+        );
+        await tester.pump();
+        expect(dashCtrl.currentIndex.value, equals(0));
       },
     );
   });

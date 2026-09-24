@@ -95,14 +95,19 @@ void main() {
     );
 
     test('supports activities lookup and filtering by ID', () {
-      final tawafActivities = repository.getActivitiesForStage(HajjDuaStage.tawaf);
+      final tawafActivities = repository.getActivitiesForStage(
+        HajjDuaStage.tawaf,
+      );
       expect(tawafActivities, isNotEmpty);
 
       final byId = repository.getDuaById('ihram_niat_haji');
       expect(byId, isNotNull);
       expect(byId?.stage, HajjDuaStage.ihram);
 
-      final batch = repository.getDuasByIds(['ihram_niat_haji', 'zamzam_doa_minum']);
+      final batch = repository.getDuasByIds([
+        'ihram_niat_haji',
+        'zamzam_doa_minum',
+      ]);
       expect(batch, hasLength(2));
     });
   });

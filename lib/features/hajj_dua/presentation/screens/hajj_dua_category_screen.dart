@@ -48,10 +48,14 @@ class _HajjDuaCategoryScreenState extends State<HajjDuaCategoryScreen> {
 
   String? _getContextualLabel(BuildContext context) {
     if (widget.category.stage == HajjDuaStage.tawafIfadah) {
-      return context.tr('hajjDuaContextualType', {'type': 'Ifadah (Rukun Haji)'});
+      return context.tr('hajjDuaContextualType', {
+        'type': 'Ifadah (Rukun Haji)',
+      });
     }
     if (widget.category.stage == HajjDuaStage.tawafWada) {
-      return context.tr('hajjDuaContextualType', {'type': 'Wada\' (Perpisahan)'});
+      return context.tr('hajjDuaContextualType', {
+        'type': 'Wada\' (Perpisahan)',
+      });
     }
     return null;
   }
@@ -60,11 +64,15 @@ class _HajjDuaCategoryScreenState extends State<HajjDuaCategoryScreen> {
   Widget build(BuildContext context) {
     final scaffoldColor = AppColors.scaffoldColor(context);
     final allDuas = widget.repository.getDuasForStage(widget.category.stage);
-    final activities = widget.repository.getActivitiesForStage(widget.category.stage);
+    final activities = widget.repository.getActivitiesForStage(
+      widget.category.stage,
+    );
 
     final filteredDuas = _selectedActivity == null
         ? allDuas
-        : allDuas.where((d) => d.activity?.trim() == _selectedActivity?.trim()).toList();
+        : allDuas
+              .where((d) => d.activity?.trim() == _selectedActivity?.trim())
+              .toList();
 
     final contextualLabel = _getContextualLabel(context);
 
@@ -133,7 +141,9 @@ class _HajjDuaCategoryScreenState extends State<HajjDuaCategoryScreen> {
                   const SizedBox(height: AppSpacing.lg),
                   const _ArafahGuidanceCard(),
                 ],
-                if (activities.isNotEmpty && !_isTawafStage && !_isSaiStage) ...[
+                if (activities.isNotEmpty &&
+                    !_isTawafStage &&
+                    !_isSaiStage) ...[
                   const SizedBox(height: AppSpacing.lg),
                   _ActivityFilterChips(
                     activities: activities,
@@ -151,7 +161,9 @@ class _HajjDuaCategoryScreenState extends State<HajjDuaCategoryScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        context.tr('hajjDuaCount', {'count': filteredDuas.length}),
+                        context.tr('hajjDuaCount', {
+                          'count': filteredDuas.length,
+                        }),
                         style: HajjDuaTypography.caption.copyWith(
                           color: AppColors.textSecondaryColor(context),
                         ),
@@ -172,7 +184,8 @@ class _HajjDuaCategoryScreenState extends State<HajjDuaCategoryScreen> {
                       child: DuaCard(
                         key: Key('dua_card_${dua.id}'),
                         dua: dua,
-                        initiallyExpanded: dua.id == widget.initiallyExpandedDuaId,
+                        initiallyExpanded:
+                            dua.id == widget.initiallyExpandedDuaId,
                       ),
                     ),
                   ),
@@ -190,10 +203,7 @@ class _CategoryIntroduction extends StatelessWidget {
   final HajjDuaCategory category;
   final String? contextualLabel;
 
-  const _CategoryIntroduction({
-    required this.category,
-    this.contextualLabel,
-  });
+  const _CategoryIntroduction({required this.category, this.contextualLabel});
 
   @override
   Widget build(BuildContext context) {
@@ -283,14 +293,20 @@ class _TawafCircuitGuide extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.goldPrimary.withValues(alpha: 0.35)),
+        border: Border.all(
+          color: AppColors.goldPrimary.withValues(alpha: 0.35),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.sync_rounded, color: AppColors.goldPrimary, size: 20),
+              const Icon(
+                Icons.sync_rounded,
+                color: AppColors.goldPrimary,
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Panduan Putaran Thawaf (1 - 7)',
@@ -313,8 +329,12 @@ class _TawafCircuitGuide extends StatelessWidget {
                     label: Text(
                       'Putaran $circuitNum',
                       style: TextStyle(
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                        color: isSelected ? Colors.white : AppColors.textHeadingColor(context),
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        color: isSelected
+                            ? Colors.white
+                            : AppColors.textHeadingColor(context),
                       ),
                     ),
                     selected: isSelected,
@@ -329,9 +349,13 @@ class _TawafCircuitGuide extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
-              color: AppColors.goldPrimary.withValues(alpha: isDark ? 0.12 : 0.08),
+              color: AppColors.goldPrimary.withValues(
+                alpha: isDark ? 0.12 : 0.08,
+              ),
               borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(color: AppColors.goldPrimary.withValues(alpha: 0.25)),
+              border: Border.all(
+                color: AppColors.goldPrimary.withValues(alpha: 0.25),
+              ),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -349,7 +373,9 @@ class _TawafCircuitGuide extends StatelessWidget {
                       Text(
                         'Ketentuan Doa Putaran ke-$selectedCircuit',
                         style: HajjDuaTypography.metadataLabel.copyWith(
-                          color: isDark ? AppColors.goldLight : AppColors.goldDark,
+                          color: isDark
+                              ? AppColors.goldLight
+                              : AppColors.goldDark,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -377,10 +403,7 @@ class _SaiLapGuide extends StatelessWidget {
   final int selectedLap;
   final ValueChanged<int> onLapSelected;
 
-  const _SaiLapGuide({
-    required this.selectedLap,
-    required this.onLapSelected,
-  });
+  const _SaiLapGuide({required this.selectedLap, required this.onLapSelected});
 
   String _getLapRoute(int lap) {
     if (lap.isOdd) {
@@ -399,14 +422,20 @@ class _SaiLapGuide extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.goldPrimary.withValues(alpha: 0.35)),
+        border: Border.all(
+          color: AppColors.goldPrimary.withValues(alpha: 0.35),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.directions_walk_rounded, color: AppColors.goldPrimary, size: 20),
+              const Icon(
+                Icons.directions_walk_rounded,
+                color: AppColors.goldPrimary,
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Perjalanan Sa\'i (1 - 7)',
@@ -429,8 +458,12 @@ class _SaiLapGuide extends StatelessWidget {
                     label: Text(
                       'Trip $lapNum/7',
                       style: TextStyle(
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                        color: isSelected ? Colors.white : AppColors.textHeadingColor(context),
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        color: isSelected
+                            ? Colors.white
+                            : AppColors.textHeadingColor(context),
                       ),
                     ),
                     selected: isSelected,
@@ -445,21 +478,31 @@ class _SaiLapGuide extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
-              color: AppColors.goldPrimary.withValues(alpha: isDark ? 0.12 : 0.08),
+              color: AppColors.goldPrimary.withValues(
+                alpha: isDark ? 0.12 : 0.08,
+              ),
               borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(color: AppColors.goldPrimary.withValues(alpha: 0.25)),
+              border: Border.all(
+                color: AppColors.goldPrimary.withValues(alpha: 0.25),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.route_rounded, color: AppColors.goldPrimary, size: 18),
+                    const Icon(
+                      Icons.route_rounded,
+                      color: AppColors.goldPrimary,
+                      size: 18,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       'Perjalanan $selectedLap dari 7: ${_getLapRoute(selectedLap)}',
                       style: HajjDuaTypography.metadataLabel.copyWith(
-                        color: isDark ? AppColors.goldLight : AppColors.goldDark,
+                        color: isDark
+                            ? AppColors.goldLight
+                            : AppColors.goldDark,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -496,7 +539,9 @@ class _ArafahGuidanceCard extends StatelessWidget {
             ? AppColors.darkSurfaceContainer
             : AppColors.goldPrimary.withValues(alpha: 0.09),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.goldPrimary.withValues(alpha: 0.35)),
+        border: Border.all(
+          color: AppColors.goldPrimary.withValues(alpha: 0.35),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

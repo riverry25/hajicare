@@ -48,7 +48,11 @@ class DuaCategoryCard extends StatelessWidget {
                     color: accentColor.withValues(alpha: isDark ? 0.16 : 0.08),
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
-                  child: Icon(_iconForStage(category.stage), color: accentColor, size: 26),
+                  child: Icon(
+                    _iconForStage(category.stage),
+                    color: accentColor,
+                    size: 26,
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
@@ -89,7 +93,9 @@ class DuaCategoryCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     duaCount > 0
-                        ? context.tr('hajjDuaAvailableCount', {'count': duaCount})
+                        ? context.tr('hajjDuaAvailableCount', {
+                            'count': duaCount,
+                          })
                         : 'Bacaan tersedia',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

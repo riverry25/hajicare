@@ -312,30 +312,33 @@ void main() {
     );
   });
 
-  testWidgets('Dua card displays "Kapan dibaca?" context and audio unavailable state', (
-    tester,
-  ) async {
-    final category = repository.categoryFor(HajjDuaStage.zamzam)!;
-    await tester.pumpWidget(
-      testApp(
-        home: HajjDuaCategoryScreen(category: category, repository: repository),
-      ),
-    );
-    await tester.pump();
+  testWidgets(
+    'Dua card displays "Kapan dibaca?" context and audio unavailable state',
+    (tester) async {
+      final category = repository.categoryFor(HajjDuaStage.zamzam)!;
+      await tester.pumpWidget(
+        testApp(
+          home: HajjDuaCategoryScreen(
+            category: category,
+            repository: repository,
+          ),
+        ),
+      );
+      await tester.pump();
 
-    // Expand the dua card
-    await tester.tap(find.text('Doa Minum Air Zamzam'));
-    await tester.pumpAndSettle();
+      // Expand the dua card
+      await tester.tap(find.text('Doa Minum Air Zamzam'));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Kapan dibaca?'), findsOneWidget);
-    expect(
-      find.text(
-        'Dibaca ketika hendak meminum air Zamzam menghadap kiblat dengan tangan kanan dan membaca bismillah.',
-      ),
-      findsOneWidget,
-    );
-    expect(find.text('Audio belum tersedia'), findsOneWidget);
-    expect(find.text('Kementerian Agama Republik Indonesia'), findsOneWidget);
-  });
+      expect(find.text('Kapan dibaca?'), findsOneWidget);
+      expect(
+        find.text(
+          'Dibaca ketika hendak meminum air Zamzam menghadap kiblat dengan tangan kanan dan membaca bismillah.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Audio belum tersedia'), findsOneWidget);
+      expect(find.text('Kementerian Agama Republik Indonesia'), findsOneWidget);
+    },
+  );
 }
-

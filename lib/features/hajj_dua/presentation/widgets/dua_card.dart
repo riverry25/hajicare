@@ -148,7 +148,8 @@ class _DuaCardState extends State<DuaCard> {
                 ),
             ],
           ),
-          subtitle: widget.dua.subtitleKey == null && widget.dua.subtitle == null
+          subtitle:
+              widget.dua.subtitleKey == null && widget.dua.subtitle == null
               ? null
               : Padding(
                   padding: const EdgeInsets.only(top: AppSpacing.xs),
@@ -187,11 +188,14 @@ class _DuaCardState extends State<DuaCard> {
                 scale: textScale,
               ),
             ],
-            if (widget.dua.descriptionKey != null || widget.dua.description != null) ...[
+            if (widget.dua.descriptionKey != null ||
+                widget.dua.description != null) ...[
               const SizedBox(height: AppSpacing.lg),
               _PlainInformation(
                 title: context.tr('hajjDuaInformation'),
-                message: widget.dua.description ?? context.tr(widget.dua.descriptionKey!),
+                message:
+                    widget.dua.description ??
+                    context.tr(widget.dua.descriptionKey!),
               ),
             ],
             const SizedBox(height: AppSpacing.lg),
@@ -230,7 +234,9 @@ class _DuaCardState extends State<DuaCard> {
                   onPressed: () => _service.toggleBookmark(widget.dua.id),
                   icon: Icon(
                     isSaved ? Icons.star_rounded : Icons.star_outline_rounded,
-                    color: isSaved ? AppColors.goldPrimary : AppColors.textBodyColor(context),
+                    color: isSaved
+                        ? AppColors.goldPrimary
+                        : AppColors.textBodyColor(context),
                     size: 20,
                   ),
                   tooltip: isSaved
@@ -355,9 +361,13 @@ class _AudioPlayerSection extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite,
+          color: isDark
+              ? AppColors.darkSurfaceContainer
+              : AppColors.surfaceWhite,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: AppColors.goldPrimary.withValues(alpha: 0.4)),
+          border: Border.all(
+            color: AppColors.goldPrimary.withValues(alpha: 0.4),
+          ),
         ),
         child: Row(
           children: [
@@ -366,7 +376,9 @@ class _AudioPlayerSection extends StatelessWidget {
                 duaId: dua.id,
                 audioPath: dua.audioPath,
               ),
-              icon: Icon(isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded),
+              icon: Icon(
+                isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+              ),
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
@@ -383,7 +395,8 @@ class _AudioPlayerSection extends StatelessWidget {
                   ),
                   if (isCurrent && service.totalDuration.value > Duration.zero)
                     LinearProgressIndicator(
-                      value: service.currentPosition.value.inMilliseconds /
+                      value:
+                          service.currentPosition.value.inMilliseconds /
                           service.totalDuration.value.inMilliseconds,
                       backgroundColor: AppColors.outlineColor(context),
                       color: AppColors.goldPrimary,
@@ -423,7 +436,9 @@ class _SourceCard extends StatelessWidget {
             ? AppColors.darkSurfaceContainer
             : AppColors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.outlineColor(context).withValues(alpha: 0.5)),
+        border: Border.all(
+          color: AppColors.outlineColor(context).withValues(alpha: 0.5),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

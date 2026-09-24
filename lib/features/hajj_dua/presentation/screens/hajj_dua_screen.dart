@@ -49,7 +49,10 @@ class _HajjDuaScreenState extends State<HajjDuaScreen> {
     _updateQuery('');
   }
 
-  void _openCategory(HajjDuaCategory category, {String? initiallyExpandedDuaId}) {
+  void _openCategory(
+    HajjDuaCategory category, {
+    String? initiallyExpandedDuaId,
+  }) {
     Get.to(
       () => HajjDuaCategoryScreen(
         category: category,
@@ -286,7 +289,11 @@ class _RecentlyOpenedSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.history_rounded, size: 18, color: AppColors.goldPrimary),
+              const Icon(
+                Icons.history_rounded,
+                size: 18,
+                color: AppColors.goldPrimary,
+              ),
               const SizedBox(width: 6),
               Text(
                 context.tr('hajjDuaRecentTitle'),
@@ -346,7 +353,11 @@ class _SavedDuasSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.star_rounded, size: 18, color: AppColors.goldPrimary),
+              const Icon(
+                Icons.star_rounded,
+                size: 18,
+                color: AppColors.goldPrimary,
+              ),
               const SizedBox(width: 6),
               Text(
                 context.tr('hajjDuaSavedTitle'),
@@ -366,7 +377,11 @@ class _SavedDuasSection extends StatelessWidget {
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: ActionChip(
-                    avatar: const Icon(Icons.star_rounded, size: 16, color: AppColors.goldPrimary),
+                    avatar: const Icon(
+                      Icons.star_rounded,
+                      size: 16,
+                      color: AppColors.goldPrimary,
+                    ),
                     label: Text(title),
                     onPressed: () => onDuaTap(dua),
                   ),

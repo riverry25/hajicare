@@ -7,7 +7,7 @@ import '../../../core/services/app_alert_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../map/controllers/map_controller.dart';
+import '../controllers/dashboard_controller.dart';
 import '../models/assistance_request_model.dart';
 import '../presentation/dashboard_typography.dart';
 import '../services/assistance_request_service.dart';
@@ -113,7 +113,9 @@ class AssistanceTrackingSheet extends StatelessWidget {
                       onPressed: () {
                         HapticFeedback.lightImpact();
                         Get.back();
-                        if (Get.isRegistered<MapController>()) {
+                        if (Get.isRegistered<DashboardController>()) {
+                          Get.find<DashboardController>().changeTab(1);
+                        } else {
                           Get.toNamed(AppRoutes.interactiveMap);
                         }
                       },

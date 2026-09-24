@@ -106,9 +106,11 @@ class HajjDuaService extends GetxService {
     } else {
       textScaleMultiplier.value = 1.0; // Normal
     }
-    SharedPreferences.getInstance().then((prefs) {
-      prefs.setDouble(_textScaleKey, textScaleMultiplier.value);
-    }).catchError((_) {});
+    SharedPreferences.getInstance()
+        .then((prefs) {
+          prefs.setDouble(_textScaleKey, textScaleMultiplier.value);
+        })
+        .catchError((_) {});
   }
 
   Future<bool> playOrPauseAudio({

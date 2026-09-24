@@ -11,6 +11,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/user_feedback_message.dart';
 import '../../notification/services/notification_service.dart';
+import '../controllers/dashboard_controller.dart';
 import '../models/assistance_request_model.dart';
 import '../presentation/dashboard_typography.dart';
 import '../services/assistance_request_service.dart';
@@ -678,7 +679,12 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                       ),
                       TextButton(
                         onPressed: () {
-                          Get.toNamed(AppRoutes.interactiveMap);
+                          Get.back();
+                          if (Get.isRegistered<DashboardController>()) {
+                            Get.find<DashboardController>().changeTab(1);
+                          } else {
+                            Get.toNamed(AppRoutes.interactiveMap);
+                          }
                         },
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -876,7 +882,12 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
               ),
               OutlinedButton.icon(
                 onPressed: () {
-                  Get.toNamed(AppRoutes.interactiveMap);
+                  Get.back();
+                  if (Get.isRegistered<DashboardController>()) {
+                    Get.find<DashboardController>().changeTab(1);
+                  } else {
+                    Get.toNamed(AppRoutes.interactiveMap);
+                  }
                 },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
