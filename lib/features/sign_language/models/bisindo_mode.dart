@@ -1,21 +1,21 @@
-/// Mode pengenalan BISINDO: Unified (1 input gabungan), Kata (word), atau Huruf (alfabet).
+/// Mode pengenalan BISINDO: Unified (Gabungan Kata & Huruf), Huruf (alphabet), atau Kata (word).
 enum BisindoMode {
   unified,
-  word,
-  alphabet;
+  alphabet,
+  word;
 
   bool get isUnified => this == BisindoMode.unified;
-  bool get isWord => this == BisindoMode.word;
   bool get isAlphabet => this == BisindoMode.alphabet;
+  bool get isWord => this == BisindoMode.word;
 
   String get label {
     switch (this) {
       case BisindoMode.unified:
-        return 'BISINDO';
-      case BisindoMode.word:
-        return 'KATA';
+        return 'GABUNGAN';
       case BisindoMode.alphabet:
         return 'HURUF';
+      case BisindoMode.word:
+        return 'KATA';
     }
   }
 }

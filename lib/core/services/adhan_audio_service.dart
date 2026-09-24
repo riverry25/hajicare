@@ -17,6 +17,8 @@ class AdhanAudioService extends GetxService {
   }) : _player = player,
        _notificationService = notificationService ?? AdhanNotificationService();
 
+  AdhanNotificationService get notificationService => _notificationService;
+
   static AdhanAudioService? instance;
 
   final isPlaying = false.obs;

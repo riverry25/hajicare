@@ -458,7 +458,7 @@ class PrayerTimesScreen extends StatelessWidget {
                     // Arabic Calligraphy
                     Text(
                       controller.nextPrayerArabic.value,
-                      style: AppTypography.titleMedium.copyWith(
+                      style: AppTypography.arabicMedium.copyWith(
                         color: AppColors.goldPrimary,
                         fontWeight: FontWeight.w700,
                       ),
@@ -1051,6 +1051,8 @@ class PrayerTimesScreen extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(height: AppSpacing.md),
+            _buildAdhanBackgroundCard(context: context, controller: controller),
             const SizedBox(height: AppConstants.space3xl),
           ],
         ),
@@ -1214,7 +1216,7 @@ class PrayerTimesScreen extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     arabicName,
-                    style: AppTypography.captionSmall.copyWith(
+                    style: AppTypography.arabicSmall.copyWith(
                       color: isDark
                           ? AppColors.darkTextBody
                           : AppColors.tanMedium,
@@ -1276,5 +1278,153 @@ class PrayerTimesScreen extends StatelessWidget {
         ),
       );
     });
+  }
+
+  Widget _buildAdhanBackgroundCard({
+    required BuildContext context,
+    required PrayerTimesController controller,
+  }) {
+    final isDark = AppColors.isDark(context);
+
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      backgroundColor: isDark
+          ? AppColors.darkSurfaceContainer
+          : AppColors.canvasCreamSubtle.withValues(alpha: 0.5),
+      borderColor: isDark
+          ? AppColors.darkOutlineVariant
+          : AppColors.cardBorderColor(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.goldPrimary.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.notifications_active_rounded,
+                  size: 20,
+                  color: AppColors.goldPrimary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Adzan Otomatis Latar Belakang',
+                      style: AppTypography.titleMedium.copyWith(
+                        color: isDark
+                            ? AppColors.darkTextHeading
+                            : AppColors.espressoDark,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Adzan berbunyi meski aplikasi ditutup atau HP terkunci.',
+                      style: AppTypography.captionSmall.copyWith(
+                        color: isDark
+                            ? AppColors.darkTextBody
+                            : AppColors.tanMedium,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppColors.darkSurfaceContainerHigh
+                  : AppColors.surfaceWhite,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              border: Border.all(
+                color: isDark
+                    ? AppColors.darkOutlineVariant
+                    : AppColors.cardBorderColor(context),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.info_outline_rounded,
+                  size: 16,
+                  color: isDark ? AppColors.goldLight : AppColors.goldPrimary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Agar adzan berbunyi tepat waktu saat aplikasi ditutup:\n'
+                    '• Notifikasi pengingat persiapan salat otomatis muncul 10 menit sebelum adzan.\n'
+                    '• Izinkan "Alarm & Pengingat" di Pengaturan HP.\n'
+                    '• Matikan Penghemat Baterai (Pilih "Tidak Dibatasi / No restrictions").\n'
+                    '• Izinkan "Mulai Otomatis" (Auto-start).',
+                    style: AppTypography.captionSmall.copyWith(
+                      color: isDark
+                          ? AppColors.darkTextBody
+                          : AppColors.espressoDark,
+                      fontSize: 11,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                await controller.scheduleTestAdhanAlarm(delaySeconds: 5);
+                Get.closeAllSnackbars();
+                Get.snackbar(
+                  'Uji Coba Alarm & Pengingat Diset',
+                  'Kunci layar atau tutup aplikasi sekarang: Notifikasi pengingat akan muncul di detik ke-2, lalu suara Adzan penuh berkumandang di detik ke-5!',
+                  snackPosition: SnackPosition.BOTTOM,
+                  duration: const Duration(seconds: 6),
+                  backgroundColor: isDark
+                      ? AppColors.darkSurfaceContainerHigh
+                      : AppColors.espressoDark,
+                  colorText: AppColors.goldLight,
+                  icon: const Icon(
+                    Icons.alarm_on_rounded,
+                    color: AppColors.goldPrimary,
+                  ),
+                  margin: const EdgeInsets.all(AppSpacing.md),
+                  borderRadius: AppRadius.md,
+                );
+              },
+              icon: const Icon(Icons.timer_rounded, size: 18),
+              label: const Text(
+                'Uji Coba Alarm Adzan (5 Detik)',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.goldPrimary,
+                foregroundColor: AppColors.espressoDark,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

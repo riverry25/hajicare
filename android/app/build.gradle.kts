@@ -93,6 +93,8 @@ flutter {
 }
 
 configurations.all {
+    exclude(group = "com.google.ai.edge.litert", module = "litert-api")
+    exclude(group = "com.google.ai.edge.litert", module = "litert-gpu-api")
     exclude(group = "org.tensorflow", module = "tensorflow-lite")
     exclude(group = "org.tensorflow", module = "tensorflow-lite-api")
     exclude(group = "org.tensorflow", module = "tensorflow-lite-gpu")

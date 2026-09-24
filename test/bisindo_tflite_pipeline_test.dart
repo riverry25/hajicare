@@ -123,6 +123,8 @@ void main() {
 
     test('Default mode is UNIFIED and can switch modes', () {
       expect(controller.selectedMode.value, equals(BisindoMode.unified));
+      controller.setMode(BisindoMode.word);
+      expect(controller.selectedMode.value, equals(BisindoMode.word));
       controller.setMode(BisindoMode.alphabet);
       expect(controller.selectedMode.value, equals(BisindoMode.alphabet));
       expect(

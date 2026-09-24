@@ -15,31 +15,41 @@ class BleException implements Exception {
 }
 
 /// Service handling BLE scanning, connection, service/characteristic discovery,
-/// and realtime notification listening for HajiCare Watch.
+/// initial characteristic read, and realtime notification listening for HajiCare Watch
+/// using the DHT11 Environmental Sensor.
 class BleService {
   static const String targetDeviceName = 'HajiCare Watch';
   static const String serviceUuid = '12345678-1234-1234-1234-1234567890ab';
-  static const String ldrCharacteristicUuid =
+
+  // 3 Distinct Characteristics for DHT11 on ESP32
+  static const String temperatureCharacteristicUuid =
       '12345678-1234-1234-1234-1234567890ac';
-  static const String flameCharacteristicUuid =
+  static const String humidityCharacteristicUuid =
       '12345678-1234-1234-1234-1234567890ad';
+  static const String heatIndexCharacteristicUuid =
+      '12345678-1234-1234-1234-1234567890ae';
 
   BluetoothDevice? _connectedDevice;
-  BluetoothCharacteristic? _ldrCharacteristic;
-  BluetoothCharacteristic? _flameCharacteristic;
+  BluetoothCharacteristic? _tempCharacteristic;
+  BluetoothCharacteristic? _humCharacteristic;
+  BluetoothCharacteristic? _hiCharacteristic;
 
   StreamSubscription<List<ScanResult>>? _scanSubscription;
   StreamSubscription<BluetoothConnectionState>? _connectionSubscription;
-  StreamSubscription<List<int>>? _valueSubscription;
-  StreamSubscription<List<int>>? _flameSubscription;
+  StreamSubscription<List<int>>? _tempSubscription;
+  StreamSubscription<List<int>>? _humSubscription;
+  StreamSubscription<List<int>>? _hiSubscription;
+
   Timer? _scanTimeoutTimer;
   Completer<BluetoothDevice>? _scanCompleter;
   bool _isDisposed = false;
   int _generation = 0;
 
-  // Callbacks for notifying controller of events
-  void Function(int ldrValue, String rawString)? onDataReceived;
-  void Function(bool flameDetected, String rawString)? onFlameDataReceived;
+  // Callbacks for notifying controller of sensor updates
+  void Function(double? temperature, String rawString)? onTemperatureReceived;
+  void Function(double? humidity, String rawString)? onHumidityReceived;
+  void Function(double? heatIndex, String rawString)? onHeatIndexReceived;
+  void Function(String error)? onSensorError;
   void Function(bool isConnected)? onConnectionChanged;
   void Function(String message)? onStatusLog;
 
@@ -154,14 +164,15 @@ class BleService {
     }
   }
 
-  /// Connect to the specified device and discover services & characteristics.
+  /// Connect to the specified device, discover services, find the 3 characteristics,
+  /// read initial values, and subscribe to notifications.
   Future<void> connectToDevice(BluetoothDevice device) async {
     if (_isDisposed) {
       throw const BleException('Layanan gelang sudah ditutup.', code: 'CLOSED');
     }
     final generation = _generation;
     try {
-      onStatusLog?.call('Menghubungkan gelang...');
+      onStatusLog?.call('Menghubungkan ke HajiCare Watch...');
 
       await device.connect(
         license: License.nonprofit,
@@ -176,15 +187,14 @@ class BleService {
       _connectedDevice = device;
 
       // ==========================================
-      // CONNECTION STATE
+      // 1. CONNECTION STATE LISTENER
       // ==========================================
 
       await _connectionSubscription?.cancel();
-
       _connectionSubscription = device.connectionState.listen((state) {
         if (_isDisposed || generation != _generation) return;
         if (state == BluetoothConnectionState.disconnected) {
-          onStatusLog?.call('Perangkat terputus.');
+          onStatusLog?.call('HajiCare Watch terputus');
           _handleDisconnection();
         } else if (state == BluetoothConnectionState.connected) {
           onConnectionChanged?.call(true);
@@ -192,16 +202,15 @@ class BleService {
       });
 
       // ==========================================
-      // DISCOVER SERVICES
+      // 2. DISCOVER BLE SERVICES
       // ==========================================
 
-      onStatusLog?.call('Menyiapkan gelang...');
+      onStatusLog?.call('Mencari service sensor...');
 
       final services = await device.discoverServices();
       _ensureActive(generation);
 
       BluetoothService? targetService;
-
       for (final service in services) {
         if (service.uuid.toString().toLowerCase() ==
             serviceUuid.toLowerCase()) {
@@ -212,102 +221,113 @@ class BleService {
 
       if (targetService == null) {
         await disconnect();
-
         throw const BleException(
-          'BLE Service tidak ditemukan pada perangkat.',
+          'BLE Service sensor tidak ditemukan pada ESP32.',
           code: 'SERVICE_NOT_FOUND',
         );
       }
 
       // ==========================================
-      // FIND LDR + FLAME CHARACTERISTIC
+      // 3. DISCOVER 3 SENSOR CHARACTERISTICS
       // ==========================================
 
-      BluetoothCharacteristic? ldrChar;
-      BluetoothCharacteristic? flameChar;
+      BluetoothCharacteristic? tempChar;
+      BluetoothCharacteristic? humChar;
+      BluetoothCharacteristic? hiChar;
 
       for (final characteristic in targetService.characteristics) {
         final uuid = characteristic.uuid.toString().toLowerCase();
-
-        if (uuid == ldrCharacteristicUuid.toLowerCase()) {
-          ldrChar = characteristic;
-        }
-
-        if (uuid == flameCharacteristicUuid.toLowerCase()) {
-          flameChar = characteristic;
+        if (uuid == temperatureCharacteristicUuid.toLowerCase()) {
+          tempChar = characteristic;
+        } else if (uuid == humidityCharacteristicUuid.toLowerCase()) {
+          humChar = characteristic;
+        } else if (uuid == heatIndexCharacteristicUuid.toLowerCase()) {
+          hiChar = characteristic;
         }
       }
 
-      // ==========================================
-      // VALIDATE LDR
-      // ==========================================
-
-      if (ldrChar == null) {
+      if (tempChar == null || humChar == null || hiChar == null) {
         await disconnect();
-
-        throw const BleException(
-          'LDR sensor characteristic tidak ditemukan.',
-          code: 'LDR_CHARACTERISTIC_NOT_FOUND',
+        final missing = <String>[];
+        if (tempChar == null) missing.add('Temperature');
+        if (humChar == null) missing.add('Humidity');
+        if (hiChar == null) missing.add('Heat Index');
+        throw BleException(
+          'Karakteristik sensor tidak ditemukan: ${missing.join(', ')}.',
+          code: 'CHARACTERISTIC_NOT_FOUND',
         );
       }
 
+      _tempCharacteristic = tempChar;
+      _humCharacteristic = humChar;
+      _hiCharacteristic = hiChar;
+
       // ==========================================
-      // VALIDATE FLAME
+      // 4. READ INITIAL VALUES (PROPERTY_READ)
       // ==========================================
 
-      if (flameChar == null) {
-        await disconnect();
+      onStatusLog?.call('Membaca data awal sensor...');
 
-        throw const BleException(
-          'Flame sensor characteristic tidak ditemukan.',
-          code: 'FLAME_CHARACTERISTIC_NOT_FOUND',
-        );
+      try {
+        final tempBytes = await tempChar.read();
+        _processTemperatureData(tempBytes);
+      } catch (e) {
+        debugPrint('Error reading initial temperature: $e');
       }
 
-      _ldrCharacteristic = ldrChar;
-      _flameCharacteristic = flameChar;
+      try {
+        final humBytes = await humChar.read();
+        _processHumidityData(humBytes);
+      } catch (e) {
+        debugPrint('Error reading initial humidity: $e');
+      }
+
+      try {
+        final hiBytes = await hiChar.read();
+        _processHeatIndexData(hiBytes);
+      } catch (e) {
+        debugPrint('Error reading initial heat index: $e');
+      }
 
       // ==========================================
-      // LDR NOTIFICATION
+      // 5. SUBSCRIBE NOTIFICATIONS (PROPERTY_NOTIFY)
       // ==========================================
 
-      onStatusLog?.call('Menyiapkan sensor cahaya...');
+      onStatusLog?.call('Mengaktifkan notifikasi realtime...');
 
-      await _valueSubscription?.cancel();
-
-      _valueSubscription = ldrChar.onValueReceived.listen((bytes) {
-        _processReceivedData(bytes);
+      // 5a. Temperature notification
+      await _tempSubscription?.cancel();
+      _tempSubscription = tempChar.onValueReceived.listen((bytes) {
+        _processTemperatureData(bytes);
       });
+      device.cancelWhenDisconnected(_tempSubscription!);
+      await tempChar.setNotifyValue(true);
+      _ensureActive(generation);
 
-      device.cancelWhenDisconnected(_valueSubscription!);
+      // 5b. Humidity notification
+      await _humSubscription?.cancel();
+      _humSubscription = humChar.onValueReceived.listen((bytes) {
+        _processHumidityData(bytes);
+      });
+      device.cancelWhenDisconnected(_humSubscription!);
+      await humChar.setNotifyValue(true);
+      _ensureActive(generation);
 
-      await ldrChar.setNotifyValue(true);
+      // 5c. Heat Index notification
+      await _hiSubscription?.cancel();
+      _hiSubscription = hiChar.onValueReceived.listen((bytes) {
+        _processHeatIndexData(bytes);
+      });
+      device.cancelWhenDisconnected(_hiSubscription!);
+      await hiChar.setNotifyValue(true);
       _ensureActive(generation);
 
       // ==========================================
-      // FLAME NOTIFICATION
-      // ==========================================
-
-      onStatusLog?.call('Menyiapkan sensor api...');
-
-      await _flameSubscription?.cancel();
-
-      _flameSubscription = flameChar.onValueReceived.listen((bytes) {
-        _processFlameData(bytes);
-      });
-
-      device.cancelWhenDisconnected(_flameSubscription!);
-
-      await flameChar.setNotifyValue(true);
-      _ensureActive(generation);
-
-      // ==========================================
-      // SUCCESS
+      // 6. SUCCESS
       // ==========================================
 
       onConnectionChanged?.call(true);
-
-      onStatusLog?.call('Gelang terhubung');
+      onStatusLog?.call('HajiCare Watch terhubung');
     } catch (e) {
       if (e is BleException) {
         rethrow;
@@ -320,59 +340,109 @@ class BleService {
     }
   }
 
-  /// Process incoming byte stream from ESP32 notification.
-  void _processReceivedData(List<int> bytes) {
+  /// Process incoming byte stream for Temperature from ESP32.
+  /// Converts String representation (e.g. "31.00") to double.
+  void _processTemperatureData(List<int> bytes) {
     if (_isDisposed) return;
     if (bytes.isEmpty) return;
+
     try {
       final rawString = utf8.decode(bytes).trim();
-      final parsed = int.tryParse(rawString);
-      if (parsed != null) {
-        onDataReceived?.call(parsed, rawString);
+      if (rawString.isEmpty) return;
+
+      final parsed = double.tryParse(rawString);
+      if (parsed != null &&
+          !parsed.isNaN &&
+          parsed >= -20.0 &&
+          parsed <= 80.0) {
+        onTemperatureReceived?.call(parsed, rawString);
+      } else {
+        onSensorError?.call('Format suhu tidak valid: "$rawString"');
       }
     } catch (e) {
-      debugPrint('Error decoding LDR BLE data: $e');
+      debugPrint('Error decoding temperature: $e');
+      onSensorError?.call('Gagal memproses data suhu: $e');
     }
   }
 
-  void _processFlameData(List<int> bytes) {
+  /// Process incoming byte stream for Humidity from ESP32.
+  /// Converts String representation (e.g. "68.00") to double.
+  void _processHumidityData(List<int> bytes) {
     if (_isDisposed) return;
     if (bytes.isEmpty) return;
 
     try {
       final rawString = utf8.decode(bytes).trim();
+      if (rawString.isEmpty) return;
 
-      final flameDetected = rawString.toUpperCase() == 'FIRE';
-
-      debugPrint('FLAME BLE: $rawString');
-
-      onFlameDataReceived?.call(flameDetected, rawString);
+      final parsed = double.tryParse(rawString);
+      if (parsed != null && !parsed.isNaN && parsed >= 0.0 && parsed <= 100.0) {
+        onHumidityReceived?.call(parsed, rawString);
+      } else {
+        onSensorError?.call('Format kelembapan tidak valid: "$rawString"');
+      }
     } catch (e) {
-      debugPrint('Error decoding Flame BLE data: $e');
+      debugPrint('Error decoding humidity: $e');
+      onSensorError?.call('Gagal memproses data kelembapan: $e');
     }
   }
 
-  /// Disconnect cleanly from the currently connected device.
+  /// Process incoming byte stream for Heat Index from ESP32.
+  /// Converts String representation (e.g. "33.80") to double.
+  void _processHeatIndexData(List<int> bytes) {
+    if (_isDisposed) return;
+    if (bytes.isEmpty) return;
+
+    try {
+      final rawString = utf8.decode(bytes).trim();
+      if (rawString.isEmpty) return;
+
+      final parsed = double.tryParse(rawString);
+      if (parsed != null &&
+          !parsed.isNaN &&
+          parsed >= -20.0 &&
+          parsed <= 100.0) {
+        onHeatIndexReceived?.call(parsed, rawString);
+      } else {
+        onSensorError?.call('Format Heat Index tidak valid: "$rawString"');
+      }
+    } catch (e) {
+      debugPrint('Error decoding heat index: $e');
+      onSensorError?.call('Gagal memproses data Heat Index: $e');
+    }
+  }
+
+  /// Disconnect cleanly from the currently connected device and stop notifications.
   Future<void> disconnect() async {
     try {
-      await _valueSubscription?.cancel();
-      _valueSubscription = null;
+      await _tempSubscription?.cancel();
+      _tempSubscription = null;
 
-      await _flameSubscription?.cancel();
-      _flameSubscription = null;
+      await _humSubscription?.cancel();
+      _humSubscription = null;
 
-      if (_ldrCharacteristic != null) {
+      await _hiSubscription?.cancel();
+      _hiSubscription = null;
+
+      if (_tempCharacteristic != null) {
         try {
-          await _ldrCharacteristic?.setNotifyValue(false);
+          await _tempCharacteristic?.setNotifyValue(false);
         } catch (_) {}
-        _ldrCharacteristic = null;
+        _tempCharacteristic = null;
       }
-      if (_flameCharacteristic != null) {
-        try {
-          await _flameCharacteristic?.setNotifyValue(false);
-        } catch (_) {}
 
-        _flameCharacteristic = null;
+      if (_humCharacteristic != null) {
+        try {
+          await _humCharacteristic?.setNotifyValue(false);
+        } catch (_) {}
+        _humCharacteristic = null;
+      }
+
+      if (_hiCharacteristic != null) {
+        try {
+          await _hiCharacteristic?.setNotifyValue(false);
+        } catch (_) {}
+        _hiCharacteristic = null;
       }
 
       if (_connectedDevice != null) {
@@ -388,15 +458,18 @@ class BleService {
 
   void _handleDisconnection() {
     _connectedDevice = null;
+    _tempCharacteristic = null;
+    _humCharacteristic = null;
+    _hiCharacteristic = null;
 
-    _ldrCharacteristic = null;
-    _flameCharacteristic = null;
+    _tempSubscription?.cancel();
+    _tempSubscription = null;
 
-    _valueSubscription?.cancel();
-    _valueSubscription = null;
+    _humSubscription?.cancel();
+    _humSubscription = null;
 
-    _flameSubscription?.cancel();
-    _flameSubscription = null;
+    _hiSubscription?.cancel();
+    _hiSubscription = null;
 
     _connectionSubscription?.cancel();
     _connectionSubscription = null;
@@ -429,8 +502,10 @@ class BleService {
         const BleException('Operasi gelang dibatalkan.', code: 'CLOSED'),
       );
     }
-    onDataReceived = null;
-    onFlameDataReceived = null;
+    onTemperatureReceived = null;
+    onHumidityReceived = null;
+    onHeatIndexReceived = null;
+    onSensorError = null;
     onConnectionChanged = null;
     onStatusLog = null;
     await disconnect();

@@ -158,6 +158,14 @@ class RiyalCurrencyHelper {
       final thousands = number ~/ 1000;
       final remainder = number % 1000;
       return '${numberToIndonesianWords(thousands)} ribu${remainder > 0 ? ' ${numberToIndonesianWords(remainder)}' : ''}';
+    } else if (number < 1000000000) {
+      final millions = number ~/ 1000000;
+      final remainder = number % 1000000;
+      return '${numberToIndonesianWords(millions)} juta${remainder > 0 ? ' ${numberToIndonesianWords(remainder)}' : ''}';
+    } else if (number < 1000000000000) {
+      final billions = number ~/ 1000000000;
+      final remainder = number % 1000000000;
+      return '${numberToIndonesianWords(billions)} miliar${remainder > 0 ? ' ${numberToIndonesianWords(remainder)}' : ''}';
     }
 
     return number.toString();
@@ -181,5 +189,42 @@ class RiyalCurrencyHelper {
       return '$wholeWords dan ${numberToIndonesianWords(halala)} halala';
     }
     return wholeWords;
+  }
+
+  /// Formats an IDR amount into clean standard currency string with dots.
+  /// E.g. 43000 -> "Rp 43.000", 2150000 -> "Rp 2.150.000"
+  static String formatRupiah(double rupiah) {
+    final int rounded = rupiah.round();
+    if (rounded <= 0) return 'Rp 0';
+    final str = rounded.toString();
+    final buffer = StringBuffer();
+    int count = 0;
+    for (int i = str.length - 1; i >= 0; i--) {
+      buffer.write(str[i]);
+      count++;
+      if (count % 3 == 0 && i > 0) {
+        buffer.write('.');
+      }
+    }
+    final formatted = buffer.toString().split('').reversed.join('');
+    return 'Rp $formatted';
+  }
+
+  /// Converts an IDR amount to natural Indonesian spoken sentence.
+  /// E.g. 43000 -> "empat puluh tiga ribu rupiah"
+  /// E.g. 2150000 -> "dua juta seratus lima puluh ribu rupiah"
+  static String rupiahToSpokenIndonesian(double rupiah) {
+    final int rounded = rupiah.round();
+    if (rounded <= 0) return 'nol rupiah';
+    return '${numberToIndonesianWords(rounded)} rupiah';
+  }
+
+  /// Combines Riyal and converted Rupiah into a natural spoken announcement.
+  /// E.g. 10 Riyal (rate 4300) -> "sepuluh Riyal, setara sekitar empat puluh tiga ribu rupiah"
+  static String totalWithRupiahSpoken(double riyalAmount, double rupiahAmount) {
+    final riyalText = totalToSpokenIndonesian(riyalAmount);
+    if (rupiahAmount.round() <= 0) return riyalText;
+    final rupiahText = rupiahToSpokenIndonesian(rupiahAmount);
+    return '$riyalText, setara sekitar $rupiahText';
   }
 }

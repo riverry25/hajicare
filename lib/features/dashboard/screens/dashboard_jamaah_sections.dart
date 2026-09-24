@@ -787,7 +787,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: isTall ? 17 : 15,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w700,
                     color: headingColor,
                     letterSpacing: -0.3,
                     height: 1.1,
@@ -801,7 +801,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   textAlign: TextAlign.center,
                   style: DashboardTypography.captionSmall.copyWith(
                     color: bodyColor.withValues(alpha: 0.85),
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                     fontSize: isTall ? 11.5 : 10.5,
                   ),
                 ),
@@ -1707,9 +1707,12 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
       builder: (ctx) => Dialog(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 400, maxHeight: 620),
+          constraints: BoxConstraints(
+            maxWidth: 420,
+            maxHeight: MediaQuery.of(context).size.height * 0.88,
+          ),
           child: Stack(
             clipBehavior: Clip.none,
             alignment: Alignment.topCenter,
@@ -1722,7 +1725,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   right: 10,
                   left: 10,
                 ),
-                padding: const EdgeInsets.fromLTRB(18, 68, 18, 14),
+                padding: const EdgeInsets.fromLTRB(16, 68, 16, 14),
                 decoration: BoxDecoration(
                   color: isDark ? AppColors.darkSurface : Colors.white,
                   borderRadius: BorderRadius.circular(20),
@@ -1743,20 +1746,60 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   ],
                 ),
                 child: Obx(() {
-                  final ldrVal = ldrCtrl.ldrValue.value;
-                  final isFlame = ldrCtrl.flameDetected.value;
                   final isConnected = ldrCtrl.isConnected;
-                  final lightStatus = ldrCtrl.lightStatus;
+                  final isAvailable = ldrCtrl.isSensorAvailable.value;
+                  final temp = ldrCtrl.temperature.value;
+                  final hum = ldrCtrl.humidity.value;
+                  final hi = ldrCtrl.heatIndex.value;
+                  final statusLabel = ldrCtrl.environmentStatusLabel;
+                  final statusColor = ldrCtrl.environmentStatusColor;
+                  final statusIcon = ldrCtrl.environmentStatusIcon;
+                  final hasPriorData =
+                      !isConnected && (temp != null || hum != null);
 
-                  // Safe fallback readings if not yet connected to physical hardware
-                  final displayLdr = isConnected && ldrVal > 0
-                      ? ldrVal
-                      : (ldrVal > 0 ? ldrVal : 820);
-                  final displayBrightnessPct = ((4095 - displayLdr) / 4095.0)
-                      .clamp(0.1, 1.0);
-                  final displayStatus = lightStatus != '-'
-                      ? lightStatus
-                      : context.tr('dashboard.bright');
+                  // 1. Suhu Lingkungan (No fake static fallback)
+                  final String displayTemp;
+                  if (isConnected && isAvailable && temp != null) {
+                    displayTemp = '${temp.toStringAsFixed(1)} °C';
+                  } else if (hasPriorData && temp != null) {
+                    displayTemp = '${temp.toStringAsFixed(1)} °C';
+                  } else {
+                    displayTemp = '-';
+                  }
+
+                  // 2. Kelembapan Udara (No fake static fallback)
+                  final String displayHum;
+                  if (isConnected && isAvailable && hum != null) {
+                    displayHum = '${hum.round()} %';
+                  } else if (hasPriorData && hum != null) {
+                    displayHum = '${hum.round()} %';
+                  } else {
+                    displayHum = '-';
+                  }
+
+                  // 3. Heat Index (No fake static fallback)
+                  final String displayHiText;
+                  final double displayGaugePct;
+                  if (isConnected && isAvailable && hi != null) {
+                    displayHiText = '${hi.round()}°';
+                    displayGaugePct = ((hi - 20.0) / 30.0).clamp(0.05, 1.0);
+                  } else if (hasPriorData && hi != null) {
+                    displayHiText = '${hi.round()}°';
+                    displayGaugePct = ((hi - 20.0) / 30.0).clamp(0.05, 1.0);
+                  } else {
+                    displayHiText = '-°';
+                    displayGaugePct = 0.0;
+                  }
+
+                  // 4. Status Lingkungan Pill
+                  final String displayStatus;
+                  if (isConnected && isAvailable) {
+                    displayStatus = statusLabel;
+                  } else if (hasPriorData) {
+                    displayStatus = 'Data Lalu';
+                  } else {
+                    displayStatus = '-';
+                  }
 
                   return SingleChildScrollView(
                     physics: const ClampingScrollPhysics(),
@@ -1776,7 +1819,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          context.tr('dashboard.smartbandMonitoringSub'),
+                          'Telemetri sensor lingkungan DHT11 & kondisi fisik.',
                           style: DashboardTypography.bodySmall.copyWith(
                             color: isDark
                                 ? Colors.white70
@@ -1785,25 +1828,190 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                             fontSize: 12,
                           ),
                         ),
+                        const SizedBox(height: 12),
+
+                        // ── Connection State Notice Banner ──
+                        if (isConnected)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color:
+                                  (isDark
+                                          ? AppColors.emeraldIslamic
+                                          : const Color(0xFF059669))
+                                      .withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color:
+                                    (isDark
+                                            ? AppColors.emeraldLight
+                                            : const Color(0xFF10B981))
+                                        .withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Color(0xFF10B981),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'HajiCare Watch Terhubung • Data Realtime',
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark
+                                          ? AppColors.emeraldLight
+                                          : const Color(0xFF065F46),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        else if (hasPriorData)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 7,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(
+                                0xFFD97706,
+                              ).withValues(alpha: isDark ? 0.22 : 0.12),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: const Color(
+                                  0xFFD97706,
+                                ).withValues(alpha: 0.4),
+                              ),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(
+                                  Icons.history_rounded,
+                                  size: 16,
+                                  color: Color(0xFFD97706),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Data Sebelumnya (Gelang Terputus)',
+                                        style: TextStyle(
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w800,
+                                          color: Color(0xFFD97706),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 1),
+                                      Text(
+                                        'Data terakhir disimpan (${ldrCtrl.relativeTimeStr.value.isNotEmpty ? ldrCtrl.relativeTimeStr.value : "sebelum terputus"}). Hubungkan kembali untuk data langsung.',
+                                        style: TextStyle(
+                                          fontSize: 10.5,
+                                          height: 1.3,
+                                          color: isDark
+                                              ? Colors.white70
+                                              : const Color(0xFF92400E),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        else
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 7,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? Colors.white10
+                                  : const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: isDark
+                                    ? AppColors.darkCardBorder
+                                    : const Color(0xFFCBD5E1),
+                              ),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  Icons.sensors_off_rounded,
+                                  size: 16,
+                                  color: isDark
+                                      ? Colors.white60
+                                      : const Color(0xFF64748B),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Gelang Belum Terhubung',
+                                        style: TextStyle(
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w800,
+                                          color: headingColor,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 1),
+                                      Text(
+                                        'Data sensor belum tersedia (-). Dekatkan gelang HajiCare Watch Anda.',
+                                        style: TextStyle(
+                                          fontSize: 10.5,
+                                          height: 1.3,
+                                          color: isDark
+                                              ? Colors.white60
+                                              : const Color(0xFF64748B),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
                         const SizedBox(height: 14),
 
                         // ── Top Section: Left 2 Stacked Metrics + Right Arc Gauge ──
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            // Left: Stacked Sensor LDR & Flame Sensor
+                            // Left: Stacked Suhu Lingkungan & Kelembapan
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // 1. Sensor LDR Item
+                                  // 1. Suhu Lingkungan Item
                                   Row(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.center,
                                     children: [
                                       Container(
                                         width: 3.5,
-                                        height: 36,
+                                        height: 38,
                                         decoration: BoxDecoration(
                                           color: isDark
                                               ? AppColors.goldLight
@@ -1820,13 +2028,13 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              context.tr('dashboard.ldrSensor'),
+                                              'Suhu Lingkungan',
                                               style: TextStyle(
                                                 color: isDark
                                                     ? Colors.white60
                                                     : const Color(0xFF64748B),
                                                 fontSize: 11.5,
-                                                fontWeight: FontWeight.w500,
+                                                fontWeight: FontWeight.w600,
                                               ),
                                             ),
                                             const SizedBox(height: 3),
@@ -1836,69 +2044,79 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                               spacing: 5,
                                               runSpacing: 2,
                                               children: [
-                                                Icon(
-                                                  Icons.wb_sunny_rounded,
-                                                  color: isDark
-                                                      ? AppColors.goldLight
-                                                      : AppColors.primaryGold,
-                                                  size: 15,
+                                                const Icon(
+                                                  Icons.thermostat_rounded,
+                                                  color: Color(0xFFE11D48),
+                                                  size: 16,
                                                 ),
                                                 Text(
-                                                  '$displayLdr',
+                                                  displayTemp,
                                                   style: TextStyle(
                                                     color: headingColor,
-                                                    fontSize: 15,
+                                                    fontSize: 16,
                                                     fontWeight: FontWeight.w800,
                                                     letterSpacing: -0.3,
                                                   ),
                                                 ),
-                                                Text(
-                                                  'Lux',
-                                                  style: TextStyle(
-                                                    color: isDark
-                                                        ? Colors.white54
-                                                        : const Color(
-                                                            0xFF94A3B8,
-                                                          ),
-                                                    fontSize: 10.5,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                                Container(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 5,
-                                                        vertical: 1.5,
-                                                      ),
-                                                  decoration: BoxDecoration(
-                                                    color:
-                                                        (isDark
-                                                                ? AppColors
-                                                                      .goldLight
-                                                                : AppColors
-                                                                      .primaryGold)
-                                                            .withValues(
-                                                              alpha: isDark
-                                                                  ? 0.25
-                                                                  : 0.14,
-                                                            ),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          4,
+                                                if (displayStatus != '-')
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 5.5,
+                                                          vertical: 2,
                                                         ),
-                                                  ),
-                                                  child: Text(
-                                                    displayStatus,
-                                                    style: TextStyle(
-                                                      color: isDark
-                                                          ? AppColors.goldLight
-                                                          : AppColors.goldDark,
-                                                      fontSize: 10,
-                                                      fontWeight:
-                                                          FontWeight.w700,
+                                                    decoration: BoxDecoration(
+                                                      color:
+                                                          (hasPriorData
+                                                                  ? const Color(
+                                                                      0xFFD97706,
+                                                                    )
+                                                                  : statusColor)
+                                                              .withValues(
+                                                                alpha: isDark
+                                                                    ? 0.25
+                                                                    : 0.14,
+                                                              ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            4,
+                                                          ),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        Icon(
+                                                          hasPriorData
+                                                              ? Icons
+                                                                    .history_rounded
+                                                              : statusIcon,
+                                                          color: hasPriorData
+                                                              ? const Color(
+                                                                  0xFFD97706,
+                                                                )
+                                                              : statusColor,
+                                                          size: 11,
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 3,
+                                                        ),
+                                                        Text(
+                                                          displayStatus,
+                                                          style: TextStyle(
+                                                            color: hasPriorData
+                                                                ? const Color(
+                                                                    0xFFD97706,
+                                                                  )
+                                                                : statusColor,
+                                                            fontSize: 10,
+                                                            fontWeight:
+                                                                FontWeight.w700,
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
                                                   ),
-                                                ),
                                               ],
                                             ),
                                           ],
@@ -1907,22 +2125,18 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                     ],
                                   ),
 
-                                  const SizedBox(height: 14),
+                                  const SizedBox(height: 12),
 
-                                  // 2. Flame Sensor Item
+                                  // 2. Kelembapan Item
                                   Row(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.center,
                                     children: [
                                       Container(
                                         width: 3.5,
-                                        height: 36,
+                                        height: 38,
                                         decoration: BoxDecoration(
-                                          color: isFlame
-                                              ? AppColors.sosEmergency
-                                              : (isDark
-                                                    ? AppColors.darkSecondary
-                                                    : AppColors.tanMedium),
+                                          color: const Color(0xFF0284C7),
                                           borderRadius: BorderRadius.circular(
                                             2,
                                           ),
@@ -1935,15 +2149,13 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              context.tr(
-                                                'dashboard.flameSensor',
-                                              ),
+                                              'Kelembapan Udara',
                                               style: TextStyle(
                                                 color: isDark
                                                     ? Colors.white60
                                                     : const Color(0xFF64748B),
                                                 fontSize: 11.5,
-                                                fontWeight: FontWeight.w500,
+                                                fontWeight: FontWeight.w600,
                                               ),
                                             ),
                                             const SizedBox(height: 3),
@@ -1953,76 +2165,18 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                               spacing: 5,
                                               runSpacing: 2,
                                               children: [
-                                                Icon(
-                                                  Icons
-                                                      .local_fire_department_rounded,
-                                                  color: isFlame
-                                                      ? AppColors.sosEmergency
-                                                      : (isDark
-                                                            ? AppColors
-                                                                  .darkSecondary
-                                                            : AppColors
-                                                                  .tanMedium),
-                                                  size: 15,
+                                                const Icon(
+                                                  Icons.water_drop_rounded,
+                                                  color: Color(0xFF0284C7),
+                                                  size: 16,
                                                 ),
                                                 Text(
-                                                  isFlame
-                                                      ? context.tr(
-                                                          'dashboard.fireDetected',
-                                                        )
-                                                      : context.tr(
-                                                          'dashboard.normal',
-                                                        ),
+                                                  displayHum,
                                                   style: TextStyle(
-                                                    color: isFlame
-                                                        ? AppColors.sosEmergency
-                                                        : headingColor,
-                                                    fontSize: 15,
+                                                    color: headingColor,
+                                                    fontSize: 16,
                                                     fontWeight: FontWeight.w800,
                                                     letterSpacing: -0.3,
-                                                  ),
-                                                ),
-                                                Container(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 5,
-                                                        vertical: 1.5,
-                                                      ),
-                                                  decoration: BoxDecoration(
-                                                    color:
-                                                        (isFlame
-                                                                ? AppColors
-                                                                      .sosEmergency
-                                                                : AppColors
-                                                                      .statusSafe)
-                                                            .withValues(
-                                                              alpha: isDark
-                                                                  ? 0.25
-                                                                  : 0.12,
-                                                            ),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          4,
-                                                        ),
-                                                  ),
-                                                  child: Text(
-                                                    isFlame
-                                                        ? context.tr(
-                                                            'dashboard.evacuate',
-                                                          )
-                                                        : context.tr(
-                                                            'dashboard.safe',
-                                                          ),
-                                                    style: TextStyle(
-                                                      color: isFlame
-                                                          ? AppColors
-                                                                .sosEmergency
-                                                          : AppColors
-                                                                .statusSafe,
-                                                      fontSize: 10,
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                    ),
                                                   ),
                                                 ),
                                               ],
@@ -2038,29 +2192,37 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
                             const SizedBox(width: 10),
 
-                            // Right: Circular Arc Progress Ring Gauge
+                            // Right: Circular Arc Progress Ring Gauge for Heat Index
                             SizedBox(
-                              width: 100,
-                              height: 100,
+                              width: 98,
+                              height: 98,
                               child: CustomPaint(
                                 painter: _CircularGaugePainter(
-                                  progress: displayBrightnessPct,
+                                  progress: displayGaugePct,
                                   trackColor: isDark
                                       ? AppColors.darkSurfaceContainerHighest
                                       : AppColors.canvasCreamSubtle,
-                                  arcColor: isDark
-                                      ? AppColors.goldLight
-                                      : AppColors.goldPrimary,
-                                  dotColor: isDark
-                                      ? AppColors.accentGoldStar
-                                      : AppColors.goldDark,
+                                  arcColor: displayGaugePct > 0
+                                      ? (hasPriorData
+                                            ? const Color(0xFFD97706)
+                                            : (isDark
+                                                  ? AppColors.goldLight
+                                                  : AppColors.goldPrimary))
+                                      : (isDark
+                                            ? Colors.white24
+                                            : const Color(0xFFCBD5E1)),
+                                  dotColor: displayGaugePct > 0
+                                      ? (isDark
+                                            ? AppColors.accentGoldStar
+                                            : AppColors.goldDark)
+                                      : Colors.transparent,
                                 ),
                                 child: Center(
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
-                                        '$displayLdr',
+                                        displayHiText,
                                         style: TextStyle(
                                           color: headingColor,
                                           fontSize: 20,
@@ -2071,13 +2233,13 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        context.tr('dashboard.ldrLevel'),
+                                        'Heat Index',
                                         style: TextStyle(
                                           color: isDark
                                               ? Colors.white60
                                               : const Color(0xFF64748B),
                                           fontSize: 10,
-                                          fontWeight: FontWeight.w500,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
                                     ],
@@ -2090,29 +2252,40 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
                         const SizedBox(height: 14),
 
-                        // ── Horizontal Divider Line ──
-                        Divider(
-                          height: 1,
-                          color: isDark
-                              ? AppColors.darkCardBorder
-                              : const Color(0xFFE2E8F0),
+                        // ── Interactive Heartbeat Waveform (Lansia / Senior Friendly) ──
+                        _InteractiveHeartbeatWave(
+                          isConnected: isConnected,
+                          hasPriorData: hasPriorData,
+                          priorTime: ldrCtrl.relativeTimeStr.value,
+                          onConnectTap: () {
+                            ldrCtrl.connectSmartband();
+                          },
                         ),
 
                         const SizedBox(height: 14),
 
-                        // ── Bottom Row: 3 Horizontal Metrics with Mini Progress Bars ──
+                        // ── Bottom Row: 3 Non-Static Status Metrics ──
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
                               child: _buildLinearMetricColumn(
                                 context: context,
-                                title: context.tr('dashboard.heartRate'),
-                                valueText: '76 bpm',
-                                progress: 0.65,
-                                barColor: isDark
-                                    ? AppColors.goldLight
-                                    : AppColors.primaryGold,
+                                title: 'Kondisi Udara',
+                                valueText: isConnected && isAvailable
+                                    ? statusLabel
+                                    : (hasPriorData ? '$statusLabel*' : '-'),
+                                progress:
+                                    (isConnected || hasPriorData) && isAvailable
+                                    ? 0.75
+                                    : 0.0,
+                                barColor: hasPriorData
+                                    ? const Color(0xFFD97706)
+                                    : (isConnected && isAvailable
+                                          ? statusColor
+                                          : (isDark
+                                                ? Colors.white24
+                                                : const Color(0xFFCBD5E1))),
                                 isDark: isDark,
                                 headingColor: headingColor,
                               ),
@@ -2121,12 +2294,20 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                             Expanded(
                               child: _buildLinearMetricColumn(
                                 context: context,
-                                title: context.tr('dashboard.bodyTemperature'),
-                                valueText: '36.6 °C',
-                                progress: 0.72,
-                                barColor: isDark
-                                    ? AppColors.darkSecondary
-                                    : AppColors.tanMedium,
+                                title: 'Sinyal Gelang',
+                                valueText: isConnected
+                                    ? 'Terhubung'
+                                    : (hasPriorData ? 'Terputus' : '-'),
+                                progress: isConnected
+                                    ? 1.0
+                                    : (hasPriorData ? 0.25 : 0.0),
+                                barColor: isConnected
+                                    ? const Color(0xFF0284C7)
+                                    : (hasPriorData
+                                          ? const Color(0xFFD97706)
+                                          : (isDark
+                                                ? Colors.white24
+                                                : const Color(0xFFCBD5E1))),
                                 isDark: isDark,
                                 headingColor: headingColor,
                               ),
@@ -2135,12 +2316,20 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                             Expanded(
                               child: _buildLinearMetricColumn(
                                 context: context,
-                                title: context.tr('dashboard.bandBattery'),
-                                valueText: '88% BLE',
-                                progress: 0.88,
-                                barColor: isDark
-                                    ? AppColors.darkPrimary
-                                    : AppColors.espressoDark,
+                                title: 'Sensor DHT11',
+                                valueText: isConnected && isAvailable
+                                    ? 'Aktif'
+                                    : (hasPriorData ? 'Tersimpan' : '-'),
+                                progress: isConnected && isAvailable
+                                    ? 1.0
+                                    : (hasPriorData ? 0.5 : 0.0),
+                                barColor: isConnected && isAvailable
+                                    ? const Color(0xFF10B981)
+                                    : (hasPriorData
+                                          ? const Color(0xFFD97706)
+                                          : (isDark
+                                                ? Colors.white24
+                                                : const Color(0xFFCBD5E1))),
                                 isDark: isDark,
                                 headingColor: headingColor,
                               ),
@@ -2150,7 +2339,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
                         const SizedBox(height: 16),
 
-                        // Bottom Row: Detail sensor on left, space reserved for protruding button
+                        // Bottom Row: Detail sensor on left, space reserved for protruding ribbon
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -2300,7 +2489,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                 ),
               ),
 
-              // ── 3. Protruding Ribbon Submit Button (No shadow) ──
+              // ── 3. Protruding Ribbon Action Button (No shadow) ──
               Positioned(
                 bottom: 0,
                 right: 0,
@@ -2319,65 +2508,77 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                         ),
                       ),
                     ),
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          Navigator.of(ctx).pop();
-                          HapticFeedback.lightImpact();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                context.tr('dashboard.bandSignalSent'),
-                              ),
-                              duration: const Duration(seconds: 2),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        },
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(24),
-                          bottomLeft: Radius.circular(24),
-                          bottomRight: Radius.circular(5),
-                        ),
-                        child: Ink(
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? AppColors.darkPrimaryContainer
-                                : AppColors.espressoDark,
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(24),
-                              bottomLeft: Radius.circular(24),
-                              bottomRight: Radius.circular(5),
-                            ),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 13.5,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.vibration_rounded,
-                                size: 16,
-                                color: Colors.white,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                context.tr('dashboard.vibrate'),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 12.5,
-                                  letterSpacing: 1.8,
+                    Obx(() {
+                      final isConnected = ldrCtrl.isConnected;
+                      return Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            if (isConnected) {
+                              Navigator.of(ctx).pop();
+                              HapticFeedback.lightImpact();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    context.tr('dashboard.bandSignalSent'),
+                                  ),
+                                  duration: const Duration(seconds: 2),
+                                  behavior: SnackBarBehavior.floating,
                                 ),
+                              );
+                            } else {
+                              Navigator.of(ctx).pop();
+                              Get.toNamed(AppRoutes.smartbandLdr);
+                            }
+                          },
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(24),
+                            bottomLeft: Radius.circular(24),
+                            bottomRight: Radius.circular(5),
+                          ),
+                          child: Ink(
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? AppColors.darkPrimaryContainer
+                                  : AppColors.espressoDark,
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(24),
+                                bottomLeft: Radius.circular(24),
+                                bottomRight: Radius.circular(5),
                               ),
-                            ],
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: 13.5,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  isConnected
+                                      ? Icons.vibration_rounded
+                                      : Icons.bluetooth_searching_rounded,
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  isConnected
+                                      ? context.tr('dashboard.vibrate')
+                                      : 'HUBUNGKAN',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 12,
+                                    letterSpacing: 1.5,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ),
+                      );
+                    }),
                   ],
                 ),
               ),
@@ -2405,8 +2606,9 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
           title,
           style: TextStyle(
             color: headingColor,
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,

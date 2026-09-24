@@ -76,7 +76,7 @@ class BisindoRecognitionController extends GetxController {
     this.autoTick = true,
   }) : ttsService = ttsService ?? BisindoTtsService();
 
-  // Mode Selection: Unified (1 input gabungan kata & huruf), KATA, atau HURUF
+  // Mode Selection: UNIFIED (gabungan huruf & kata), HURUF, atau KATA
   final selectedMode = BisindoMode.unified.obs;
 
   // Camera & Detection States
@@ -184,16 +184,9 @@ class BisindoRecognitionController extends GetxController {
     candidateConfidence.value = conf;
     confidence.value = conf;
 
-    final double minConf;
-    if (selectedMode.value.isUnified) {
-      minConf = prediction.label.length == 1
-          ? config.minimumConfidenceAlphabet
-          : config.minimumConfidenceWord;
-    } else if (selectedMode.value.isWord) {
-      minConf = config.minimumConfidenceWord;
-    } else {
-      minConf = config.minimumConfidenceAlphabet;
-    }
+    final double minConf = selectedMode.value.isWord
+        ? config.minimumConfidenceWord
+        : config.minimumConfidenceAlphabet;
 
     final passesFilter =
         prediction.isRecognized &&

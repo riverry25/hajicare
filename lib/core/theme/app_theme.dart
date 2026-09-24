@@ -16,6 +16,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
+      fontFamily: AppTypography.bodyFontFamily,
       colorScheme: const ColorScheme.light(
         primary: AppColors.primaryContainer, // Deep warm espresso
         onPrimary: AppColors.onPrimary,
@@ -191,6 +192,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
+      fontFamily: AppTypography.bodyFontFamily,
       colorScheme: const ColorScheme.dark(
         primary: AppColors.darkPrimary,
         onPrimary: AppColors.darkOnPrimary,
