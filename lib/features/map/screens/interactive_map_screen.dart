@@ -358,12 +358,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
         ],
       ),
       bottomNavigationBar: widget.showBottomNav
-          ? Obx(
-              () => HajiCareBottomNavBar(
-                currentIndex: mapCtrl.currentIndex.value,
-                onTap: mapCtrl.changeTab,
-              ),
-            )
+          ? const HajiCareBottomNavBar(currentIndex: 1)
           : null,
     );
   }

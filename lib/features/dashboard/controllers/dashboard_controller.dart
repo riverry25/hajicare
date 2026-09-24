@@ -6,6 +6,18 @@ class DashboardController extends GetxController {
   final visitedTabs = <int>{0}.obs;
   final selectedJamaahIndex = 0.obs;
 
+  @override
+  void onInit() {
+    super.onInit();
+    final args = Get.arguments;
+    if (args is Map && args.containsKey('tabIndex')) {
+      final tab = args['tabIndex'];
+      if (tab is int && tab >= 0 && tab <= 3) {
+        changeTab(tab);
+      }
+    }
+  }
+
   void changeTab(int index) {
     visitedTabs.add(index);
     currentIndex.value = index;

@@ -22,6 +22,8 @@ import '../controllers/dashboard_controller.dart';
 import '../widgets/pendamping_radar_card.dart';
 import '../widgets/pendamping_sos_banner.dart';
 import '../widgets/mini_sparkline_button.dart';
+import '../widgets/pendamping_assistance_card.dart';
+import '../services/assistance_request_service.dart';
 
 class DashboardPendampingScreen extends StatelessWidget {
   const DashboardPendampingScreen({super.key});
@@ -603,6 +605,31 @@ class DashboardPendampingScreen extends StatelessWidget {
             ),
 
             const SizedBox(height: 20),
+
+            // Permintaan Bantuan Jamaah (Request Assistance Lifecycle)
+            Obx(() {
+              final activeReq =
+                  AssistanceRequestService.instance.activeRequest.value;
+              if (activeReq == null || !activeReq.isActive) {
+                return const SizedBox.shrink();
+              }
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _sectionHeader(
+                    title: 'Permintaan Bantuan',
+                    subtitle: 'Bantuan jamaah rombongan membutuhkan penanganan',
+                    actionText: 'Lihat Peta',
+                    onAction: () => dashboardCtrl.changeTab(1),
+                    headingColor: headingColor,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(height: 12),
+                  PendampingAssistanceCard(request: activeReq, isDark: isDark),
+                  const SizedBox(height: 12),
+                ],
+              );
+            }),
 
             // Status Darurat (only when active)
             if (state.anySosActive || state.anyJamaahSeparated) ...[

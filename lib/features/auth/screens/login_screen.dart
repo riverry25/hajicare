@@ -71,35 +71,42 @@ class LoginScreen extends StatelessWidget {
 
                   const SizedBox(width: AppSpacing.sm),
 
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'HajiCare',
-                        style: AppTypography.titleLarge.copyWith(
-                          color: AppColors.textHeadingColor(context),
-                          fontWeight: FontWeight.w800,
-                          height: 1,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'HajiCare',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.titleLarge.copyWith(
+                            color: AppColors.textHeadingColor(context),
+                            fontWeight: FontWeight.w800,
+                            height: 1,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        context.tr('appTagline'),
-                        style: AppTypography.captionSmall.copyWith(
-                          color: AppColors.tanMedium,
-                          fontWeight: FontWeight.w500,
+                        const SizedBox(height: 5),
+                        Text(
+                          context.tr('appTagline'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.captionSmall.copyWith(
+                            color: AppColors.tanMedium,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
 
-                  const Spacer(),
+                  const SizedBox(width: AppSpacing.sm),
 
                   // Security status chip
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 11,
-                      vertical: 7,
+                      horizontal: 10,
+                      vertical: 6,
                     ),
                     decoration: BoxDecoration(
                       color: AppColors.cardBgColor(context),
@@ -120,10 +127,10 @@ class LoginScreen extends StatelessWidget {
                       children: [
                         const Icon(
                           Icons.verified_user_rounded,
-                          size: 15,
+                          size: 14,
                           color: AppColors.statusPositive,
                         ),
-                        const SizedBox(width: 5),
+                        const SizedBox(width: 4),
                         Text(
                           context.tr('auth.officialSafe'),
                           style: AppTypography.captionSmall.copyWith(
@@ -230,12 +237,17 @@ class LoginScreen extends StatelessWidget {
                                     color: AppColors.goldPrimary,
                                   ),
                                   const SizedBox(width: 6),
-                                  Text(
-                                    context.tr('auth.demoBadge'),
-                                    style: AppTypography.captionSmall.copyWith(
-                                      color: AppColors.canvasCream,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.2,
+                                  Flexible(
+                                    child: Text(
+                                      context.tr('auth.demoBadge'),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: AppTypography.captionSmall
+                                          .copyWith(
+                                            color: AppColors.canvasCream,
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: 0.2,
+                                          ),
                                     ),
                                   ),
                                 ],
@@ -288,18 +300,18 @@ class LoginScreen extends StatelessWidget {
                           const SizedBox(height: 18),
 
                           // Mini feature tags
-                          Row(
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
                             children: [
                               _WelcomeFeature(
                                 icon: Icons.shield_outlined,
                                 label: context.tr('auth.featureSafe'),
                               ),
-                              const SizedBox(width: 8),
                               _WelcomeFeature(
                                 icon: Icons.people_outline_rounded,
                                 label: context.tr('auth.featureConnected'),
                               ),
-                              const SizedBox(width: 8),
                               _WelcomeFeature(
                                 icon: Icons.accessibility_new_rounded,
                                 label: context.tr('auth.featureInclusive'),
@@ -359,24 +371,30 @@ class LoginScreen extends StatelessWidget {
 
                         const SizedBox(width: 12),
 
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              context.tr('auth.loginCardTitle'),
-                              style: AppTypography.titleMedium.copyWith(
-                                color: AppColors.textHeadingColor(context),
-                                fontWeight: FontWeight.w800,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                context.tr('auth.loginCardTitle'),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.titleMedium.copyWith(
+                                  color: AppColors.textHeadingColor(context),
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              context.tr('auth.loginCardSubtitle'),
-                              style: AppTypography.captionSmall.copyWith(
-                                color: AppColors.textMuted,
+                              const SizedBox(height: 2),
+                              Text(
+                                context.tr('auth.loginCardSubtitle'),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.captionSmall.copyWith(
+                                  color: AppColors.textMuted,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -411,14 +429,18 @@ class LoginScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          context.tr('auth.password'),
-                          style: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.textHeadingColor(context),
-                            fontWeight: FontWeight.w700,
+                        Flexible(
+                          child: Text(
+                            context.tr('auth.password'),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.bodyMedium.copyWith(
+                              color: AppColors.textHeadingColor(context),
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
-
+                        const SizedBox(width: 8),
                         GestureDetector(
                           onTap: () {
                             // Forgot password hook
@@ -487,15 +509,19 @@ class LoginScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 4),
-                          GestureDetector(
-                            onTap: () => controller.setRememberMe(
-                              !controller.rememberMe.value,
-                            ),
-                            child: Text(
-                              context.tr('auth.rememberMe'),
-                              style: AppTypography.caption.copyWith(
-                                color: AppColors.textBodyColor(context),
-                                fontWeight: FontWeight.w500,
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => controller.setRememberMe(
+                                !controller.rememberMe.value,
+                              ),
+                              child: Text(
+                                context.tr('auth.rememberMe'),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.caption.copyWith(
+                                  color: AppColors.textBodyColor(context),
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
                           ),
@@ -590,11 +616,16 @@ class LoginScreen extends StatelessWidget {
                                   children: [
                                     const _GoogleLogo(size: 20),
                                     const SizedBox(width: 10),
-                                    Text(
-                                      context.tr('auth.googleSignIn'),
-                                      style: AppTypography.bodyMedium.copyWith(
-                                        color: AppColors.espressoDark,
-                                        fontWeight: FontWeight.w700,
+                                    Flexible(
+                                      child: Text(
+                                        context.tr('auth.googleSignIn'),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: AppTypography.bodyMedium
+                                            .copyWith(
+                                              color: AppColors.espressoDark,
+                                              fontWeight: FontWeight.w700,
+                                            ),
                                       ),
                                     ),
                                   ],

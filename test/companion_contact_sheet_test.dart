@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:hajicare/core/locales/app_localizations.dart';
 import 'package:hajicare/core/state/hajicare_controller.dart';
+import 'package:hajicare/features/dashboard/services/assistance_request_service.dart';
 import 'package:hajicare/features/dashboard/widgets/companion_contact_sheet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -16,9 +17,13 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     Get.reset();
     state = Get.put(HajiCareController());
+    Get.put(AssistanceRequestService());
   });
 
-  tearDown(Get.reset);
+  tearDown(() {
+    AssistanceRequestService.instance.reset();
+    Get.reset();
+  });
 
   Widget buildApp({Size size = const Size(390, 844), double textScale = 1}) {
     return MaterialApp(
@@ -57,54 +62,91 @@ void main() {
     );
   }
 
-  testWidgets('menawarkan pesan ke satu atau semua pendamping', (tester) async {
+  testWidgets('menampilkan header dan 4 jenis bantuan yang accessible', (
+    tester,
+  ) async {
     await tester.pumpWidget(buildApp());
     await tester.pumpAndSettle();
 
     expect(find.text('Hubungi Pendamping'), findsOneWidget);
-    expect(find.text('Kirim Pesan'), findsAtLeastNWidgets(1));
-    expect(find.text('Satu Pendamping'), findsOneWidget);
-    expect(find.text('Semua Pendamping'), findsOneWidget);
-    expect(
-      find.byKey(const Key('companion_recipient_dropdown')),
-      findsOneWidget,
-    );
+    expect(find.text('Dapatkan bantuan dari pendamping Anda'), findsOneWidget);
+    expect(find.text('Apa yang terjadi?'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('recipient_all')));
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const Key('companion_recipient_dropdown')), findsNothing);
-    expect(find.text('Kirim ke Semua Pendamping'), findsOneWidget);
+    // 4 pilihan jenis bantuan
+    expect(find.text('Saya tidak tahu jalan pulang'), findsWidgets);
+    expect(find.text('Saya terpisah dari rombongan'), findsWidgets);
+    expect(find.text('Saya membutuhkan penjemputan'), findsWidgets);
+    expect(find.text('Saya ingin mengirim pesan'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('informasi selalu ditujukan ke semua pendamping', (tester) async {
-    await tester.pumpWidget(buildApp());
-    await tester.pumpAndSettle();
+  testWidgets(
+    'menawarkan pilihan penerima satu atau semua pendamping dengan dropdown',
+    (tester) async {
+      await tester.pumpWidget(buildApp());
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('companion_kind_info')));
-    await tester.pumpAndSettle();
+      expect(find.text('Satu Pendamping'), findsOneWidget);
+      expect(find.text('Semua Pendamping'), findsOneWidget);
+      expect(
+        find.byKey(const Key('companion_recipient_dropdown')),
+        findsOneWidget,
+      );
 
-    expect(find.text('Penerima: Semua Pendamping'), findsOneWidget);
-    expect(find.text('2 pendamping dalam rombongan'), findsOneWidget);
-    expect(find.text('Kirim ke Semua Pendamping'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
+      // Beralih ke semua pendamping
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('recipient_all')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.byKey(const Key('recipient_all')));
+      await tester.pumpAndSettle();
 
-  testWidgets('tombol lokasi menjelaskan status dan tindakan dengan jelas', (
+      expect(
+        find.byKey(const Key('companion_recipient_dropdown')),
+        findsNothing,
+      );
+      expect(find.text('Kirim ke Semua Pendamping'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('tombol dan status lokasi menjelaskan masalah dan tindakan jelas', (
     tester,
   ) async {
     await tester.pumpWidget(buildApp());
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('companion_location_button')), findsOneWidget);
-    expect(find.text('Tekan untuk Kirim Lokasi'), findsOneWidget);
-    expect(find.text('MATI'), findsOneWidget);
+    expect(find.text('⚠️ Lokasi belum tersedia'), findsOneWidget);
     expect(
-      find.text('Lokasi hanya dikirim jika status tombol menunjukkan AKTIF.'),
+      find.text(
+        'Aktifkan GPS dan izin akses lokasi agar pendamping dapat menemukan Anda.',
+      ),
       findsOneWidget,
     );
+    expect(find.text('Aktifkan Lokasi'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('mengubah jenis bantuan mengubah teks CTA secara kontekstual', (
+    tester,
+  ) async {
+    await tester.pumpWidget(buildApp());
+    await tester.pumpAndSettle();
+
+    // Default: 'Saya tidak tahu jalan pulang' -> CTA: 'Minta Bantuan'
+    expect(find.text('Minta Bantuan'), findsOneWidget);
+
+    // Pilih Penjemputan
+    await tester.tap(find.byKey(const Key('companion_kind_pickup')));
+    await tester.pumpAndSettle();
+    expect(find.text('Minta Penjemputan'), findsOneWidget);
+
+    // Pilih Kirim Pesan
+    await tester.tap(find.byKey(const Key('companion_kind_message')));
+    await tester.pumpAndSettle();
+    expect(find.text('Kirim Pesan'), findsWidgets);
   });
 
   testWidgets('tetap dapat digulir pada layar sempit dengan teks besar', (

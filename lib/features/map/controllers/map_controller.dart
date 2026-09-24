@@ -8,10 +8,12 @@ import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/services/geocoding_service.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/utils/user_feedback_message.dart';
+import '../../dashboard/controllers/dashboard_controller.dart';
 import '../../room/services/room_service.dart';
 import '../models/map_poi.dart';
 import '../models/map_search_result.dart';
@@ -740,7 +742,22 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     selectedRoleFilter.value = index;
   }
 
-  void changeTab(int index) => currentIndex.value = index;
+  void changeTab(int index) {
+    currentIndex.value = index;
+    if (index == 1) return;
+    if (Get.isRegistered<DashboardController>()) {
+      Get.find<DashboardController>().changeTab(index);
+      if (Get.key.currentState?.canPop() == true) {
+        Get.until(
+          (route) =>
+              route.settings.name == AppRoutes.dashboardJamaah ||
+              route.settings.name == AppRoutes.dashboardPendamping ||
+              route.settings.name == AppRoutes.adminDashboard ||
+              route.isFirst,
+        );
+      }
+    }
+  }
 
   List<MapPoi> get filteredPois {
     switch (selectedFilter.value) {

@@ -200,8 +200,10 @@ class BisindoCameraLandmarkService {
     // Send valid frame to temporal inference buffer
     streamBuffer.addFrame(frame);
 
-    if (_receivedFramesCount == 1 || _receivedFramesCount % 20 == 0) {
-      debugPrint('[BISINDO_CAMERA] landmarks=543');
+    if (_receivedFramesCount == 1 || _receivedFramesCount % 30 == 0) {
+      debugPrint(
+        '[BISINDO_CAMERA] landmarks=543 buffer=${streamBuffer.bufferLength}/${streamBuffer.windowSize}',
+      );
     }
   }
 

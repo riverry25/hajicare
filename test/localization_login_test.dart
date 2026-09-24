@@ -94,5 +94,33 @@ void main() {
         },
       );
     }
+
+    testWidgets(
+      'LoginScreen header does not overflow on narrow screens with large text scale',
+      (tester) async {
+        tester.view.physicalSize = const Size(340 * 2, 800 * 2);
+        tester.view.devicePixelRatio = 2.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        final loc = const Locale('id');
+        final settings = Get.put(AppSettingsController(), permanent: true);
+        await settings.setLocale(loc);
+        LoginBinding().dependencies();
+
+        await tester.pumpWidget(
+          MediaQuery(
+            data: const MediaQueryData(
+              size: Size(340, 800),
+              textScaler: TextScaler.linear(1.3),
+            ),
+            child: _buildTestApp(locale: loc, child: const LoginScreen()),
+          ),
+        );
+
+        await tester.pump();
+        expect(find.byType(LoginScreen), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
   });
 }

@@ -4,18 +4,26 @@ class HajjDua {
   final String id;
   final HajjDuaStage stage;
   final String titleKey;
+  final String? title;
   final String? subtitleKey;
+  final String? subtitle;
+  final String? activity;
+  final String? contextText;
   final String arabic;
   final String? transliteration;
   final Map<String, String> translations;
   final String? descriptionKey;
+  final String? description;
   final String? source;
+  final String? sourceReference;
   final String? sourceUrl;
+  final String? audioPath;
   final int order;
   final bool isRecommended;
   final bool requiresSourceVerification;
   final String? notesKey;
   final List<String> keywords;
+  final List<String> tags;
 
   const HajjDua({
     required this.id,
@@ -23,16 +31,24 @@ class HajjDua {
     required this.titleKey,
     required this.arabic,
     required this.order,
+    this.title,
     this.subtitleKey,
+    this.subtitle,
+    this.activity,
+    this.contextText,
     this.transliteration,
     this.translations = const {},
     this.descriptionKey,
+    this.description,
     this.source,
+    this.sourceReference,
     this.sourceUrl,
+    this.audioPath,
     this.isRecommended = false,
     this.requiresSourceVerification = true,
     this.notesKey,
     this.keywords = const [],
+    this.tags = const [],
   });
 
   String? translationFor(String languageCode) {

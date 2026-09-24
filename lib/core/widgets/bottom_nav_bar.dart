@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import '../../features/dashboard/controllers/dashboard_controller.dart';
 import '../../features/translator/widgets/translator_sheet.dart';
 import '../locales/app_localizations.dart';
 import '../routes/app_routes.dart';
@@ -29,37 +30,48 @@ class HajiCareBottomNavBar extends StatelessWidget {
       return;
     }
 
-    // Fallback when used outside an IndexedStack shell.
-    final hajicare = Get.find<HajiCareController>();
+    // 1. Coordinate with existing Dashboard shell if active
+    if (Get.isRegistered<DashboardController>()) {
+      final dashboardCtrl = Get.find<DashboardController>();
+      dashboardCtrl.changeTab(index);
 
-    final String route;
-
-    switch (index) {
-      case 0:
-        route = hajicare.role == UserRole.admin
-            ? AppRoutes.adminDashboard
-            : hajicare.role == UserRole.jamaah
-            ? AppRoutes.dashboardJamaah
-            : AppRoutes.dashboardPendamping;
-        break;
-
-      case 1:
-        route = AppRoutes.interactiveMap;
-        break;
-
-      case 2:
-        route = AppRoutes.prayerTimes;
-        break;
-
-      case 3:
-        route = AppRoutes.profile;
-        break;
-
-      default:
+      if (Navigator.of(context).canPop()) {
+        Get.until(
+          (route) =>
+              route.settings.name == AppRoutes.dashboardJamaah ||
+              route.settings.name == AppRoutes.dashboardPendamping ||
+              route.settings.name == AppRoutes.adminDashboard ||
+              route.isFirst,
+        );
         return;
+      }
     }
 
-    Get.offNamed(route);
+    // 2. Fallback when used outside an IndexedStack shell or cannot pop back
+    final hajicare = Get.isRegistered<HajiCareController>()
+        ? Get.find<HajiCareController>()
+        : null;
+
+    final String dashboardRoute = hajicare?.role == UserRole.admin
+        ? AppRoutes.adminDashboard
+        : hajicare?.role == UserRole.jamaah
+        ? AppRoutes.dashboardJamaah
+        : AppRoutes.dashboardPendamping;
+
+    try {
+      if (index == 1) {
+        Get.offNamed(AppRoutes.interactiveMap);
+      } else {
+        Get.offAllNamed(dashboardRoute, arguments: {'tabIndex': index});
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (Get.isRegistered<DashboardController>()) {
+            Get.find<DashboardController>().changeTab(index);
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('[HajiCareBottomNavBar] Fallback route navigation deferred: $e');
+    }
   }
 
   @override

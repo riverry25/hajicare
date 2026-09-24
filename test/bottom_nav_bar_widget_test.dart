@@ -3,8 +3,10 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:hajicare/core/locales/app_localizations.dart';
+import 'package:hajicare/core/state/hajicare_controller.dart';
 import 'package:hajicare/core/theme/app_theme.dart';
 import 'package:hajicare/core/widgets/bottom_nav_bar.dart';
+import 'package:hajicare/features/dashboard/controllers/dashboard_controller.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -92,5 +94,50 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(HajiCareBottomNavBar), findsOneWidget);
     });
+
+    testWidgets(
+      'Navigates and switches DashboardController tab when onTap is null (e.g. Map screen)',
+      (tester) async {
+        final dashCtrl = Get.put(DashboardController());
+        Get.put(HajiCareController());
+
+        await tester.pumpWidget(
+          GetMaterialApp(
+            theme: AppTheme.lightTheme,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              FallbackMaterialLocalizationsDelegate(),
+              FallbackCupertinoLocalizationsDelegate(),
+              FallbackWidgetsLocalizationsDelegate(),
+            ],
+            home: const Scaffold(
+              bottomNavigationBar: HajiCareBottomNavBar(
+                currentIndex: 1, // On Map screen
+              ),
+            ),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+
+        // Tap Jadwal Salat (tab 2)
+        await tester.tap(find.byIcon(Icons.schedule_rounded));
+        await tester.pump();
+        expect(dashCtrl.currentIndex.value, equals(2));
+
+        // Tap Profil (tab 3)
+        await tester.tap(find.byIcon(Icons.person_rounded));
+        await tester.pump();
+        expect(dashCtrl.currentIndex.value, equals(3));
+
+        // Tap Beranda (tab 0)
+        await tester.tap(find.byIcon(Icons.home_rounded));
+        await tester.pump();
+        expect(dashCtrl.currentIndex.value, equals(0));
+      },
+    );
   });
 }

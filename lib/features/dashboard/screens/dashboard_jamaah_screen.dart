@@ -26,6 +26,8 @@ import '../../smartband/controllers/smartband_ldr_controller.dart';
 import '../controllers/dashboard_controller.dart';
 import '../widgets/distance_sparkline_widget.dart';
 import '../widgets/companion_contact_sheet.dart';
+import '../widgets/jamaah_active_assistance_banner.dart';
+import '../services/assistance_request_service.dart';
 
 part 'dashboard_jamaah_header.dart';
 part 'dashboard_jamaah_sections.dart';

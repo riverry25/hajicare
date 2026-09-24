@@ -95,6 +95,19 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
           const SizedBox(height: 18),
 
+          // ── Active Assistance Banner (when request is in progress) ──
+          Obx(() {
+            final activeReq =
+                AssistanceRequestService.instance.activeRequest.value;
+            if (activeReq == null || !activeReq.isActive) {
+              return const SizedBox.shrink();
+            }
+            return JamaahActiveAssistanceBanner(
+              request: activeReq,
+              isDark: isDark,
+            );
+          }),
+
           // ── Bento Grid: Layanan & Fitur Utama Jamaah ─────────────
           _buildJamaahBentoSection(
             context: context,

@@ -977,6 +977,41 @@ const Map<String, String> enTranslations = {
       'A religious reviewer must verify the transliteration and reference.',
   'hajjDuaReferenceMissingNote':
       'The previous implementation did not record a reference.',
+  'hajjDuaSubtitle': 'Find readings based on your pilgrimage stages.',
+  'hajjDuaRecentTitle': 'Recently Opened',
+  'hajjDuaSavedTitle': 'Saved Readings',
+  'hajjDuaSaveAction': 'Save',
+  'hajjDuaSavedAction': 'Saved',
+  'hajjDuaAudioPlay': 'Listen',
+  'hajjDuaAudioPause': 'Pause',
+  'hajjDuaAudioReplay': 'Replay',
+  'hajjDuaAudioUnavailable': 'Audio not yet available',
+  'hajjDuaTextScaleNormal': 'Normal Text',
+  'hajjDuaTextScaleLarge': 'Large Text',
+  'hajjDuaTextScaleXLarge': 'Extra Large Text',
+  'hajjDuaWhenToRead': 'When to recite?',
+  'hajjDuaNoRoundDuaNote':
+      'No specific prayer is obligatory for this circuit. Pilgrims may supplicate and recite dhikr as needed.',
+  'hajjDuaArafahGuidanceNote':
+      'During the standing at Arafah, pilgrims are encouraged to increase dua, dhikr, istighfar, and supplication. It is not limited to any single prayer.',
+  'hajjDuaRoundTitle': 'Circuit {number}',
+  'hajjDuaTripTitle': 'Lap {number} of 7',
+  'hajjDuaOfficialKemenagSource':
+      'Ministry of Religious Affairs of the Republic of Indonesia',
+  'hajjDuaActivityAll': 'All Activities',
+  'hajjDuaContextualType': 'Tawaf Type: {type}',
+  'hajjDuaCategoryZamzamTitle': 'Drinking Zamzam Water',
+  'hajjDuaCategoryZamzamDescription':
+      'Readings and etiquette when drinking Zamzam water.',
+  'hajjDuaCategoryTawafIfadahTitle': 'Tawaf Ifadah',
+  'hajjDuaCategoryTawafIfadahDescription':
+      'Implementation and reading guide relevant to Tawaf Ifadah.',
+  'hajjDuaCategoryTawafWadaTitle': 'Tawaf Wada\'',
+  'hajjDuaCategoryTawafWadaDescription':
+      'Readings and dhikr guidance for the farewell circumambulation.',
+  'hajjDuaCategoryMadinahTitle': 'Madinah & Prophet\'s Mosque',
+  'hajjDuaCategoryMadinahDescription':
+      'Guidance on prayers and etiquette in Madinah and the Prophet\'s Mosque.',
   'servicePrayerTitle': 'Prayers & Manasik',
   'serviceScheduleAgenda': 'Schedule & Agenda',
   'serviceScheduleAgendaSub': 'Jamarat timing & meeting points',

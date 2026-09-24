@@ -993,6 +993,40 @@ final Map<String, String> jvTranslations = {
       'Transliterasi lan rujukan kudu diverifikasi dening panelaah agama.',
   'hajjDuaReferenceMissingNote':
       'Rujukan durung kacathet ing implementasi sadurunge.',
+  'hajjDuaSubtitle': 'Temokake wacan adhedhasar tahapan ibadah panjenengan.',
+  'hajjDuaRecentTitle': 'Bubar Dibukak',
+  'hajjDuaSavedTitle': 'Wacan Kasimpen',
+  'hajjDuaSaveAction': 'Simpen',
+  'hajjDuaSavedAction': 'Kasimpen',
+  'hajjDuaAudioPlay': 'Rungokake',
+  'hajjDuaAudioPause': 'Lerem',
+  'hajjDuaAudioReplay': 'Baleni',
+  'hajjDuaAudioUnavailable': 'Audio durung sumadya',
+  'hajjDuaTextScaleNormal': 'Teks Biasa',
+  'hajjDuaTextScaleLarge': 'Teks Gedhe',
+  'hajjDuaTextScaleXLarge': 'Teks Gedhe Banget',
+  'hajjDuaWhenToRead': 'Kapan diwaca?',
+  'hajjDuaNoRoundDuaNote':
+      'Ing perangan iki ora ana donga khusus sing diwajibake. Jamaah bisa ndonga lan dzikir miturut kabutuhan.',
+  'hajjDuaArafahGuidanceNote':
+      'Nalika wukuf, jamaah dianjurake ngakehake donga, dzikir, istighfar, lan nyenyuwun marang Allah. Ora winates mung ing sak wacan tartamtu.',
+  'hajjDuaRoundTitle': 'Ubenan {number}',
+  'hajjDuaTripTitle': 'Lelungan {number} saka 7',
+  'hajjDuaOfficialKemenagSource': 'Kementerian Agama Republik Indonesia',
+  'hajjDuaActivityAll': 'Kabeh Kagiyatan',
+  'hajjDuaContextualType': 'Jinis Thawaf: {type}',
+  'hajjDuaCategoryZamzamTitle': 'Ngunjuk Banyu Zamzam',
+  'hajjDuaCategoryZamzamDescription':
+      'Wacan lan tata krama nalika ngunjuk banyu Zamzam.',
+  'hajjDuaCategoryTawafIfadahTitle': 'Thawaf Ifadah',
+  'hajjDuaCategoryTawafIfadahDescription':
+      'Pandhuan lampahing ibadah lan wacan kanggo Thawaf Ifadah.',
+  'hajjDuaCategoryTawafWadaTitle': 'Tawaf Wada\'',
+  'hajjDuaCategoryTawafWadaDescription':
+      'Pandhuan wacan lan dzikir kanggo thawaf pamitan.',
+  'hajjDuaCategoryMadinahTitle': 'Madinah & Masjid Nabawi',
+  'hajjDuaCategoryMadinahDescription':
+      'Pandhuan donga lan tata krama nalika ana ing Madinah lan Masjid Nabawi.',
   'servicePrayerTitle': 'Donga & Manasik',
   'serviceScheduleAgenda': 'Jadwal & Agenda',
   'serviceScheduleAgendaSub': 'Wektu Jamarat & titik kumpul',
