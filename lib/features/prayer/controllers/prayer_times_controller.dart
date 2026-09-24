@@ -149,6 +149,7 @@ class PrayerTimesController extends GetxController {
     _initHijriDate();
     _initCompass();
     await _loadPrayerSoundPreferences();
+    await _adhanAudioService.notificationService.requestPermissions();
 
     // Priority order:
     // 1. Fresh GPS
@@ -452,6 +453,7 @@ class PrayerTimesController extends GetxController {
 
       _updateCountdownDifference();
       _updateQiblaOffset(deviceHeading.value);
+      _syncUpcomingPrayerAlarms();
     } catch (e) {
       debugPrint('[PrayerTimesController] Calculation error: $e');
     } finally {
@@ -628,6 +630,7 @@ class PrayerTimesController extends GetxController {
     } catch (e) {
       debugPrint('[PrayerTimesController] Error saving sound preference: $e');
     }
+    _syncUpcomingPrayerAlarms();
   }
 
   /// Check if at least one prayer has sound enabled
@@ -663,6 +666,32 @@ class PrayerTimesController extends GetxController {
         '[PrayerTimesController] Error saving all sound preferences: $e',
       );
     }
+    _syncUpcomingPrayerAlarms();
+  }
+
+  /// Synchronizes exact system alarm notifications for upcoming prayers (next 7 days)
+  void _syncUpcomingPrayerAlarms() {
+    if (currentLat.value == 0.0 && currentLng.value == 0.0) return;
+    unawaited(
+      _adhanAudioService.notificationService.scheduleUpcomingPrayers(
+        latitude: currentLat.value,
+        longitude: currentLng.value,
+        timezoneId: timezoneName.value.isNotEmpty
+            ? timezoneName.value
+            : 'Asia/Jakarta',
+        countryCode: countryCode.value.isNotEmpty ? countryCode.value : 'ID',
+        isPrayerSoundEnabled: isPrayerSoundOn,
+      ),
+    );
+  }
+
+  /// Trigger a test background adhan alarm [delaySeconds] from now so the user can verify
+  /// background execution without waiting for actual prayer time.
+  Future<void> scheduleTestAdhanAlarm({int delaySeconds = 5}) async {
+    await _adhanAudioService.notificationService.requestPermissions();
+    await _adhanAudioService.notificationService.scheduleTestAdhan(
+      delaySeconds: delaySeconds,
+    );
   }
 
   /// Stop current adhan audio playback

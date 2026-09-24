@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:hajicare/core/theme/app_typography.dart';
 
+/// Hajj & Umrah Dua Typography adapter.
+/// Delegates to the centralized [AppTypography] service while preserving
+/// specific semantic scales for supplications and translations.
 class HajjDuaTypography {
   HajjDuaTypography._();
 
-  static const String headingFontFamily = 'Poppins';
-  static const String bodyFontFamily = 'Montserrat';
-  static const String arabicFontFamily = 'NotoNaskhArabic';
+  static const String headingFontFamily = AppTypography.headingFontFamily;
+  static const String bodyFontFamily = AppTypography.bodyFontFamily;
+  static const String arabicFontFamily = AppTypography.arabicFontFamily;
 
   static const TextStyle appBarTitle = TextStyle(
     fontFamily: headingFontFamily,

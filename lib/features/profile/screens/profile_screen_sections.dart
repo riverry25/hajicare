@@ -136,9 +136,9 @@ extension _ProfileScreenSections on ProfileScreen {
                         _showEditMedicalDialog(context, profileCtrl);
                       },
                       icon: const Icon(Icons.edit_note_rounded, size: 20),
-                      label: const Text(
+                      label: Text(
                         'Isi Data Medis Sekarang',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                        style: AppTypography.button,
                       ),
                     ),
                   ),
@@ -233,10 +233,7 @@ extension _ProfileScreenSections on ProfileScreen {
                             _showEditMedicalDialog(context, profileCtrl);
                           },
                           icon: const Icon(Icons.edit_rounded, size: 18),
-                          label: const Text(
-                            'Ubah Data',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
+                          label: Text('Ubah Data', style: AppTypography.button),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -257,10 +254,7 @@ extension _ProfileScreenSections on ProfileScreen {
                             minimumSize: const Size(0, 48),
                           ),
                           onPressed: () => Navigator.of(context).pop(),
-                          child: const Text(
-                            'Tutup',
-                            style: TextStyle(fontWeight: FontWeight.w700),
-                          ),
+                          child: Text('Tutup', style: AppTypography.button),
                         ),
                       ),
                     ],
@@ -472,9 +466,9 @@ extension _ProfileScreenSections on ProfileScreen {
                       Get.toNamed(AppRoutes.joinRoom);
                     },
                     icon: const Icon(Icons.login_rounded, size: 18),
-                    label: const Text(
+                    label: Text(
                       'Gabung Room Sekarang',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: AppTypography.button,
                     ),
                   ),
                 ),
@@ -523,10 +517,7 @@ extension _ProfileScreenSections on ProfileScreen {
                       ),
                     ),
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text(
-                      'Selesai',
-                      style: TextStyle(fontWeight: FontWeight.w700),
-                    ),
+                    child: Text('Selesai', style: AppTypography.button),
                   ),
                 ),
               ],
@@ -713,10 +704,9 @@ extension _ProfileScreenSections on ProfileScreen {
           const SizedBox(height: 4),
           Text(
             'Kelola akun dan preferensi Hajicare Anda',
-            style: TextStyle(
+            style: AppTypography.bodySmall.copyWith(
               color: bodyColor,
               fontSize: 12.5,
-              fontWeight: FontWeight.w400,
               height: 1.4,
             ),
             maxLines: 2,
@@ -859,7 +849,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
       children: [
         Text(
           label,
-          style: TextStyle(
+          style: AppTypography.heading(
             color: headingColor,
             fontSize: 12.5,
             fontWeight: FontWeight.w700,
@@ -869,14 +859,14 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
         TextField(
           controller: ctrl,
           keyboardType: keyboardType,
-          style: TextStyle(
+          style: AppTypography.bodyText(
             color: headingColor,
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(
+            hintStyle: AppTypography.bodyText(
               color: isDark ? Colors.white38 : const Color(0xFF9E8E81),
               fontSize: 12.5,
               fontWeight: FontWeight.w400,
@@ -1091,8 +1081,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                             context.tr('cancel').isEmpty
                                 ? 'Batal'
                                 : context.tr('cancel'),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
+                            style: AppTypography.button.copyWith(
                               fontSize: 13,
                               letterSpacing: 0.5,
                             ),
@@ -1198,9 +1187,9 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
+                          Text(
                             'DATA KESEHATAN JAMAAH',
-                            style: TextStyle(
+                            style: AppTypography.heading(
                               color: AppColors.goldLight,
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
@@ -1272,9 +1261,9 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                                     color: Colors.white,
                                   ),
                                 )
-                              : const Text(
+                              : Text(
                                   'SIMPAN',
-                                  style: TextStyle(
+                                  style: AppTypography.heading(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w900,
                                     fontSize: 13,

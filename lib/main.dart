@@ -4,6 +4,8 @@ import 'firebase_options.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 
+import 'dart:async';
+import 'core/services/adhan_notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/locales/app_localizations.dart';
 import 'core/routes/app_routes.dart';
@@ -23,6 +25,11 @@ void main() async {
   Get.put(AppStartupController(), permanent: true);
   Get.put(HajiCareController(), permanent: true);
   Get.put(NotificationController(), permanent: true);
+
+  // Initialize background Adhan Notification & Alarm service for exact prayer alarms
+  final adhanNotifService = AdhanNotificationService();
+  await adhanNotifService.initialize();
+  unawaited(adhanNotifService.scheduleFromPreferences());
 
   runApp(const HajiCareApp());
 }

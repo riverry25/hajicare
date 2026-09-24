@@ -195,7 +195,7 @@ class _ProfileHeader extends StatelessWidget {
                             const SizedBox(width: 8),
                             Text(
                               'Ubah Profil',
-                              style: TextStyle(
+                              style: AppTypography.heading(
                                 color: isDark ? Colors.black : Colors.white,
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w700,
@@ -370,9 +370,9 @@ class _ProfileHeader extends StatelessWidget {
                                     color: AppColors.accentGoldStar,
                                   ),
                                   const SizedBox(width: 5),
-                                  const Text(
+                                  Text(
                                     'Kartu Jamaah',
-                                    style: TextStyle(
+                                    style: AppTypography.heading(
                                       color: AppColors.goldLight,
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
@@ -387,7 +387,7 @@ class _ProfileHeader extends StatelessWidget {
                                   controller.displayName.value.isNotEmpty
                                       ? controller.displayName.value
                                       : 'Pengguna',
-                                  style: const TextStyle(
+                                  style: AppTypography.heading(
                                     color: Colors.white,
                                     fontSize: 17,
                                     fontWeight: FontWeight.w800,
@@ -429,7 +429,7 @@ class _ProfileHeader extends StatelessWidget {
                               const SizedBox(width: 5),
                               Text(
                                 roleLabel,
-                                style: const TextStyle(
+                                style: AppTypography.heading(
                                   color: Colors.white,
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
@@ -617,7 +617,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                           textInputAction: TextInputAction.done,
                           onSubmitted: (_) => _submit(),
                           maxLength: 50,
-                          style: TextStyle(
+                          style: AppTypography.bodyText(
                             color: headingClr,
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
@@ -625,7 +625,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                           decoration: InputDecoration(
                             counterText: '',
                             hintText: context.tr('profile.yourFullName'),
-                            hintStyle: TextStyle(
+                            hintStyle: AppTypography.bodyText(
                               color: isDarkDialog
                                   ? Colors.white38
                                   : const Color(0xFF9E8E81),
@@ -690,7 +690,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                           const SizedBox(height: 4),
                           Text(
                             _inputError!,
-                            style: const TextStyle(
+                            style: AppTypography.caption.copyWith(
                               color: AppColors.sosEmergency,
                               fontSize: 11.5,
                               fontWeight: FontWeight.w500,
@@ -723,8 +723,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                             context.tr('cancel').isEmpty
                                 ? 'Batal'
                                 : context.tr('cancel'),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
+                            style: AppTypography.button.copyWith(
                               fontSize: 13,
                               letterSpacing: 0.5,
                             ),
@@ -830,9 +829,9 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
+                          Text(
                             'IDENTITAS PENGGUNA',
-                            style: TextStyle(
+                            style: AppTypography.heading(
                               color: AppColors.goldLight,
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
@@ -904,9 +903,9 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                                     color: Colors.white,
                                   ),
                                 )
-                              : const Text(
+                              : Text(
                                   'SIMPAN',
-                                  style: TextStyle(
+                                  style: AppTypography.heading(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w900,
                                     fontSize: 13,
@@ -1002,7 +1001,7 @@ class _InitialsAvatar extends StatelessWidget {
             alignment: Alignment.center,
             child: Text(
               initials,
-              style: const TextStyle(
+              style: AppTypography.heading(
                 color: Colors.white,
                 fontSize: 24,
                 fontWeight: FontWeight.w800,
@@ -1083,7 +1082,7 @@ class _TagChip extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             label,
-            style: TextStyle(
+            style: AppTypography.heading(
               color: textColor,
               fontSize: 11,
               fontWeight: FontWeight.w700,
@@ -1291,7 +1290,7 @@ class _LogoutButton extends StatelessWidget {
           ),
           label: Text(
             label,
-            style: const TextStyle(
+            style: AppTypography.button.copyWith(
               color: AppColors.sosEmergency,
               fontWeight: FontWeight.w800,
             ),
