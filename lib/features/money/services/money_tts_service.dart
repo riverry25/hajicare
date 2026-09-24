@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
 import '../models/money_detection.dart';
+import 'currency_rate_service.dart';
 import 'riyal_currency_helper.dart';
 
 /// Service responsible for managing Indonesian Text-to-Speech (TTS)
@@ -37,11 +38,12 @@ class MoneyTtsService {
     }
   }
 
-  /// Speaks the results of a single photo inference once.
+  /// Speaks the results of a single photo inference once, including Rupiah translation.
   Future<void> speakResults(
     List<MoneyDetection> detections,
-    double totalAmount,
-  ) async {
+    double totalAmount, {
+    double? exchangeRate,
+  }) async {
     if (!isVoiceEnabled || !_isInitialized) return;
     if (detections.isEmpty) {
       await speak(
@@ -49,13 +51,17 @@ class MoneyTtsService {
       );
       return;
     }
-    final speechSentence = _buildSpeechSentence(detections, totalAmount);
+    final rate = exchangeRate ?? CurrencyRateService.instance.currentRate;
+    final speechSentence = _buildSpeechSentence(detections, totalAmount, rate);
     await speak(speechSentence);
   }
 
   /// Evaluates the current frame's detections and speaks if the detection state is stable
   /// and either represents a change in detected items or has passed cooldown.
-  Future<void> processDetections(List<MoneyDetection> detections) async {
+  Future<void> processDetections(
+    List<MoneyDetection> detections, {
+    double? exchangeRate,
+  }) async {
     if (!isVoiceEnabled || !_isInitialized) return;
     if (detections.isEmpty) return;
 
@@ -68,31 +74,40 @@ class MoneyTtsService {
       0.0,
       (sum, item) => sum + item.amount,
     );
+    final rate = exchangeRate ?? CurrencyRateService.instance.currentRate;
     final currentSignature =
-        '${detections.length}_${totalAmount.toStringAsFixed(2)}_${sortedDenominations.join(',')}';
+        '${detections.length}_${totalAmount.toStringAsFixed(2)}_${rate.toInt()}_${sortedDenominations.join(',')}';
 
     final bool signatureChanged = currentSignature != _lastSpokenSignature;
     final bool cooldownPassed = (now - _lastSpeakTime) >= cooldownMs;
 
     // Only speak when signature changed or cooldown elapsed
     if (signatureChanged || cooldownPassed) {
-      final speechSentence = _buildSpeechSentence(detections, totalAmount);
+      final speechSentence = _buildSpeechSentence(
+        detections,
+        totalAmount,
+        rate,
+      );
       await speak(speechSentence);
       _lastSpokenSignature = currentSignature;
       _lastSpeakTime = now;
     }
   }
 
-  /// Builds a natural Indonesian speech sentence for single or multiple detected items.
+  /// Builds a natural Indonesian speech sentence for single or multiple detected items,
+  /// seamlessly translating the Riyal value into its Rupiah equivalent.
   String _buildSpeechSentence(
     List<MoneyDetection> detections,
     double totalAmount,
+    double exchangeRate,
   ) {
     if (detections.isEmpty) return '';
 
     if (detections.length == 1) {
       final item = detections.first;
-      return 'Terdeteksi satu uang, ${item.spokenName}.';
+      final rupiah = (item.amount * exchangeRate).roundToDouble();
+      final rupiahWords = RiyalCurrencyHelper.rupiahToSpokenIndonesian(rupiah);
+      return 'Terdeteksi satu uang, ${item.spokenName}, setara sekitar $rupiahWords.';
     }
 
     // Multi-money speech
@@ -114,8 +129,10 @@ class MoneyTtsService {
       itemsListStr = '$allExceptLast, dan ${spokenItems.last}';
     }
 
-    final totalSpoken = RiyalCurrencyHelper.totalToSpokenIndonesian(
+    final totalRupiah = (totalAmount * exchangeRate).roundToDouble();
+    final totalSpoken = RiyalCurrencyHelper.totalWithRupiahSpoken(
       totalAmount,
+      totalRupiah,
     );
     return 'Terdeteksi $countWords uang. $itemsListStr. Total $totalSpoken.';
   }

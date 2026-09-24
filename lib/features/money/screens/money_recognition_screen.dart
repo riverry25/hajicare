@@ -11,6 +11,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../models/money_detection.dart';
+import '../services/currency_rate_service.dart';
 import '../services/money_tts_service.dart';
 import '../services/riyal_currency_helper.dart';
 import '../services/smart_multi_pass_detector.dart';
@@ -37,6 +38,9 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
 
   // Indonesian TTS Service
   final MoneyTtsService _ttsService = MoneyTtsService();
+
+  // Active SAR to IDR exchange rate (default 1 SAR ≈ Rp 4,300)
+  double _exchangeRate = CurrencyRateService.defaultRate;
 
   // Model Asset Configuration
   static const String _modelAssetPath = 'assets/models/best_float16.tflite';
@@ -69,11 +73,26 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
   @override
   void initState() {
     super.initState();
+    CurrencyRateService.instance.rateNotifier.addListener(_onRateChanged);
     _initServices();
+  }
+
+  void _onRateChanged() {
+    if (mounted) {
+      setState(() {
+        _exchangeRate = CurrencyRateService.instance.currentRate;
+      });
+    }
   }
 
   Future<void> _initServices() async {
     await _ttsService.init();
+    await CurrencyRateService.instance.init();
+    if (mounted) {
+      setState(() {
+        _exchangeRate = CurrencyRateService.instance.currentRate;
+      });
+    }
     try {
       _yolo = YOLO(modelPath: _modelAssetPath, task: YOLOTask.detect);
       final loaded = await _yolo.loadModel();
@@ -114,6 +133,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
 
   @override
   void dispose() {
+    CurrencyRateService.instance.rateNotifier.removeListener(_onRateChanged);
     _ttsService.dispose();
     _yoloController.dispose();
     _yolo.dispose();
@@ -198,10 +218,11 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
         _mode = RecognitionMode.result;
       });
 
-      // 5. Speak announcement once in Indonesian
+      // 5. Speak announcement once in Indonesian with Rupiah conversion
       await _ttsService.speakResults(
         result.finalDetections,
         result.totalAmount,
+        exchangeRate: _exchangeRate,
       );
     } catch (e) {
       debugPrint('Capture & inference pipeline error: $e');
@@ -429,13 +450,47 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                       fontSize: 20,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Kenali nominal Riyal dengan kamera',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.captionSmall.copyWith(
-                      color: Colors.white.withValues(alpha: 0.78),
+                  const SizedBox(height: 4),
+                  GestureDetector(
+                    onTap: _showExchangeRateSheet,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.45),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        border: Border.all(
+                          color: AppColors.goldPrimary.withValues(alpha: 0.5),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.currency_exchange_rounded,
+                            size: 13,
+                            color: AppColors.goldPrimary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '1 SAR ≈ ${RiyalCurrencyHelper.formatRupiah(_exchangeRate)}',
+                            style: AppTypography.captionSmall.copyWith(
+                              color: AppColors.goldLight,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 11,
+                            ),
+                          ),
+                          const SizedBox(width: 3),
+                          const Icon(
+                            Icons.tune_rounded,
+                            size: 12,
+                            color: AppColors.goldMuted,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -810,12 +865,25 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                 ),
                 const SizedBox(width: AppSpacing.xs),
                 Expanded(
-                  child: Text(
-                    'Hasil Deteksi Riyal',
-                    style: AppTypography.titleLarge.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Hasil Deteksi Riyal',
+                        style: AppTypography.titleLarge.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      Text(
+                        'Kurs: 1 SAR ≈ ${RiyalCurrencyHelper.formatRupiah(_exchangeRate)}',
+                        style: AppTypography.captionSmall.copyWith(
+                          color: AppColors.goldLight.withValues(alpha: 0.85),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 // Keep the same mute state and behavior as the camera screen.
@@ -1046,14 +1114,29 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                                 ],
                               ),
                             ),
-                            Text(
-                              item.isCoin
-                                  ? '${item.amount.toStringAsFixed(2)} SAR'
-                                  : '${item.amount.toInt()} SAR',
-                              style: AppTypography.titleLarge.copyWith(
-                                color: AppColors.goldPrimary,
-                                fontWeight: FontWeight.w800,
-                              ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  item.isCoin
+                                      ? '${item.amount.toStringAsFixed(2)} SAR'
+                                      : '${item.amount.toInt()} SAR',
+                                  style: AppTypography.titleLarge.copyWith(
+                                    color: AppColors.goldPrimary,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '≈ ${RiyalCurrencyHelper.formatRupiah(item.amount * _exchangeRate)}',
+                                  style: AppTypography.captionSmall.copyWith(
+                                    color: AppColors.canvasCream.withValues(
+                                      alpha: 0.90,
+                                    ),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -1114,15 +1197,142 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 12),
+
+                        // Seamless Rupiah Conversion Box
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.goldPrimary.withValues(alpha: 0.22),
+                                AppColors.goldPrimary.withValues(alpha: 0.08),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            border: Border.all(
+                              color: AppColors.goldPrimary.withValues(
+                                alpha: 0.55,
+                              ),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.goldPrimary.withValues(
+                                    alpha: 0.25,
+                                  ),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.currency_exchange_rounded,
+                                  color: AppColors.goldLight,
+                                  size: 22,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'SETARA RUPIAH (IDR)',
+                                      style: AppTypography.captionSmall
+                                          .copyWith(
+                                            color: AppColors.goldLight
+                                                .withValues(alpha: 0.85),
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 10,
+                                            letterSpacing: 1.2,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      RiyalCurrencyHelper.formatRupiah(
+                                        _totalAmount * _exchangeRate,
+                                      ),
+                                      style: AppTypography.displayMedium
+                                          .copyWith(
+                                            color: AppColors.goldLight,
+                                            fontSize: 26,
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+
                         Text(
-                          'Terbilang: ${RiyalCurrencyHelper.totalToSpokenIndonesian(_totalAmount)}',
+                          'Terbilang: ${RiyalCurrencyHelper.totalWithRupiahSpoken(_totalAmount, _totalAmount * _exchangeRate)}',
                           textAlign: TextAlign.center,
                           style: AppTypography.bodySmall.copyWith(
                             color: AppColors.canvasCream.withValues(
-                              alpha: 0.85,
+                              alpha: 0.90,
                             ),
                             fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+
+                        // Exchange rate reference & adjust button
+                        GestureDetector(
+                          onTap: _showExchangeRateSheet,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.15),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.info_outline_rounded,
+                                  size: 13,
+                                  color: AppColors.goldMuted,
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  'Kurs acuan: 1 SAR = ${RiyalCurrencyHelper.formatRupiah(_exchangeRate)}',
+                                  style: AppTypography.captionSmall.copyWith(
+                                    color: Colors.white70,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  '• Ubah',
+                                  style: AppTypography.captionSmall.copyWith(
+                                    color: AppColors.goldPrimary,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 11,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -1156,6 +1366,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                                     _ttsService.speakResults(
                                       _capturedDetections,
                                       _totalAmount,
+                                      exchangeRate: _exchangeRate,
                                     );
                                   }
                                 : null,
@@ -1291,6 +1502,345 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 5. EXCHANGE RATE CUSTOMIZATION BOTTOM SHEET
+  // ---------------------------------------------------------------------------
+
+  void _showExchangeRateSheet() {
+    final TextEditingController rateController = TextEditingController(
+      text: _exchangeRate.round().toString(),
+    );
+    bool isCheckingOnline = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (bottomSheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+            return Container(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.screenEdgeGutter,
+                AppSpacing.lg,
+                AppSpacing.screenEdgeGutter,
+                bottomInset + AppSpacing.xl,
+              ),
+              decoration: const BoxDecoration(
+                color: AppColors.espressoDark,
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(AppRadius.xl),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black54,
+                    blurRadius: 20,
+                    offset: Offset(0, -4),
+                  ),
+                ],
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Drag handle
+                    Center(
+                      child: Container(
+                        width: 42,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.white24,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+
+                    // Header
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.goldPrimary.withValues(
+                              alpha: 0.15,
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.currency_exchange_rounded,
+                            color: AppColors.goldPrimary,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Pengaturan Kurs Riyal',
+                                style: AppTypography.titleLarge.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              Text(
+                                CurrencyRateService.instance.lastApiUtcTime !=
+                                        null
+                                    ? 'Live API: ${CurrencyRateService.instance.lastApiUtcTime}'
+                                    : 'Konversi 1 SAR ke Rupiah Indonesia (IDR)',
+                                style: AppTypography.captionSmall.copyWith(
+                                  color: AppColors.goldLight.withValues(
+                                    alpha: 0.9,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.close_rounded,
+                            color: Colors.white70,
+                          ),
+                          onPressed: () => Navigator.pop(bottomSheetContext),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+
+                    // Quick presets
+                    Text(
+                      'Pilihan Cepat Kurs:',
+                      style: AppTypography.labelMedium.copyWith(
+                        color: AppColors.canvasCream.withValues(alpha: 0.8),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: <double>{
+                        if (CurrencyRateService.instance.currentRate > 0)
+                          CurrencyRateService.instance.currentRate,
+                        4500.0,
+                        4600.0,
+                        4700.0,
+                        4750.0,
+                        4800.0,
+                      }.map((preset) {
+                            final currentVal = double.tryParse(
+                              rateController.text,
+                            );
+                            final isSelected = (currentVal == preset);
+                            return ChoiceChip(
+                              label: Text(
+                                RiyalCurrencyHelper.formatRupiah(preset),
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? AppColors.espressoDark
+                                      : Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              selected: isSelected,
+                              selectedColor: AppColors.goldPrimary,
+                              backgroundColor: AppColors.primaryContainer,
+                              side: BorderSide(
+                                color: isSelected
+                                    ? AppColors.goldPrimary
+                                    : Colors.white24,
+                              ),
+                              onSelected: (selected) {
+                                if (selected) {
+                                  setSheetState(() {
+                                    rateController.text = preset
+                                        .toInt()
+                                        .toString();
+                                  });
+                                }
+                              },
+                            );
+                          }).toList(),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+
+                    // Manual input
+                    Text(
+                      'Nominal Kurs Manual (Rp):',
+                      style: AppTypography.labelMedium.copyWith(
+                        color: AppColors.canvasCream.withValues(alpha: 0.8),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: rateController,
+                      keyboardType: TextInputType.number,
+                      style: AppTypography.titleLarge.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                      decoration: InputDecoration(
+                        prefixText: 'Rp  ',
+                        prefixStyle: AppTypography.titleLarge.copyWith(
+                          color: AppColors.goldPrimary,
+                          fontWeight: FontWeight.w800,
+                        ),
+                        filled: true,
+                        fillColor: AppColors.primaryContainer.withValues(
+                          alpha: 0.8,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          borderSide: const BorderSide(
+                            color: AppColors.goldPrimary,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          borderSide: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.25),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          borderSide: const BorderSide(
+                            color: AppColors.goldPrimary,
+                            width: 2,
+                          ),
+                        ),
+                        hintText: '4300',
+                        hintStyle: const TextStyle(color: Colors.white38),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+
+                    // Fetch online button
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                          color: AppColors.goldPrimary.withValues(alpha: 0.6),
+                        ),
+                        foregroundColor: AppColors.goldPrimary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      onPressed: isCheckingOnline
+                          ? null
+                          : () async {
+                              setSheetState(() => isCheckingOnline = true);
+                              final success = await CurrencyRateService.instance
+                                  .fetchLatestOnlineRate();
+                              setSheetState(() => isCheckingOnline = false);
+
+                              if (success) {
+                                setSheetState(() {
+                                  rateController.text = CurrencyRateService
+                                      .instance
+                                      .currentRate
+                                      .toInt()
+                                      .toString();
+                                });
+                                Get.snackbar(
+                                  'Kurs Terkini Diperbarui',
+                                  'Kurs 1 SAR = ${RiyalCurrencyHelper.formatRupiah(CurrencyRateService.instance.currentRate)}',
+                                  snackPosition: SnackPosition.BOTTOM,
+                                  backgroundColor: AppColors.primaryContainer,
+                                  colorText: Colors.white,
+                                );
+                              } else {
+                                Get.snackbar(
+                                  'Tidak Dapat Menghubungkan',
+                                  'Periksa koneksi internet Anda atau gunakan pilihan kurs acuan.',
+                                  snackPosition: SnackPosition.BOTTOM,
+                                  backgroundColor: AppColors.primaryContainer,
+                                  colorText: Colors.white,
+                                );
+                              }
+                            },
+                      icon: isCheckingOnline
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.goldPrimary,
+                              ),
+                            )
+                          : const Icon(Icons.cloud_sync_rounded, size: 20),
+                      label: Text(
+                        isCheckingOnline
+                            ? 'Memeriksa kurs terbaru...'
+                            : 'Cek Kurs Real-Time (Online)',
+                        style: AppTypography.labelLarge.copyWith(
+                          color: AppColors.goldPrimary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+
+                    // Save & Apply button
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.goldPrimary,
+                        foregroundColor: AppColors.espressoDark,
+                        minimumSize: const Size.fromHeight(52),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                      ),
+                      onPressed: () async {
+                        final val = double.tryParse(
+                          rateController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+                        );
+                        if (val != null && val > 500 && val < 20000) {
+                          await CurrencyRateService.instance.setCustomRate(val);
+                          if (mounted) {
+                            setState(() {
+                              _exchangeRate = val;
+                            });
+                          }
+                          if (bottomSheetContext.mounted) {
+                            Navigator.pop(bottomSheetContext);
+                          }
+                        } else {
+                          Get.snackbar(
+                            'Nominal Tidak Valid',
+                            'Masukkan nilai kurs yang wajar (antara Rp 1.000 - Rp 15.000).',
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: Colors.black87,
+                            colorText: Colors.white,
+                          );
+                        }
+                      },
+                      child: Text(
+                        'Terapkan Kurs',
+                        style: AppTypography.titleMedium.copyWith(
+                          color: AppColors.espressoDark,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
