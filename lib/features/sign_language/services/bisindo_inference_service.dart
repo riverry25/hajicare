@@ -1,11 +1,10 @@
-import 'dart:math' as math;
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:tflite_flutter/tflite_flutter.dart' as tfl;
 
-import '../models/bisindo_mode.dart';
 import '../models/bisindo_prediction.dart';
-import 'bisindo_alphabet_inference_service.dart';
 import 'bisindo_preprocessor.dart';
-import 'bisindo_word_inference_service.dart';
 
 abstract interface class BisindoPredictor {
   Future<BisindoPrediction> predictFromLandmarks(
@@ -13,103 +12,250 @@ abstract interface class BisindoPredictor {
   );
 }
 
-/// Coordinator service managing independent BISINDO TFLite model services.
-///
-/// Features:
-/// 1. Alphabet Service (`BisindoAlphabetInferenceService`):
-///    - Dedicated Interpreter & separate labels (`assets/models/bisindo_alphabet_labels.json`)
-///    - Shape: [1, 86] -> [1, 27]
-///
-/// 2. Word Service (`BisindoWordInferenceService`):
-///    - Dedicated Interpreter & separate labels (`assets/models/bisindo_wl_labels.json`)
-///    - Shape: [1, 30, 300] -> [1, 8]
-///
-/// Complete isolation:
-/// - When mode is UNIFIED, seamlessly recognizes both alphabet and words without manual switching.
-///   Static hand postures are directed to Alphabet; dynamic motion signs are evaluated for Words.
-/// - When mode is ALPHABET, only Alphabet interpreter runs. Word model NEVER runs.
-/// - When mode is WORD, only Word interpreter runs. Alphabet model NEVER runs.
+/// Service managing the final deploy-ready BISINDO Tiny GRU TFLite model:
+/// - Model: `assets/models/bisindo/hajicare_bisindo_gru_float32.tflite`
+/// - Input shape: [1, 48, 135] Float32
+/// - Output shape: [1, 23] Float32
+/// - Labels: 23 classes loaded from `assets/models/bisindo/labels.json`
+/// - Config: loaded dynamically from `assets/models/bisindo/model_config.json`
 class BisindoInferenceService implements BisindoPredictor {
-  final BisindoAlphabetInferenceService alphabetService;
-  final BisindoWordInferenceService wordService;
+  static const String kModelAssetPath =
+      'assets/models/bisindo/hajicare_bisindo_gru_float32.tflite';
+  static const String kLabelsAssetPath = 'assets/models/bisindo/labels.json';
+  static const String kConfigAssetPath =
+      'assets/models/bisindo/model_config.json';
 
-  BisindoMode currentMode = BisindoMode.unified;
+  // Fallback defaults if config fails to load
+  static const double kDefaultConfidenceThreshold = 0.78;
+  static const int kExpectedSequenceLen = 48;
+  static const int kExpectedFeatureDim = 135;
+  static const int kExpectedNumClasses = 23;
 
-  BisindoInferenceService({
-    BisindoAlphabetInferenceService? alphabetService,
-    BisindoWordInferenceService? wordService,
-  }) : alphabetService = alphabetService ?? BisindoAlphabetInferenceService(),
-       wordService = wordService ?? BisindoWordInferenceService();
+  tfl.Interpreter? _interpreter;
+  List<String> _labels = [];
+  Map<String, dynamic> _config = {};
+  double _confidenceThreshold = kDefaultConfidenceThreshold;
+  bool _isInitialized = false;
 
-  bool get isInitialized =>
-      alphabetService.isInitialized && wordService.isInitialized;
+  bool get isInitialized => _isInitialized;
+  List<String> get labels => List.unmodifiable(_labels);
+  double get confidenceThreshold => _confidenceThreshold;
+  Map<String, dynamic> get config => Map.unmodifiable(_config);
 
-  List<String> get alphabetLabels => alphabetService.labels;
-  List<String> get wordLabels => wordService.labels;
-
-  /// Initializes both models independently with clear status logging.
+  /// Loads configuration, labels, and the TFLite interpreter.
   Future<void> initialize() async {
-    Object? alphabetError;
-    Object? wordError;
+    if (_isInitialized) return;
 
     try {
-      await alphabetService.initialize();
-    } catch (e) {
-      alphabetError = e;
-      debugPrint('[BISINDO][INIT] Alphabet service initialization failed: $e');
-    }
-
-    try {
-      await wordService.initialize();
-    } catch (e) {
-      wordError = e;
-      debugPrint('[BISINDO][INIT] Word service initialization failed: $e');
-    }
-
-    if (alphabetError != null && wordError != null) {
-      throw StateError(
-        'Both BISINDO models failed to initialize:\n'
-        'Alphabet: $alphabetError\nWord: $wordError',
-      );
-    } else if (alphabetError != null) {
-      debugPrint(
-        '[BISINDO][INIT] Warning: Alphabet failed, but Word model is ready.',
-      );
-    } else if (wordError != null) {
-      debugPrint(
-        '[BISINDO][INIT] Warning: Word failed, but Alphabet model is ready.',
-      );
-    }
-  }
-
-  /// Calculates average hand/wrist displacement between consecutive frames.
-  /// Dynamic word signs have active trajectories (> 0.015), while fingerspelling
-  /// alphabet signs are held steadily (< 0.015).
-  static double _calculateHandMotion(List<List<List<double>>> sequence) {
-    if (sequence.length < 2) return 0.0;
-    double displacement = 0.0;
-    int count = 0;
-    for (int i = 1; i < sequence.length; i++) {
-      final prev = sequence[i - 1];
-      final curr = sequence[i];
-      for (final idx in [15, 16, 501, 522]) {
-        if (idx < prev.length && idx < curr.length) {
-          final p = prev[idx];
-          final c = curr[idx];
-          if (p.length >= 2 && c.length >= 2) {
-            final dx = c[0] - p[0];
-            final dy = c[1] - p[1];
-            displacement += math.sqrt(dx * dx + dy * dy);
-            count++;
-          }
+      debugPrint('[BISINDO][INIT] Loading model configuration...');
+      // 1. Load model_config.json
+      try {
+        final configStr = await rootBundle.loadString(kConfigAssetPath);
+        _config = json.decode(configStr) as Map<String, dynamic>;
+        if (_config.containsKey('confidence_threshold')) {
+          _confidenceThreshold = (_config['confidence_threshold'] as num)
+              .toDouble();
         }
+        debugPrint(
+          '[BISINDO][INIT] Config loaded: confidence_threshold=$_confidenceThreshold, seqLen=${_config['sequence_length']}, featureDim=${_config['feature_dim']}',
+        );
+      } catch (e) {
+        debugPrint(
+          '[BISINDO][INIT] Warning: Failed to load config ($e), using default threshold: $kDefaultConfidenceThreshold',
+        );
+        _confidenceThreshold = kDefaultConfidenceThreshold;
       }
+
+      // 2. Load labels.json as source of truth
+      debugPrint('[BISINDO][INIT] Loading labels from $kLabelsAssetPath...');
+      final labelsStr = await rootBundle.loadString(kLabelsAssetPath);
+      final Map<String, dynamic> labelsDecoded =
+          json.decode(labelsStr) as Map<String, dynamic>;
+
+      if (labelsDecoded.containsKey('labels')) {
+        final rawLabels = labelsDecoded['labels'] as List;
+        _labels = rawLabels.map((item) {
+          if (item is Map && item.containsKey('name')) {
+            return item['name'].toString();
+          }
+          return item.toString();
+        }).toList();
+      } else if (labelsDecoded.containsKey('class_names')) {
+        _labels = (labelsDecoded['class_names'] as List).cast<String>();
+      } else {
+        throw StateError('Invalid labels format in $kLabelsAssetPath');
+      }
+
+      debugPrint(
+        '[BISINDO][INIT] Loaded ${_labels.length} classes: ${_labels.join(', ')}',
+      );
+
+      if (_labels.length != kExpectedNumClasses) {
+        debugPrint(
+          '[BISINDO][INIT] Warning: Loaded ${_labels.length} classes, expected $kExpectedNumClasses',
+        );
+      }
+
+      // 3. Load TFLite interpreter
+      debugPrint(
+        '[BISINDO][INIT] Loading TFLite model from $kModelAssetPath...',
+      );
+      final options = tfl.InterpreterOptions()..threads = 2;
+
+      try {
+        final byteData = await rootBundle.load(kModelAssetPath);
+        final bytes = byteData.buffer.asUint8List(
+          byteData.offsetInBytes,
+          byteData.lengthInBytes,
+        );
+        _interpreter = tfl.Interpreter.fromBuffer(bytes, options: options);
+      } catch (e) {
+        debugPrint(
+          '[BISINDO][INIT] fromBuffer failed ($e), falling back to fromAsset...',
+        );
+        _interpreter = await tfl.Interpreter.fromAsset(
+          kModelAssetPath,
+          options: options,
+        );
+      }
+
+      // 4. Validate tensor shapes & types
+      final inTensors = _interpreter!.getInputTensors();
+      final outTensors = _interpreter!.getOutputTensors();
+
+      final inShape = inTensors.isNotEmpty ? inTensors[0].shape : [];
+      final inType = inTensors.isNotEmpty ? inTensors[0].type : null;
+      final outShape = outTensors.isNotEmpty ? outTensors[0].shape : [];
+      final outType = outTensors.isNotEmpty ? outTensors[0].type : null;
+
+      debugPrint(
+        '[BISINDO][INIT] Input Tensor: shape=$inShape, type=$inType (Expected: [1, 48, 135] Float32)',
+      );
+      debugPrint(
+        '[BISINDO][INIT] Output Tensor: shape=$outShape, type=$outType (Expected: [1, ${_labels.length}] Float32)',
+      );
+
+      // Verify shape constraints
+      if (inShape.length != 3 ||
+          inShape[0] != 1 ||
+          inShape[1] != kExpectedSequenceLen ||
+          inShape[2] != kExpectedFeatureDim) {
+        throw StateError(
+          'Tensor shape mismatch: Model input $inShape does not match expected [1, 48, 135]',
+        );
+      }
+
+      final int outClasses = outShape.isNotEmpty ? outShape.last : 0;
+      if (outClasses != _labels.length) {
+        throw StateError(
+          'Output tensor classes ($outClasses) != label count (${_labels.length})',
+        );
+      }
+
+      _isInitialized = true;
+      debugPrint(
+        '[BISINDO][INIT] BISINDO GRU model initialized successfully ✅',
+      );
+    } catch (e, stack) {
+      debugPrint('[BISINDO][INIT] Initialization failed: $e\n$stack');
+      _isInitialized = false;
+      await dispose();
+      rethrow;
     }
-    return count > 0 ? (displacement / count) : 0.0;
   }
 
-  /// Unified prediction intelligently combining Alphabet and Word models.
-  Future<BisindoPrediction> _predictUnified(
+  /// Predicts gesture label from a sequence of 48 frames, each frame containing 135 features.
+  BisindoPrediction predict(List<Float32List> sequence48) {
+    final interpreter = _interpreter;
+    if (!_isInitialized || interpreter == null) {
+      throw StateError('[BISINDO] Interpreter is not initialized');
+    }
+
+    if (sequence48.length < kExpectedSequenceLen) {
+      return const BisindoPrediction(
+        classId: -1,
+        label: '',
+        confidence: 0.0,
+        distance: 1.0,
+        candidates: [],
+        isRecognized: false,
+      );
+    }
+
+    final stopwatch = Stopwatch()..start();
+
+    // 1. Prepare input tensor [1, 48, 135]
+    final List<List<List<double>>> input = [
+      List.generate(kExpectedSequenceLen, (t) {
+        final frameFeatures = sequence48[t];
+        return List<double>.generate(kExpectedFeatureDim, (f) {
+          return f < frameFeatures.length ? frameFeatures[f].toDouble() : 0.0;
+        });
+      }),
+    ];
+
+    // 2. Prepare output tensor [1, 23]
+    final List<List<double>> output = [
+      List<double>.filled(_labels.length, 0.0),
+    ];
+
+    // 3. Run inference
+    interpreter.run(input, output);
+    stopwatch.stop();
+
+    final List<double> probs = output[0];
+
+    // 4. Find best prediction and candidate ranking
+    final List<MapEntry<int, double>> indexedProbs = [];
+    for (int i = 0; i < probs.length; i++) {
+      indexedProbs.add(MapEntry(i, probs[i]));
+    }
+    indexedProbs.sort((a, b) => b.value.compareTo(a.value));
+
+    final topIdx = indexedProbs.first.key;
+    final topConfidence = indexedProbs.first.value;
+    final predictedLabel = _labels[topIdx];
+
+    // Live recognition flag: marks as recognized if confidence >= 0.48 so controller
+    // can evaluate hold-and-confirm stability.
+    final isRecognized = topConfidence >= 0.48;
+
+    if (kDebugMode) {
+      final top3Log = indexedProbs
+          .take(3)
+          .map(
+            (e) => '${_labels[e.key]}: ${(e.value * 100).toStringAsFixed(1)}%',
+          )
+          .join(', ');
+      debugPrint(
+        '[BISINDO] buffer=48/48 prediction=$predictedLabel confidence=${(topConfidence * 100).toStringAsFixed(1)}% (th=${(_confidenceThreshold * 100).round()}%) inference=${stopwatch.elapsedMilliseconds}ms top3=[$top3Log]',
+      );
+    }
+
+    final candidates = indexedProbs
+        .map(
+          (e) => BisindoCandidate(
+            classId: e.key,
+            label: _labels[e.key],
+            distance: (1.0 - e.value).clamp(0.0, 1.0),
+            confidence: e.value,
+          ),
+        )
+        .toList();
+
+    return BisindoPrediction(
+      classId: topIdx,
+      label: predictedLabel,
+      confidence: topConfidence,
+      distance: (1.0 - topConfidence).clamp(0.0, 1.0),
+      candidates: candidates,
+      isRecognized: isRecognized,
+    );
+  }
+
+  /// Predicts directly from a sequence of 543-landmark frames (e.g. from camera landmark stream).
+  @override
+  Future<BisindoPrediction> predictFromLandmarks(
     List<List<List<double>>> landmarks,
   ) async {
     if (landmarks.isEmpty) {
@@ -123,113 +269,31 @@ class BisindoInferenceService implements BisindoPredictor {
       );
     }
 
-    // 1. Evaluate alphabet on the latest frame
-    final alphaPred = alphabetService.predict(landmarks.last);
-
-    // 2. If buffer does not have enough frames for word sequence, return alphabet
-    if (landmarks.length < 15) {
-      return alphaPred;
-    }
-
-    // 3. Compute dynamic hand motion across the sequence
-    final motion = _calculateHandMotion(landmarks);
-
-    // If hands are static / holding a hand posture, the sign is fingerspelling (alphabet).
-    // Word model must NOT trigger when hands are static, preventing "U -> MAAF" false positives.
-    if (motion < 0.015) {
-      return alphaPred;
-    }
-
-    // 4. Dynamic motion detected: evaluate word sequence
-    final wordPred = wordService.predict(landmarks);
-
-    // 5. Arbitration:
-    // If the word model is strongly confident with dynamic motion, it is a word gesture!
-    if (wordPred.isRecognized && wordPred.confidence >= 0.75) {
-      return wordPred;
-    }
-
-    // Otherwise, if alphabet is recognized, prefer alphabet
-    if (alphaPred.isRecognized) {
-      return alphaPred;
-    }
-
-    // Fall back to word prediction if recognized with moderate confidence
-    if (wordPred.isRecognized) {
-      return wordPred;
-    }
-
-    return alphaPred;
-  }
-
-  /// Mode routing:
-  /// - UNIFIED mode: Seamlessly detects both alphabet letters and dynamic words.
-  /// - ALPHABET mode: ONLY runs alphabetService. Never produces a word label.
-  /// - WORD mode: ONLY runs wordService. Never produces an alphabet label.
-  @override
-  Future<BisindoPrediction> predictFromLandmarks(
-    List<List<List<double>>> landmarks,
-  ) async {
-    if (currentMode == BisindoMode.unified) {
-      return _predictUnified(landmarks);
-    } else if (currentMode == BisindoMode.alphabet) {
-      if (landmarks.isEmpty) {
-        return const BisindoPrediction(
-          classId: -1,
-          label: '',
-          confidence: 0.0,
-          distance: 1.0,
-          candidates: [],
-          isRecognized: false,
-        );
-      }
-      final pred = alphabetService.predict(landmarks.last);
-
-      // Section 13 Safety Check: An alphabet prediction must NEVER produce a word label
-      if (wordLabels.isNotEmpty &&
-          wordLabels.contains(pred.label.toLowerCase())) {
-        debugPrint(
-          '[BISINDO][ROUTING_ERROR] Alphabet mode produced word label "${pred.label}"! Rejecting.',
-        );
-        throw StateError(
-          'Pipeline routing error: Alphabet mode produced word label "${pred.label}"',
-        );
-      }
-
-      return pred;
+    // Take the most recent 48 frames or pad initial frames if buffer is filling up
+    final List<List<List<double>>> sourceFrames;
+    if (landmarks.length >= kExpectedSequenceLen) {
+      sourceFrames = landmarks.sublist(landmarks.length - kExpectedSequenceLen);
     } else {
-      // WORD mode
-      if (landmarks.isEmpty) {
-        return const BisindoPrediction(
-          classId: -1,
-          label: '',
-          confidence: 0.0,
-          distance: 1.0,
-          candidates: [],
-          isRecognized: false,
-        );
-      }
-      final pred = wordService.predict(landmarks);
-
-      // Safety check: A word prediction must NEVER produce a single alphabet letter
-      if (pred.label.length == 1 &&
-          alphabetLabels.contains(pred.label.toUpperCase())) {
-        debugPrint(
-          '[BISINDO][ROUTING_ERROR] Word mode produced alphabet label "${pred.label}"! Rejecting.',
-        );
-        throw StateError(
-          'Pipeline routing error: Word mode produced alphabet label "${pred.label}"',
-        );
-      }
-
-      return pred;
+      final deficit = kExpectedSequenceLen - landmarks.length;
+      final firstFrame = landmarks.first;
+      sourceFrames = [
+        for (int i = 0; i < deficit; i++) firstFrame,
+        ...landmarks,
+      ];
     }
+
+    final List<Float32List> sequence135 = [];
+    for (final frame in sourceFrames) {
+      sequence135.add(BisindoPreprocessor.processRaw543Frame(frame));
+    }
+
+    return predict(sequence135);
   }
 
-  /// Self-test helper for unit tests without camera hardware.
+  /// Self-test helper generating a synthetic 48-frame sequence for diagnostic validation.
   Future<BisindoPrediction> runSelfTest() async {
     final syntheticSeq = BisindoPreprocessor.generateSyntheticSequence(
-      frames: 30,
+      frames: kExpectedSequenceLen,
     );
     return await predictFromLandmarks(syntheticSeq);
   }
@@ -253,7 +317,12 @@ class BisindoInferenceService implements BisindoPredictor {
   }
 
   Future<void> dispose() async {
-    await alphabetService.dispose();
-    await wordService.dispose();
+    try {
+      _interpreter?.close();
+    } catch (e) {
+      debugPrint('[BISINDO] Error closing interpreter: $e');
+    }
+    _interpreter = null;
+    _isInitialized = false;
   }
 }

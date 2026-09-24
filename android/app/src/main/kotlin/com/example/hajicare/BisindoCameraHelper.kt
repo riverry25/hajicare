@@ -40,7 +40,7 @@ class BisindoCameraHelper(
 ) {
     companion object {
         private const val TAG = "BISINDO_CAMERA"
-        private const val MIN_FRAME_INTERVAL_MS = 50L // Cap at ~20 FPS to prevent channel saturation
+        private const val MIN_FRAME_INTERVAL_MS = 66L // Target ~15 FPS matching model training sequence
         private const val MAX_PENDING_FRAMES = 12
     }
 
@@ -112,6 +112,9 @@ class BisindoCameraHelper(
                 .setBaseOptions(handBaseOptions)
                 .setRunningMode(RunningMode.LIVE_STREAM)
                 .setNumHands(2)
+                .setMinHandDetectionConfidence(0.50f)
+                .setMinHandPresenceConfidence(0.50f)
+                .setMinTrackingConfidence(0.50f)
                 .setResultListener { result: HandLandmarkerResult, _: MPImage ->
                     onHandResult(result)
                 }
@@ -248,21 +251,13 @@ class BisindoCameraHelper(
                 handList.add(listOf(lm.x().toDouble(), lm.y().toDouble(), lm.z().toDouble()))
             }
 
-            val rawLabel = if (i < handednesses.size && handednesses[i].isNotEmpty()) {
+            val label = if (i < handednesses.size && handednesses[i].isNotEmpty()) {
                 handednesses[i][0].categoryName()
             } else {
                 if (i == 0) "Left" else "Right"
             }
 
-            // CameraX ImageAnalysis is not mirrored. MediaPipe handedness is
-            // defined for mirrored selfie input, so swap its label while
-            // preserving the original coordinates expected by the encoder.
-            val label = if (rawLabel.equals("Left", ignoreCase = true)) {
-                "Right"
-            } else {
-                "Left"
-            }
-
+            // SWAP_HANDEDNESS = false: Left hand enters Left slot, Right hand enters Right slot directly
             if (label.equals("Left", ignoreCase = true)) {
                 leftHand = handList
             } else {

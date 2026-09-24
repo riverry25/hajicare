@@ -8,6 +8,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../data/hajj_dua_repository.dart';
 import '../../models/hajj_dua.dart';
 import '../../models/hajj_dua_category.dart';
+import '../../services/hajj_dua_service.dart';
 import '../hajj_dua_typography.dart';
 import '../widgets/dua_card.dart';
 import '../widgets/dua_category_card.dart';
@@ -25,6 +26,13 @@ class HajjDuaScreen extends StatefulWidget {
 class _HajjDuaScreenState extends State<HajjDuaScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
+  late final HajjDuaService _service;
+
+  @override
+  void initState() {
+    super.initState();
+    _service = HajjDuaService.instance;
+  }
 
   @override
   void dispose() {
@@ -41,13 +49,21 @@ class _HajjDuaScreenState extends State<HajjDuaScreen> {
     _updateQuery('');
   }
 
-  void _openCategory(HajjDuaCategory category) {
+  void _openCategory(HajjDuaCategory category, {String? initiallyExpandedDuaId}) {
     Get.to(
       () => HajjDuaCategoryScreen(
         category: category,
         repository: widget.repository,
+        initiallyExpandedDuaId: initiallyExpandedDuaId,
       ),
     );
+  }
+
+  void _openDuaDirectly(HajjDua dua) {
+    final category = widget.repository.categoryFor(dua.stage);
+    if (category != null) {
+      _openCategory(category, initiallyExpandedDuaId: dua.id);
+    }
   }
 
   @override
@@ -82,6 +98,13 @@ class _HajjDuaScreenState extends State<HajjDuaScreen> {
             color: AppColors.textHeadingColor(context),
           ),
         ),
+        actions: [
+          IconButton(
+            onPressed: _service.cycleTextScale,
+            icon: const Icon(Icons.format_size_rounded),
+            tooltip: 'Ukuran Teks',
+          ),
+        ],
       ),
       body: SafeArea(
         top: false,
@@ -109,7 +132,7 @@ class _HajjDuaScreenState extends State<HajjDuaScreen> {
                     color: AppColors.textHeadingColor(context),
                   ),
                   decoration: InputDecoration(
-                    hintText: context.tr('hajjDuaSearchHint'),
+                    hintText: 'Cari doa, tahap, arti, atau transliterasi...',
                     hintStyle: HajjDuaTypography.body.copyWith(
                       color: AppColors.textSecondaryColor(context),
                     ),
@@ -125,13 +148,25 @@ class _HajjDuaScreenState extends State<HajjDuaScreen> {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xl),
-                if (_query.isEmpty)
+                if (_query.isEmpty) ...[
+                  // Recently Viewed Section
+                  _RecentlyOpenedSection(
+                    service: _service,
+                    repository: widget.repository,
+                    onDuaTap: _openDuaDirectly,
+                  ),
+                  // Bookmarked Duas Section
+                  _SavedDuasSection(
+                    service: _service,
+                    repository: widget.repository,
+                    onDuaTap: _openDuaDirectly,
+                  ),
                   _CategorySection(
                     categories: categories,
                     repository: widget.repository,
                     onCategoryTap: _openCategory,
-                  )
-                else
+                  ),
+                ] else
                   _SearchResults(
                     query: _query,
                     categories: categories,
@@ -173,34 +208,176 @@ class _GuideHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.goldPrimary.withValues(alpha: 0.18),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.menu_book_rounded,
-              color: AppColors.goldLight,
-              size: 27,
-            ),
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.goldPrimary.withValues(alpha: 0.22),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.menu_book_rounded,
+                  color: AppColors.goldLight,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      context.tr('hajjDuaGuideTitle'),
+                      style: HajjDuaTypography.screenTitle.copyWith(
+                        color: Colors.white,
+                        fontSize: 20,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      context.tr('hajjDuaSubtitle'),
+                      style: HajjDuaTypography.caption.copyWith(
+                        color: Colors.white.withValues(alpha: 0.85),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            context.tr('hajjDuaGuideTitle'),
-            style: HajjDuaTypography.screenTitle.copyWith(color: Colors.white),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
             context.tr('hajjDuaGuideDescription'),
             style: HajjDuaTypography.body.copyWith(
-              color: Colors.white.withValues(alpha: 0.86),
+              color: Colors.white.withValues(alpha: 0.88),
+              fontSize: 13,
             ),
           ),
         ],
       ),
     );
+  }
+}
+
+class _RecentlyOpenedSection extends StatelessWidget {
+  final HajjDuaService service;
+  final HajjDuaRepository repository;
+  final ValueChanged<HajjDua> onDuaTap;
+
+  const _RecentlyOpenedSection({
+    required this.service,
+    required this.repository,
+    required this.onDuaTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final recentIds = service.recentDuaIds;
+      if (recentIds.isEmpty) return const SizedBox.shrink();
+
+      final recentDuas = repository.getDuasByIds(recentIds);
+      if (recentDuas.isEmpty) return const SizedBox.shrink();
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.history_rounded, size: 18, color: AppColors.goldPrimary),
+              const SizedBox(width: 6),
+              Text(
+                context.tr('hajjDuaRecentTitle'),
+                style: HajjDuaTypography.sectionTitle.copyWith(
+                  color: AppColors.textHeadingColor(context),
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: recentDuas.map((dua) {
+                final title = dua.title ?? context.tr(dua.titleKey);
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ActionChip(
+                    avatar: const Icon(Icons.menu_book_outlined, size: 16),
+                    label: Text(title),
+                    onPressed: () => onDuaTap(dua),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+        ],
+      );
+    });
+  }
+}
+
+class _SavedDuasSection extends StatelessWidget {
+  final HajjDuaService service;
+  final HajjDuaRepository repository;
+  final ValueChanged<HajjDua> onDuaTap;
+
+  const _SavedDuasSection({
+    required this.service,
+    required this.repository,
+    required this.onDuaTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final savedIds = service.bookmarkedIds;
+      if (savedIds.isEmpty) return const SizedBox.shrink();
+
+      final savedDuas = repository.getDuasByIds(savedIds);
+      if (savedDuas.isEmpty) return const SizedBox.shrink();
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.star_rounded, size: 18, color: AppColors.goldPrimary),
+              const SizedBox(width: 6),
+              Text(
+                context.tr('hajjDuaSavedTitle'),
+                style: HajjDuaTypography.sectionTitle.copyWith(
+                  color: AppColors.textHeadingColor(context),
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: savedDuas.map((dua) {
+                final title = dua.title ?? context.tr(dua.titleKey);
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ActionChip(
+                    avatar: const Icon(Icons.star_rounded, size: 16, color: AppColors.goldPrimary),
+                    label: Text(title),
+                    onPressed: () => onDuaTap(dua),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+        ],
+      );
+    });
   }
 }
 
@@ -398,7 +575,7 @@ class _EmptySearchState extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            context.tr('hajjDuaNoSearchResult', {'query': query}),
+            'Belum menemukan bacaan',
             textAlign: TextAlign.center,
             style: HajjDuaTypography.cardTitle.copyWith(
               color: AppColors.textHeadingColor(context),
@@ -406,7 +583,7 @@ class _EmptySearchState extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            context.tr('hajjDuaNoSearchHelp'),
+            'Coba gunakan kata kunci lain seperti: thawaf, sa\'i, wukuf, zamzam, atau talbiyah.',
             textAlign: TextAlign.center,
             style: HajjDuaTypography.body.copyWith(
               color: AppColors.textBodyColor(context),

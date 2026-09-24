@@ -1,69 +1,34 @@
 import 'dart:async';
-import 'dart:math' as math;
-
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
-import '../models/bisindo_mode.dart';
 import '../models/bisindo_prediction.dart';
 import '../models/sign_token.dart';
 import '../services/bisindo_tts_service.dart';
 
-enum SignRecognitionState {
-  idle,
-  candidate,
-  holding,
-  confirmed,
-  waitingForRelease,
-}
+enum SignRecognitionState { idle, reading, analyzing, recognized }
 
 class BisindoRecognitionConfig {
-  final double minimumConfidenceWord;
-  final double minimumConfidenceAlphabet;
-  final Duration confirmationDuration;
-  final Duration predictionInterval;
-  final int predictionWindowSize;
-  final double minimumStableRatio;
-  final double releaseConfidence;
-  final Duration releaseDuration;
+  final double confidenceThreshold;
+  final int stablePredictionsRequired;
   final Duration duplicateCooldown;
   final Duration handPresenceTimeout;
-  final Duration predictionFreshness;
-  final Duration confirmedDisplayDuration;
 
   const BisindoRecognitionConfig({
-    double? minimumConfidence,
-    double? minimumConfidenceWord,
-    double? minimumConfidenceAlphabet,
-    this.confirmationDuration = const Duration(milliseconds: 950),
-    this.predictionInterval = const Duration(milliseconds: 100),
-    this.predictionWindowSize = 5,
-    this.minimumStableRatio = 0.75,
-    this.releaseConfidence = 0.45,
-    this.releaseDuration = const Duration(milliseconds: 300),
-    this.duplicateCooldown = const Duration(milliseconds: 900),
-    this.handPresenceTimeout = const Duration(milliseconds: 450),
-    this.predictionFreshness = const Duration(milliseconds: 350),
-    this.confirmedDisplayDuration = const Duration(milliseconds: 300),
-  }) : minimumConfidenceWord =
-           minimumConfidenceWord ?? minimumConfidence ?? 0.70,
-       minimumConfidenceAlphabet =
-           minimumConfidenceAlphabet ?? minimumConfidence ?? 0.65,
-       assert(predictionWindowSize > 0),
-       assert(minimumStableRatio > 0 && minimumStableRatio <= 1);
-
-  double get minimumConfidence => minimumConfidenceWord;
+    this.confidenceThreshold = 0.58,
+    this.stablePredictionsRequired = 3,
+    this.duplicateCooldown = const Duration(milliseconds: 1200),
+    this.handPresenceTimeout = const Duration(milliseconds: 1000),
+  }) : assert(stablePredictionsRequired > 0),
+       assert(confidenceThreshold >= 0.0 && confidenceThreshold <= 1.0);
 }
 
-typedef BisindoAiProcessor = Future<String> Function(String rawTranscript);
-
-/// Manages reactive state, mode switching (Word vs. Alphabet), gesture hold
-/// stabilization, duplicate prevention, and Indonesian Text-to-Speech.
+/// Manages reactive state, hold-to-confirm stability gate, anti-duplicate cooldown,
+/// token composition, and Indonesian Text-to-Speech.
 class BisindoRecognitionController extends GetxController {
   final BisindoRecognitionConfig config;
   final SignLabelParser labelParser;
   final SignTokenComposer tokenComposer;
-  final BisindoAiProcessor? aiProcessor;
   final BisindoTtsService ttsService;
   final bool autoTick;
 
@@ -71,19 +36,16 @@ class BisindoRecognitionController extends GetxController {
     this.config = const BisindoRecognitionConfig(),
     this.labelParser = const SignLabelParser(),
     this.tokenComposer = const SignTokenComposer(),
-    this.aiProcessor,
     BisindoTtsService? ttsService,
     this.autoTick = true,
   }) : ttsService = ttsService ?? BisindoTtsService();
-
-  // Mode Selection: UNIFIED (gabungan huruf & kata), HURUF, atau KATA
-  final selectedMode = BisindoMode.unified.obs;
 
   // Camera & Detection States
   final isCameraActive = false.obs;
   final isCameraReady = false.obs;
   final isDetecting = false.obs;
   final isHandDetected = false.obs;
+  final bufferCount = 0.obs;
 
   // Recognition States
   final recognitionState = SignRecognitionState.idle.obs;
@@ -91,49 +53,43 @@ class BisindoRecognitionController extends GetxController {
   final detectedLabel = ''.obs;
   final candidateConfidence = 0.0.obs;
   final confidence = 0.0.obs;
-  final confirmationProgress = 0.0.obs;
+  final stabilityStreak = 0.obs;
   final holdProgress = 0.0.obs;
 
-  // Tokens & Output Text
+  // Output Sentence Tokens & Transcript
   final tokens = <SignToken>[].obs;
   final rawTranscript = ''.obs;
-  final aiTranscript = ''.obs;
-  final isSendingToAi = false.obs;
   final isSpeaking = false.obs;
 
-  final List<String?> _predictionWindow = <String?>[];
+  final List<String> _consecutivePredictions = [];
   Timer? _ticker;
   DateTime? _lastHandSeenAt;
-  DateTime? _lastStrongPredictionAt;
-  DateTime? _holdStartedAt;
-  DateTime? _releaseStartedAt;
-  DateTime? _confirmedAt;
   DateTime? _lastCommittedAt;
-  String? _holdingLabel;
-  String? _lockedLabel;
+  String? _lastCommittedLabel;
   bool _isClosed = false;
-
-  int get _requiredStableSamples => math.max(
-    1,
-    (config.predictionWindowSize * config.minimumStableRatio).ceil(),
-  );
 
   String get statusText {
     if (!isCameraActive.value) return 'Mulai kamera untuk mendeteksi isyarat';
-    if (!isHandDetected.value) {
-      return 'Arahkan tangan ke kamera untuk mendeteksi';
+    if (!isHandDetected.value) return 'Posisikan tangan ke kamera';
+    if (bufferCount.value < 20) {
+      return 'Menyiapkan deteksi... (${bufferCount.value}/48)';
     }
     switch (recognitionState.value) {
       case SignRecognitionState.idle:
-        return 'Lakukan isyarat kata atau bentuk huruf';
-      case SignRecognitionState.candidate:
-        return 'Mendeteksi isyarat...';
-      case SignRecognitionState.holding:
-        return 'Tahan sebentar: ${currentCandidate.value?.toUpperCase() ?? ''}';
-      case SignRecognitionState.confirmed:
-        return '✓ ${currentCandidate.value?.toUpperCase() ?? ''} terkonfirmasi';
-      case SignRecognitionState.waitingForRelease:
-        return 'Lepaskan tangan atau ubah isyarat';
+        return 'Posisikan tangan ke kamera';
+      case SignRecognitionState.reading:
+        return 'Membaca gerakan...';
+      case SignRecognitionState.analyzing:
+        final candidate = currentCandidate.value;
+        if (candidate != null &&
+            candidate.isNotEmpty &&
+            stabilityStreak.value > 0) {
+          final pct = (holdProgress.value * 100).round();
+          return 'Tahan gerakan: ${candidate.toUpperCase()} ($pct%)';
+        }
+        return 'Menganalisis gerakan...';
+      case SignRecognitionState.recognized:
+        return '✓ ${detectedLabel.value.toUpperCase()} terkonfirmasi!';
     }
   }
 
@@ -142,15 +98,11 @@ class BisindoRecognitionController extends GetxController {
     super.onInit();
     ttsService.initialize();
     if (autoTick) {
-      _ticker = Timer.periodic(const Duration(milliseconds: 50), (_) => tick());
+      _ticker = Timer.periodic(
+        const Duration(milliseconds: 100),
+        (_) => tick(),
+      );
     }
-  }
-
-  void setMode(BisindoMode newMode) {
-    if (_isClosed || selectedMode.value == newMode) return;
-    selectedMode.value = newMode;
-    _resetRecognition(clearLock: true);
-    debugPrint('[BISINDO] Mode changed to: ${newMode.label}');
   }
 
   void setCameraActive(bool active, {DateTime? now}) {
@@ -159,13 +111,20 @@ class BisindoRecognitionController extends GetxController {
     isCameraReady.value = active;
     if (!active) {
       isDetecting.value = false;
-      _resetRecognition(clearLock: true);
+      _resetRecognition(clearAll: true);
       isHandDetected.value = false;
       _lastHandSeenAt = null;
-      _lastStrongPredictionAt = null;
     } else {
       isDetecting.value = true;
       _lastHandSeenAt = now ?? DateTime.now();
+    }
+  }
+
+  void updateBufferCount(int count) {
+    if (_isClosed) return;
+    bufferCount.value = count;
+    if (count < 48 && isHandDetected.value) {
+      recognitionState.value = SignRecognitionState.reading;
     }
   }
 
@@ -175,6 +134,7 @@ class BisindoRecognitionController extends GetxController {
     _lastHandSeenAt = now ?? DateTime.now();
   }
 
+  /// Processes inference result through confidence check and stability gate.
   void handlePrediction(BisindoPrediction prediction, {DateTime? now}) {
     if (_isClosed || !isCameraActive.value) return;
     final timestamp = now ?? DateTime.now();
@@ -184,81 +144,90 @@ class BisindoRecognitionController extends GetxController {
     candidateConfidence.value = conf;
     confidence.value = conf;
 
-    final double minConf = selectedMode.value.isWord
-        ? config.minimumConfidenceWord
-        : config.minimumConfidenceAlphabet;
+    final double threshold = config.confidenceThreshold;
 
-    final passesFilter =
-        prediction.isRecognized &&
-        prediction.label.isNotEmpty &&
-        prediction.confidence >= minConf;
-
-    if (!passesFilter) {
-      _addWindowSample(null);
-      if (_lockedLabel != null &&
-          (!prediction.isRecognized ||
-              prediction.confidence < config.releaseConfidence)) {
-        _advanceRelease(timestamp);
-      } else if (_lockedLabel == null) {
-        _predictionWindow.clear();
-        _cancelHold(keepCandidate: false);
-      }
+    // Check confidence threshold
+    if (!prediction.isRecognized ||
+        prediction.label.isEmpty ||
+        prediction.confidence < threshold) {
+      // Confidence rejected
+      _consecutivePredictions.clear();
+      stabilityStreak.value = 0;
+      holdProgress.value = 0.0;
+      recognitionState.value = SignRecognitionState.analyzing;
+      currentCandidate.value = null;
       return;
     }
 
     currentCandidate.value = prediction.label;
-    detectedLabel.value = prediction.label;
-    _lastStrongPredictionAt = timestamp;
-    _addWindowSample(prediction.label);
-    final stableLabel = _stableLabel();
+    recognitionState.value = SignRecognitionState.analyzing;
+
+    // Stability Filter: requires stablePredictionsRequired consecutive identical labels
+    if (_consecutivePredictions.isNotEmpty &&
+        _consecutivePredictions.last != prediction.label) {
+      _consecutivePredictions.clear();
+    }
+
+    _consecutivePredictions.add(prediction.label);
+    final streak = _consecutivePredictions.length;
+    stabilityStreak.value = streak;
+    holdProgress.value = (streak / config.stablePredictionsRequired).clamp(
+      0.0,
+      1.0,
+    );
 
     if (kDebugMode) {
       debugPrint(
-        '[BISINDO] candidate=${prediction.label} '
-        'conf=${(prediction.confidence * 100).toStringAsFixed(1)}% '
-        'stable=${stableLabel ?? '-'}',
+        '[BISINDO] candidate=${prediction.label} conf=${(conf * 100).toStringAsFixed(1)}% streak=$streak/${config.stablePredictionsRequired} hold=${(holdProgress.value * 100).round()}%',
       );
     }
 
-    // Handle locked label (duplicate prevention)
-    if (_lockedLabel != null) {
-      if (stableLabel != null && stableLabel != _lockedLabel) {
-        if (_advanceRelease(timestamp, clearPredictionWindow: false)) {
-          _startHolding(stableLabel, timestamp);
-        }
-      } else {
-        _releaseStartedAt = null;
-        if (recognitionState.value != SignRecognitionState.confirmed) {
-          recognitionState.value = SignRecognitionState.waitingForRelease;
-        }
-      }
-      return;
-    }
-
-    if (stableLabel == null) {
-      _cancelHold(keepCandidate: true);
-      recognitionState.value = SignRecognitionState.candidate;
-      return;
-    }
-
-    if (_holdingLabel != stableLabel || _holdStartedAt == null) {
-      _startHolding(stableLabel, timestamp);
-    } else {
-      _updateHold(timestamp);
+    if (streak >= config.stablePredictionsRequired) {
+      _commitLabel(prediction.label, timestamp);
     }
   }
 
+  void _commitLabel(String label, DateTime now) {
+    // Anti Duplicate Cooldown Check
+    if (_lastCommittedLabel == label && _lastCommittedAt != null) {
+      final elapsed = now.difference(_lastCommittedAt!);
+      if (elapsed < config.duplicateCooldown) {
+        return; // Suppress duplicate commit within cooldown
+      }
+    }
+
+    try {
+      tokens.add(labelParser.parse(label).toToken());
+    } on FormatException catch (e) {
+      debugPrint('[BISINDO] FormatException parsing label $label: $e');
+      return;
+    }
+
+    _refreshTranscript();
+    _lastCommittedLabel = label;
+    _lastCommittedAt = now;
+    detectedLabel.value = label;
+    recognitionState.value = SignRecognitionState.recognized;
+    _consecutivePredictions.clear();
+    stabilityStreak.value = 0;
+    holdProgress.value = 1.0;
+
+    if (kDebugMode) {
+      debugPrint(
+        '[BISINDO] Committed label: "$label" -> Transcript: "${rawTranscript.value}"',
+      );
+    }
+  }
+
+  /// Handles absence of hands.
   void handleNoHand({DateTime? now}) {
     if (_isClosed) return;
-    final timestamp = now ?? DateTime.now();
     isHandDetected.value = false;
-    _addWindowSample(null);
-    _cancelHold(keepCandidate: false);
-    if (_lockedLabel != null) {
-      _advanceRelease(timestamp);
-    } else {
-      recognitionState.value = SignRecognitionState.idle;
-    }
+    _consecutivePredictions.clear();
+    stabilityStreak.value = 0;
+    holdProgress.value = 0.0;
+    currentCandidate.value = null;
+    recognitionState.value = SignRecognitionState.idle;
   }
 
   void tick({DateTime? now}) {
@@ -269,28 +238,6 @@ class BisindoRecognitionController extends GetxController {
         timestamp.difference(lastHand) >= config.handPresenceTimeout) {
       handleNoHand(now: timestamp);
     }
-
-    if (_lockedLabel != null) {
-      final confirmedAt = _confirmedAt;
-      if (recognitionState.value == SignRecognitionState.confirmed &&
-          confirmedAt != null &&
-          timestamp.difference(confirmedAt) >=
-              config.confirmedDisplayDuration) {
-        recognitionState.value = SignRecognitionState.waitingForRelease;
-      }
-      if (!isHandDetected.value) _advanceRelease(timestamp);
-      return;
-    }
-
-    final lastPrediction = _lastStrongPredictionAt;
-    if (_holdStartedAt != null &&
-        (lastPrediction == null ||
-            timestamp.difference(lastPrediction) >
-                config.predictionFreshness)) {
-      _cancelHold(keepCandidate: false);
-      return;
-    }
-    _updateHold(timestamp);
   }
 
   void insertSpace() {
@@ -308,12 +255,9 @@ class BisindoRecognitionController extends GetxController {
   void resetTranscript() {
     tokens.clear();
     rawTranscript.value = '';
-    aiTranscript.value = '';
     _lastCommittedAt = null;
-    _resetRecognition(clearLock: true);
-    isHandDetected.value = false;
-    _lastHandSeenAt = null;
-    _lastStrongPredictionAt = null;
+    _lastCommittedLabel = null;
+    _resetRecognition(clearAll: true);
   }
 
   Future<void> speakTranscript() async {
@@ -327,131 +271,22 @@ class BisindoRecognitionController extends GetxController {
     }
   }
 
-  Future<bool> sendToAi() async {
-    final input = rawTranscript.value.trim();
-    if (input.isEmpty || aiProcessor == null || isSendingToAi.value) {
-      return false;
-    }
-    isSendingToAi.value = true;
-    try {
-      final result = (await aiProcessor!(input)).trim();
-      if (!_isClosed) aiTranscript.value = result;
-      return result.isNotEmpty;
-    } finally {
-      if (!_isClosed) isSendingToAi.value = false;
-    }
-  }
-
-  void _addWindowSample(String? label) {
-    _predictionWindow.add(label);
-    if (_predictionWindow.length > config.predictionWindowSize) {
-      _predictionWindow.removeAt(0);
-    }
-  }
-
-  String? _stableLabel() {
-    if (_predictionWindow.length < _requiredStableSamples) return null;
-    final counts = <String, int>{};
-    for (final label in _predictionWindow) {
-      if (label != null) counts[label] = (counts[label] ?? 0) + 1;
-    }
-    if (counts.isEmpty) return null;
-    final best = counts.entries.reduce((a, b) => a.value >= b.value ? a : b);
-    return best.value >= _requiredStableSamples ? best.key : null;
-  }
-
-  void _startHolding(String label, DateTime now) {
-    _holdingLabel = label;
-    _holdStartedAt = now;
-    currentCandidate.value = label;
-    detectedLabel.value = label;
-    confirmationProgress.value = 0;
-    holdProgress.value = 0;
-    recognitionState.value = SignRecognitionState.holding;
-    if (kDebugMode) debugPrint('[BISINDO] holding=$label progress=0.00');
-  }
-
-  void _updateHold(DateTime now) {
-    final started = _holdStartedAt;
-    final label = _holdingLabel;
-    if (started == null || label == null || _lockedLabel != null) return;
-    final durationMs = math.max(1, config.confirmationDuration.inMilliseconds);
-    final progress = now.difference(started).inMilliseconds / durationMs;
-    final clamped = progress.clamp(0.0, 1.0);
-    confirmationProgress.value = clamped;
-    holdProgress.value = clamped;
-    if (progress >= 1) _commit(label, now);
-  }
-
-  void _commit(String label, DateTime now) {
-    final lastCommit = _lastCommittedAt;
-    if (lastCommit != null &&
-        now.difference(lastCommit) < config.duplicateCooldown) {
-      return;
-    }
-    try {
-      tokens.add(labelParser.parse(label).toToken());
-    } on FormatException catch (error) {
-      if (kDebugMode) debugPrint('[BISINDO] ignored label: $error');
-      _cancelHold(keepCandidate: false);
-      return;
-    }
-    _refreshTranscript();
-    _lockedLabel = label;
-    _lastCommittedAt = now;
-    _confirmedAt = now;
-    _holdingLabel = null;
-    _holdStartedAt = null;
-    confirmationProgress.value = 1;
-    holdProgress.value = 1;
-    recognitionState.value = SignRecognitionState.confirmed;
-    if (kDebugMode) debugPrint('[BISINDO] confirmed=$label -> committed');
-  }
-
-  bool _advanceRelease(DateTime now, {bool clearPredictionWindow = true}) {
-    _releaseStartedAt ??= now;
-    if (now.difference(_releaseStartedAt!) < config.releaseDuration) {
-      return false;
-    }
-    if (kDebugMode) debugPrint('[BISINDO] released=$_lockedLabel');
-    _lockedLabel = null;
-    _releaseStartedAt = null;
-    _confirmedAt = null;
-    if (clearPredictionWindow) _predictionWindow.clear();
-    confirmationProgress.value = 0;
-    holdProgress.value = 0;
-    recognitionState.value = SignRecognitionState.idle;
-    return true;
-  }
-
-  void _cancelHold({required bool keepCandidate}) {
-    _holdingLabel = null;
-    _holdStartedAt = null;
-    confirmationProgress.value = 0;
-    holdProgress.value = 0;
-    if (!keepCandidate) {
-      currentCandidate.value = null;
-      detectedLabel.value = '';
-    }
-    if (_lockedLabel == null) {
-      recognitionState.value = SignRecognitionState.idle;
-    }
-  }
-
-  void _resetRecognition({required bool clearLock}) {
-    _predictionWindow.clear();
-    _cancelHold(keepCandidate: false);
+  void _resetRecognition({required bool clearAll}) {
+    _consecutivePredictions.clear();
+    stabilityStreak.value = 0;
+    holdProgress.value = 0.0;
     candidateConfidence.value = 0;
     confidence.value = 0;
-    _releaseStartedAt = null;
-    _confirmedAt = null;
-    if (clearLock) _lockedLabel = null;
+    currentCandidate.value = null;
+    detectedLabel.value = '';
     recognitionState.value = SignRecognitionState.idle;
+    if (clearAll) {
+      bufferCount.value = 0;
+    }
   }
 
   void _refreshTranscript() {
     rawTranscript.value = tokenComposer.compose(tokens);
-    aiTranscript.value = '';
   }
 
   @override

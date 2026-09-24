@@ -50,7 +50,7 @@ void main() {
     expect(find.byKey(const Key('category_ihram')), findsOneWidget);
     expect(find.byKey(const Key('category_masjidAlHaram')), findsOneWidget);
     expect(find.byKey(const Key('category_tawaf')), findsOneWidget);
-    expect(find.byKey(const Key('category_sai')), findsNothing);
+    expect(find.byKey(const Key('category_sai')), findsOneWidget);
     expect(find.byKey(const Key('category_general')), findsNothing);
 
     await tester.tap(find.byKey(const Key('category_ihram')));
@@ -256,4 +256,86 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
   });
+
+  testWidgets('Tawaf screen displays 1-7 circuit switcher and fiqh disclaimer', (
+    tester,
+  ) async {
+    final category = repository.categoryFor(HajjDuaStage.tawaf)!;
+    await tester.pumpWidget(
+      testApp(
+        home: HajjDuaCategoryScreen(category: category, repository: repository),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Panduan Putaran Thawaf (1 - 7)'), findsOneWidget);
+    expect(find.text('Putaran 1'), findsOneWidget);
+    expect(find.text('Putaran 7'), findsOneWidget);
+    expect(
+      find.text(
+        'Pada bagian ini tidak ada doa khusus yang diwajibkan. Jamaah dapat berdoa dan berdzikir sesuai kebutuhan.',
+      ),
+      findsOneWidget,
+    );
+
+    // Switch circuit
+    await tester.tap(find.text('Putaran 4'));
+    await tester.pump();
+    expect(find.text('Ketentuan Doa Putaran ke-4'), findsOneWidget);
+  });
+
+  testWidgets('Sai screen displays 1-7 lap tracker with route descriptions', (
+    tester,
+  ) async {
+    final category = repository.categoryFor(HajjDuaStage.sai)!;
+    await tester.pumpWidget(
+      testApp(
+        home: HajjDuaCategoryScreen(category: category, repository: repository),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Perjalanan Sa\'i (1 - 7)'), findsOneWidget);
+    expect(find.text('Trip 1/7'), findsOneWidget);
+    expect(find.text('Trip 7/7'), findsOneWidget);
+    expect(
+      find.text('Perjalanan 1 dari 7: Bukit Shafa → Bukit Marwah'),
+      findsOneWidget,
+    );
+
+    // Switch lap
+    await tester.tap(find.text('Trip 2/7'));
+    await tester.pump();
+    expect(
+      find.text('Perjalanan 2 dari 7: Bukit Marwah → Bukit Shafa'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Dua card displays "Kapan dibaca?" context and audio unavailable state', (
+    tester,
+  ) async {
+    final category = repository.categoryFor(HajjDuaStage.zamzam)!;
+    await tester.pumpWidget(
+      testApp(
+        home: HajjDuaCategoryScreen(category: category, repository: repository),
+      ),
+    );
+    await tester.pump();
+
+    // Expand the dua card
+    await tester.tap(find.text('Doa Minum Air Zamzam'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Kapan dibaca?'), findsOneWidget);
+    expect(
+      find.text(
+        'Dibaca ketika hendak meminum air Zamzam menghadap kiblat dengan tangan kanan dan membaca bismillah.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Audio belum tersedia'), findsOneWidget);
+    expect(find.text('Kementerian Agama Republik Indonesia'), findsOneWidget);
+  });
 }
+

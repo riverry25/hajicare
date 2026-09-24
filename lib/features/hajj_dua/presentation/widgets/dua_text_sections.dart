@@ -7,8 +7,9 @@ import '../hajj_dua_typography.dart';
 
 class ArabicDuaText extends StatelessWidget {
   final String text;
+  final double scale;
 
-  const ArabicDuaText({super.key, required this.text});
+  const ArabicDuaText({super.key, required this.text, this.scale = 1.0});
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +22,8 @@ class ArabicDuaText extends StatelessWidget {
           textAlign: TextAlign.right,
           style: HajjDuaTypography.arabic.copyWith(
             color: AppColors.textHeadingColor(context),
+            fontSize: (HajjDuaTypography.arabic.fontSize ?? 31) * scale,
+            height: 1.95,
           ),
         ),
       ),
@@ -30,8 +33,9 @@ class ArabicDuaText extends StatelessWidget {
 
 class TransliterationText extends StatelessWidget {
   final String text;
+  final double scale;
 
-  const TransliterationText({super.key, required this.text});
+  const TransliterationText({super.key, required this.text, this.scale = 1.0});
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +45,7 @@ class TransliterationText extends StatelessWidget {
         text,
         style: HajjDuaTypography.transliteration.copyWith(
           color: AppColors.textBodyColor(context),
+          fontSize: (HajjDuaTypography.transliteration.fontSize ?? 15) * scale,
         ),
       ),
     );
@@ -49,8 +54,9 @@ class TransliterationText extends StatelessWidget {
 
 class TranslationText extends StatelessWidget {
   final String text;
+  final double scale;
 
-  const TranslationText({super.key, required this.text});
+  const TranslationText({super.key, required this.text, this.scale = 1.0});
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +66,7 @@ class TranslationText extends StatelessWidget {
         text,
         style: HajjDuaTypography.translation.copyWith(
           color: AppColors.textBodyColor(context),
+          fontSize: (HajjDuaTypography.translation.fontSize ?? 14.5) * scale,
         ),
       ),
     );

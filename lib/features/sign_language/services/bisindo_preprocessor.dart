@@ -27,6 +27,153 @@ class BisindoPreprocessor {
   // Alphabet Model constant
   static const int kAlphabetFeatureDim = 86; // 42 left + 42 right + 2 presence
 
+  // GRU Final Model constants (hajicare_bisindo_gru_float32.tflite)
+  static const int kGruSequenceLen = 48;
+  static const int kGruFeatureDim = 135;
+  static const List<int> kMcpIndices = [5, 9, 13, 17];
+
+  /// Extracts the exact 135-D feature vector according to the training specification:
+  /// - 0..62: Left hand local XYZ (21 landmarks * 3)
+  /// - 63..125: Right hand local XYZ (21 landmarks * 3)
+  /// - 126: Left hand presence (1.0 if detected, else 0.0)
+  /// - 127: Right hand presence (1.0 if detected, else 0.0)
+  /// - 128..129: Left wrist XY (leftRaw[0].x - 0.5, leftRaw[0].y - 0.5)
+  /// - 130..131: Right wrist XY (rightRaw[0].x - 0.5, rightRaw[0].y - 0.5)
+  /// - 132..134: Inter-hand wrist XYZ (rightWrist - leftWrist if both detected, else 0.0)
+  ///
+  /// Hand normalization:
+  /// - wrist = landmark[0]
+  /// - centered[i] = coords[i] - wrist
+  /// - palmScale = mean(euclideanDistance2D(centered[MCP].x, centered[MCP].y)) for MCP in [5, 9, 13, 17]
+  /// - if palmScale < 1e-4, use 1.0
+  /// - normalized = centered / palmScale
+  /// - clamp to [-5.0, 5.0]
+  static Float32List extract135Features({
+    List<List<double>>? leftHand,
+    List<List<double>>? rightHand,
+  }) {
+    final features = Float32List(kGruFeatureDim);
+
+    final bool hasLeft = leftHand != null && leftHand.length >= 21;
+    final bool hasRight = rightHand != null && rightHand.length >= 21;
+
+    // 1. Left Hand local XYZ (0..62)
+    if (hasLeft) {
+      _normalizeHandToSlot(hand: leftHand, features: features, startOffset: 0);
+      features[126] = 1.0;
+      features[128] = (leftHand[0][0] - 0.5).toDouble();
+      features[129] = (leftHand[0][1] - 0.5).toDouble();
+    } else {
+      features[126] = 0.0;
+      features[128] = 0.0;
+      features[129] = 0.0;
+    }
+
+    // 2. Right Hand local XYZ (63..125)
+    if (hasRight) {
+      _normalizeHandToSlot(
+        hand: rightHand,
+        features: features,
+        startOffset: 63,
+      );
+      features[127] = 1.0;
+      features[130] = (rightHand[0][0] - 0.5).toDouble();
+      features[131] = (rightHand[0][1] - 0.5).toDouble();
+    } else {
+      features[127] = 0.0;
+      features[130] = 0.0;
+      features[131] = 0.0;
+    }
+
+    // 3. Inter-hand wrist XYZ (132..134)
+    if (hasLeft && hasRight) {
+      features[132] = (rightHand[0][0] - leftHand[0][0]).toDouble();
+      features[133] = (rightHand[0][1] - leftHand[0][1]).toDouble();
+      features[134] = (rightHand[0][2] - leftHand[0][2]).toDouble();
+    } else {
+      features[132] = 0.0;
+      features[133] = 0.0;
+      features[134] = 0.0;
+    }
+
+    return features;
+  }
+
+  /// Normalizes 21 3D landmarks of a single hand:
+  /// - Centered at wrist (index 0)
+  /// - palmScale = mean(2D distance from wrist of MCP 5, 9, 13, 17)
+  /// - coords / palmScale, clamped to [-5.0, 5.0]
+  static void _normalizeHandToSlot({
+    required List<List<double>> hand,
+    required Float32List features,
+    required int startOffset,
+  }) {
+    final wristX = hand[0][0];
+    final wristY = hand[0][1];
+    final wristZ = hand[0][2];
+
+    // Compute centered 21 landmarks
+    final centered = List<List<double>>.generate(21, (i) {
+      return [hand[i][0] - wristX, hand[i][1] - wristY, hand[i][2] - wristZ];
+    });
+
+    // Compute palmScale = mean 2D distance of MCP indices (5, 9, 13, 17)
+    double mcpDistSum = 0.0;
+    for (final mcp in kMcpIndices) {
+      final dx = centered[mcp][0];
+      final dy = centered[mcp][1];
+      mcpDistSum += math.sqrt(dx * dx + dy * dy);
+    }
+    double palmScale = mcpDistSum / kMcpIndices.length;
+    if (palmScale < 1e-4 || palmScale.isNaN || palmScale.isInfinite) {
+      palmScale = 1.0;
+    }
+
+    // Normalized & clamped to [-5.0, 5.0]
+    int offset = startOffset;
+    for (int i = 0; i < 21; i++) {
+      final nx = (centered[i][0] / palmScale).clamp(-5.0, 5.0);
+      final ny = (centered[i][1] / palmScale).clamp(-5.0, 5.0);
+      final nz = (centered[i][2] / palmScale).clamp(-5.0, 5.0);
+
+      features[offset++] = nx;
+      features[offset++] = ny;
+      features[offset++] = nz;
+    }
+  }
+
+  /// Extracts 135 features directly from a 543-element holistic frame:
+  /// 501..521 = Left Hand
+  /// 522..542 = Right Hand
+  static Float32List processRaw543Frame(List<List<double>> frame) {
+    if (frame.length < 543) {
+      return Float32List(kGruFeatureDim);
+    }
+
+    final bool hasLeft = isHandDetected(
+      frame,
+      kLeftHandStartIdx,
+      kLeftHandEndIdx,
+    );
+    final bool hasRight = isHandDetected(
+      frame,
+      kRightHandStartIdx,
+      kRightHandEndIdx,
+    );
+
+    List<List<double>>? leftHand;
+    if (hasLeft) {
+      leftHand = frame.sublist(kLeftHandStartIdx, kLeftHandEndIdx + 1);
+    }
+
+    List<List<double>>? rightHand;
+    if (hasRight) {
+      rightHand = frame.sublist(kRightHandStartIdx, kRightHandEndIdx + 1);
+    }
+
+    return extract135Features(leftHand: leftHand, rightHand: rightHand);
+  }
+
   // Backwards-compatible constants for synthetic generation & test suite
   static const int kNumHolisticLandmarks = 543;
   static const int kNumSelectedKeypoints = 27;

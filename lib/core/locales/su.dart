@@ -989,6 +989,40 @@ final Map<String, String> suTranslations = {
       'Transliterasi jeung rujukan kedah diverifikasi ku panalungtik agama.',
   'hajjDuaReferenceMissingNote':
       'Rujukan can kacatet dina implementasi saméméhna.',
+  'hajjDuaSubtitle': 'Panggihan bacaan dumasar kana tahapan ibadah anjeun.',
+  'hajjDuaRecentTitle': 'Tembé Dibuka',
+  'hajjDuaSavedTitle': 'Bacaan Disimpen',
+  'hajjDuaSaveAction': 'Simpen',
+  'hajjDuaSavedAction': 'Disimpen',
+  'hajjDuaAudioPlay': 'Regepkeun',
+  'hajjDuaAudioPause': 'Reureuh',
+  'hajjDuaAudioReplay': 'Balikan',
+  'hajjDuaAudioUnavailable': 'Audio teu acan sayogi',
+  'hajjDuaTextScaleNormal': 'Téks Biasa',
+  'hajjDuaTextScaleLarge': 'Téks Gede',
+  'hajjDuaTextScaleXLarge': 'Téks Gede Pisan',
+  'hajjDuaWhenToRead': 'Iraha dibacana?',
+  'hajjDuaNoRoundDuaNote':
+      'Dina bagian ieu teu aya doa khusus anu diwajibkeun. Jamaah tiasa ngadoa sareng dzikir saluyu kabutuhan.',
+  'hajjDuaArafahGuidanceNote':
+      'Nalika wukuf, jamaah dianjurkeun ngalobaan doa, dzikir, istighfar, sareng muntang ka Allah. Henteu kawates dina hiji bacaan wungkul.',
+  'hajjDuaRoundTitle': 'Puteran {number}',
+  'hajjDuaTripTitle': 'Perjalanan {number} ti 7',
+  'hajjDuaOfficialKemenagSource': 'Kamenterian Agama Republik Indonesia',
+  'hajjDuaActivityAll': 'Sadaya Kagiatan',
+  'hajjDuaContextualType': 'Jinis Thawaf: {type}',
+  'hajjDuaCategoryZamzamTitle': 'Ngaleueut Cai Zamzam',
+  'hajjDuaCategoryZamzamDescription':
+      'Bacaan jeung tata krama nalika ngaleueut cai Zamzam.',
+  'hajjDuaCategoryTawafIfadahTitle': 'Thawaf Ifadah',
+  'hajjDuaCategoryTawafIfadahDescription':
+      'Pituduh palaksanaan jeung bacaan anu luyu pikeun Thawaf Ifadah.',
+  'hajjDuaCategoryTawafWadaTitle': 'Tawaf Wada\'',
+  'hajjDuaCategoryTawafWadaDescription':
+      'Pituduh bacaan jeung dzikir pikeun tawaf pamitan.',
+  'hajjDuaCategoryMadinahTitle': 'Madinah & Masjid Nabawi',
+  'hajjDuaCategoryMadinahDescription':
+      'Pituduh doa jeung tata krama nalika di Madinah jeung Masjid Nabawi.',
   'servicePrayerTitle': 'Doa & Manasik',
   'serviceScheduleAgenda': 'Jadwal & Agenda',
   'serviceScheduleAgendaSub': 'Waktos Jamarat & tempat kumpul',

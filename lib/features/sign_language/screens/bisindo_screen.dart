@@ -1,18 +1,21 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:ultralytics_yolo/ultralytics_yolo.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_typography.dart';
 import '../controllers/bisindo_recognition_controller.dart';
 import '../models/sign_token.dart';
-import '../services/bisindo_yolo_service.dart';
+import '../services/bisindo_camera_landmark_service.dart';
+import '../services/bisindo_inference_service.dart';
+import '../services/landmark_stream_buffer.dart';
 
 /// Realtime BISINDO Sign Language to Text and Speech screen.
-/// Uses YOLOv8 (best.tflite) for alphabet recognition via the front camera.
+/// Uses MediaPipe Hand Landmarker + Tiny GRU TFLite (hajicare_bisindo_gru_float32.tflite)
+/// for 23-class BISINDO word & gesture recognition via the front camera.
 class BisindoScreen extends StatefulWidget {
   const BisindoScreen({super.key});
 
@@ -21,6 +24,8 @@ class BisindoScreen extends StatefulWidget {
 }
 
 class _BisindoScreenState extends State<BisindoScreen> {
+  static const String _kPreviewViewType = 'com.hajicare.bisindo/camera_preview';
+
   static Color _accent(BuildContext context) => AppColors.isDark(context)
       ? AppColors.darkPrimary
       : AppColors.espressoDark;
@@ -29,8 +34,9 @@ class _BisindoScreenState extends State<BisindoScreen> {
       : AppColors.goldPrimary;
 
   late final BisindoRecognitionController _recognition;
-  late final BisindoYoloService _yoloService;
-  late final YOLOViewController _yoloController;
+  late final BisindoInferenceService _inferenceService;
+  late final LandmarkStreamBuffer _streamBuffer;
+  late final BisindoCameraLandmarkService _cameraService;
 
   bool _isCameraActive = false;
   bool _isLoading = false;
@@ -40,87 +46,111 @@ class _BisindoScreenState extends State<BisindoScreen> {
   void initState() {
     super.initState();
     _recognition = Get.find<BisindoRecognitionController>();
-    _yoloService = BisindoYoloService();
-    _yoloController = YOLOViewController();
-    unawaited(_initLabels());
-  }
 
-  Future<void> _initLabels() async {
-    try {
-      await _yoloService.loadLabels();
-    } catch (e) {
-      debugPrint('[BISINDO_YOLO] Label load error: $e');
-      // fallback A-Z labels are used automatically
-    }
-  }
-
-  void _onYoloResult(List<YOLOResult> results) {
-    if (!_isCameraActive) return;
-
-    if (results.isEmpty) {
-      _recognition.handleNoHand();
-      return;
-    }
-
-    final confident = results
-        .where(
-          (r) => r.confidence >= BisindoYoloService.kDefaultConfidenceThreshold,
-        )
-        .toList();
-
-    if (confident.isEmpty) {
-      _recognition.handleNoHand();
-      return;
-    }
-
-    final prediction = _yoloService.processDetections(confident);
-    if (prediction.isRecognized) {
-      _recognition.handlePrediction(prediction);
+    if (Get.isRegistered<BisindoInferenceService>()) {
+      _inferenceService = Get.find<BisindoInferenceService>();
     } else {
-      _recognition.handleNoHand();
+      _inferenceService = BisindoInferenceService();
+      Get.put(_inferenceService);
     }
+
+    _streamBuffer = LandmarkStreamBuffer(
+      inferenceService: _inferenceService,
+      windowSize: 48,
+      minimumFrames: 24,
+      inferenceStride: 2,
+      throttleDuration: const Duration(milliseconds: 70),
+      onPrediction: (prediction) {
+        _recognition.handlePrediction(prediction);
+      },
+      onBufferLengthChanged: (len) {
+        _recognition.updateBufferCount(len);
+      },
+      onError: (err) {
+        debugPrint('[BISINDO_SCREEN] Stream buffer error: $err');
+      },
+    );
+
+    _cameraService = BisindoCameraLandmarkService(streamBuffer: _streamBuffer);
+
+    unawaited(_initPipeline());
   }
 
-  void _onModelLoaded(String modelPath, YOLOTask? task) {
-    debugPrint('[BISINDO_YOLO] Model loaded: $modelPath task=$task');
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-      unawaited(_yoloController.setShowOverlays(false));
-    }
-  }
-
-  void _onModelError(Object error, String modelPath, YOLOTask? task) {
-    debugPrint('[BISINDO_YOLO] Model error: $error');
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'Gagal memuat model: $error';
-      });
+  Future<void> _initPipeline() async {
+    setState(() => _isLoading = true);
+    try {
+      await _inferenceService.initialize();
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = null;
+        });
+      }
+    } catch (e) {
+      debugPrint('[BISINDO_SCREEN] Model initialization failed: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Gagal memuat model BISINDO: $e';
+        });
+      }
     }
   }
 
   Future<void> _toggleCamera() async {
     if (_isLoading) return;
+
     if (_isCameraActive) {
-      await _yoloController.stop();
+      await _cameraService.stopCamera();
+      _streamBuffer.clear();
       _recognition.setCameraActive(false);
       if (mounted) setState(() => _isCameraActive = false);
     } else {
       setState(() {
         _isLoading = true;
         _errorMessage = null;
-        _isCameraActive = true;
       });
-      _recognition.setCameraActive(true);
+
+      final perm = await _cameraService.checkPermission();
+      if (perm != 'granted') {
+        final req = await _cameraService.requestPermission();
+        if (req != 'granted') {
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+              _errorMessage =
+                  'Izin kamera ditolak. Silakan berikan izin di pengaturan.';
+            });
+          }
+          return;
+        }
+      }
+
+      final started = await _cameraService.startCamera();
+      if (started) {
+        _recognition.setCameraActive(true);
+        if (mounted) {
+          setState(() {
+            _isCameraActive = true;
+            _isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = _cameraService.lastError ?? 'Gagal memulai kamera.';
+          });
+        }
+      }
     }
   }
 
   @override
   void dispose() {
     _recognition.setCameraActive(false);
-    _yoloController.dispose();
+    unawaited(_cameraService.dispose());
+    _streamBuffer.dispose();
     super.dispose();
   }
 
@@ -176,7 +206,7 @@ class _BisindoScreenState extends State<BisindoScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
-                'Arahkan tangan ke kamera untuk mendeteksi huruf BISINDO secara langsung.',
+                'Arahkan tangan ke kamera untuk menerjemahkan bahasa isyarat BISINDO secara realtime.',
                 textAlign: TextAlign.center,
                 style: AppTypography.captionSmall.copyWith(
                   color: AppColors.textSecondaryColor(context),
@@ -201,18 +231,9 @@ class _BisindoScreenState extends State<BisindoScreen> {
             ColoredBox(
               color: AppColors.espressoDark,
               child: _isCameraActive
-                  ? YOLOView(
-                      modelPath: BisindoYoloService.kModelPath,
-                      task: YOLOTask.detect,
-                      controller: _yoloController,
-                      lensFacing: LensFacing.front,
-                      cameraResolution: '720p',
-                      confidenceThreshold:
-                          BisindoYoloService.kDefaultConfidenceThreshold,
-                      iouThreshold: 0.45,
-                      onResult: _onYoloResult,
-                      onModelLoad: _onModelLoaded,
-                      onModelError: _onModelError,
+                  ? const AndroidView(
+                      viewType: _kPreviewViewType,
+                      creationParamsCodec: StandardMessageCodec(),
                     )
                   : Center(
                       child: Column(
@@ -259,37 +280,40 @@ class _BisindoScreenState extends State<BisindoScreen> {
                 child: CircularProgressIndicator(color: Colors.white),
               ),
             Obx(() {
-              final label = _recognition.currentCandidate.value;
-              if (label == null || label.isEmpty) {
+              final state = _recognition.recognitionState.value;
+              final recognized = state == SignRecognitionState.recognized;
+              final candidate = _recognition.currentCandidate.value;
+              final label = recognized
+                  ? _recognition.detectedLabel.value
+                  : (candidate ?? '');
+
+              if (label.isEmpty) {
                 return const SizedBox.shrink();
               }
-              final state = _recognition.recognitionState.value;
-              final confirmed = state == SignRecognitionState.confirmed;
-              final holding = state == SignRecognitionState.holding;
-              final progress = _recognition.holdProgress.value;
-              final conf = (_recognition.candidateConfidence.value * 100)
-                  .round();
-              final isSingleChar = label.length == 1;
+
+              final streak = _recognition.stabilityStreak.value;
+              final maxStreak = _recognition.config.stablePredictionsRequired;
+              final holdPct = (_recognition.holdProgress.value * 100).round();
 
               return Positioned(
                 right: 20,
                 bottom: 26,
                 child: AnimatedScale(
-                  scale: confirmed ? 1.08 : 1.0,
+                  scale: recognized ? 1.08 : 1.0,
                   duration: const Duration(milliseconds: 160),
                   child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isSingleChar ? 22 : 18,
-                      vertical: isSingleChar ? 16 : 12,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 12,
                     ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF0D6B58),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: confirmed
+                        color: recognized
                             ? AppColors.accentGoldStar
                             : Colors.white.withValues(alpha: 0.35),
-                        width: confirmed ? 2.5 : 1.2,
+                        width: recognized ? 2.5 : 1.2,
                       ),
                       boxShadow: [
                         BoxShadow(
@@ -305,7 +329,7 @@ class _BisindoScreenState extends State<BisindoScreen> {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (confirmed) ...[
+                            if (recognized) ...[
                               const Icon(
                                 Icons.check_circle_rounded,
                                 color: AppColors.accentGoldStar,
@@ -314,11 +338,11 @@ class _BisindoScreenState extends State<BisindoScreen> {
                               const SizedBox(width: 5),
                             ],
                             Text(
-                              isSingleChar ? label.toUpperCase() : label,
-                              style: TextStyle(
+                              label,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w900,
-                                fontSize: isSingleChar ? 34 : 20,
+                                fontSize: 20,
                                 height: 1.1,
                               ),
                             ),
@@ -326,77 +350,17 @@ class _BisindoScreenState extends State<BisindoScreen> {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          '$conf%',
+                          recognized
+                              ? 'Terkonfirmasi (100%)'
+                              : 'Tahan: $holdPct% ($streak/$maxStreak)',
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.8),
+                            color: Colors.white.withValues(alpha: 0.88),
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        if (holding && progress > 0) ...[
-                          const SizedBox(height: 6),
-                          SizedBox(
-                            width: isSingleChar ? 36 : 64,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: LinearProgressIndicator(
-                                value: progress,
-                                minHeight: 4,
-                                backgroundColor: Colors.white24,
-                                valueColor: const AlwaysStoppedAnimation(
-                                  AppColors.accentGoldStar,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
                       ],
                     ),
-                  ),
-                ),
-              );
-            }),
-            Obx(() {
-              final progress = _recognition.holdProgress.value;
-              if (progress <= 0 ||
-                  _recognition.recognitionState.value !=
-                      SignRecognitionState.holding) {
-                return const SizedBox.shrink();
-              }
-              return Positioned(
-                left: 20,
-                right: 20,
-                bottom: 18,
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.65),
-                    borderRadius: BorderRadius.circular(13),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: LinearProgressIndicator(
-                            value: progress,
-                            minHeight: 8,
-                            backgroundColor: Colors.white24,
-                            valueColor: const AlwaysStoppedAnimation(
-                              AppColors.accentGoldStar,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        '${(progress * 100).round()}%',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
                   ),
                 ),
               );
@@ -453,7 +417,7 @@ class _BisindoScreenState extends State<BisindoScreen> {
                 ),
                 if (items.isNotEmpty)
                   Text(
-                    '${items.length} Gerakan',
+                    '${items.length} Kata',
                     style: AppTypography.captionSmall.copyWith(
                       color: AppColors.textSecondaryColor(context),
                       fontWeight: FontWeight.w600,
@@ -556,15 +520,11 @@ class _BisindoScreenState extends State<BisindoScreen> {
       );
     }
 
-    final isLetter = token.type == SignTokenType.letter;
-    final text = isLetter ? token.value.toUpperCase() : token.value;
+    final text = token.value;
 
     return Container(
       margin: const EdgeInsets.only(right: 8),
-      padding: EdgeInsets.symmetric(
-        horizontal: isLetter ? 14 : 16,
-        vertical: 10,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       constraints: const BoxConstraints(minHeight: 44),
       decoration: BoxDecoration(
         color: isDark
@@ -583,7 +543,7 @@ class _BisindoScreenState extends State<BisindoScreen> {
           text,
           style: TextStyle(
             color: isDark ? AppColors.goldLight : const Color(0xFF0F5A47),
-            fontSize: isLetter ? 17 : 15,
+            fontSize: 15,
             fontWeight: FontWeight.w800,
             letterSpacing: 0.3,
           ),
@@ -594,12 +554,23 @@ class _BisindoScreenState extends State<BisindoScreen> {
 
   Widget _buildRecognitionStatus() {
     return Obx(() {
-      final progress = _recognition.holdProgress.value;
-      final holding =
-          _recognition.recognitionState.value == SignRecognitionState.holding;
-      final confirmed =
-          _recognition.recognitionState.value == SignRecognitionState.confirmed;
+      final state = _recognition.recognitionState.value;
+      final streak = _recognition.stabilityStreak.value;
+      final maxStreak = _recognition.config.stablePredictionsRequired;
+      final buffer = _recognition.bufferCount.value;
+      final isHand = _recognition.isHandDetected.value;
       final gold = _accentGold(context);
+
+      double progress = 0.0;
+      if (!isHand) {
+        progress = 0.0;
+      } else if (buffer < 24) {
+        progress = buffer / 24.0;
+      } else if (state == SignRecognitionState.recognized) {
+        progress = 1.0;
+      } else {
+        progress = _recognition.holdProgress.value;
+      }
 
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -608,7 +579,8 @@ class _BisindoScreenState extends State<BisindoScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (holding)
+                if (state == SignRecognitionState.reading ||
+                    (state == SignRecognitionState.analyzing && streak == 0))
                   Padding(
                     padding: const EdgeInsets.only(right: 6),
                     child: SizedBox(
@@ -625,12 +597,12 @@ class _BisindoScreenState extends State<BisindoScreen> {
                     _recognition.statusText,
                     textAlign: TextAlign.center,
                     style: AppTypography.bodyMedium.copyWith(
-                      color: confirmed
+                      color: state == SignRecognitionState.recognized
                           ? AppColors.emeraldIslamic
-                          : holding
+                          : streak > 0
                           ? gold
                           : AppColors.textBodyColor(context),
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
@@ -641,16 +613,22 @@ class _BisindoScreenState extends State<BisindoScreen> {
               borderRadius: BorderRadius.circular(20),
               child: LinearProgressIndicator(
                 value: progress,
-                minHeight: 7,
+                minHeight: 8,
                 backgroundColor: gold.withValues(alpha: 0.15),
                 valueColor: AlwaysStoppedAnimation(
-                  confirmed ? AppColors.emeraldIslamic : gold,
+                  state == SignRecognitionState.recognized
+                      ? AppColors.emeraldIslamic
+                      : gold,
                 ),
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 5),
             Text(
-              'Tahan gerakan ±${_recognition.config.confirmationDuration.inMilliseconds} ms hingga penuh',
+              buffer < 24
+                  ? 'Menyiapkan buffer $buffer/24 frame awal (~15 FPS)'
+                  : streak > 0
+                  ? 'Tahan gerakan: $streak/$maxStreak konfirmasi stabil'
+                  : 'Arahkan & tahan isyarat di depan kamera',
               style: AppTypography.captionSmall.copyWith(
                 color: AppColors.textSecondaryColor(context),
                 fontSize: 10,

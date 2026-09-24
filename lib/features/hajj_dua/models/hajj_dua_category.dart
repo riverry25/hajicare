@@ -2,11 +2,15 @@ enum HajjDuaStage {
   ihram,
   masjidAlHaram,
   tawaf,
+  zamzam,
   sai,
   arafah,
   muzdalifah,
   mina,
   tahallul,
+  tawafIfadah,
+  tawafWada,
+  madinah,
   general,
 }
 

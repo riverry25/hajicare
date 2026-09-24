@@ -79,6 +79,10 @@ flutter:
     - assets/models/sibi_alphabet_labels.json
     - assets/models/fix_model/best.tflite
     - assets/models/fix_model/label.txt
+    - assets/models/bisindo/hajicare_bisindo_gru_float32.tflite
+    - assets/models/bisindo/labels.json
+    - assets/models/bisindo/model_config.json
+    - assets/models/bisindo/hand_landmarker.task
     - assets/audio/
   fonts:
     - family: Poppins

@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "num_classes": 23,
+  "labels": [
+    {
+      "id": 0,
+      "name": "Air"
+    },
+    {
+      "id": 1,
+      "name": "Apa"
+    },
+    {
+      "id": 2,
+      "name": "Apa Kabar"
+    },
+    {
+      "id": 3,
+      "name": "Bagaimana"
+    },
+    {
+      "id": 4,
+      "name": "Baik"
+    },
+    {
+      "id": 5,
+      "name": "Berapa"
+    },
+    {
+      "id": 6,
+      "name": "Berdiri"
+    },
+    {
+      "id": 7,
+      "name": "Dia"
+    },
+    {
+      "id": 8,
+      "name": "Dimana"
+    },
+    {
+      "id": 9,
+      "name": "Duduk"
+    },
+    {
+      "id": 10,
+      "name": "Halo"
+    },
+    {
+      "id": 11,
+      "name": "Kalian"
+    },
+    {
+      "id": 12,
+      "name": "Kami"
+    },
+    {
+      "id": 13,
+      "name": "Kamu"
+    },
+    {
+      "id": 14,
+      "name": "Kapan"
+    },
+    {
+      "id": 15,
+      "name": "Kemana"
+    },
+    {
+      "id": 16,
+      "name": "Kita"
+    },
+    {
+      "id": 17,
+      "name": "Makan"
+    },
+    {
+      "id": 18,
+      "name": "Mandi"
+    },
+    {
+      "id": 19,
+      "name": "Minum"
+    },
+    {
+      "id": 20,
+      "name": "Siapa"
+    },
+    {
+      "id": 21,
+      "name": "Terima Kasih"
+    },
+    {
+      "id": 22,
+      "name": "Tuli"
+    }
+  ]
+}

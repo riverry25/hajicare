@@ -38,6 +38,34 @@ class HajjDuaRepository {
     return List.unmodifiable(duas);
   }
 
+  List<String> getActivitiesForStage(HajjDuaStage stage) {
+    final activities = <String>{};
+    for (final dua in getDuasForStage(stage)) {
+      if (dua.activity != null && dua.activity!.trim().isNotEmpty) {
+        activities.add(dua.activity!.trim());
+      }
+    }
+    return activities.toList(growable: false);
+  }
+
+  List<HajjDua> getDuasForActivity(HajjDuaStage stage, String activity) {
+    return getDuasForStage(stage)
+        .where((dua) => dua.activity?.trim() == activity.trim())
+        .toList(growable: false);
+  }
+
+  HajjDua? getDuaById(String id) {
+    for (final dua in _duas) {
+      if (dua.id == id) return dua;
+    }
+    return null;
+  }
+
+  List<HajjDua> getDuasByIds(Iterable<String> ids) {
+    final idSet = ids.toSet();
+    return _duas.where((dua) => idSet.contains(dua.id)).toList(growable: false);
+  }
+
   int countForStage(HajjDuaStage stage) =>
       _duas.where((dua) => dua.stage == stage).length;
 
@@ -68,16 +96,24 @@ class HajjDuaRepository {
       final category = categoryFor(dua.stage);
       final searchableText = [
         AppTranslations.translate(dua.titleKey, languageCode),
+        if (dua.title != null) dua.title!,
         if (dua.subtitleKey != null)
           AppTranslations.translate(dua.subtitleKey!, languageCode),
+        if (dua.subtitle != null) dua.subtitle!,
+        if (dua.activity != null) dua.activity!,
+        if (dua.contextText != null) dua.contextText!,
         dua.arabic,
         dua.transliteration ?? '',
         ...dua.translations.values,
         if (dua.descriptionKey != null)
           AppTranslations.translate(dua.descriptionKey!, languageCode),
-        if (category != null)
+        if (dua.description != null) dua.description!,
+        if (category != null) ...[
           AppTranslations.translate(category.titleKey, languageCode),
+          ...category.keywords,
+        ],
         ...dua.keywords,
+        ...dua.tags,
       ].join(' ').toLowerCase();
       return searchableText.contains(normalizedQuery);
     }).toList();

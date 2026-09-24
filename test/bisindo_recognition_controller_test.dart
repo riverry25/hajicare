@@ -4,15 +4,10 @@ import 'package:hajicare/features/sign_language/models/bisindo_prediction.dart';
 import 'package:hajicare/features/sign_language/models/sign_token.dart';
 
 const _config = BisindoRecognitionConfig(
-  minimumConfidence: 0.85,
-  confirmationDuration: Duration(milliseconds: 1000),
-  predictionInterval: Duration(milliseconds: 100),
-  predictionWindowSize: 4,
-  minimumStableRatio: 0.75,
-  releaseDuration: Duration(milliseconds: 300),
-  duplicateCooldown: Duration(milliseconds: 200),
-  handPresenceTimeout: Duration(seconds: 10),
-  predictionFreshness: Duration(milliseconds: 350),
+  confidenceThreshold: 0.78,
+  stablePredictionsRequired: 4,
+  duplicateCooldown: Duration(milliseconds: 1200),
+  handPresenceTimeout: Duration(milliseconds: 1000),
 );
 
 BisindoPrediction prediction(String label, [double confidence = 0.94]) {
@@ -22,6 +17,7 @@ BisindoPrediction prediction(String label, [double confidence = 0.94]) {
     confidence: confidence,
     distance: 1,
     candidates: const [],
+    isRecognized: true,
   );
 }
 
@@ -52,173 +48,88 @@ void main() {
 
   tearDown(() => controller.onClose());
 
-  test('stable gesture commits exactly once after real hold duration', () {
-    feedStable(controller, 'LETTER_A', origin);
-    expect(controller.tokens, isEmpty);
-    expect(controller.recognitionState.value, SignRecognitionState.holding);
-
-    controller.handlePrediction(
-      prediction('LETTER_A'),
-      now: origin.add(const Duration(milliseconds: 1300)),
-    );
-
-    expect(controller.rawTranscript.value, 'A');
-    expect(controller.tokens.length, 1);
-  });
-
-  test('held gesture stays locked and never duplicates', () {
-    feedStable(controller, 'LETTER_A', origin);
-    controller.handlePrediction(
-      prediction('LETTER_A'),
-      now: origin.add(const Duration(milliseconds: 1300)),
-    );
-
-    for (var i = 14; i < 60; i++) {
+  test('stable gesture commits after 4 identical predictions', () {
+    for (var i = 0; i < 3; i++) {
       controller.handlePrediction(
-        prediction('LETTER_A'),
+        prediction('Air'),
         now: origin.add(Duration(milliseconds: i * 100)),
       );
-      controller.tick(now: origin.add(Duration(milliseconds: i * 100)));
     }
+    expect(controller.tokens, isEmpty);
+    expect(controller.stabilityStreak.value, 3);
+    expect(controller.recognitionState.value, SignRecognitionState.analyzing);
 
-    expect(controller.rawTranscript.value, 'A');
+    controller.handlePrediction(
+      prediction('Air'),
+      now: origin.add(const Duration(milliseconds: 300)),
+    );
+
     expect(controller.tokens.length, 1);
+    expect(controller.rawTranscript.value, 'air');
+    expect(controller.recognitionState.value, SignRecognitionState.recognized);
   });
 
-  test('same gesture can be committed again after a real release', () {
-    feedStable(controller, 'LETTER_A', origin);
-    controller.handlePrediction(
-      prediction('LETTER_A'),
-      now: origin.add(const Duration(milliseconds: 1300)),
-    );
+  test('consecutive duplicates within 1200ms cooldown are rejected', () {
+    feedStable(controller, 'Air', origin);
+    expect(controller.tokens.length, 1);
 
-    controller.handleNoHand(
-      now: origin.add(const Duration(milliseconds: 1400)),
+    // Feed another 4 frames within 1200ms
+    feedStable(
+      controller,
+      'Air',
+      origin.add(const Duration(milliseconds: 500)),
     );
-    controller.handleNoHand(
-      now: origin.add(const Duration(milliseconds: 1750)),
-    );
-    feedStable(controller, 'LETTER_A', origin.add(const Duration(seconds: 2)));
-    controller.handlePrediction(
-      prediction('LETTER_A'),
-      now: origin.add(const Duration(milliseconds: 3300)),
-    );
+    expect(controller.tokens.length, 1);
 
-    expect(controller.rawTranscript.value, 'AA');
+    // After cooldown, gesture can commit again
+    feedStable(
+      controller,
+      'Air',
+      origin.add(const Duration(milliseconds: 1800)),
+    );
     expect(controller.tokens.length, 2);
   });
 
-  test('stable changed gesture releases lock before starting its own hold', () {
-    feedStable(controller, 'LETTER_A', origin);
-    controller.handlePrediction(
-      prediction('LETTER_A'),
-      now: origin.add(const Duration(milliseconds: 1300)),
-    );
-
-    for (var i = 14; i <= 31; i++) {
+  test('absence of hands resets streak and sets idle state', () {
+    for (var i = 0; i < 2; i++) {
       controller.handlePrediction(
-        prediction('LETTER_K'),
+        prediction('Air'),
         now: origin.add(Duration(milliseconds: i * 100)),
       );
     }
+    expect(controller.stabilityStreak.value, 2);
 
-    expect(controller.rawTranscript.value, 'AK');
-    expect(controller.tokens.length, 2);
+    controller.handleNoHand(now: origin.add(const Duration(milliseconds: 300)));
+    expect(controller.stabilityStreak.value, 0);
+    expect(controller.recognitionState.value, SignRecognitionState.idle);
   });
 
-  test('flickering labels never begin confirmation or commit', () {
-    final labels = [
-      'LETTER_A',
-      'LETTER_A',
-      'LETTER_K',
-      'LETTER_A',
-      'LETTER_K',
-      'LETTER_K',
-    ];
-    for (var i = 0; i < labels.length; i++) {
-      controller.handlePrediction(
-        prediction(labels[i]),
-        now: origin.add(Duration(milliseconds: i * 100)),
-      );
-    }
-    controller.tick(now: origin.add(const Duration(milliseconds: 1700)));
+  test('deleteLast, insertSpace, and resetTranscript work as expected', () {
+    feedStable(controller, 'Air', origin);
+    expect(controller.rawTranscript.value, 'air');
 
-    expect(controller.tokens, isEmpty);
-    expect(controller.confirmationProgress.value, 0);
-  });
-
-  test('low confidence interrupts an active hold', () {
-    feedStable(controller, 'LETTER_A', origin);
-    controller.handlePrediction(
-      prediction('LETTER_A', 0.4),
-      now: origin.add(const Duration(milliseconds: 500)),
-    );
-    controller.tick(now: origin.add(const Duration(milliseconds: 1500)));
-
-    expect(controller.tokens, isEmpty);
-    expect(controller.confirmationProgress.value, 0);
-  });
-
-  test(
-    'word and consecutive letters compose without spaces between letters',
-    () {
-      const parser = SignLabelParser();
-      const composer = SignTokenComposer();
-      final tokens = [
-        parser.parse('WORD_BELAJAR').toToken(),
-        parser.parse('LETTER_A').toToken(),
-        parser.parse('LETTER_K').toToken(),
-        parser.parse('LETTER_U').toToken(),
-      ];
-
-      expect(composer.compose(tokens), 'belajar AKU');
-    },
-  );
-
-  test('manual space separates letter runs and rejects duplicate spaces', () {
-    controller.tokens.addAll(const [
-      SignToken.letter('S'),
-      SignToken.letter('A'),
-      SignToken.letter('Y'),
-      SignToken.letter('A'),
-    ]);
     controller.insertSpace();
-    controller.insertSpace();
-    controller.tokens.add(const SignToken.word('belajar'));
-    // Trigger the public composer behavior after the externally seeded fixture.
-    expect(
-      const SignTokenComposer().compose(controller.tokens),
-      'SAYA belajar',
+    feedStable(
+      controller,
+      'Minum',
+      origin.add(const Duration(milliseconds: 1500)),
     );
-    expect(
-      controller.tokens.where((t) => t.type == SignTokenType.space).length,
-      1,
-    );
+    expect(controller.rawTranscript.value, 'air minum');
+
+    controller.deleteLast();
+    expect(controller.rawTranscript.value, 'air');
+
+    controller.resetTranscript();
+    expect(controller.rawTranscript.value, isEmpty);
   });
 
-  test(
-    'AI result remains separate from deterministic raw transcript',
-    () async {
-      final aiController = BisindoRecognitionController(
-        config: _config,
-        autoTick: false,
-        aiProcessor: (raw) async {
-          expect(raw, 'belajar');
-          return 'Saya belajar.';
-        },
-      );
-      aiController.onInit();
-      aiController.setCameraActive(true, now: origin);
-      feedStable(aiController, 'WORD_BELAJAR', origin);
-      aiController.handlePrediction(
-        prediction('WORD_BELAJAR'),
-        now: origin.add(const Duration(milliseconds: 1300)),
-      );
+  test('multi-word phrase like Apa Kabar parsed as single token', () {
+    const parser = SignLabelParser();
+    const composer = SignTokenComposer();
+    final token = parser.parse('Apa Kabar').toToken();
 
-      expect(await aiController.sendToAi(), isTrue);
-      expect(aiController.rawTranscript.value, 'belajar');
-      expect(aiController.aiTranscript.value, 'Saya belajar.');
-      aiController.onClose();
-    },
-  );
+    expect(token.type, SignTokenType.word);
+    expect(token.value, 'apa kabar');
+    expect(composer.compose([token]), 'apa kabar');
+  });
 }
