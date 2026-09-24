@@ -1,0 +1,75 @@
+{
+  "project": "HajiCare BISINDO",
+  "backup_timestamp": "20260924_124519",
+  "model_status": "KERAS_GOLDEN_TFLITE_REQUIRES_FIX",
+  "sequence_length": 48,
+  "feature_dim": 135,
+  "sample_fps": 15.0,
+  "window_seconds": 3.2,
+  "num_classes": 23,
+  "class_names": [
+    "Air",
+    "Apa",
+    "Apa Kabar",
+    "Bagaimana",
+    "Baik",
+    "Berapa",
+    "Berdiri",
+    "Dia",
+    "Dimana",
+    "Duduk",
+    "Halo",
+    "Kalian",
+    "Kami",
+    "Kamu",
+    "Kapan",
+    "Kemana",
+    "Kita",
+    "Makan",
+    "Mandi",
+    "Minum",
+    "Siapa",
+    "Terima Kasih",
+    "Tuli"
+  ],
+  "confidence_threshold": 0.78,
+  "num_hands": 2,
+  "min_hand_detection_confidence": 0.5,
+  "min_hand_presence_confidence": 0.5,
+  "min_tracking_confidence": 0.5,
+  "swap_handedness": false,
+  "max_interpolation_gap": 3,
+  "split_mode": "SIGNER_INDEPENDENT_GROUP_SPLIT",
+  "feature_layout": {
+    "left_local_xyz": [
+      0,
+      63
+    ],
+    "right_local_xyz": [
+      63,
+      126
+    ],
+    "left_presence": 126,
+    "right_presence": 127,
+    "left_wrist_xy": [
+      128,
+      130
+    ],
+    "right_wrist_xy": [
+      130,
+      132
+    ],
+    "inter_hand_wrist_xyz": [
+      132,
+      135
+    ]
+  },
+  "normalization": {
+    "hand_local": "landmark xyz dikurangi wrist landmark 0, kemudian dibagi mean jarak 2D wrist ke MCP 5,9,13,17",
+    "clip": [
+      -5.0,
+      5.0
+    ],
+    "wrist_xy": "raw normalized image coordinate minus 0.5"
+  }
+}
