@@ -431,6 +431,51 @@ class BisindoPreprocessor {
     return result;
   }
 
+  /// Transforms a single frame of 543 landmarks into a `Float32List` of shape `[1, 42]`
+  /// for SIBI Alphabet model (`sibi_alphabet_model_f32.tflite`).
+  ///
+  /// Extracts 21 hand landmarks relative to the wrist (landmark 0).
+  /// Prefers the right hand if detected, otherwise falls back to the left hand.
+  /// If neither hand is detected, returns 42 zeros.
+  static Float32List processSibiAlphabetFrame(List<List<double>> frame) {
+    const int sibiFeatureDim = 42;
+    final result = Float32List(sibiFeatureDim);
+    if (frame.length < 543) {
+      return result;
+    }
+
+    final bool hasRight = isHandDetected(
+      frame,
+      kRightHandStartIdx,
+      kRightHandEndIdx,
+    );
+    final bool hasLeft = isHandDetected(
+      frame,
+      kLeftHandStartIdx,
+      kLeftHandEndIdx,
+    );
+
+    if (!hasRight && !hasLeft) {
+      return result;
+    }
+
+    // Prefer right hand if present, fallback to left hand
+    final startIdx = hasRight ? kRightHandStartIdx : kLeftHandStartIdx;
+    final endIdx = hasRight ? kRightHandEndIdx : kLeftHandEndIdx;
+
+    final wristX = frame[startIdx][0];
+    final wristY = frame[startIdx][1];
+
+    int offset = 0;
+    for (int i = startIdx; i <= endIdx; i++) {
+      final pt = frame[i];
+      result[offset++] = (pt.isNotEmpty ? (pt[0] - wristX).toDouble() : 0.0);
+      result[offset++] = (pt.length > 1 ? (pt[1] - wristY).toDouble() : 0.0);
+    }
+
+    return result;
+  }
+
   // --------------------------------------------------------------------------
   // Legacy / Test Compatibility Methods
   // --------------------------------------------------------------------------

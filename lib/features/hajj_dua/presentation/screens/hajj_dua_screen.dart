@@ -102,86 +102,149 @@ class _HajjDuaScreenState extends State<HajjDuaScreen> {
           ),
         ),
         actions: [
-          IconButton(
-            onPressed: _service.cycleTextScale,
-            icon: const Icon(Icons.format_size_rounded),
-            tooltip: 'Ukuran Teks',
-          ),
+          Obx(() {
+            final multiplier = _service.textScaleMultiplier.value;
+            final percent = (multiplier * 100).toInt();
+            return IconButton(
+              onPressed: () {
+                _service.cycleTextScale();
+                final newMultiplier = _service.textScaleMultiplier.value;
+                final newPercent = (newMultiplier * 100).toInt();
+                final newLabel = newMultiplier < 1.15
+                    ? context.tr('textSizeNormal')
+                    : newMultiplier < 1.3
+                    ? context.tr('textSizeLarge')
+                    : context.tr('textSizeExtraLarge');
+                ScaffoldMessenger.of(context)
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(
+                    SnackBar(
+                      duration: const Duration(milliseconds: 1400),
+                      behavior: SnackBarBehavior.floating,
+                      content: Text(
+                        '${context.tr('textSize')}: $newLabel ($newPercent%)',
+                      ),
+                    ),
+                  );
+              },
+              icon: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.format_size_rounded),
+                  const SizedBox(width: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 1.5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.goldPrimary.withValues(alpha: 0.22),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '$percent%',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.goldPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              tooltip: context.tr('textSize'),
+            );
+          }),
         ],
       ),
-      body: SafeArea(
-        top: false,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 900),
-            child: ListView(
-              key: const Key('hajj_dua_screen'),
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.md,
-                AppSpacing.lg,
-                AppSpacing.huge,
-              ),
-              children: [
-                const _GuideHeader(),
-                const SizedBox(height: AppSpacing.lg),
-                TextField(
-                  key: const Key('hajj_dua_search_field'),
-                  controller: _searchController,
-                  onChanged: _updateQuery,
-                  textInputAction: TextInputAction.search,
-                  style: HajjDuaTypography.body.copyWith(
-                    color: AppColors.textHeadingColor(context),
+      body: Obx(() {
+        final multiplier = _service.textScaleMultiplier.value;
+        final baseScaler = MediaQuery.textScalerOf(context);
+        final effectiveScale = (baseScaler.scale(1) * multiplier).clamp(
+          0.8,
+          2.5,
+        );
+
+        return MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(effectiveScale)),
+          child: SafeArea(
+            top: false,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 900),
+                child: ListView(
+                  key: const Key('hajj_dua_screen'),
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    AppSpacing.md,
+                    AppSpacing.lg,
+                    AppSpacing.huge,
                   ),
-                  decoration: InputDecoration(
-                    hintText: 'Cari doa, tahap, arti, atau transliterasi...',
-                    hintStyle: HajjDuaTypography.body.copyWith(
-                      color: AppColors.textSecondaryColor(context),
+                  children: [
+                    const _GuideHeader(),
+                    const SizedBox(height: AppSpacing.lg),
+                    TextField(
+                      key: const Key('hajj_dua_search_field'),
+                      controller: _searchController,
+                      onChanged: _updateQuery,
+                      textInputAction: TextInputAction.search,
+                      style: HajjDuaTypography.body.copyWith(
+                        color: AppColors.textHeadingColor(context),
+                      ),
+                      decoration: InputDecoration(
+                        hintText: context.tr('hajjDuaSearchHint'),
+                        hintStyle: HajjDuaTypography.body.copyWith(
+                          color: AppColors.textSecondaryColor(context),
+                        ),
+                        prefixIcon: const Icon(Icons.search_rounded),
+                        suffixIcon: _query.isEmpty
+                            ? null
+                            : IconButton(
+                                key: const Key('clear_hajj_dua_search'),
+                                onPressed: _clearSearch,
+                                icon: const Icon(Icons.close_rounded),
+                                tooltip: context.tr('hajjDuaClearSearch'),
+                              ),
+                      ),
                     ),
-                    prefixIcon: const Icon(Icons.search_rounded),
-                    suffixIcon: _query.isEmpty
-                        ? null
-                        : IconButton(
-                            key: const Key('clear_hajj_dua_search'),
-                            onPressed: _clearSearch,
-                            icon: const Icon(Icons.close_rounded),
-                            tooltip: context.tr('hajjDuaClearSearch'),
-                          ),
-                  ),
+                    const SizedBox(height: AppSpacing.xl),
+                    if (_query.isEmpty) ...[
+                      // Recently Viewed Section
+                      _RecentlyOpenedSection(
+                        service: _service,
+                        repository: widget.repository,
+                        onDuaTap: _openDuaDirectly,
+                      ),
+                      // Bookmarked Duas Section
+                      _SavedDuasSection(
+                        service: _service,
+                        repository: widget.repository,
+                        onDuaTap: _openDuaDirectly,
+                      ),
+                      _CategorySection(
+                        categories: categories,
+                        repository: widget.repository,
+                        onCategoryTap: _openCategory,
+                      ),
+                    ] else
+                      _SearchResults(
+                        query: _query,
+                        categories: categories,
+                        duas: matchingDuas,
+                        repository: widget.repository,
+                        onCategoryTap: _openCategory,
+                      ),
+                  ],
                 ),
-                const SizedBox(height: AppSpacing.xl),
-                if (_query.isEmpty) ...[
-                  // Recently Viewed Section
-                  _RecentlyOpenedSection(
-                    service: _service,
-                    repository: widget.repository,
-                    onDuaTap: _openDuaDirectly,
-                  ),
-                  // Bookmarked Duas Section
-                  _SavedDuasSection(
-                    service: _service,
-                    repository: widget.repository,
-                    onDuaTap: _openDuaDirectly,
-                  ),
-                  _CategorySection(
-                    categories: categories,
-                    repository: widget.repository,
-                    onCategoryTap: _openCategory,
-                  ),
-                ] else
-                  _SearchResults(
-                    query: _query,
-                    categories: categories,
-                    duas: matchingDuas,
-                    repository: widget.repository,
-                    onCategoryTap: _openCategory,
-                  ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      }),
     );
   }
 }
@@ -309,7 +372,10 @@ class _RecentlyOpenedSection extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: recentDuas.map((dua) {
-                final title = dua.title ?? context.tr(dua.titleKey);
+                final translated = context.tr(dua.titleKey);
+                final title = translated != dua.titleKey
+                    ? translated
+                    : (dua.title ?? dua.titleKey);
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: ActionChip(
@@ -373,7 +439,10 @@ class _SavedDuasSection extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: savedDuas.map((dua) {
-                final title = dua.title ?? context.tr(dua.titleKey);
+                final translated = context.tr(dua.titleKey);
+                final title = translated != dua.titleKey
+                    ? translated
+                    : (dua.title ?? dua.titleKey);
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: ActionChip(
@@ -590,7 +659,7 @@ class _EmptySearchState extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            'Belum menemukan bacaan',
+            context.tr('hajjDuaSearchEmptyTitle'),
             textAlign: TextAlign.center,
             style: HajjDuaTypography.cardTitle.copyWith(
               color: AppColors.textHeadingColor(context),
@@ -598,7 +667,7 @@ class _EmptySearchState extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            'Coba gunakan kata kunci lain seperti: thawaf, sa\'i, wukuf, zamzam, atau talbiyah.',
+            context.tr('hajjDuaSearchEmptySubtitle'),
             textAlign: TextAlign.center,
             style: HajjDuaTypography.body.copyWith(
               color: AppColors.textBodyColor(context),

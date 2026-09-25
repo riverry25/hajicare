@@ -70,7 +70,9 @@ class HajiCareBottomNavBar extends StatelessWidget {
         });
       }
     } catch (e) {
-      debugPrint('[HajiCareBottomNavBar] Fallback route navigation deferred: $e');
+      debugPrint(
+        '[HajiCareBottomNavBar] Fallback route navigation deferred: $e',
+      );
     }
   }
 

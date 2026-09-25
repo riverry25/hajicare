@@ -41,6 +41,7 @@ class MainActivity : FlutterFragmentActivity() {
                 override fun create(context: Context, viewId: Int, args: Any?): PlatformView {
                     return object : PlatformView {
                         private val previewView = androidx.camera.view.PreviewView(context).also { pv ->
+                            pv.implementationMode = androidx.camera.view.PreviewView.ImplementationMode.COMPATIBLE
                             activePreviewView = pv
                             cameraHelper?.attachPreviewView(pv)
                         }

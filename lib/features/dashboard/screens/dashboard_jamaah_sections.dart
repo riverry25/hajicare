@@ -621,7 +621,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   _buildBentoFeatureCard(
                     context: context,
                     title: context.tr('dashboard.signLanguage'),
-                    value: 'BISINDO',
+                    value: 'SIBI / BISINDO',
                     subtitle: context.tr('dashboard.openCamera'),
                     icon: Icons.sign_language_rounded,
                     height: 162,
@@ -635,7 +635,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                         : AppColors.emeraldLight,
                     iconColor: AppColors.emeraldIslamic,
                     accentColor: AppColors.emeraldIslamic,
-                    onTap: () => Get.toNamed(AppRoutes.bisindo),
+                    onTap: () => Get.toNamed(AppRoutes.signLanguage),
                   ),
                   const SizedBox(height: 12),
                   _buildBentoFeatureCard(

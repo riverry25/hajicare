@@ -233,7 +233,10 @@ extension _ProfileScreenSections on ProfileScreen {
                             _showEditMedicalDialog(context, profileCtrl);
                           },
                           icon: const Icon(Icons.edit_rounded, size: 18),
-                          label: Text('Ubah Data', style: AppTypography.button),
+                          label: Text(
+                            context.tr('profile.editData'),
+                            style: AppTypography.button,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -254,7 +257,10 @@ extension _ProfileScreenSections on ProfileScreen {
                             minimumSize: const Size(0, 48),
                           ),
                           onPressed: () => Navigator.of(context).pop(),
-                          child: Text('Tutup', style: AppTypography.button),
+                          child: Text(
+                            context.tr('close'),
+                            style: AppTypography.button,
+                          ),
                         ),
                       ),
                     ],
@@ -517,7 +523,10 @@ extension _ProfileScreenSections on ProfileScreen {
                       ),
                     ),
                     onPressed: () => Navigator.of(context).pop(),
-                    child: Text('Selesai', style: AppTypography.button),
+                    child: Text(
+                      context.tr('done'),
+                      style: AppTypography.button,
+                    ),
                   ),
                 ),
               ],
@@ -614,7 +623,7 @@ extension _ProfileScreenSections on ProfileScreen {
       children: AppTextScale.values.map((scale) {
         final isSelected = settings.currentTextScale == scale;
         return _PickerOption(
-          label: scale.label,
+          label: scale.localizedLabel(context),
           trailingHint: '${(scale.factor * 100).toStringAsFixed(0)}%',
           isSelected: isSelected,
           onTap: () {

@@ -116,7 +116,9 @@ class ProfileScreen extends StatelessWidget {
                     _SettingsTile(
                       icon: Icons.text_fields_rounded,
                       label: context.tr('profile.textSize'),
-                      trailingLabel: settings.currentTextScale.label,
+                      trailingLabel: settings.currentTextScale.localizedLabel(
+                        context,
+                      ),
                       cardBg: cardBg,
                       headingColor: headingColor,
                       bodyColor: bodyColor,

@@ -190,7 +190,10 @@ const List<HajjDua> hajjDuas = [
     transliteration:
         'Labbaikallaahumma labbaik, labbaika laa syariika laka labbaik, innal hamda wan ni\'mata laka wal mulk, laa syariika lak.',
     translations: {
-      'id': 'Aku penuhi panggilan-Mu ya Allah, aku penuhi panggilan-Mu...',
+      'id':
+          'Aku penuhi panggilan-Mu ya Allah, aku penuhi panggilan-Mu. Aku penuhi panggilan-Mu, tiada sekutu bagi-Mu, aku penuhi panggilan-Mu. Sesungguhnya segala puji, nikmat, dan kekuasaan adalah milik-Mu, tiada sekutu bagi-Mu.',
+      'en':
+          'Here I am, O Allah, here I am. Here I am, You have no partner, here I am. Truly all praise, favor, and sovereignty belong to You, You have no partner.',
     },
     descriptionKey: 'hajjDuaExistingContentDescription',
     source: 'Kementerian Agama Republik Indonesia',
@@ -242,7 +245,10 @@ const List<HajjDua> hajjDuas = [
     contextText: 'Dibaca saat melangkahkan kaki kanan memasuki Masjidil Haram.',
     arabic: 'اللَّهُمَّ افْتَحْ لِي أَبْوَابَ رَحْمَتِكَ',
     transliteration: 'Allaahummaftah lii abwaaba rahmatik.',
-    translations: {'id': 'Ya Allah, bukalah pintu-pintu rahmat-Mu untukku.'},
+    translations: {
+      'id': 'Ya Allah, bukalah pintu-pintu rahmat-Mu untukku.',
+      'en': 'O Allah, open the gates of Your mercy for me.',
+    },
     descriptionKey: 'hajjDuaExistingContentDescription',
     source: 'Kementerian Agama Republik Indonesia',
     sourceReference:
@@ -329,6 +335,8 @@ const List<HajjDua> hajjDuas = [
     translations: {
       'id':
           'Ya Tuhan kami, berilah kami kebaikan di dunia dan kebaikan di akhirat dan lindungilah kami dari azab neraka.',
+      'en':
+          'Our Lord, grant us good in this world and good in the Hereafter, and save us from the punishment of the Fire.',
     },
     descriptionKey: 'hajjDuaRukunYamaniDescription',
     source: 'Kementerian Agama Republik Indonesia',

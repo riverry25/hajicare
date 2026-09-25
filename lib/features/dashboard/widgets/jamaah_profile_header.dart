@@ -106,7 +106,7 @@ class JamaahProfileHeader extends StatelessWidget {
                               ),
                               const SizedBox(width: AppSpacing.md),
                               Text(
-                                scale.label,
+                                scale.localizedLabel(context),
                                 style: DashboardTypography.bodyMedium.copyWith(
                                   color: headingColor,
                                   fontWeight: isSelected

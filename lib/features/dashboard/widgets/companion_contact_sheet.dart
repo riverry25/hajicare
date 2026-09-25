@@ -56,13 +56,6 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
   AssistanceRequestService get _assistanceService =>
       AssistanceRequestService.instance;
 
-  List<String> get _quickMessages => [
-    'Saya tidak tahu jalan pulang',
-    'Saya terpisah dari rombongan',
-    'Saya menunggu di lokasi ini',
-    'Mohon bantuan penjemputan',
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -241,22 +234,31 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Header: "Hubungi Pendamping" + "Dapatkan bantuan dari pendamping Anda"
-                  _buildHeader(headingColor, bodyColor),
+                  // Header: "Hubungi Pendamping"
+                  _buildHeader(context, headingColor, bodyColor),
                   const SizedBox(height: 22),
 
                   // ── 1. "Apa yang terjadi?" (Pilihan Bantuan yang Jelas) ──
-                  _buildSectionTitle('Apa yang terjadi?', headingColor),
+                  _buildSectionTitle(
+                    context.tr('assistanceWhatHappened'),
+                    headingColor,
+                  ),
                   const SizedBox(height: 12),
                   _buildAssistanceTypeCards(isDark, headingColor, bodyColor),
                   const SizedBox(height: 24),
 
                   // ── 2. "Lokasi Anda" (Inti, Bukan Opsional) ───────────────
-                  _buildLocationSection(isDark, headingColor, bodyColor),
+                  _buildLocationSection(
+                    context,
+                    isDark,
+                    headingColor,
+                    bodyColor,
+                  ),
                   const SizedBox(height: 24),
 
                   // ── 3. "Tujuan Anda" (Hotel/Maktab Jamaah) ────────────────
                   _buildTargetDestinationSection(
+                    context,
                     isDark,
                     headingColor,
                     bodyColor,
@@ -264,15 +266,25 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                   const SizedBox(height: 24),
 
                   // ── 4. Quick Messages & Pesan Tambahan ─────────────────────
-                  _buildMessageSection(isDark, headingColor, bodyColor),
+                  _buildMessageSection(
+                    context,
+                    isDark,
+                    headingColor,
+                    bodyColor,
+                  ),
                   const SizedBox(height: 24),
 
                   // ── 5. Pilih Penerima ─────────────────────────────────────
-                  _buildRecipientSection(isDark, headingColor, bodyColor),
+                  _buildRecipientSection(
+                    context,
+                    isDark,
+                    headingColor,
+                    bodyColor,
+                  ),
                   const SizedBox(height: 26),
 
                   // ── 6. CTA Utama Dinamis ──────────────────────────────────
-                  _buildPrimaryCtaButton(isDark),
+                  _buildPrimaryCtaButton(context, isDark),
                   const SizedBox(height: 8),
 
                   Center(
@@ -297,7 +309,11 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
     });
   }
 
-  Widget _buildHeader(Color headingColor, Color bodyColor) {
+  Widget _buildHeader(
+    BuildContext context,
+    Color headingColor,
+    Color bodyColor,
+  ) {
     return Row(
       children: [
         Container(
@@ -323,7 +339,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Hubungi Pendamping',
+                context.tr('dashboard.contactCompanion'),
                 style: DashboardTypography.titleMedium.copyWith(
                   color: headingColor,
                   fontSize: 21,
@@ -332,7 +348,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
               ),
               const SizedBox(height: 3),
               Text(
-                'Dapatkan bantuan dari pendamping Anda',
+                context.tr('assistanceContactCompanionSub'),
                 style: TextStyle(color: bodyColor, fontSize: 13.5, height: 1.3),
               ),
             ],
@@ -548,6 +564,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
   }
 
   Widget _buildLocationSection(
+    BuildContext context,
     bool isDark,
     Color headingColor,
     Color bodyColor,
@@ -564,7 +581,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('Lokasi Anda', headingColor),
+        _buildSectionTitle(context.tr('assistanceYourLocation'), headingColor),
         const SizedBox(height: 10),
         AnimatedContainer(
           duration: const Duration(milliseconds: 200),
@@ -616,8 +633,8 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                       children: [
                         Text(
                           active
-                              ? '📍 Lokasi aktif'
-                              : '⚠️ Lokasi belum tersedia',
+                              ? context.tr('assistanceLocationActive')
+                              : context.tr('assistanceLocationUnavailable'),
                           style: TextStyle(
                             color: active
                                 ? const Color(0xFF16A34A)
@@ -629,8 +646,8 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                         const SizedBox(height: 2),
                         Text(
                           active
-                              ? 'Diperbarui beberapa detik yang lalu'
-                              : 'Aktifkan GPS dan izin akses lokasi agar pendamping dapat menemukan Anda.',
+                              ? context.tr('assistanceLocationUpdatedRecent')
+                              : context.tr('assistanceLocationEnablePrompt'),
                           style: TextStyle(color: bodyColor, fontSize: 12.5),
                         ),
                       ],
@@ -691,9 +708,9 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                           minimumSize: Size.zero,
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
-                        child: const Text(
-                          'Lihat lokasi',
-                          style: TextStyle(
+                        child: Text(
+                          context.tr('assistanceViewLocation'),
+                          style: const TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 13,
                           ),
@@ -708,7 +725,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                 Row(
                   children: [
                     Text(
-                      'Bagikan lokasi selama:',
+                      context.tr('assistanceShareDuration'),
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -722,7 +739,11 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                         children: [15, 30, 60].map((mins) {
                           final isSel = _sharingDurationMinutes == mins;
                           return ChoiceChip(
-                            label: Text(mins == 60 ? '1 Jam' : '$mins mnt'),
+                            label: Text(
+                              mins == 60
+                                  ? context.tr('durationOneHour')
+                                  : '$mins ${context.tr('minutesShort')}',
+                            ),
                             selected: isSel,
                             selectedColor: const Color(0xFF16A34A),
                             labelStyle: TextStyle(
@@ -769,8 +790,8 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                         : const Icon(Icons.my_location_rounded, size: 20),
                     label: Text(
                       _isFindingLocation
-                          ? 'Mencari lokasi...'
-                          : 'Aktifkan Lokasi',
+                          ? context.tr('searchingLocation')
+                          : context.tr('enableLocation'),
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
@@ -805,6 +826,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
   }
 
   Widget _buildTargetDestinationSection(
+    BuildContext context,
     bool isDark,
     Color headingColor,
     Color bodyColor,
@@ -824,7 +846,10 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('Tujuan Anda', headingColor),
+        _buildSectionTitle(
+          context.tr('assistanceYourDestination'),
+          headingColor,
+        ),
         const SizedBox(height: 10),
         Container(
           width: double.infinity,
@@ -870,7 +895,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '$targetRoom • Jarak: $distText',
+                      '$targetRoom • ${context.tr('assistanceDistance', {'dist': distText})}',
                       style: TextStyle(
                         color: bodyColor.withValues(alpha: 0.9),
                         fontSize: 13,
@@ -900,9 +925,12 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                   ),
                 ),
                 icon: const Icon(Icons.directions_rounded, size: 16),
-                label: const Text(
-                  'Petunjuk arah',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                label: Text(
+                  context.tr('assistanceGetDirections'),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ],
@@ -913,19 +941,27 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
   }
 
   Widget _buildMessageSection(
+    BuildContext context,
     bool isDark,
     Color headingColor,
     Color bodyColor,
   ) {
+    final quickMessages = [
+      context.tr('quickMsgLostHotel'),
+      context.tr('quickMsgSeparatedMosque'),
+      context.tr('quickMsgExhaustedWheelchair'),
+      context.tr('quickMsgSafePosition'),
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('Pesan cepat (ketuk untuk memilih):', headingColor),
+        _buildSectionTitle(context.tr('assistanceQuickMessages'), headingColor),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: _quickMessages.map((msg) {
+          children: quickMessages.map((msg) {
             return ActionChip(
               avatar: const Icon(Icons.add_rounded, size: 16),
               label: Text(msg),
@@ -941,7 +977,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
         ),
         const SizedBox(height: 16),
         Text(
-          'Pesan tambahan (opsional)',
+          context.tr('assistanceAdditionalMessage'),
           style: TextStyle(
             color: headingColor,
             fontSize: 14,
@@ -957,7 +993,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
           maxLength: 500,
           style: TextStyle(color: headingColor, fontSize: 16),
           decoration: InputDecoration(
-            hintText: 'Contoh: Saya berada di dekat pintu masuk masjid...',
+            hintText: context.tr('assistanceMessagePlaceholder'),
             hintStyle: TextStyle(
               color: bodyColor.withValues(alpha: 0.65),
               fontSize: 14,
@@ -990,6 +1026,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
   }
 
   Widget _buildRecipientSection(
+    BuildContext context,
     bool isDark,
     Color headingColor,
     Color bodyColor,
@@ -997,7 +1034,10 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('Pilih Penerima', headingColor),
+        _buildSectionTitle(
+          context.tr('assistanceSelectRecipient'),
+          headingColor,
+        ),
         const SizedBox(height: 8),
         Material(
           color: isDark
@@ -1022,7 +1062,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                     ? null
                     : (val) => setState(() => _sendToAll = val ?? false),
                 title: Text(
-                  'Satu Pendamping',
+                  context.tr('assistanceSingleCompanion'),
                   style: TextStyle(
                     color: headingColor,
                     fontSize: 15.5,
@@ -1030,7 +1070,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                   ),
                 ),
                 subtitle: Text(
-                  'Pilih pendamping yang ingin dihubungi',
+                  context.tr('assistanceSingleCompanionSub'),
                   style: TextStyle(color: bodyColor, fontSize: 12.5),
                 ),
                 secondary: const Icon(Icons.person_rounded),
@@ -1045,7 +1085,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                     ? null
                     : (val) => setState(() => _sendToAll = val ?? true),
                 title: Text(
-                  'Semua Pendamping',
+                  context.tr('assistanceAllCompanions'),
                   style: TextStyle(
                     color: headingColor,
                     fontSize: 15.5,
@@ -1053,7 +1093,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                   ),
                 ),
                 subtitle: Text(
-                  'Semua pendamping rombongan akan menerima notifikasi',
+                  context.tr('assistanceAllCompanionsSub'),
                   style: TextStyle(color: bodyColor, fontSize: 12.5),
                 ),
                 secondary: const Icon(Icons.groups_rounded),
@@ -1073,7 +1113,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                 : AppColors.surfaceWhite,
             style: TextStyle(color: headingColor, fontSize: 16),
             decoration: InputDecoration(
-              labelText: 'Nama Pendamping',
+              labelText: context.tr('assistanceCompanionName'),
               prefixIcon: const Icon(Icons.support_agent_rounded),
               filled: true,
               fillColor: isDark
@@ -1108,9 +1148,9 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
     );
   }
 
-  Widget _buildPrimaryCtaButton(bool isDark) {
+  Widget _buildPrimaryCtaButton(BuildContext context, bool isDark) {
     final String ctaText = _sendToAll
-        ? 'Kirim ke Semua Pendamping'
+        ? context.tr('assistanceSendToAll')
         : _selectedType.ctaLabel;
 
     return SizedBox(
@@ -1145,7 +1185,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                 ),
               )
             : Icon(_selectedType.icon, size: 24),
-        label: Text(_isSubmitting ? 'Mengirim Permintaan...' : ctaText),
+        label: Text(_isSubmitting ? context.tr('assistanceSending') : ctaText),
       ),
     );
   }

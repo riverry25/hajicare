@@ -83,6 +83,7 @@ flutter:
     - assets/models/bisindo/labels.json
     - assets/models/bisindo/model_config.json
     - assets/models/bisindo/hand_landmarker.task
+    - assets/models/sibi/
     - assets/audio/
   fonts:
     - family: Poppins

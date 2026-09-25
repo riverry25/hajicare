@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../locales/app_translations.dart';
 
 /// Text scale options for user-adjustable font size.
 enum AppTextScale {
-  small(0.9, 'Kecil / Small'),
-  normal(1.0, 'Normal'),
-  large(1.15, 'Besar / Large'),
-  extraLarge(1.20, 'Ekstra Besar / XL');
+  small(0.9, 'textSizeSmall'),
+  normal(1.0, 'textSizeNormal'),
+  large(1.15, 'textSizeLarge'),
+  extraLarge(1.20, 'textSizeExtraLarge');
 
-  const AppTextScale(this.factor, this.label);
+  const AppTextScale(this.factor, this.labelKey);
   final double factor;
-  final String label;
+  final String labelKey;
+
+  String get label => AppTranslations.tr(labelKey);
+  String localizedLabel(BuildContext context) => context.tr(labelKey);
 }
 
 /// Centralized GetX controller for persistent user preferences:

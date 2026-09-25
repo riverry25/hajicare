@@ -96,7 +96,7 @@ class DuaCategoryCard extends StatelessWidget {
                         ? context.tr('hajjDuaAvailableCount', {
                             'count': duaCount,
                           })
-                        : 'Bacaan tersedia',
+                        : context.tr('hajjDuaAvailableCountPlural'),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: HajjDuaTypography.metadataLabel.copyWith(
@@ -113,7 +113,10 @@ class DuaCategoryCard extends StatelessWidget {
                   children: [
                     _FeaturePill(label: 'عربي', isDark: isDark),
                     _FeaturePill(label: 'Latin', isDark: isDark),
-                    _FeaturePill(label: 'Arti', isDark: isDark),
+                    _FeaturePill(
+                      label: context.tr('hajjDuaMeaningShort'),
+                      isDark: isDark,
+                    ),
                   ],
                 ),
               ],
