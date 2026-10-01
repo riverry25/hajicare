@@ -14,6 +14,7 @@ import '../../../core/services/location_service.dart';
 import '../../../core/services/prayer_calculation_service.dart';
 import '../../../core/services/timezone_service.dart';
 import '../../../core/services/adhan_audio_service.dart';
+import '../../../core/services/adhan_native_bridge.dart';
 import '../models/prayer_location_data.dart';
 import '../models/prayer_schedule_item.dart';
 
@@ -747,6 +748,17 @@ class PrayerTimesController extends GetxController {
     }
 
     _lastPlayedAdhanKey = triggerKey;
+
+    // If adhan is already actively playing, do not start another playback
+    if (_adhanAudioService.isPlaying.value) {
+      return;
+    }
+    final isNativeRunning = await AdhanNativeBridge.isServiceRunning();
+    if (isNativeRunning) {
+      _adhanAudioService.isPlaying.value = true;
+      _adhanAudioService.currentPrayerName.value = prayerName;
+      return;
+    }
 
     if (isPrayerSoundOn(key)) {
       debugPrint('[PrayerTimesController] Triggering adhan for $prayerName');
