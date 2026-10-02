@@ -16,6 +16,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settings = Get.find<AppSettingsController>();
+    final isDark = AppColors.isDark(context);
 
     return Container(
       margin: const EdgeInsets.symmetric(
@@ -24,9 +25,13 @@ class OnboardingSlideLanguage extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.surfaceWhite,
+        color: AppColors.cardBgColor(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.goldLight.withValues(alpha: 0.3)),
+        border: Border.all(
+          color: isDark
+              ? AppColors.darkCardBorder
+              : AppColors.goldLight.withValues(alpha: 0.3),
+        ),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -45,10 +50,13 @@ class OnboardingSlideLanguage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: AppColors.canvasCream.withValues(alpha: .35),
+                color: isDark
+                    ? AppColors.darkSurfaceContainer
+                    : AppColors.canvasCream.withValues(alpha: .35),
                 borderRadius: BorderRadius.circular(18),
               ),
               child: _buildStepper(
+                context: context,
                 activeIndex: activeIndex,
                 label: context.tr('onboarding.stage1Of3'),
               ),
@@ -66,7 +74,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
               child: Text(
                 context.tr('onboarding.chooseLanguageDesc'),
                 style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.textBody,
+                  color: AppColors.textBodyColor(context),
                 ),
               ),
             ),
@@ -119,6 +127,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
                   final isSelected = currentCode == lang.$1;
 
                   return _buildLanguageCard(
+                    context: context,
                     title: lang.$2,
                     subtitle: lang.$3,
                     type: lang.$4,
@@ -137,17 +146,23 @@ class OnboardingSlideLanguage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.statusPositive.withValues(alpha: .08),
+                color: isDark
+                    ? AppColors.statusPositive.withValues(alpha: .15)
+                    : AppColors.statusPositive.withValues(alpha: .08),
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
-                  color: AppColors.statusPositive.withValues(alpha: .15),
+                  color: isDark
+                      ? AppColors.statusPositive.withValues(alpha: .3)
+                      : AppColors.statusPositive.withValues(alpha: .15),
                 ),
               ),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.volume_up_rounded,
-                    color: AppColors.statusPositive,
+                    color: isDark
+                        ? AppColors.statusSafe
+                        : AppColors.statusPositive,
                   ),
 
                   const SizedBox(width: 12),
@@ -156,7 +171,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
                     child: Text(
                       context.tr('onboarding.audioGuideHint'),
                       style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.espressoDark.withValues(alpha: 0.5),
+                        color: AppColors.textBodyColor(context),
                       ),
                     ),
                   ),
@@ -169,7 +184,13 @@ class OnboardingSlideLanguage extends StatelessWidget {
     );
   }
 
-  Widget _buildStepper({required int activeIndex, required String label}) {
+  Widget _buildStepper({
+    required BuildContext context,
+    required int activeIndex,
+    required String label,
+  }) {
+    final isDark = AppColors.isDark(context);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm2),
       child: Row(
@@ -188,8 +209,12 @@ class OnboardingSlideLanguage extends StatelessWidget {
                   height: 10,
                   decoration: BoxDecoration(
                     color: isActive
-                        ? AppColors.espressoDark
-                        : AppColors.outlineVariant,
+                        ? (isDark
+                              ? AppColors.accentGoldStar
+                              : AppColors.espressoDark)
+                        : (isDark
+                              ? AppColors.darkOutlineVariant
+                              : AppColors.outlineVariant),
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                 ),
@@ -202,7 +227,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
               label,
               textAlign: TextAlign.end,
               style: AppTypography.captionSmall.copyWith(
-                color: AppColors.tanMedium,
+                color: isDark ? AppColors.darkTextBody : AppColors.tanMedium,
               ),
             ),
           ),
@@ -212,10 +237,14 @@ class OnboardingSlideLanguage extends StatelessWidget {
   }
 
   Widget _buildLanguageHeader(BuildContext context) {
+    final isDark = AppColors.isDark(context);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.canvasCream.withValues(alpha: .35),
+        color: isDark
+            ? AppColors.darkSurfaceContainer
+            : AppColors.canvasCream.withValues(alpha: .35),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -223,14 +252,16 @@ class OnboardingSlideLanguage extends StatelessWidget {
           Container(
             width: 56,
             height: 56,
-            decoration: const BoxDecoration(
-              color: AppColors.surfaceWhite,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppColors.darkSurfaceContainerHighest
+                  : AppColors.surfaceWhite,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.translate,
               size: 26,
-              color: AppColors.espressoDark,
+              color: isDark ? AppColors.darkPrimary : AppColors.espressoDark,
             ),
           ),
 
@@ -244,7 +275,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
                   context.tr('onboarding.introTitle'),
                   style: AppTypography.titleLarge.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.espressoDark,
+                    color: AppColors.textHeadingColor(context),
                   ),
                 ),
 
@@ -253,7 +284,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
                 Text(
                   context.tr('onboarding.introDesc'),
                   style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.espressoDark.withValues(alpha: 0.5),
+                    color: AppColors.textSecondaryColor(context),
                   ),
                 ),
               ],
@@ -265,12 +296,15 @@ class OnboardingSlideLanguage extends StatelessWidget {
   }
 
   Widget _buildLanguageCard({
+    required BuildContext context,
     required String title,
     required String subtitle,
     required String type,
     required bool isSelected,
     required VoidCallback onTap,
   }) {
+    final isDark = AppColors.isDark(context);
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.card),
@@ -278,19 +312,25 @@ class OnboardingSlideLanguage extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(AppSpacing.cardPadding),
         decoration: BoxDecoration(
-          color: AppColors.surfaceWhite,
+          color: isDark
+              ? AppColors.darkSurfaceContainer
+              : AppColors.surfaceWhite,
           borderRadius: BorderRadius.circular(AppRadius.card),
           border: Border.all(
             color: isSelected
-                ? AppColors.primaryContainer
-                : AppColors.lightCardBorder,
+                ? (isDark ? AppColors.darkPrimary : AppColors.primaryContainer)
+                : AppColors.cardBorderColor(context),
             width: isSelected ? 2.0 : 1.0,
           ),
           boxShadow: [
             BoxShadow(
               color: isSelected
-                  ? AppColors.primary.withValues(alpha: 0.08)
-                  : Colors.black.withValues(alpha: 0.03),
+                  ? (isDark
+                        ? AppColors.darkPrimary.withValues(alpha: 0.15)
+                        : AppColors.primary.withValues(alpha: 0.08))
+                  : (isDark
+                        ? Colors.black.withValues(alpha: 0.2)
+                        : Colors.black.withValues(alpha: 0.03)),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -308,16 +348,22 @@ class OnboardingSlideLanguage extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? AppColors.goldPrimary.withValues(alpha: 0.15)
-                        : AppColors.canvasCream,
+                        ? (isDark
+                              ? AppColors.goldPrimary.withValues(alpha: 0.25)
+                              : AppColors.goldPrimary.withValues(alpha: 0.15))
+                        : (isDark
+                              ? AppColors.darkSurfaceContainerHighest
+                              : AppColors.canvasCream),
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Text(
                     type,
                     style: AppTypography.captionSmall.copyWith(
                       color: isSelected
-                          ? AppColors.espressoDark
-                          : AppColors.textBody,
+                          ? (isDark
+                                ? AppColors.accentGoldStar
+                                : AppColors.espressoDark)
+                          : AppColors.textBodyColor(context),
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -332,10 +378,12 @@ class OnboardingSlideLanguage extends StatelessWidget {
                           color: AppColors.statusSafe,
                           size: 22,
                         )
-                      : const Icon(
+                      : Icon(
                           Icons.radio_button_unchecked_rounded,
-                          key: ValueKey(false),
-                          color: AppColors.tanMedium,
+                          key: const ValueKey(false),
+                          color: isDark
+                              ? AppColors.darkOutline
+                              : AppColors.tanMedium,
                           size: 22,
                         ),
                 ),
@@ -346,7 +394,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
               title,
               style: AppTypography.titleMedium.copyWith(
                 fontWeight: FontWeight.w800,
-                color: AppColors.espressoDark,
+                color: AppColors.textHeadingColor(context),
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -356,7 +404,9 @@ class OnboardingSlideLanguage extends StatelessWidget {
               subtitle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppTypography.caption.copyWith(color: AppColors.textBody),
+              style: AppTypography.caption.copyWith(
+                color: AppColors.textSecondaryColor(context),
+              ),
             ),
           ],
         ),

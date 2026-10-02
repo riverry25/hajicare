@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'adhan_native_bridge.dart';
 import 'adhan_notification_service.dart';
 
 /// Service to handle playing and stopping Adhan audio.
@@ -46,11 +47,11 @@ class AdhanAudioService extends GetxService {
         _notificationService.cancelAdhanNotification();
       });
 
-      // Listen for state changes
+      // Listen for state changes - do NOT cancel notification on transient non-playing states
       _player?.onPlayerStateChanged.listen((state) {
         final active = (state == PlayerState.playing);
         isPlaying.value = active;
-        if (!active) {
+        if (state == PlayerState.completed) {
           _notificationService.cancelAdhanNotification();
         }
       });
@@ -64,7 +65,10 @@ class AdhanAudioService extends GetxService {
   /// Other canonical prayers (Dzuhur, Ashar, Maghrib, Isya) use regular adhan.
   Future<void> playAdhan({required String prayerName}) async {
     try {
-      initPlayer();
+      if (isPlaying.value && currentPrayerName.value == prayerName) {
+        return;
+      }
+
       await stopAdhan();
 
       final isFajr =
@@ -78,13 +82,24 @@ class AdhanAudioService extends GetxService {
       currentPrayerName.value = prayerName;
       isPlaying.value = true;
 
-      // Show system notification with "Matikan Adzan" button
-      await _notificationService.showAdhanNotification(
-        prayerName: prayerName,
-        onStopAdhan: stopAdhan,
-      );
+      // On Android: Start native foreground service (plays audio + displays 1 single notification)
+      bool nativeStarted = false;
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+        nativeStarted = await AdhanNativeBridge.startAdhanService(
+          prayerName: prayerName,
+          isSubuh: isFajr,
+        );
+      }
 
-      await _player?.play(AssetSource(assetPath));
+      // If native service didn't start (iOS / Web / fallback): use audioplayers and local notification
+      if (!nativeStarted) {
+        initPlayer();
+        await _notificationService.showAdhanNotification(
+          prayerName: prayerName,
+          onStopAdhan: stopAdhan,
+        );
+        await _player?.play(AssetSource(assetPath));
+      }
     } catch (e) {
       debugPrint('[AdhanAudioService] Play error for $prayerName: $e');
       isPlaying.value = false;
@@ -97,6 +112,7 @@ class AdhanAudioService extends GetxService {
   Future<void> stopAdhan() async {
     try {
       await _player?.stop();
+      await AdhanNativeBridge.stopAdhanService();
     } catch (e) {
       debugPrint('[AdhanAudioService] Stop error: $e');
     } finally {

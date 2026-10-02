@@ -23,6 +23,8 @@ class OnboardingHeroBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppColors.isDark(context);
+
     return Container(
       height: height,
       width: double.infinity,
@@ -30,7 +32,9 @@ class OnboardingHeroBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: [
           BoxShadow(
-            color: AppColors.espressoDark.withValues(alpha: .12),
+            color: isDark
+                ? Colors.black.withValues(alpha: .35)
+                : AppColors.espressoDark.withValues(alpha: .12),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),
@@ -46,11 +50,17 @@ class OnboardingHeroBanner extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.espressoDark,
-                    AppColors.primaryContainer,
-                    AppColors.espressoDark,
-                  ],
+                  colors: isDark
+                      ? [
+                          AppColors.darkSurfaceContainerHighest,
+                          AppColors.darkPrimaryContainer,
+                          AppColors.darkSurfaceContainer,
+                        ]
+                      : [
+                          AppColors.espressoDark,
+                          AppColors.primaryContainer,
+                          AppColors.espressoDark,
+                        ],
                 ),
               ),
             ),
@@ -63,7 +73,7 @@ class OnboardingHeroBanner extends StatelessWidget {
                 width: 140,
                 height: 140,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: .05),
+                  color: Colors.white.withValues(alpha: isDark ? .03 : .05),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -77,7 +87,7 @@ class OnboardingHeroBanner extends StatelessWidget {
                 width: 180,
                 height: 180,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: .04),
+                  color: Colors.white.withValues(alpha: isDark ? .02 : .04),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -99,7 +109,9 @@ class OnboardingHeroBanner extends StatelessWidget {
                 ),
                 child: Icon(
                   icon,
-                  color: Colors.white.withValues(alpha: .95),
+                  color: isDark
+                      ? AppColors.darkPrimary
+                      : Colors.white.withValues(alpha: .95),
                   size: 34,
                 ),
               ),
@@ -115,7 +127,9 @@ class OnboardingHeroBanner extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: .95),
+                  color: isDark
+                      ? AppColors.darkSurfaceContainerHighest
+                      : Colors.white.withValues(alpha: .95),
                   borderRadius: BorderRadius.circular(50),
                 ),
                 child: Row(
@@ -135,7 +149,9 @@ class OnboardingHeroBanner extends StatelessWidget {
                     Text(
                       badgeText.toUpperCase(),
                       style: AppTypography.captionSmall.copyWith(
-                        color: AppColors.espressoDark,
+                        color: isDark
+                            ? AppColors.darkTextHeading
+                            : AppColors.espressoDark,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -158,7 +174,9 @@ class OnboardingHeroBanner extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.accentGoldStar.withValues(alpha: .15),
+                      color: AppColors.accentGoldStar.withValues(
+                        alpha: isDark ? .2 : .15,
+                      ),
                       borderRadius: BorderRadius.circular(50),
                     ),
                     child: Text(
@@ -175,7 +193,9 @@ class OnboardingHeroBanner extends StatelessWidget {
                   Text(
                     title,
                     style: AppTypography.titleLarge.copyWith(
-                      color: AppColors.surfaceWhite,
+                      color: isDark
+                          ? AppColors.darkTextHeading
+                          : AppColors.surfaceWhite,
                       fontWeight: FontWeight.w800,
                       height: 1.15,
                     ),

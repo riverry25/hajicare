@@ -1052,54 +1052,55 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                   : AppColors.lightCardBorder,
             ),
           ),
-          child: RadioGroup<bool>(
-            groupValue: _sendToAll,
-            onChanged: (val) {
-              if (_isSubmitting) return;
-              setState(() => _sendToAll = val ?? false);
-            },
-            child: Column(
-              children: [
-                RadioListTile<bool>(
-                  key: const Key('recipient_one'),
-                  value: false,
-                  enabled: !_isSubmitting,
-                  title: Text(
-                    context.tr('assistanceSingleCompanion'),
-                    style: TextStyle(
-                      color: headingColor,
-                      fontSize: 15.5,
-                      fontWeight: FontWeight.w700,
+          child: AbsorbPointer(
+            absorbing: _isSubmitting,
+            child: RadioGroup<bool>(
+              groupValue: _sendToAll,
+              onChanged: (val) {
+                if (_isSubmitting) return;
+                setState(() => _sendToAll = val ?? false);
+              },
+              child: Column(
+                children: [
+                  RadioListTile<bool>(
+                    key: const Key('recipient_one'),
+                    value: false,
+                    title: Text(
+                      context.tr('assistanceSingleCompanion'),
+                      style: TextStyle(
+                        color: headingColor,
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                  subtitle: Text(
-                    context.tr('assistanceSingleCompanionSub'),
-                    style: TextStyle(color: bodyColor, fontSize: 12.5),
-                  ),
-                  secondary: const Icon(Icons.person_rounded),
-                  controlAffinity: ListTileControlAffinity.trailing,
-                ),
-                Divider(height: 1, color: bodyColor.withValues(alpha: 0.15)),
-                RadioListTile<bool>(
-                  key: const Key('recipient_all'),
-                  value: true,
-                  enabled: !_isSubmitting,
-                  title: Text(
-                    context.tr('assistanceAllCompanions'),
-                    style: TextStyle(
-                      color: headingColor,
-                      fontSize: 15.5,
-                      fontWeight: FontWeight.w700,
+                    subtitle: Text(
+                      context.tr('assistanceSingleCompanionSub'),
+                      style: TextStyle(color: bodyColor, fontSize: 12.5),
                     ),
+                    secondary: const Icon(Icons.person_rounded),
+                    controlAffinity: ListTileControlAffinity.trailing,
                   ),
-                  subtitle: Text(
-                    context.tr('assistanceAllCompanionsSub'),
-                    style: TextStyle(color: bodyColor, fontSize: 12.5),
+                  Divider(height: 1, color: bodyColor.withValues(alpha: 0.15)),
+                  RadioListTile<bool>(
+                    key: const Key('recipient_all'),
+                    value: true,
+                    title: Text(
+                      context.tr('assistanceAllCompanions'),
+                      style: TextStyle(
+                        color: headingColor,
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    subtitle: Text(
+                      context.tr('assistanceAllCompanionsSub'),
+                      style: TextStyle(color: bodyColor, fontSize: 12.5),
+                    ),
+                    secondary: const Icon(Icons.groups_rounded),
+                    controlAffinity: ListTileControlAffinity.trailing,
                   ),
-                  secondary: const Icon(Icons.groups_rounded),
-                  controlAffinity: ListTileControlAffinity.trailing,
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

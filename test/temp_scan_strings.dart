@@ -71,22 +71,29 @@ void main() {
     ];
 
     for (final dir in dirs) {
-      if (!dir.existsSync()) continue;
+      if (!dir.existsSync()) {
+        continue;
+      }
       final files = dir
           .listSync(recursive: true)
           .whereType<File>()
           .where((f) => f.path.endsWith('.dart'));
       for (final file in files) {
-        if (file.path.contains('hajj_dua_data.dart')) continue;
+        if (file.path.contains('hajj_dua_data.dart')) {
+          continue;
+        }
         final lines = file.readAsLinesSync();
         for (var i = 0; i < lines.length; i++) {
           final line = lines[i];
-          if (line.trim().startsWith('//')) continue;
+          if (line.trim().startsWith('//')) {
+            continue;
+          }
           if (line.contains('debugPrint') ||
               line.contains('print(') ||
               line.contains("key:") ||
-              line.contains("Key("))
+              line.contains("Key(")) {
             continue;
+          }
 
           for (final word in knownIndo) {
             // Find quoted strings containing word
