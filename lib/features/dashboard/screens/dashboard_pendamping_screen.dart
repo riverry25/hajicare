@@ -1367,7 +1367,7 @@ class _PilgrimsPillsSectionState extends State<_PilgrimsPillsSection>
               SizeTransition(
                 sizeFactor: _widthAnim,
                 axis: Axis.horizontal,
-                axisAlignment: 1.0,
+                alignment: Alignment.centerRight,
                 child: AnimatedOpacity(
                   opacity: _searchOpen ? 1.0 : 0.0,
                   duration: const Duration(milliseconds: 180),
