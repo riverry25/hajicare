@@ -49,3 +49,7 @@ service-account.json
 tools/seed/node_modules/
 
 config.json
+
+android/app/build/
+**/.cxx/
+
