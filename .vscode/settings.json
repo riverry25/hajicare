@@ -1,2 +1,10 @@
 {
+    "dart.flutterSdkPath": "C:\\flutter",
+    "editor.formatOnSave": true,
+    "gradle.nestedProjects": [
+        "android"
+    ],
+    "java.import.exclusions": [
+        "**/packages/adhan_foreground_service/android/**"
+    ]
 }

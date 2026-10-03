@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hajicare/features/money/models/currency_code.dart';
 import 'package:hajicare/features/money/models/money_detection.dart';
 import 'package:hajicare/features/money/services/riyal_currency_helper.dart';
 import 'package:hajicare/features/money/services/smart_multi_pass_detector.dart';
@@ -15,6 +16,7 @@ void main() {
       final info = RiyalCurrencyHelper.getInfo(className)!;
       return MoneyDetection(
         className: className,
+        currency: CurrencyCode.sar,
         displayName: info.displayName,
         spokenName: info.spokenName,
         amount: info.amount,

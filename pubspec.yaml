@@ -71,6 +71,7 @@ flutter:
   assets:
     - assets/icon.jpeg
     - assets/models/best_float16.tflite
+    - assets/models/money_recognition.tflite
     - assets/models/labels.txt
     - assets/models/hajicare_encoder.onnx
     - assets/models/hajicare_prototypes.json
