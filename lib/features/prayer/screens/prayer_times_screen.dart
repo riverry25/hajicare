@@ -12,6 +12,8 @@ import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
 import '../../../core/widgets/hajicare_header.dart';
 import '../controllers/prayer_times_controller.dart';
+import '../../../core/services/background_alarm_poc_service.dart';
+import '../../../core/services/prayer_alarm_manager_service.dart';
 
 class PrayerTimesScreen extends StatelessWidget {
   final bool showBottomNav;
@@ -1388,33 +1390,148 @@ class PrayerTimesScreen extends StatelessWidget {
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: () async {
-                await controller.scheduleTestAdhanAlarm(delaySeconds: 5);
+                final success =
+                    await BackgroundAlarmPocService.scheduleBackgroundAdhanTest(
+                      delaySeconds: 30,
+                    );
                 Get.closeAllSnackbars();
                 Get.snackbar(
-                  'Uji Coba Alarm & Pengingat Diset',
-                  'Kunci layar atau tutup aplikasi sekarang: Notifikasi pengingat akan muncul di detik ke-2, lalu suara Adzan penuh berkumandang di detik ke-5!',
+                  success
+                      ? 'Test Background Adzan 30 Detik Diset'
+                      : 'Gagal Menjadwalkan Test Adzan',
+                  success
+                      ? 'ID: 88888. Tutup HajiCare dari Recent Apps, kunci layar, lalu tunggu 30 detik untuk mendengarkan lantunan adzan!'
+                      : 'Periksa izin SCHEDULE_EXACT_ALARM di pengaturan HP.',
                   snackPosition: SnackPosition.BOTTOM,
-                  duration: const Duration(seconds: 6),
+                  duration: const Duration(seconds: 8),
                   backgroundColor: isDark
                       ? AppColors.darkSurfaceContainerHigh
                       : AppColors.espressoDark,
                   colorText: AppColors.goldLight,
-                  icon: const Icon(
-                    Icons.alarm_on_rounded,
-                    color: AppColors.goldPrimary,
+                  icon: Icon(
+                    success
+                        ? Icons.volume_up_rounded
+                        : Icons.error_outline_rounded,
+                    color: success ? AppColors.goldPrimary : Colors.redAccent,
                   ),
                   margin: const EdgeInsets.all(AppSpacing.md),
                   borderRadius: AppRadius.md,
                 );
               },
-              icon: const Icon(Icons.timer_rounded, size: 18),
+              icon: const Icon(Icons.volume_up_rounded, size: 18),
               label: const Text(
-                'Uji Coba Alarm Adzan (5 Detik)',
+                'Test Background Adzan 30 Detik',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.goldPrimary,
                 foregroundColor: AppColors.espressoDark,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () async {
+                final success =
+                    await BackgroundAlarmPocService.schedulePocAlarm(
+                      delaySeconds: 30,
+                    );
+                Get.closeAllSnackbars();
+                Get.snackbar(
+                  success
+                      ? 'POC Alarm Berhasil Dijadwalkan'
+                      : 'Gagal Menjadwalkan Alarm',
+                  success
+                      ? 'ID: 99999 (30 Detik). Tekan Home, tutup HajiCare dari Recent Apps, lalu kunci layar!'
+                      : 'Periksa izin SCHEDULE_EXACT_ALARM di pengaturan HP.',
+                  snackPosition: SnackPosition.BOTTOM,
+                  duration: const Duration(seconds: 8),
+                  backgroundColor: isDark
+                      ? AppColors.darkSurfaceContainerHigh
+                      : AppColors.espressoDark,
+                  colorText: AppColors.goldLight,
+                  icon: Icon(
+                    success
+                        ? Icons.alarm_on_rounded
+                        : Icons.error_outline_rounded,
+                    color: success ? AppColors.goldPrimary : Colors.redAccent,
+                  ),
+                  margin: const EdgeInsets.all(AppSpacing.md),
+                  borderRadius: AppRadius.md,
+                );
+              },
+              icon: const Icon(Icons.bolt_rounded, size: 18),
+              label: const Text(
+                'Test Background Alarm 30 Detik',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: isDark
+                    ? AppColors.goldLight
+                    : AppColors.goldPrimary,
+                side: BorderSide(
+                  color: isDark ? AppColors.goldLight : AppColors.goldPrimary,
+                  width: 1.5,
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                final success =
+                    await PrayerAlarmManagerService.scheduleTestPrayerAlarm(
+                      delaySeconds: 30,
+                    );
+                Get.closeAllSnackbars();
+                Get.snackbar(
+                  success
+                      ? 'Simulasi Dzuhur Test Dijadwalkan (30 Detik)'
+                      : 'Gagal Menjadwalkan Alarm Sholat',
+                  success
+                      ? 'Target: 30 detik lagi (Dzuhur Test). Tekan Home, swipe tutup HajiCare, lalu kunci layar!'
+                      : 'Periksa izin SCHEDULE_EXACT_ALARM di pengaturan HP.',
+                  snackPosition: SnackPosition.BOTTOM,
+                  duration: const Duration(seconds: 8),
+                  backgroundColor: isDark
+                      ? AppColors.darkSurfaceContainerHigh
+                      : AppColors.espressoDark,
+                  colorText: AppColors.goldLight,
+                  icon: Icon(
+                    success
+                        ? Icons.notifications_active_rounded
+                        : Icons.error_outline_rounded,
+                    color: success ? AppColors.goldPrimary : Colors.redAccent,
+                  ),
+                  margin: const EdgeInsets.all(AppSpacing.md),
+                  borderRadius: AppRadius.md,
+                );
+              },
+              icon: const Icon(Icons.mosque_rounded, size: 18),
+              label: const Text(
+                'Test Jadwal Sholat Background',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isDark
+                    ? AppColors.darkSurfaceContainerHigh
+                    : AppColors.goldPrimary,
+                foregroundColor: isDark
+                    ? AppColors.goldLight
+                    : AppColors.espressoDark,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 shape: RoundedRectangleBorder(
