@@ -1628,15 +1628,16 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: <double>{
-                        if (CurrencyRateService.instance.currentRate > 0)
-                          CurrencyRateService.instance.currentRate,
-                        4500.0,
-                        4600.0,
-                        4700.0,
-                        4750.0,
-                        4800.0,
-                      }.map((preset) {
+                      children:
+                          <double>{
+                            if (CurrencyRateService.instance.currentRate > 0)
+                              CurrencyRateService.instance.currentRate,
+                            4500.0,
+                            4600.0,
+                            4700.0,
+                            4750.0,
+                            4800.0,
+                          }.map((preset) {
                             final currentVal = double.tryParse(
                               rateController.text,
                             );

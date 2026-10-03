@@ -20,9 +20,10 @@ class OnboardingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ctrl = Get.find<OnboardingController>();
+    final isDark = AppColors.isDark(context);
 
     return Scaffold(
-      backgroundColor: AppColors.canvasCream,
+      backgroundColor: AppColors.scaffoldColor(context),
       body: SafeArea(
         child: Column(
           children: [
@@ -40,15 +41,21 @@ class OnboardingScreen extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: AppColors.espressoDark,
+                      color: isDark
+                          ? AppColors.darkSurfaceContainer
+                          : AppColors.espressoDark,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: AppColors.goldPrimary.withValues(alpha: 0.5),
+                        color: AppColors.goldPrimary.withValues(
+                          alpha: isDark ? 0.7 : 0.5,
+                        ),
                         width: 1.5,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.espressoDark.withValues(alpha: 0.15),
+                          color: isDark
+                              ? Colors.black.withValues(alpha: 0.3)
+                              : AppColors.espressoDark.withValues(alpha: 0.15),
                           blurRadius: 10,
                           offset: const Offset(0, 3),
                         ),
@@ -58,12 +65,13 @@ class OnboardingScreen extends StatelessWidget {
                       child: Image.asset(
                         'assets/icon.jpeg',
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const Icon(
-                              Icons.mosque_rounded,
-                              color: AppColors.canvasCream,
-                              size: 22,
-                            ),
+                        errorBuilder: (context, error, stackTrace) => Icon(
+                          Icons.mosque_rounded,
+                          color: isDark
+                              ? AppColors.darkPrimary
+                              : AppColors.canvasCream,
+                          size: 22,
+                        ),
                       ),
                     ),
                   ),
@@ -77,7 +85,7 @@ class OnboardingScreen extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTypography.titleLarge.copyWith(
-                            color: AppColors.espressoDark,
+                            color: AppColors.textHeadingColor(context),
                             fontWeight: FontWeight.w800,
                             height: 1.1,
                           ),
@@ -88,7 +96,9 @@ class OnboardingScreen extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTypography.caption.copyWith(
-                            color: AppColors.tanMedium,
+                            color: isDark
+                                ? AppColors.darkTextBody
+                                : AppColors.tanMedium,
                           ),
                         ),
                       ],
@@ -99,8 +109,10 @@ class OnboardingScreen extends StatelessWidget {
                   TextButton(
                     onPressed: () => ctrl.completeOnboarding(),
                     style: TextButton.styleFrom(
-                      foregroundColor: AppColors.textBody,
-                      backgroundColor: AppColors.surfaceWhite,
+                      foregroundColor: AppColors.textBodyColor(context),
+                      backgroundColor: isDark
+                          ? AppColors.darkSurfaceContainerHigh
+                          : AppColors.surfaceWhite,
                       minimumSize: const Size(0, 38),
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppSpacing.md,
@@ -108,7 +120,7 @@ class OnboardingScreen extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                         side: BorderSide(
-                          color: AppColors.lightCardBorder,
+                          color: AppColors.cardBorderColor(context),
                           width: 1.0,
                         ),
                       ),
@@ -116,7 +128,7 @@ class OnboardingScreen extends StatelessWidget {
                     child: Text(
                       context.tr('onboarding.skip'),
                       style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textBody,
+                        color: AppColors.textBodyColor(context),
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -149,7 +161,7 @@ class OnboardingScreen extends StatelessWidget {
             Obx(
               () => Container(
                 width: double.infinity,
-                color: AppColors.canvasCream,
+                color: AppColors.scaffoldColor(context),
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.screenEdgeGutter,
                   AppSpacing.sm,
@@ -173,8 +185,14 @@ class OnboardingScreen extends StatelessWidget {
                           height: 8,
                           decoration: BoxDecoration(
                             color: isActive
-                                ? AppColors.espressoDark
-                                : AppColors.goldMuted.withValues(alpha: 0.5),
+                                ? (isDark
+                                      ? AppColors.accentGoldStar
+                                      : AppColors.espressoDark)
+                                : (isDark
+                                      ? AppColors.darkOutlineVariant
+                                      : AppColors.goldMuted.withValues(
+                                          alpha: 0.5,
+                                        )),
                             borderRadius: BorderRadius.circular(AppRadius.pill),
                           ),
                         );
@@ -190,8 +208,12 @@ class OnboardingScreen extends StatelessWidget {
                       child: ElevatedButton(
                         onPressed: () => ctrl.nextPage(_totalPages),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryContainer,
-                          foregroundColor: AppColors.surfaceWhite,
+                          backgroundColor: isDark
+                              ? AppColors.darkPrimary
+                              : AppColors.primaryContainer,
+                          foregroundColor: isDark
+                              ? AppColors.darkOnPrimary
+                              : AppColors.surfaceWhite,
                           elevation: 2,
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.lg,
@@ -214,7 +236,9 @@ class OnboardingScreen extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 textAlign: TextAlign.center,
                                 style: AppTypography.labelLarge.copyWith(
-                                  color: AppColors.surfaceWhite,
+                                  color: isDark
+                                      ? AppColors.darkOnPrimary
+                                      : AppColors.surfaceWhite,
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),
@@ -224,13 +248,19 @@ class OnboardingScreen extends StatelessWidget {
                               width: 32,
                               height: 32,
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.18),
+                                color: isDark
+                                    ? AppColors.darkOnPrimary.withValues(
+                                        alpha: 0.15,
+                                      )
+                                    : Colors.white.withValues(alpha: 0.18),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.arrow_forward_rounded,
                                 size: 18,
-                                color: Colors.white,
+                                color: isDark
+                                    ? AppColors.darkOnPrimary
+                                    : Colors.white,
                               ),
                             ),
                           ],
@@ -244,10 +274,12 @@ class OnboardingScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.verified_user_rounded,
                           size: 15,
-                          color: AppColors.goldPrimary,
+                          color: isDark
+                              ? AppColors.accentGoldStar
+                              : AppColors.goldPrimary,
                         ),
                         const SizedBox(width: 6),
                         Flexible(
@@ -260,7 +292,7 @@ class OnboardingScreen extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             textAlign: TextAlign.center,
                             style: AppTypography.caption.copyWith(
-                              color: AppColors.textBody,
+                              color: AppColors.textBodyColor(context),
                               fontWeight: FontWeight.w600,
                             ),
                           ),

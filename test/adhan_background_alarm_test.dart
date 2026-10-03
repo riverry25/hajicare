@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:hajicare/core/services/adhan_notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -36,6 +37,17 @@ class MockAdhanNotificationService extends AdhanNotificationService {
   @override
   Future<void> cancelNotification(int id) async {
     cancelledIds.add(id);
+  }
+
+  @override
+  Future<List<PendingNotificationRequest>> logPendingNotifications({
+    String tag = '',
+  }) async {
+    return scheduledIds
+        .map(
+          (id) => PendingNotificationRequest(id, 'Title $id', 'Body $id', null),
+        )
+        .toList();
   }
 }
 
@@ -151,6 +163,38 @@ void main() {
         // Schedules for Mecca coordinates stored in mock SharedPreferences
         expect(service.scheduledIds.isNotEmpty, true);
         expect(service.scheduledPrayers.contains('Terbit'), false);
+      },
+    );
+
+    test(
+      'prayer notification IDs 91000-91040 are correctly structured and logged',
+      () async {
+        final service = MockAdhanNotificationService();
+        await service.scheduleUpcomingPrayers(
+          latitude: -6.2088,
+          longitude: 106.8456,
+          timezoneId: 'Asia/Jakarta',
+          countryCode: 'ID',
+          daysAhead: 5,
+        );
+
+        final pending = await service.logPendingNotifications();
+        expect(pending.isNotEmpty, true);
+
+        // Check canonical IDs exist for future scheduled days
+        final ids = pending.map((p) => p.id).toSet();
+        // Day 1: 91010..91014
+        expect(ids.contains(91010), true); // Subuh
+        expect(ids.contains(91011), true); // Dzuhur
+        expect(ids.contains(91012), true); // Ashar
+        expect(ids.contains(91013), true); // Maghrib
+        expect(ids.contains(91014), true); // Isya
+        // Day 2: 91020..91024
+        expect(ids.contains(91020), true);
+        // Day 3: 91030..91034
+        expect(ids.contains(91030), true);
+        // Day 4: 91040..91044
+        expect(ids.contains(91040), true);
       },
     );
   });

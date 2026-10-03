@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:tflite_flutter/tflite_flutter.dart' as tfl;
 
 import '../models/bisindo_prediction.dart';
+import '../models/sign_language_model.dart';
 import 'bisindo_preprocessor.dart';
 
 abstract interface class BisindoPredictor {
@@ -12,12 +13,14 @@ abstract interface class BisindoPredictor {
   );
 }
 
-/// Service managing the final deploy-ready BISINDO Tiny GRU TFLite model:
-/// - Model: `assets/models/bisindo/hajicare_bisindo_gru_float32.tflite`
-/// - Input shape: [1, 48, 135] Float32
-/// - Output shape: [1, 23] Float32
-/// - Labels: 23 classes loaded from `assets/models/bisindo/labels.json`
-/// - Config: loaded dynamically from `assets/models/bisindo/model_config.json`
+/// Service managing the deploy-ready Sign Language TFLite models (SIBI & BISINDO):
+/// - SIBI Model: `assets/models/sibi_alphabet_model_f32.tflite`
+///   Input shape: [1, 42] Float32 (single-frame 21 hand landmarks x 2)
+///   Output shape: [1, 24] Float32 (24 alphabet classes A..Y)
+/// - BISINDO Model: `assets/models/bisindo/hajicare_bisindo_gru_float32.tflite`
+///   Input shape: [1, 48, 135] Float32
+///   Output shape: [1, 23] Float32
+///   Labels: 23 classes loaded from `assets/models/bisindo/labels.json`
 class BisindoInferenceService implements BisindoPredictor {
   static const String kModelAssetPath =
       'assets/models/bisindo/hajicare_bisindo_gru_float32.tflite';
@@ -37,73 +40,101 @@ class BisindoInferenceService implements BisindoPredictor {
   double _confidenceThreshold = kDefaultConfidenceThreshold;
   bool _isInitialized = false;
 
+  SignLanguageModel _activeModel = SignLanguageModel.sibi;
+  SignLanguageModelConfig _activeConfig = SignLanguageModelConfig.sibi;
+
   bool get isInitialized => _isInitialized;
+  SignLanguageModel get activeModel => _activeModel;
+  SignLanguageModelConfig get activeConfig => _activeConfig;
   List<String> get labels => List.unmodifiable(_labels);
   double get confidenceThreshold => _confidenceThreshold;
   Map<String, dynamic> get config => Map.unmodifiable(_config);
 
-  /// Loads configuration, labels, and the TFLite interpreter.
-  Future<void> initialize() async {
-    if (_isInitialized) return;
+  /// Loads configuration, labels, and the TFLite interpreter for the default or specified model.
+  Future<void> initialize({
+    SignLanguageModel model = SignLanguageModel.sibi,
+  }) async {
+    await loadModel(SignLanguageModelConfig.forModel(model));
+  }
+
+  /// Safely switches and loads a new sign language model without crashing or leaving half-initialized state.
+  Future<void> loadModel(SignLanguageModelConfig modelConfig) async {
+    debugPrint(
+      '[SIGN_LANGUAGE][LOAD] Switching to ${modelConfig.model.displayName}...',
+    );
+    await disposeInterpreter();
 
     try {
-      debugPrint('[BISINDO][INIT] Loading model configuration...');
-      // 1. Load model_config.json
-      try {
-        final configStr = await rootBundle.loadString(kConfigAssetPath);
-        _config = json.decode(configStr) as Map<String, dynamic>;
-        if (_config.containsKey('confidence_threshold')) {
-          _confidenceThreshold = (_config['confidence_threshold'] as num)
-              .toDouble();
+      _activeModel = modelConfig.model;
+      _activeConfig = modelConfig;
+      _config = {};
+
+      // 1. Load config asset if available
+      if (modelConfig.configAsset != null) {
+        try {
+          final configStr = await rootBundle.loadString(
+            modelConfig.configAsset!,
+          );
+          _config = json.decode(configStr) as Map<String, dynamic>;
+          if (_config.containsKey('confidence_threshold')) {
+            _confidenceThreshold = (_config['confidence_threshold'] as num)
+                .toDouble();
+          } else {
+            _confidenceThreshold = modelConfig.defaultConfidenceThreshold;
+          }
+        } catch (e) {
+          debugPrint(
+            '[SIGN_LANGUAGE][LOAD] Config asset load warning ($e), using default threshold: ${modelConfig.defaultConfidenceThreshold}',
+          );
+          _confidenceThreshold = modelConfig.defaultConfidenceThreshold;
         }
-        debugPrint(
-          '[BISINDO][INIT] Config loaded: confidence_threshold=$_confidenceThreshold, seqLen=${_config['sequence_length']}, featureDim=${_config['feature_dim']}',
-        );
-      } catch (e) {
-        debugPrint(
-          '[BISINDO][INIT] Warning: Failed to load config ($e), using default threshold: $kDefaultConfidenceThreshold',
-        );
-        _confidenceThreshold = kDefaultConfidenceThreshold;
+      } else {
+        _confidenceThreshold = modelConfig.defaultConfidenceThreshold;
       }
 
-      // 2. Load labels.json as source of truth
-      debugPrint('[BISINDO][INIT] Loading labels from $kLabelsAssetPath...');
-      final labelsStr = await rootBundle.loadString(kLabelsAssetPath);
-      final Map<String, dynamic> labelsDecoded =
-          json.decode(labelsStr) as Map<String, dynamic>;
-
-      if (labelsDecoded.containsKey('labels')) {
-        final rawLabels = labelsDecoded['labels'] as List;
-        _labels = rawLabels.map((item) {
-          if (item is Map && item.containsKey('name')) {
-            return item['name'].toString();
+      // 2. Load labels
+      debugPrint(
+        '[SIGN_LANGUAGE][LOAD] Loading labels from ${modelConfig.labelAsset}...',
+      );
+      final labelsStr = await rootBundle.loadString(modelConfig.labelAsset);
+      if (modelConfig.labelAsset.endsWith('.json')) {
+        final dynamic decoded = json.decode(labelsStr);
+        if (decoded is List) {
+          _labels = decoded.cast<String>();
+        } else if (decoded is Map) {
+          if (decoded.containsKey('labels')) {
+            final rawLabels = decoded['labels'] as List;
+            _labels = rawLabels.map((item) {
+              if (item is Map && item.containsKey('name')) {
+                return item['name'].toString();
+              }
+              return item.toString();
+            }).toList();
+          } else if (decoded.containsKey('class_names')) {
+            _labels = (decoded['class_names'] as List).cast<String>();
+          } else {
+            throw StateError(
+              'Invalid JSON labels format in ${modelConfig.labelAsset}',
+            );
           }
-          return item.toString();
-        }).toList();
-      } else if (labelsDecoded.containsKey('class_names')) {
-        _labels = (labelsDecoded['class_names'] as List).cast<String>();
+        }
       } else {
-        throw StateError('Invalid labels format in $kLabelsAssetPath');
+        // Plain text labels (one per line)
+        _labels = labelsStr
+            .split('\n')
+            .map((l) => l.trim())
+            .where((l) => l.isNotEmpty)
+            .toList();
       }
 
       debugPrint(
-        '[BISINDO][INIT] Loaded ${_labels.length} classes: ${_labels.join(', ')}',
+        '[SIGN_LANGUAGE][LOAD] Loaded ${_labels.length} classes for ${modelConfig.model.displayName}: ${_labels.take(6).join(', ')}...',
       );
-
-      if (_labels.length != kExpectedNumClasses) {
-        debugPrint(
-          '[BISINDO][INIT] Warning: Loaded ${_labels.length} classes, expected $kExpectedNumClasses',
-        );
-      }
 
       // 3. Load TFLite interpreter
-      debugPrint(
-        '[BISINDO][INIT] Loading TFLite model from $kModelAssetPath...',
-      );
       final options = tfl.InterpreterOptions()..threads = 2;
-
       try {
-        final byteData = await rootBundle.load(kModelAssetPath);
+        final byteData = await rootBundle.load(modelConfig.modelAsset);
         final bytes = byteData.buffer.asUint8List(
           byteData.offsetInBytes,
           byteData.lengthInBytes,
@@ -111,10 +142,10 @@ class BisindoInferenceService implements BisindoPredictor {
         _interpreter = tfl.Interpreter.fromBuffer(bytes, options: options);
       } catch (e) {
         debugPrint(
-          '[BISINDO][INIT] fromBuffer failed ($e), falling back to fromAsset...',
+          '[SIGN_LANGUAGE][LOAD] fromBuffer failed ($e), falling back to fromAsset...',
         );
         _interpreter = await tfl.Interpreter.fromAsset(
-          kModelAssetPath,
+          modelConfig.modelAsset,
           options: options,
         );
       }
@@ -129,37 +160,26 @@ class BisindoInferenceService implements BisindoPredictor {
       final outType = outTensors.isNotEmpty ? outTensors[0].type : null;
 
       debugPrint(
-        '[BISINDO][INIT] Input Tensor: shape=$inShape, type=$inType (Expected: [1, 48, 135] Float32)',
+        '[SIGN_LANGUAGE][LOAD] ${modelConfig.model.displayName} Input: shape=$inShape, type=$inType; Output: shape=$outShape, type=$outType',
       );
-      debugPrint(
-        '[BISINDO][INIT] Output Tensor: shape=$outShape, type=$outType (Expected: [1, ${_labels.length}] Float32)',
-      );
-
-      // Verify shape constraints
-      if (inShape.length != 3 ||
-          inShape[0] != 1 ||
-          inShape[1] != kExpectedSequenceLen ||
-          inShape[2] != kExpectedFeatureDim) {
-        throw StateError(
-          'Tensor shape mismatch: Model input $inShape does not match expected [1, 48, 135]',
-        );
-      }
 
       final int outClasses = outShape.isNotEmpty ? outShape.last : 0;
       if (outClasses != _labels.length) {
         throw StateError(
-          'Output tensor classes ($outClasses) != label count (${_labels.length})',
+          'Output tensor classes ($outClasses) != label count (${_labels.length}) for ${modelConfig.model.displayName}',
         );
       }
 
       _isInitialized = true;
       debugPrint(
-        '[BISINDO][INIT] BISINDO GRU model initialized successfully ✅',
+        '[SIGN_LANGUAGE][LOAD] ${modelConfig.model.displayName} initialized successfully ✅',
       );
     } catch (e, stack) {
-      debugPrint('[BISINDO][INIT] Initialization failed: $e\n$stack');
+      debugPrint(
+        '[SIGN_LANGUAGE][LOAD] Initialization failed for ${modelConfig.model.displayName}: $e\n$stack',
+      );
       _isInitialized = false;
-      await dispose();
+      await disposeInterpreter();
       rethrow;
     }
   }
@@ -258,7 +278,7 @@ class BisindoInferenceService implements BisindoPredictor {
   Future<BisindoPrediction> predictFromLandmarks(
     List<List<List<double>>> landmarks,
   ) async {
-    if (landmarks.isEmpty) {
+    if (!_isInitialized || _interpreter == null || landmarks.isEmpty) {
       return const BisindoPrediction(
         classId: -1,
         label: '',
@@ -269,7 +289,94 @@ class BisindoInferenceService implements BisindoPredictor {
       );
     }
 
-    // Take the most recent 48 frames or pad initial frames if buffer is filling up
+    if (_activeModel == SignLanguageModel.sibi) {
+      return _predictSibi(landmarks.last);
+    } else {
+      return _predictBisindo(landmarks);
+    }
+  }
+
+  /// Single-frame inference for SIBI Alphabet model.
+  BisindoPrediction _predictSibi(List<List<double>> frame) {
+    final interpreter = _interpreter;
+    if (interpreter == null || !_isInitialized) {
+      return const BisindoPrediction(
+        classId: -1,
+        label: '',
+        confidence: 0.0,
+        distance: 1.0,
+        candidates: [],
+        isRecognized: false,
+      );
+    }
+
+    final bool hasRight = BisindoPreprocessor.isHandDetected(
+      frame,
+      BisindoPreprocessor.kRightHandStartIdx,
+      BisindoPreprocessor.kRightHandEndIdx,
+    );
+    final bool hasLeft = BisindoPreprocessor.isHandDetected(
+      frame,
+      BisindoPreprocessor.kLeftHandStartIdx,
+      BisindoPreprocessor.kLeftHandEndIdx,
+    );
+
+    if (!hasRight && !hasLeft) {
+      return const BisindoPrediction(
+        classId: -1,
+        label: '',
+        confidence: 0.0,
+        distance: 1.0,
+        candidates: [],
+        isRecognized: false,
+      );
+    }
+
+    final Float32List inputTensor =
+        BisindoPreprocessor.processSibiAlphabetFrame(frame);
+    final List<List<double>> input = [inputTensor];
+    final List<List<double>> output = [
+      List<double>.filled(_labels.length, 0.0),
+    ];
+
+    interpreter.run(input, output);
+
+    final List<double> probs = output[0];
+    final List<MapEntry<int, double>> indexedProbs = [];
+    for (int i = 0; i < probs.length; i++) {
+      indexedProbs.add(MapEntry(i, probs[i]));
+    }
+    indexedProbs.sort((a, b) => b.value.compareTo(a.value));
+
+    final topIdx = indexedProbs.first.key;
+    final topConfidence = indexedProbs.first.value;
+    final predictedLabel = _labels[topIdx];
+    final isRecognized = topConfidence >= _confidenceThreshold;
+
+    final candidates = indexedProbs
+        .take(5)
+        .map(
+          (e) => BisindoCandidate(
+            classId: e.key,
+            label: _labels[e.key],
+            distance: (1.0 - e.value).clamp(0.0, 1.0),
+            confidence: e.value,
+          ),
+        )
+        .toList();
+
+    return BisindoPrediction(
+      classId: topIdx,
+      label: predictedLabel,
+      confidence: topConfidence,
+      distance: (1.0 - topConfidence).clamp(0.0, 1.0),
+      candidates: candidates,
+      isRecognized: isRecognized,
+    );
+  }
+
+  /// Sequence-based inference for BISINDO GRU model.
+  BisindoPrediction _predictBisindo(List<List<List<double>>> landmarks) {
     final List<List<List<double>>> sourceFrames;
     if (landmarks.length >= kExpectedSequenceLen) {
       sourceFrames = landmarks.sublist(landmarks.length - kExpectedSequenceLen);
@@ -316,13 +423,18 @@ class BisindoInferenceService implements BisindoPredictor {
     return relativeDistance <= 1.60 && margin >= 0.04;
   }
 
-  Future<void> dispose() async {
+  /// Safely disposes and cleans up the active interpreter.
+  Future<void> disposeInterpreter() async {
     try {
       _interpreter?.close();
     } catch (e) {
-      debugPrint('[BISINDO] Error closing interpreter: $e');
+      debugPrint('[SIGN_LANGUAGE] Error closing interpreter: $e');
     }
     _interpreter = null;
     _isInitialized = false;
+  }
+
+  Future<void> dispose() async {
+    await disposeInterpreter();
   }
 }

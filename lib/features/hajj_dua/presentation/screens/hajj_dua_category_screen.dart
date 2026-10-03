@@ -49,12 +49,12 @@ class _HajjDuaCategoryScreenState extends State<HajjDuaCategoryScreen> {
   String? _getContextualLabel(BuildContext context) {
     if (widget.category.stage == HajjDuaStage.tawafIfadah) {
       return context.tr('hajjDuaContextualType', {
-        'type': 'Ifadah (Rukun Haji)',
+        'type': context.tr('hajjDuaTypeIfadah'),
       });
     }
     if (widget.category.stage == HajjDuaStage.tawafWada) {
       return context.tr('hajjDuaContextualType', {
-        'type': 'Wada\' (Perpisahan)',
+        'type': context.tr('hajjDuaTypeWada'),
       });
     }
     return null;
@@ -94,107 +94,169 @@ class _HajjDuaCategoryScreenState extends State<HajjDuaCategoryScreen> {
           ),
         ),
         actions: [
-          IconButton(
-            onPressed: _service.cycleTextScale,
-            icon: const Icon(Icons.format_size_rounded),
-            tooltip: 'Ukuran Teks',
-          ),
-        ],
-      ),
-      body: SafeArea(
-        top: false,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 820),
-            child: ListView(
-              key: Key('category_screen_${widget.category.stage.name}'),
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.md,
-                AppSpacing.lg,
-                AppSpacing.huge,
-              ),
-              children: [
-                _CategoryIntroduction(
-                  category: widget.category,
-                  contextualLabel: contextualLabel,
-                ),
-                if (_isTawafStage) ...[
-                  const SizedBox(height: AppSpacing.lg),
-                  _TawafCircuitGuide(
-                    selectedCircuit: _selectedCircuit,
-                    onCircuitSelected: (circuit) {
-                      setState(() => _selectedCircuit = circuit);
-                    },
-                  ),
-                ],
-                if (_isSaiStage) ...[
-                  const SizedBox(height: AppSpacing.lg),
-                  _SaiLapGuide(
-                    selectedLap: _selectedCircuit,
-                    onLapSelected: (lap) {
-                      setState(() => _selectedCircuit = lap);
-                    },
-                  ),
-                ],
-                if (_isArafahStage) ...[
-                  const SizedBox(height: AppSpacing.lg),
-                  const _ArafahGuidanceCard(),
-                ],
-                if (activities.isNotEmpty &&
-                    !_isTawafStage &&
-                    !_isSaiStage) ...[
-                  const SizedBox(height: AppSpacing.lg),
-                  _ActivityFilterChips(
-                    activities: activities,
-                    selectedActivity: _selectedActivity,
-                    onActivitySelected: (act) {
-                      setState(() => _selectedActivity = act);
-                    },
-                  ),
-                ],
-                const SizedBox(height: AppSpacing.lg),
-                if (filteredDuas.isEmpty)
-                  _EmptyCategoryState(category: widget.category)
-                else ...[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        context.tr('hajjDuaCount', {
-                          'count': filteredDuas.length,
-                        }),
-                        style: HajjDuaTypography.caption.copyWith(
-                          color: AppColors.textSecondaryColor(context),
-                        ),
+          Obx(() {
+            final multiplier = _service.textScaleMultiplier.value;
+            final percent = (multiplier * 100).toInt();
+            return IconButton(
+              onPressed: () {
+                _service.cycleTextScale();
+                final newMultiplier = _service.textScaleMultiplier.value;
+                final newPercent = (newMultiplier * 100).toInt();
+                final newLabel = newMultiplier < 1.15
+                    ? context.tr('textSizeNormal')
+                    : newMultiplier < 1.3
+                    ? context.tr('textSizeLarge')
+                    : context.tr('textSizeExtraLarge');
+                ScaffoldMessenger.of(context)
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(
+                    SnackBar(
+                      duration: const Duration(milliseconds: 1400),
+                      behavior: SnackBarBehavior.floating,
+                      content: Text(
+                        '${context.tr('textSize')}: $newLabel ($newPercent%)',
                       ),
-                      Text(
-                        'Kementerian Agama RI',
-                        style: HajjDuaTypography.metadataLabel.copyWith(
-                          color: AppColors.goldPrimary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  ...filteredDuas.map(
-                    (dua) => Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                      child: DuaCard(
-                        key: Key('dua_card_${dua.id}'),
-                        dua: dua,
-                        initiallyExpanded:
-                            dua.id == widget.initiallyExpandedDuaId,
+                    ),
+                  );
+              },
+              icon: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.format_size_rounded),
+                  const SizedBox(width: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 1.5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.goldPrimary.withValues(alpha: 0.22),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '$percent%',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.goldPrimary,
                       ),
                     ),
                   ),
                 ],
-              ],
+              ),
+              tooltip: context.tr('textSize'),
+            );
+          }),
+        ],
+      ),
+      body: Obx(() {
+        final multiplier = _service.textScaleMultiplier.value;
+        final baseScaler = MediaQuery.textScalerOf(context);
+        final effectiveScale = (baseScaler.scale(1) * multiplier).clamp(
+          0.8,
+          2.5,
+        );
+
+        return MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(effectiveScale)),
+          child: SafeArea(
+            top: false,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 820),
+                child: ListView(
+                  key: Key('category_screen_${widget.category.stage.name}'),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    AppSpacing.md,
+                    AppSpacing.lg,
+                    AppSpacing.huge,
+                  ),
+                  children: [
+                    _CategoryIntroduction(
+                      category: widget.category,
+                      contextualLabel: contextualLabel,
+                    ),
+                    if (_isTawafStage) ...[
+                      const SizedBox(height: AppSpacing.lg),
+                      _TawafCircuitGuide(
+                        selectedCircuit: _selectedCircuit,
+                        onCircuitSelected: (circuit) {
+                          setState(() => _selectedCircuit = circuit);
+                        },
+                      ),
+                    ],
+                    if (_isSaiStage) ...[
+                      const SizedBox(height: AppSpacing.lg),
+                      _SaiLapGuide(
+                        selectedLap: _selectedCircuit,
+                        onLapSelected: (lap) {
+                          setState(() => _selectedCircuit = lap);
+                        },
+                      ),
+                    ],
+                    if (_isArafahStage) ...[
+                      const SizedBox(height: AppSpacing.lg),
+                      const _ArafahGuidanceCard(),
+                    ],
+                    if (activities.isNotEmpty &&
+                        !_isTawafStage &&
+                        !_isSaiStage) ...[
+                      const SizedBox(height: AppSpacing.lg),
+                      _ActivityFilterChips(
+                        activities: activities,
+                        selectedActivity: _selectedActivity,
+                        onActivitySelected: (act) {
+                          setState(() => _selectedActivity = act);
+                        },
+                      ),
+                    ],
+                    const SizedBox(height: AppSpacing.lg),
+                    if (filteredDuas.isEmpty)
+                      _EmptyCategoryState(category: widget.category)
+                    else ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            context.tr('hajjDuaCount', {
+                              'count': filteredDuas.length,
+                            }),
+                            style: HajjDuaTypography.caption.copyWith(
+                              color: AppColors.textSecondaryColor(context),
+                            ),
+                          ),
+                          Text(
+                            'Kementerian Agama RI',
+                            style: HajjDuaTypography.metadataLabel.copyWith(
+                              color: AppColors.goldPrimary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      ...filteredDuas.map(
+                        (dua) => Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                          child: DuaCard(
+                            key: Key('dua_card_${dua.id}'),
+                            dua: dua,
+                            initiallyExpanded:
+                                dua.id == widget.initiallyExpandedDuaId,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      }),
     );
   }
 }
@@ -309,7 +371,7 @@ class _TawafCircuitGuide extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Panduan Putaran Thawaf (1 - 7)',
+                context.tr('hajjDuaTawafGuideTitle'),
                 style: HajjDuaTypography.cardTitle.copyWith(
                   color: AppColors.textHeadingColor(context),
                 ),
@@ -327,7 +389,9 @@ class _TawafCircuitGuide extends StatelessWidget {
                   padding: const EdgeInsets.only(right: 8),
                   child: ChoiceChip(
                     label: Text(
-                      'Putaran $circuitNum',
+                      context.tr('hajjDuaCircuitNumber', {
+                        'number': circuitNum,
+                      }),
                       style: TextStyle(
                         fontWeight: isSelected
                             ? FontWeight.w700
@@ -371,7 +435,9 @@ class _TawafCircuitGuide extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Ketentuan Doa Putaran ke-$selectedCircuit',
+                        context.tr('hajjDuaCircuitRules', {
+                          'number': selectedCircuit,
+                        }),
                         style: HajjDuaTypography.metadataLabel.copyWith(
                           color: isDark
                               ? AppColors.goldLight
@@ -405,11 +471,11 @@ class _SaiLapGuide extends StatelessWidget {
 
   const _SaiLapGuide({required this.selectedLap, required this.onLapSelected});
 
-  String _getLapRoute(int lap) {
+  String _getLapRoute(int lap, BuildContext context) {
     if (lap.isOdd) {
-      return 'Bukit Shafa → Bukit Marwah';
+      return context.tr('hajjDuaSafaToMarwa');
     } else {
-      return 'Bukit Marwah → Bukit Shafa';
+      return context.tr('hajjDuaMarwaToSafa');
     }
   }
 
@@ -438,7 +504,7 @@ class _SaiLapGuide extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Perjalanan Sa\'i (1 - 7)',
+                context.tr('hajjDuaSaiTripTitle'),
                 style: HajjDuaTypography.cardTitle.copyWith(
                   color: AppColors.textHeadingColor(context),
                 ),
@@ -456,7 +522,10 @@ class _SaiLapGuide extends StatelessWidget {
                   padding: const EdgeInsets.only(right: 8),
                   child: ChoiceChip(
                     label: Text(
-                      'Trip $lapNum/7',
+                      context.tr('hajjDuaSaiLapNumber', {
+                        'lap': lapNum,
+                        'total': 7,
+                      }),
                       style: TextStyle(
                         fontWeight: isSelected
                             ? FontWeight.w700
@@ -498,7 +567,11 @@ class _SaiLapGuide extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'Perjalanan $selectedLap dari 7: ${_getLapRoute(selectedLap)}',
+                      context.tr('hajjDuaSaiLapDetail', {
+                        'lap': selectedLap,
+                        'total': 7,
+                        'route': _getLapRoute(selectedLap, context),
+                      }),
                       style: HajjDuaTypography.metadataLabel.copyWith(
                         color: isDark
                             ? AppColors.goldLight
@@ -557,7 +630,7 @@ class _ArafahGuidanceCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Panduan Wukuf di Arafah',
+                  context.tr('hajjDuaArafahGuideTitle'),
                   style: HajjDuaTypography.cardTitle.copyWith(
                     color: AppColors.textHeadingColor(context),
                   ),

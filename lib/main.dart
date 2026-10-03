@@ -12,12 +12,23 @@ import 'core/routes/app_routes.dart';
 import 'core/state/app_settings_controller.dart';
 import 'core/state/app_startup_controller.dart';
 import 'core/state/hajicare_controller.dart';
+import 'package:flutter/foundation.dart';
+import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'features/notification/controllers/notification_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Initialize AndroidAlarmManager for background exact alarms
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    try {
+      await AndroidAlarmManager.initialize();
+    } catch (e) {
+      debugPrint('[Main] AndroidAlarmManager initialization error: $e');
+    }
+  }
 
   // Register global permanent controllers before runApp.
   final settings = Get.put(AppSettingsController(), permanent: true);

@@ -134,6 +134,18 @@ class BisindoRecognitionController extends GetxController {
     _lastHandSeenAt = now ?? DateTime.now();
   }
 
+  double? _customConfidenceThreshold;
+  int? _customStablePredictionsRequired;
+
+  /// Sets model-specific threshold overrides (e.g. for YOLO SIBI vs BISINDO GRU).
+  void setModelThresholds({
+    double? confidenceThreshold,
+    int? stablePredictionsRequired,
+  }) {
+    _customConfidenceThreshold = confidenceThreshold;
+    _customStablePredictionsRequired = stablePredictionsRequired;
+  }
+
   /// Processes inference result through confidence check and stability gate.
   void handlePrediction(BisindoPrediction prediction, {DateTime? now}) {
     if (_isClosed || !isCameraActive.value) return;
@@ -144,7 +156,10 @@ class BisindoRecognitionController extends GetxController {
     candidateConfidence.value = conf;
     confidence.value = conf;
 
-    final double threshold = config.confidenceThreshold;
+    final double threshold =
+        _customConfidenceThreshold ?? config.confidenceThreshold;
+    final int requiredStreak =
+        _customStablePredictionsRequired ?? config.stablePredictionsRequired;
 
     // Check confidence threshold
     if (!prediction.isRecognized ||
@@ -171,18 +186,15 @@ class BisindoRecognitionController extends GetxController {
     _consecutivePredictions.add(prediction.label);
     final streak = _consecutivePredictions.length;
     stabilityStreak.value = streak;
-    holdProgress.value = (streak / config.stablePredictionsRequired).clamp(
-      0.0,
-      1.0,
-    );
+    holdProgress.value = (streak / requiredStreak).clamp(0.0, 1.0);
 
-    if (kDebugMode) {
+    if (kDebugMode && (streak == 1 || streak >= requiredStreak)) {
       debugPrint(
-        '[BISINDO] candidate=${prediction.label} conf=${(conf * 100).toStringAsFixed(1)}% streak=$streak/${config.stablePredictionsRequired} hold=${(holdProgress.value * 100).round()}%',
+        '[SIGN_LANGUAGE] candidate=${prediction.label} conf=${(conf * 100).toStringAsFixed(1)}% streak=$streak/$requiredStreak hold=${(holdProgress.value * 100).round()}%',
       );
     }
 
-    if (streak >= config.stablePredictionsRequired) {
+    if (streak >= requiredStreak) {
       _commitLabel(prediction.label, timestamp);
     }
   }
@@ -243,6 +255,20 @@ class BisindoRecognitionController extends GetxController {
   void insertSpace() {
     if (tokens.isEmpty || tokens.last.type == SignTokenType.space) return;
     tokens.add(const SignToken.space());
+    _refreshTranscript();
+  }
+
+  void insertWord(String word) {
+    final trimmed = word.trim();
+    if (trimmed.isEmpty) return;
+    tokens.add(SignToken.word(trimmed));
+    _refreshTranscript();
+  }
+
+  void insertLetter(String letter) {
+    final trimmed = letter.trim().toUpperCase();
+    if (trimmed.isEmpty) return;
+    tokens.add(SignToken.letter(trimmed));
     _refreshTranscript();
   }
 

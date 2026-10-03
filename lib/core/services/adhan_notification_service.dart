@@ -4,6 +4,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'adhan_native_bridge.dart';
 import 'prayer_calculation_service.dart';
 
 /// Top-level callback required by flutter_local_notifications for background notification actions.
@@ -18,6 +19,7 @@ void adhanBackgroundNotificationResponse(NotificationResponse response) {
       response.notificationResponseType ==
           NotificationResponseType.selectedNotification) {
     AdhanNotificationService.globalStopAdhanCallback?.call();
+    unawaited(AdhanNativeBridge.stopAdhanService());
     try {
       final plugin = AdhanNotificationService.activePlugin;
       if (plugin != null) {
@@ -282,12 +284,25 @@ class AdhanNotificationService {
     required String timezoneId,
   }) async {
     final now = DateTime.now();
-    if (scheduledTime.isBefore(now)) return;
+    if (scheduledTime.isBefore(now)) {
+      debugPrint(
+        '[AdhanNotificationService] [SKIP] Cannot schedule $prayerName for past time: $scheduledTime (now: $now, id: $id)',
+      );
+      return;
+    }
+
+    debugPrint(
+      '[AdhanNotificationService] [SCHEDULE-START] Prayer: $prayerName | ID: $id | ScheduledTime: $scheduledTime | Timezone: $timezoneId',
+    );
 
     try {
       if (!_isInitialized) {
         await initialize();
       }
+
+      final isSubuh =
+          prayerName.trim().toLowerCase() == 'subuh' ||
+          prayerName.trim().toLowerCase() == 'fajr';
 
       tz.initializeTimeZones();
       tz.Location location;
@@ -298,9 +313,6 @@ class AdhanNotificationService {
       }
       final tzScheduled = tz.TZDateTime.from(scheduledTime, location);
 
-      final isSubuh =
-          prayerName.trim().toLowerCase() == 'subuh' ||
-          prayerName.trim().toLowerCase() == 'fajr';
       final soundRes = isSubuh ? soundAdzanSubuh : soundAdzanRegular;
       final channelId = isSubuh ? channelIdSubuh : channelIdRegular;
       final channelName = isSubuh ? channelNameSubuh : channelNameRegular;
@@ -342,36 +354,24 @@ class AdhanNotificationService {
         iOS: darwinDetails,
       );
 
-      try {
-        await _notificationsPlugin.zonedSchedule(
-          id: id,
-          title: 'Waktu Salat $prayerName Telah Tiba',
-          body:
-              'Mari tunaikan salat $prayerName. Suara adzan sedang berkumandang.',
-          scheduledDate: tzScheduled,
-          notificationDetails: notificationDetails,
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        );
-      } catch (scheduleErr) {
-        debugPrint(
-          '[AdhanNotificationService] Exact alarm failed, trying inexact fallback: $scheduleErr',
-        );
-        await _notificationsPlugin.zonedSchedule(
-          id: id,
-          title: 'Waktu Salat $prayerName Telah Tiba',
-          body:
-              'Mari tunaikan salat $prayerName. Suara adzan sedang berkumandang.',
-          scheduledDate: tzScheduled,
-          notificationDetails: notificationDetails,
-          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        );
-      }
+      // Primary reliable background notification scheduling
+      await _notificationsPlugin.zonedSchedule(
+        id: id,
+        title: 'Waktu Salat $prayerName Telah Tiba',
+        body:
+            'Mari tunaikan salat $prayerName. Suara adzan sedang berkumandang.',
+        scheduledDate: tzScheduled,
+        notificationDetails: notificationDetails,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      );
 
       debugPrint(
-        '[AdhanNotificationService] Scheduled adhan for $prayerName at $tzScheduled (ID: $id)',
+        '[AdhanNotificationService] [ZONED-SCHEDULE-SUCCESS] Scheduled adhan for $prayerName at $tzScheduled (ID: $id, channel: $channelId, sound: $soundRes)',
       );
     } catch (e) {
-      debugPrint('[AdhanNotificationService] Error scheduling adhan: $e');
+      debugPrint(
+        '[AdhanNotificationService] [ERROR] Failed to schedule adhan for $prayerName (ID: $id): $e',
+      );
     }
   }
 
@@ -593,15 +593,18 @@ class AdhanNotificationService {
     }
   }
 
-  /// Schedules a test adhan notification [delaySeconds] from now, including an approaching reminder.
+  /// Schedules a test adhan notification [delaySeconds] from now.
   /// Useful for users to verify that background alarms and audio play properly when phone is locked or app is closed.
-  Future<void> scheduleTestAdhan({int delaySeconds = 5}) async {
+  Future<void> scheduleTestAdhan({
+    int delaySeconds = 5,
+    bool includeReminder = false,
+  }) async {
     final now = DateTime.now();
     tz.initializeTimeZones();
     final localTz = tz.local.name.isNotEmpty ? tz.local.name : 'Asia/Jakarta';
 
-    // 1. Pre-adhan approaching reminder simulation (fires 2 seconds ahead if delaySeconds >= 4)
-    if (delaySeconds >= 4) {
+    // 1. Optional pre-adhan approaching reminder simulation
+    if (includeReminder && delaySeconds >= 4) {
       final simReminderTime = now.add(const Duration(seconds: 2));
       final simPrayerTime = now.add(Duration(seconds: delaySeconds));
       await schedulePrayerReminder(
@@ -627,10 +630,14 @@ class AdhanNotificationService {
   /// Cancel specific notification by ID
   Future<void> cancelNotification(int id) async {
     try {
+      debugPrint(
+        '[AdhanNotificationService] [CANCEL] Cancelling notification ID: $id',
+      );
       await _notificationsPlugin.cancel(id: id);
+      await AdhanNativeBridge.cancelNativeAdhan(id: id);
     } catch (e) {
       debugPrint(
-        '[AdhanNotificationService] Cancel notification $id error: $e',
+        '[AdhanNotificationService] [ERROR] Cancel notification $id error: $e',
       );
     }
   }
@@ -643,9 +650,13 @@ class AdhanNotificationService {
   /// Cancel all scheduled and active adhan notifications
   Future<void> cancelAllScheduledAdhans() async {
     try {
+      debugPrint(
+        '[AdhanNotificationService] [CANCEL-ALL] Cancelling all scheduled adhan notifications',
+      );
       await _notificationsPlugin.cancelAll();
+      await AdhanNativeBridge.stopAdhanService();
     } catch (e) {
-      debugPrint('[AdhanNotificationService] Cancel all error: $e');
+      debugPrint('[AdhanNotificationService] [ERROR] Cancel all error: $e');
     }
   }
 

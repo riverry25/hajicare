@@ -31,7 +31,7 @@ void main() {
         expect(dua!.arabic.trim(), isNotEmpty);
         expect(dua.transliteration?.trim(), isNotEmpty);
         expect(dua.translationFor('id')?.trim(), isNotEmpty);
-        expect(dua.translationFor('en'), dua.translationFor('id'));
+        expect(dua.translationFor('en')?.trim(), isNotEmpty);
         expect(dua.requiresSourceVerification, isTrue);
       }
     });

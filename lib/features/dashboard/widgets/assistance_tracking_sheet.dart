@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import '../../../core/locales/app_translations.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/theme/app_colors.dart';
@@ -72,15 +73,22 @@ class AssistanceTrackingSheet extends StatelessWidget {
               const SizedBox(height: 16),
 
               // Header Status
-              _buildHeader(current, isDark, headingColor, bodyColor),
+              _buildHeader(context, current, isDark, headingColor, bodyColor),
               const SizedBox(height: 20),
 
               // Status Lifecycle Progress Timeline
-              _buildLifecycleTimeline(current, isDark, headingColor, bodyColor),
+              _buildLifecycleTimeline(
+                context,
+                current,
+                isDark,
+                headingColor,
+                bodyColor,
+              ),
               const SizedBox(height: 20),
 
               // Detail Bantuan Card
               _buildRequestDetailsCard(
+                context,
                 current,
                 isDark,
                 headingColor,
@@ -131,9 +139,9 @@ class AssistanceTrackingSheet extends StatelessWidget {
                         ),
                       ),
                       icon: const Icon(Icons.map_rounded, size: 20),
-                      label: const Text(
-                        'Lihat di Peta',
-                        style: TextStyle(fontWeight: FontWeight.w700),
+                      label: Text(
+                        context.tr('viewOnMap'),
+                        style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
                   ),
@@ -156,9 +164,9 @@ class AssistanceTrackingSheet extends StatelessWidget {
                           ),
                         ),
                         icon: const Icon(Icons.close_rounded, size: 20),
-                        label: const Text(
-                          'Batalkan',
-                          style: TextStyle(fontWeight: FontWeight.w700),
+                        label: Text(
+                          context.tr('assistanceCancelAction'),
+                          style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                       ),
                     ),
@@ -169,6 +177,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
               if (!isCompleted) ...[
                 const SizedBox(height: 24),
                 _buildCompanionSimulatorToolbar(
+                  context,
                   service,
                   current,
                   isDark,
@@ -183,6 +192,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
   }
 
   Widget _buildHeader(
+    BuildContext context,
     AssistanceRequestModel current,
     bool isDark,
     Color headingColor,
@@ -204,16 +214,16 @@ class AssistanceTrackingSheet extends StatelessWidget {
         : Icons.notifications_active_rounded;
 
     final String titleText = isDone
-        ? 'Bantuan Telah Selesai'
+        ? context.tr('assistanceTrackingTitleDone')
         : isEnRoute
-        ? 'Pendamping Menuju Lokasi'
-        : 'Permintaan Bantuan Terkirim';
+        ? context.tr('assistanceTrackingTitleEnRoute')
+        : context.tr('assistanceTrackingTitleSent');
 
     final String subtitleText = isDone
-        ? 'Alhamdulillah, Anda sudah terhubung dengan pendamping.'
+        ? context.tr('assistanceTrackingSubDone')
         : isEnRoute
-        ? 'Pendamping sedang bergerak ke tempat Anda. Tetap di posisi.'
-        : 'Pendamping Anda telah diberi tahu. Tetap tenang dan tunggu di lokasi.';
+        ? context.tr('assistanceTrackingSubEnRoute')
+        : context.tr('assistanceTrackingSubSent');
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -262,6 +272,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
   }
 
   Widget _buildLifecycleTimeline(
+    BuildContext context,
     AssistanceRequestModel current,
     bool isDark,
     Color headingColor,
@@ -300,7 +311,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'STATUS PERMINTAAN',
+                context.tr('assistanceStatusRequestHeader'),
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
@@ -312,7 +323,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           _timelineStep(
-            title: 'Permintaan terkirim',
+            title: context.tr('assistanceRequestSent'),
             time: _formatTime(current.createdAt),
             isDone: step1Active,
             isCurrent: status == AssistanceStatus.sent,
@@ -321,10 +332,12 @@ class AssistanceTrackingSheet extends StatelessWidget {
           ),
           _timelineConnector(step2Active),
           _timelineStep(
-            title: 'Diterima pendamping',
+            title: context.tr('assistanceTimelineAccepted'),
             time: current.acknowledgedAt != null
                 ? _formatTime(current.acknowledgedAt!)
-                : (step2Active ? 'Dikonfirmasi' : 'Menunggu respons'),
+                : (step2Active
+                      ? context.tr('assistanceStatusConfirmed')
+                      : context.tr('assistanceStatusWaitingResponse')),
             isDone: step2Active,
             isCurrent: status == AssistanceStatus.acknowledged,
             headingColor: headingColor,
@@ -332,10 +345,12 @@ class AssistanceTrackingSheet extends StatelessWidget {
           ),
           _timelineConnector(step3Active),
           _timelineStep(
-            title: 'Pendamping menuju lokasi',
+            title: context.tr('assistanceTimelineEnRoute'),
             time: current.onTheWayAt != null
                 ? _formatTime(current.onTheWayAt!)
-                : (step3Active ? 'Dalam perjalanan' : 'Menunggu persiapan'),
+                : (step3Active
+                      ? context.tr('assistanceStatusInTransit')
+                      : context.tr('assistanceStatusPreparing')),
             isDone: step3Active,
             isCurrent: status == AssistanceStatus.onTheWay,
             headingColor: headingColor,
@@ -343,10 +358,12 @@ class AssistanceTrackingSheet extends StatelessWidget {
           ),
           _timelineConnector(step4Active),
           _timelineStep(
-            title: 'Bantuan selesai',
+            title: context.tr('assistanceTimelineFinished'),
             time: current.completedAt != null
                 ? _formatTime(current.completedAt!)
-                : (step4Active ? 'Selesai' : 'Belum selesai'),
+                : (step4Active
+                      ? context.tr('assistanceStatusFinished')
+                      : context.tr('assistanceStatusNotFinished')),
             isDone: step4Active,
             isCurrent: status == AssistanceStatus.completed,
             headingColor: headingColor,
@@ -439,6 +456,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
   }
 
   Widget _buildRequestDetailsCard(
+    BuildContext context,
     AssistanceRequestModel current,
     bool isDark,
     Color headingColor,
@@ -478,7 +496,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
           const SizedBox(height: 12),
           _infoRow(
             icon: Icons.place_rounded,
-            label: 'Lokasi Anda',
+            label: context.tr('assistanceYourLocation'),
             value: current.humanReadableLocation,
             iconColor: const Color(0xFFE64A19),
             headingColor: headingColor,
@@ -487,7 +505,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
           const SizedBox(height: 10),
           _infoRow(
             icon: Icons.hotel_rounded,
-            label: 'Tujuan Hotel',
+            label: context.tr('assistanceYourDestination'),
             value:
                 '${current.targetHotel}${current.targetRoom != null ? " • ${current.targetRoom}" : ""}',
             iconColor: const Color(0xFF8E24AA),
@@ -498,7 +516,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
             const SizedBox(height: 10),
             _infoRow(
               icon: Icons.chat_bubble_outline_rounded,
-              label: 'Pesan Tambahan',
+              label: context.tr('assistanceAdditionalMessage'),
               value: current.message,
               iconColor: const Color(0xFF0284C7),
               headingColor: headingColor,
@@ -508,10 +526,11 @@ class AssistanceTrackingSheet extends StatelessWidget {
           const SizedBox(height: 10),
           _infoRow(
             icon: Icons.support_agent_rounded,
-            label: 'Penerima Bantuan',
+            label: context.tr('assistanceRecipientLabel'),
             value: current.sendToAll
-                ? 'Semua Pendamping Rombongan'
-                : (current.assignedPendampingName ?? 'Pendamping'),
+                ? context.tr('assistanceAllGroupCompanions')
+                : (current.assignedPendampingName ??
+                      context.tr('dashboard.officerFallback')),
             iconColor: const Color(0xFF16A34A),
             headingColor: headingColor,
             bodyColor: bodyColor,
@@ -582,7 +601,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            'Apakah Anda sudah bersama pendamping?',
+            context.tr('assistanceAreYouWithCompanion'),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 15,
@@ -592,7 +611,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Tekan tombol di bawah jika Anda sudah bertemu dengan pendamping.',
+            context.tr('assistancePressBelowIfMet'),
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12.5, color: bodyColor),
           ),
@@ -608,9 +627,8 @@ class AssistanceTrackingSheet extends StatelessWidget {
                 onCompleted?.call();
                 AppAlert.success(
                   context,
-                  title: 'Bantuan Selesai',
-                  message:
-                      'Anda sudah terhubung dengan pendamping. Berbagi lokasi dihentikan.',
+                  title: context.tr('assistanceConfirmDoneTitle'),
+                  message: context.tr('assistanceConfirmDoneDesc'),
                 );
               },
               style: ElevatedButton.styleFrom(
@@ -622,9 +640,12 @@ class AssistanceTrackingSheet extends StatelessWidget {
                 elevation: 0,
               ),
               icon: const Icon(Icons.check_circle_outline_rounded, size: 24),
-              label: const Text(
-                'Ya, Saya Sudah Ditemukan',
-                style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.w800),
+              label: Text(
+                context.tr('assistanceFoundButton'),
+                style: const TextStyle(
+                  fontSize: 16.5,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ),
@@ -655,7 +676,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Bantuan Selesai',
+            context.tr('assistanceConfirmDoneTitle'),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
@@ -663,10 +684,10 @@ class AssistanceTrackingSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Anda sudah aman bersama pendamping. Berbagi lokasi dihentikan.',
+          Text(
+            context.tr('assistanceCompletedSafeBanner'),
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13),
+            style: const TextStyle(fontSize: 13),
           ),
           const SizedBox(height: 12),
           TextButton(
@@ -674,9 +695,9 @@ class AssistanceTrackingSheet extends StatelessWidget {
               AssistanceRequestService.instance.clearActiveRequest();
               Get.back();
             },
-            child: const Text(
-              'Tutup',
-              style: TextStyle(fontWeight: FontWeight.w800),
+            child: Text(
+              context.tr('close'),
+              style: const TextStyle(fontWeight: FontWeight.w800),
             ),
           ),
         ],
@@ -685,6 +706,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
   }
 
   Widget _buildCompanionSimulatorToolbar(
+    BuildContext context,
     AssistanceRequestService service,
     AssistanceRequestModel current,
     bool isDark,
@@ -710,7 +732,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                'SIMULASI RESPON PENDAMPING (TEST FLOW)',
+                context.tr('assistanceSimHeader'),
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
@@ -728,9 +750,9 @@ class AssistanceTrackingSheet extends StatelessWidget {
               ActionChip(
                 key: const Key('sim_acknowledge_button'),
                 avatar: const Icon(Icons.mark_email_read_rounded, size: 16),
-                label: const Text(
-                  'Pendamping Terima',
-                  style: TextStyle(fontSize: 12),
+                label: Text(
+                  context.tr('assistanceSimAcknowledge'),
+                  style: const TextStyle(fontSize: 12),
                 ),
                 onPressed: () {
                   HapticFeedback.selectionClick();
@@ -740,9 +762,9 @@ class AssistanceTrackingSheet extends StatelessWidget {
               ActionChip(
                 key: const Key('sim_on_the_way_button'),
                 avatar: const Icon(Icons.directions_run_rounded, size: 16),
-                label: const Text(
-                  'Menuju Lokasi',
-                  style: TextStyle(fontSize: 12),
+                label: Text(
+                  context.tr('assistanceSimEnRoute'),
+                  style: const TextStyle(fontSize: 12),
                 ),
                 onPressed: () {
                   HapticFeedback.selectionClick();
@@ -759,10 +781,10 @@ class AssistanceTrackingSheet extends StatelessWidget {
   void _confirmCancel(BuildContext context, AssistanceRequestService service) {
     AppAlert.confirm(
       context,
-      title: 'Batalkan Permintaan?',
-      message: 'Apakah Anda yakin ingin membatalkan permintaan bantuan ini?',
-      confirmText: 'Ya, Batalkan',
-      cancelText: 'Kembali',
+      title: context.tr('assistanceCancelPromptTitle'),
+      message: context.tr('assistanceCancelPromptDesc'),
+      confirmText: context.tr('assistanceYesCancel'),
+      cancelText: context.tr('assistanceBack'),
       isDestructive: true,
       onConfirm: () {
         service.cancelRequest();

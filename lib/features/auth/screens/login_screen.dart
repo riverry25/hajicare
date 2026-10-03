@@ -206,9 +206,9 @@ class LoginScreen extends StatelessWidget {
                           GestureDetector(
                             onTap: () {
                               debugPrint(
-                                '[DEMO] Tapping badge -> navigating to Bisindo',
+                                '[DEMO] Tapping badge -> navigating to Sign Language',
                               );
-                              Get.toNamed(AppRoutes.bisindo);
+                              Get.toNamed(AppRoutes.signLanguage);
                             },
                             child: Container(
                               padding: const EdgeInsets.symmetric(

@@ -14,6 +14,8 @@ import '../../../core/services/location_service.dart';
 import '../../../core/services/prayer_calculation_service.dart';
 import '../../../core/services/timezone_service.dart';
 import '../../../core/services/adhan_audio_service.dart';
+import '../../../core/services/adhan_native_bridge.dart';
+import '../../../core/services/prayer_alarm_manager_service.dart';
 import '../models/prayer_location_data.dart';
 import '../models/prayer_schedule_item.dart';
 
@@ -672,22 +674,35 @@ class PrayerTimesController extends GetxController {
   /// Synchronizes exact system alarm notifications for upcoming prayers (next 7 days)
   void _syncUpcomingPrayerAlarms() {
     if (currentLat.value == 0.0 && currentLng.value == 0.0) return;
+    final tz = timezoneName.value.isNotEmpty
+        ? timezoneName.value
+        : 'Asia/Jakarta';
+    final cCode = countryCode.value.isNotEmpty ? countryCode.value : 'ID';
+
     unawaited(
       _adhanAudioService.notificationService.scheduleUpcomingPrayers(
         latitude: currentLat.value,
         longitude: currentLng.value,
-        timezoneId: timezoneName.value.isNotEmpty
-            ? timezoneName.value
-            : 'Asia/Jakarta',
-        countryCode: countryCode.value.isNotEmpty ? countryCode.value : 'ID',
+        timezoneId: tz,
+        countryCode: cCode,
         isPrayerSoundEnabled: isPrayerSoundOn,
+      ),
+    );
+
+    // Parallel background exact alarm scheduling via AndroidAlarmManager (alarmClock)
+    unawaited(
+      PrayerAlarmManagerService.scheduleUpcomingPrayers(
+        latitude: currentLat.value,
+        longitude: currentLng.value,
+        timezoneId: tz,
+        countryCode: cCode,
       ),
     );
   }
 
   /// Trigger a test background adhan alarm [delaySeconds] from now so the user can verify
   /// background execution without waiting for actual prayer time.
-  Future<void> scheduleTestAdhanAlarm({int delaySeconds = 5}) async {
+  Future<void> scheduleTestAdhanAlarm({int delaySeconds = 30}) async {
     await _adhanAudioService.notificationService.requestPermissions();
     await _adhanAudioService.notificationService.scheduleTestAdhan(
       delaySeconds: delaySeconds,
@@ -747,6 +762,17 @@ class PrayerTimesController extends GetxController {
     }
 
     _lastPlayedAdhanKey = triggerKey;
+
+    // If adhan is already actively playing, do not start another playback
+    if (_adhanAudioService.isPlaying.value) {
+      return;
+    }
+    final isNativeRunning = await AdhanNativeBridge.isServiceRunning();
+    if (isNativeRunning) {
+      _adhanAudioService.isPlaying.value = true;
+      _adhanAudioService.currentPrayerName.value = prayerName;
+      return;
+    }
 
     if (isPrayerSoundOn(key)) {
       debugPrint('[PrayerTimesController] Triggering adhan for $prayerName');

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hajicare/core/locales/app_translations.dart';
 
 enum AssistanceType { lostWay, separated, pickup, message }
 
@@ -6,26 +7,26 @@ extension AssistanceTypeExtension on AssistanceType {
   String get title {
     switch (this) {
       case AssistanceType.lostWay:
-        return 'Saya tidak tahu jalan pulang';
+        return AppTranslations.tr('assistanceTypeLostWayTitle');
       case AssistanceType.separated:
-        return 'Saya terpisah dari rombongan';
+        return AppTranslations.tr('assistanceTypeSeparatedTitle');
       case AssistanceType.pickup:
-        return 'Saya membutuhkan penjemputan';
+        return AppTranslations.tr('assistanceTypePickupTitle');
       case AssistanceType.message:
-        return 'Saya ingin mengirim pesan';
+        return AppTranslations.tr('assistanceTypeMessageTitle');
     }
   }
 
   String get description {
     switch (this) {
       case AssistanceType.lostWay:
-        return 'Bantu saya menemukan jalan kembali ke hotel';
+        return AppTranslations.tr('assistanceTypeLostWayDesc');
       case AssistanceType.separated:
-        return 'Kirim lokasi saya kepada pendamping';
+        return AppTranslations.tr('assistanceTypeSeparatedDesc');
       case AssistanceType.pickup:
-        return 'Minta pendamping datang ke lokasi saya';
+        return AppTranslations.tr('assistanceTypePickupDesc');
       case AssistanceType.message:
-        return 'Kirim informasi kepada pendamping';
+        return AppTranslations.tr('assistanceTypeMessageDesc');
     }
   }
 
@@ -45,26 +46,26 @@ extension AssistanceTypeExtension on AssistanceType {
   String get ctaLabel {
     switch (this) {
       case AssistanceType.lostWay:
-        return 'Minta Bantuan';
+        return AppTranslations.tr('assistanceCtaRequestHelp');
       case AssistanceType.separated:
-        return 'Minta Bantuan';
+        return AppTranslations.tr('assistanceCtaRequestHelp');
       case AssistanceType.pickup:
-        return 'Minta Penjemputan';
+        return AppTranslations.tr('assistanceCtaRequestPickup');
       case AssistanceType.message:
-        return 'Kirim Pesan';
+        return AppTranslations.tr('assistanceCtaSendMessage');
     }
   }
 
   String get defaultQuickMessage {
     switch (this) {
       case AssistanceType.lostWay:
-        return 'Saya tidak tahu jalan pulang, mohon panduan arah ke hotel.';
+        return AppTranslations.tr('assistanceTypeLostWayTitle');
       case AssistanceType.separated:
-        return 'Saya terpisah dari rombongan dan menunggu di lokasi ini.';
+        return AppTranslations.tr('assistanceTypeSeparatedTitle');
       case AssistanceType.pickup:
-        return 'Mohon bantuan penjemputan di lokasi saya saat ini.';
+        return AppTranslations.tr('assistanceTypePickupTitle');
       case AssistanceType.message:
-        return 'Mohon hubungi saya.';
+        return AppTranslations.tr('assistanceTypeMessageTitle');
     }
   }
 
@@ -86,30 +87,30 @@ extension AssistanceStatusExtension on AssistanceStatus {
   String get label {
     switch (this) {
       case AssistanceStatus.sent:
-        return 'Permintaan Terkirim';
+        return AppTranslations.tr('assistanceStatusSent');
       case AssistanceStatus.acknowledged:
-        return 'Diterima Pendamping';
+        return AppTranslations.tr('assistanceStatusAcknowledged');
       case AssistanceStatus.onTheWay:
-        return 'Pendamping Menuju Lokasi';
+        return AppTranslations.tr('assistanceStatusOnTheWay');
       case AssistanceStatus.completed:
-        return 'Bantuan Selesai';
+        return AppTranslations.tr('assistanceStatusCompleted');
       case AssistanceStatus.cancelled:
-        return 'Dibatalkan';
+        return AppTranslations.tr('assistanceStatusCancelled');
     }
   }
 
   String get description {
     switch (this) {
       case AssistanceStatus.sent:
-        return 'Pendamping Anda telah diberi tahu. Mohon tunggu sejenak.';
+        return AppTranslations.tr('assistanceStatusSentDesc');
       case AssistanceStatus.acknowledged:
-        return 'Pendamping telah menerima permintaan dan sedang bersiap.';
+        return AppTranslations.tr('assistanceStatusAcknowledgedDesc');
       case AssistanceStatus.onTheWay:
-        return 'Pendamping sedang bergerak menuju lokasi Anda. Tetap di posisi.';
+        return AppTranslations.tr('assistanceStatusOnTheWayDesc');
       case AssistanceStatus.completed:
-        return 'Anda telah bertemu pendamping. Bantuan selesai.';
+        return AppTranslations.tr('assistanceStatusCompletedDesc');
       case AssistanceStatus.cancelled:
-        return 'Permintaan bantuan telah dibatalkan.';
+        return AppTranslations.tr('assistanceStatusCancelledDesc');
     }
   }
 

@@ -5,6 +5,10 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.Intent
+import android.os.Build
 import android.view.View
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -41,6 +45,7 @@ class MainActivity : FlutterFragmentActivity() {
                 override fun create(context: Context, viewId: Int, args: Any?): PlatformView {
                     return object : PlatformView {
                         private val previewView = androidx.camera.view.PreviewView(context).also { pv ->
+                            pv.implementationMode = androidx.camera.view.PreviewView.ImplementationMode.COMPATIBLE
                             activePreviewView = pv
                             cameraHelper?.attachPreviewView(pv)
                         }
@@ -115,6 +120,8 @@ class MainActivity : FlutterFragmentActivity() {
                     else -> result.notImplemented()
                 }
             }
+
+
     }
 
     override fun onRequestPermissionsResult(
