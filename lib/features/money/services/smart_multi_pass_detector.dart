@@ -5,8 +5,10 @@ import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 import 'package:ultralytics_yolo/ultralytics_yolo.dart';
 
+import '../models/currency_code.dart';
 import '../models/money_detection.dart';
-import 'riyal_currency_helper.dart';
+import 'money_aggregator.dart';
+import 'money_class_parser.dart';
 
 /// Configuration for Smart Multi-Pass Money Detection.
 class MultiPassConfig {
@@ -45,23 +47,29 @@ class PassResult {
   });
 }
 
-/// Overall result of the Smart Multi-Pass detection pipeline.
+/// Overall result of the Smart Multi-Pass multi-currency detection pipeline.
 class MultiPassDetectionResult {
   final List<MoneyDetection> finalDetections;
-  final double totalAmount;
+  final Map<CurrencyCode, double> totalsByCurrency;
   final List<PassResult> passResults;
   final int totalExecutionTimeMs;
 
   const MultiPassDetectionResult({
     required this.finalDetections,
-    required this.totalAmount,
+    required this.totalsByCurrency,
     required this.passResults,
     required this.totalExecutionTimeMs,
   });
+
+  /// Total amount for a given currency code.
+  double totalFor(CurrencyCode currency) => totalsByCurrency[currency] ?? 0.0;
+
+  /// Convenience getter for SAR total (preserved for backward compatibility).
+  double get totalAmount => totalFor(CurrencyCode.sar);
 }
 
 /// Engine that performs smart multi-pass detection, enhancement,
-/// adaptive tiling, and cross-pass deduplication.
+/// adaptive tiling, and cross-pass deduplication across multiple currencies.
 class SmartMultiPassDetector {
   final YOLO yolo;
   final MultiPassConfig config;
@@ -190,20 +198,19 @@ class SmartMultiPassDetector {
       iouThreshold: config.crossPassIoUThreshold,
     );
 
-    final double totalAmount = finalDetections.fold(
-      0.0,
-      (sum, item) => sum + item.amount,
-    );
+    // Multi-currency totals calculation
+    final Map<CurrencyCode, double> totalsByCurrency =
+        MoneyAggregator.totalsByCurrency(finalDetections);
 
     overallStopwatch.stop();
 
     debugPrint(
-      '[MoneyAI] Merged: ${finalDetections.length} unique objects. Total: ${totalAmount.toStringAsFixed(2)} SAR (${overallStopwatch.elapsedMilliseconds}ms total)',
+      '[MoneyAI] Merged: ${finalDetections.length} unique objects. Totals: $totalsByCurrency (${overallStopwatch.elapsedMilliseconds}ms total)',
     );
 
     return MultiPassDetectionResult(
       finalDetections: finalDetections,
-      totalAmount: totalAmount,
+      totalsByCurrency: totalsByCurrency,
       passResults: passResults,
       totalExecutionTimeMs: overallStopwatch.elapsedMilliseconds,
     );
@@ -231,12 +238,13 @@ class SmartMultiPassDetector {
     final List<MoneyDetection> list = [];
     for (final res in rawList) {
       if (res.confidence < confidenceThreshold) continue;
-      final info = RiyalCurrencyHelper.getInfo(res.className);
+      final info = MoneyClassParser.parse(res.className);
       if (info == null) continue;
 
       list.add(
         MoneyDetection(
           className: res.className,
+          currency: info.currency,
           displayName: info.displayName,
           spokenName: info.spokenName,
           amount: info.amount,
@@ -318,7 +326,7 @@ class SmartMultiPassDetector {
       final img.Image? decoded = img.decodeImage(imageBytes);
       if (decoded == null) return null;
 
-      // 1. Moderate contrast enhancement (contrast: 1.25)
+      // 1. Moderate contrast enhancement (contrast: 1.20)
       final enhanced = img.contrast(decoded, contrast: 120);
 
       // 2. Encode to high-quality JPEG
@@ -342,7 +350,6 @@ class SmartMultiPassDetector {
     final List<MoneyDetection> tiledResults = [];
 
     // Define 4 quadrants with 15% overlap to prevent cutting bills at boundaries
-    // [left_norm, top_norm, width_norm, height_norm]
     const tiles = [
       Rect.fromLTWH(0.0, 0.0, 0.58, 0.58), // Top-Left
       Rect.fromLTWH(0.42, 0.0, 0.58, 0.58), // Top-Right
@@ -396,7 +403,7 @@ class SmartMultiPassDetector {
 
         for (final res in rawList) {
           if (res.confidence < candidateThreshold) continue;
-          final info = RiyalCurrencyHelper.getInfo(res.className);
+          final info = MoneyClassParser.parse(res.className);
           if (info == null) continue;
 
           // Map normalized box from tile coordinates back to original image space
@@ -422,6 +429,7 @@ class SmartMultiPassDetector {
           tiledResults.add(
             MoneyDetection(
               className: res.className,
+              currency: info.currency,
               displayName: info.displayName,
               spokenName: info.spokenName,
               amount: info.amount,
@@ -450,7 +458,7 @@ class SmartMultiPassDetector {
   // ---------------------------------------------------------------------------
 
   /// Merges detections from multiple passes:
-  /// - Identifies detections of the SAME physical object (same class + IoU >= [iouThreshold]).
+  /// - Identifies detections of the SAME physical object (same currency + same class + IoU >= [iouThreshold]).
   /// - Preserves the best confidence score and box for that physical object.
   /// - Real physical duplicate objects (e.g. two separate 5 Riyal bills at different positions)
   ///   have IoU < [iouThreshold] and are NEVER merged.
@@ -484,9 +492,10 @@ class SmartMultiPassDetector {
       for (int i = 0; i < clusters.length; i++) {
         final existing = clusters[i];
 
-        // Must be the same denomination/class
-        if (existing.className.toLowerCase() !=
-            candidate.className.toLowerCase()) {
+        // Must be the same currency and denomination/class
+        if (existing.currency != candidate.currency ||
+            existing.className.toLowerCase() !=
+                candidate.className.toLowerCase()) {
           continue;
         }
 
@@ -531,18 +540,7 @@ class SmartMultiPassDetector {
         // Confirmed across multiple passes: boost confidence
         final boostedConfidence = math.min(1.0, item.confidence + 0.10);
         if (boostedConfidence >= finalThreshold) {
-          finalValidList.add(
-            MoneyDetection(
-              className: item.className,
-              displayName: item.displayName,
-              spokenName: item.spokenName,
-              amount: item.amount,
-              confidence: boostedConfidence,
-              box: item.box,
-              normalizedBox: item.normalizedBox,
-              isCoin: item.isCoin,
-            ),
-          );
+          finalValidList.add(item.copyWith(confidence: boostedConfidence));
         }
       }
     }

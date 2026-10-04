@@ -1,19 +1,19 @@
-import '../../../core/locales/app_localizations.dart';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ultralytics_yolo/ultralytics_yolo.dart';
-
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../models/currency_code.dart';
 import '../models/money_detection.dart';
 import '../services/currency_rate_service.dart';
+import '../services/money_aggregator.dart';
+import '../services/money_currency_helper.dart';
 import '../services/money_tts_service.dart';
-import '../services/riyal_currency_helper.dart';
 import '../services/smart_multi_pass_detector.dart';
 
 /// State modes for photo-based money recognition.
@@ -39,11 +39,12 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
   // Indonesian TTS Service
   final MoneyTtsService _ttsService = MoneyTtsService();
 
-  // Active SAR to IDR exchange rate (default 1 SAR ≈ Rp 4,300)
+  // Active SAR to IDR exchange rate (default 1 SAR ≈ Rp 4,750)
   double _exchangeRate = CurrencyRateService.defaultRate;
 
-  // Model Asset Configuration
-  static const String _modelAssetPath = 'assets/models/best_float16.tflite';
+  // Multi-Currency Model Asset Configuration (SAR, IDR, USD)
+  static const String _modelAssetPath =
+      'assets/models/money_recognition.tflite';
 
   // ---------------------------------------------------------------------------
   // TUNABLE PIPELINE CONFIGURATION
@@ -68,7 +69,10 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
   Uint8List? _capturedImageBytes;
   Size? _capturedImageSize;
   List<MoneyDetection> _capturedDetections = [];
-  double _totalAmount = 0.0;
+  Map<CurrencyCode, double> _totalsByCurrency = {};
+  CurrencyCode _conversionTarget = CurrencyCode.idr;
+  double _convertedGrandTotal = 0.0;
+  bool _isConversionAvailable = true;
 
   @override
   void initState() {
@@ -81,6 +85,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
     if (mounted) {
       setState(() {
         _exchangeRate = CurrencyRateService.instance.currentRate;
+        _recalculateConversions();
       });
     }
   }
@@ -108,11 +113,9 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
       );
 
       if (loaded) {
-        debugPrint('[RIYAL] Riyal model ready ✅');
-        debugPrint('[RIYAL] model = $_modelAssetPath');
-        debugPrint('[RIYAL] input = [1, 640, 640, 3], input type = float32');
-        debugPrint('[RIYAL] output = [1, 300, 6], output type = float32');
-        debugPrint('[RIYAL] labels = 14 (assets/models/labels.txt)');
+        debugPrint('[MoneyAI] Multi-currency model ready ✅');
+        debugPrint('[MoneyAI] model = $_modelAssetPath');
+        debugPrint('[MoneyAI] labels = 32 (SAR, IDR, USD)');
       }
 
       if (mounted) {
@@ -121,13 +124,27 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
         });
       }
     } catch (e) {
-      debugPrint('Failed to load YOLO model: $e');
+      debugPrint('[MoneyAI] Failed to load YOLO model: $e');
       if (mounted) {
         setState(() {
           _modelError =
               'Pemindai uang belum siap. Tutup lalu buka kembali halaman ini.';
         });
       }
+    }
+  }
+
+  void _recalculateConversions() {
+    try {
+      _convertedGrandTotal = MoneyAggregator.grandTotalIn(
+        totals: _totalsByCurrency,
+        targetCurrency: _conversionTarget,
+        conversionService: CurrencyRateService.instance,
+      );
+      _isConversionAvailable = true;
+    } catch (e) {
+      debugPrint('[MoneyFX] Recalculate error: $e');
+      _isConversionAvailable = false;
     }
   }
 
@@ -170,14 +187,14 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
       try {
         photoBytes = await _yoloController.capturePhoto(withOverlays: false);
       } catch (e) {
-        debugPrint('capturePhoto error: $e');
+        debugPrint('[MoneyAI] capturePhoto error: $e');
       }
 
       if (photoBytes == null || photoBytes.isEmpty) {
         try {
           photoBytes = await _yoloController.captureFrame();
         } catch (e) {
-          debugPrint('captureFrame error: $e');
+          debugPrint('[MoneyAI] captureFrame error: $e');
         }
       }
 
@@ -195,7 +212,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
         decodedImage.height.toDouble(),
       );
 
-      // 4. Run Smart Multi-Pass Pipeline (Pass 1 Baseline -> Pass 2 Enhanced -> Pass 3 Tiled -> IoU Merge)
+      // 4. Run Smart Multi-Pass Pipeline
       final MultiPassDetectionResult result = await _multiPassDetector
           .processImage(
             photoBytes,
@@ -210,22 +227,31 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
 
       if (!mounted) return;
 
+      _capturedImageBytes = photoBytes;
+      _capturedImageSize = imageSize;
+      _capturedDetections = result.finalDetections;
+      _totalsByCurrency = result.totalsByCurrency;
+      _recalculateConversions();
+
       setState(() {
-        _capturedImageBytes = photoBytes;
-        _capturedImageSize = imageSize;
-        _capturedDetections = result.finalDetections;
-        _totalAmount = result.totalAmount;
         _mode = RecognitionMode.result;
       });
 
-      // 5. Speak announcement once in Indonesian with Rupiah conversion
-      await _ttsService.speakResults(
-        result.finalDetections,
-        result.totalAmount,
-        exchangeRate: _exchangeRate,
-      );
+      // 5. Speak accessible result once (isolated try/catch so speech failure never breaks UI)
+      try {
+        final speech = _ttsService.buildSpeechSentence(
+          detections: result.finalDetections,
+          totalsByCurrency: result.totalsByCurrency,
+          targetCurrency: _conversionTarget,
+          conversionService: CurrencyRateService.instance,
+          isConversionAvailable: _isConversionAvailable,
+        );
+        await _ttsService.speak(speech);
+      } catch (e) {
+        debugPrint('[MoneyTTS] Speech error: $e');
+      }
     } catch (e) {
-      debugPrint('Capture & inference pipeline error: $e');
+      debugPrint('[MoneyAI] Capture & inference pipeline error: $e');
       if (!mounted) return;
 
       setState(() {
@@ -254,13 +280,14 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
       _capturedImageBytes = null;
       _capturedImageSize = null;
       _capturedDetections = [];
-      _totalAmount = 0.0;
+      _totalsByCurrency = {};
+      _convertedGrandTotal = 0.0;
     });
 
     try {
       await _yoloController.resume();
     } catch (e) {
-      debugPrint('Failed to resume YOLOView: $e');
+      debugPrint('[MoneyAI] Failed to resume YOLOView: $e');
     }
   }
 
@@ -271,7 +298,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
         _isTorchOn = !_isTorchOn;
       });
     } catch (e) {
-      debugPrint('Torch error: $e');
+      debugPrint('[MoneyAI] Torch error: $e');
     }
   }
 
@@ -285,7 +312,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
         _isTorchOn = false;
       });
     } catch (e) {
-      debugPrint('Switch camera error: $e');
+      debugPrint('[MoneyAI] Switch camera error: $e');
     }
   }
 
@@ -296,7 +323,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
       _ttsService.isVoiceEnabled = shouldEnableVoice;
     });
 
-    // Muting must also silence an announcement that is already playing.
+    // Muting must also silence an announcement that is already playing
     if (!shouldEnableVoice) {
       await _ttsService.stop();
     }
@@ -356,7 +383,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
   }
 
   // ---------------------------------------------------------------------------
-  // 1. CAMERA MODE WIDGETS
+  // 1. CAMERA VIEW & CONTROLS
   // ---------------------------------------------------------------------------
 
   Widget _buildCameraView() {
@@ -412,6 +439,10 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
 
   Widget _buildCameraTopBar() {
     final topPadding = MediaQuery.of(context).padding.top;
+    final sarToIdr = CurrencyRateService.instance.getRate(
+      CurrencyCode.sar,
+      CurrencyCode.idr,
+    );
 
     return Positioned(
       top: 0,
@@ -476,7 +507,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '1 SAR ≈ ${RiyalCurrencyHelper.formatRupiah(_exchangeRate)}',
+                            '1 SAR ≈ ${CurrencyFormatter.formatRupiah(sarToIdr)}',
                             style: AppTypography.captionSmall.copyWith(
                               color: AppColors.goldLight,
                               fontWeight: FontWeight.w700,
@@ -716,7 +747,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                     size: sideControlSize,
                   ),
                   Semantics(
-                    label: context.tr('money.captureRiyal'),
+                    label: 'Ambil Foto Uang',
                     button: true,
                     child: GestureDetector(
                       onTap: _captureAndAnalyze,
@@ -839,6 +870,15 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
         ? (_capturedImageSize!.width / _capturedImageSize!.height)
         : (3 / 4);
 
+    final sarToIdr = CurrencyRateService.instance.getRate(
+      CurrencyCode.sar,
+      CurrencyCode.idr,
+    );
+    final usdToIdr = CurrencyRateService.instance.getRate(
+      CurrencyCode.usd,
+      CurrencyCode.idr,
+    );
+
     return SafeArea(
       top: false,
       bottom: false,
@@ -870,14 +910,16 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Hasil Deteksi Riyal',
+                        'Hasil Deteksi Uang',
                         style: AppTypography.titleLarge.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                       Text(
-                        'Kurs: 1 SAR ≈ ${RiyalCurrencyHelper.formatRupiah(_exchangeRate)}',
+                        'Kurs: 1 SAR ≈ ${CurrencyFormatter.formatRupiah(sarToIdr)} • 1 USD ≈ ${CurrencyFormatter.formatRupiah(usdToIdr)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: AppTypography.captionSmall.copyWith(
                           color: AppColors.goldLight.withValues(alpha: 0.85),
                           fontWeight: FontWeight.w600,
@@ -886,7 +928,6 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                     ],
                   ),
                 ),
-                // Keep the same mute state and behavior as the camera screen.
                 Container(
                   decoration: BoxDecoration(
                     color: AppColors.surfaceWhite.withValues(alpha: 0.12),
@@ -990,7 +1031,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                           ),
                           const SizedBox(width: AppSpacing.sm),
                           Text(
-                            '${_capturedDetections.length} Lembar/Koin Terdeteksi',
+                            '${_capturedDetections.length} Uang Terdeteksi',
                             style: AppTypography.titleMedium.copyWith(
                               color: AppColors.statusPositive,
                               fontWeight: FontWeight.w800,
@@ -1035,7 +1076,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  'Pastikan pencahayaan cukup dan uang tidak terlipat, lalu coba foto lagi.',
+                                  'Pastikan pencahayaan cukup dan uang terlihat jelas, lalu coba foto lagi.',
                                   style: AppTypography.bodySmall.copyWith(
                                     color: Colors.white70,
                                   ),
@@ -1061,11 +1102,9 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                     const SizedBox(height: 8),
                     ...List.generate(_capturedDetections.length, (index) {
                       final item = _capturedDetections[index];
-                      final color =
-                          MoneyBoundingBoxPainter.getDenominationColor(
-                            item.amount,
-                            item.isCoin,
-                          );
+                      final color = MoneyBoundingBoxPainter.getDetectionColor(
+                        item,
+                      );
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 8),
@@ -1106,7 +1145,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                                     ),
                                   ),
                                   Text(
-                                    '${item.isCoin ? "Uang Logam" : "Uang Kertas"} • Akurasi ${item.confidencePercentage}%',
+                                    '${item.isCoin ? "Uang Logam" : "Uang Kertas"} • ${item.currency.code} • Akurasi ${item.confidencePercentage}%',
                                     style: AppTypography.captionSmall.copyWith(
                                       color: Colors.white60,
                                     ),
@@ -1118,24 +1157,28 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  item.isCoin
-                                      ? '${item.amount.toStringAsFixed(2)} SAR'
-                                      : '${item.amount.toInt()} SAR',
+                                  CurrencyFormatter.format(
+                                    item.amount,
+                                    item.currency,
+                                  ),
                                   style: AppTypography.titleLarge.copyWith(
                                     color: AppColors.goldPrimary,
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  '≈ ${RiyalCurrencyHelper.formatRupiah(item.amount * _exchangeRate)}',
-                                  style: AppTypography.captionSmall.copyWith(
-                                    color: AppColors.canvasCream.withValues(
-                                      alpha: 0.90,
+                                if (item.currency != _conversionTarget &&
+                                    _isConversionAvailable) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '≈ ${CurrencyFormatter.format(CurrencyRateService.instance.convert(amount: item.amount, from: item.currency, to: _conversionTarget), _conversionTarget)}',
+                                    style: AppTypography.captionSmall.copyWith(
+                                      color: AppColors.canvasCream.withValues(
+                                        alpha: 0.90,
+                                      ),
+                                      fontWeight: FontWeight.w700,
                                     ),
-                                    fontWeight: FontWeight.w700,
                                   ),
-                                ),
+                                ],
                               ],
                             ),
                           ],
@@ -1145,202 +1188,12 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                     const SizedBox(height: AppSpacing.md),
                   ],
 
-                  // TOTAL NOMINAL CARD (Islamic Luxury Aesthetic)
-                  Container(
-                    padding: const EdgeInsets.all(AppSpacing.cardPadding),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [AppColors.espressoDark, Color(0xFF22160E)],
-                      ),
-                      borderRadius: BorderRadius.circular(AppRadius.xl),
-                      border: Border.all(
-                        color: AppColors.goldPrimary,
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.4),
-                          blurRadius: 16,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.auto_awesome_rounded,
-                              size: 15,
-                              color: AppColors.goldPrimary,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'TOTAL NOMINAL RIYAL',
-                              style: AppTypography.captionSmall.copyWith(
-                                color: AppColors.goldPrimary,
-                                letterSpacing: 1.5,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          RiyalCurrencyHelper.formatAmount(_totalAmount),
-                          style: AppTypography.displayLarge.copyWith(
-                            color: Colors.white,
-                            fontSize: 34,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
+                  // TOTAL CARD (Multi-Currency Aware)
+                  if (hasDetections) _buildSummaryTotalCard(),
 
-                        // Seamless Rupiah Conversion Box
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                AppColors.goldPrimary.withValues(alpha: 0.22),
-                                AppColors.goldPrimary.withValues(alpha: 0.08),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(AppRadius.lg),
-                            border: Border.all(
-                              color: AppColors.goldPrimary.withValues(
-                                alpha: 0.55,
-                              ),
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: AppColors.goldPrimary.withValues(
-                                    alpha: 0.25,
-                                  ),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.currency_exchange_rounded,
-                                  color: AppColors.goldLight,
-                                  size: 22,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      'SETARA RUPIAH (IDR)',
-                                      style: AppTypography.captionSmall
-                                          .copyWith(
-                                            color: AppColors.goldLight
-                                                .withValues(alpha: 0.85),
-                                            fontWeight: FontWeight.w800,
-                                            fontSize: 10,
-                                            letterSpacing: 1.2,
-                                          ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      RiyalCurrencyHelper.formatRupiah(
-                                        _totalAmount * _exchangeRate,
-                                      ),
-                                      style: AppTypography.displayMedium
-                                          .copyWith(
-                                            color: AppColors.goldLight,
-                                            fontSize: 26,
-                                            fontWeight: FontWeight.w900,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-
-                        Text(
-                          'Terbilang: ${RiyalCurrencyHelper.totalWithRupiahSpoken(_totalAmount, _totalAmount * _exchangeRate)}',
-                          textAlign: TextAlign.center,
-                          style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.canvasCream.withValues(
-                              alpha: 0.90,
-                            ),
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-
-                        // Exchange rate reference & adjust button
-                        GestureDetector(
-                          onTap: _showExchangeRateSheet,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.3),
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
-                              ),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.15),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.info_outline_rounded,
-                                  size: 13,
-                                  color: AppColors.goldMuted,
-                                ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  'Kurs acuan: 1 SAR = ${RiyalCurrencyHelper.formatRupiah(_exchangeRate)}',
-                                  style: AppTypography.captionSmall.copyWith(
-                                    color: Colors.white70,
-                                    fontSize: 11,
-                                  ),
-                                ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  '• Ubah',
-                                  style: AppTypography.captionSmall.copyWith(
-                                    color: AppColors.goldPrimary,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 11,
-                                    decoration: TextDecoration.underline,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                   const SizedBox(height: AppSpacing.lg),
 
-                  // ACTION BUTTONS (54px height for elderly)
+                  // ACTION BUTTONS (54px height for accessibility)
                   Row(
                     children: [
                       // Replay Voice Button
@@ -1363,11 +1216,17 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                             ),
                             onPressed: _ttsService.isVoiceEnabled
                                 ? () {
-                                    _ttsService.speakResults(
-                                      _capturedDetections,
-                                      _totalAmount,
-                                      exchangeRate: _exchangeRate,
-                                    );
+                                    final speech = _ttsService
+                                        .buildSpeechSentence(
+                                          detections: _capturedDetections,
+                                          totalsByCurrency: _totalsByCurrency,
+                                          targetCurrency: _conversionTarget,
+                                          conversionService:
+                                              CurrencyRateService.instance,
+                                          isConversionAvailable:
+                                              _isConversionAvailable,
+                                        );
+                                    _ttsService.speak(speech);
                                   }
                                 : null,
                             icon: Icon(
@@ -1422,6 +1281,362 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                         ),
                       ),
                     ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Builds the summary card: single-currency presentation or mixed-currency breakdown
+  /// with target currency selector (without re-running YOLO).
+  Widget _buildSummaryTotalCard() {
+    final singleCurrency = MoneyAggregator.singleCurrencyOrNull(
+      _capturedDetections,
+    );
+    final bool isSingle = singleCurrency != null;
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.cardPadding),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.espressoDark, Color(0xFF22160E)],
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: AppColors.goldPrimary, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.4),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          if (isSingle) ...[
+            // Single currency total presentation
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.auto_awesome_rounded,
+                  size: 15,
+                  color: AppColors.goldPrimary,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'TOTAL NOMINAL ${singleCurrency.code}',
+                  style: AppTypography.captionSmall.copyWith(
+                    color: AppColors.goldPrimary,
+                    letterSpacing: 1.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              CurrencyFormatter.format(
+                _totalsByCurrency[singleCurrency] ?? 0.0,
+                singleCurrency,
+              ),
+              style: AppTypography.displayLarge.copyWith(
+                color: Colors.white,
+                fontSize: 34,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Equivalent conversions into other 2 currencies
+            if (_isConversionAvailable) ...[
+              Builder(
+                builder: (context) {
+                  final others = CurrencyCode.values
+                      .where((c) => c != singleCurrency)
+                      .toList();
+                  final double baseAmount =
+                      _totalsByCurrency[singleCurrency] ?? 0.0;
+                  final eq1 = CurrencyRateService.instance.convert(
+                    amount: baseAmount,
+                    from: singleCurrency,
+                    to: others[0],
+                  );
+                  final eq2 = CurrencyRateService.instance.convert(
+                    amount: baseAmount,
+                    from: singleCurrency,
+                    to: others[1],
+                  );
+
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.goldPrimary.withValues(alpha: 0.22),
+                          AppColors.goldPrimary.withValues(alpha: 0.08),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(
+                        color: AppColors.goldPrimary.withValues(alpha: 0.55),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.goldPrimary.withValues(
+                              alpha: 0.25,
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.currency_exchange_rounded,
+                            color: AppColors.goldLight,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'SETARA KURS MATA UANG',
+                                style: AppTypography.captionSmall.copyWith(
+                                  color: AppColors.goldLight.withValues(
+                                    alpha: 0.85,
+                                  ),
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 10,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '≈ ${CurrencyFormatter.format(eq1, others[0])}  •  ≈ ${CurrencyFormatter.format(eq2, others[1])}',
+                                style: AppTypography.titleMedium.copyWith(
+                                  color: AppColors.goldLight,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 10),
+            ],
+
+            Text(
+              'Terbilang: ${MoneySpeechFormatter.amountToSpoken(_totalsByCurrency[singleCurrency] ?? 0.0, singleCurrency)}',
+              textAlign: TextAlign.center,
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.canvasCream.withValues(alpha: 0.90),
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ] else ...[
+            // Mixed currency totals presentation
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.auto_awesome_rounded,
+                  size: 15,
+                  color: AppColors.goldPrimary,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'TOTAL PER MATA UANG',
+                  style: AppTypography.captionSmall.copyWith(
+                    color: AppColors.goldPrimary,
+                    letterSpacing: 1.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+
+            // Rows for each currency present
+            ...CurrencyCode.values.map((code) {
+              final amount = _totalsByCurrency[code] ?? 0.0;
+              if (amount <= 0) return const SizedBox.shrink();
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      code.displayName,
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: Colors.white70,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      CurrencyFormatter.format(amount, code),
+                      style: AppTypography.titleMedium.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+            const SizedBox(height: 14),
+
+            // Target Currency Selector Chips (IDR, SAR, USD) — Zero inference recompute!
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.goldPrimary.withValues(alpha: 0.22),
+                    AppColors.goldPrimary.withValues(alpha: 0.08),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                border: Border.all(
+                  color: AppColors.goldPrimary.withValues(alpha: 0.55),
+                  width: 1.5,
+                ),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'TOTAL SETARA',
+                        style: AppTypography.captionSmall.copyWith(
+                          color: AppColors.goldLight.withValues(alpha: 0.85),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 10,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      Row(
+                        children: CurrencyCode.values.map((c) {
+                          final isSelected = c == _conversionTarget;
+                          return Padding(
+                            padding: const EdgeInsets.only(left: 4),
+                            child: ChoiceChip(
+                              label: Text(c.code),
+                              selected: isSelected,
+                              selectedColor: AppColors.goldPrimary,
+                              backgroundColor: AppColors.espressoDark,
+                              labelStyle: TextStyle(
+                                color: isSelected
+                                    ? AppColors.espressoDark
+                                    : Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                              ),
+                              visualDensity: VisualDensity.compact,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                              ),
+                              onSelected: (selected) {
+                                if (selected) {
+                                  setState(() {
+                                    _conversionTarget = c;
+                                    _recalculateConversions();
+                                  });
+                                }
+                              },
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    CurrencyFormatter.format(
+                      _convertedGrandTotal,
+                      _conversionTarget,
+                    ),
+                    style: AppTypography.displayMedium.copyWith(
+                      color: AppColors.goldLight,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Terbilang: ${MoneySpeechFormatter.amountToSpoken(_convertedGrandTotal, _conversionTarget)}',
+                    textAlign: TextAlign.center,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.canvasCream.withValues(alpha: 0.90),
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+
+          // Exchange rate reference & adjust button
+          GestureDetector(
+            onTap: _showExchangeRateSheet,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    size: 13,
+                    color: AppColors.goldMuted,
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    'Kurs: 1 SAR = ${CurrencyFormatter.formatRupiah(CurrencyRateService.instance.getRate(CurrencyCode.sar, CurrencyCode.idr))}',
+                    style: AppTypography.captionSmall.copyWith(
+                      color: Colors.white70,
+                      fontSize: 11,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    '• Ubah',
+                    style: AppTypography.captionSmall.copyWith(
+                      color: AppColors.goldPrimary,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 11,
+                      decoration: TextDecoration.underline,
+                    ),
                   ),
                 ],
               ),
@@ -1585,7 +1800,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Pengaturan Kurs Riyal',
+                                'Pengaturan Kurs Mata Uang',
                                 style: AppTypography.titleLarge.copyWith(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w800,
@@ -1595,7 +1810,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                                 CurrencyRateService.instance.lastApiUtcTime !=
                                         null
                                     ? 'Live API: ${CurrencyRateService.instance.lastApiUtcTime}'
-                                    : 'Konversi 1 SAR ke Rupiah Indonesia (IDR)',
+                                    : 'SAR ↔ IDR ↔ USD (Dynamic FX)',
                                 style: AppTypography.captionSmall.copyWith(
                                   color: AppColors.goldLight.withValues(
                                     alpha: 0.9,
@@ -1618,7 +1833,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
 
                     // Quick presets
                     Text(
-                      'Pilihan Cepat Kurs:',
+                      'Pilihan Cepat Kurs SAR ke Rupiah:',
                       style: AppTypography.labelMedium.copyWith(
                         color: AppColors.canvasCream.withValues(alpha: 0.8),
                         fontWeight: FontWeight.w600,
@@ -1644,7 +1859,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                             final isSelected = (currentVal == preset);
                             return ChoiceChip(
                               label: Text(
-                                RiyalCurrencyHelper.formatRupiah(preset),
+                                CurrencyFormatter.formatRupiah(preset),
                                 style: TextStyle(
                                   color: isSelected
                                       ? AppColors.espressoDark
@@ -1677,7 +1892,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
 
                     // Manual input
                     Text(
-                      'Nominal Kurs Manual (Rp):',
+                      'Nominal Kurs SAR Manual (Rp):',
                       style: AppTypography.labelMedium.copyWith(
                         color: AppColors.canvasCream.withValues(alpha: 0.8),
                         fontWeight: FontWeight.w600,
@@ -1720,7 +1935,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                             width: 2,
                           ),
                         ),
-                        hintText: '4300',
+                        hintText: '4750',
                         hintStyle: const TextStyle(color: Colors.white38),
                       ),
                     ),
@@ -1756,7 +1971,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                                 });
                                 Get.snackbar(
                                   'Kurs Terkini Diperbarui',
-                                  'Kurs 1 SAR = ${RiyalCurrencyHelper.formatRupiah(CurrencyRateService.instance.currentRate)}',
+                                  '1 SAR = ${CurrencyFormatter.formatRupiah(CurrencyRateService.instance.currentRate)}',
                                   snackPosition: SnackPosition.BOTTOM,
                                   backgroundColor: AppColors.primaryContainer,
                                   colorText: Colors.white,
@@ -1812,6 +2027,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                           if (mounted) {
                             setState(() {
                               _exchangeRate = val;
+                              _recalculateConversions();
                             });
                           }
                           if (bottomSheetContext.mounted) {
@@ -1870,7 +2086,7 @@ class MoneyBoundingBoxPainter extends CustomPainter {
 
       final rect = Rect.fromLTRB(left, top, right, bottom);
       final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(8));
-      final color = getDenominationColor(detection.amount, detection.isCoin);
+      final color = getDetectionColor(detection);
 
       // 1. Semi-transparent fill inside box
       final fillPaint = Paint()
@@ -1933,18 +2149,108 @@ class MoneyBoundingBoxPainter extends CustomPainter {
     }
   }
 
-  static Color getDenominationColor(double amount, bool isCoin) {
-    if (isCoin) return const Color(0xFFF59E0B); // Amber / coin
-    if (amount >= 500) return const Color(0xFF9333EA); // Purple (500 SAR)
-    if (amount >= 200) return const Color(0xFF8D6E63); // Brown (200 SAR)
-    if (amount >= 100) {
-      return const Color(0xFFE11D48); // Red / Crimson (100 SAR)
+  /// Currency-aware high-contrast color palette for bounding box overlays.
+  static Color getDetectionColor(MoneyDetection detection) {
+    if (detection.isCoin) {
+      return const Color(0xFFF59E0B); // Amber / coin
     }
-    if (amount >= 50) return const Color(0xFF16A34A); // Green (50 SAR)
-    if (amount >= 20) return const Color(0xFFEA580C); // Deep orange (20 SAR)
-    if (amount >= 10) return const Color(0xFFD97706); // Amber (10 SAR)
-    if (amount >= 5) return const Color(0xFF0D9488); // Teal / Emerald (5 SAR)
-    return const Color(0xFF78716C); // Stone / Tan (1 & 2 SAR)
+
+    switch (detection.currency) {
+      case CurrencyCode.sar:
+        if (detection.amount >= 500) {
+          return const Color(0xFF047857); // Deep Emerald
+        }
+        if (detection.amount >= 200) {
+          return const Color(0xFF0D9488); // Teal
+        }
+        if (detection.amount >= 100) {
+          return const Color(0xFF10B981); // Emerald
+        }
+        if (detection.amount >= 50) {
+          return const Color(0xFF059669);
+        }
+        if (detection.amount >= 20) {
+          return const Color(0xFF14B8A6);
+        }
+        if (detection.amount >= 10) {
+          return const Color(0xFF2DD4BF);
+        }
+        if (detection.amount >= 5) {
+          return const Color(0xFF34D399);
+        }
+        return const Color(0xFF6EE7B7);
+
+      case CurrencyCode.idr:
+        if (detection.amount >= 100000) {
+          return const Color(0xFFE11D48); // Red
+        }
+        if (detection.amount >= 75000) {
+          return const Color(0xFFF43F5E); // Rose
+        }
+        if (detection.amount >= 50000) {
+          return const Color(0xFF3B82F6); // Blue
+        }
+        if (detection.amount >= 20000) {
+          return const Color(0xFF16A34A); // Green
+        }
+        if (detection.amount >= 10000) {
+          return const Color(0xFF9333EA); // Purple
+        }
+        if (detection.amount >= 5000) {
+          return const Color(0xFFD97706); // Amber
+        }
+        if (detection.amount >= 2000) {
+          return const Color(0xFF64748B); // Slate
+        }
+        return const Color(0xFF78716C); // Stone
+
+      case CurrencyCode.usd:
+        if (detection.amount >= 100) {
+          return const Color(0xFF0284C7); // Sky/Navy
+        }
+        if (detection.amount >= 50) {
+          return const Color(0xFF0EA5E9);
+        }
+        if (detection.amount >= 20) {
+          return const Color(0xFF38BDF8);
+        }
+        if (detection.amount >= 10) {
+          return const Color(0xFF06B6D4);
+        }
+        if (detection.amount >= 5) {
+          return const Color(0xFF14B8A6);
+        }
+        return const Color(0xFF059669);
+    }
+  }
+
+  /// Backward-compatible denomination color helper.
+  static Color getDenominationColor(double amount, bool isCoin) {
+    if (isCoin) {
+      return const Color(0xFFF59E0B); // Amber / coin
+    }
+    if (amount >= 500) {
+      return const Color(0xFF9333EA); // Purple (500 SAR)
+    }
+    if (amount >= 200) {
+      return const Color(0xFF8D6E63); // Brown (200 SAR)
+    }
+    if (amount >= 100) {
+      return const Color(0xFFE11D48); // Red (100 SAR)
+    }
+    if (amount >= 50) {
+      return const Color(0xFF16A34A); // Green (50 SAR)
+    }
+    if (amount >= 20) {
+      return const Color(0xFFEA580C); // Deep orange (20 SAR)
+    }
+    if (amount >= 10) {
+      return const Color(0xFFD97706); // Amber (10 SAR)
+    }
+    if (amount >= 5) {
+      return const Color(0xFF0D9488); // Teal (5 SAR)
+    }
+    return const Color(0xFF78716C); // Stone (1 & 2 SAR)
   }
 
   @override
