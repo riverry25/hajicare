@@ -39,7 +39,6 @@ class MockAdhanNotificationService extends AdhanNotificationService {
     cancelledIds.add(id);
   }
 
-  @override
   Future<List<PendingNotificationRequest>> logPendingNotifications({
     String tag = '',
   }) async {
