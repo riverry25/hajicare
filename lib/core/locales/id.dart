@@ -271,6 +271,7 @@ const Map<String, String> idTranslations = {
   'dashboard.messageAndLocation': 'Pesan & Lokasi',
   'dashboard.messageSampleHint': 'Contoh: Saya menunggu di depan pintu masjid.',
   'dashboard.moneyDetection': 'Deteksi Uang',
+  'dashboard.textToSign': 'Teks ke Isyarat',
   'dashboard.noGroupYet': 'Belum Ada Rombongan',
   'dashboard.notInRoom': 'Belum Tergabung Rombongan',
   'dashboard.openCamera': 'Buka Kamera',

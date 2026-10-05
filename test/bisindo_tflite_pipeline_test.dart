@@ -128,6 +128,27 @@ void main() {
       expect(features.length, equals(135));
       expect(features.every((v) => !v.isNaN && !v.isInfinite), isTrue);
     });
+
+    test(
+      'processRaw42Frame and processFrame produce exact 135 features for 42 hand landmarks',
+      () {
+        // 42 landmarks: 0..20 = left hand, 21..41 = right hand
+        final frame42 = List.generate(42, (i) => [0.1 * (i + 1), 0.2, 0.05]);
+        final features42 = BisindoPreprocessor.processRaw42Frame(frame42);
+        expect(features42.length, equals(135));
+        expect(features42.every((v) => !v.isNaN && !v.isInfinite), isTrue);
+
+        final featuresAdaptive = BisindoPreprocessor.processFrame(frame42);
+        expect(featuresAdaptive.length, equals(135));
+        expect(BisindoPreprocessor.hasRightHand(frame42), isTrue);
+        expect(BisindoPreprocessor.hasLeftHand(frame42), isTrue);
+        expect(BisindoPreprocessor.hasAnyHand(frame42), isTrue);
+
+        final sibi42 = BisindoPreprocessor.processSibiAlphabetFrame(frame42);
+        expect(sibi42.length, equals(42));
+        expect(sibi42.every((v) => !v.isNaN && !v.isInfinite), isTrue);
+      },
+    );
   });
 
   group('BISINDO Controller & 4-Step Stability Gate Logic', () {

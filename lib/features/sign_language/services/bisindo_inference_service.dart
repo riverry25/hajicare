@@ -310,16 +310,8 @@ class BisindoInferenceService implements BisindoPredictor {
       );
     }
 
-    final bool hasRight = BisindoPreprocessor.isHandDetected(
-      frame,
-      BisindoPreprocessor.kRightHandStartIdx,
-      BisindoPreprocessor.kRightHandEndIdx,
-    );
-    final bool hasLeft = BisindoPreprocessor.isHandDetected(
-      frame,
-      BisindoPreprocessor.kLeftHandStartIdx,
-      BisindoPreprocessor.kLeftHandEndIdx,
-    );
+    final bool hasRight = BisindoPreprocessor.hasRightHand(frame);
+    final bool hasLeft = BisindoPreprocessor.hasLeftHand(frame);
 
     if (!hasRight && !hasLeft) {
       return const BisindoPrediction(
@@ -391,7 +383,7 @@ class BisindoInferenceService implements BisindoPredictor {
 
     final List<Float32List> sequence135 = [];
     for (final frame in sourceFrames) {
-      sequence135.add(BisindoPreprocessor.processRaw543Frame(frame));
+      sequence135.add(BisindoPreprocessor.processFrame(frame));
     }
 
     return predict(sequence135);

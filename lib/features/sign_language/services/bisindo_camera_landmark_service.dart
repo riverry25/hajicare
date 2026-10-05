@@ -154,18 +154,19 @@ class BisindoCameraLandmarkService {
     final rawLandmarks = event['landmarks'];
     if (rawLandmarks is! List) return;
 
-    // Strict validation: must have exactly 543 landmarks
-    if (rawLandmarks.length != 543) {
+    // Accept either 42 hand landmarks (new high-perf) or 543 holistic landmarks (legacy/tests)
+    if (rawLandmarks.length != 42 && rawLandmarks.length != 543) {
       debugPrint(
-        '[BISINDO_CAMERA] Invalid landmark count: ${rawLandmarks.length} (expected 543)',
+        '[BISINDO_CAMERA] Invalid landmark count: ${rawLandmarks.length} (expected 42 or 543)',
       );
       return;
     }
 
+    final int expectedCount = rawLandmarks.length;
     final List<List<double>> frame = [];
     bool hasInvalidValue = false;
 
-    for (int i = 0; i < 543; i++) {
+    for (int i = 0; i < expectedCount; i++) {
       final pt = rawLandmarks[i];
       if (pt is! List || pt.length < 3) {
         hasInvalidValue = true;
@@ -190,7 +191,7 @@ class BisindoCameraLandmarkService {
       frame.add([x, y, z]);
     }
 
-    if (hasInvalidValue || frame.length != 543) {
+    if (hasInvalidValue || frame.length != expectedCount) {
       return; // Discard corrupt frame
     }
 
@@ -202,7 +203,7 @@ class BisindoCameraLandmarkService {
 
     if (_receivedFramesCount == 1 || _receivedFramesCount % 30 == 0) {
       debugPrint(
-        '[BISINDO_CAMERA] landmarks=543 buffer=${streamBuffer.bufferLength}/${streamBuffer.windowSize}',
+        '[BISINDO_CAMERA] landmarks=$expectedCount buffer=${streamBuffer.bufferLength}/${streamBuffer.windowSize}',
       );
     }
   }

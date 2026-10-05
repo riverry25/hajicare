@@ -277,6 +277,7 @@ final Map<String, String> jvTranslations = {
   'dashboard.messageSampleHint':
       'Tuladha: Kula nengga wonten sangajengipun kori masjid.',
   'dashboard.moneyDetection': 'Deteksi Arta',
+  'dashboard.textToSign': 'Teks dadi Sasmita',
   'dashboard.noGroupYet': 'Dèrèng Wonten Rombongan',
   'dashboard.notInRoom': 'Dèrèng Gathuk Rombongan',
   'dashboard.openCamera': 'Bikak Kodhak',

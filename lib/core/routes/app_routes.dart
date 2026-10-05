@@ -40,6 +40,8 @@ import '../../features/smartband/screens/smartband_ble_test_screen.dart';
 import '../../features/smartband/bindings/smartband_ble_test_binding.dart';
 import '../../features/sign_language/screens/sign_language_screen.dart';
 import '../../features/sign_language/bindings/sign_language_binding.dart';
+import '../../features/sign_language/screens/text_to_sign_screen.dart';
+import '../../features/sign_language/bindings/text_to_sign_binding.dart';
 import '../../features/hajj_dua/presentation/screens/hajj_dua_screen.dart';
 import 'role_and_room_guard.dart';
 
@@ -67,6 +69,7 @@ class AppRoutes {
   static const String communication = '/communication';
   static const String signLanguage = '/sign_language';
   static const String bisindo = '/bisindo';
+  static const String textToSign = '/text_to_sign';
   static const String hajjDua = '/hajj_dua';
   static const String profile = '/profile';
   static const String notification = '/notification';
@@ -197,6 +200,11 @@ class AppRoutes {
       name: bisindo,
       page: () => const SignLanguageScreen(),
       binding: SignLanguageBinding(),
+    ),
+    GetPage(
+      name: textToSign,
+      page: () => const TextToSignScreen(),
+      binding: TextToSignBinding(),
     ),
     GetPage(name: hajjDua, page: () => const HajjDuaScreen()),
     GetPage(

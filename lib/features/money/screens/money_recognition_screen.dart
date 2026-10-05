@@ -400,6 +400,19 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
             controller: _yoloController,
             lensFacing: _currentLens,
             confidenceThreshold: _candidateConfidenceThreshold,
+            cameraResolution: '480p',
+            streamingConfig: const YOLOStreamingConfig.custom(
+              includeDetections: false,
+              includeClassifications: false,
+              includeProcessingTimeMs: false,
+              includeFps: false,
+              includeMasks: false,
+              includePoses: false,
+              includeOBB: false,
+              includeOriginalImage: false,
+              maxFPS: 1,
+              skipFrames: 30,
+            ),
             onModelLoad: (path, task) {
               _yoloController.setShowOverlays(false);
               if (mounted) {

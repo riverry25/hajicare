@@ -45,6 +45,9 @@ dependencies:
   android_alarm_manager_plus: ^5.1.1
   adhan_foreground_service:
     path: packages/adhan_foreground_service
+  video_player: ^2.9.2
+  dio: ^5.7.0
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:
@@ -77,6 +80,8 @@ flutter:
     - assets/models/bisindo/model_config.json
     - assets/models/sibi/
     - assets/audio/
+    - assets/sign_language/offline/bisindo/alfabet/
+    - assets/sign_language/offline/sibi/kalimat/
   fonts:
     - family: Poppins
       fonts:

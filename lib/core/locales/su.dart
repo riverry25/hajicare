@@ -272,6 +272,7 @@ final Map<String, String> suTranslations = {
   'dashboard.messageSampleHint':
       'Conto: Sim kuring ngantosan di payuneun panto masjid.',
   'dashboard.moneyDetection': 'Deteksi Artos',
+  'dashboard.textToSign': 'Teks ka Isarat',
   'dashboard.noGroupYet': 'Teu Acan Aya Rombongan',
   'dashboard.notInRoom': 'Teu Acan Gabung Rombongan',
   'dashboard.openCamera': 'Buka Kaméra',
