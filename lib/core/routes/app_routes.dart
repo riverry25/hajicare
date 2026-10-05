@@ -36,6 +36,8 @@ import '../../features/room/bindings/admin_room_binding.dart';
 import '../../features/room/bindings/join_room_binding.dart';
 import '../../features/smartband/screens/smartband_ldr_page.dart';
 import '../../features/smartband/bindings/smartband_ldr_binding.dart';
+import '../../features/smartband/screens/smartband_ble_test_screen.dart';
+import '../../features/smartband/bindings/smartband_ble_test_binding.dart';
 import '../../features/sign_language/screens/sign_language_screen.dart';
 import '../../features/sign_language/bindings/sign_language_binding.dart';
 import '../../features/hajj_dua/presentation/screens/hajj_dua_screen.dart';
@@ -71,6 +73,7 @@ class AppRoutes {
   static const String helpCenter = '/help';
   static const String about = '/about';
   static const String smartbandLdr = '/smartband_ldr';
+  static const String smartbandBleTest = '/smartband_ble_test';
   static const String editRoom = '/edit_room';
   static const String sosAlertDetail = '/sos_alert_detail';
   static const String sosScanning = '/sos_scanning';
@@ -212,6 +215,11 @@ class AppRoutes {
       name: smartbandLdr,
       page: () => const SmartbandLdrPage(),
       binding: SmartbandLdrBinding(),
+    ),
+    GetPage(
+      name: smartbandBleTest,
+      page: () => const SmartbandBleTestScreen(),
+      binding: SmartbandBleTestBinding(),
     ),
     GetPage(
       name: editRoom,

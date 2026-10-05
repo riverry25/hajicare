@@ -10,9 +10,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../presentation/dashboard_typography.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
-import '../../../core/widgets/ribbon_fold_painter.dart';
 import '../../map/screens/interactive_map_screen.dart';
-import 'dart:math' as math;
 import '../../../core/services/app_alert_service.dart';
 import '../../notification/controllers/notification_controller.dart';
 import '../../notification/services/notification_service.dart';
@@ -31,7 +29,6 @@ import '../services/assistance_request_service.dart';
 
 part 'dashboard_jamaah_header.dart';
 part 'dashboard_jamaah_sections.dart';
-part 'dashboard_jamaah_components.dart';
 
 class DashboardJamaahScreen extends StatelessWidget {
   const DashboardJamaahScreen({super.key});
