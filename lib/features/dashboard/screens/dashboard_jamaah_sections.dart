@@ -1739,7 +1739,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   right: 10,
                   left: 10,
                 ),
-                padding: const EdgeInsets.fromLTRB(16, 68, 16, 14),
+                padding: const EdgeInsets.fromLTRB(16, 68, 16, 18),
                 decoration: BoxDecoration(
                   color: isDark ? AppColors.darkSurface : Colors.white,
                   borderRadius: BorderRadius.circular(20),
@@ -2243,41 +2243,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
                         const SizedBox(height: 14),
 
-                        // ── Buka Halaman Penuh ──
-                        Center(
-                          child: TextButton.icon(
-                            style: TextButton.styleFrom(
-                              foregroundColor: isDark
-                                  ? AppColors.goldLight
-                                  : AppColors.espressoDark,
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 6,
-                                horizontal: 12,
-                              ),
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            onPressed: () {
-                              Navigator.of(ctx).pop();
-                              Get.toNamed(AppRoutes.smartbandLdr);
-                            },
-                            icon: const Icon(
-                              Icons.open_in_new_rounded,
-                              size: 15,
-                            ),
-                            label: const Text(
-                              'Buka Halaman Penuh',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12.5,
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        // ── Tombol Hubungkan / Putuskan Gelang (Responsive) ──
+                        // ── Tombol Hubungkan / Putuskan Gelang (Primary Action) ──
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton.icon(
@@ -2325,6 +2291,40 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                 fontWeight: FontWeight.w900,
                                 fontSize: 12,
                                 letterSpacing: 0.8,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        // ── Buka Halaman Penuh (Secondary Action) ──
+                        Center(
+                          child: TextButton.icon(
+                            style: TextButton.styleFrom(
+                              foregroundColor: isDark
+                                  ? AppColors.goldLight
+                                  : AppColors.espressoDark,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 6,
+                                horizontal: 12,
+                              ),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            onPressed: () {
+                              Navigator.of(ctx).pop();
+                              Get.toNamed(AppRoutes.smartbandLdr);
+                            },
+                            icon: const Icon(
+                              Icons.open_in_new_rounded,
+                              size: 15,
+                            ),
+                            label: const Text(
+                              'Buka Halaman Penuh',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12.5,
                               ),
                             ),
                           ),
