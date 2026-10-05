@@ -1,15 +1,16 @@
-import '../../../core/locales/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../core/widgets/animated_ping_dot.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/hajicare_header.dart';
 import '../controllers/smartband_ldr_controller.dart';
+import '../services/smartband_ble_service.dart';
 
+/// Halaman Utama Pemantauan Smartband HajiCare (ESP32-S3 + NEO-6M GPS + MAX30102 Heart Rate)
 class SmartbandLdrPage extends GetView<SmartbandLdrController> {
   const SmartbandLdrPage({super.key});
 
@@ -21,10 +22,17 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
     return Scaffold(
       backgroundColor: scaffoldBg,
       appBar: HajiCareHeader(
-        title: context.tr('smartband.hajjSmartband'),
-        subtitle: 'Sensor Lingkungan DHT11',
+        title: 'HAJICARE SMARTBAND',
+        subtitle: 'Pemantauan Jamaah',
         icon: Icons.watch_rounded,
         showBackButton: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.tune_rounded, color: AppColors.primaryGold),
+            tooltip: 'Uji BLE Realtime',
+            onPressed: () => Get.toNamed(AppRoutes.smartbandBleTest),
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -35,15 +43,24 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildConnectionCard(context, ctrl),
+              // ── BAGIAN 1: STATUS GELANG & KONEKSI ─────────────────────────
+              _buildConnectionStatusCard(context, ctrl),
               const SizedBox(height: AppSpacing.gapCards),
-              _buildDhtMainCard(context, ctrl),
+
+              // ── BAGIAN 2: IDENTITAS SMARTBAND ──────────────────────────────
+              _buildDeviceIdentityCard(context, ctrl),
               const SizedBox(height: AppSpacing.gapCards),
-              _buildRealtimeIndicator(context, ctrl),
+
+              // ── BAGIAN 3: DETAK JANTUNG (MAX30102) ─────────────────────────
+              _buildHeartRateCard(context, ctrl),
               const SizedBox(height: AppSpacing.gapCards),
-              _buildRawDataCard(context, ctrl),
-              const SizedBox(height: AppSpacing.gapSection),
-              _buildActionButton(context, ctrl),
+
+              // ── BAGIAN 4 & 5: LOKASI JAMAAH (NEO-6M GPS) & LIHAT DI PETA ───
+              _buildGpsLocationCard(context, ctrl),
+              const SizedBox(height: AppSpacing.gapCards),
+
+              // ── BAGIAN 6: STATUS UPDATE DATA & LOG KONEKSI ─────────────────
+              _buildDataUpdateStatusCard(context, ctrl),
               const SizedBox(height: AppSpacing.lg),
             ],
           ),
@@ -52,311 +69,237 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
     );
   }
 
-  // ── 1. Connection Card ──────────────────────────────────────────────────────
-  Widget _buildConnectionCard(
+  // ── 1. STATUS GELANG (Card Utama Paling Atas) ─────────────────────────────
+  Widget _buildConnectionStatusCard(
     BuildContext context,
     SmartbandLdrController ctrl,
   ) {
-    final isDark = AppColors.isDark(context);
     final headingColor = AppColors.textHeadingColor(context);
     final bodyColor = AppColors.textBodyColor(context);
 
     return Obx(() {
-      final state = ctrl.connectionState.value;
+      final status = ctrl.bleStatus.value;
+      final isConnected = status == SmartbandBleStatus.connected;
+      final isScanning = status == SmartbandBleStatus.scanning;
+      final isConnecting = status == SmartbandBleStatus.connecting;
 
       Color badgeBg;
       Color badgeBorder;
-      Color iconColor;
-      IconData iconData;
-      String titleText;
-      String subtitleText;
-      String noteText;
-      bool showSpinner = false;
+      Color statusColor;
+      String statusTitle;
+      String statusSubtitle;
+      Widget actionButton;
 
-      switch (state) {
-        case SmartbandConnectionState.scanning:
-          badgeBg = AppColors.primaryGold.withValues(alpha: 0.15);
-          badgeBorder = AppColors.primaryGold.withValues(alpha: 0.4);
-          iconColor = AppColors.primaryGold;
-          iconData = Icons.bluetooth_searching_rounded;
-          titleText = 'Bluetooth';
-          subtitleText = 'Mencari HajiCare Watch...';
-          noteText = 'Memindai sinyal BLE di sekitar...';
-          showSpinner = true;
-          break;
+      if (isConnected) {
+        badgeBg = AppColors.statusSafe.withValues(alpha: 0.12);
+        badgeBorder = AppColors.statusSafe.withValues(alpha: 0.35);
+        statusColor = AppColors.statusSafe;
+        statusTitle = '🟢 Gelang Terhubung';
+        statusSubtitle = 'ID: ${ctrl.braceletId.value}';
 
-        case SmartbandConnectionState.connecting:
-          badgeBg = AppColors.primaryGold.withValues(alpha: 0.15);
-          badgeBorder = AppColors.primaryGold.withValues(alpha: 0.4);
-          iconColor = AppColors.primaryGold;
-          iconData = Icons.bluetooth_connected_rounded;
-          titleText = 'Bluetooth';
-          subtitleText = 'Menghubungkan...';
-          noteText = 'Menyiapkan sensor DHT11...';
-          showSpinner = true;
-          break;
+        actionButton = ElevatedButton.icon(
+          onPressed: () => ctrl.disconnectSmartband(),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.statusDanger.withValues(alpha: 0.1),
+            foregroundColor: AppColors.statusDanger,
+            elevation: 0,
+            side: const BorderSide(color: AppColors.statusDanger, width: 1.2),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.button),
+            ),
+          ),
+          icon: const Icon(Icons.link_off_rounded, size: 20),
+          label: const Text(
+            'PUTUSKAN GELANG',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+        );
+      } else if (isScanning || isConnecting) {
+        badgeBg = AppColors.primaryGold.withValues(alpha: 0.12);
+        badgeBorder = AppColors.primaryGold.withValues(alpha: 0.35);
+        statusColor = AppColors.primaryGold;
+        statusTitle = isScanning
+            ? '🟡 Memindai Gelang...'
+            : '🟡 Menghubungkan...';
+        statusSubtitle = isScanning
+            ? 'Mencari HajiCare-Gelang-001...'
+            : 'Menyiapkan sensor telemetri...';
 
-        case SmartbandConnectionState.connected:
-          badgeBg = AppColors.statusSafe.withValues(alpha: 0.15);
-          badgeBorder = AppColors.statusSafe.withValues(alpha: 0.35);
-          iconColor = AppColors.statusSafe;
-          iconData = Icons.watch_rounded;
-          titleText = 'HajiCare Watch';
-          subtitleText = 'Terhubung';
-          noteText = ctrl.isSensorAvailable.value
-              ? 'Data sensor DHT11 aktif'
-              : 'Menunggu pembacaan sensor...';
-          break;
+        actionButton = OutlinedButton.icon(
+          onPressed: () => ctrl.disconnectSmartband(),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.textMuted,
+            side: BorderSide(color: AppColors.textMuted.withValues(alpha: 0.4)),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.button),
+            ),
+          ),
+          icon: const Icon(Icons.close_rounded, size: 18),
+          label: const Text(
+            'BATALKAN',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        );
+      } else {
+        badgeBg = AppColors.statusDanger.withValues(alpha: 0.1);
+        badgeBorder = AppColors.statusDanger.withValues(alpha: 0.3);
+        statusColor = AppColors.statusDanger;
+        statusTitle = '🔴 Gelang Belum Terhubung';
+        statusSubtitle =
+            'Hubungkan gelang untuk menerima data GPS dan detak jantung.';
 
-        case SmartbandConnectionState.disconnected:
-          final isExplicitDisconnected =
-              ctrl.statusMessage.value == 'Gelang terputus';
-          badgeBg = isDark
-              ? AppColors.darkSurfaceContainerHighest
-              : AppColors.canvasCreamSubtle;
-          badgeBorder = isDark
-              ? AppColors.darkOutlineVariant
-              : AppColors.outlineVariant;
-          iconColor = isExplicitDisconnected
-              ? AppColors.textCaption
-              : AppColors.primaryGold;
-          iconData = Icons.bluetooth_disabled_rounded;
-          titleText = 'HajiCare Watch';
-          subtitleText = isExplicitDisconnected
-              ? 'Terputus'
-              : 'Belum terhubung';
-          noteText = isExplicitDisconnected
-              ? 'Data sensor berhenti diterima'
-              : 'Tekan tombol Hubungkan Gelang';
-          break;
+        actionButton = ElevatedButton.icon(
+          onPressed: () => ctrl.connectSmartband(),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primaryGold,
+            foregroundColor: Colors.black,
+            elevation: 1,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.button),
+            ),
+          ),
+          icon: const Icon(Icons.bluetooth_searching_rounded, size: 20),
+          label: const Text(
+            'HUBUNGKAN GELANG',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+        );
       }
 
       return AppCard(
         padding: const EdgeInsets.all(AppSpacing.cardPadding),
         borderColor: badgeBorder,
-        child: Row(
-          children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: badgeBg,
-                shape: BoxShape.circle,
-                border: Border.all(color: badgeBorder, width: 1.5),
-              ),
-              child: showSpinner
-                  ? const Center(
-                      child: SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          color: AppColors.primaryGold,
-                        ),
-                      ),
-                    )
-                  : Icon(iconData, color: iconColor, size: 28),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    titleText,
-                    style: AppTypography.titleMedium.copyWith(
-                      color: headingColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitleText,
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: state == SmartbandConnectionState.connected
-                          ? AppColors.statusSafe
-                          : headingColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    noteText,
-                    style: AppTypography.caption.copyWith(
-                      color: bodyColor.withValues(alpha: 0.8),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-    });
-  }
-
-  // ── 2. DHT11 Main Card (4 Metrics) ──────────────────────────────────────────
-  Widget _buildDhtMainCard(BuildContext context, SmartbandLdrController ctrl) {
-    final isDark = AppColors.isDark(context);
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
-
-    return Obx(() {
-      final isConnected = ctrl.isConnected;
-      final isAvailable = ctrl.isSensorAvailable.value;
-      final tempText = ctrl.formattedTemperature;
-      final humText = ctrl.formattedHumidity;
-      final heatIndexText = ctrl.formattedHeatIndex;
-      final statusLabel = ctrl.environmentStatusLabel;
-      final statusColor = ctrl.environmentStatusColor;
-      final statusIcon = ctrl.environmentStatusIcon;
-
-      return AppCard(
-        padding: const EdgeInsets.all(AppSpacing.cardPadding),
-        borderColor: isConnected && isAvailable
-            ? statusColor.withValues(alpha: 0.35)
-            : null,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header Row: Title & Status Badge
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: statusColor.withValues(
-                          alpha: isDark ? 0.2 : 0.1,
-                        ),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.device_thermostat_rounded,
-                        color: statusColor,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Sensor Lingkungan DHT11',
-                          style: AppTypography.titleMedium.copyWith(
-                            color: headingColor,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          'Suhu & kelembapan udara sekitar',
-                          style: AppTypography.captionSmall.copyWith(
-                            color: bodyColor.withValues(alpha: 0.7),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                // Environment Status Pill Badge
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: isDark ? 0.22 : 0.12),
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                    border: Border.all(
-                      color: statusColor.withValues(alpha: 0.4),
-                      width: 1,
+                    color: badgeBg,
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
+                    border: Border.all(color: badgeBorder),
+                  ),
+                  child: Text(
+                    statusTitle,
+                    style: AppTypography.captionSmall.copyWith(
+                      color: statusColor,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(statusIcon, color: statusColor, size: 14),
-                      const SizedBox(width: 4),
-                      Text(
-                        statusLabel,
-                        style: AppTypography.captionSmall.copyWith(
-                          color: statusColor,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.lg),
-
-            // 4 Metrics: 2x2 Grid Layout
-            Row(
-              children: [
-                // Metric 1: 🌡 Suhu Lingkungan
-                Expanded(
-                  child: _buildMetricTile(
-                    context: context,
-                    icon: Icons.thermostat_rounded,
-                    iconColor: const Color(0xFFE11D48),
-                    label: 'Suhu Lingkungan',
-                    value: tempText,
-                    unit: isConnected && isAvailable ? '' : '',
-                    note: 'Udara sekitar jamaah',
-                    isDark: isDark,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                // Metric 2: 💧 Kelembapan
-                Expanded(
-                  child: _buildMetricTile(
-                    context: context,
-                    icon: Icons.water_drop_rounded,
-                    iconColor: const Color(0xFF0284C7),
-                    label: 'Kelembapan',
-                    value: humText,
-                    unit: '',
-                    note: 'Relatif udara (%RH)',
-                    isDark: isDark,
-                  ),
-                ),
-              ],
+            const SizedBox(height: 12),
+            Text(
+              ctrl.deviceName.value,
+              style: AppTypography.titleLarge.copyWith(
+                color: headingColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              statusSubtitle,
+              style: AppTypography.bodySmall.copyWith(
+                color: bodyColor.withValues(alpha: 0.8),
+                height: 1.4,
+              ),
             ),
             const SizedBox(height: AppSpacing.md),
+            actionButton,
+          ],
+        ),
+      );
+    });
+  }
+
+  // ── 2. IDENTITAS SMARTBAND ────────────────────────────────────────────────
+  Widget _buildDeviceIdentityCard(
+    BuildContext context,
+    SmartbandLdrController ctrl,
+  ) {
+    final headingColor = AppColors.textHeadingColor(context);
+    final bodyColor = AppColors.textBodyColor(context);
+
+    return Obx(() {
+      final status = ctrl.bleStatus.value;
+
+      String statusDisplay;
+      Color statusDisplayColor;
+
+      switch (status) {
+        case SmartbandBleStatus.connected:
+          statusDisplay = 'Connected';
+          statusDisplayColor = AppColors.statusSafe;
+          break;
+        case SmartbandBleStatus.connecting:
+          statusDisplay = 'Connecting';
+          statusDisplayColor = AppColors.primaryGold;
+          break;
+        case SmartbandBleStatus.scanning:
+          statusDisplay = 'Scanning';
+          statusDisplayColor = AppColors.primaryGold;
+          break;
+        case SmartbandBleStatus.disconnected:
+          statusDisplay = 'Disconnected';
+          statusDisplayColor = AppColors.statusDanger;
+          break;
+      }
+
+      return AppCard(
+        padding: const EdgeInsets.all(AppSpacing.cardPadding),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Row(
               children: [
-                // Metric 3: 🔥 Heat Index
-                Expanded(
-                  child: _buildMetricTile(
-                    context: context,
-                    icon: Icons.local_fire_department_rounded,
-                    iconColor: const Color(0xFFEA580C),
-                    label: 'Heat Index',
-                    value: heatIndexText,
-                    unit: '',
-                    note: 'Suhu terasa tubuh',
-                    isDark: isDark,
-                  ),
+                const Icon(
+                  Icons.fingerprint_rounded,
+                  color: AppColors.primaryGold,
+                  size: 20,
                 ),
-                const SizedBox(width: AppSpacing.md),
-                // Metric 4: 🌤 Kondisi Lingkungan
-                Expanded(
-                  child: _buildMetricTile(
-                    context: context,
-                    icon: statusIcon,
-                    iconColor: statusColor,
-                    label: 'Kondisi Lingkungan',
-                    value: statusLabel,
-                    unit: '',
-                    note: 'Kombinasi T & HI',
-                    isDark: isDark,
-                    valueColor: isConnected && isAvailable ? statusColor : null,
+                const SizedBox(width: 8),
+                Text(
+                  'IDENTITAS SMARTBAND',
+                  style: AppTypography.labelLarge.copyWith(
+                    color: bodyColor.withValues(alpha: 0.7),
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.1,
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 8),
+            const Divider(),
+            const SizedBox(height: 4),
+            _buildDataRow(
+              label: 'Nama Perangkat',
+              value: ctrl.deviceName.value,
+              valueColor: headingColor,
+              bodyColor: bodyColor,
+            ),
+            const SizedBox(height: 8),
+            _buildDataRow(
+              label: 'Bracelet ID',
+              value: ctrl.braceletId.value,
+              valueColor: headingColor,
+              bodyColor: bodyColor,
+            ),
+            const SizedBox(height: 8),
+            _buildDataRow(
+              label: 'Status Koneksi',
+              value: statusDisplay,
+              valueColor: statusDisplayColor,
+              bodyColor: bodyColor,
+              isBold: true,
             ),
           ],
         ),
@@ -364,337 +307,407 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
     });
   }
 
-  Widget _buildMetricTile({
-    required BuildContext context,
-    required IconData icon,
-    required Color iconColor,
-    required String label,
-    required String value,
-    required String unit,
-    required String note,
-    required bool isDark,
-    Color? valueColor,
-  }) {
+  // ── 3. DETAK JANTUNG (MAX30102) ───────────────────────────────────────────
+  Widget _buildHeartRateCard(
+    BuildContext context,
+    SmartbandLdrController ctrl,
+  ) {
     final headingColor = AppColors.textHeadingColor(context);
     final bodyColor = AppColors.textBodyColor(context);
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.darkSurfaceContainerHighest.withValues(alpha: 0.4)
-            : const Color(0xFFF8FAF9),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(
-          color: isDark
-              ? AppColors.darkOutlineVariant
-              : const Color(0xFFE2E8F0),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: iconColor, size: 18),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  label,
-                  style: AppTypography.captionSmall.copyWith(
-                    color: bodyColor.withValues(alpha: 0.85),
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+    return Obx(() {
+      final hr = ctrl.heartRate.value;
+      final isConnected = ctrl.isConnected;
+      final statusText = ctrl.heartRateStatus.value;
+
+      final bool hasReading = isConnected && hr != null && hr > 0;
+
+      return AppCard(
+        padding: const EdgeInsets.all(AppSpacing.cardPadding),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                      child: const Icon(
+                        Icons.favorite_rounded,
+                        color: Colors.redAccent,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Detak Jantung',
+                      style: AppTypography.titleMedium.copyWith(
+                        color: headingColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              value,
-              style: AppTypography.titleLarge.copyWith(
-                color: valueColor ?? headingColor,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.5,
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: hasReading
+                          ? AppColors.statusSafe.withValues(alpha: 0.12)
+                          : (isConnected
+                                ? AppColors.primaryGold.withValues(alpha: 0.12)
+                                : Colors.grey.withValues(alpha: 0.12)),
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
+                    ),
+                    child: Text(
+                      statusText,
+                      style: AppTypography.captionSmall.copyWith(
+                        color: hasReading
+                            ? AppColors.statusSafe
+                            : (isConnected
+                                  ? AppColors.primaryGold
+                                  : AppColors.textMuted),
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            // BPM Big Readout
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  hasReading ? '$hr' : '—',
+                  style: TextStyle(
+                    fontFamily: AppTypography.headingFontFamily,
+                    fontSize: 52,
+                    fontWeight: FontWeight.w800,
+                    color: hasReading ? headingColor : AppColors.textMuted,
+                    height: 1.0,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'BPM',
+                  style: AppTypography.titleMedium.copyWith(
+                    color: bodyColor.withValues(alpha: 0.7),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              hasReading
+                  ? 'Pengukuran detak jantung aktif secara realtime.'
+                  : (isConnected
+                        ? 'Sensor MAX30102 sedang mengukur detak nadi...'
+                        : 'Hubungkan gelang untuk memantau detak jantung lansia.'),
+              style: AppTypography.caption.copyWith(
+                color: bodyColor.withValues(alpha: 0.6),
               ),
             ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            note,
-            style: AppTypography.captionSmall.copyWith(
-              color: bodyColor.withValues(alpha: 0.6),
-              fontSize: 10,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 
-  // ── 3. Realtime Indicator (DHT11) ───────────────────────────────────────────
-  Widget _buildRealtimeIndicator(
+  // ── 4 & 5. LOKASI JAMAAH (NEO-6M GPS) & TOMBOL LIHAT DI PETA ──────────────
+  Widget _buildGpsLocationCard(
+    BuildContext context,
+    SmartbandLdrController ctrl,
+  ) {
+    final headingColor = AppColors.textHeadingColor(context);
+    final bodyColor = AppColors.textBodyColor(context);
+
+    return Obx(() {
+      final isConnected = ctrl.isConnected;
+      final isGpsFix = ctrl.isGpsFix.value;
+      final lat = ctrl.latitude.value;
+      final lng = ctrl.longitude.value;
+      final lastLat = ctrl.lastKnownLatitude.value;
+      final lastLng = ctrl.lastKnownLongitude.value;
+      final relativeTime = ctrl.relativeTimeText.value;
+
+      String gpsStatusText;
+      Color gpsStatusColor;
+      Color gpsStatusBg;
+
+      if (!isConnected) {
+        gpsStatusText = '🔴 Gelang Terputus';
+        gpsStatusColor = AppColors.statusDanger;
+        gpsStatusBg = AppColors.statusDanger.withValues(alpha: 0.1);
+      } else if (isGpsFix && lat != null && lng != null) {
+        gpsStatusText = '🟢 FIX';
+        gpsStatusColor = AppColors.statusSafe;
+        gpsStatusBg = AppColors.statusSafe.withValues(alpha: 0.12);
+      } else {
+        gpsStatusText = '🟡 Mencari GPS';
+        gpsStatusColor = AppColors.primaryGold;
+        gpsStatusBg = AppColors.primaryGold.withValues(alpha: 0.12);
+      }
+
+      final String displayLat;
+      final String displayLng;
+      if (isGpsFix && lat != null && lng != null) {
+        displayLat = lat.toStringAsFixed(6);
+        displayLng = lng.toStringAsFixed(6);
+      } else if (!isConnected && lastLat != null && lastLng != null) {
+        displayLat = '${lastLat.toStringAsFixed(6)} (Terakhir)';
+        displayLng = '${lastLng.toStringAsFixed(6)} (Terakhir)';
+      } else {
+        displayLat = '—';
+        displayLng = '—';
+      }
+
+      final bool canViewOnMap =
+          (isGpsFix && lat != null && lng != null) ||
+          (lastLat != null && lastLng != null);
+
+      return AppCard(
+        padding: const EdgeInsets.all(AppSpacing.cardPadding),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryGold.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                      child: const Icon(
+                        Icons.location_on_rounded,
+                        color: AppColors.primaryGold,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Lokasi Jamaah',
+                      style: AppTypography.titleMedium.copyWith(
+                        color: headingColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: gpsStatusBg,
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
+                    ),
+                    child: Text(
+                      gpsStatusText,
+                      style: AppTypography.captionSmall.copyWith(
+                        color: gpsStatusColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            const Divider(),
+            const SizedBox(height: 6),
+
+            _buildDataRow(
+              label: 'Latitude',
+              value: displayLat,
+              valueColor: headingColor,
+              bodyColor: bodyColor,
+            ),
+            const SizedBox(height: 8),
+            _buildDataRow(
+              label: 'Longitude',
+              value: displayLng,
+              valueColor: headingColor,
+              bodyColor: bodyColor,
+            ),
+            const SizedBox(height: 8),
+            _buildDataRow(
+              label: 'Sumber Lokasi',
+              value: 'Smartband',
+              valueColor: headingColor,
+              bodyColor: bodyColor,
+            ),
+            const SizedBox(height: 8),
+            _buildDataRow(
+              label: 'Update Terakhir',
+              value: relativeTime,
+              valueColor: bodyColor,
+              bodyColor: bodyColor,
+            ),
+
+            const SizedBox(height: AppSpacing.md),
+            // ── BAGIAN 5: TOMBOL LIHAT DI PETA ──
+            ElevatedButton.icon(
+              onPressed: () => ctrl.navigateToMap(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: canViewOnMap
+                    ? const Color(0xFF1E293B)
+                    : Colors.grey.shade400,
+                foregroundColor: Colors.white,
+                elevation: canViewOnMap ? 1 : 0,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.button),
+                ),
+              ),
+              icon: const Icon(Icons.map_rounded, size: 20),
+              label: const Text(
+                'LIHAT DI PETA',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  // ── 6. STATUS UPDATE DATA ──────────────────────────────────────────────────
+  Widget _buildDataUpdateStatusCard(
     BuildContext context,
     SmartbandLdrController ctrl,
   ) {
     final bodyColor = AppColors.textBodyColor(context);
 
     return Obx(() {
-      final isConnected = ctrl.isConnected;
-      final isAvailable = ctrl.isSensorAvailable.value;
-      final timeStr = ctrl.relativeTimeStr.value;
+      final relativeTime = ctrl.relativeTimeText.value;
+      final error = ctrl.errorMessage.value;
 
-      Color indicatorBg;
-      Color indicatorBorder;
-      Color statusTextColor;
-      String statusMsg;
-      bool showDot = false;
-
-      if (!isConnected) {
-        indicatorBg = AppColors.canvasCreamSubtle.withValues(alpha: 0.4);
-        indicatorBorder = AppColors.outlineVariant.withValues(alpha: 0.3);
-        statusTextColor = bodyColor;
-        statusMsg = 'HajiCare Watch belum terhubung';
-      } else if (isAvailable) {
-        indicatorBg = AppColors.statusSafe.withValues(alpha: 0.08);
-        indicatorBorder = AppColors.statusSafe.withValues(alpha: 0.25);
-        statusTextColor = AppColors.statusSafe;
-        statusMsg = 'DHT11 realtime: $timeStr';
-        showDot = true;
-      } else {
-        indicatorBg = const Color(0xFFEA580C).withValues(alpha: 0.08);
-        indicatorBorder = const Color(0xFFEA580C).withValues(alpha: 0.25);
-        statusTextColor = const Color(0xFFEA580C);
-        statusMsg = 'Sensor tidak tersedia (menunggu data)';
-      }
-
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: indicatorBg,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: indicatorBorder),
-        ),
-        child: Row(
-          children: [
-            if (showDot)
-              const AnimatedPingDot(size: 8, color: AppColors.statusSafe)
-            else
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isConnected
-                      ? const Color(0xFFEA580C)
-                      : AppColors.textCaption,
+      return Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.04),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.sync_rounded,
+                      size: 16,
+                      color: AppColors.primaryGold,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Status Update:',
+                      style: AppTypography.caption.copyWith(
+                        color: bodyColor.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
                 ),
+                Text(
+                  relativeTime,
+                  style: AppTypography.caption.copyWith(
+                    color: bodyColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (error.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.statusDanger.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                statusMsg,
-                style: AppTypography.bodySmall.copyWith(
-                  color: statusTextColor,
-                  fontWeight: showDot ? FontWeight.w600 : FontWeight.normal,
-                ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.error_outline_rounded,
+                    color: AppColors.statusDanger,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      error,
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.statusDanger,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
-        ),
-      );
-    });
-  }
-
-  // ── 4. Raw Data Diagnostic Card ─────────────────────────────────────────────
-  Widget _buildRawDataCard(BuildContext context, SmartbandLdrController ctrl) {
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
-
-    return Obx(() {
-      final isConnected = ctrl.isConnected;
-      final isAvailable = ctrl.isSensorAvailable.value;
-      final rawPayload = ctrl.rawDataString.value;
-      final temp = ctrl.temperature.value != null
-          ? '${ctrl.temperature.value!.toStringAsFixed(1)} °C'
-          : '-';
-      final hum = ctrl.humidity.value != null
-          ? '${ctrl.humidity.value!.toStringAsFixed(1)} %'
-          : '-';
-      final hi = ctrl.heatIndex.value != null
-          ? '${ctrl.heatIndex.value!.toStringAsFixed(1)} °C'
-          : '-';
-
-      return AppCard(
-        padding: const EdgeInsets.all(AppSpacing.cardPadding),
-        child: Theme(
-          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-          child: ExpansionTile(
-            initiallyExpanded: false,
-            tilePadding: EdgeInsets.zero,
-            childrenPadding: const EdgeInsets.only(top: AppSpacing.sm),
-            title: Text(
-              'Data Diagnostik Sensor',
-              style: AppTypography.titleMedium.copyWith(
-                color: headingColor,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            subtitle: Text(
-              'Detail teknis BLE & status sensor DHT11',
-              style: AppTypography.caption.copyWith(
-                color: bodyColor.withValues(alpha: 0.75),
-              ),
-            ),
-            children: [
-              const Divider(height: 16),
-              _buildDebugRow(context, 'Device Name', ctrl.deviceName.value),
-              _buildDebugRow(
-                context,
-                'BLE Status',
-                isConnected ? 'Connected' : 'Disconnected',
-                isSuccess: isConnected,
-              ),
-              _buildDebugRow(
-                context,
-                'DHT11 Status',
-                isAvailable ? 'Receiving' : 'Not Available',
-                isSuccess: isAvailable,
-              ),
-              _buildDebugRow(context, 'Suhu Lingkungan', temp),
-              _buildDebugRow(context, 'Kelembapan', hum),
-              _buildDebugRow(context, 'Heat Index', hi),
-              _buildDebugRow(context, 'Kondisi', ctrl.environmentStatusLabel),
-              _buildDebugRow(context, 'Raw Payload', rawPayload),
-            ],
-          ),
-        ),
-      );
-    });
-  }
-
-  Widget _buildDebugRow(
-    BuildContext context,
-    String label,
-    String value, {
-    bool? isSuccess,
-    String? hint,
-  }) {
-    final bodyColor = AppColors.textBodyColor(context);
-    final headingColor = AppColors.textHeadingColor(context);
-
-    Color valColor = headingColor;
-    if (isSuccess == true) valColor = AppColors.statusSafe;
-    if (isSuccess == false) valColor = AppColors.error;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                label,
-                style: AppTypography.bodySmall.copyWith(
-                  color: bodyColor.withValues(alpha: 0.8),
-                ),
-              ),
-              Text(
-                value,
-                style: AppTypography.labelLarge.copyWith(
-                  color: valColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          if (hint != null)
-            Text(
-              hint,
-              style: AppTypography.captionSmall.copyWith(
-                color: AppColors.textCaption.withValues(alpha: 0.7),
-                fontSize: 10,
-              ),
-            ),
         ],
-      ),
-    );
-  }
-
-  // ── 5. Action Button ────────────────────────────────────────────────────────
-  Widget _buildActionButton(BuildContext context, SmartbandLdrController ctrl) {
-    return Obx(() {
-      final isConnected = ctrl.isConnected;
-      final isBusy = ctrl.isBusy;
-
-      if (isConnected) {
-        return SizedBox(
-          height: 52,
-          child: OutlinedButton.icon(
-            onPressed: isBusy ? null : () => ctrl.disconnectSmartband(),
-            icon: const Icon(Icons.link_off_rounded, size: 20),
-            label: Text(
-              'Putuskan Gelang',
-              style: AppTypography.titleMedium.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.error,
-              side: const BorderSide(color: AppColors.error, width: 1.5),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-              ),
-            ),
-          ),
-        );
-      }
-
-      return SizedBox(
-        height: 52,
-        child: ElevatedButton.icon(
-          onPressed: isBusy ? null : () => ctrl.connectSmartband(),
-          icon: isBusy
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: AppColors.surfaceWhite,
-                  ),
-                )
-              : const Icon(Icons.bluetooth_searching_rounded, size: 20),
-          label: Text(
-            isBusy
-                ? (ctrl.isScanning ? 'Mencari Gelang...' : 'Menghubungkan...')
-                : 'Hubungkan Gelang',
-            style: AppTypography.titleMedium.copyWith(
-              color: AppColors.surfaceWhite,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primaryContainer,
-            foregroundColor: AppColors.surfaceWhite,
-            disabledBackgroundColor: AppColors.primaryContainer.withValues(
-              alpha: 0.6,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.pill),
-            ),
-            elevation: 0,
-          ),
-        ),
       );
     });
+  }
+
+  Widget _buildDataRow({
+    required String label,
+    required String value,
+    required Color valueColor,
+    required Color bodyColor,
+    bool isBold = false,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: AppTypography.bodySmall.copyWith(
+            color: bodyColor.withValues(alpha: 0.7),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.bodySmall.copyWith(
+              color: valueColor,
+              fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

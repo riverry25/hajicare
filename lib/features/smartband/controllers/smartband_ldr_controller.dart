@@ -3,28 +3,50 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../core/locales/app_translations.dart';
+import 'package:latlong2/latlong.dart';
+import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/utils/user_feedback_message.dart';
-import '../../../core/services/app_alert_service.dart';
-import '../services/ble_service.dart';
+import '../../map/controllers/map_controller.dart';
+import '../models/smartband_data.dart';
+import '../services/smartband_ble_service.dart';
 
 enum SmartbandConnectionState { disconnected, scanning, connecting, connected }
 
 class SmartbandLdrController extends GetxController {
-  final BleService _bleService = BleService();
+  final SmartbandBleService bleService;
 
-  // Observable state - Connection
+  SmartbandLdrController({SmartbandBleService? bleService})
+    : bleService =
+          bleService ??
+          (Get.isRegistered<SmartbandBleService>()
+              ? Get.find<SmartbandBleService>()
+              : SmartbandBleService());
+
+  // ── Observable State - Smartband BLE (ESP32-S3) ───────────────────────────
+  final Rx<SmartbandBleStatus> bleStatus = SmartbandBleStatus.disconnected.obs;
+  final RxString braceletId = 'HCG-001'.obs;
+  final Rxn<int> heartRate = Rxn<int>();
+  final Rxn<double> latitude = Rxn<double>();
+  final Rxn<double> longitude = Rxn<double>();
+  final RxBool isGpsFix = false.obs;
+  final Rxn<double> lastKnownLatitude = Rxn<double>();
+  final Rxn<double> lastKnownLongitude = Rxn<double>();
+  final Rxn<DateTime> lastDataReceivedAt = Rxn<DateTime>();
+  final RxString relativeTimeText = 'Belum menerima data'.obs;
+  final RxString heartRateStatus = 'Sensor belum tersedia'.obs;
+  final RxString errorMessage = ''.obs;
+
+  // ── Observable State - Legacy / Generic Connection ────────────────────────
   final isWatchConnected = false.obs;
   final connectionState = SmartbandConnectionState.disconnected.obs;
-  final statusMessage = 'HajiCare Watch belum terhubung'.obs;
-  final deviceName = 'HajiCare Watch'.obs;
+  final statusMessage = 'Gelang Belum Terhubung'.obs;
+  final deviceName = 'HajiCare-Gelang-001'.obs;
   final receivingData = false.obs;
   final lastUpdated = Rxn<DateTime>();
   final rawDataString = '-'.obs;
   final relativeTimeStr = ''.obs;
 
-  // Observable state - DHT11 Environmental Sensor (Specification Requirement 5)
+  // ── Observable State - DHT11 (Preserved for backwards compatibility) ───────
   final temperature = Rxn<double>();
   final humidity = Rxn<double>();
   final heatIndex = Rxn<double>();
@@ -32,29 +54,25 @@ class SmartbandLdrController extends GetxController {
   final sensorError = Rxn<String>();
   final environmentStatus = 'Menunggu Sensor'.obs;
 
-  int _connectionGeneration = 0;
   Timer? _tickerTimer;
+  StreamSubscription<SmartbandBleStatus>? _bleStatusSub;
+  StreamSubscription<SmartbandData>? _bleDataSub;
+  StreamSubscription<String>? _bleMessageSub;
 
-  // Convenient getters
-  bool get isConnected => isWatchConnected.value;
-  bool get isScanning =>
-      connectionState.value == SmartbandConnectionState.scanning;
-  bool get isConnecting =>
-      connectionState.value == SmartbandConnectionState.connecting;
+  // Getters
+  bool get isConnected => bleStatus.value == SmartbandBleStatus.connected;
+  bool get isScanning => bleStatus.value == SmartbandBleStatus.scanning;
+  bool get isConnecting => bleStatus.value == SmartbandBleStatus.connecting;
   bool get isBusy => isScanning || isConnecting;
 
-  /// Calculates Heat Index (°C) based on ambient temperature (°C) and relative humidity (%)
-  /// using NOAA's Rothfusz regression equation as fallback if ESP32 does not provide it.
+  /// Calculates Heat Index (°C) - Preserved for tests
   static double calculateHeatIndex(double tempC, double hum) {
     final rh = hum.clamp(0.0, 100.0);
-
     if (tempC < 26.7) {
       return double.parse(tempC.toStringAsFixed(1));
     }
-
     final tf = tempC * 1.8 + 32.0;
     double hi = 0.5 * (tf + 61.0 + ((tf - 68.0) * 1.2) + (rh * 0.094));
-
     if ((hi + tf) / 2.0 >= 80.0) {
       hi =
           -42.379 +
@@ -79,15 +97,11 @@ class SmartbandLdrController extends GetxController {
         hi += adj;
       }
     }
-
     final hiC = (hi - 32.0) / 1.8;
     return double.parse(hiC.toStringAsFixed(1));
   }
 
-  /// Dedicated function to determine environmental condition (Requirement 10):
-  /// - 'Dingin'  : Temp < 20.0 °C
-  /// - 'Panas'   : Temp >= 32.0 °C OR Heat Index >= 35.0 °C
-  /// - 'Normal'  : 20.0 °C <= Temp < 32.0 °C and Heat Index < 35.0 °C
+  /// Determines environmental condition - Preserved for tests
   static String determineEnvironmentStatus({
     required double temperature,
     required double heatIndex,
@@ -101,7 +115,6 @@ class SmartbandLdrController extends GetxController {
     }
   }
 
-  /// Formatted string for Suhu Lingkungan, e.g. "31.0 °C" (Requirement 8 & 9)
   String get formattedTemperature {
     if (!isWatchConnected.value ||
         !isSensorAvailable.value ||
@@ -111,7 +124,6 @@ class SmartbandLdrController extends GetxController {
     return '${temperature.value!.toStringAsFixed(1)} °C';
   }
 
-  /// Formatted string for Kelembapan, e.g. "68 %" (Requirement 8)
   String get formattedHumidity {
     if (!isWatchConnected.value ||
         !isSensorAvailable.value ||
@@ -121,7 +133,6 @@ class SmartbandLdrController extends GetxController {
     return '${humidity.value!.round()} %';
   }
 
-  /// Formatted string for Heat Index, e.g. "33.8 °C" (Requirement 8)
   String get formattedHeatIndex {
     if (!isWatchConnected.value ||
         !isSensorAvailable.value ||
@@ -131,7 +142,6 @@ class SmartbandLdrController extends GetxController {
     return '${heatIndex.value!.toStringAsFixed(1)} °C';
   }
 
-  /// Status label for Kondisi Lingkungan (Requirement 8 & 10)
   String get environmentStatusLabel {
     if (!isWatchConnected.value) {
       return '-';
@@ -142,24 +152,22 @@ class SmartbandLdrController extends GetxController {
     return environmentStatus.value;
   }
 
-  /// Theme color representing the environmental condition
   Color get environmentStatusColor {
     if (!isWatchConnected.value || !isSensorAvailable.value) {
       return AppColors.textMuted;
     }
     switch (environmentStatus.value) {
       case 'Dingin':
-        return const Color(0xFF0284C7); // Sky blue
+        return const Color(0xFF0284C7);
       case 'Normal':
-        return AppColors.statusSafe; // Emerald Islamic green
+        return AppColors.statusSafe;
       case 'Panas':
-        return const Color(0xFFEA580C); // Warning amber / heat
+        return const Color(0xFFEA580C);
       default:
         return AppColors.textMuted;
     }
   }
 
-  /// Icon representing the environmental condition
   IconData get environmentStatusIcon {
     if (!isWatchConnected.value || !isSensorAvailable.value) {
       return Icons.sensors_off_rounded;
@@ -179,223 +187,189 @@ class SmartbandLdrController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    ever<SmartbandConnectionState>(connectionState, (state) {
-      isWatchConnected.value = (state == SmartbandConnectionState.connected);
-    });
-    _setupBleCallbacks();
+    _subscribeToBleService();
     _startRelativeTimeTicker();
   }
 
-  void _setupBleCallbacks() {
-    // 1. Temperature characteristic received (initial read & notification)
-    _bleService.onTemperatureReceived = (val, rawStr) {
-      temperature.value = val;
-      rawDataString.value = 'Temp: $rawStr';
-      receivingData.value = true;
-      lastUpdated.value = DateTime.now();
-      _evaluateSensorState();
-      _updateRelativeTime();
-    };
+  void _subscribeToBleService() {
+    bleStatus.value = bleService.currentStatus;
+    _syncLegacyState(bleService.currentStatus);
 
-    // 2. Humidity characteristic received (initial read & notification)
-    _bleService.onHumidityReceived = (val, rawStr) {
-      humidity.value = val;
-      rawDataString.value = 'Hum: $rawStr';
-      receivingData.value = true;
-      lastUpdated.value = DateTime.now();
-      _evaluateSensorState();
-      _updateRelativeTime();
-    };
+    _bleStatusSub = bleService.connectionStateStream.listen((status) {
+      bleStatus.value = status;
+      _syncLegacyState(status);
 
-    // 3. Heat Index characteristic received (initial read & notification)
-    _bleService.onHeatIndexReceived = (val, rawStr) {
-      heatIndex.value = val;
-      rawDataString.value = 'HI: $rawStr';
-      receivingData.value = true;
-      lastUpdated.value = DateTime.now();
-      _evaluateSensorState();
-      _updateRelativeTime();
-    };
-
-    // 4. Sensor parsing error / corrupted stream
-    _bleService.onSensorError = (err) {
-      sensorError.value = err;
-      debugPrint('[HajiCare Watch] $err');
-      _evaluateSensorState();
-    };
-
-    // 5. Connection state changes
-    _bleService.onConnectionChanged = (connected) {
-      isWatchConnected.value = connected;
-      if (connected) {
-        connectionState.value = SmartbandConnectionState.connected;
-        statusMessage.value = 'HajiCare Watch terhubung';
-        sensorError.value = null;
-      } else {
-        // Requirement 7: When ESP32 disconnects
-        connectionState.value = SmartbandConnectionState.disconnected;
-        statusMessage.value = 'HajiCare Watch terputus';
-        receivingData.value = false;
-        isSensorAvailable.value = false;
-        environmentStatus.value = 'Sensor tidak tersedia';
+      if (status == SmartbandBleStatus.connected) {
+        errorMessage.value = '';
+        statusMessage.value = 'Gelang Terhubung';
+      } else if (status == SmartbandBleStatus.disconnected) {
+        statusMessage.value = 'Gelang Belum Terhubung';
+        isGpsFix.value = false;
+        heartRateStatus.value = 'Sensor belum tersedia';
+      } else if (status == SmartbandBleStatus.scanning) {
+        statusMessage.value = 'Memindai sinyal gelang...';
+      } else if (status == SmartbandBleStatus.connecting) {
+        statusMessage.value = 'Menghubungkan ke Smartband...';
       }
-    };
+    });
 
-    _bleService.onStatusLog = (msg) {
-      statusMessage.value = msg;
-    };
-  }
+    _bleDataSub = bleService.receivedSmartbandData.listen((data) {
+      _processSmartbandData(data);
+    });
 
-  /// Evaluates reactive sensor availability and condition status
-  void _evaluateSensorState() {
-    final t = temperature.value;
-    final h = humidity.value;
-
-    if (t == null || h == null) {
-      // DHT11 data is incomplete or unavailable
-      isSensorAvailable.value = false;
-      environmentStatus.value = 'Sensor tidak tersedia';
-      return;
-    }
-
-    // Both temperature and humidity are available
-    isSensorAvailable.value = true;
-    sensorError.value = null;
-
-    // Use reported Heat Index or calculate fallback
-    final hi = heatIndex.value ?? calculateHeatIndex(t, h);
-    if (heatIndex.value == null) {
-      heatIndex.value = hi;
-    }
-
-    environmentStatus.value = determineEnvironmentStatus(
-      temperature: t,
-      heatIndex: hi,
-    );
-  }
-
-  void _startRelativeTimeTicker() {
-    _tickerTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _updateRelativeTime();
-      _checkSensorTimeout();
+    _bleMessageSub = bleService.statusMessageStream.listen((msg) {
+      debugPrint('[SmartbandLdrController] $msg');
     });
   }
 
-  void _checkSensorTimeout() {
-    if (!isWatchConnected.value) return;
-    final updated = lastUpdated.value;
-    if (updated != null &&
-        DateTime.now().difference(updated) > const Duration(seconds: 45)) {
-      if (isSensorAvailable.value) {
-        isSensorAvailable.value = false;
-        environmentStatus.value = 'Sensor tidak tersedia';
-        sensorError.value = 'Sensor tidak merespon (timeout)';
+  void _syncLegacyState(SmartbandBleStatus status) {
+    switch (status) {
+      case SmartbandBleStatus.connected:
+        isWatchConnected.value = true;
+        connectionState.value = SmartbandConnectionState.connected;
+        break;
+      case SmartbandBleStatus.scanning:
+        isWatchConnected.value = false;
+        connectionState.value = SmartbandConnectionState.scanning;
+        break;
+      case SmartbandBleStatus.connecting:
+        isWatchConnected.value = false;
+        connectionState.value = SmartbandConnectionState.connecting;
+        break;
+      case SmartbandBleStatus.disconnected:
+        isWatchConnected.value = false;
+        connectionState.value = SmartbandConnectionState.disconnected;
+        break;
+    }
+  }
+
+  void _processSmartbandData(SmartbandData data) {
+    braceletId.value = data.braceletId;
+    heartRate.value = data.heartRate;
+
+    // Evaluasi status Heart Rate (MAX30102)
+    if (data.heartRate == 0) {
+      heartRateStatus.value = 'Mengukur... Tempelkan jari';
+    } else {
+      heartRateStatus.value = 'Sensor aktif';
+    }
+
+    // Evaluasi status GPS (NEO-6M)
+    if (data.isValidLocation &&
+        data.latitude != null &&
+        data.longitude != null) {
+      latitude.value = data.latitude;
+      longitude.value = data.longitude;
+      lastKnownLatitude.value = data.latitude;
+      lastKnownLongitude.value = data.longitude;
+      isGpsFix.value = true;
+    } else {
+      latitude.value = null;
+      longitude.value = null;
+      isGpsFix.value = false;
+    }
+
+    lastDataReceivedAt.value = data.timestamp;
+    lastUpdated.value = data.timestamp;
+    receivingData.value = true;
+    rawDataString.value = data.rawJson;
+    _updateRelativeTime();
+  }
+
+  /// Hubungkan ke Smartband dengan memindai BLE dan auto-connect
+  Future<void> connectSmartband() async {
+    errorMessage.value = '';
+    try {
+      await bleService.scanSmartband(autoConnect: true);
+    } catch (e) {
+      final msg = e.toString().replaceFirst('Exception: ', '');
+      errorMessage.value = msg;
+      if (Get.context != null) {
+        Get.snackbar(
+          'Koneksi Smartband',
+          msg,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: AppColors.statusDanger.withValues(alpha: 0.9),
+          colorText: Colors.white,
+          duration: const Duration(seconds: 4),
+          margin: const EdgeInsets.all(16),
+          borderRadius: 12,
+          icon: const Icon(
+            Icons.bluetooth_disabled_rounded,
+            color: Colors.white,
+          ),
+        );
       }
     }
   }
 
-  void _updateRelativeTime() {
-    final updated = lastUpdated.value;
-    if (updated == null) {
-      relativeTimeStr.value = 'Menunggu data sensor...';
-      return;
-    }
-
-    final diff = DateTime.now().difference(updated);
-    if (diff.inSeconds <= 1) {
-      relativeTimeStr.value = 'Diperbarui baru saja';
-    } else if (diff.inSeconds < 60) {
-      relativeTimeStr.value = 'Diperbarui ${diff.inSeconds} detik lalu';
-    } else {
-      final minutes = diff.inMinutes;
-      relativeTimeStr.value = 'Diperbarui $minutes menit lalu';
-    }
-  }
-
-  /// Start BLE Scanning and Connection flow (No uncontrolled reconnect loop)
-  Future<void> connectSmartband() async {
-    if (isBusy) return;
-    final generation = ++_connectionGeneration;
-
-    // 1. Check if Bluetooth is enabled
-    final isEnabled = await _bleService.isBluetoothEnabled();
-    if (isClosed || generation != _connectionGeneration) return;
-    if (!isEnabled) {
-      AppAlert.warning(
-        Get.context,
-        title: AppTranslations.tr('smartband.bluetoothInactive'),
-        message:
-            'Silakan aktifkan Bluetooth pada perangkat Anda untuk menghubungkan HajiCare Watch.',
-      );
-      return;
-    }
-
-    try {
-      // 2. Update state to Scanning
-      connectionState.value = SmartbandConnectionState.scanning;
-      statusMessage.value = 'Mencari HajiCare Watch...';
-      receivingData.value = false;
-      isSensorAvailable.value = false;
-
-      // 3. Scan for target device
-      final device = await _bleService.scanForDevice(
-        timeout: const Duration(seconds: 15),
-      );
-      if (isClosed || generation != _connectionGeneration) return;
-
-      // 4. Update state to Connecting
-      connectionState.value = SmartbandConnectionState.connecting;
-      statusMessage.value =
-          'Menghubungkan ke ${device.platformName.isNotEmpty ? device.platformName : BleService.targetDeviceName}...';
-      deviceName.value = device.platformName.isNotEmpty
-          ? device.platformName
-          : BleService.targetDeviceName;
-
-      // 5. Connect, discover 3 characteristics, read initial values, subscribe notifications
-      await _bleService.connectToDevice(device);
-    } catch (e) {
-      if (isClosed || generation != _connectionGeneration) return;
-      isWatchConnected.value = false;
-      connectionState.value = SmartbandConnectionState.disconnected;
-      statusMessage.value = 'HajiCare Watch belum terhubung';
-      receivingData.value = false;
-      isSensorAvailable.value = false;
-      environmentStatus.value = 'Sensor tidak tersedia';
-      sensorError.value = UserFeedbackMessage.from(e);
-
-      AppAlert.error(
-        Get.context,
-        title: AppTranslations.tr('smartband.bandNotConnected'),
-        message: UserFeedbackMessage.from(
-          e,
-          fallback:
-              'Pastikan ESP32 HajiCare Watch menyala dan berada dekat dengan ponsel, lalu coba lagi.',
-        ),
-        okText: 'Coba Lagi',
-      );
-    }
-  }
-
-  /// Disconnect cleanly from HajiCare Watch without reconnect loop
+  /// Putuskan koneksi dari Smartband secara aman
   Future<void> disconnectSmartband() async {
-    await _bleService.disconnect();
-    isWatchConnected.value = false;
-    connectionState.value = SmartbandConnectionState.disconnected;
-    statusMessage.value = 'HajiCare Watch terputus';
-    receivingData.value = false;
-    isSensorAvailable.value = false;
-    environmentStatus.value = 'Menunggu Sensor';
-    temperature.value = null;
-    humidity.value = null;
-    heatIndex.value = null;
-    sensorError.value = null;
+    errorMessage.value = '';
+    try {
+      await bleService.disconnectSmartband();
+    } catch (e) {
+      errorMessage.value = 'Gagal memutuskan: $e';
+    }
+  }
+
+  /// Buka tampilan Peta dan pusatkan ke lokasi Smartband
+  void navigateToMap(BuildContext context) {
+    final lat = latitude.value ?? lastKnownLatitude.value;
+    final lng = longitude.value ?? lastKnownLongitude.value;
+
+    if (lat != null && lng != null) {
+      if (Get.isRegistered<MapController>()) {
+        final mapCtrl = Get.find<MapController>();
+        mapCtrl.focusCoordinate(LatLng(lat, lng), destZoom: 17.0);
+      }
+      Get.toNamed(AppRoutes.interactiveMap);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Koordinat GPS Smartband belum tersedia. Menunggu sinyal GPS FIX.',
+          ),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  void _startRelativeTimeTicker() {
+    _tickerTimer?.cancel();
+    _tickerTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _updateRelativeTime();
+    });
+  }
+
+  void _updateRelativeTime() {
+    final timestamp = lastDataReceivedAt.value;
+    if (timestamp == null) {
+      relativeTimeText.value = 'Belum menerima data';
+      relativeTimeStr.value = '';
+      return;
+    }
+
+    final diff = DateTime.now().difference(timestamp);
+    if (diff.inSeconds < 5) {
+      relativeTimeText.value = 'Baru saja';
+    } else if (diff.inSeconds < 60) {
+      relativeTimeText.value = '${diff.inSeconds} detik lalu';
+    } else if (diff.inMinutes < 60) {
+      relativeTimeText.value = '${diff.inMinutes} menit lalu';
+    } else {
+      relativeTimeText.value = '${diff.inHours} jam lalu';
+    }
+    relativeTimeStr.value = relativeTimeText.value;
   }
 
   @override
   void onClose() {
-    _connectionGeneration++;
     _tickerTimer?.cancel();
-    unawaited(_bleService.dispose());
+    _bleStatusSub?.cancel();
+    _bleDataSub?.cancel();
+    _bleMessageSub?.cancel();
     super.onClose();
   }
 }
