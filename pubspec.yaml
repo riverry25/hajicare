@@ -37,7 +37,6 @@ dependencies:
   mobile_scanner: ^7.4.2
   speech_to_text: ^7.4.0
   google_mlkit_translation: ^0.14.0
-  flutter_onnxruntime: ^1.8.5
   url_launcher: ^6.3.2
   cloud_functions: ^6.5.0
   audioplayers: ^6.1.2
@@ -70,17 +69,12 @@ flutter:
   uses-material-design: true
   assets:
     - assets/icon.jpeg
-    - assets/models/best_float16.tflite
     - assets/models/money_recognition.tflite
     - assets/models/labels.txt
-    - assets/models/hajicare_encoder.onnx
     - assets/models/hajicare_prototypes.json
-    - assets/models/fix_model/best.tflite
-    - assets/models/fix_model/label.txt
     - assets/models/bisindo/hajicare_bisindo_gru_float32.tflite
     - assets/models/bisindo/labels.json
     - assets/models/bisindo/model_config.json
-    - assets/models/bisindo/hand_landmarker.task
     - assets/models/sibi/
     - assets/audio/
   fonts:

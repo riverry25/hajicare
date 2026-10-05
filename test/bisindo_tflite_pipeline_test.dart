@@ -53,7 +53,7 @@ void main() {
     });
 
     test('hand_landmarker.task exists and is valid size', () {
-      final file = File('assets/models/bisindo/hand_landmarker.task');
+      final file = File('android/app/src/main/assets/hand_landmarker.task');
       expect(file.existsSync(), isTrue);
       expect(file.lengthSync(), greaterThan(5 * 1024 * 1024));
     });

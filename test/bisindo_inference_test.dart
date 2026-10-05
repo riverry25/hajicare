@@ -371,12 +371,5 @@ void main() {
         isTrue,
       );
     });
-
-    test('ONNX model asset exists and has valid size', () {
-      final modelFile = File('assets/models/hajicare_encoder.onnx');
-      expect(modelFile.existsSync(), isTrue);
-      // Approximately 17-18 MB
-      expect(modelFile.lengthSync(), greaterThan(15 * 1024 * 1024));
-    });
   });
 }

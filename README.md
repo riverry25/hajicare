@@ -56,8 +56,7 @@ File keystore dan `key.properties` sudah diabaikan oleh Git.
 
 ## Pemeriksaan kualitas
 
-Baseline hasil refactor tersedia di `docs/refactor_completion.md`. Perintah
-utama sebelum merge:
+Perintah utama sebelum merge:
 
 ```powershell
 dart format --output=none --set-exit-if-changed lib test
