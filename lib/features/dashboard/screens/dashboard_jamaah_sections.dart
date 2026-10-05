@@ -89,6 +89,20 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                     onTap: () => Get.toNamed(AppRoutes.moneyRecognition),
                   ),
                 ),
+                Expanded(
+                  child: _buildCategoryItem(
+                    context: context,
+                    label: context.tr('dashboard.textToSign'),
+                    icon: Icons.interpreter_mode_rounded,
+                    bgColor: isDark
+                        ? AppColors.darkSurfaceContainer
+                        : AppColors.canvasCream,
+                    iconColor: isDark
+                        ? AppColors.emeraldIslamic
+                        : AppColors.emeraldIslamic,
+                    onTap: () => Get.toNamed(AppRoutes.textToSign),
+                  ),
+                ),
               ],
             ),
           ),

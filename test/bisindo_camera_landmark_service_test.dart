@@ -60,6 +60,17 @@ void main() {
       expect(buffer.bufferLength, equals(1));
     });
 
+    test('Validates 42 hand landmarks structure', () {
+      final validFrame = List.generate(
+        42,
+        (i) => [0.1 * (i % 10), 0.2 * (i % 5), 0.0],
+      );
+      expect(validFrame.length, equals(42));
+
+      buffer.addFrame(validFrame);
+      expect(buffer.bufferLength, equals(1));
+    });
+
     test('Sliding window caps at exactly 48 frames', () {
       for (int f = 0; f < 60; f++) {
         final frame = List.generate(543, (i) => [0.1, 0.2, 0.0]);

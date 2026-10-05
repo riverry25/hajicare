@@ -15,22 +15,22 @@ import com.google.mediapipe.tasks.core.BaseOptions
 import com.google.mediapipe.tasks.vision.core.RunningMode
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarker
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarkerResult
-import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarker
-import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarkerResult
 import androidx.camera.view.PreviewView
 import java.util.LinkedHashMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 /**
- * Manages CameraX live video stream and Google MediaPipe Vision Tasks (Pose & Hands)
- * to output strict 543-landmark vectors [543, 3] for BISINDO sign language inference.
+ * Manages CameraX live video stream and Google MediaPipe HandLandmarker only
+ * to output 135-d feature vectors [2, 21, 3] for BISINDO sign language inference.
  *
- * Landmark Index Structure (OpenHands Compatible):
- * 0..32     : Pose Landmarks (33 points)
- * 33..500   : Face Mesh (468 points, zero-filled as unused in minimal_27)
- * 501..521  : Left Hand (21 points)
- * 522..542  : Right Hand (21 points)
+ * Optimized version: PoseLandmarker removed (not used in BISINDO 135-d pipeline).
+ * Frame rate capped at ~15 FPS. HandLandmarker only processes actual hand frames.
+ *
+ * Landmark Index Structure (minimal_hands_only):
+ *   Left Hand  : 21 points  (index 0..20)
+ *   Right Hand : 21 points  (index 21..41)
+ *   Total      : 42 points → preprocessed to 135 floats in Dart preprocessor
  */
 class BisindoCameraHelper(
     private val context: Context,
@@ -40,11 +40,9 @@ class BisindoCameraHelper(
 ) {
     companion object {
         private const val TAG = "BISINDO_CAMERA"
-        private const val MIN_FRAME_INTERVAL_MS = 66L // Target ~15 FPS matching model training sequence
-        private const val MAX_PENDING_FRAMES = 12
+        private const val MIN_FRAME_INTERVAL_MS = 66L // ~15 FPS max
+        private const val MAX_PENDING_FRAMES = 8
     }
-
-    private data class PoseFrame(val landmarks: List<List<Double>>?)
 
     private data class HandFrame(
         val left: List<List<Double>>?,
@@ -54,7 +52,6 @@ class BisindoCameraHelper(
     private var cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private var cameraProvider: ProcessCameraProvider? = null
     private var imageAnalysis: ImageAnalysis? = null
-    private var poseLandmarker: PoseLandmarker? = null
     private var handLandmarker: HandLandmarker? = null
 
     @Volatile
@@ -63,9 +60,7 @@ class BisindoCameraHelper(
     private var isRunning = false
     private var lastProcessedTimestamp = 0L
 
-    // Pose and hand tasks finish independently. Keep results by source-frame
-    // timestamp so a skeleton never combines body and hands from different frames.
-    private val pendingPoseFrames = LinkedHashMap<Long, PoseFrame>()
+    // Pending hand frames by source-frame timestamp
     private val pendingHandFrames = LinkedHashMap<Long, HandFrame>()
     private var lastEmittedTimestamp = -1L
 
@@ -85,25 +80,7 @@ class BisindoCameraHelper(
 
     fun initialize() {
         try {
-            // 1. Initialize Pose Landmarker
-            val poseBaseOptions = BaseOptions.builder()
-                .setModelAssetPath("pose_landmarker_lite.task")
-                .build()
-
-            val poseOptions = PoseLandmarker.PoseLandmarkerOptions.builder()
-                .setBaseOptions(poseBaseOptions)
-                .setRunningMode(RunningMode.LIVE_STREAM)
-                .setResultListener { result: PoseLandmarkerResult, _: MPImage ->
-                    onPoseResult(result)
-                }
-                .setErrorListener { error ->
-                    Log.e(TAG, "PoseLandmarker error: ${error.message}")
-                }
-                .build()
-
-            poseLandmarker = PoseLandmarker.createFromOptions(context, poseOptions)
-
-            // 2. Initialize Hand Landmarker (tracks up to 2 hands)
+            // Initialize Hand Landmarker only (tracks up to 2 hands)
             val handBaseOptions = BaseOptions.builder()
                 .setModelAssetPath("hand_landmarker.task")
                 .build()
@@ -124,7 +101,7 @@ class BisindoCameraHelper(
                 .build()
 
             handLandmarker = HandLandmarker.createFromOptions(context, handOptions)
-            Log.d(TAG, "MediaPipe Tasks Vision initialized successfully")
+            Log.d(TAG, "MediaPipe HandLandmarker initialized successfully")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to initialize MediaPipe: ${e.message}", e)
             onError("MediaPipe gagal diinisialisasi: ${e.message}")
@@ -212,29 +189,13 @@ class BisindoCameraHelper(
 
             val mpImage = BitmapImageBuilder(rotatedBitmap).build()
 
-            // Run asynchronous live stream inference
-            poseLandmarker?.detectAsync(mpImage, currentTime)
+            // Run asynchronous live stream inference (hands only)
             handLandmarker?.detectAsync(mpImage, currentTime)
         } catch (e: Exception) {
             Log.e(TAG, "Error processing camera frame: ${e.message}", e)
         } finally {
             imageProxy.close()
         }
-    }
-
-    private fun onPoseResult(result: PoseLandmarkerResult) {
-        val landmarks = result.landmarks()
-        val pose = if (landmarks.isNotEmpty()) {
-            val poseList = mutableListOf<List<Double>>()
-            val firstPose = landmarks[0]
-            for (lm in firstPose) {
-                poseList.add(listOf(lm.x().toDouble(), lm.y().toDouble(), lm.z().toDouble()))
-            }
-            poseList
-        } else {
-            null
-        }
-        storePoseResult(result.timestampMs(), pose)
     }
 
     private fun onHandResult(result: HandLandmarkerResult) {
@@ -257,7 +218,6 @@ class BisindoCameraHelper(
                 if (i == 0) "Left" else "Right"
             }
 
-            // SWAP_HANDEDNESS = false: Left hand enters Left slot, Right hand enters Right slot directly
             if (label.equals("Left", ignoreCase = true)) {
                 leftHand = handList
             } else {
@@ -269,113 +229,64 @@ class BisindoCameraHelper(
     }
 
     @Synchronized
-    private fun storePoseResult(timestamp: Long, pose: List<List<Double>>?) {
-        pendingPoseFrames[timestamp] = PoseFrame(pose)
-        emitSynchronizedFrame(timestamp)
-        trimPendingFrames()
-    }
-
-    @Synchronized
     private fun storeHandResult(
         timestamp: Long,
         left: List<List<Double>>?,
         right: List<List<Double>>?
     ) {
         pendingHandFrames[timestamp] = HandFrame(left, right)
-        emitSynchronizedFrame(timestamp)
+        emitHandFrame(timestamp)
         trimPendingFrames()
     }
 
-    /** Emits at most one landmark packet for one analyzed camera frame. */
-    private fun emitSynchronizedFrame(timestamp: Long) {
+    /** Emits landmark packet for a camera frame if at least one hand is visible. */
+    private fun emitHandFrame(timestamp: Long) {
         if (timestamp <= lastEmittedTimestamp) return
 
-        val poseFrame = pendingPoseFrames[timestamp] ?: return
-        val handFrame = pendingHandFrames[timestamp] ?: return
-        pendingPoseFrames.remove(timestamp)
-        pendingHandFrames.remove(timestamp)
+        val handFrame = pendingHandFrames.remove(timestamp) ?: return
 
-        val pose = poseFrame.landmarks
         val left = handFrame.left
         val right = handFrame.right
 
         // Require at least one hand to be visible for sign language recognition.
-        // Even if pose is partially occluded in selfie view, emit the frame so
-        // alphabet and gestures reach Flutter without being discarded.
-        if (left == null && right == null) {
-            return
-        }
+        if (left == null && right == null) return
 
         lastEmittedTimestamp = timestamp
-        assembleAndEmitLandmarks(pose ?: emptyList(), left, right)
+        assembleAndEmitLandmarks(left, right)
     }
 
     private fun trimPendingFrames() {
-        while (pendingPoseFrames.size > MAX_PENDING_FRAMES) {
-            pendingPoseFrames.remove(pendingPoseFrames.keys.first())
-        }
         while (pendingHandFrames.size > MAX_PENDING_FRAMES) {
             pendingHandFrames.remove(pendingHandFrames.keys.first())
         }
     }
 
     /**
-     * Assembles exactly 543 landmarks in the strictly required sequence:
-     * - 0..32    : Pose 33
-     * - 33..500  : Face 468 (zero-filled placeholder)
-     * - 501..521 : Left Hand 21
-     * - 522..542 : Right Hand 21
+     * Assembles 42 hand landmarks [42, 3] in the required sequence:
+     *   Left Hand  : 21 points (0..20)
+     *   Right Hand : 21 points (21..41)
+     *
+     * The Dart BisindoPreprocessor then extracts the 135-d feature vector
+     * from these 42 points. No pose or face landmarks needed.
      */
     private fun assembleAndEmitLandmarks(
-        pose: List<List<Double>>,
         left: List<List<Double>>?,
         right: List<List<Double>>?
     ) {
         val zeroPoint = listOf(0.0, 0.0, 0.0)
-        val totalLandmarks = ArrayList<List<Double>>(543)
+        val totalLandmarks = ArrayList<List<Double>>(42)
 
-        // 1. Pose 33 points (0..32)
-        val poseCount = pose.size
-        for (i in 0 until 33) {
-            if (i < pose.size) {
-                totalLandmarks.add(pose[i])
-            } else {
-                totalLandmarks.add(zeroPoint)
-            }
-        }
-
-        // 2. Face 468 points (33..500) -> zero-filled placeholder
-        for (i in 33..500) {
-            totalLandmarks.add(zeroPoint)
-        }
-
-        // 3. Left Hand 21 points (501..521)
-        val leftHandCount = if (left != null) left.size else 0
+        // 1. Left Hand 21 points (0..20)
         for (i in 0 until 21) {
-            if (left != null && i < left.size) {
-                totalLandmarks.add(left[i])
-            } else {
-                totalLandmarks.add(zeroPoint)
-            }
+            totalLandmarks.add(left?.getOrNull(i) ?: zeroPoint)
         }
 
-        // 4. Right Hand 21 points (522..542)
-        val rightHandCount = if (right != null) right.size else 0
+        // 2. Right Hand 21 points (21..41)
         for (i in 0 until 21) {
-            if (right != null && i < right.size) {
-                totalLandmarks.add(right[i])
-            } else {
-                totalLandmarks.add(zeroPoint)
-            }
+            totalLandmarks.add(right?.getOrNull(i) ?: zeroPoint)
         }
 
-        if (totalLandmarks.size == 543) {
-            Log.d(TAG, "pose=$poseCount")
-            Log.d(TAG, "leftHand=$leftHandCount")
-            Log.d(TAG, "rightHand=$rightHandCount")
-            Log.d(TAG, "landmarks=543")
-            onLandmarksReady(totalLandmarks)
-        }
+        onLandmarksReady(totalLandmarks)
     }
 
     fun stopCamera() {
@@ -394,7 +305,6 @@ class BisindoCameraHelper(
 
     @Synchronized
     private fun clearPendingFrames() {
-        pendingPoseFrames.clear()
         pendingHandFrames.clear()
         lastEmittedTimestamp = -1L
     }
@@ -402,7 +312,6 @@ class BisindoCameraHelper(
     fun dispose() {
         stopCamera()
         try {
-            poseLandmarker?.close()
             handLandmarker?.close()
             cameraExecutor.shutdown()
         } catch (e: Exception) {

@@ -142,10 +142,65 @@ class BisindoPreprocessor {
     }
   }
 
+  /// 42 Hand landmark format constants:
+  /// 0..20 = Left Hand (21 points)
+  /// 21..41 = Right Hand (21 points)
+  static const int kNumHandLandmarks = 42;
+  static const int kHandLeftStartIdx = 0;
+  static const int kHandLeftEndIdx = 20;
+  static const int kHandRightStartIdx = 21;
+  static const int kHandRightEndIdx = 41;
+
+  /// Extracts 135 features directly from a 42-element hands-only frame:
+  /// 0..20 = Left Hand
+  /// 21..41 = Right Hand
+  static Float32List processRaw42Frame(List<List<double>> frame) {
+    if (frame.length < 42) {
+      return Float32List(kGruFeatureDim);
+    }
+
+    final bool hasLeft = isHandDetected(
+      frame,
+      kHandLeftStartIdx,
+      kHandLeftEndIdx,
+    );
+    final bool hasRight = isHandDetected(
+      frame,
+      kHandRightStartIdx,
+      kHandRightEndIdx,
+    );
+
+    List<List<double>>? leftHand;
+    if (hasLeft) {
+      leftHand = frame.sublist(kHandLeftStartIdx, kHandLeftEndIdx + 1);
+    }
+
+    List<List<double>>? rightHand;
+    if (hasRight) {
+      rightHand = frame.sublist(kHandRightStartIdx, kHandRightEndIdx + 1);
+    }
+
+    return extract135Features(leftHand: leftHand, rightHand: rightHand);
+  }
+
+  /// Extracts 135 features adaptively from either a 42-element hands-only frame
+  /// or a 543-element holistic frame.
+  static Float32List processFrame(List<List<double>> frame) {
+    if (frame.length >= 543) {
+      return processRaw543Frame(frame);
+    } else if (frame.length >= 42) {
+      return processRaw42Frame(frame);
+    }
+    return Float32List(kGruFeatureDim);
+  }
+
   /// Extracts 135 features directly from a 543-element holistic frame:
   /// 501..521 = Left Hand
   /// 522..542 = Right Hand
   static Float32List processRaw543Frame(List<List<double>> frame) {
+    if (frame.length == 42) {
+      return processRaw42Frame(frame);
+    }
     if (frame.length < 543) {
       return Float32List(kGruFeatureDim);
     }
@@ -228,6 +283,31 @@ class BisindoPreprocessor {
       }
     }
     return sumAbs > 0.01;
+  }
+
+  /// Checks whether right hand is present in either 42-landmark or 543-landmark frame.
+  static bool hasRightHand(List<List<double>> frame) {
+    if (frame.length >= 543) {
+      return isHandDetected(frame, kRightHandStartIdx, kRightHandEndIdx);
+    } else if (frame.length >= 42) {
+      return isHandDetected(frame, kHandRightStartIdx, kHandRightEndIdx);
+    }
+    return false;
+  }
+
+  /// Checks whether left hand is present in either 42-landmark or 543-landmark frame.
+  static bool hasLeftHand(List<List<double>> frame) {
+    if (frame.length >= 543) {
+      return isHandDetected(frame, kLeftHandStartIdx, kLeftHandEndIdx);
+    } else if (frame.length >= 42) {
+      return isHandDetected(frame, kHandLeftStartIdx, kHandLeftEndIdx);
+    }
+    return false;
+  }
+
+  /// Checks whether any hand is detected in either frame format.
+  static bool hasAnyHand(List<List<double>> frame) {
+    return hasRightHand(frame) || hasLeftHand(frame);
   }
 
   /// Transforms a sequence of frames [T, 543, 3] into a `Float32List` of shape `[1, 30, 300]`.
@@ -372,23 +452,21 @@ class BisindoPreprocessor {
     return result;
   }
 
-  /// Transforms a single frame of 543 landmarks into a `Float32List` of shape `[1, 86]`.
+  /// Transforms a single frame (42 or 543 landmarks) into a `Float32List` of shape `[1, 86]`.
   static Float32List processAlphabetFrame(List<List<double>> frame) {
     final result = Float32List(kAlphabetFeatureDim);
-    if (frame.length < 543) {
+    if (frame.length < 42) {
       return result; // all zeros -> model outputs NOTHING
     }
 
-    final bool hasLeft = isHandDetected(
-      frame,
-      kLeftHandStartIdx,
-      kLeftHandEndIdx,
-    );
-    final bool hasRight = isHandDetected(
-      frame,
-      kRightHandStartIdx,
-      kRightHandEndIdx,
-    );
+    final bool is42 = frame.length < 543;
+    final int leftStart = is42 ? kHandLeftStartIdx : kLeftHandStartIdx;
+    final int leftEnd = is42 ? kHandLeftEndIdx : kLeftHandEndIdx;
+    final int rightStart = is42 ? kHandRightStartIdx : kRightHandStartIdx;
+    final int rightEnd = is42 ? kHandRightEndIdx : kRightHandEndIdx;
+
+    final bool hasLeft = isHandDetected(frame, leftStart, leftEnd);
+    final bool hasRight = isHandDetected(frame, rightStart, rightEnd);
 
     if (!hasLeft && !hasRight) {
       return result; // all zeros
@@ -398,10 +476,10 @@ class BisindoPreprocessor {
 
     // 1. Left Hand (21 points x 2 = 42 floats), wrist-centered
     if (hasLeft) {
-      final wristX = frame[kLeftHandStartIdx][0];
-      final wristY = frame[kLeftHandStartIdx][1];
+      final wristX = frame[leftStart][0];
+      final wristY = frame[leftStart][1];
 
-      for (int i = kLeftHandStartIdx; i <= kLeftHandEndIdx; i++) {
+      for (int i = leftStart; i <= leftEnd; i++) {
         final pt = frame[i];
         result[offset++] = (pt.isNotEmpty ? pt[0] - wristX : 0.0);
         result[offset++] = (pt.length > 1 ? pt[1] - wristY : 0.0);
@@ -412,10 +490,10 @@ class BisindoPreprocessor {
 
     // 2. Right Hand (21 points x 2 = 42 floats), wrist-centered
     if (hasRight) {
-      final wristX = frame[kRightHandStartIdx][0];
-      final wristY = frame[kRightHandStartIdx][1];
+      final wristX = frame[rightStart][0];
+      final wristY = frame[rightStart][1];
 
-      for (int i = kRightHandStartIdx; i <= kRightHandEndIdx; i++) {
+      for (int i = rightStart; i <= rightEnd; i++) {
         final pt = frame[i];
         result[offset++] = (pt.isNotEmpty ? pt[0] - wristX : 0.0);
         result[offset++] = (pt.length > 1 ? pt[1] - wristY : 0.0);
@@ -431,7 +509,7 @@ class BisindoPreprocessor {
     return result;
   }
 
-  /// Transforms a single frame of 543 landmarks into a `Float32List` of shape `[1, 42]`
+  /// Transforms a single frame (42 or 543 landmarks) into a `Float32List` of shape `[1, 42]`
   /// for SIBI Alphabet model (`sibi_alphabet_model_f32.tflite`).
   ///
   /// Extracts 21 hand landmarks relative to the wrist (landmark 0).
@@ -440,28 +518,26 @@ class BisindoPreprocessor {
   static Float32List processSibiAlphabetFrame(List<List<double>> frame) {
     const int sibiFeatureDim = 42;
     final result = Float32List(sibiFeatureDim);
-    if (frame.length < 543) {
+    if (frame.length < 42) {
       return result;
     }
 
-    final bool hasRight = isHandDetected(
-      frame,
-      kRightHandStartIdx,
-      kRightHandEndIdx,
-    );
-    final bool hasLeft = isHandDetected(
-      frame,
-      kLeftHandStartIdx,
-      kLeftHandEndIdx,
-    );
+    final bool is42 = frame.length < 543;
+    final int rightStart = is42 ? kHandRightStartIdx : kRightHandStartIdx;
+    final int rightEnd = is42 ? kHandRightEndIdx : kRightHandEndIdx;
+    final int leftStart = is42 ? kHandLeftStartIdx : kLeftHandStartIdx;
+    final int leftEnd = is42 ? kHandLeftEndIdx : kLeftHandEndIdx;
+
+    final bool hasRight = isHandDetected(frame, rightStart, rightEnd);
+    final bool hasLeft = isHandDetected(frame, leftStart, leftEnd);
 
     if (!hasRight && !hasLeft) {
       return result;
     }
 
     // Prefer right hand if present, fallback to left hand
-    final startIdx = hasRight ? kRightHandStartIdx : kLeftHandStartIdx;
-    final endIdx = hasRight ? kRightHandEndIdx : kLeftHandEndIdx;
+    final startIdx = hasRight ? rightStart : leftStart;
+    final endIdx = hasRight ? rightEnd : leftEnd;
 
     final wristX = frame[startIdx][0];
     final wristY = frame[startIdx][1];

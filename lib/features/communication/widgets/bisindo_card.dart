@@ -248,7 +248,7 @@ class _BisindoCardState extends State<BisindoCard> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'MediaPipe Holistic 543 • ONNX On-Device',
+                      'MediaPipe Hands • TFLite On-Device',
                       style: AppTypography.captionSmall.copyWith(
                         color: AppColors.textMuted,
                       ),
@@ -284,7 +284,7 @@ class _BisindoCardState extends State<BisindoCard> {
                   child: Text(
                     isCameraActive
                         ? 'Kamera Aktif: Menganalisis gerakan isyarat (Buffer: ${_streamBuffer.bufferLength}/100)...'
-                        : 'Kamera Siap: MediaPipe Holistic 543 → ONNX',
+                        : 'Kamera Siap: MediaPipe Hands → TFLite',
                     style: AppTypography.captionSmall.copyWith(
                       color: isCameraActive
                           ? Colors.green.shade800
@@ -522,7 +522,7 @@ class _BisindoCardState extends State<BisindoCard> {
             ),
             const SizedBox(width: 6),
             Text(
-              'Memuat ONNX',
+              'Memuat Model',
               style: AppTypography.captionSmall.copyWith(
                 color: AppColors.tanMedium,
                 fontWeight: FontWeight.w600,
@@ -573,7 +573,7 @@ class _BisindoCardState extends State<BisindoCard> {
           ),
           const SizedBox(width: 5),
           Text(
-            isCameraActive ? 'Live Kamera' : 'ONNX Siap',
+            isCameraActive ? 'Live Kamera' : 'Model Siap',
             style: AppTypography.captionSmall.copyWith(
               color: isCameraActive
                   ? Colors.green.shade800

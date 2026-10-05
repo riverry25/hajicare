@@ -267,6 +267,7 @@ const Map<String, String> enTranslations = {
   'dashboard.messageSampleHint':
       'Example: I am waiting in front of the mosque gate.',
   'dashboard.moneyDetection': 'Money Detection',
+  'dashboard.textToSign': 'Text to Sign',
   'dashboard.noGroupYet': 'No Group Yet',
   'dashboard.notInRoom': 'Not in a Group Yet',
   'dashboard.openCamera': 'Open Camera',
