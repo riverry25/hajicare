@@ -10,7 +10,6 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../presentation/dashboard_typography.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
-import '../../../core/widgets/ribbon_fold_painter.dart';
 import '../../map/screens/interactive_map_screen.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../notification/controllers/notification_controller.dart';
