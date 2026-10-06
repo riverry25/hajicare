@@ -81,6 +81,7 @@ flutter:
     - assets/models/sibi/
     - assets/audio/
     - assets/sign_language/offline/bisindo/alfabet/
+    - assets/sign_language/offline/bisindo/kalimat/
     - assets/sign_language/offline/sibi/kalimat/
   fonts:
     - family: Poppins

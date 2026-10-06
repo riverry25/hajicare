@@ -84,18 +84,37 @@ void main() {
     });
 
     test(
-      'SignLanguageAssetRegistry contains Dokter bundled entry with dok alias',
+      'SignLanguageAssetRegistry contains Bantu bundled entry with tolong alias',
       () {
-        final dokterAsset = SignLanguageAssetRegistry.matchAsset('dok', 'sibi');
-        expect(dokterAsset, isNotNull);
-        expect(dokterAsset!.label, 'Dokter');
-
-        final dokterExact = SignLanguageAssetRegistry.matchAsset(
-          'dokter',
+        final bantuAsset = SignLanguageAssetRegistry.matchAsset(
+          'tolong',
           'sibi',
         );
-        expect(dokterExact, isNotNull);
-        expect(dokterExact!.label, 'Dokter');
+        expect(bantuAsset, isNotNull);
+        expect(bantuAsset!.label, 'Bantu');
+
+        final bantuExact = SignLanguageAssetRegistry.matchAsset(
+          'bantu',
+          'sibi',
+        );
+        expect(bantuExact, isNotNull);
+        expect(bantuExact!.label, 'Bantu');
+      },
+    );
+
+    test(
+      'SignLanguageAssetRegistry contains BISINDO offline assets (A, Air, Terima Kasih)',
+      () {
+        final aAsset = SignLanguageAssetRegistry.matchAsset('a', 'bisindo');
+        expect(aAsset, isNotNull);
+        expect(aAsset!.label, 'A');
+
+        final thanksAsset = SignLanguageAssetRegistry.matchAsset(
+          'makasih',
+          'bisindo',
+        );
+        expect(thanksAsset, isNotNull);
+        expect(thanksAsset!.label, 'Terima Kasih');
       },
     );
   });

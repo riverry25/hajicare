@@ -261,6 +261,81 @@ class _TextToSignScreenState extends State<TextToSignScreen>
 
             // ── 5. MAIN VIDEO PLAYER AREA ────────────────────────────────────
             SignVideoPlayerWidget(controller: controller),
+
+            // ── 5.1 CANDIDATES SELECTOR (JIKA LEBIH DARI 1 KATA TERDETEKSI) ──
+            Obx(() {
+              final result = controller.searchResult.value;
+              if (result == null || result.candidates.length <= 1) {
+                return const SizedBox.shrink();
+              }
+              return Container(
+                margin: const EdgeInsets.only(top: AppSpacing.sm),
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.darkSurfaceContainer
+                      : AppColors.surfaceWhite,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.darkCardBorder
+                        : AppColors.lightCardBorder,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.segment_rounded,
+                          size: 16,
+                          color: AppColors.goldPrimary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Pilih kata dalam kalimat untuk diputar:',
+                          style: AppTypography.captionSmall.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: headingColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: result.candidates.map((candidate) {
+                        final isPlayingThis =
+                            controller.currentEntry.value?.id == candidate.id;
+                        return ChoiceChip(
+                          label: Text(candidate.label),
+                          selected: isPlayingThis,
+                          selectedColor: AppColors.goldPrimary,
+                          backgroundColor: isDark
+                              ? AppColors.darkSurface
+                              : AppColors.canvasCream,
+                          labelStyle: AppTypography.captionSmall.copyWith(
+                            color: isPlayingThis
+                                ? AppColors.espressoDark
+                                : (isDark
+                                      ? AppColors.goldLight
+                                      : AppColors.espressoDark),
+                            fontWeight: isPlayingThis
+                                ? FontWeight.bold
+                                : FontWeight.w500,
+                          ),
+                          onSelected: (_) {
+                            controller.playEntry(candidate);
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
+              );
+            }),
             const SizedBox(height: AppSpacing.xl),
 
             // ── FITUR UTAMA: SUARA KE BAHASA ISYARAT (SPEECH TO SIGN) ────────
@@ -408,8 +483,8 @@ class _TextToSignScreenState extends State<TextToSignScreen>
               focusNode: controller.searchFocusNode,
               decoration: InputDecoration(
                 hintText: controller.selectedLanguage.value == 'sibi'
-                    ? 'Ketik kata misal: Masjid, Bantu, Dokter...'
-                    : 'Ketik huruf misal: J atau L...',
+                    ? 'Ketik kata misal: Masjid, Bantu, Dokter, Obat, Sakit...'
+                    : 'Ketik kata/huruf misal: Halo, Apa Kabar, A, J, Baik...',
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
@@ -865,8 +940,32 @@ class _TextToSignScreenState extends State<TextToSignScreen>
     return Obx(() {
       final lang = controller.selectedLanguage.value;
       final List<String> suggestions = lang == 'sibi'
-          ? ['Masjid', 'Bantu', 'Dokter', 'Obat', 'Tolong bantu saya']
-          : ['J', 'L'];
+          ? [
+              'Masjid',
+              'Bantu',
+              'Dokter',
+              'Obat',
+              'Sakit',
+              'Makan',
+              'Minum',
+              'Hilang',
+              'Sesat',
+              'Tolong bantu saya',
+            ]
+          : [
+              'Halo',
+              'Apa Kabar',
+              'Terima Kasih',
+              'Dimana',
+              'Siapa',
+              'Baik',
+              'Air',
+              'Mandi',
+              'A',
+              'B',
+              'J',
+              'L',
+            ];
 
       return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -1158,48 +1257,92 @@ class _TextToSignScreenState extends State<TextToSignScreen>
 
         Obx(() {
           final lang = controller.selectedLanguage.value;
+          final List<Widget> cards;
           if (lang == 'sibi') {
-            return Row(
-              children: [
-                Expanded(
-                  child: _buildPackageCard(
-                    context: context,
-                    title: 'Paket Kesehatan',
-                    subtitle: 'Dokter, Obat',
-                    category: 'health',
-                    icon: Icons.local_hospital_rounded,
-                    isDark: isDark,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: _buildPackageCard(
-                    context: context,
-                    title: 'Paket Ibadah',
-                    subtitle: 'Masjid, Doa',
-                    category: 'hajj',
-                    icon: Icons.mosque_rounded,
-                    isDark: isDark,
-                  ),
-                ),
-              ],
-            );
+            cards = [
+              _buildPackageCard(
+                context: context,
+                title: 'Paket Kesehatan',
+                subtitle: 'Dokter, Obat',
+                category: 'health',
+                icon: Icons.local_hospital_rounded,
+                isDark: isDark,
+              ),
+              _buildPackageCard(
+                context: context,
+                title: 'Paket Umum & Darurat',
+                subtitle: 'Beli, Hilang, Segera, Sesat',
+                category: 'general',
+                icon: Icons.warning_amber_rounded,
+                isDark: isDark,
+              ),
+              _buildPackageCard(
+                context: context,
+                title: 'Paket Pertanyaan',
+                subtitle: 'Mana',
+                category: 'question',
+                icon: Icons.help_outline_rounded,
+                isDark: isDark,
+              ),
+            ];
           } else {
-            return Row(
-              children: [
-                Expanded(
-                  child: _buildPackageCard(
-                    context: context,
-                    title: 'Paket Alfabet',
-                    subtitle: 'Huruf J, L',
-                    category: 'alphabet',
-                    icon: Icons.spellcheck_rounded,
-                    isDark: isDark,
-                  ),
-                ),
-              ],
-            );
+            cards = [
+              _buildPackageCard(
+                context: context,
+                title: 'Paket Alfabet Cloud',
+                subtitle: 'Huruf F s/d Z (21 Huruf)',
+                category: 'alphabet',
+                icon: Icons.spellcheck_rounded,
+                isDark: isDark,
+              ),
+              _buildPackageCard(
+                context: context,
+                title: 'Paket Pertanyaan',
+                subtitle: 'Berapa, Kapan, Kemana, Siapa',
+                category: 'question',
+                icon: Icons.help_outline_rounded,
+                isDark: isDark,
+              ),
+              _buildPackageCard(
+                context: context,
+                title: 'Paket Kata Ganti',
+                subtitle: 'Kalian, Kami, Kamu, Kita',
+                category: 'pronoun',
+                icon: Icons.people_outline_rounded,
+                isDark: isDark,
+              ),
+              _buildPackageCard(
+                context: context,
+                title: 'Paket Gerakan',
+                subtitle: 'Berdiri, Duduk',
+                category: 'movement',
+                icon: Icons.accessibility_new_rounded,
+                isDark: isDark,
+              ),
+              _buildPackageCard(
+                context: context,
+                title: 'Paket Umum',
+                subtitle: 'Baik',
+                category: 'general',
+                icon: Icons.thumb_up_alt_rounded,
+                isDark: isDark,
+              ),
+            ];
           }
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: cards
+                  .map(
+                    (card) => Container(
+                      width: 175,
+                      margin: const EdgeInsets.only(right: AppSpacing.sm),
+                      child: card,
+                    ),
+                  )
+                  .toList(),
+            ),
+          );
         }),
       ],
     );

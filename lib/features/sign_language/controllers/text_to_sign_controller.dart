@@ -28,17 +28,29 @@ class TextToSignController extends GetxController {
 
   /// Kamus kosakata umum SIBI untuk auto-suggest
   static const List<String> sibiDictionary = [
-    'Dokter',
-    'Obat',
-    'Masjid',
+    'Aku',
     'Bantu',
-    'Tolong bantu saya',
+    'Beli',
+    'Dia',
+    'Dokter',
+    'Haus',
+    'Hilang',
+    'Kami',
+    'Kamu',
+    'Lapar',
+    'Lelah',
+    'Makan',
+    'Mana',
+    'Masjid',
+    'Minum',
+    'Obat',
     'Sakit',
+    'Segera',
+    'Sesat',
+    'Tolong bantu saya',
     'Rumah Sakit',
     'Ambulans',
     'Air Minum',
-    'Makan',
-    'Minum',
     'Tawaf',
     'Sa\'i',
     'Hotel',
@@ -49,7 +61,7 @@ class TextToSignController extends GetxController {
     'Kamar Mandi',
   ];
 
-  /// Kamus alfabet BISINDO untuk auto-suggest
+  /// Kamus alfabet dan kosakata BISINDO untuk auto-suggest
   static const List<String> bisindoDictionary = [
     'A',
     'B',
@@ -77,6 +89,27 @@ class TextToSignController extends GetxController {
     'X',
     'Y',
     'Z',
+    'Air',
+    'Apa',
+    'Apa Kabar',
+    'Baik',
+    'Berapa',
+    'Berdiri',
+    'Dia',
+    'Dimana',
+    'Duduk',
+    'Halo',
+    'Kalian',
+    'Kami',
+    'Kamu',
+    'Kapan',
+    'Kemana',
+    'Kita',
+    'Mandi',
+    'Minum',
+    'Siapa',
+    'Terima Kasih',
+    'Tuli',
   ];
 
   final RxBool isLoadingVideos = false.obs;
