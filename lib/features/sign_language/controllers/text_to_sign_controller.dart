@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
+import '../../translator/services/speech_service.dart';
 import '../models/sign_video_entry.dart';
 import '../services/sign_language_repository.dart';
 
@@ -49,6 +50,7 @@ class TextToSignController extends GetxController {
   @override
   void onClose() {
     _disposePlayer();
+    _speechService?.dispose();
     textController.dispose();
     super.onClose();
   }
@@ -67,6 +69,7 @@ class TextToSignController extends GetxController {
       );
 
       availableVideos.assignAll(videos);
+      currentVocabPage.value = 1;
     } catch (e) {
       debugPrint('[TextToSignCtrl] loadAvailableVideos error: $e');
       errorMessage.value = 'Gagal memuat katalog video: $e';
@@ -82,6 +85,7 @@ class TextToSignController extends GetxController {
     _disposePlayer();
     currentEntry.value = null;
     searchResult.value = null;
+    currentVocabPage.value = 1;
     loadAvailableVideos();
 
     // Jalankan ulang pencarian jika ada teks pada text input
@@ -141,7 +145,8 @@ class TextToSignController extends GetxController {
     // Jika video remote dan belum di-cache, jangan inisialisasi player; beri tahu pengguna
     if (resolved.source == SignVideoSource.remote) {
       _disposePlayer();
-      statusMessage.value = 'Video ini berada di cloud dan perlu diunduh sebelum diputar.';
+      statusMessage.value =
+          'Video ini berada di cloud dan perlu diunduh sebelum diputar.';
       return;
     }
 
@@ -330,5 +335,129 @@ class TextToSignController extends GetxController {
       backgroundColor: Colors.black87,
       colorText: Colors.white,
     );
+  }
+
+  // ── 7. SPEECH-TO-SIGN (VOICE RECOGNITION) ──────────────────────────────────
+  SpeechService? _speechService;
+  SpeechService get speechService => _speechService ??= SpeechService();
+
+  final RxBool isListening = false.obs;
+  final RxString recognizedWords = ''.obs;
+  final RxString speechStatusMessage = 'Tekan mikrofon & bicara kata/huruf'.obs;
+
+  /// Memulai atau menghentikan pengenalan suara (Speech to Sign).
+  Future<void> toggleVoiceRecognition() async {
+    final service = speechService;
+    if (isListening.value) {
+      await service.stopListening();
+      isListening.value = false;
+      if (textController.text.trim().isNotEmpty) {
+        searchSign(textController.text);
+      }
+      return;
+    }
+
+    recognizedWords.value = '';
+    speechStatusMessage.value = 'Mendengarkan... Silakan ucapkan kata';
+
+    service.onStatusChanged = (status, msg) {
+      isListening.value = service.isListening;
+      if (status == SpeechStatus.listening) {
+        isListening.value = true;
+        speechStatusMessage.value = 'Mendengarkan... Silakan ucapkan kata';
+      } else if (status == SpeechStatus.done) {
+        isListening.value = false;
+        if (textController.text.trim().isNotEmpty) {
+          speechStatusMessage.value = 'Terdeteksi: "${textController.text}"';
+        } else {
+          speechStatusMessage.value = 'Tekan mikrofon & bicara kata/huruf';
+        }
+      } else if (status == SpeechStatus.permissionDenied) {
+        isListening.value = false;
+        speechStatusMessage.value = 'Izin mikrofon diperlukan';
+      } else {
+        isListening.value = false;
+        speechStatusMessage.value = msg;
+      }
+    };
+
+    service.onResult = (words, isFinal) {
+      if (words.trim().isNotEmpty) {
+        recognizedWords.value = words;
+        textController.text = words;
+        currentQuery.value = words;
+        if (isFinal) {
+          searchSign(words);
+        }
+      }
+    };
+
+    final hasPerm = await service.init();
+    if (!hasPerm) {
+      isListening.value = false;
+      Get.snackbar(
+        'Izin Mikrofon',
+        'Mohon berikan izin mikrofon untuk menggunakan fitur suara ke isyarat.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    await service.startListening(languageCode: 'id');
+    isListening.value = service.isListening;
+  }
+
+  /// Menghentikan pengenalan suara secara eksplisit.
+  Future<void> stopVoiceRecognition() async {
+    if (isListening.value) {
+      await speechService.stopListening();
+      isListening.value = false;
+      if (textController.text.trim().isNotEmpty) {
+        searchSign(textController.text);
+      }
+    }
+  }
+
+  // ── 8. PAGINASI KOSAKATA (MAKSIMAL 5 VIDEO PER HALAMAN) ───────────────────
+  static const int vocabPageSize = 5;
+  final RxInt currentVocabPage = 1.obs;
+
+  /// Jumlah total halaman berdasarkan ukuran halaman 5 video.
+  int get totalVocabPages {
+    if (availableVideos.isEmpty) return 1;
+    return ((availableVideos.length - 1) / vocabPageSize).floor() + 1;
+  }
+
+  /// Daftar video yang dipotong untuk halaman aktif saat ini.
+  List<SignVideoEntry> get paginatedVocabulary {
+    if (availableVideos.isEmpty) return [];
+    final start = (currentVocabPage.value - 1) * vocabPageSize;
+    if (start >= availableVideos.length) {
+      currentVocabPage.value = 1;
+      return availableVideos.take(vocabPageSize).toList();
+    }
+    final end = (start + vocabPageSize).clamp(0, availableVideos.length);
+    return availableVideos.sublist(start, end);
+  }
+
+  /// Pindah ke halaman berikutnya.
+  void nextVocabPage() {
+    if (currentVocabPage.value < totalVocabPages) {
+      currentVocabPage.value++;
+    }
+  }
+
+  /// Pindah ke halaman sebelumnya.
+  void previousVocabPage() {
+    if (currentVocabPage.value > 1) {
+      currentVocabPage.value--;
+    }
+  }
+
+  /// Pindah ke nomor halaman tertentu.
+  void goToVocabPage(int page) {
+    if (page >= 1 && page <= totalVocabPages) {
+      currentVocabPage.value = page;
+    }
   }
 }
