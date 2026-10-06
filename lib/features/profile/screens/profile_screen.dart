@@ -151,7 +151,7 @@ class ProfileScreen extends StatelessWidget {
                     _SettingsTile(
                       icon: Icons.brightness_6_rounded,
                       label: context.tr('profile.theme'),
-                      trailingLabel: settings.themeModeName,
+                      trailingLabel: settings.localizedThemeModeName(context),
                       cardBg: cardBg,
                       headingColor: headingColor,
                       bodyColor: bodyColor,

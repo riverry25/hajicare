@@ -13,14 +13,7 @@ class JamaahPrayerCard extends StatelessWidget {
   const JamaahPrayerCard({super.key});
 
   String _localizedPrayerName(BuildContext context, String rawName) {
-    final name = rawName.trim().toLowerCase();
-    if (name == 'subuh' || name == 'fajr') return context.tr('subuh');
-    if (name == 'terbit' || name == 'sunrise') return context.tr('terbit');
-    if (name == 'dzuhur' || name == 'dhuhr') return context.tr('dzuhur');
-    if (name == 'ashar' || name == 'asr') return context.tr('ashar');
-    if (name == 'maghrib') return context.tr('maghrib');
-    if (name == 'isya' || name == 'isha') return context.tr('isya');
-    return rawName;
+    return context.localizedPrayerName(rawName);
   }
 
   @override
@@ -38,10 +31,10 @@ class JamaahPrayerCard extends StatelessWidget {
           : '';
       final qiblaDeg = prayerCtrl.qiblaBearing.value;
       final nextName = prayerCtrl.nextPrayerName.value.isNotEmpty
-          ? prayerCtrl.nextPrayerName.value
+          ? context.localizedPrayerName(prayerCtrl.nextPrayerName.value)
           : context.tr('subuh');
       final nextTime = prayerCtrl.nextPrayerTime.value;
-      final countdown = prayerCtrl.countdownText.value;
+      final countdown = prayerCtrl.formatCountdown(context);
 
       // Filter to the 5 canonical fardhu prayers (exclude Sunrise/Terbit for mini time bar)
       final allPrayers = prayerCtrl.prayers;

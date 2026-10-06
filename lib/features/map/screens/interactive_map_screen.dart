@@ -16,6 +16,8 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
+import '../../dashboard/models/assistance_request_model.dart';
+import '../../dashboard/services/assistance_request_service.dart';
 import '../controllers/map_controller.dart';
 import '../models/map_search_result.dart';
 import '../widgets/location_detail_sheet.dart';
@@ -719,6 +721,14 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
         Obx(() {
           final userLocation = mapCtrl.currentUserLocation.value;
           final searchResult = mapCtrl.selectedSearchResult.value;
+          final assistanceReq =
+              mapCtrl.activeAssistanceRequest.value ??
+              AssistanceRequestService.instance.activeRequest.value;
+          final hasAssistanceMarker =
+              assistanceReq != null &&
+              assistanceReq.isActive &&
+              assistanceReq.latitude != null &&
+              assistanceReq.longitude != null;
 
           return fmap.MarkerLayer(
             markers: [
@@ -731,11 +741,26 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                   child: RepaintBoundary(child: _buildCompanionMarker()),
                 ),
 
-              // Room Member Markers (filtered, excluding current user)
+              // Active Assistance Request Pin Marker (Prominent Jemputan / Bantuan Pin)
+              if (hasAssistanceMarker)
+                _buildAssistanceMarker(assistanceReq, mapCtrl),
+
+              // Room Member Markers (filtered, excluding current user and assistance target)
               if (mapCtrl.roomMembers.isNotEmpty)
-                ..._buildRoomMemberMarkers(mapCtrl)
+                ..._buildRoomMemberMarkers(
+                  mapCtrl,
+                  excludeUid: hasAssistanceMarker
+                      ? assistanceReq.jamaahId
+                      : null,
+                )
               else
-                ..._buildJamaahMarkers(state, mapCtrl),
+                ..._buildJamaahMarkers(
+                  state,
+                  mapCtrl,
+                  excludeUid: hasAssistanceMarker
+                      ? assistanceReq.jamaahId
+                      : null,
+                ),
 
               // Filtered POI Markers
               ..._buildPoiMarkers(mapCtrl),
@@ -840,6 +865,129 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
     );
   }
 
+  fmap.Marker _buildAssistanceMarker(
+    AssistanceRequestModel req,
+    MapController mapCtrl,
+  ) {
+    final coord = LatLng(req.latitude!, req.longitude!);
+    final isSelected =
+        mapCtrl.selectedMember.value?.uid == req.jamaahId ||
+        mapCtrl.activeAssistanceRequest.value?.id == req.id;
+
+    return fmap.Marker(
+      point: coord,
+      width: 170,
+      height: 82,
+      alignment: Alignment.topCenter,
+      child: RepaintBoundary(
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            HapticFeedback.selectionClick();
+            mapCtrl.focusOnAssistanceRequest(req, autoRoute: false);
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Callout Banner
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFE64A19), Color(0xFFD84315)],
+                  ),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  border: Border.all(
+                    color: Colors.white,
+                    width: isSelected ? 2.2 : 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFE64A19).withValues(alpha: 0.5),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.notifications_active_rounded,
+                      size: 13,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        req.jamaahName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.captionSmall.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 2),
+              // Pin Icon with pulsing ring
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  AnimatedBuilder(
+                    animation: _pulseController,
+                    builder: (context, child) {
+                      return Container(
+                        width: 32 + (10 * _pulseController.value),
+                        height: 32 + (10 * _pulseController.value),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0xFFE64A19).withValues(
+                            alpha: 0.35 * (1.0 - _pulseController.value),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFE64A19), Color(0xFFBF360C)],
+                      ),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFE64A19).withValues(alpha: 0.5),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.directions_run_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildCompanionMarker() {
     final isDark = AppColors.isDark(context);
     return Column(
@@ -935,7 +1083,10 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
     );
   }
 
-  List<fmap.Marker> _buildRoomMemberMarkers(MapController mapCtrl) {
+  List<fmap.Marker> _buildRoomMemberMarkers(
+    MapController mapCtrl, {
+    String? excludeUid,
+  }) {
     if (mapCtrl.selectedFilter.value > 2) {
       return [];
     }
@@ -952,6 +1103,11 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
     for (final member in members) {
       // 1. Never render current user twice
       if (currentUid != null && member.uid == currentUid) {
+        continue;
+      }
+
+      // Exclude assistance target to prevent duplicate marker
+      if (excludeUid != null && member.uid == excludeUid) {
         continue;
       }
 
@@ -1099,8 +1255,9 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
 
   List<fmap.Marker> _buildJamaahMarkers(
     HajiCareController state,
-    MapController mapCtrl,
-  ) {
+    MapController mapCtrl, {
+    String? excludeUid,
+  }) {
     if (mapCtrl.selectedFilter.value > 2) {
       return [];
     }
@@ -1109,7 +1266,11 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
     final source = state.jamaahList.isNotEmpty
         ? state.jamaahList
         : [state.self];
-    final list = source.where((jamaah) => jamaah.currentLocation != null);
+    final list = source.where(
+      (jamaah) =>
+          jamaah.currentLocation != null &&
+          (excludeUid == null || jamaah.id != excludeUid),
+    );
 
     return list.map((jamaah) {
       final coord = mapCtrl.getJamaahCoordinate(jamaah);

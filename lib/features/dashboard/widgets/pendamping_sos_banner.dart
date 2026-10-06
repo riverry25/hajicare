@@ -1,7 +1,9 @@
+import 'dart:async';
 import '../../../core/locales/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/locales/app_translations.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/state/hajicare_state.dart';
@@ -290,30 +292,35 @@ class PendampingSosBanner extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                Wrap(
-                  spacing: AppSpacing.sm,
-                  runSpacing: AppSpacing.sm,
+                Row(
                   children: [
-                    _buildSmallBtn(
-                      icon: Icons.volume_up_rounded,
-                      label: context.tr('testAlarmSignal'),
-                      bg: isDark
-                          ? AppColors.darkSurfaceContainer
-                          : AppColors.canvasCream,
-                      fg: isDark ? AppColors.goldLight : AppColors.espressoDark,
-                      outline: false,
-                      onTap: () => _handleTestAlarm(context),
-                    ),
-                    _buildSmallBtn(
-                      icon: Icons.call_rounded,
-                      label: context.tr('responseCenter'),
-                      bg: Colors.transparent,
-                      fg: AppColors.sosEmergency,
-                      outline: true,
-                      borderColor: AppColors.sosEmergency.withValues(
-                        alpha: 0.4,
+                    Expanded(
+                      child: _buildSmallBtn(
+                        icon: Icons.volume_up_rounded,
+                        label: context.tr('testAlarmSignal'),
+                        bg: isDark
+                            ? AppColors.darkSurfaceContainer
+                            : AppColors.canvasCream,
+                        fg: isDark
+                            ? AppColors.goldLight
+                            : AppColors.espressoDark,
+                        outline: false,
+                        onTap: () => _handleTestAlarm(context),
                       ),
-                      onTap: () => _handleResponseCenter(context),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: _buildSmallBtn(
+                        icon: Icons.call_rounded,
+                        label: context.tr('responseCenter'),
+                        bg: Colors.transparent,
+                        fg: AppColors.sosEmergency,
+                        outline: true,
+                        borderColor: AppColors.sosEmergency.withValues(
+                          alpha: 0.4,
+                        ),
+                        onTap: () => _handleResponseCenter(context),
+                      ),
                     ),
                   ],
                 ),
@@ -326,119 +333,46 @@ class PendampingSosBanner extends StatelessWidget {
   }
 
   Future<void> _handleTestAlarm(BuildContext context) async {
-    HapticFeedback.heavyImpact();
-    SystemSound.play(SystemSoundType.alert);
-
-    try {
-      final hasVib = await Vibration.hasVibrator();
-      if (hasVib == true) {
-        Vibration.vibrate(pattern: [0, 300, 150, 300, 150, 400]);
-      }
-    } catch (_) {}
-
-    if (!context.mounted) return;
-
-    showDialog(
+    final isDark = AppColors.isDark(context);
+    final result = await showDialog<bool>(
       context: context,
-      barrierDismissible: true,
-      builder: (ctx) {
-        final isDark = AppColors.isDark(ctx);
-        return Dialog(
-          backgroundColor: isDark
-              ? AppColors.darkSurface
-              : AppColors.surfaceWhite,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            side: BorderSide(
-              color: isDark
-                  ? AppColors.darkOutlineVariant
-                  : const Color(0xFFE2E8F0),
-            ),
+      barrierDismissible: false,
+      builder: (ctx) => _AlarmTestDialog(isDark: isDark),
+    );
+
+    if (result == true && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Uji sinyal alarm selesai. Sirene & getar berfungsi normal.',
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(22),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: AppColors.accentGoldStar.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.goldPrimary.withValues(alpha: 0.4),
-                      width: 2,
-                    ),
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.volume_up_rounded,
-                      color: AppColors.goldPrimary,
-                      size: 32,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  context.tr('dashboard.alarmTestRunning'),
-                  style: DashboardTypography.titleMedium.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: isDark
-                        ? AppColors.darkTextHeading
-                        : AppColors.espressoDark,
-                    fontSize: 17,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  context.tr('dashboard.alarmTestDone'),
-                  style: DashboardTypography.bodySmall.copyWith(
-                    color: isDark ? AppColors.darkTextBody : AppColors.textBody,
-                    height: 1.45,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      try {
-                        Vibration.cancel();
-                      } catch (_) {}
-                      Navigator.of(ctx).pop();
-                    },
-                    icon: const Icon(
-                      Icons.check_circle_outline_rounded,
-                      size: 18,
-                    ),
-                    label: Text(
-                      context.tr('dashboard.finishTest'),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.espressoDark,
-                      foregroundColor: AppColors.surfaceWhite,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                      elevation: 2,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _makePhoneCall(BuildContext context, String phone) async {
+    final cleanPhone = phone.replaceAll(RegExp(r'[^\d+]'), '');
+    final uri = Uri.parse('tel:$cleanPhone');
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri);
+      } else {
+        await launchUrl(uri);
+      }
+    } catch (_) {
+      if (context.mounted) {
+        Clipboard.setData(ClipboardData(text: cleanPhone));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Nomor $cleanPhone telah disalin ke clipboard.'),
+            behavior: SnackBarBehavior.floating,
           ),
         );
-      },
-    ).then((_) {
-      try {
-        Vibration.cancel();
-      } catch (_) {}
-    });
+      }
+    }
   }
 
   void _handleResponseCenter(BuildContext context) {
@@ -451,6 +385,7 @@ class PendampingSosBanner extends StatelessWidget {
       context: context,
       useRootNavigator: true,
       backgroundColor: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
@@ -462,125 +397,141 @@ class PendampingSosBanner extends StatelessWidget {
             AppSpacing.lg,
             AppSpacing.xl,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkOutline
-                        : AppColors.outlineVariant,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  Container(
-                    width: 42,
-                    height: 42,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
                     decoration: BoxDecoration(
-                      color: AppColors.sosEmergency.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.sosEmergency.withValues(alpha: 0.3),
-                      ),
+                      color: isDark
+                          ? AppColors.darkOutline
+                          : AppColors.outlineVariant,
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.phone_in_talk_rounded,
-                        color: AppColors.sosEmergency,
-                        size: 22,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          context.tr('dashboard.emergencyResponseCenter'),
-                          style: DashboardTypography.titleMedium.copyWith(
-                            color: headingColor,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          context.tr('dashboard.emergencyResponseCenterSub'),
-                          style: DashboardTypography.captionSmall.copyWith(
-                            color: bodyColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              _buildHotlineCard(
-                ctx,
-                title: context.tr('dashboard.hotlineKemenag'),
-                number: '800-119-999',
-                icon: Icons.support_agent_rounded,
-                isDark: isDark,
-                headingColor: headingColor,
-                bodyColor: bodyColor,
-              ),
-              const SizedBox(height: 10),
-              _buildHotlineCard(
-                ctx,
-                title: context.tr('dashboard.redCrescent'),
-                number: '997',
-                icon: Icons.medical_services_rounded,
-                isDark: isDark,
-                headingColor: headingColor,
-                bodyColor: bodyColor,
-              ),
-              const SizedBox(height: 10),
-              _buildHotlineCard(
-                ctx,
-                title: context.tr('dashboard.saudiPolice'),
-                number: '911',
-                icon: Icons.local_police_rounded,
-                isDark: isDark,
-                headingColor: headingColor,
-                bodyColor: bodyColor,
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.of(ctx).pop();
-                    Get.toNamed(AppRoutes.modalSos);
-                  },
-                  icon: const Icon(Icons.emergency_rounded, size: 20),
-                  label: Text(
-                    context.tr('dashboard.openEmergencyPanel'),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.sosEmergency,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                    ),
-                    elevation: 2,
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: AppColors.sosEmergency.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.sosEmergency.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.phone_in_talk_rounded,
+                          color: AppColors.sosEmergency,
+                          size: 22,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            context.tr('dashboard.emergencyResponseCenter'),
+                            style: DashboardTypography.titleMedium.copyWith(
+                              color: headingColor,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            context.tr('dashboard.emergencyResponseCenterSub'),
+                            style: DashboardTypography.captionSmall.copyWith(
+                              color: bodyColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                _buildHotlineCard(
+                  ctx,
+                  title: context.tr('dashboard.hotlineKemenag'),
+                  subtitle: 'Layanan Pengaduan & Bantuan Jamaah RI',
+                  number: '800-119-999',
+                  icon: Icons.support_agent_rounded,
+                  isDark: isDark,
+                  headingColor: headingColor,
+                  bodyColor: bodyColor,
+                ),
+                const SizedBox(height: 10),
+                _buildHotlineCard(
+                  ctx,
+                  title: context.tr('dashboard.redCrescent'),
+                  subtitle: 'Gawat Darurat Medis & Ambulans',
+                  number: '997',
+                  icon: Icons.medical_services_rounded,
+                  isDark: isDark,
+                  headingColor: headingColor,
+                  bodyColor: bodyColor,
+                ),
+                const SizedBox(height: 10),
+                _buildHotlineCard(
+                  ctx,
+                  title: context.tr('dashboard.saudiPolice'),
+                  subtitle: 'Kepolisian & Pertolongan Darurat Umum',
+                  number: '911',
+                  icon: Icons.local_police_rounded,
+                  isDark: isDark,
+                  headingColor: headingColor,
+                  bodyColor: bodyColor,
+                ),
+                const SizedBox(height: 10),
+                _buildHotlineCard(
+                  ctx,
+                  title: 'KKHI Makkah / Madinah',
+                  subtitle: 'Balai Kesehatan & Pengobatan Haji RI',
+                  number: '+966 12 542 0000',
+                  icon: Icons.local_hospital_rounded,
+                  isDark: isDark,
+                  headingColor: headingColor,
+                  bodyColor: bodyColor,
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                      Get.toNamed(AppRoutes.modalSos);
+                    },
+                    icon: const Icon(Icons.emergency_rounded, size: 20),
+                    label: Text(
+                      context.tr('dashboard.openEmergencyPanel'),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.sosEmergency,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                      elevation: 2,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -590,100 +541,121 @@ class PendampingSosBanner extends StatelessWidget {
   Widget _buildHotlineCard(
     BuildContext context, {
     required String title,
+    String? subtitle,
     required String number,
     required IconData icon,
     required bool isDark,
     required Color headingColor,
     required Color bodyColor,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _makePhoneCall(context, number),
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(
-          color: isDark
-              ? AppColors.darkOutlineVariant
-              : const Color(0xFFE2E8F0),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: AppColors.espressoDark),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: headingColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  number,
-                  style: const TextStyle(
-                    color: AppColors.sosEmergency,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ],
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppColors.darkSurfaceContainer
+                : AppColors.canvasCream,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(
+              color: isDark
+                  ? AppColors.darkOutlineVariant
+                  : const Color(0xFFE2E8F0),
             ),
           ),
-          InkWell(
-            onTap: () {
-              Clipboard.setData(ClipboardData(text: number));
-              HapticFeedback.lightImpact();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    context.tr('dashboard.numberCopied', {'number': number}),
-                  ),
-                  duration: const Duration(seconds: 2),
-                  behavior: SnackBarBehavior.floating,
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppColors.sosEmergency.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
                 ),
-              );
-            },
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: isDark
-                      ? AppColors.darkOutlineVariant
-                      : const Color(0xFFCBD5E1),
+                child: Center(
+                  child: Icon(icon, size: 20, color: AppColors.sosEmergency),
                 ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.copy_rounded,
-                    size: 14,
-                    color: AppColors.espressoDark,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    context.tr('dashboard.copy'),
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.espressoDark,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        color: headingColor,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 1),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          color: bodyColor.withValues(alpha: 0.75),
+                          fontSize: 10.5,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    const SizedBox(height: 3),
+                    Text(
+                      number,
+                      style: const TextStyle(
+                        color: AppColors.sosEmergency,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+              // Call direct button
+              IconButton(
+                tooltip: 'Panggil',
+                icon: const Icon(
+                  Icons.phone_forwarded_rounded,
+                  color: AppColors.statusSafe,
+                  size: 21,
+                ),
+                onPressed: () => _makePhoneCall(context, number),
+              ),
+              // Copy button
+              IconButton(
+                tooltip: context.tr('dashboard.copy'),
+                icon: Icon(
+                  Icons.copy_rounded,
+                  size: 18,
+                  color: bodyColor.withValues(alpha: 0.8),
+                ),
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: number));
+                  HapticFeedback.lightImpact();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        context.tr('dashboard.numberCopied', {
+                          'number': number,
+                        }),
+                      ),
+                      duration: const Duration(seconds: 2),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -703,10 +675,7 @@ class PendampingSosBanner extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.pill),
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: 7,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           decoration: BoxDecoration(
             color: bg,
             borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -715,19 +684,218 @@ class PendampingSosBanner extends StatelessWidget {
                 : null,
           ),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.max,
             children: [
               Icon(icon, size: 15, color: fg),
               const SizedBox(width: 5),
-              Text(
-                label,
-                style: DashboardTypography.caption.copyWith(
-                  color: fg,
-                  fontWeight: FontWeight.w700,
+              Flexible(
+                child: Text(
+                  label,
+                  style: DashboardTypography.caption.copyWith(
+                    color: fg,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AlarmTestDialog extends StatefulWidget {
+  final bool isDark;
+  const _AlarmTestDialog({required this.isDark});
+
+  @override
+  State<_AlarmTestDialog> createState() => _AlarmTestDialogState();
+}
+
+class _AlarmTestDialogState extends State<_AlarmTestDialog>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulseAnim;
+  Timer? _soundTimer;
+  Timer? _durationTimer;
+  int _secondsElapsed = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseAnim = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat(reverse: true);
+
+    _startAlarmTest();
+  }
+
+  void _startAlarmTest() {
+    HapticFeedback.heavyImpact();
+    SystemSound.play(SystemSoundType.alert);
+
+    try {
+      Vibration.hasVibrator().then((hasVib) {
+        if (hasVib == true && mounted) {
+          Vibration.vibrate(pattern: [0, 400, 200, 400, 200, 500], repeat: 0);
+        }
+      });
+    } catch (_) {}
+
+    _soundTimer = Timer.periodic(const Duration(milliseconds: 900), (_) {
+      if (!mounted) return;
+      SystemSound.play(SystemSoundType.alert);
+      HapticFeedback.heavyImpact();
+    });
+
+    _durationTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() {
+        _secondsElapsed++;
+      });
+    });
+  }
+
+  void _stopAlarmTest() {
+    _soundTimer?.cancel();
+    _soundTimer = null;
+    _durationTimer?.cancel();
+    _durationTimer = null;
+    _pulseAnim.stop();
+    try {
+      Vibration.cancel();
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _stopAlarmTest();
+    _pulseAnim.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.isDark;
+    return Dialog(
+      backgroundColor: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        side: BorderSide(
+          color: isDark
+              ? AppColors.darkOutlineVariant
+              : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(22),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ScaleTransition(
+              scale: Tween<double>(begin: 0.9, end: 1.15).animate(
+                CurvedAnimation(parent: _pulseAnim, curve: Curves.easeInOut),
+              ),
+              child: Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: AppColors.sosEmergency.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.sosEmergency.withValues(alpha: 0.6),
+                    width: 2.5,
+                  ),
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.volume_up_rounded,
+                    color: AppColors.sosEmergency,
+                    size: 36,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            Text(
+              context.tr('dashboard.alarmTestRunning'),
+              style: DashboardTypography.titleMedium.copyWith(
+                fontWeight: FontWeight.w800,
+                color: isDark
+                    ? AppColors.darkTextHeading
+                    : AppColors.espressoDark,
+                fontSize: 17,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.sosEmergency.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: AppColors.sosEmergency,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Sirene & Getar Aktif (${_secondsElapsed.toString().padLeft(2, '0')}s)',
+                    style: const TextStyle(
+                      color: AppColors.sosEmergency,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              context.tr('dashboard.alarmTestDone'),
+              style: DashboardTypography.bodySmall.copyWith(
+                color: isDark ? AppColors.darkTextBody : AppColors.textBody,
+                height: 1.45,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  _stopAlarmTest();
+                  Navigator.of(context).pop(true);
+                },
+                icon: const Icon(Icons.stop_circle_rounded, size: 18),
+                label: Text(
+                  context.tr('dashboard.finishTest'),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.espressoDark,
+                  foregroundColor: AppColors.surfaceWhite,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  elevation: 2,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

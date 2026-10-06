@@ -40,7 +40,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
 
     // Next prayer time display with timezone suffix stripped to avoid overflow
     final prayerName = prayerCtrl.nextPrayerName.value.isNotEmpty
-        ? prayerCtrl.nextPrayerName.value
+        ? context.localizedPrayerName(prayerCtrl.nextPrayerName.value)
         : context.tr('ashar');
     final rawPrayerTime = prayerCtrl.nextPrayerTime.value.isNotEmpty
         ? prayerCtrl.nextPrayerTime.value
@@ -252,7 +252,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
             ),
             child: Row(
               children: [
-                // Left Pill: Lacak Petugas (Map)
+                // Left Pill: Lacak Pendamping (Map)
                 Expanded(
                   child: Material(
                     color: Colors.transparent,
@@ -260,9 +260,35 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                       borderRadius: const BorderRadius.horizontal(
                         left: Radius.circular(26),
                       ),
-                      onTap: () {
+                      onTap: () async {
                         HapticFeedback.selectionClick();
+                        final mapCtrl = Get.isRegistered<MapController>()
+                            ? Get.find<MapController>()
+                            : Get.put(MapController());
+
+                        final companion = await mapCtrl.focusOnCompanion();
+                        if (companion == null) {
+                          if (context.mounted) {
+                            AppAlert.info(
+                              context,
+                              title: 'Pendamping Belum Terhubung',
+                              message:
+                                  'Belum ada data pendamping dalam room Anda. Pastikan Anda telah bergabung ke room yang sama dengan pendamping.',
+                            );
+                          }
+                          return;
+                        }
+
                         dashboardCtrl.changeTab(1);
+
+                        if (!companion.hasLocation && context.mounted) {
+                          AppAlert.warning(
+                            context,
+                            title: 'Lokasi Belum Tersedia',
+                            message:
+                                'GPS pendamping (${companion.name}) belum aktif atau koordinat belum diperbarui.',
+                          );
+                        }
                       },
                       child: Center(
                         child: Row(
@@ -416,65 +442,58 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
     );
   }
 
-  // ── Money Recognition Metric (Camera Shortcut) ───────────────────────────
+  // ── Money Recognition Metric (Scanner Icon Shortcut) ────────────────────
   Widget _buildMoneyRecognitionMetric(BuildContext context) {
     return Expanded(
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          Get.toNamed(AppRoutes.moneyRecognition);
-        },
-        borderRadius: BorderRadius.circular(12),
-        splashColor: Colors.white.withValues(alpha: 0.08),
-        highlightColor: Colors.white.withValues(alpha: 0.04),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Icon chip — same height as the value text (fontSize 16 ≈ 20px)
-            Container(
-              height: 28,
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: AppColors.goldLight.withValues(alpha: 0.45),
-                  width: 1.0,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            Get.toNamed(AppRoutes.moneyRecognition);
+          },
+          borderRadius: BorderRadius.circular(12),
+          splashColor: Colors.white.withValues(alpha: 0.12),
+          highlightColor: Colors.white.withValues(alpha: 0.06),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Circular scan icon button (moved from next to notification bell)
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.14),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.goldLight.withValues(alpha: 0.45),
+                    width: 1.0,
+                  ),
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.document_scanner_outlined,
+                    color: AppColors.goldLight,
+                    size: 18,
+                  ),
                 ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.camera_alt_rounded,
-                    color: AppColors.goldLight,
-                    size: 13,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    context.tr('dashboard.scanRiyal'),
-                    style: const TextStyle(
-                      color: AppColors.goldLight,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.1,
-                    ),
-                  ),
-                ],
+              const SizedBox(height: 3),
+              Text(
+                context.tr('dashboard.scanRiyal'),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.75),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              context.tr('dashboard.recognizeMoney'),
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.65),
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

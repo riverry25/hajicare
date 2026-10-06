@@ -84,6 +84,10 @@ class OnboardingSlideLanguage extends StatelessWidget {
             // 2x2 Language Grid
             Obx(() {
               final currentCode = settings.currentLocale.languageCode;
+              final textScale = MediaQuery.textScalerOf(context).scale(1);
+              final dynamicAspectRatio = textScale > 1.35
+                  ? 1.05
+                  : (textScale > 1.15 ? 1.18 : 1.35);
 
               final languages = [
                 (
@@ -116,11 +120,11 @@ class OnboardingSlideLanguage extends StatelessWidget {
                 itemCount: languages.length,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   crossAxisSpacing: AppSpacing.sm,
                   mainAxisSpacing: AppSpacing.sm,
-                  childAspectRatio: 1.35,
+                  childAspectRatio: dynamicAspectRatio,
                 ),
                 itemBuilder: (context, index) {
                   final lang = languages[index];
@@ -304,13 +308,15 @@ class OnboardingSlideLanguage extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     final isDark = AppColors.isDark(context);
+    final textScale = MediaQuery.textScalerOf(context).scale(1);
+    final cardPadding = textScale > 1.15 ? 12.0 : AppSpacing.cardPadding;
 
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.card),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(AppSpacing.cardPadding),
+        padding: EdgeInsets.all(cardPadding),
         decoration: BoxDecoration(
           color: isDark
               ? AppColors.darkSurfaceContainer
@@ -341,34 +347,38 @@ class OnboardingSlideLanguage extends StatelessWidget {
           children: [
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? (isDark
-                              ? AppColors.goldPrimary.withValues(alpha: 0.25)
-                              : AppColors.goldPrimary.withValues(alpha: 0.15))
-                        : (isDark
-                              ? AppColors.darkSurfaceContainerHighest
-                              : AppColors.canvasCream),
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                  child: Text(
-                    type,
-                    style: AppTypography.captionSmall.copyWith(
+                Flexible(
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: textScale > 1.15 ? 6 : 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
                       color: isSelected
                           ? (isDark
-                                ? AppColors.accentGoldStar
-                                : AppColors.espressoDark)
-                          : AppColors.textBodyColor(context),
-                      fontWeight: FontWeight.w700,
+                                ? AppColors.goldPrimary.withValues(alpha: 0.25)
+                                : AppColors.goldPrimary.withValues(alpha: 0.15))
+                          : (isDark
+                                ? AppColors.darkSurfaceContainerHighest
+                                : AppColors.canvasCream),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    child: Text(
+                      type,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.captionSmall.copyWith(
+                        color: isSelected
+                            ? (isDark
+                                  ? AppColors.accentGoldStar
+                                  : AppColors.espressoDark)
+                            : AppColors.textBodyColor(context),
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 4),
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 200),
                   child: isSelected
@@ -376,7 +386,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
                           Icons.check_circle_rounded,
                           key: ValueKey(true),
                           color: AppColors.statusSafe,
-                          size: 22,
+                          size: 20,
                         )
                       : Icon(
                           Icons.radio_button_unchecked_rounded,
@@ -384,7 +394,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
                           color: isDark
                               ? AppColors.darkOutline
                               : AppColors.tanMedium,
-                          size: 22,
+                          size: 20,
                         ),
                 ),
               ],

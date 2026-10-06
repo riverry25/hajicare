@@ -1368,12 +1368,6 @@ class _RadarWaveStatisticWidgetState extends State<_RadarWaveStatisticWidget>
                 decoration: BoxDecoration(
                   color: Colors.transparent,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: widget.isDark
-                        ? AppColors.darkCardBorder
-                        : const Color(0xFFE2E8F0),
-                    width: 1,
-                  ),
                 ),
                 child: AnimatedBuilder(
                   animation: Listenable.merge([_waveCtrl, _tapCtrl]),

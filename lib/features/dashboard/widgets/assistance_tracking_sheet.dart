@@ -172,18 +172,6 @@ class AssistanceTrackingSheet extends StatelessWidget {
                     ),
                 ],
               ),
-
-              // Demo / Simulator Pendamping baris pembantu
-              if (!isCompleted) ...[
-                const SizedBox(height: 24),
-                _buildCompanionSimulatorToolbar(
-                  context,
-                  service,
-                  current,
-                  isDark,
-                  bodyColor,
-                ),
-              ],
             ],
           ),
         ),
@@ -699,79 +687,6 @@ class AssistanceTrackingSheet extends StatelessWidget {
               context.tr('close'),
               style: const TextStyle(fontWeight: FontWeight.w800),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCompanionSimulatorToolbar(
-    BuildContext context,
-    AssistanceRequestService service,
-    AssistanceRequestModel current,
-    bool isDark,
-    Color bodyColor,
-  ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.black.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.developer_mode_rounded,
-                size: 15,
-                color: Color(0xFFD97706),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                context.tr('assistanceSimHeader'),
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.6,
-                  color: bodyColor.withValues(alpha: 0.7),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              ActionChip(
-                key: const Key('sim_acknowledge_button'),
-                avatar: const Icon(Icons.mark_email_read_rounded, size: 16),
-                label: Text(
-                  context.tr('assistanceSimAcknowledge'),
-                  style: const TextStyle(fontSize: 12),
-                ),
-                onPressed: () {
-                  HapticFeedback.selectionClick();
-                  service.acknowledgeRequest();
-                },
-              ),
-              ActionChip(
-                key: const Key('sim_on_the_way_button'),
-                avatar: const Icon(Icons.directions_run_rounded, size: 16),
-                label: Text(
-                  context.tr('assistanceSimEnRoute'),
-                  style: const TextStyle(fontSize: 12),
-                ),
-                onPressed: () {
-                  HapticFeedback.selectionClick();
-                  service.dispatchCompanionToLocation();
-                },
-              ),
-            ],
           ),
         ],
       ),

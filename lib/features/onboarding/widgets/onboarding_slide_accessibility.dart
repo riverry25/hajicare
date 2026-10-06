@@ -169,10 +169,14 @@ class OnboardingSlideAccessibility extends StatelessWidget {
               );
             }),
           ),
-          Text(
-            label,
-            style: AppTypography.captionSmall.copyWith(
-              color: isDark ? AppColors.darkTextBody : AppColors.tanMedium,
+          const SizedBox(width: AppSpacing.sm),
+          Flexible(
+            child: Text(
+              label,
+              textAlign: TextAlign.end,
+              style: AppTypography.captionSmall.copyWith(
+                color: isDark ? AppColors.darkTextBody : AppColors.tanMedium,
+              ),
             ),
           ),
         ],

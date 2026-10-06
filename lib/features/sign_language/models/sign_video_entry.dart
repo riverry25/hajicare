@@ -91,7 +91,8 @@ class SignVideoEntry {
       language: (json['language'] as String? ?? 'sibi').toLowerCase(),
       type: (json['type'] as String? ?? 'word').toLowerCase(),
       label: json['label'] as String? ?? '',
-      aliases: (json['aliases'] as List<dynamic>?)
+      aliases:
+          (json['aliases'] as List<dynamic>?)
               ?.map((e) => e.toString().toLowerCase().trim())
               .toList() ??
           [],

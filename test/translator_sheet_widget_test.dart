@@ -76,6 +76,50 @@ void main() {
       },
     );
 
+    testWidgets(
+      'Renders center hero mic button and adapts smoothly to large text scaling (1.4x)',
+      (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            locale: const Locale('id'),
+            supportedLocales: AppTranslations.supportedLocales,
+            theme: AppTheme.lightTheme,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              FallbackMaterialLocalizationsDelegate(),
+              FallbackCupertinoLocalizationsDelegate(),
+              FallbackWidgetsLocalizationsDelegate(),
+            ],
+            home: MediaQuery(
+              data: const MediaQueryData(
+                textScaler: TextScaler.linear(1.4),
+                size: Size(390, 844),
+              ),
+              child: const Scaffold(body: HajiCareTranslatorSheet()),
+            ),
+          ),
+        );
+
+        await tester.pump();
+
+        // Check center mic icon is visible and tappable
+        expect(find.byIcon(Icons.mic_rounded), findsOneWidget);
+        // Check elderly friendly instructions
+        expect(find.text('Bicara Indonesia'), findsOneWidget);
+        expect(
+          find.text('Tekan tombol mikrofon lalu mulai berbicara'),
+          findsOneWidget,
+        );
+
+        // Verify tapping microphone triggers without throwing
+        await tester.tap(find.byIcon(Icons.mic_rounded));
+        await tester.pump();
+      },
+    );
+
     testWidgets('Renders properly in Dark Theme', (tester) async {
       await tester.pumpWidget(
         MaterialApp(

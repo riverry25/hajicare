@@ -331,6 +331,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
         );
       }
 
+      if (realNotifs.isEmpty && invitations.isEmpty) {
+        return _buildEmptyState(context);
+      }
+
       return ListView(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md,
@@ -361,52 +365,65 @@ class _NotificationScreenState extends State<NotificationScreen> {
             ...realNotifs.map(
               (n) => _buildFirestoreNotificationCard(context, n),
             ),
-            const SizedBox(height: AppSpacing.lg),
           ],
-
-          // 3. Fallback / General Announcements
-          _buildSectionHeader(
-            context,
-            'PENGUMUMAN & CUACA',
-            Icons.today_rounded,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          _buildNotificationCard(
-            context: context,
-            category: 'PERINGATAN CUACA',
-            icon: Icons.wb_sunny_rounded,
-            iconColor: const Color(0xFFE65100),
-            title: context.tr('notification.heatwaveAdvisory'),
-            message:
-                'Suhu di sekitar Masjidil Haram mencapai 45°C. Jamaah diimbau memperbanyak minum air zamzam, memakai payung, dan menghindari paparan langsung.',
-            time: 'Hari ini',
-            isUnread: false,
-          ),
-          _buildNotificationCard(
-            context: context,
-            category: 'JADWAL KLOTER',
-            icon: Icons.directions_bus_rounded,
-            iconColor: AppColors.goldDark,
-            title: context.tr('notification.busScheduleInfo'),
-            message:
-                'Bus Shalawat rute nomor 3 (Syisyah - Terminal Syib Amir) beroperasi normal dengan interval tiap 10 menit.',
-            time: 'Hari ini',
-            isUnread: false,
-          ),
-          _buildNotificationCard(
-            context: context,
-            category: 'PANDUAN IBADAH',
-            icon: Icons.menu_book_rounded,
-            iconColor: const Color(0xFF0D7C66),
-            title: context.tr('notification.additionalManasikInfo'),
-            message:
-                'Doa-doa tawaf dan sa\'i serta tips menjaga stamina selama di Mina telah ditambahkan ke panduan.',
-            time: 'Kemarin',
-            isUnread: false,
-          ),
         ],
       );
     });
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    final isDark = AppColors.isDark(context);
+    final headingColor = AppColors.textHeadingColor(context);
+    final bodyColor = AppColors.textBodyColor(context);
+    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+
+    return Center(
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xl,
+          vertical: AppSpacing.xxl,
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: primaryColor.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.notifications_none_rounded,
+                  size: 40,
+                  color: primaryColor,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              context.tr('notification.emptyNotifications'),
+              style: AppTypography.titleMedium.copyWith(
+                color: headingColor,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Semua pemberitahuan dan informasi penting rombongan akan muncul di sini.',
+              textAlign: TextAlign.center,
+              style: AppTypography.bodySmall.copyWith(
+                color: bodyColor.withValues(alpha: 0.8),
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildInvitationCard(BuildContext context, RoomInvitationModel inv) {

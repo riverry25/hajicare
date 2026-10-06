@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
 import '../../translator/services/speech_service.dart';
 import '../models/sign_video_entry.dart';
+import '../services/sign_language_asset_registry.dart';
 import '../services/sign_language_repository.dart';
 
 /// Controller GetX untuk fitur Text-to-Sign Language (SIBI & BISINDO).
@@ -11,6 +12,7 @@ class TextToSignController extends GetxController {
   final SignLanguageRepository _repository = SignLanguageRepository.instance;
 
   final TextEditingController textController = TextEditingController();
+  final FocusNode searchFocusNode = FocusNode();
 
   // ── REAKTIF STATE ─────────────────────────────────────────────────────────
   final RxString selectedLanguage = 'sibi'.obs; // 'sibi' atau 'bisindo'
@@ -19,6 +21,63 @@ class TextToSignController extends GetxController {
   final Rx<SignSearchResult?> searchResult = Rx<SignSearchResult?>(null);
   final Rx<SignVideoEntry?> currentEntry = Rx<SignVideoEntry?>(null);
   final RxList<SignVideoEntry> availableVideos = <SignVideoEntry>[].obs;
+
+  // ── AUTOCOMPLETE SUGGESTIONS STATE ────────────────────────────────────────
+  final RxList<String> searchSuggestions = <String>[].obs;
+  final RxBool showSuggestions = false.obs;
+
+  /// Kamus kosakata umum SIBI untuk auto-suggest
+  static const List<String> sibiDictionary = [
+    'Dokter',
+    'Obat',
+    'Masjid',
+    'Bantu',
+    'Tolong bantu saya',
+    'Sakit',
+    'Rumah Sakit',
+    'Ambulans',
+    'Air Minum',
+    'Makan',
+    'Minum',
+    'Tawaf',
+    'Sa\'i',
+    'Hotel',
+    'Maktab',
+    'Kloter',
+    'Polisi',
+    'Darurat',
+    'Kamar Mandi',
+  ];
+
+  /// Kamus alfabet BISINDO untuk auto-suggest
+  static const List<String> bisindoDictionary = [
+    'A',
+    'B',
+    'C',
+    'D',
+    'E',
+    'F',
+    'G',
+    'H',
+    'I',
+    'J',
+    'K',
+    'L',
+    'M',
+    'N',
+    'O',
+    'P',
+    'Q',
+    'R',
+    'S',
+    'T',
+    'U',
+    'V',
+    'W',
+    'X',
+    'Y',
+    'Z',
+  ];
 
   final RxBool isLoadingVideos = false.obs;
   final RxBool isSearching = false.obs;
@@ -52,6 +111,7 @@ class TextToSignController extends GetxController {
     _disposePlayer();
     _speechService?.dispose();
     textController.dispose();
+    searchFocusNode.dispose();
     super.onClose();
   }
 
@@ -94,7 +154,89 @@ class TextToSignController extends GetxController {
     }
   }
 
-  // ── 2. TEXT-TO-SIGN SEARCH ───────────────────────────────────────────────
+  // ── 2. AUTOCOMPLETE & TEXT-TO-SIGN SEARCH ─────────────────────────────────
+
+  /// Memperbarui query pencarian dan memfilter saran kosakata (autocomplete).
+  void updateSearchQuery(String text) {
+    currentQuery.value = text;
+    final clean = text.trim().toLowerCase();
+
+    if (clean.isEmpty) {
+      searchSuggestions.clear();
+      showSuggestions.value = false;
+      return;
+    }
+
+    final candidatePool = <String>{};
+
+    // 1. Kamus bawaan berdasarkan bahasa aktif
+    if (selectedLanguage.value == 'sibi') {
+      candidatePool.addAll(sibiDictionary);
+    } else {
+      candidatePool.addAll(bisindoDictionary);
+    }
+
+    // 2. Dari katalog video yang saat ini dimuat
+    for (final v in availableVideos) {
+      candidatePool.add(v.label);
+    }
+
+    // 3. Dari registry bundled offline assets
+    for (final b in SignLanguageAssetRegistry.getByLanguage(
+      selectedLanguage.value,
+    )) {
+      candidatePool.add(b.label);
+    }
+
+    // Filter kandidat: cocokkan awalan kata atau substring
+    final prefixMatches = <String>[];
+    final containsMatches = <String>[];
+
+    for (final item in candidatePool) {
+      final itemLower = item.toLowerCase();
+      if (itemLower.startsWith(clean)) {
+        prefixMatches.add(item);
+      } else if (itemLower.contains(clean)) {
+        containsMatches.add(item);
+      }
+    }
+
+    // Urutkan prefix match lebih dulu
+    prefixMatches.sort((a, b) => a.length.compareTo(b.length));
+    containsMatches.sort((a, b) => a.length.compareTo(b.length));
+
+    final combined = [...prefixMatches, ...containsMatches].take(6).toList();
+
+    searchSuggestions.assignAll(combined);
+    showSuggestions.value = combined.isNotEmpty;
+  }
+
+  /// Memilih salah satu saran autocomplete, mengisi input, dan langsung memicu pemutaran video.
+  void selectSuggestion(String suggestion) {
+    textController.text = suggestion;
+    textController.selection = TextSelection.fromPosition(
+      TextPosition(offset: suggestion.length),
+    );
+    currentQuery.value = suggestion;
+    showSuggestions.value = false;
+    searchSuggestions.clear();
+    searchFocusNode.unfocus();
+    searchSign(suggestion);
+  }
+
+  /// Menutup popover saran autocomplete.
+  void dismissSuggestions() {
+    showSuggestions.value = false;
+  }
+
+  /// Menghapus teks input pencarian dan mereset hasil pencarian.
+  void clearSearch() {
+    textController.clear();
+    currentQuery.value = '';
+    searchSuggestions.clear();
+    showSuggestions.value = false;
+    searchSign('');
+  }
 
   /// Mencari dan mencocokkan teks ke video bahasa isyarat.
   Future<void> searchSign(String text) async {
@@ -351,8 +493,9 @@ class TextToSignController extends GetxController {
     if (isListening.value) {
       await service.stopListening();
       isListening.value = false;
+      showSuggestions.value = false;
       if (textController.text.trim().isNotEmpty) {
-        searchSign(textController.text);
+        searchSign(textController.text.trim());
       }
       return;
     }
@@ -367,8 +510,12 @@ class TextToSignController extends GetxController {
         speechStatusMessage.value = 'Mendengarkan... Silakan ucapkan kata';
       } else if (status == SpeechStatus.done) {
         isListening.value = false;
+        showSuggestions.value = false;
         if (textController.text.trim().isNotEmpty) {
           speechStatusMessage.value = 'Terdeteksi: "${textController.text}"';
+          if (!isSearching.value) {
+            searchSign(textController.text.trim());
+          }
         } else {
           speechStatusMessage.value = 'Tekan mikrofon & bicara kata/huruf';
         }
@@ -383,11 +530,17 @@ class TextToSignController extends GetxController {
 
     service.onResult = (words, isFinal) {
       if (words.trim().isNotEmpty) {
-        recognizedWords.value = words;
-        textController.text = words;
-        currentQuery.value = words;
+        final cleanWords = words.trim();
+        recognizedWords.value = cleanWords;
+        textController.text = cleanWords;
+        textController.selection = TextSelection.fromPosition(
+          TextPosition(offset: cleanWords.length),
+        );
+        currentQuery.value = cleanWords;
+        updateSearchQuery(cleanWords);
         if (isFinal) {
-          searchSign(words);
+          showSuggestions.value = false;
+          searchSign(cleanWords);
         }
       }
     };
@@ -407,13 +560,14 @@ class TextToSignController extends GetxController {
     isListening.value = service.isListening;
   }
 
-  /// Menghentikan pengenalan suara secara eksplisit.
+  /// Menghentikan pengenalan suara secara eksplisit dan memicu pencarian jika ada teks.
   Future<void> stopVoiceRecognition() async {
     if (isListening.value) {
       await speechService.stopListening();
       isListening.value = false;
+      showSuggestions.value = false;
       if (textController.text.trim().isNotEmpty) {
-        searchSign(textController.text);
+        searchSign(textController.text.trim());
       }
     }
   }

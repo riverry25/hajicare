@@ -26,7 +26,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Quick Service Categories (Row of 5 Horizontal Items) ─
+          // ── Quick Service Categories (Row of 4 Horizontal Items) ─
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
             child: Row(
@@ -73,20 +73,6 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                         ? AppColors.goldLight
                         : AppColors.espressoDark,
                     onTap: () => _showMedicalSheet(context),
-                  ),
-                ),
-                Expanded(
-                  child: _buildCategoryItem(
-                    context: context,
-                    label: context.tr('dashboard.moneyDetection'),
-                    icon: Icons.payments_rounded,
-                    bgColor: isDark
-                        ? AppColors.darkSurfaceContainer
-                        : AppColors.canvasCream,
-                    iconColor: isDark
-                        ? AppColors.goldLight
-                        : AppColors.espressoDark,
-                    onTap: () => Get.toNamed(AppRoutes.moneyRecognition),
                   ),
                 ),
                 Expanded(
@@ -893,213 +879,10 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
   // ── Modal Sheet: Jadwal & Guide Ibadah Haji ────────────────────────────────
   void _showHajiScheduleGuideSheet(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
-
-    final scheduleStages = [
-      {
-        'day': context.tr('dashboard.stageTarwiyahDay'),
-        'title': context.tr('dashboard.stageTarwiyahTitle'),
-        'icon': Icons.location_city_rounded,
-        'color': AppColors.emeraldIslamic,
-        'desc': context.tr('dashboard.stageTarwiyahDesc'),
-      },
-      {
-        'day': context.tr('dashboard.stageArafahDay'),
-        'title': context.tr('dashboard.stageArafahTitle'),
-        'icon': Icons.wb_sunny_rounded,
-        'color': const Color(0xFFE65100),
-        'desc': context.tr('dashboard.stageArafahDesc'),
-      },
-      {
-        'day': context.tr('dashboard.stageMuzdalifahDay'),
-        'title': context.tr('dashboard.stageMuzdalifahTitle'),
-        'icon': Icons.nights_stay_rounded,
-        'color': const Color(0xFF5C6BC0),
-        'desc': context.tr('dashboard.stageMuzdalifahDesc'),
-      },
-      {
-        'day': context.tr('dashboard.stageNaharDay'),
-        'title': context.tr('dashboard.stageNaharTitle'),
-        'icon': Icons.flag_rounded,
-        'color': const Color(0xFFC2185B),
-        'desc': context.tr('dashboard.stageNaharDesc'),
-      },
-      {
-        'day': context.tr('dashboard.stageTasyrikDay'),
-        'title': context.tr('dashboard.stageTasyrikTitle'),
-        'icon': Icons.alt_route_rounded,
-        'color': const Color(0xFF00897B),
-        'desc': context.tr('dashboard.stageTasyrikDesc'),
-      },
-      {
-        'day': context.tr('dashboard.stageWadaDay'),
-        'title': context.tr('dashboard.stageWadaTitle'),
-        'icon': Icons.mosque_rounded,
-        'color': AppColors.secondary,
-        'desc': context.tr('dashboard.stageWadaDesc'),
-      },
-    ];
-
     Get.bottomSheet(
-      Container(
-        padding: const EdgeInsets.all(AppSpacing.cardPadding),
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.82,
-        ),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(AppRadius.sheet),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkOutlineVariant
-                      : AppColors.outlineVariant,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                ),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.tanMedium.withValues(
-                      alpha: isDark ? 0.25 : 0.12,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.calendar_month_rounded,
-                    color: AppColors.tanMedium,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        context.tr('dashboard.hajjStagesTitle'),
-                        style: DashboardTypography.titleMedium.copyWith(
-                          color: headingColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        context.tr('dashboard.hajjStagesSub'),
-                        style: DashboardTypography.captionSmall.copyWith(
-                          color: bodyColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            const Divider(height: 1),
-            const SizedBox(height: AppSpacing.sm),
-            Expanded(
-              child: ListView.separated(
-                itemCount: scheduleStages.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final item = scheduleStages[index];
-                  final stageColor = item['color'] as Color;
-
-                  return Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkSurfaceContainer
-                          : AppColors.canvasCream,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: stageColor.withValues(alpha: isDark ? 0.3 : 0.2),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 9,
-                                vertical: 3.5,
-                              ),
-                              decoration: BoxDecoration(
-                                color: stageColor.withValues(
-                                  alpha: isDark ? 0.25 : 0.12,
-                                ),
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.pill,
-                                ),
-                              ),
-                              child: Text(
-                                item['day'] as String,
-                                style: TextStyle(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: stageColor,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Icon(
-                              item['icon'] as IconData,
-                              size: 18,
-                              color: stageColor,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                item['title'] as String,
-                                style: DashboardTypography.labelLarge.copyWith(
-                                  color: headingColor,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          item['desc'] as String,
-                          style: DashboardTypography.bodySmall.copyWith(
-                            color: bodyColor.withValues(alpha: 0.9),
-                            height: 1.45,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
+      const HajjScheduleGuideSheet(),
       isScrollControlled: true,
+      backgroundColor: Colors.transparent,
     );
   }
 
@@ -1874,46 +1657,83 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    isConnected
-                                        ? '🟢 Gelang Terhubung'
-                                        : (ldrCtrl.isScanning
-                                              ? '🔍 Mencari Smartband...'
-                                              : (ldrCtrl.isConnecting
-                                                    ? '🔄 Menghubungkan...'
-                                                    : (hasLastLocation
-                                                          ? '🔴 Gelang Terputus'
-                                                          : '🔴 Gelang Belum Terhubung'))),
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w800,
-                                      color: isConnected
-                                          ? AppColors.statusSafe
-                                          : (ldrCtrl.isBusy
-                                                ? AppColors.primaryGold
-                                                : AppColors.statusDanger),
-                                    ),
-                                  ),
-                                  const Spacer(),
-                                  Text(
-                                    isConnected
-                                        ? '🟢 BLE Terhubung'
-                                        : (ldrCtrl.isBusy
-                                              ? '⏳ BLE Memindai'
-                                              : '🔴 BLE Terputus'),
-                                    style: TextStyle(
-                                      fontSize: 10.5,
-                                      fontWeight: FontWeight.w600,
-                                      color: isConnected
-                                          ? AppColors.statusSafe
-                                          : (ldrCtrl.isBusy
-                                                ? AppColors.primaryGold
-                                                : AppColors.statusDanger),
-                                    ),
-                                  ),
-                                ],
+                              Builder(
+                                builder: (context) {
+                                  final textScale = MediaQuery.textScalerOf(
+                                    context,
+                                  ).scale(1);
+                                  final statusText = isConnected
+                                      ? '🟢 Gelang Terhubung'
+                                      : (ldrCtrl.isScanning
+                                            ? '🔍 Mencari Smartband...'
+                                            : (ldrCtrl.isConnecting
+                                                  ? '🔄 Menghubungkan...'
+                                                  : (hasLastLocation
+                                                        ? '🔴 Gelang Terputus'
+                                                        : '🔴 Gelang Belum Terhubung')));
+                                  final statusColor = isConnected
+                                      ? AppColors.statusSafe
+                                      : (ldrCtrl.isBusy
+                                            ? AppColors.primaryGold
+                                            : AppColors.statusDanger);
+                                  final bleText = isConnected
+                                      ? '🟢 BLE Terhubung'
+                                      : (ldrCtrl.isBusy
+                                            ? '⏳ BLE Memindai'
+                                            : '🔴 BLE Terputus');
+
+                                  if (textScale > 1.15) {
+                                    return Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          statusText,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w800,
+                                            color: statusColor,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 3),
+                                        Text(
+                                          bleText,
+                                          style: TextStyle(
+                                            fontSize: 10.5,
+                                            fontWeight: FontWeight.w600,
+                                            color: statusColor,
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  }
+
+                                  return Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          statusText,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w800,
+                                            color: statusColor,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        bleText,
+                                        style: TextStyle(
+                                          fontSize: 10.5,
+                                          fontWeight: FontWeight.w600,
+                                          color: statusColor,
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
                               ),
                               const SizedBox(height: 4),
                               Text(
@@ -1995,33 +1815,40 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        width: 28,
-                                        height: 28,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: Colors.redAccent.withValues(
-                                            alpha: 0.12,
+                                  Flexible(
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          width: 28,
+                                          height: 28,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Colors.redAccent.withValues(
+                                              alpha: 0.12,
+                                            ),
+                                          ),
+                                          child: const Icon(
+                                            Icons.favorite_rounded,
+                                            color: Colors.redAccent,
+                                            size: 16,
                                           ),
                                         ),
-                                        child: const Icon(
-                                          Icons.favorite_rounded,
-                                          color: Colors.redAccent,
-                                          size: 16,
+                                        const SizedBox(width: 8),
+                                        Flexible(
+                                          child: Text(
+                                            'Detak Jantung',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              color: headingColor,
+                                              fontSize: 13.5,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'Detak Jantung',
-                                        style: TextStyle(
-                                          color: headingColor,
-                                          fontSize: 13.5,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                   const SizedBox(width: 8),
                                   Flexible(
@@ -2127,32 +1954,39 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        width: 28,
-                                        height: 28,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: AppColors.primaryGold
-                                              .withValues(alpha: 0.15),
+                                  Flexible(
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          width: 28,
+                                          height: 28,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: AppColors.primaryGold
+                                                .withValues(alpha: 0.15),
+                                          ),
+                                          child: const Icon(
+                                            Icons.location_on_rounded,
+                                            color: AppColors.primaryGold,
+                                            size: 16,
+                                          ),
                                         ),
-                                        child: const Icon(
-                                          Icons.location_on_rounded,
-                                          color: AppColors.primaryGold,
-                                          size: 16,
+                                        const SizedBox(width: 8),
+                                        Flexible(
+                                          child: Text(
+                                            'Lokasi Jamaah',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              color: headingColor,
+                                              fontSize: 13.5,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'Lokasi Jamaah',
-                                        style: TextStyle(
-                                          color: headingColor,
-                                          fontSize: 13.5,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                   const SizedBox(width: 8),
                                   Flexible(

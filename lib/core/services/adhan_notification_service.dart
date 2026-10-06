@@ -285,15 +285,8 @@ class AdhanNotificationService {
   }) async {
     final now = DateTime.now();
     if (scheduledTime.isBefore(now)) {
-      debugPrint(
-        '[AdhanNotificationService] [SKIP] Cannot schedule $prayerName for past time: $scheduledTime (now: $now, id: $id)',
-      );
       return;
     }
-
-    debugPrint(
-      '[AdhanNotificationService] [SCHEDULE-START] Prayer: $prayerName | ID: $id | ScheduledTime: $scheduledTime | Timezone: $timezoneId',
-    );
 
     try {
       if (!_isInitialized) {
@@ -363,10 +356,6 @@ class AdhanNotificationService {
         scheduledDate: tzScheduled,
         notificationDetails: notificationDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      );
-
-      debugPrint(
-        '[AdhanNotificationService] [ZONED-SCHEDULE-SUCCESS] Scheduled adhan for $prayerName at $tzScheduled (ID: $id, channel: $channelId, sound: $soundRes)',
       );
     } catch (e) {
       debugPrint(
@@ -450,10 +439,6 @@ class AdhanNotificationService {
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         );
       }
-
-      debugPrint(
-        '[AdhanNotificationService] Scheduled reminder for $prayerName at $tzScheduled (ID: $id)',
-      );
     } catch (e) {
       debugPrint('[AdhanNotificationService] Error scheduling reminder: $e');
     }
@@ -630,9 +615,6 @@ class AdhanNotificationService {
   /// Cancel specific notification by ID
   Future<void> cancelNotification(int id) async {
     try {
-      debugPrint(
-        '[AdhanNotificationService] [CANCEL] Cancelling notification ID: $id',
-      );
       await _notificationsPlugin.cancel(id: id);
       await AdhanNativeBridge.cancelNativeAdhan(id: id);
     } catch (e) {
@@ -650,9 +632,6 @@ class AdhanNotificationService {
   /// Cancel all scheduled and active adhan notifications
   Future<void> cancelAllScheduledAdhans() async {
     try {
-      debugPrint(
-        '[AdhanNotificationService] [CANCEL-ALL] Cancelling all scheduled adhan notifications',
-      );
       await _notificationsPlugin.cancelAll();
       await AdhanNativeBridge.stopAdhanService();
     } catch (e) {

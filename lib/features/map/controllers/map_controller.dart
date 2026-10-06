@@ -1,6 +1,7 @@
 import '../../../core/locales/app_translations.dart';
 import 'dart:async';
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart' as fmap;
 import 'package:geolocator/geolocator.dart';
@@ -14,6 +15,7 @@ import '../../../core/services/geocoding_service.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/utils/user_feedback_message.dart';
 import '../../dashboard/controllers/dashboard_controller.dart';
+import '../../dashboard/models/assistance_request_model.dart';
 import '../../room/services/room_service.dart';
 import '../models/map_poi.dart';
 import '../models/map_search_result.dart';
@@ -64,6 +66,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   final selectedPoi = Rxn<MapPoi>();
   final selectedJamaah = Rxn<JamaahData>();
   final selectedMember = Rxn<RoomMemberModel>();
+  final activeAssistanceRequest = Rxn<AssistanceRequestModel>();
   final activeRoute = <LatLng>[].obs;
 
   final isRouteLoading = false.obs;
@@ -869,14 +872,137 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     await focusOnJamaah(jamaah, autoRoute: autoRoute);
   }
 
+  /// Focuses the map on the primary/assigned companion (pendamping) in the room
+  /// and centers the map camera on their real-time pin.
+  /// Returns the focused [RoomMemberModel], or null if no companion is found.
+  Future<RoomMemberModel?> focusOnCompanion({bool autoRoute = false}) async {
+    // 1. Try to find companion from roomMembers (prefer one with real GPS location)
+    RoomMemberModel? companion =
+        pendampingMembers.firstWhereOrNull((m) => m.hasLocation) ??
+        pendampingMembers.firstOrNull;
+
+    // 2. If roomMembers doesn't have it yet, check HajiCareController.activeRoomMembers
+    if (companion == null && Get.isRegistered<HajiCareController>()) {
+      final hajiCtrl = Get.find<HajiCareController>();
+      final hPendampings = hajiCtrl.activeRoomMembers
+          .where((m) => m.isPendamping)
+          .toList();
+      companion =
+          hPendampings.firstWhereOrNull((m) => m.hasLocation) ??
+          hPendampings.firstOrNull;
+    }
+
+    // 3. Fallback: match by pendampingName from HajiCareController
+    if (companion == null && Get.isRegistered<HajiCareController>()) {
+      final hajiCtrl = Get.find<HajiCareController>();
+      final pName = hajiCtrl.pendampingName.value.trim().toLowerCase();
+      if (pName.isNotEmpty) {
+        companion =
+            roomMembers.firstWhereOrNull(
+              (m) =>
+                  m.name.toLowerCase().contains(pName) ||
+                  pName.contains(m.name.toLowerCase()),
+            ) ??
+            hajiCtrl.activeRoomMembers.firstWhereOrNull(
+              (m) =>
+                  m.name.toLowerCase().contains(pName) ||
+                  pName.contains(m.name.toLowerCase()),
+            );
+      }
+    }
+
+    if (companion != null) {
+      debugPrint(
+        '[FOCUS] companion = ${companion.name} (hasLocation=${companion.hasLocation})',
+      );
+      await focusOnMember(companion, autoRoute: autoRoute);
+      if (companion.hasLocation) {
+        focusCoordinate(
+          LatLng(companion.latitude!, companion.longitude!),
+          destZoom: 17.5,
+        );
+      }
+      return companion;
+    }
+
+    debugPrint('[FOCUS] No companion found in room');
+    return null;
+  }
+
   bool get hasActiveRoute => activeRoute.isNotEmpty;
 
   void clearSelection() {
     selectedPoi.value = null;
     selectedJamaah.value = null;
     selectedMember.value = null;
+    activeAssistanceRequest.value = null;
     // Note: does NOT clear active route. Route persists until
     // clearRoute() is explicitly called or a new route is requested.
+  }
+
+  void clearAssistanceRequest() {
+    activeAssistanceRequest.value = null;
+  }
+
+  /// Focuses the map on an incoming AssistanceRequestModel and optionally
+  /// calculates the route from companion's location to the jamaah.
+  Future<void> focusOnAssistanceRequest(
+    AssistanceRequestModel request, {
+    bool autoRoute = false,
+  }) async {
+    debugPrint('[FOCUS] assistance request = ${request.jamaahName}');
+    activeAssistanceRequest.value = request;
+    selectedFilter.value = 0;
+    isBottomSheetOpen.value = true;
+
+    RoomMemberModel? member;
+    try {
+      member = roomMembers.firstWhereOrNull((m) => m.uid == request.jamaahId);
+    } catch (_) {}
+
+    member ??= RoomMemberModel(
+      uid: request.jamaahId,
+      name: request.jamaahName,
+      role: 'jamaah',
+      currentLocation: request.latitude != null && request.longitude != null
+          ? GeoPoint(request.latitude!, request.longitude!)
+          : null,
+      locationUpdatedAt: request.createdAt,
+    );
+
+    selectedMember.value = member;
+    selectedPoi.value = null;
+    selectedJamaah.value = null;
+
+    if (request.latitude != null && request.longitude != null) {
+      final target = LatLng(request.latitude!, request.longitude!);
+      focusCoordinate(target, destZoom: 17.5);
+
+      if (autoRoute && currentUserLocation.value != null) {
+        debugPrint('[ROUTE] assistance request autoRoute started');
+        await _updateRouteTo(target);
+      } else if (!autoRoute) {
+        clearRoute();
+      }
+    }
+  }
+
+  Future<void> requestRouteToAssistanceRequest(
+    AssistanceRequestModel request,
+  ) async {
+    activeAssistanceRequest.value = request;
+    if (request.latitude != null &&
+        request.longitude != null &&
+        currentUserLocation.value != null) {
+      await _updateRouteTo(LatLng(request.latitude!, request.longitude!));
+    } else {
+      clearRoute();
+      if (currentUserLocation.value == null) {
+        routeError.value = 'Lokasi Anda belum ditemukan';
+      } else if (request.latitude == null || request.longitude == null) {
+        routeError.value = 'Koordinat jamaah belum tersedia';
+      }
+    }
   }
 
   void clearRoute() {
@@ -1038,6 +1164,15 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
         LatLng(
           selectedMember.value!.latitude!,
           selectedMember.value!.longitude!,
+        ),
+      );
+    } else if (activeAssistanceRequest.value != null &&
+        activeAssistanceRequest.value!.latitude != null &&
+        activeAssistanceRequest.value!.longitude != null) {
+      _updateRouteTo(
+        LatLng(
+          activeAssistanceRequest.value!.latitude!,
+          activeAssistanceRequest.value!.longitude!,
         ),
       );
     } else if (selectedJamaah.value != null) {

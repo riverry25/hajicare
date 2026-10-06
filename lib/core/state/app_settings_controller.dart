@@ -127,6 +127,17 @@ class AppSettingsController extends GetxController {
     }
   }
 
+  String localizedThemeModeName(BuildContext context) {
+    switch (_themeMode.value) {
+      case ThemeMode.light:
+        return context.tr('themeLight');
+      case ThemeMode.dark:
+        return context.tr('themeDark');
+      default:
+        return context.tr('themeSystem');
+    }
+  }
+
   // ── Private helpers ──────────────────────────────────────────────────────────
   static String _stringFromTheme(ThemeMode mode) {
     switch (mode) {

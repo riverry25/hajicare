@@ -137,7 +137,7 @@ extension _ProfileScreenSections on ProfileScreen {
                       },
                       icon: const Icon(Icons.edit_note_rounded, size: 20),
                       label: Text(
-                        'Isi Data Medis Sekarang',
+                        context.tr('medicalFillDataNow'),
                         style: AppTypography.button,
                       ),
                     ),
@@ -158,7 +158,7 @@ extension _ProfileScreenSections on ProfileScreen {
                       children: [
                         _buildMedRow(
                           context,
-                          'NIK',
+                          context.tr('profile.nik'),
                           profileCtrl.nik.value.isNotEmpty
                               ? profileCtrl.nik.value
                               : '-',
@@ -166,7 +166,7 @@ extension _ProfileScreenSections on ProfileScreen {
                         const Divider(height: 16),
                         _buildMedRow(
                           context,
-                          'Nomor Porsi',
+                          context.tr('profile.portionNumber'),
                           profileCtrl.nomorPorsi.value.isNotEmpty
                               ? profileCtrl.nomorPorsi.value
                               : '-',
@@ -174,7 +174,7 @@ extension _ProfileScreenSections on ProfileScreen {
                         const Divider(height: 16),
                         _buildMedRow(
                           context,
-                          'Golongan Darah',
+                          context.tr('profile.bloodType'),
                           profileCtrl.bloodType.value.isNotEmpty
                               ? profileCtrl.bloodType.value
                               : '-',
@@ -182,7 +182,7 @@ extension _ProfileScreenSections on ProfileScreen {
                         const Divider(height: 16),
                         _buildMedRow(
                           context,
-                          'Riwayat Alergi',
+                          context.tr('medical.allergiesLabel'),
                           profileCtrl.allergies.value.isNotEmpty
                               ? profileCtrl.allergies.value
                               : '-',
@@ -190,7 +190,7 @@ extension _ProfileScreenSections on ProfileScreen {
                         const Divider(height: 16),
                         _buildMedRow(
                           context,
-                          'Kondisi Khusus',
+                          context.tr('profile.specialConditions'),
                           profileCtrl.conditions.value.isNotEmpty
                               ? profileCtrl.conditions.value
                               : '-',
@@ -198,7 +198,7 @@ extension _ProfileScreenSections on ProfileScreen {
                         const Divider(height: 16),
                         _buildMedRow(
                           context,
-                          'Kontak Darurat',
+                          context.tr('profile.emergencyContact'),
                           profileCtrl.emergencyContact.value.isNotEmpty
                               ? profileCtrl.emergencyContact.value
                               : '-',
@@ -206,7 +206,7 @@ extension _ProfileScreenSections on ProfileScreen {
                         const Divider(height: 16),
                         _buildMedRow(
                           context,
-                          'Nomor Paspor',
+                          context.tr('profile.passportNumber'),
                           profileCtrl.passportNumber.value.isNotEmpty
                               ? profileCtrl.passportNumber.value
                               : '-',
@@ -334,13 +334,13 @@ extension _ProfileScreenSections on ProfileScreen {
         state?.activeRoomId.value != null &&
         state!.activeRoomId.value!.trim().isNotEmpty;
     final roomName = hasRoom
-        ? (state.activeRoom.value?.name ?? 'Room Pemantauan')
+        ? (state.activeRoom.value?.name ?? context.tr('profileRoomMonitoring'))
         : '-';
     final roomCode = hasRoom ? (state.activeRoom.value?.code ?? '-') : '-';
     final pendamping = hasRoom
         ? (state.pendampingName.value.isNotEmpty
               ? state.pendampingName.value
-              : 'Pendamping Room')
+              : context.tr('profileRoomCompanion'))
         : '-';
 
     showModalBottomSheet(
@@ -389,7 +389,7 @@ extension _ProfileScreenSections on ProfileScreen {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Pendamping & Room Aktif',
+                          context.tr('profileCompanionSheetTitle'),
                           style: AppTypography.titleMedium.copyWith(
                             color: headingColor,
                             fontWeight: FontWeight.w800,
@@ -398,8 +398,8 @@ extension _ProfileScreenSections on ProfileScreen {
                         const SizedBox(height: 2),
                         Text(
                           hasRoom
-                              ? 'Terhubung ke pengawasan rombongan Anda'
-                              : 'Anda belum terhubung ke room rombongan manapun',
+                              ? context.tr('profileConnectedToGroup')
+                              : context.tr('profileNotConnectedToGroup'),
                           style: AppTypography.captionSmall.copyWith(
                             color: isDark
                                 ? AppColors.darkTextBody
@@ -434,7 +434,7 @@ extension _ProfileScreenSections on ProfileScreen {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'Belum Ada Room Terhubung',
+                        context.tr('profileNoRoomConnectedTitle'),
                         style: AppTypography.titleSmall.copyWith(
                           color: headingColor,
                           fontWeight: FontWeight.bold,
@@ -442,7 +442,7 @@ extension _ProfileScreenSections on ProfileScreen {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Anda belum bergabung dengan rombongan. Masukkan kode dari pendamping agar lokasi Anda dapat dipantau.',
+                        context.tr('profileNoRoomConnectedDesc'),
                         textAlign: TextAlign.center,
                         style: AppTypography.captionSmall.copyWith(
                           color: bodyColor,
@@ -473,7 +473,7 @@ extension _ProfileScreenSections on ProfileScreen {
                     },
                     icon: const Icon(Icons.login_rounded, size: 18),
                     label: Text(
-                      'Gabung Room Sekarang',
+                      context.tr('profileJoinRoomNow'),
                       style: AppTypography.button,
                     ),
                   ),
@@ -492,16 +492,28 @@ extension _ProfileScreenSections on ProfileScreen {
                   ),
                   child: Column(
                     children: [
-                      _buildMedRow(context, 'Room Pemantauan', roomName),
-                      const Divider(height: 16),
-                      _buildMedRow(context, 'Kode Room', roomCode),
-                      const Divider(height: 16),
-                      _buildMedRow(context, 'Ketua Rombongan', pendamping),
+                      _buildMedRow(
+                        context,
+                        context.tr('profileRoomMonitoring'),
+                        roomName,
+                      ),
                       const Divider(height: 16),
                       _buildMedRow(
                         context,
-                        'Status Sambungan',
-                        'Terkoneksi Realtime',
+                        context.tr('profileRoomCode'),
+                        roomCode,
+                      ),
+                      const Divider(height: 16),
+                      _buildMedRow(
+                        context,
+                        context.tr('profileGroupLeader'),
+                        pendamping,
+                      ),
+                      const Divider(height: 16),
+                      _buildMedRow(
+                        context,
+                        context.tr('profileConnectionStatus'),
+                        context.tr('profileRealtimeConnected'),
                       ),
                     ],
                   ),
@@ -712,7 +724,7 @@ extension _ProfileScreenSections on ProfileScreen {
           ),
           const SizedBox(height: 4),
           Text(
-            'Kelola akun dan preferensi Hajicare Anda',
+            context.tr('profileSubtitle'),
             style: AppTypography.bodySmall.copyWith(
               color: bodyColor,
               fontSize: 12.5,
@@ -976,7 +988,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                   children: [
                     // Title
                     Text(
-                      'Kelola Data Jamaah & Medis',
+                      context.tr('medicalManageTitle'),
                       style: AppTypography.titleMedium.copyWith(
                         color: headingColor,
                         fontWeight: FontWeight.w800,
@@ -988,7 +1000,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
 
                     // Subtitle
                     Text(
-                      'Informasi identitas jamaah dan kesehatan pribadi untuk kesiapsiagaan.',
+                      context.tr('medicalManageSubtitle'),
                       style: AppTypography.bodySmall.copyWith(
                         color: AppColors.textBodyColor(
                           context,
@@ -1025,7 +1037,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                     _buildUnderlineField(
                       context: context,
                       label: context.tr('profile.bloodType'),
-                      hint: 'Contoh: O Rhesus (+), A (+), B (+)',
+                      hint: context.tr('medicalBloodTypeHint'),
                       ctrl: _bloodTypeCtrl,
                       icon: Icons.bloodtype_rounded,
                     ),
@@ -1197,7 +1209,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'DATA KESEHATAN JAMAAH',
+                            context.tr('medicalBadgeHeader'),
                             style: AppTypography.heading(
                               color: AppColors.goldLight,
                               fontSize: 10,
@@ -1271,7 +1283,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                                   ),
                                 )
                               : Text(
-                                  'SIMPAN',
+                                  context.tr('save').toUpperCase(),
                                   style: AppTypography.heading(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w900,

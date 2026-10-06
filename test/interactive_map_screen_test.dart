@@ -9,6 +9,8 @@ import 'package:hajicare/core/state/hajicare_controller.dart';
 import 'package:hajicare/core/theme/app_theme.dart';
 import 'package:hajicare/core/widgets/bottom_nav_bar.dart';
 import 'package:hajicare/features/dashboard/controllers/dashboard_controller.dart';
+import 'package:hajicare/features/dashboard/models/assistance_request_model.dart';
+import 'package:hajicare/features/dashboard/services/assistance_request_service.dart';
 import 'package:hajicare/features/map/bindings/map_binding.dart';
 import 'package:hajicare/features/map/controllers/map_controller.dart';
 import 'package:hajicare/features/map/screens/interactive_map_screen.dart';
@@ -214,6 +216,65 @@ void main() {
         );
         await tester.pump();
         expect(dashCtrl.currentIndex.value, equals(0));
+      },
+    );
+
+    testWidgets(
+      'Renders assistance marker on map when active assistance exists',
+      (tester) async {
+        tester.view.physicalSize = const Size(1080, 2400);
+        tester.view.devicePixelRatio = 2.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        Get.put(AppSettingsController(), permanent: true);
+        Get.put(HajiCareController(), permanent: true);
+        final assistanceService = Get.put(
+          AssistanceRequestService(),
+          permanent: true,
+        );
+        MapBinding().dependencies();
+
+        final req = AssistanceRequestModel(
+          id: 'req-map-001',
+          roomId: 'room-1',
+          jamaahId: 'j-01',
+          jamaahName: 'Jihad Ardiansyah',
+          type: AssistanceType.lostWay,
+          status: AssistanceStatus.sent,
+          message: 'Saya terpisah dari rombongan',
+          latitude: 21.4225,
+          longitude: 39.8262,
+          humanReadableLocation: '3.5 km dari Maktab 20',
+          targetHotel: 'Maktab 20',
+          createdAt: DateTime.now(),
+        );
+        assistanceService.activeRequest.value = req;
+        final mapCtrl = Get.find<MapController>();
+        mapCtrl.focusOnAssistanceRequest(req);
+
+        await tester.pumpWidget(
+          GetMaterialApp(
+            theme: AppTheme.lightTheme,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('id'),
+            home: const InteractiveMapScreen(),
+          ),
+        );
+
+        await tester.pump();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 1000));
+
+        // Memastikan Marker Bantuan untuk Jihad Ardiansyah dirender pada layer peta
+        // dan MapBottomSheet menampilkan detail jamaah
+        expect(find.text('Jihad Ardiansyah'), findsNWidgets(2));
+        expect(find.byIcon(Icons.directions_run_rounded), findsOneWidget);
       },
     );
   });

@@ -188,6 +188,73 @@ void main() {
       expect(controller.searchQuery.value, isEmpty);
     });
 
+    testWidgets('category arrow rotates when selected and deselects', (
+      tester,
+    ) async {
+      await tester.pumpWidget(buildTestApp(const HelpCenterScreen()));
+      await tester.pumpAndSettle();
+
+      List<AnimatedRotation> getCategoryRotations() {
+        return tester
+            .widgetList<AnimatedRotation>(
+              find.descendant(
+                of: find.byType(HelpCenterScreen),
+                matching: find.byType(AnimatedRotation),
+              ),
+            )
+            .take(6)
+            .toList();
+      }
+
+      // Initial state: all chevrons face right (turns == 0)
+      for (final r in getCategoryRotations()) {
+        expect(r.turns, 0.0);
+      }
+
+      // 1. Tap index 2 (Fitur HajiCare)
+      await tester.tap(find.text('Fitur HajiCare'));
+      await tester.pumpAndSettle();
+
+      var rotations = getCategoryRotations();
+      expect(rotations[0].turns, 0.0);
+      expect(rotations[1].turns, 0.0);
+      expect(rotations[2].turns, 0.25); // Rotated downward
+      expect(rotations[3].turns, 0.0);
+      expect(rotations[4].turns, 0.0);
+      expect(rotations[5].turns, 0.0);
+
+      // 2. Now tap index 0 (Akun & Profil) -> index 0 rotates, index 2 resets
+      await tester.tap(find.text('Akun & Profil'));
+      await tester.pumpAndSettle();
+
+      rotations = getCategoryRotations();
+      expect(rotations[0].turns, 0.25); // Now rotated downward
+      expect(rotations[1].turns, 0.0);
+      expect(rotations[2].turns, 0.0); // Reset to right
+      expect(rotations[3].turns, 0.0);
+      expect(rotations[4].turns, 0.0);
+      expect(rotations[5].turns, 0.0);
+
+      // 3. Tap index 0 again to toggle off -> resets to 0.0
+      await tester.tap(find.text('Akun & Profil'));
+      await tester.pumpAndSettle();
+
+      rotations = getCategoryRotations();
+      expect(rotations[0].turns, 0.0);
+      expect(rotations[2].turns, 0.0);
+
+      // 4. Tap index 1 (Pendamping), then clear via "Semua" button
+      await tester.tap(find.text('Pendamping'));
+      await tester.pumpAndSettle();
+
+      final controller = Get.find<HelpCenterController>();
+      controller.clearCategory();
+      await tester.pumpAndSettle();
+
+      rotations = getCategoryRotations();
+      expect(rotations[1].turns, 0.0);
+    });
+
     testWidgets('AboutScreen renders app identity and sections', (
       tester,
     ) async {

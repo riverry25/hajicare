@@ -19,10 +19,7 @@ class _ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final self = state?.self;
-    final porsiText = self?.porsi != null && self!.porsi!.isNotEmpty
-        ? 'Paspor: Indonesia'
-        : 'Paspor: Indonesia';
+    final porsiText = context.tr('profilePassportCountry');
     final roleLabel = state?.role == UserRole.pendamping
         ? context.tr('auth.rolePendamping')
         : context.tr('auth.roleJamaah');
@@ -130,7 +127,9 @@ class _ProfileHeader extends StatelessWidget {
                         icon: Icons.flight_takeoff_rounded,
                         label: kloterStr.toLowerCase().startsWith('kloter')
                             ? kloterStr
-                            : 'Kloter $kloterStr',
+                            : context.tr('profileKloter', {
+                                'kloter': kloterStr,
+                              }),
                         isDark: isDark,
                         isPrimary: false,
                       ),
@@ -141,7 +140,9 @@ class _ProfileHeader extends StatelessWidget {
                         icon: Icons.hotel_rounded,
                         label: maktabStr.toLowerCase().startsWith('maktab')
                             ? maktabStr
-                            : 'Maktab $maktabStr',
+                            : context.tr('profileMaktab', {
+                                'maktab': maktabStr,
+                              }),
                         isDark: isDark,
                         isPrimary: false,
                       ),
@@ -194,7 +195,7 @@ class _ProfileHeader extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Ubah Profil',
+                              context.tr('profile.editProfile'),
                               style: AppTypography.heading(
                                 color: isDark ? Colors.black : Colors.white,
                                 fontSize: 13.5,
@@ -371,7 +372,7 @@ class _ProfileHeader extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 5),
                                   Text(
-                                    'Kartu Jamaah',
+                                    context.tr('profilePilgrimCard'),
                                     style: AppTypography.heading(
                                       color: AppColors.goldLight,
                                       fontSize: 11,
@@ -386,7 +387,7 @@ class _ProfileHeader extends StatelessWidget {
                                 () => Text(
                                   controller.displayName.value.isNotEmpty
                                       ? controller.displayName.value
-                                      : 'Pengguna',
+                                      : context.tr('profile.defaultUser'),
                                   style: AppTypography.heading(
                                     color: Colors.white,
                                     fontSize: 17,
@@ -584,7 +585,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                   children: [
                     // Title
                     Text(
-                      'Ubah Nama Pengguna',
+                      context.tr('profileEditNameTitle'),
                       style: AppTypography.titleMedium.copyWith(
                         color: headingClr,
                         fontWeight: FontWeight.w800,
@@ -596,7 +597,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
 
                     // Description
                     Text(
-                      'Nama ini akan ditampilkan pada profil, dashboard, dan pantauan rombongan jamaah.',
+                      context.tr('profileEditNameDesc'),
                       style: AppTypography.bodySmall.copyWith(
                         color: bodyClr.withValues(alpha: 0.85),
                         height: 1.35,
@@ -830,7 +831,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'IDENTITAS PENGGUNA',
+                            context.tr('profileUserIdentityBadge'),
                             style: AppTypography.heading(
                               color: AppColors.goldLight,
                               fontSize: 10,
@@ -904,7 +905,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                                   ),
                                 )
                               : Text(
-                                  'SIMPAN',
+                                  context.tr('save').toUpperCase(),
                                   style: AppTypography.heading(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w900,

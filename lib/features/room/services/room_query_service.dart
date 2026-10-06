@@ -158,9 +158,14 @@ class RoomQueryService {
     if (normalizedRoomId != null && normalizedRoomId.isNotEmpty) {
       query = query.where('roomId', isEqualTo: normalizedRoomId);
     }
-    query = query
-        .where('status', whereIn: const ['active', 'baru', 'direspons'])
-        .orderBy('timestamp', descending: true);
+    // Equality/`in` filters only: served by automatic single-field indexes,
+    // so the stream never fails with FAILED_PRECONDITION when the composite
+    // (roomId, status, timestamp) index is not deployed. Ordering is applied
+    // client-side below.
+    query = query.where(
+      'status',
+      whereIn: const ['active', 'baru', 'direspons'],
+    );
 
     return query.limit(_sosWindow).snapshots().map((snapshot) {
       final items = snapshot.docs
@@ -182,8 +187,7 @@ class RoomQueryService {
     return _firestore
         .collection('sos_events')
         .where('status', isEqualTo: 'selesai')
-        .orderBy('timestamp', descending: true)
-        .limit(limit)
+        .limit(_sosWindow)
         .snapshots()
         .map((snapshot) {
           final items = snapshot.docs
@@ -199,7 +203,7 @@ class RoomQueryService {
                   _eventTime(a, const ['resolvedAt', 'timestamp', 'createdAt']),
                 ),
           );
-          return items;
+          return items.take(limit).toList(growable: false);
         });
   }
 

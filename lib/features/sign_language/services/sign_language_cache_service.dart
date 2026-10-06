@@ -92,7 +92,9 @@ class SignLanguageCacheService {
     try {
       final file = await getCatalogFile();
       await file.writeAsString(jsonString, flush: true);
-      debugPrint('[SignCache] Catalog cached successfully (${jsonString.length} bytes)');
+      debugPrint(
+        '[SignCache] Catalog cached successfully (${jsonString.length} bytes)',
+      );
     } catch (e) {
       debugPrint('[SignCache] Error saving catalog: $e');
     }

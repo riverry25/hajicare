@@ -15,7 +15,13 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return claimedRole() == 'admin';
+      // Custom claim is preferred. The users/{uid}.role fallback mirrors the
+      // client (HajiCareController) and is safe because clients can never
+      // create or update their own role to 'admin' (see /users rules).
+      return claimedRole() == 'admin' || (
+        signedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'admin'
+      );
     }
 
     function isClaimedPendamping() {

@@ -17,6 +17,7 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<LoginController>();
+    final isDark = AppColors.isDark(context);
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldColor(context),
@@ -125,16 +126,20 @@ class LoginScreen extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.verified_user_rounded,
                           size: 14,
-                          color: AppColors.statusPositive,
+                          color: isDark
+                              ? const Color(0xFF4ADE80)
+                              : AppColors.statusPositive,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           context.tr('auth.officialSafe'),
                           style: AppTypography.captionSmall.copyWith(
-                            color: AppColors.statusPositive,
+                            color: isDark
+                                ? const Color(0xFF4ADE80)
+                                : AppColors.statusPositive,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -354,17 +359,21 @@ class LoginScreen extends StatelessWidget {
                           width: 42,
                           height: 42,
                           decoration: BoxDecoration(
-                            color: AppColors.canvasCream,
+                            color: isDark
+                                ? AppColors.darkSurfaceContainerHighest
+                                : AppColors.canvasCream,
                             borderRadius: BorderRadius.circular(13),
                             border: Border.all(
                               color: AppColors.goldPrimary.withValues(
-                                alpha: 0.25,
+                                alpha: isDark ? 0.40 : 0.25,
                               ),
                             ),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.login_rounded,
-                            color: AppColors.espressoDark,
+                            color: isDark
+                                ? AppColors.goldLight
+                                : AppColors.espressoDark,
                             size: 21,
                           ),
                         ),
@@ -390,7 +399,9 @@ class LoginScreen extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: AppTypography.captionSmall.copyWith(
-                                  color: AppColors.textMuted,
+                                  color: isDark
+                                      ? AppColors.darkTextBody
+                                      : AppColors.textMuted,
                                 ),
                               ),
                             ],
@@ -448,7 +459,9 @@ class LoginScreen extends StatelessWidget {
                           child: Text(
                             context.tr('auth.forgotPassword'),
                             style: AppTypography.captionSmall.copyWith(
-                              color: AppColors.secondary,
+                              color: isDark
+                                  ? AppColors.goldAccent
+                                  : AppColors.secondary,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -498,9 +511,16 @@ class LoginScreen extends StatelessWidget {
                               value: controller.rememberMe.value,
                               onChanged: (value) =>
                                   controller.setRememberMe(value ?? true),
-                              activeColor: AppColors.espressoDark,
-                              side: const BorderSide(
-                                color: AppColors.goldLight,
+                              activeColor: isDark
+                                  ? AppColors.goldPrimary
+                                  : AppColors.espressoDark,
+                              checkColor: isDark
+                                  ? AppColors.espressoDark
+                                  : Colors.white,
+                              side: BorderSide(
+                                color: isDark
+                                    ? AppColors.goldLight
+                                    : AppColors.goldLight,
                                 width: 1.5,
                               ),
                               shape: RoundedRectangleBorder(
@@ -519,8 +539,10 @@ class LoginScreen extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: AppTypography.caption.copyWith(
-                                  color: AppColors.textBodyColor(context),
-                                  fontWeight: FontWeight.w500,
+                                  color: isDark
+                                      ? AppColors.darkTextHeading
+                                      : AppColors.textBodyColor(context),
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ),
@@ -541,6 +563,12 @@ class LoginScreen extends StatelessWidget {
                               ? context.tr('auth.loginLoading')
                               : context.tr('auth.loginBtn'),
                           icon: Icons.arrow_forward_rounded,
+                          color: isDark
+                              ? AppColors.goldPrimary
+                              : AppColors.espressoDark,
+                          textColor: isDark
+                              ? AppColors.espressoDark
+                              : AppColors.surfaceWhite,
                           onPressed: controller.isLoading.value
                               ? null
                               : () => controller.login(),
@@ -564,7 +592,9 @@ class LoginScreen extends StatelessWidget {
                           child: Text(
                             context.tr('auth.orDivider'),
                             style: AppTypography.captionSmall.copyWith(
-                              color: AppColors.tanMedium,
+                              color: isDark
+                                  ? AppColors.darkTextBody
+                                  : AppColors.tanMedium,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -590,11 +620,13 @@ class LoginScreen extends StatelessWidget {
                               ? null
                               : () => controller.loginWithGoogle(),
                           style: OutlinedButton.styleFrom(
-                            backgroundColor: AppColors.canvasCream.withValues(
-                              alpha: 0.35,
-                            ),
+                            backgroundColor: isDark
+                                ? AppColors.darkSurfaceContainerHighest
+                                : AppColors.canvasCream.withValues(alpha: 0.35),
                             side: BorderSide(
-                              color: AppColors.cardBorderColor(context),
+                              color: isDark
+                                  ? AppColors.goldLight.withValues(alpha: 0.35)
+                                  : AppColors.cardBorderColor(context),
                             ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(
@@ -623,7 +655,9 @@ class LoginScreen extends StatelessWidget {
                                         overflow: TextOverflow.ellipsis,
                                         style: AppTypography.bodyMedium
                                             .copyWith(
-                                              color: AppColors.espressoDark,
+                                              color: isDark
+                                                  ? AppColors.darkTextHeading
+                                                  : AppColors.espressoDark,
                                               fontWeight: FontWeight.w700,
                                             ),
                                       ),
@@ -661,10 +695,14 @@ class LoginScreen extends StatelessWidget {
                           TextSpan(
                             text: context.tr('auth.registerNow'),
                             style: AppTypography.bodyMedium.copyWith(
-                              color: AppColors.espressoDark,
+                              color: isDark
+                                  ? AppColors.goldAccent
+                                  : AppColors.espressoDark,
                               fontWeight: FontWeight.w800,
                               decoration: TextDecoration.underline,
-                              decorationColor: AppColors.goldPrimary,
+                              decorationColor: isDark
+                                  ? AppColors.goldAccent
+                                  : AppColors.goldPrimary,
                               decorationThickness: 2,
                             ),
                           ),
@@ -686,9 +724,15 @@ class LoginScreen extends StatelessWidget {
                   vertical: 13,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.cardBgColor(context).withValues(alpha: 0.7),
+                  color: isDark
+                      ? AppColors.darkSurfaceContainer
+                      : AppColors.cardBgColor(context).withValues(alpha: 0.7),
                   borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(color: AppColors.cardBorderColor(context)),
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.darkCardBorder
+                        : AppColors.cardBorderColor(context),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -696,7 +740,9 @@ class LoginScreen extends StatelessWidget {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: AppColors.canvasCream,
+                        color: isDark
+                            ? AppColors.darkSurfaceContainerHighest
+                            : AppColors.canvasCream,
                         borderRadius: BorderRadius.circular(11),
                         border: Border.all(
                           color: AppColors.goldPrimary.withValues(alpha: 0.25),
@@ -726,17 +772,19 @@ class LoginScreen extends StatelessWidget {
                           Text(
                             context.tr('auth.helpSubtitle'),
                             style: AppTypography.captionSmall.copyWith(
-                              color: AppColors.textMuted,
+                              color: isDark
+                                  ? AppColors.darkTextBody
+                                  : AppColors.textMuted,
                             ),
                           ),
                         ],
                       ),
                     ),
 
-                    const Icon(
+                    Icon(
                       Icons.arrow_forward_ios_rounded,
                       size: 14,
-                      color: AppColors.tanMedium,
+                      color: isDark ? AppColors.goldLight : AppColors.tanMedium,
                     ),
                   ],
                 ),
@@ -748,9 +796,11 @@ class LoginScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.lock_outline_rounded,
-                    color: AppColors.statusPositive,
+                    color: isDark
+                        ? AppColors.goldPrimary
+                        : AppColors.statusPositive,
                     size: 15,
                   ),
                   const SizedBox(width: 6),
@@ -759,7 +809,9 @@ class LoginScreen extends StatelessWidget {
                       context.tr('auth.encryptedNote'),
                       textAlign: TextAlign.center,
                       style: AppTypography.captionSmall.copyWith(
-                        color: AppColors.tanMedium,
+                        color: isDark
+                            ? AppColors.darkTextBody
+                            : AppColors.tanMedium,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -780,7 +832,9 @@ class LoginScreen extends StatelessWidget {
                   label: Text(
                     context.tr('auth.demoModeBtn'),
                     style: AppTypography.captionSmall.copyWith(
-                      color: AppColors.espressoDark,
+                      color: isDark
+                          ? AppColors.goldLight
+                          : AppColors.espressoDark,
                       fontWeight: FontWeight.w700,
                       decoration: TextDecoration.underline,
                     ),

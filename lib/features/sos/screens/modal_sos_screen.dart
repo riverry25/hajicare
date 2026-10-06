@@ -162,7 +162,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
             ),
             const SizedBox(width: 8),
             Text(
-              'Pusat Darurat SOS',
+              context.tr('sosCenterTitle'),
               style: AppTypography.headlineMedium.copyWith(
                 color: headingColor,
                 fontWeight: FontWeight.bold,
@@ -183,7 +183,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                 borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
               child: Text(
-                '$activeCount AKTIF',
+                '$activeCount ${context.tr('sosActiveBadge')}',
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w900,
@@ -280,7 +280,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'PANGGILAN DARURAT AKTIF',
+                        context.tr('sosActiveCallsHeader'),
                         style: AppTypography.titleMedium.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w900,
@@ -290,7 +290,9 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Ada ${activeSosList.length} jamaah membutuhkan pertolongan segera.',
+                        context.tr('sosPilgrimsNeedHelp', {
+                          'count': activeSosList.length,
+                        }),
                         style: AppTypography.bodySmall.copyWith(
                           color: Colors.white.withValues(alpha: 0.95),
                           height: 1.3,
@@ -328,7 +330,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                   ),
                   const SizedBox(height: AppSpacing.md),
                   Text(
-                    'Kondisi Aman',
+                    context.tr('sosSafeConditionTitle'),
                     style: AppTypography.titleMedium.copyWith(
                       color: headingColor,
                       fontWeight: FontWeight.bold,
@@ -336,7 +338,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Tidak ada panggilan darurat SOS aktif saat ini. Seluruh jamaah terpantau dalam batas aman.',
+                    context.tr('sosSafeConditionDesc'),
                     textAlign: TextAlign.center,
                     style: AppTypography.bodySmall.copyWith(color: bodyColor),
                   ),
@@ -346,7 +348,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
           ),
         ] else ...[
           Text(
-            'Daftar Panggilan Masuk (${activeSosList.length})',
+            context.tr('sosIncomingCallsList', {'count': activeSosList.length}),
             style: AppTypography.titleSmall.copyWith(
               color: headingColor,
               fontWeight: FontWeight.bold,
@@ -790,10 +792,10 @@ class _ModalSosScreenState extends State<ModalSosScreen>
           // ── Status Title & Subtitle ────────────────────────────────────────
           Text(
             isSosAlreadyActive
-                ? 'Sinyal Darurat Sedang Aktif!'
+                ? context.tr('sosSignalActiveNow')
                 : (_isCountingDown
-                      ? 'Mengirim Sinyal SOS...'
-                      : 'Siap Mengirim Darurat SOS'),
+                      ? context.tr('sosSendingSignal')
+                      : context.tr('sosReadyToSend')),
             style: AppTypography.titleLarge.copyWith(
               color: isSosAlreadyActive ? AppColors.sosEmergency : headingColor,
               fontWeight: FontWeight.bold,
@@ -803,10 +805,10 @@ class _ModalSosScreenState extends State<ModalSosScreen>
           const SizedBox(height: 6),
           Text(
             isSosAlreadyActive
-                ? 'Lokasi Anda sudah dikirim kepada pendamping rombongan.'
+                ? context.tr('sosLocationSentToCompanion')
                 : (_isCountingDown
-                      ? 'Ketuk tombol SOS untuk membatalkan sebelum hitungan mundur selesai.'
-                      : 'Gunakan saat terpisah jauh dari rombongan atau membutuhkan bantuan darurat segera.'),
+                      ? context.tr('sosTapToCancelCountdown')
+                      : context.tr('sosUsagePrompt')),
             textAlign: TextAlign.center,
             style: AppTypography.bodySmall.copyWith(
               color: bodyColor.withValues(alpha: 0.85),
@@ -829,9 +831,9 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                   ),
                 ),
                 icon: const Icon(Icons.close_rounded),
-                label: const Text(
-                  'Batalkan Pengiriman',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                label: Text(
+                  context.tr('sosCancelSending'),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 onPressed: _cancelCountdown,
               ),
@@ -849,9 +851,9 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                   ),
                 ),
                 icon: const Icon(Icons.radar_rounded),
-                label: const Text(
-                  'Pantau Radar Deteksi Pendamping',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                label: Text(
+                  context.tr('sosTrackRadarCompanion'),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 onPressed: () => Get.toNamed(AppRoutes.sosScanning),
               ),
@@ -869,9 +871,9 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                   ),
                 ),
                 icon: const Icon(Icons.check_circle_rounded),
-                label: const Text(
-                  'Akhiri / Batalkan Sinyal SOS',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                label: Text(
+                  context.tr('sosDismissSignal'),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 onPressed: () async {
                   final uid = state.currentUid;
@@ -917,9 +919,9 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                   elevation: 2,
                 ),
                 icon: const Icon(Icons.emergency_rounded),
-                label: const Text(
-                  'Kirim Sinyal SOS Sekarang',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                label: Text(
+                  context.tr('sosSendNow'),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 onPressed: _sendSos,
               ),
@@ -953,8 +955,11 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                 const SizedBox(width: 6),
                 Text(
                   state.myCurrentPosition.value != null
-                      ? 'Lokasi ditemukan (±${state.myCurrentPosition.value!.accuracy.round()}m)'
-                      : 'Mencari lokasi ponsel...',
+                      ? context.tr('sosLocationFoundAccuracy', {
+                          'accuracy': state.myCurrentPosition.value!.accuracy
+                              .round(),
+                        })
+                      : context.tr('sosSearchingGps'),
                   style: AppTypography.captionSmall.copyWith(
                     color: headingColor,
                     fontWeight: FontWeight.w600,

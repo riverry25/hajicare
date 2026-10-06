@@ -71,4 +71,28 @@ extension TrContextExtension on BuildContext {
       return AppTranslations.translate(key, lang, params);
     }
   }
+
+  /// Returns the localized prayer name for Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha
+  String localizedPrayerName(String rawName) {
+    final name = rawName.trim().toLowerCase();
+    if (name == 'subuh' || name == 'fajr') {
+      return tr('subuh');
+    }
+    if (name == 'terbit' || name == 'sunrise') {
+      return tr('terbit');
+    }
+    if (name == 'dzuhur' || name == 'dhuhr' || name == 'dhuhur') {
+      return tr('dzuhur');
+    }
+    if (name == 'ashar' || name == 'asr') {
+      return tr('ashar');
+    }
+    if (name == 'maghrib') {
+      return tr('maghrib');
+    }
+    if (name == 'isya' || name == 'isha') {
+      return tr('isya');
+    }
+    return rawName;
+  }
 }

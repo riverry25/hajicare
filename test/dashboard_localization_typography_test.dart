@@ -78,7 +78,7 @@ void main() {
       );
 
       await tester.pumpWidget(buildApp(const Locale('id')));
-      expect(find.text('Lacak Petugas'), findsOneWidget);
+      expect(find.text('Lacak Pendamping'), findsOneWidget);
 
       await tester.pumpWidget(buildApp(const Locale('en')));
       await tester.pump();

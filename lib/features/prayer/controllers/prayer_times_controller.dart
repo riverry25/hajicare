@@ -1,6 +1,7 @@
 import '../../../core/locales/app_translations.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
@@ -106,6 +107,9 @@ class PrayerTimesController extends GetxController {
   final nextPrayerArabic = ''.obs;
   final nextPrayerTime = '--:--'.obs;
   final countdownText = '-- Menit -- Detik'.obs;
+  final countdownHours = 0.obs;
+  final countdownMinutes = 0.obs;
+  final countdownSeconds = 0.obs;
 
   // Adhan Sound Preferences (prayer key -> bool)
   final prayerSoundEnabled = <String, bool>{}.obs;
@@ -508,10 +512,34 @@ class PrayerTimesController extends GetxController {
     final minutes = diff.inMinutes % 60;
     final seconds = diff.inSeconds % 60;
 
+    countdownHours.value = hours;
+    countdownMinutes.value = minutes;
+    countdownSeconds.value = seconds;
+
     if (hours > 0) {
       countdownText.value = '$hours Jam $minutes Menit $seconds Detik';
     } else {
       countdownText.value = '$minutes Menit $seconds Detik';
+    }
+  }
+
+  /// Formats the countdown dynamically using the active locale in [context]
+  String formatCountdown(BuildContext context) {
+    final hours = countdownHours.value;
+    final minutes = countdownMinutes.value;
+    final seconds = countdownSeconds.value;
+
+    if (hours == 0 &&
+        minutes == 0 &&
+        seconds == 0 &&
+        countdownText.value == '--:--:--') {
+      return '--:--:--';
+    }
+
+    if (hours > 0) {
+      return '$hours ${context.tr('countdownHours')} $minutes ${context.tr('countdownMinutes')} $seconds ${context.tr('countdownSeconds')}';
+    } else {
+      return '$minutes ${context.tr('countdownMinutes')} $seconds ${context.tr('countdownSeconds')}';
     }
   }
 

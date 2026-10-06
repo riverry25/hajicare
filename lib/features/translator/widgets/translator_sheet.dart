@@ -538,13 +538,18 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                 primaryColor: primaryColor,
                 isListening: isListening,
               ),
+              const SizedBox(height: AppSpacing.sm),
 
-              // ── Speech Status Indicator (if listening or message exists) ──
-              if (isListening || _speechMessage != null) ...[
-                const SizedBox(height: AppSpacing.xs),
-                _buildSpeechStatusBar(isListening, bodyColor),
-              ],
-              const SizedBox(height: AppSpacing.md),
+              // ── Hero Central Microphone Voice Action (Large & Adaptive) ──
+              _buildCenterMicHeroSection(
+                context: context,
+                isDark: isDark,
+                headingColor: headingColor,
+                bodyColor: bodyColor,
+                primaryColor: primaryColor,
+                isListening: isListening,
+              ),
+              const SizedBox(height: AppSpacing.sm),
 
               // ── Target Output Card ────────────────────────────────────────
               _buildOutputCard(
@@ -715,53 +720,6 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
     );
   }
 
-  Widget _buildSpeechStatusBar(bool isListening, Color bodyColor) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: 6,
-      ),
-      decoration: BoxDecoration(
-        color: isListening
-            ? AppColors.sosEmergency.withValues(alpha: 0.10)
-            : bodyColor.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (isListening)
-            AnimatedBuilder(
-              animation: _pulseController,
-              builder: (context, child) {
-                return Container(
-                  width: 8,
-                  height: 8,
-                  margin: const EdgeInsets.only(right: 6),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.sosEmergency.withValues(
-                      alpha: 0.4 + (_pulseController.value * 0.6),
-                    ),
-                  ),
-                );
-              },
-            ),
-          Expanded(
-            child: Text(
-              _speechMessage ??
-                  (isListening ? context.tr('translator.listeningPrompt') : ''),
-              style: AppTypography.captionSmall.copyWith(
-                color: isListening ? AppColors.sosEmergency : bodyColor,
-                fontWeight: isListening ? FontWeight.w600 : FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildInputCard({
     required bool isDark,
     required Color headingColor,
@@ -769,6 +727,8 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
     required Color primaryColor,
     required bool isListening,
   }) {
+    final hasInput = _inputController.text.isNotEmpty;
+
     return Container(
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite,
@@ -820,13 +780,11 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
             onChanged: _onInputChanged,
             onSubmitted: (_) => _performTranslation(),
           ),
-          const SizedBox(height: AppSpacing.xs),
-
-          // Bottom Action Controls inside Input Card
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              if (_inputController.text.isNotEmpty)
+          if (hasInput) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
                 InkWell(
                   onTap: _clearInput,
                   borderRadius: BorderRadius.circular(AppRadius.xs),
@@ -853,40 +811,207 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                       ],
                     ),
                   ),
-                )
-              else
-                const SizedBox.shrink(),
-
-              // Voice Recording Trigger Button
-              Material(
-                color: Colors.transparent,
-                shape: const CircleBorder(),
-                child: InkWell(
-                  onTap: _toggleListening,
-                  customBorder: const CircleBorder(),
-                  child: Ink(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isListening
-                          ? AppColors.sosEmergency
-                          : primaryColor.withValues(alpha: 0.12),
+                ),
+                InkWell(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    _performTranslation();
+                  },
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 5,
                     ),
-                    child: Center(
-                      child: Icon(
-                        isListening
-                            ? Icons.mic_rounded
-                            : Icons.mic_none_rounded,
-                        color: isListening ? Colors.white : primaryColor,
-                        size: 24,
-                      ),
+                    decoration: BoxDecoration(
+                      color: primaryColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Terjemahkan',
+                          style: AppTypography.captionSmall.copyWith(
+                            color: primaryColor,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.arrow_forward_rounded,
+                          size: 14,
+                          color: primaryColor,
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// Prominent, tactile, and adaptive center microphone hero section.
+  /// Designed without box shadow for a crisp, clean, and modern appearance.
+  Widget _buildCenterMicHeroSection({
+    required BuildContext context,
+    required bool isDark,
+    required Color headingColor,
+    required Color bodyColor,
+    required Color primaryColor,
+    required bool isListening,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Animated Pulse & Hero Central Microphone Button
+          AnimatedBuilder(
+            animation: _pulseController,
+            builder: (context, child) {
+              final pulseValue = _pulseController.value;
+              final ringSize = isListening ? 88.0 + (pulseValue * 14.0) : 80.0;
+              final ringColor = isListening
+                  ? AppColors.sosEmergency.withValues(
+                      alpha: 0.15 + (pulseValue * 0.20),
+                    )
+                  : (isDark
+                        ? AppColors.goldPrimary.withValues(alpha: 0.15)
+                        : AppColors.canvasCream);
+
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Outer Glow / Wave Ripple
+                  Container(
+                    width: ringSize,
+                    height: ringSize,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: ringColor,
+                    ),
+                  ),
+
+                  // Secondary Ripple Ring (when recording)
+                  if (isListening)
+                    Container(
+                      width: ringSize - 14,
+                      height: ringSize - 14,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.sosEmergency.withValues(
+                          alpha: 0.22 + (pulseValue * 0.20),
+                        ),
+                      ),
+                    ),
+
+                  // Tactile Hero Circle Button (Large 70x70, NO box shadow)
+                  Material(
+                    color: Colors.transparent,
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      onTap: _toggleListening,
+                      customBorder: const CircleBorder(),
+                      child: Ink(
+                        width: 70,
+                        height: 70,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: isListening
+                              ? const LinearGradient(
+                                  colors: [
+                                    Color(0xFFE53935),
+                                    Color(0xFFC62828),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                )
+                              : LinearGradient(
+                                  colors: isDark
+                                      ? [
+                                          AppColors.accentGoldStar,
+                                          AppColors.goldPrimary,
+                                        ]
+                                      : [
+                                          AppColors.espressoDark,
+                                          AppColors.primaryContainer,
+                                        ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                        ),
+                        child: Center(
+                          child: Icon(
+                            Icons.mic_rounded,
+                            color: isListening
+                                ? Colors.white
+                                : (isDark
+                                      ? AppColors.espressoDark
+                                      : Colors.white),
+                            size: 34,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
+          const SizedBox(height: 10),
+
+          // Primary Title Label
+          Text(
+            isListening
+                ? (context.tr('translator.listeningPrompt').isNotEmpty
+                      ? context.tr('translator.listeningPrompt')
+                      : 'Mendengarkan suara Anda...')
+                : 'Bicara ${_sourceLanguage.name}',
+            textAlign: TextAlign.center,
+            style: AppTypography.titleMedium.copyWith(
+              color: isListening ? AppColors.sosEmergency : headingColor,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 3),
+
+          // Helper Subtitle
+          Text(
+            isListening
+                ? 'Ketuk tombol lagi untuk selesai bicara'
+                : 'Tekan tombol mikrofon lalu mulai berbicara',
+            textAlign: TextAlign.center,
+            style: AppTypography.bodySmall.copyWith(
+              color: isListening
+                  ? AppColors.sosEmergency.withValues(alpha: 0.85)
+                  : bodyColor.withValues(alpha: 0.70),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+
+          // Speech Status or Error Notice (if any)
+          if (_speechMessage != null && !isListening) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              decoration: BoxDecoration(
+                color: bodyColor.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(color: bodyColor.withValues(alpha: 0.15)),
+              ),
+              child: Text(
+                _speechMessage!,
+                textAlign: TextAlign.center,
+                style: AppTypography.captionSmall.copyWith(color: bodyColor),
+              ),
+            ),
+          ],
         ],
       ),
     );

@@ -9,6 +9,9 @@ import 'package:hajicare/core/theme/app_theme.dart';
 import 'package:hajicare/features/dashboard/bindings/dashboard_binding.dart';
 import 'package:hajicare/features/dashboard/screens/dashboard_jamaah_screen.dart';
 import 'package:hajicare/features/dashboard/widgets/distance_sparkline_widget.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:hajicare/features/dashboard/controllers/dashboard_controller.dart';
+import 'package:hajicare/features/map/controllers/map_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -117,6 +120,88 @@ void main() {
         sparklineFinder,
       );
       expect(sparklineWidget.distance, 45.0);
+    },
+  );
+
+  testWidgets(
+    'Dashboard Jamaah renders "Lacak Pendamping" and tapping it navigates to companion on map',
+    (tester) async {
+      Get.put(AppSettingsController(), permanent: true);
+      final hajiCtrl = Get.put(HajiCareController(), permanent: true);
+      DashboardBinding().dependencies();
+
+      final pendamping = RoomMemberModel(
+        uid: 'pendamping-01',
+        name: 'Ustadz Ahmad',
+        role: 'pendamping',
+        currentLocation: const GeoPoint(21.4150, 39.8950),
+      );
+
+      hajiCtrl.activeRoomId.value = 'room_vip_01';
+      hajiCtrl.activeRoomMembers.value = [pendamping];
+      hajiCtrl.jamaahList.value = [
+        JamaahData(
+          id: 'test_user_1',
+          name: 'Ahmad Jamaah',
+          shortLabel: 'Ahmad',
+          distance: 45.0,
+          activeRoomId: 'room_vip_01',
+        ),
+      ];
+
+      await tester.pumpWidget(buildTestWidget());
+      await tester.pump();
+
+      // Check button text "Lacak Pendamping"
+      expect(find.text('Lacak Pendamping'), findsOneWidget);
+
+      // Tap "Lacak Pendamping"
+      await tester.tap(find.text('Lacak Pendamping'));
+      await tester.pump();
+      for (int i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      final dashboardCtrl = Get.find<DashboardController>();
+      expect(dashboardCtrl.currentIndex.value, 1);
+
+      final mapCtrl = Get.find<MapController>();
+      expect(mapCtrl.selectedMember.value?.uid, 'pendamping-01');
+      expect(mapCtrl.selectedMember.value?.latitude, closeTo(21.4150, 0.0001));
+      expect(mapCtrl.selectedMember.value?.longitude, closeTo(39.8950, 0.0001));
+    },
+  );
+
+  testWidgets(
+    'Dashboard Jamaah shows info alert when no companion is in room on Lacak Pendamping tap',
+    (tester) async {
+      Get.put(AppSettingsController(), permanent: true);
+      final hajiCtrl = Get.put(HajiCareController(), permanent: true);
+      DashboardBinding().dependencies();
+
+      hajiCtrl.activeRoomId.value = 'room_vip_01';
+      hajiCtrl.activeRoomMembers.value = []; // No pendamping
+      hajiCtrl.jamaahList.value = [
+        JamaahData(
+          id: 'test_user_1',
+          name: 'Ahmad Jamaah',
+          shortLabel: 'Ahmad',
+          distance: 0.0,
+          activeRoomId: 'room_vip_01',
+        ),
+      ];
+
+      await tester.pumpWidget(buildTestWidget());
+      await tester.pump();
+
+      await tester.tap(find.text('Lacak Pendamping'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('Pendamping Belum Terhubung'), findsOneWidget);
+
+      final dashboardCtrl = Get.find<DashboardController>();
+      expect(dashboardCtrl.currentIndex.value, 0); // Stays on home tab
     },
   );
 }

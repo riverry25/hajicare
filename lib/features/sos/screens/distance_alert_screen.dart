@@ -100,7 +100,7 @@ class DistanceAlertScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                     child: Text(
-                      'PERINGATAN JARAK LANSIA',
+                      context.tr('distanceAlertElderly'),
                       style: AppTypography.captionSmall.copyWith(
                         color: AppColors.surfaceWhite,
                         letterSpacing: 1.2,
@@ -110,7 +110,7 @@ class DistanceAlertScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.sm),
 
                   Text(
-                    'Anda Terlalu Jauh',
+                    context.tr('distanceAlertTooFar'),
                     style: AppTypography.displayMedium.copyWith(
                       color: AppColors.espressoDark,
                       fontWeight: FontWeight.w800,
@@ -120,7 +120,7 @@ class DistanceAlertScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.sm2),
 
                   Text(
-                    'Jarak Anda dari Pendamping (Siti Aminah) telah melebihi batas aman 200 meter. Harap segera kembali ke rombongan.',
+                    context.tr('distanceAlertDesc'),
                     style: AppTypography.bodySmall.copyWith(
                       color: AppColors.textBody,
                     ),
@@ -153,7 +153,7 @@ class DistanceAlertScreen extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'meter',
+                              context.tr('distanceMeters'),
                               style: AppTypography.titleMedium.copyWith(
                                 color: AppColors.textBody,
                               ),
@@ -192,7 +192,7 @@ class DistanceAlertScreen extends StatelessWidget {
                           const Icon(Icons.directions, size: 20),
                           const SizedBox(width: AppSpacing.sm2),
                           Text(
-                            'Lihat Arah Kembali',
+                            context.tr('seeReturnDirections'),
                             style: AppTypography.labelLarge.copyWith(
                               color: AppColors.surfaceWhite,
                             ),
@@ -227,7 +227,7 @@ class DistanceAlertScreen extends StatelessWidget {
                           ),
                           const SizedBox(width: AppSpacing.sm2),
                           Text(
-                            'Telepon Pendamping',
+                            context.tr('callCompanion'),
                             style: AppTypography.labelLarge.copyWith(
                               color: AppColors.espressoDark,
                             ),

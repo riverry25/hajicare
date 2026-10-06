@@ -10,7 +10,7 @@ const Map<String, String> dashboardIdTranslations = {
   'dashboard.notConnectedToRoom': 'Belum Terhubung ke Room',
   'dashboard.refreshGps': 'Perbarui lokasi GPS',
   'dashboard.locationRefreshed': 'Lokasi GPS berhasil diperbarui',
-  'dashboard.trackOfficer': 'Lacak Petugas',
+  'dashboard.trackOfficer': 'Lacak Pendamping',
   'dashboard.emergencyHelp': 'Bantuan Darurat',
   'dashboard.scanRiyal': 'Pindai Riyal',
   'dashboard.recognizeMoney': 'Kenali Uang',

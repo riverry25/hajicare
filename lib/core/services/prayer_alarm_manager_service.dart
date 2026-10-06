@@ -166,10 +166,6 @@ class PrayerAlarmManagerService {
           final alarmId = basePrayerAlarmId + (day * 10) + prayerIndex;
 
           if (item.time.isAfter(now)) {
-            debugPrint(
-              '🕌 [PRAYER-ALARM-QUEUE] Mendaftarkan $normalized (ID: $alarmId) pada ${item.time}',
-            );
-
             await AndroidAlarmManager.oneShotAt(
               item.time,
               alarmId,

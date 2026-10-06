@@ -12,10 +12,7 @@ import '../models/sign_video_entry.dart';
 class SignVideoPlayerWidget extends StatelessWidget {
   final TextToSignController controller;
 
-  const SignVideoPlayerWidget({
-    super.key,
-    required this.controller,
-  });
+  const SignVideoPlayerWidget({super.key, required this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -330,10 +327,12 @@ class SignVideoPlayerWidget extends StatelessWidget {
                 SliderTheme(
                   data: SliderTheme.of(context).copyWith(
                     trackHeight: 4,
-                    thumbShape:
-                        const RoundSliderThumbShape(enabledThumbRadius: 6),
-                    overlayShape:
-                        const RoundSliderOverlayShape(overlayRadius: 12),
+                    thumbShape: const RoundSliderThumbShape(
+                      enabledThumbRadius: 6,
+                    ),
+                    overlayShape: const RoundSliderOverlayShape(
+                      overlayRadius: 12,
+                    ),
                     activeTrackColor: AppColors.goldPrimary,
                     inactiveTrackColor: isDark
                         ? AppColors.darkOutlineVariant

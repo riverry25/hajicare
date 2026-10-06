@@ -272,32 +272,35 @@ class _CategoriesSection extends StatelessWidget {
                   : AppColors.canvasCreamSubtle,
             ),
           ),
-          child: Column(
-            children: [
-              for (int i = 0; i < categories.length; i++) ...[
-                if (i > 0)
-                  Divider(
-                    height: 1,
-                    indent: AppSpacing.xl + AppSizes.touchTargetMin,
-                    color: isDark
-                        ? AppColors.darkOutlineVariant
-                        : AppColors.canvasCreamSubtle,
+          child: Obx(() {
+            final activeCategory = controller.selectedCategory.value;
+            return Column(
+              children: [
+                for (int i = 0; i < categories.length; i++) ...[
+                  if (i > 0)
+                    Divider(
+                      height: 1,
+                      indent: AppSpacing.xl + AppSizes.touchTargetMin,
+                      color: isDark
+                          ? AppColors.darkOutlineVariant
+                          : AppColors.canvasCreamSubtle,
+                    ),
+                  _CategoryTile(
+                    key: ValueKey(categories[i].$1),
+                    icon: categories[i].$2,
+                    titleKey: categories[i].$3,
+                    descKey: categories[i].$4,
+                    iconColor: categories[i].$5,
+                    headingColor: headingColor,
+                    bodyColor: bodyColor,
+                    isDark: isDark,
+                    isSelected: activeCategory == categories[i].$1,
+                    onTap: () => controller.selectCategory(categories[i].$1),
                   ),
-                _CategoryTile(
-                  icon: categories[i].$2,
-                  titleKey: categories[i].$3,
-                  descKey: categories[i].$4,
-                  iconColor: categories[i].$5,
-                  headingColor: headingColor,
-                  bodyColor: bodyColor,
-                  isDark: isDark,
-                  isSelected:
-                      controller.selectedCategory.value == categories[i].$1,
-                  onTap: () => controller.selectCategory(categories[i].$1),
-                ),
+                ],
               ],
-            ],
-          ),
+            );
+          }),
         ),
         const SizedBox(height: AppSpacing.gapSection),
       ],
@@ -317,6 +320,7 @@ class _CategoryTile extends StatelessWidget {
   final VoidCallback onTap;
 
   const _CategoryTile({
+    super.key,
     required this.icon,
     required this.titleKey,
     required this.descKey,
@@ -518,6 +522,7 @@ class _FaqSection extends StatelessWidget {
                           : AppColors.canvasCreamSubtle,
                     ),
                   _FaqItem(
+                    key: ValueKey(filtered[i].$1),
                     index: allFaqs.indexOf(filtered[i]),
                     questionKey: filtered[i].$1,
                     answerKey: filtered[i].$2,
@@ -546,6 +551,7 @@ class _FaqItem extends StatelessWidget {
   final bool isDark;
 
   const _FaqItem({
+    super.key,
     required this.index,
     required this.questionKey,
     required this.answerKey,

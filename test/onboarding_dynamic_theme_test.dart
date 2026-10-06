@@ -122,5 +122,51 @@ void main() {
         expect(find.byType(OnboardingSlideAccessibility), findsOneWidget);
       },
     );
+
+    testWidgets(
+      'Renders OnboardingSlideLanguage under 1.4x text scaling without overflow',
+      (tester) async {
+        Get.put(AppSettingsController(), permanent: true);
+        Get.put(OnboardingController(), permanent: true);
+
+        tester.view.physicalSize = const Size(1080, 2400);
+        tester.view.devicePixelRatio = 3.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
+
+        await tester.pumpWidget(
+          GetMaterialApp(
+            theme: AppTheme.darkTheme,
+            themeMode: ThemeMode.dark,
+            locale: const Locale('id', 'ID'),
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              FallbackMaterialLocalizationsDelegate(),
+              FallbackCupertinoLocalizationsDelegate(),
+              FallbackWidgetsLocalizationsDelegate(),
+            ],
+            home: MediaQuery(
+              data: const MediaQueryData(
+                textScaler: TextScaler.linear(1.4),
+                size: Size(360, 800),
+              ),
+              child: const Scaffold(
+                body: SingleChildScrollView(child: OnboardingSlideLanguage()),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(OnboardingSlideLanguage), findsOneWidget);
+        expect(find.text('Indonesia'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
   });
 }

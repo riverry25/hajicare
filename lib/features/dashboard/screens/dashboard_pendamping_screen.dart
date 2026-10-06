@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../core/locales/app_translations.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
+import '../../../core/state/app_settings_controller.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../presentation/dashboard_typography.dart';
@@ -32,14 +33,18 @@ class DashboardPendampingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final dashboardCtrl = Get.find<DashboardController>();
     final state = Get.find<HajiCareController>();
+    final settings = Get.isRegistered<AppSettingsController>()
+        ? Get.find<AppSettingsController>()
+        : null;
 
     return Theme(
       data: DashboardTypography.applyTo(Theme.of(context)),
       child: Scaffold(
         backgroundColor: AppColors.scaffoldColor(context),
         extendBody: true,
-        body: Obx(
-          () => IndexedStack(
+        body: Obx(() {
+          settings?.rxLocale.value;
+          return IndexedStack(
             index: dashboardCtrl.currentIndex.value,
             children: [
               _buildHome(context, state, dashboardCtrl),
@@ -56,8 +61,8 @@ class DashboardPendampingScreen extends StatelessWidget {
               else
                 const SizedBox.shrink(),
             ],
-          ),
-        ),
+          );
+        }),
         bottomNavigationBar: Obx(
           () => HajiCareBottomNavBar(
             currentIndex: dashboardCtrl.currentIndex.value,
@@ -166,7 +171,7 @@ class DashboardPendampingScreen extends StatelessWidget {
     final jamaahCount = state.jamaahList.length;
 
     final prayerName = prayerCtrl.nextPrayerName.value.isNotEmpty
-        ? prayerCtrl.nextPrayerName.value
+        ? context.localizedPrayerName(prayerCtrl.nextPrayerName.value)
         : context.tr('ashar');
     final cleanTime =
         (prayerCtrl.nextPrayerTime.value.isNotEmpty
@@ -259,6 +264,8 @@ class DashboardPendampingScreen extends StatelessWidget {
                   ],
                 ),
               ),
+              _textToSignHeaderButton(context),
+              const SizedBox(width: 8),
               _notifButton(context, state),
             ],
           ),
@@ -372,7 +379,7 @@ class DashboardPendampingScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _broadcastChip(context),
+              _textToSignChip(context),
               _metricCol(
                 value: '$prayerName $cleanTime',
                 label: context.tr('dashboard.prayerSchedule'),
@@ -620,7 +627,16 @@ class DashboardPendampingScreen extends StatelessWidget {
                     title: 'Permintaan Bantuan',
                     subtitle: 'Bantuan jamaah rombongan membutuhkan penanganan',
                     actionText: 'Lihat Peta',
-                    onAction: () => dashboardCtrl.changeTab(1),
+                    onAction: () {
+                      final mapCtrl = Get.isRegistered<MapController>()
+                          ? Get.find<MapController>()
+                          : Get.put(MapController());
+                      mapCtrl.focusOnAssistanceRequest(
+                        activeReq,
+                        autoRoute: false,
+                      );
+                      dashboardCtrl.changeTab(1);
+                    },
                     headingColor: headingColor,
                     isDark: isDark,
                   ),
@@ -831,49 +847,93 @@ class DashboardPendampingScreen extends StatelessWidget {
     );
   }
 
-  Widget _broadcastChip(BuildContext context) {
+  Widget _textToSignHeaderButton(BuildContext context) {
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: AppColors.goldLight.withValues(alpha: 0.40),
+          width: 1.0,
+        ),
+      ),
+      child: IconButton(
+        constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+        padding: EdgeInsets.zero,
+        icon: const Icon(
+          Icons.sign_language_rounded,
+          color: AppColors.goldLight,
+          size: 21,
+        ),
+        tooltip: context.tr('dashboard.textToSign'),
+        onPressed: () {
+          HapticFeedback.lightImpact();
+          Get.toNamed(AppRoutes.textToSign);
+        },
+      ),
+    );
+  }
+
+  Widget _textToSignChip(BuildContext context) {
     return Expanded(
       child: InkWell(
         onTap: () {
           HapticFeedback.lightImpact();
-          final state = Get.find<HajiCareController>();
-          NotificationComposerDialog.show(
-            context,
-            initialRoomId: state.activeRoomId.value,
-            initialRoomName: state.activeRoom.value?.name,
-          );
+          Get.toNamed(AppRoutes.textToSign);
         },
         borderRadius: BorderRadius.circular(12),
+        splashColor: Colors.white.withValues(alpha: 0.12),
+        highlightColor: Colors.white.withValues(alpha: 0.06),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              height: 28,
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+              height: 29,
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4.5),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: AppColors.goldLight.withValues(alpha: 0.45),
-                  width: 1.0,
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.goldLight.withValues(alpha: 0.28),
+                    AppColors.goldPrimary.withValues(alpha: 0.16),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: AppColors.goldLight.withValues(alpha: 0.70),
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.goldPrimary.withValues(alpha: 0.18),
+                    blurRadius: 6,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(
-                    Icons.campaign_rounded,
+                    Icons.sign_language_rounded,
                     color: AppColors.goldLight,
-                    size: 13,
+                    size: 14,
                   ),
                   const SizedBox(width: 4),
-                  Text(
-                    context.tr('dashboard.broadcast'),
-                    style: const TextStyle(
-                      color: AppColors.goldLight,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.1,
+                  Flexible(
+                    child: Text(
+                      'Text to Sign',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.1,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -881,7 +941,7 @@ class DashboardPendampingScreen extends StatelessWidget {
             ),
             const SizedBox(height: 3),
             Text(
-              context.tr('dashboard.sendNotification'),
+              context.tr('dashboard.signLanguage'),
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.65),
                 fontSize: 11,
@@ -1367,7 +1427,7 @@ class _PilgrimsPillsSectionState extends State<_PilgrimsPillsSection>
               SizeTransition(
                 sizeFactor: _widthAnim,
                 axis: Axis.horizontal,
-                axisAlignment: 1.0,
+                alignment: Alignment.centerRight,
                 child: AnimatedOpacity(
                   opacity: _searchOpen ? 1.0 : 0.0,
                   duration: const Duration(milliseconds: 180),

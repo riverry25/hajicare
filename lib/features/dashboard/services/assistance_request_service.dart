@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
@@ -136,30 +137,66 @@ class AssistanceRequestService extends GetxService {
 
   /// Pendamping starts heading to the pilgrim's location.
   AssistanceRequestModel? dispatchCompanionToLocation({
+    String? requestId,
     String? pendampingName,
     String? pendampingUid,
     String? companionName,
     String? companionUid,
   }) {
-    final current = activeRequest.value;
+    var current = activeRequest.value;
+    if (current == null && requestId != null) {
+      current = requestHistory.firstWhereOrNull((r) => r.id == requestId);
+    }
     if (current == null || !current.isActive) return null;
+
+    final resolvedName =
+        companionName ?? pendampingName ?? current.assignedPendampingName;
+    final resolvedUid =
+        companionUid ?? pendampingUid ?? current.assignedPendampingUid;
 
     final updated = current.copyWith(
       status: AssistanceStatus.onTheWay,
       onTheWayAt: DateTime.now(),
-      assignedPendampingName:
-          companionName ?? pendampingName ?? current.assignedPendampingName,
-      assignedPendampingUid:
-          companionUid ?? pendampingUid ?? current.assignedPendampingUid,
+      assignedPendampingName: resolvedName,
+      assignedPendampingUid: resolvedUid,
     );
     activeRequest.value = updated;
     _updateHistory(updated);
+
+    // Kirim notifikasi konfirmasi ke jamaah jika memungkinkan
+    if (current.roomId.isNotEmpty && current.jamaahId.isNotEmpty) {
+      unawaited(
+        _notificationService
+            .sendNotification(
+              title: 'Pendamping Menuju Lokasi',
+              message:
+                  '${resolvedName ?? "Pendamping"} sedang menuju ke lokasi Anda untuk membantu.',
+              senderUid: resolvedUid ?? '',
+              senderRole: 'pendamping',
+              senderName: resolvedName ?? 'Pendamping',
+              scope: 'user',
+              targetUserId: current.jamaahId,
+              targetRoomId: current.roomId,
+              type: 'info',
+            )
+            .catchError((e) {
+              debugPrint(
+                '[AssistanceRequestService] dispatchCompanion notification handled: $e',
+              );
+              return 0;
+            }),
+      );
+    }
+
     return updated;
   }
 
-  /// Pilgrim confirms: "Saya sudah ditemukan" / assistance completed.
-  AssistanceRequestModel? completeRequest() {
-    final current = activeRequest.value;
+  /// Pilgrim or companion confirms assistance completed.
+  AssistanceRequestModel? completeRequest({String? requestId}) {
+    var current = activeRequest.value;
+    if (current == null && requestId != null) {
+      current = requestHistory.firstWhereOrNull((r) => r.id == requestId);
+    }
     if (current == null) return null;
 
     final updated = current.copyWith(

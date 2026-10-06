@@ -152,7 +152,9 @@ class SignLanguageRepository {
         return catalog;
       }
     } catch (e) {
-      debugPrint('[SignRepo] Failed to fetch remote catalog: $e (falling back to disk cache)');
+      debugPrint(
+        '[SignRepo] Failed to fetch remote catalog: $e (falling back to disk cache)',
+      );
     }
 
     // 3. Fallback: Baca dari disk cache
@@ -384,8 +386,7 @@ class SignLanguageRepository {
     final categoryVideos = allVideos
         .where(
           (v) =>
-              v.category == cleanCategory &&
-              v.source == SignVideoSource.remote,
+              v.category == cleanCategory && v.source == SignVideoSource.remote,
         )
         .toList();
 

@@ -762,6 +762,58 @@ void main() {
       },
     );
   });
+
+  group('Companion Tracking (focusOnCompanion)', () {
+    test(
+      'focuses on pendamping with real-time location and centers camera on pin',
+      () async {
+        final pendamping = RoomMemberModel(
+          uid: 'pendamping-01',
+          name: 'Ustadz Abdullah',
+          role: 'pendamping',
+          currentLocation: const GeoPoint(21.4150, 39.8950),
+        );
+        final jamaah = RoomMemberModel(
+          uid: 'jamaah-01',
+          name: 'Pak Ahmad',
+          role: 'jamaah',
+          currentLocation: const GeoPoint(21.4120, 39.8920),
+        );
+
+        controller.roomMembers.value = [jamaah, pendamping];
+
+        final result = await controller.focusOnCompanion();
+
+        expect(result, isNotNull);
+        expect(result?.uid, equals('pendamping-01'));
+        expect(controller.selectedMember.value?.uid, equals('pendamping-01'));
+        expect(controller.pendingFocusCoordinate, isNotNull);
+        expect(
+          controller.pendingFocusCoordinate?.latitude,
+          closeTo(21.4150, 0.0001),
+        );
+        expect(
+          controller.pendingFocusCoordinate?.longitude,
+          closeTo(39.8950, 0.0001),
+        );
+        expect(controller.isBottomSheetOpen.value, isTrue);
+      },
+    );
+
+    test('returns null when no pendamping exists in the room', () async {
+      final jamaah = RoomMemberModel(
+        uid: 'jamaah-01',
+        name: 'Pak Ahmad',
+        role: 'jamaah',
+        currentLocation: const GeoPoint(21.4120, 39.8920),
+      );
+
+      controller.roomMembers.value = [jamaah];
+
+      final result = await controller.focusOnCompanion();
+      expect(result, isNull);
+    });
+  });
 }
 
 class MockRouteService extends RouteService {

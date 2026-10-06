@@ -14,10 +14,13 @@ class SignLanguageConfig {
 
   /// Helper untuk merakit full URL remote video dari relative path di catalog.
   static String resolveVideoUrl(String relativePath) {
-    if (relativePath.startsWith('http://') || relativePath.startsWith('https://')) {
+    if (relativePath.startsWith('http://') ||
+        relativePath.startsWith('https://')) {
       return relativePath;
     }
-    final cleanPath = relativePath.startsWith('/') ? relativePath.substring(1) : relativePath;
+    final cleanPath = relativePath.startsWith('/')
+        ? relativePath.substring(1)
+        : relativePath;
     return '$baseUrl/$cleanPath';
   }
 }

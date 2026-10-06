@@ -9,9 +9,14 @@ import 'package:hajicare/features/auth/bindings/login_binding.dart';
 import 'package:hajicare/features/auth/screens/login_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-Widget _buildTestApp({required Locale locale, required Widget child}) {
+Widget _buildTestApp({
+  required Locale locale,
+  required Widget child,
+  ThemeData? theme,
+}) {
   return GetMaterialApp(
     locale: locale,
+    theme: theme,
     fallbackLocale: AppTranslations.fallbackLocale,
     translations: AppTranslations(),
     supportedLocales: AppTranslations.supportedLocales,
@@ -122,5 +127,26 @@ void main() {
         expect(tester.takeException(), isNull);
       },
     );
+
+    testWidgets('LoginScreen renders with high contrast colors in Dark Mode', (
+      tester,
+    ) async {
+      final loc = const Locale('id');
+      final settings = Get.put(AppSettingsController(), permanent: true);
+      await settings.setLocale(loc);
+      LoginBinding().dependencies();
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          locale: loc,
+          theme: ThemeData.dark(),
+          child: const LoginScreen(),
+        ),
+      );
+
+      await tester.pump();
+      expect(find.byType(LoginScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
   });
 }

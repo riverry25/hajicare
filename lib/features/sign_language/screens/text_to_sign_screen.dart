@@ -211,6 +211,12 @@ class _TextToSignScreenState extends State<TextToSignScreen>
 
             // ── 2. TEXT SEARCH / INPUT CARD ──────────────────────────────────
             _buildSearchInputCard(context, isDark),
+
+            // ── 2.1 AUTOCOMPLETE SUGGESTIONS (JIKA ADA MATCH) ────────────────
+            _buildSearchSuggestions(context, isDark),
+
+            // ── 2.2 BANNER STATUS MIKROFON (JIKA MIC AKTIF) ──────────────────
+            _buildActiveListeningBanner(context, isDark),
             const SizedBox(height: AppSpacing.sm),
 
             // ── 3. QUICK PHRASE CHIPS ────────────────────────────────────────
@@ -399,6 +405,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
           Expanded(
             child: TextField(
               controller: controller.textController,
+              focusNode: controller.searchFocusNode,
               decoration: InputDecoration(
                 hintText: controller.selectedLanguage.value == 'sibi'
                     ? 'Ketik kata misal: Masjid, Bantu, Dokter...'
@@ -418,54 +425,98 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                 fontWeight: FontWeight.w600,
               ),
               textInputAction: TextInputAction.search,
-              onSubmitted: (val) => controller.searchSign(val),
-              onChanged: (val) {
-                if (val.isEmpty) {
-                  controller.searchSign('');
-                }
+              onSubmitted: (val) {
+                controller.dismissSuggestions();
+                controller.searchSign(val);
               },
+              onChanged: (val) => controller.updateSearchQuery(val),
             ),
           ),
           Obx(() {
+            final isListening = controller.isListening.value;
+            final isSearching = controller.isSearching.value;
+            final hasText = controller.currentQuery.value.isNotEmpty;
+
             return Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(
-                  icon: Icon(
-                    controller.isListening.value
-                        ? Icons.mic_rounded
-                        : Icons.mic_none_rounded,
-                    size: 22,
-                  ),
-                  color: controller.isListening.value
-                      ? AppColors.sosEmergency
-                      : (isDark ? AppColors.goldLight : AppColors.goldPrimary),
-                  tooltip: 'Cari dengan Suara',
-                  onPressed: () => controller.toggleVoiceRecognition(),
-                ),
-                if (controller.isSearching.value)
-                  const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.goldPrimary,
-                    ),
-                  )
-                else if (controller.currentQuery.value.isNotEmpty)
+                // Tombol clear input (X) jika terdapat teks
+                if (hasText)
                   IconButton(
                     icon: const Icon(Icons.close_rounded, size: 20),
-                    onPressed: () {
-                      controller.textController.clear();
-                      controller.searchSign('');
-                    },
+                    color: AppColors.textMuted,
+                    tooltip: 'Hapus Teks',
+                    onPressed: () => controller.clearSearch(),
+                  ),
+
+                // Tombol Mikrofon (Speech-to-Sign)
+                Tooltip(
+                  message: isListening
+                      ? 'Sedang Mendengarkan (Ketuk untuk Selesai)'
+                      : 'Bicara (Suara ke Isyarat)',
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      onTap: () => controller.toggleVoiceRecognition(),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isListening
+                              ? AppColors.sosEmergency.withValues(alpha: 0.18)
+                              : (isDark
+                                    ? AppColors.goldLight.withValues(alpha: 0.1)
+                                    : AppColors.goldPrimary.withValues(
+                                        alpha: 0.1,
+                                      )),
+                          border: isListening
+                              ? Border.all(
+                                  color: AppColors.sosEmergency,
+                                  width: 1.5,
+                                )
+                              : null,
+                        ),
+                        child: Icon(
+                          isListening
+                              ? Icons.mic_rounded
+                              : Icons.mic_none_rounded,
+                          size: 20,
+                          color: isListening
+                              ? AppColors.sosEmergency
+                              : (isDark
+                                    ? AppColors.goldLight
+                                    : AppColors.goldPrimary),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+
+                // Tombol Pencarian (Search Button berdampingan dengan mic)
+                if (isSearching)
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.goldPrimary,
+                      ),
+                    ),
                   )
                 else
                   IconButton(
                     icon: const Icon(Icons.search_rounded),
-                    color: AppColors.goldPrimary,
-                    onPressed: () =>
-                        controller.searchSign(controller.textController.text),
+                    color: isDark ? AppColors.goldLight : AppColors.goldPrimary,
+                    tooltip: 'Cari Video Isyarat',
+                    onPressed: () {
+                      controller.dismissSuggestions();
+                      controller.searchSign(controller.textController.text);
+                    },
                   ),
               ],
             );
@@ -473,6 +524,339 @@ class _TextToSignScreenState extends State<TextToSignScreen>
         ],
       ),
     );
+  }
+
+  // ── 2.1 SEARCH AUTOCOMPLETE SUGGESTIONS ────────────────────────────────────
+
+  Widget _buildSearchSuggestions(BuildContext context, bool isDark) {
+    return Obx(() {
+      if (!controller.showSuggestions.value ||
+          controller.searchSuggestions.isEmpty) {
+        return const SizedBox.shrink();
+      }
+
+      final suggestions = controller.searchSuggestions;
+      final query = controller.currentQuery.value.trim();
+
+      return Container(
+        margin: const EdgeInsets.only(top: 4, bottom: AppSpacing.xs),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(
+            color: isDark
+                ? AppColors.goldLight.withValues(alpha: 0.3)
+                : AppColors.goldPrimary.withValues(alpha: 0.35),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.08),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header bar saran
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.auto_awesome_rounded,
+                    size: 16,
+                    color: AppColors.goldPrimary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Saran Kosakata Isyarat',
+                      style: AppTypography.captionSmall.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: isDark
+                            ? AppColors.goldLight
+                            : AppColors.goldDark,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () => controller.dismissSuggestions(),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 16,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1, thickness: 1),
+
+            // Daftar item saran
+            ...suggestions.asMap().entries.map((entry) {
+              final index = entry.key;
+              final text = entry.value;
+              final isLast = index == suggestions.length - 1;
+
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: isLast
+                          ? const BorderRadius.vertical(
+                              bottom: Radius.circular(AppRadius.card),
+                            )
+                          : BorderRadius.zero,
+                      onTap: () => controller.selectSuggestion(text),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color:
+                                    (isDark
+                                            ? AppColors.goldLight
+                                            : AppColors.goldPrimary)
+                                        .withValues(alpha: 0.12),
+                              ),
+                              child: Icon(
+                                Icons.sign_language_rounded,
+                                size: 16,
+                                color: isDark
+                                    ? AppColors.goldLight
+                                    : AppColors.goldPrimary,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildHighlightedText(
+                                text: text,
+                                query: query,
+                                isDark: isDark,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? AppColors.darkSurfaceContainer
+                                    : AppColors.canvasCream,
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.pill,
+                                ),
+                              ),
+                              child: Text(
+                                controller.selectedLanguage.value == 'sibi'
+                                    ? 'SIBI'
+                                    : 'BISINDO',
+                                style: AppTypography.captionSmall.copyWith(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            const Icon(
+                              Icons.north_west_rounded,
+                              size: 15,
+                              color: AppColors.textMuted,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (!isLast) const Divider(height: 1, indent: 46),
+                ],
+              );
+            }),
+          ],
+        ),
+      );
+    });
+  }
+
+  /// Memformat teks saran dengan highlighting pada potongan kata yang cocok dengan query.
+  Widget _buildHighlightedText({
+    required String text,
+    required String query,
+    required bool isDark,
+  }) {
+    final textColor = isDark
+        ? AppColors.darkTextHeading
+        : AppColors.textHeading;
+
+    if (query.isEmpty) {
+      return Text(
+        text,
+        style: AppTypography.bodyMedium.copyWith(
+          fontWeight: FontWeight.w600,
+          color: textColor,
+        ),
+      );
+    }
+
+    final lowerText = text.toLowerCase();
+    final lowerQuery = query.toLowerCase();
+    final matchIndex = lowerText.indexOf(lowerQuery);
+
+    if (matchIndex == -1) {
+      return Text(
+        text,
+        style: AppTypography.bodyMedium.copyWith(
+          fontWeight: FontWeight.w600,
+          color: textColor,
+        ),
+      );
+    }
+
+    final beforeMatch = text.substring(0, matchIndex);
+    final match = text.substring(matchIndex, matchIndex + query.length);
+    final afterMatch = text.substring(matchIndex + query.length);
+
+    return RichText(
+      text: TextSpan(
+        style: AppTypography.bodyMedium.copyWith(color: textColor),
+        children: [
+          if (beforeMatch.isNotEmpty)
+            TextSpan(
+              text: beforeMatch,
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+          TextSpan(
+            text: match,
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              color: isDark ? AppColors.goldLight : AppColors.goldPrimary,
+              backgroundColor:
+                  (isDark ? AppColors.goldLight : AppColors.goldPrimary)
+                      .withValues(alpha: 0.15),
+            ),
+          ),
+          if (afterMatch.isNotEmpty)
+            TextSpan(
+              text: afterMatch,
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ── 2.2 ACTIVE LISTENING BANNER ────────────────────────────────────────────
+
+  Widget _buildActiveListeningBanner(BuildContext context, bool isDark) {
+    return Obx(() {
+      if (!controller.isListening.value) return const SizedBox.shrink();
+
+      return Container(
+        margin: const EdgeInsets.only(top: 6, bottom: AppSpacing.xs),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: isDark
+              ? AppColors.sosEmergency.withValues(alpha: 0.18)
+              : AppColors.sosEmergency.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(
+            color: AppColors.sosEmergency.withValues(alpha: 0.4),
+            width: 1.2,
+          ),
+        ),
+        child: Row(
+          children: [
+            ScaleTransition(
+              scale: _pulseAnimation,
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.sosEmergency,
+                ),
+                child: const Icon(
+                  Icons.mic_rounded,
+                  color: Colors.white,
+                  size: 16,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    controller.speechStatusMessage.value,
+                    style: AppTypography.captionSmall.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.sosEmergency,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Ucapkan kata, input akan otomatis terisi...',
+                    style: AppTypography.captionSmall.copyWith(
+                      fontSize: 11,
+                      color: isDark
+                          ? AppColors.darkTextBody
+                          : AppColors.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton(
+              onPressed: () => controller.stopVoiceRecognition(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.sosEmergency,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+              ),
+              child: Text(
+                'Selesai',
+                style: AppTypography.captionSmall.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   // ── 3. QUICK PHRASE CHIPS ──────────────────────────────────────────────────
