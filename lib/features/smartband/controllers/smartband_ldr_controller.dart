@@ -22,15 +22,19 @@ class SmartbandLdrController extends GetxController {
               ? Get.find<SmartbandBleService>()
               : SmartbandBleService());
 
+  /// Koordinat GPS statis Smartband (Pelataran Masjidil Haram, Makkah)
+  static const double staticGpsLatitude = 21.422487;
+  static const double staticGpsLongitude = 39.826206;
+
   // ── Observable State - Smartband BLE (ESP32-S3) ───────────────────────────
   final Rx<SmartbandBleStatus> bleStatus = SmartbandBleStatus.disconnected.obs;
   final RxString braceletId = 'HCG-001'.obs;
   final Rxn<int> heartRate = Rxn<int>();
-  final Rxn<double> latitude = Rxn<double>();
-  final Rxn<double> longitude = Rxn<double>();
-  final RxBool isGpsFix = false.obs;
-  final Rxn<double> lastKnownLatitude = Rxn<double>();
-  final Rxn<double> lastKnownLongitude = Rxn<double>();
+  final Rxn<double> latitude = Rxn<double>(staticGpsLatitude);
+  final Rxn<double> longitude = Rxn<double>(staticGpsLongitude);
+  final RxBool isGpsFix = true.obs;
+  final Rxn<double> lastKnownLatitude = Rxn<double>(staticGpsLatitude);
+  final Rxn<double> lastKnownLongitude = Rxn<double>(staticGpsLongitude);
   final Rxn<DateTime> lastDataReceivedAt = Rxn<DateTime>();
   final RxString relativeTimeText = 'Belum menerima data'.obs;
   final RxString heartRateStatus = 'Sensor belum tersedia'.obs;
@@ -202,6 +206,11 @@ class SmartbandLdrController extends GetxController {
       if (status == SmartbandBleStatus.connected) {
         errorMessage.value = '';
         statusMessage.value = 'Gelang Terhubung';
+        isGpsFix.value = true;
+        latitude.value = staticGpsLatitude;
+        longitude.value = staticGpsLongitude;
+        lastKnownLatitude.value = staticGpsLatitude;
+        lastKnownLongitude.value = staticGpsLongitude;
       } else if (status == SmartbandBleStatus.disconnected) {
         statusMessage.value = 'Gelang Belum Terhubung';
         isGpsFix.value = false;
@@ -244,31 +253,25 @@ class SmartbandLdrController extends GetxController {
   }
 
   void _processSmartbandData(SmartbandData data) {
+    // 1. Data Dinamis dari BLE (Heart Rate, Bracelet ID)
     braceletId.value = data.braceletId;
     heartRate.value = data.heartRate;
 
-    // Evaluasi status Heart Rate (MAX30102)
+    // Evaluasi status Heart Rate (MAX30102) secara dinamis
     if (data.heartRate == 0) {
       heartRateStatus.value = 'Mengukur... Tempelkan jari';
     } else {
       heartRateStatus.value = 'Sensor aktif';
     }
 
-    // Evaluasi status GPS (NEO-6M)
-    if (data.isValidLocation &&
-        data.latitude != null &&
-        data.longitude != null) {
-      latitude.value = data.latitude;
-      longitude.value = data.longitude;
-      lastKnownLatitude.value = data.latitude;
-      lastKnownLongitude.value = data.longitude;
-      isGpsFix.value = true;
-    } else {
-      latitude.value = null;
-      longitude.value = null;
-      isGpsFix.value = false;
-    }
+    // 2. Data GPS Statis (Hanya GPS yang statis, data lainnya dinamis dari BLE)
+    latitude.value = staticGpsLatitude;
+    longitude.value = staticGpsLongitude;
+    lastKnownLatitude.value = staticGpsLatitude;
+    lastKnownLongitude.value = staticGpsLongitude;
+    isGpsFix.value = true;
 
+    // 3. Status Waktu & Raw Telemetri Dinamis dari BLE
     lastDataReceivedAt.value = data.timestamp;
     lastUpdated.value = data.timestamp;
     receivingData.value = true;

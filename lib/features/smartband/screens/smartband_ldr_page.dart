@@ -456,7 +456,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
         gpsStatusColor = AppColors.statusDanger;
         gpsStatusBg = AppColors.statusDanger.withValues(alpha: 0.1);
       } else if (isGpsFix && lat != null && lng != null) {
-        gpsStatusText = '🟢 FIX';
+        gpsStatusText = '🟢 FIX (Statis)';
         gpsStatusColor = AppColors.statusSafe;
         gpsStatusBg = AppColors.statusSafe.withValues(alpha: 0.12);
       } else {
@@ -467,10 +467,10 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
 
       final String displayLat;
       final String displayLng;
-      if (isGpsFix && lat != null && lng != null) {
+      if (lat != null && lng != null) {
         displayLat = lat.toStringAsFixed(6);
         displayLng = lng.toStringAsFixed(6);
-      } else if (!isConnected && lastLat != null && lastLng != null) {
+      } else if (lastLat != null && lastLng != null) {
         displayLat = '${lastLat.toStringAsFixed(6)} (Terakhir)';
         displayLng = '${lastLng.toStringAsFixed(6)} (Terakhir)';
       } else {
@@ -559,7 +559,7 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
             const SizedBox(height: 8),
             _buildDataRow(
               label: 'Sumber Lokasi',
-              value: 'Smartband',
+              value: 'Smartband (GPS Statis)',
               valueColor: headingColor,
               bodyColor: bodyColor,
             ),

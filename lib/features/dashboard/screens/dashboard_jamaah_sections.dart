@@ -1588,20 +1588,24 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                     gpsStatusColor = AppColors.textMuted;
                     displayLat = hasLastLocation
                         ? lastLat.toStringAsFixed(6)
-                        : '—';
+                        : SmartbandLdrController.staticGpsLatitude
+                              .toStringAsFixed(6);
                     displayLng = hasLastLocation
                         ? lastLng.toStringAsFixed(6)
-                        : '—';
+                        : SmartbandLdrController.staticGpsLongitude
+                              .toStringAsFixed(6);
                   } else if (isGpsFix && lat != null && lng != null) {
-                    gpsStatusText = '🟢 FIX';
+                    gpsStatusText = '🟢 FIX (Statis)';
                     gpsStatusColor = AppColors.statusSafe;
                     displayLat = lat.toStringAsFixed(6);
                     displayLng = lng.toStringAsFixed(6);
                   } else {
                     gpsStatusText = '🟡 Mencari GPS';
                     gpsStatusColor = AppColors.primaryGold;
-                    displayLat = '—';
-                    displayLng = '—';
+                    displayLat = SmartbandLdrController.staticGpsLatitude
+                        .toStringAsFixed(6);
+                    displayLng = SmartbandLdrController.staticGpsLongitude
+                        .toStringAsFixed(6);
                   }
 
                   return SingleChildScrollView(
@@ -2036,7 +2040,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                               const SizedBox(height: 4),
                               _buildDialogDataRow(
                                 label: 'Sumber',
-                                value: 'Smartband',
+                                value: 'Smartband (GPS Statis)',
                                 headingColor: headingColor,
                                 bodyColor: bodyColor,
                               ),

@@ -262,7 +262,7 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
                   ? data!.latitude!.toStringAsFixed(6)
                   : '-',
               helper: (data?.isValidLocation ?? false)
-                  ? 'Lokasi Valid'
+                  ? 'Lokasi Statis (GPS FIX)'
                   : 'Menunggu sinyal GPS valid',
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -277,7 +277,7 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
                   ? data!.longitude!.toStringAsFixed(6)
                   : '-',
               helper: (data?.isValidLocation ?? false)
-                  ? 'Lokasi Valid'
+                  ? 'Lokasi Statis (GPS FIX)'
                   : 'Menunggu sinyal GPS valid',
             ),
             const SizedBox(height: AppSpacing.sm),
