@@ -322,12 +322,13 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
+            const SizedBox(width: 8),
           ],
         ),
         actions: [
           if (!_isSosResolved)
             Container(
-              margin: const EdgeInsets.only(right: 12),
+              margin: const EdgeInsets.only(right: 14, left: 6),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: AppColors.sosEmergency,

@@ -73,6 +73,8 @@ class LoginController extends GetxController {
   Future<void> login() async {
     if (isLoading.value || isClosed) return;
 
+    FocusManager.instance.primaryFocus?.unfocus();
+
     // ============================================================
     // PENTING:
     // Ambil text SEKALI sebelum await.
@@ -175,6 +177,7 @@ class LoginController extends GetxController {
       void navigate() {
         if (!hasNavigated) {
           hasNavigated = true;
+          FocusManager.instance.primaryFocus?.unfocus();
           Get.offAllNamed(destination);
         }
       }
@@ -217,6 +220,8 @@ class LoginController extends GetxController {
 
   Future<void> loginWithGoogle() async {
     if (isLoading.value || isGoogleLoading.value || isClosed) return;
+
+    FocusManager.instance.primaryFocus?.unfocus();
 
     isLoading.value = true;
     isGoogleLoading.value = true;

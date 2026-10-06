@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
@@ -29,6 +30,24 @@ class SignVideoPlayerWidget extends StatelessWidget {
       // ── 2. KONDISI VIDEO REMOTE PERLU DIUNDUH ──────────────────────────────
       if (entry.source == SignVideoSource.remote) {
         return _buildRemoteDownloadCard(context, entry, isDark);
+      }
+
+      // ── 2.1 JIKA LOCAL CACHED TAPI FILE TIDAK ADA DI DISK (MISAL DIHAPUS DARI CACHE) ──
+      if (entry.source == SignVideoSource.localCached) {
+        final cachedPath = entry.cachedFilePath;
+        if (cachedPath == null || !File(cachedPath).existsSync()) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            controller.refreshCurrentEntrySource();
+          });
+          return _buildRemoteDownloadCard(
+            context,
+            entry.copyWith(
+              source: SignVideoSource.remote,
+              cachedFilePath: null,
+            ),
+            isDark,
+          );
+        }
       }
 
       // ── 3. KONDISI VIDEO SEDANG MEMUAT / INITIALIZING ──────────────────────

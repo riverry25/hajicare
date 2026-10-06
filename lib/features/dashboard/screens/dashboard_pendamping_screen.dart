@@ -1341,6 +1341,7 @@ class _PilgrimsPillsSectionState extends State<_PilgrimsPillsSection>
   bool _searchOpen = false;
   String _query = '';
   final TextEditingController _textCtrl = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
   late final AnimationController _animCtrl;
   late final Animation<double> _widthAnim;
 
@@ -1356,6 +1357,7 @@ class _PilgrimsPillsSectionState extends State<_PilgrimsPillsSection>
 
   @override
   void dispose() {
+    _searchFocusNode.dispose();
     _animCtrl.dispose();
     _textCtrl.dispose();
     super.dispose();
@@ -1366,8 +1368,10 @@ class _PilgrimsPillsSectionState extends State<_PilgrimsPillsSection>
       _searchOpen = !_searchOpen;
       if (_searchOpen) {
         _animCtrl.forward();
+        _searchFocusNode.requestFocus();
       } else {
         _animCtrl.reverse();
+        _searchFocusNode.unfocus();
         _query = '';
         _textCtrl.clear();
       }
@@ -1436,7 +1440,7 @@ class _PilgrimsPillsSectionState extends State<_PilgrimsPillsSection>
                     height: 32,
                     child: TextField(
                       controller: _textCtrl,
-                      autofocus: true,
+                      focusNode: _searchFocusNode,
                       onChanged: (v) =>
                           setState(() => _query = v.toLowerCase()),
                       style: TextStyle(

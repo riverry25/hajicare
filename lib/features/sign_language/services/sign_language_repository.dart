@@ -842,6 +842,7 @@ class SignLanguageRepository {
   Future<void> downloadCategory({
     required String category,
     required String language,
+    CancelToken? cancelToken,
     void Function(int completed, int total, double progress)? onProgress,
   }) async {
     final cleanCategory = category.toLowerCase().trim();
@@ -864,9 +865,14 @@ class SignLanguageRepository {
 
     int completed = 0;
     for (final video in categoryVideos) {
+      if (cancelToken?.isCancelled ?? false) {
+        debugPrint('[SignRepo] Category download cancelled by user: $category');
+        break;
+      }
       try {
         await downloadVideo(
           video,
+          cancelToken: cancelToken,
           onProgress: (videoProgress) {
             final overallProgress = (completed + videoProgress) / total;
             onProgress?.call(completed, total, overallProgress);
@@ -874,6 +880,10 @@ class SignLanguageRepository {
         );
         completed++;
       } catch (e) {
+        if (cancelToken?.isCancelled ?? false) {
+          debugPrint('[SignRepo] Cancelled during video ${video.id}');
+          rethrow;
+        }
         debugPrint('[SignRepo] Failed to download video ${video.id}: $e');
         // Lanjutkan download video lain dalam kategori meski satu video gagal
       }

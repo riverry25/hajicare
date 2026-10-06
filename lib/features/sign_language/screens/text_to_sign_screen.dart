@@ -24,6 +24,9 @@ class _TextToSignScreenState extends State<TextToSignScreen>
   late final TextToSignController controller;
   late final AnimationController _pulseController;
   late final Animation<double> _pulseAnimation;
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _videoPlayerKey = GlobalKey();
+  final GlobalKey _vocabSectionKey = GlobalKey();
 
   @override
   void initState() {
@@ -44,8 +47,41 @@ class _TextToSignScreenState extends State<TextToSignScreen>
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _pulseController.dispose();
     super.dispose();
+  }
+
+  void _scrollToVideoPlayer() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_videoPlayerKey.currentContext != null) {
+        Scrollable.ensureVisible(
+          _videoPlayerKey.currentContext!,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOutCubic,
+          alignment: 0.05,
+        );
+      } else if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          0.0,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOutCubic,
+        );
+      }
+    });
+  }
+
+  void _scrollToVocabularySection() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_vocabSectionKey.currentContext != null) {
+        Scrollable.ensureVisible(
+          _vocabSectionKey.currentContext!,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOutCubic,
+          alignment: 0.05,
+        );
+      }
+    });
   }
 
   void _showCacheOptionsDialog(BuildContext context) {
@@ -171,20 +207,39 @@ class _TextToSignScreenState extends State<TextToSignScreen>
             : AppColors.surfaceWhite,
         elevation: 0,
         scrolledUnderElevation: 1,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        title: Row(
           children: [
-            Text(
-              'Teks ke Isyarat',
-              style: AppTypography.titleLarge.copyWith(
-                color: headingColor,
-                fontWeight: FontWeight.bold,
+            Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: AppColors.goldPrimary.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.record_voice_over_rounded,
+                color: AppColors.goldPrimary,
+                size: 20,
               ),
             ),
-            Text(
-              'Penerjemah Video SIBI & BISINDO',
-              style: AppTypography.captionSmall.copyWith(
-                color: AppColors.textMuted,
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Teks & Suara ke Isyarat',
+                    style: AppTypography.titleLarge.copyWith(
+                      color: headingColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    'Penerjemah Video SIBI & BISINDO',
+                    style: AppTypography.captionSmall.copyWith(
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -198,6 +253,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
         ],
       ),
       body: SingleChildScrollView(
+        controller: _scrollController,
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md,
           vertical: AppSpacing.md,
@@ -260,7 +316,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
             }),
 
             // ── 5. MAIN VIDEO PLAYER AREA ────────────────────────────────────
-            SignVideoPlayerWidget(controller: controller),
+            SignVideoPlayerWidget(key: _videoPlayerKey, controller: controller),
 
             // ── 5.1 CANDIDATES SELECTOR (JIKA LEBIH DARI 1 KATA TERDETEKSI) ──
             Obx(() {
@@ -466,21 +522,46 @@ class _TextToSignScreenState extends State<TextToSignScreen>
   // ── 2. SEARCH INPUT CARD ───────────────────────────────────────────────────
 
   Widget _buildSearchInputCard(BuildContext context, bool isDark) {
-    return AppCard(
-      borderColor: Colors.transparent,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(
+          color: isDark
+              ? AppColors.darkOutlineVariant.withValues(alpha: 0.6)
+              : AppColors.canvasCreamSubtle,
+          width: 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.2)
+                : AppColors.primary.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Row(
         children: [
           Icon(
             Icons.translate_rounded,
             color: isDark ? AppColors.goldLight : AppColors.goldPrimary,
-            size: 24,
+            size: 22,
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: TextField(
               controller: controller.textController,
               focusNode: controller.searchFocusNode,
+              cursorColor: AppColors.goldPrimary,
+              style: AppTypography.bodyLarge.copyWith(
+                fontWeight: FontWeight.w600,
+                color: isDark
+                    ? AppColors.darkTextHeading
+                    : AppColors.textHeading,
+              ),
               decoration: InputDecoration(
                 hintText: controller.selectedLanguage.value == 'sibi'
                     ? 'Ketik kata misal: Masjid, Bantu, Dokter, Obat, Sakit...'
@@ -493,11 +574,10 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(vertical: 8),
                 hintStyle: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.textMuted,
+                  color: isDark
+                      ? AppColors.darkTextBody.withValues(alpha: 0.6)
+                      : AppColors.textMuted,
                 ),
-              ),
-              style: AppTypography.bodyLarge.copyWith(
-                fontWeight: FontWeight.w600,
               ),
               textInputAction: TextInputAction.search,
               onSubmitted: (val) {
@@ -1256,88 +1336,26 @@ class _TextToSignScreenState extends State<TextToSignScreen>
         const SizedBox(height: AppSpacing.md),
 
         Obx(() {
-          final lang = controller.selectedLanguage.value;
-          final List<Widget> cards;
-          if (lang == 'sibi') {
-            cards = [
-              _buildPackageCard(
-                context: context,
-                title: 'Paket Kesehatan',
-                subtitle: 'Dokter, Obat',
-                category: 'health',
-                icon: Icons.local_hospital_rounded,
-                isDark: isDark,
-              ),
-              _buildPackageCard(
-                context: context,
-                title: 'Paket Umum & Darurat',
-                subtitle: 'Beli, Hilang, Segera, Sesat',
-                category: 'general',
-                icon: Icons.warning_amber_rounded,
-                isDark: isDark,
-              ),
-              _buildPackageCard(
-                context: context,
-                title: 'Paket Pertanyaan',
-                subtitle: 'Mana',
-                category: 'question',
-                icon: Icons.help_outline_rounded,
-                isDark: isDark,
-              ),
-            ];
-          } else {
-            cards = [
-              _buildPackageCard(
-                context: context,
-                title: 'Paket Alfabet Cloud',
-                subtitle: 'Huruf F s/d Z (21 Huruf)',
-                category: 'alphabet',
-                icon: Icons.spellcheck_rounded,
-                isDark: isDark,
-              ),
-              _buildPackageCard(
-                context: context,
-                title: 'Paket Pertanyaan',
-                subtitle: 'Berapa, Kapan, Kemana, Siapa',
-                category: 'question',
-                icon: Icons.help_outline_rounded,
-                isDark: isDark,
-              ),
-              _buildPackageCard(
-                context: context,
-                title: 'Paket Kata Ganti',
-                subtitle: 'Kalian, Kami, Kamu, Kita',
-                category: 'pronoun',
-                icon: Icons.people_outline_rounded,
-                isDark: isDark,
-              ),
-              _buildPackageCard(
-                context: context,
-                title: 'Paket Gerakan',
-                subtitle: 'Berdiri, Duduk',
-                category: 'movement',
-                icon: Icons.accessibility_new_rounded,
-                isDark: isDark,
-              ),
-              _buildPackageCard(
-                context: context,
-                title: 'Paket Umum',
-                subtitle: 'Baik',
-                category: 'general',
-                icon: Icons.thumb_up_alt_rounded,
-                isDark: isDark,
-              ),
-            ];
+          final packages = controller.dynamicPackageCategories;
+          if (packages.isEmpty) {
+            return const SizedBox.shrink();
           }
+
           return SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: cards
+              children: packages
                   .map(
-                    (card) => Container(
-                      width: 175,
+                    (pkg) => Container(
+                      width: 220,
+                      height: 205,
                       margin: const EdgeInsets.only(right: AppSpacing.sm),
-                      child: card,
+                      child: _buildDynamicPackageCard(
+                        context: context,
+                        package: pkg,
+                        isDark: isDark,
+                        headingColor: headingColor,
+                      ),
                     ),
                   )
                   .toList(),
@@ -1348,25 +1366,48 @@ class _TextToSignScreenState extends State<TextToSignScreen>
     );
   }
 
-  Widget _buildPackageCard({
+  Widget _buildDynamicPackageCard({
     required BuildContext context,
-    required String title,
-    required String subtitle,
-    required String category,
-    required IconData icon,
+    required CategoryPackageInfo package,
     required bool isDark,
+    required Color headingColor,
   }) {
-    final headingColor = AppColors.textHeadingColor(context);
-
     return Obx(() {
-      final isDownloading = controller.categoryDownloading[category] == true;
-      final progress = controller.categoryDownloadProgress[category] ?? 0.0;
+      final isDownloading =
+          controller.categoryDownloading[package.category] == true;
+      final progress =
+          controller.categoryDownloadProgress[package.category] ?? 0.0;
+      final isFullyDownloaded = package.isFullyDownloaded;
 
-      return AppCard(
+      return Container(
         padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: isDark
+              ? AppColors.darkSurfaceContainer
+              : AppColors.surfaceWhite,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(
+            color: isDownloading
+                ? AppColors.goldPrimary
+                : (isDark
+                      ? AppColors.darkOutlineVariant.withValues(alpha: 0.6)
+                      : AppColors.cardBorderColor(context)),
+            width: isDownloading ? 1.5 : 1.0,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.2)
+                  : AppColors.primary.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Row Header: Icon + Status Pill
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -1379,7 +1420,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: Icon(
-                    icon,
+                    package.icon,
                     size: 20,
                     color: isDark ? AppColors.goldLight : AppColors.goldPrimary,
                   ),
@@ -1392,51 +1433,226 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                       strokeWidth: 2,
                       color: AppColors.goldPrimary,
                     ),
+                  )
+                else if (isFullyDownloaded)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.statusSafe.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.check_circle_rounded,
+                          size: 13,
+                          color: AppColors.statusSafe,
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          'Offline',
+                          style: AppTypography.captionSmall.copyWith(
+                            color: AppColors.statusSafe,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.goldPrimary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    child: Text(
+                      '${package.remoteCount} Cloud',
+                      style: AppTypography.captionSmall.copyWith(
+                        color: isDark
+                            ? AppColors.goldLight
+                            : AppColors.goldPrimary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 10,
+                      ),
+                    ),
                   ),
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
+
+            // Judul Paket
             Text(
-              title,
+              package.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: AppTypography.bodyMedium.copyWith(
                 fontWeight: FontWeight.bold,
                 color: headingColor,
               ),
             ),
-            Text(
-              subtitle,
-              style: AppTypography.captionSmall.copyWith(
-                color: AppColors.textMuted,
+            const SizedBox(height: 2),
+
+            // Subtitle / Preview isi kosakata
+            Expanded(
+              child: Text(
+                package.subtitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.captionSmall.copyWith(
+                  color: AppColors.textMuted,
+                  height: 1.25,
+                ),
               ),
             ),
-            const SizedBox(height: AppSpacing.md),
-            SizedBox(
-              width: double.infinity,
-              height: 36,
-              child: ElevatedButton(
-                onPressed: isDownloading
-                    ? null
-                    : () => controller.downloadCategoryPackage(category),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryContainer,
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.zero,
-                  shape: RoundedRectangleBorder(
+            const SizedBox(height: AppSpacing.sm),
+
+            // Tombol Aksi Bawah
+            if (isDownloading)
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          child: LinearProgressIndicator(
+                            value: progress > 0 ? progress : null,
+                            minHeight: 4,
+                            backgroundColor: AppColors.goldPrimary.withValues(
+                              alpha: 0.2,
+                            ),
+                            valueColor: const AlwaysStoppedAnimation(
+                              AppColors.goldPrimary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${(progress * 100).toInt()}% Mengunduh',
+                          style: AppTypography.captionSmall.copyWith(
+                            fontSize: 10,
+                            color: isDark
+                                ? AppColors.goldLight
+                                : AppColors.espressoDark,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: () => controller.cancelCategoryPackageDownload(
+                      package.category,
+                    ),
                     borderRadius: BorderRadius.circular(AppRadius.pill),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.sosEmergency.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        border: Border.all(
+                          color: AppColors.sosEmergency.withValues(alpha: 0.35),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.close_rounded,
+                            size: 13,
+                            color: AppColors.sosEmergency,
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            'Batal',
+                            style: AppTypography.captionSmall.copyWith(
+                              color: AppColors.sosEmergency,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  elevation: 0,
+                ],
+              )
+            else if (isFullyDownloaded)
+              Container(
+                width: double.infinity,
+                height: 36,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.statusSafe.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  border: Border.all(
+                    color: AppColors.statusSafe.withValues(alpha: 0.3),
+                  ),
                 ),
-                child: Text(
-                  isDownloading
-                      ? '${(progress * 100).toInt()}%'
-                      : 'Unduh Paket',
-                  style: AppTypography.captionSmall.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.check_circle_outline_rounded,
+                      size: 14,
+                      color: AppColors.statusSafe,
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        'Tersimpan Lengkap',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.captionSmall.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.statusSafe,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              SizedBox(
+                width: double.infinity,
+                height: 36,
+                child: ElevatedButton(
+                  onPressed: () =>
+                      controller.downloadCategoryPackage(package.category),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryContainer,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    'Unduh Paket (${package.remoteCount})',
+                    style: AppTypography.captionSmall.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
-            ),
           ],
         ),
       );
@@ -1451,170 +1667,124 @@ class _TextToSignScreenState extends State<TextToSignScreen>
     Color headingColor,
     Color bodyColor,
   ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                Text(
-                  'Daftar Kosakata',
-                  style: AppTypography.titleMedium.copyWith(
-                    color: headingColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Obx(
-                  () => Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.goldPrimary.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                    ),
-                    child: Text(
-                      '${controller.availableVideos.length} Video',
-                      style: AppTypography.captionSmall.copyWith(
-                        color: isDark
-                            ? AppColors.goldLight
-                            : AppColors.goldPrimary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 10,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            IconButton(
-              icon: const Icon(Icons.refresh_rounded, size: 20),
-              tooltip: 'Perbarui Daftar',
-              onPressed: () =>
-                  controller.loadAvailableVideos(forceRefresh: true),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.xs),
-
-        Obx(() {
-          if (controller.isLoadingVideos.value) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(AppSpacing.lg),
-                child: CircularProgressIndicator(color: AppColors.goldPrimary),
-              ),
-            );
-          }
-
-          final allVideos = controller.availableVideos;
-          if (allVideos.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                child: Text(
-                  'Belum ada video tersedia.',
-                  style: AppTypography.bodySmall.copyWith(color: bodyColor),
-                ),
-              ),
-            );
-          }
-
-          final paginatedVideos = controller.paginatedVocabulary;
-          final totalPages = controller.totalVocabPages;
-          final currentPage = controller.currentVocabPage.value;
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      key: _vocabSectionKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: paginatedVideos.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 8),
-                itemBuilder: (context, index) {
-                  final video = paginatedVideos[index];
-                  return _buildVocabularyTile(
-                    context,
-                    video,
-                    isDark,
-                    headingColor,
-                  );
-                },
-              ),
-              if (totalPages > 1) ...[
-                const SizedBox(height: AppSpacing.md),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkSurfaceContainer
-                        : AppColors.surfaceWhite,
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(
-                      color: isDark
-                          ? AppColors.darkOutlineVariant
-                          : AppColors.cardBorderColor(context),
+              Row(
+                children: [
+                  Text(
+                    'Daftar Kosakata',
+                    style: AppTypography.titleMedium.copyWith(
+                      color: headingColor,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  const SizedBox(width: 8),
+                  Obx(() {
+                    final queryActive =
+                        controller.currentQuery.value.trim().isNotEmpty;
+                    final filteredCount = controller.filteredVocabulary.length;
+                    final totalCount = controller.availableVideos.length;
+
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.goldPrimary.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      child: Text(
+                        queryActive
+                            ? '$filteredCount dari $totalCount Video'
+                            : '$totalCount Video',
+                        style: AppTypography.captionSmall.copyWith(
+                          color: isDark
+                              ? AppColors.goldLight
+                              : AppColors.goldPrimary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              ),
+              IconButton(
+                icon: const Icon(Icons.refresh_rounded, size: 20),
+                tooltip: 'Perbarui Daftar',
+                onPressed: () =>
+                    controller.loadAvailableVideos(forceRefresh: true),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+
+          Obx(() {
+            if (controller.isLoadingVideos.value) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(AppSpacing.lg),
+                  child: CircularProgressIndicator(color: AppColors.goldPrimary),
+                ),
+              );
+            }
+
+            final allVideos = controller.availableVideos;
+            if (allVideos.isEmpty) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Text(
+                    'Belum ada video tersedia.',
+                    style: AppTypography.bodySmall.copyWith(color: bodyColor),
+                  ),
+                ),
+              );
+            }
+
+            final filteredList = controller.filteredVocabulary;
+            if (filteredList.isEmpty) {
+              final query = controller.currentQuery.value.trim();
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: AppSpacing.lg,
+                    horizontal: AppSpacing.md,
+                  ),
+                  child: Column(
                     children: [
+                      Icon(
+                        Icons.search_off_rounded,
+                        size: 40,
+                        color: AppColors.textMuted,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Tidak ada kosakata yang cocok dengan "$query"',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: bodyColor,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
                       OutlinedButton.icon(
-                        onPressed: currentPage > 1
-                            ? () => controller.previousVocabPage()
-                            : null,
-                        icon: const Icon(Icons.chevron_left_rounded, size: 18),
+                        onPressed: () => controller.clearSearch(),
+                        icon: const Icon(Icons.refresh_rounded, size: 16),
                         label: const Text(
-                          'Sebelumnya',
+                          'Tampilkan Semua Kosakata',
                           style: TextStyle(fontSize: 12),
                         ),
                         style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          visualDensity: VisualDensity.compact,
                           foregroundColor: isDark
                               ? AppColors.goldLight
-                              : AppColors.espressoDark,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                          ),
-                        ),
-                      ),
-                      Text(
-                        'Hal $currentPage dari $totalPages',
-                        style: AppTypography.captionSmall.copyWith(
-                          color: headingColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: currentPage < totalPages
-                            ? () => controller.nextVocabPage()
-                            : null,
-                        icon: const Icon(Icons.chevron_right_rounded, size: 18),
-                        label: const Text(
-                          'Selanjutnya',
-                          style: TextStyle(fontSize: 12),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          visualDensity: VisualDensity.compact,
-                          backgroundColor: AppColors.goldPrimary,
-                          foregroundColor: AppColors.espressoDark,
-                          elevation: 0,
+                              : AppColors.goldDark,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(AppRadius.pill),
                           ),
@@ -1623,74 +1793,339 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                     ],
                   ),
                 ),
+              );
+            }
+
+            final paginatedVideos = controller.paginatedVocabulary;
+            final totalPages = controller.totalVocabPages;
+            final currentPage = controller.currentVocabPage.value.clamp(
+              1,
+              totalPages,
+            );
+
+            final totalItems = filteredList.length;
+            final startItem = (currentPage - 1) * TextToSignController.vocabPageSize + 1;
+            final endItem = (startItem + paginatedVideos.length - 1).clamp(
+              startItem,
+              totalItems,
+            );
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ListView.separated(
+                  key: ValueKey(
+                    'vocab_list_p_${currentPage}_${controller.currentQuery.value}',
+                  ),
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: paginatedVideos.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final video = paginatedVideos[index];
+                    return _buildVocabularyTile(
+                      context,
+                      video,
+                      isDark,
+                      headingColor,
+                      key: ValueKey('vocab_item_${video.id}'),
+                    );
+                  },
+                ),
+                if (totalPages > 1) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.darkSurfaceContainer
+                          : AppColors.surfaceWhite,
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(
+                        color: isDark
+                            ? AppColors.darkOutlineVariant
+                            : AppColors.cardBorderColor(context),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(
+                            alpha: isDark ? 0.2 : 0.04,
+                          ),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Menampilkan $startItem–$endItem dari $totalItems kosakata',
+                              style: AppTypography.captionSmall.copyWith(
+                                color: isDark
+                                    ? AppColors.darkTextBody
+                                    : AppColors.textSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Text(
+                              'Halaman $currentPage / $totalPages',
+                              style: AppTypography.captionSmall.copyWith(
+                                color: isDark
+                                    ? AppColors.goldLight
+                                    : AppColors.goldDark,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            IconButton(
+                              onPressed: currentPage > 1
+                                  ? () {
+                                      controller.previousVocabPage();
+                                      _scrollToVocabularySection();
+                                    }
+                                  : null,
+                              icon: const Icon(Icons.chevron_left_rounded),
+                              tooltip: 'Halaman Sebelumnya',
+                              style: IconButton.styleFrom(
+                                visualDensity: VisualDensity.compact,
+                                foregroundColor: isDark
+                                    ? AppColors.goldLight
+                                    : AppColors.espressoDark,
+                                disabledForegroundColor: isDark
+                                    ? Colors.white24
+                                    : Colors.black26,
+                              ),
+                            ),
+                            Expanded(
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: _buildPageChips(
+                                    totalPages: totalPages,
+                                    currentPage: currentPage,
+                                    isDark: isDark,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: currentPage < totalPages
+                                  ? () {
+                                      controller.nextVocabPage();
+                                      _scrollToVocabularySection();
+                                    }
+                                  : null,
+                              icon: const Icon(Icons.chevron_right_rounded),
+                              tooltip: 'Halaman Selanjutnya',
+                              style: IconButton.styleFrom(
+                                visualDensity: VisualDensity.compact,
+                                foregroundColor: isDark
+                                    ? AppColors.goldLight
+                                    : AppColors.espressoDark,
+                                disabledForegroundColor: isDark
+                                    ? Colors.white24
+                                    : Colors.black26,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
-            ],
-          );
-        }),
-      ],
+            );
+          }),
+        ],
+      ),
     );
+  }
+
+  List<Widget> _buildPageChips({
+    required int totalPages,
+    required int currentPage,
+    required bool isDark,
+  }) {
+    final chips = <Widget>[];
+
+    for (int p = 1; p <= totalPages; p++) {
+      final isCurrent = p == currentPage;
+      final showChip = totalPages <= 7 ||
+          p == 1 ||
+          p == totalPages ||
+          (p >= currentPage - 1 && p <= currentPage + 1);
+
+      if (showChip) {
+        final pageNum = p;
+        chips.add(
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 3),
+            child: InkWell(
+              onTap: () {
+                if (pageNum != currentPage) {
+                  controller.goToVocabPage(pageNum);
+                  _scrollToVocabularySection();
+                }
+              },
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: isCurrent
+                      ? AppColors.goldPrimary
+                      : (isDark
+                          ? AppColors.darkPrimaryContainer
+                          : AppColors.canvasCream),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  border: Border.all(
+                    color: isCurrent
+                        ? AppColors.goldPrimary
+                        : (isDark
+                            ? AppColors.darkOutlineVariant
+                            : AppColors.canvasCreamSubtle),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  '$pageNum',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight:
+                        isCurrent ? FontWeight.bold : FontWeight.w500,
+                    color: isCurrent
+                        ? AppColors.espressoDark
+                        : (isDark
+                            ? AppColors.goldLight
+                            : AppColors.textHeading),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      } else if ((p == 2 && currentPage > 3) ||
+          (p == totalPages - 1 && currentPage < totalPages - 2)) {
+        chips.add(
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 2),
+            child: Text(
+              '…',
+              style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+            ),
+          ),
+        );
+      }
+    }
+
+    return chips;
   }
 
   Widget _buildVocabularyTile(
     BuildContext context,
     SignVideoEntry video,
     bool isDark,
-    Color headingColor,
-  ) {
-    final isSelected = controller.currentEntry.value?.id == video.id;
+    Color headingColor, {
+    Key? key,
+  }) {
+    return Obx(
+      key: key,
+      () {
+        final isSelected = controller.currentEntry.value?.id == video.id;
 
-    return AppCard(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      onTap: () {
-        controller.textController.text = video.label;
-        controller.playEntry(video);
-      },
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
+
+      return Material(
+        color: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: InkWell(
+          onTap: () {
+            controller.selectVocabularyItem(video);
+            _scrollToVideoPlayer();
+          },
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: isSelected
-                  ? AppColors.goldPrimary.withValues(alpha: 0.2)
-                  : (isDark
-                        ? AppColors.darkPrimaryContainer
-                        : AppColors.canvasCream),
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(
+                color: isSelected
+                    ? AppColors.goldPrimary
+                    : (isDark
+                          ? AppColors.darkOutlineVariant.withValues(alpha: 0.6)
+                          : AppColors.canvasCreamSubtle),
+                width: isSelected ? 1.5 : 1.0,
+              ),
             ),
-            child: Icon(
-              isSelected ? Icons.play_arrow_rounded : Icons.videocam_rounded,
-              color: isSelected
-                  ? AppColors.goldPrimary
-                  : (isDark ? AppColors.goldLight : AppColors.espressoDark),
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Text(
-                  video.label,
-                  style: AppTypography.bodyLarge.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: isSelected ? AppColors.goldPrimary : headingColor,
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.goldPrimary.withValues(alpha: 0.2)
+                        : (isDark
+                              ? AppColors.darkPrimaryContainer
+                              : AppColors.canvasCream),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isSelected
+                        ? Icons.play_arrow_rounded
+                        : Icons.videocam_rounded,
+                    color: isSelected
+                        ? AppColors.goldPrimary
+                        : (isDark
+                              ? AppColors.goldLight
+                              : AppColors.espressoDark),
+                    size: 22,
                   ),
                 ),
-                Text(
-                  'Kategori: ${video.category.toUpperCase()} • Tipe: ${video.type.toUpperCase()}',
-                  style: AppTypography.captionSmall.copyWith(
-                    color: AppColors.textMuted,
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        video.label,
+                        style: AppTypography.bodyLarge.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: isSelected
+                              ? AppColors.goldPrimary
+                              : headingColor,
+                        ),
+                      ),
+                      Text(
+                        'Kategori: ${video.category.toUpperCase()} • Tipe: ${video.type.toUpperCase()}',
+                        style: AppTypography.captionSmall.copyWith(
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                _buildSourcePill(video.source),
               ],
             ),
           ),
-          _buildSourcePill(video.source),
-        ],
-      ),
-    );
+        ),
+      );
+    });
   }
 
   Widget _buildSourcePill(SignVideoSource source) {

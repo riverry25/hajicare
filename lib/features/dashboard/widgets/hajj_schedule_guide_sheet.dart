@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../presentation/dashboard_typography.dart';
+import '../services/hajj_guide_service.dart';
 
 /// Model representing a Hajj stage milestone in the journey path.
 class HajjStageItem {
@@ -46,9 +47,14 @@ class HajjScheduleGuideSheet extends StatefulWidget {
 
 class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
   final ScrollController _scrollController = ScrollController();
-  final Set<String> _completedStageIds = {'tarwiyah'};
-  final Set<String> _expandedStageIds = {'tarwiyah'};
+  late final HajjGuideService _guideService;
   int _selectedStageIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _guideService = HajjGuideService.instance;
+  }
 
   @override
   void dispose() {
@@ -169,26 +175,26 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
     ];
   }
 
-  void _toggleStageCompletion(String id) {
+  void _toggleStageCompletion(String id, {List<String>? deeds}) {
     HapticFeedback.lightImpact();
-    setState(() {
-      if (_completedStageIds.contains(id)) {
-        _completedStageIds.remove(id);
-      } else {
-        _completedStageIds.add(id);
-      }
-    });
+    _guideService.toggleStage(id, stageDeeds: deeds);
+    setState(() {});
+  }
+
+  void _toggleDeedCompletion(
+    String stageId,
+    String deed, {
+    List<String>? allDeeds,
+  }) {
+    HapticFeedback.selectionClick();
+    _guideService.toggleDeed(stageId, deed, allStageDeeds: allDeeds);
+    setState(() {});
   }
 
   void _toggleStageExpansion(String id) {
     HapticFeedback.selectionClick();
-    setState(() {
-      if (_expandedStageIds.contains(id)) {
-        _expandedStageIds.remove(id);
-      } else {
-        _expandedStageIds.add(id);
-      }
-    });
+    _guideService.toggleExpansion(id);
+    setState(() {});
   }
 
   void _scrollToStage(int index) {
@@ -218,7 +224,7 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
         : AppColors.textHeading;
     final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
     final stages = _getStages(context);
-    final completedCount = _completedStageIds.length;
+    final completedCount = _guideService.completedStageIds.length;
     final totalCount = stages.length;
     final progressFraction = totalCount > 0 ? completedCount / totalCount : 0.0;
 
@@ -366,9 +372,9 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
                   final stage = stages[index];
                   final isFirst = index == 0;
                   final isLast = index == stages.length - 1;
-                  final isCompleted = _completedStageIds.contains(stage.id);
+                  final isCompleted = _guideService.isStageCompleted(stage.id);
                   final isSelected = _selectedStageIndex == index;
-                  final isExpanded = _expandedStageIds.contains(stage.id);
+                  final isExpanded = _guideService.isStageExpanded(stage.id);
 
                   return _buildTimelineStageRow(
                     context: context,
@@ -554,7 +560,7 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
     required Color headingColor,
     required Color bodyColor,
   }) {
-    final isCompleted = _completedStageIds.contains(stage.id);
+    final isCompleted = _guideService.isStageCompleted(stage.id);
     final isSelected = _selectedStageIndex == index;
 
     return InkWell(
@@ -966,46 +972,86 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
                     ),
                     const SizedBox(height: 12),
 
-                    // Sub-deeds Micro-tags (Clean borderless pastel pills, no heavy nested card clutter)
+                    // Sub-deeds Micro-tags (Interactive per-deed checkboxes)
                     Wrap(
                       spacing: 6,
                       runSpacing: 6,
                       children: stage.deeds.map((deed) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
+                        final isDeedDone = _guideService.isDeedCompleted(
+                          stage.id,
+                          deed,
+                        );
+                        return InkWell(
+                          onTap: () => _toggleDeedCompletion(
+                            stage.id,
+                            deed,
+                            allDeeds: stage.deeds,
                           ),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? AppColors.darkSurfaceContainerHighest
-                                      .withValues(alpha: 0.6)
-                                : Colors.white.withValues(alpha: 0.85),
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.check_circle_rounded,
-                                size: 12,
-                                color: isCompleted
-                                    ? AppColors.emeraldIslamic
-                                    : stageColor,
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isDeedDone
+                                  ? AppColors.emeraldIslamic.withValues(
+                                      alpha: isDark ? 0.2 : 0.12,
+                                    )
+                                  : (isDark
+                                        ? AppColors.darkSurfaceContainerHighest
+                                              .withValues(alpha: 0.6)
+                                        : Colors.white.withValues(alpha: 0.85)),
+                              borderRadius: BorderRadius.circular(AppRadius.pill),
+                              border: Border.all(
+                                color: isDeedDone
+                                    ? AppColors.emeraldIslamic.withValues(
+                                        alpha: 0.5,
+                                      )
+                                    : (isDark
+                                          ? AppColors.darkOutlineVariant
+                                                .withValues(alpha: 0.3)
+                                          : AppColors.outlineVariant.withValues(
+                                              alpha: 0.4,
+                                            )),
                               ),
-                              const SizedBox(width: 5),
-                              Flexible(
-                                child: Text(
-                                  deed,
-                                  softWrap: true,
-                                  style: TextStyle(
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: headingColor.withValues(alpha: 0.85),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  isDeedDone
+                                      ? Icons.check_circle_rounded
+                                      : Icons.radio_button_unchecked_rounded,
+                                  size: 12,
+                                  color: isDeedDone
+                                      ? AppColors.emeraldIslamic
+                                      : stageColor.withValues(alpha: 0.7),
+                                ),
+                                const SizedBox(width: 5),
+                                Flexible(
+                                  child: Text(
+                                    deed,
+                                    softWrap: true,
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: isDeedDone
+                                          ? AppColors.emeraldIslamic
+                                          : headingColor.withValues(alpha: 0.85),
+                                      decoration: isDeedDone
+                                          ? TextDecoration.lineThrough
+                                          : null,
+                                      decorationColor:
+                                          AppColors.emeraldIslamic.withValues(
+                                        alpha: 0.6,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         );
                       }).toList(),

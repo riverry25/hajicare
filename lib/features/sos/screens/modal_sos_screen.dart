@@ -161,14 +161,19 @@ class _ModalSosScreenState extends State<ModalSosScreen>
               ),
             ),
             const SizedBox(width: 8),
-            Text(
-              context.tr('sosCenterTitle'),
-              style: AppTypography.headlineMedium.copyWith(
-                color: headingColor,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
+            Expanded(
+              child: Text(
+                context.tr('sosCenterTitle'),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.headlineMedium.copyWith(
+                  color: headingColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
               ),
             ),
+            const SizedBox(width: 10),
           ],
         ),
         actions: [
@@ -176,7 +181,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
             final activeCount = state.activeSosCount.value;
             if (activeCount <= 0) return const SizedBox.shrink();
             return Container(
-              margin: const EdgeInsets.only(right: 16),
+              margin: const EdgeInsets.only(right: 16, left: 4),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: AppColors.sosEmergency,

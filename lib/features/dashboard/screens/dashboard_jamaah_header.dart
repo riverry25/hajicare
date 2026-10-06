@@ -223,7 +223,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
 
           // ── 3 Key Metrics Columns ────────────────────────────────
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _buildMoneyRecognitionMetric(context),
               _buildMetricColumn(

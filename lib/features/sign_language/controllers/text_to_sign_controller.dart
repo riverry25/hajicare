@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
@@ -6,6 +7,28 @@ import '../../translator/services/speech_service.dart';
 import '../models/sign_video_entry.dart';
 import '../services/sign_language_asset_registry.dart';
 import '../services/sign_language_repository.dart';
+
+/// Metadata paket kategori yang dihitung secara dinamis
+class CategoryPackageInfo {
+  final String category;
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final int totalCount;
+  final int remoteCount;
+
+  const CategoryPackageInfo({
+    required this.category,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.totalCount,
+    required this.remoteCount,
+  });
+
+  bool get isAllDownloaded => remoteCount == 0;
+  bool get isFullyDownloaded => remoteCount == 0;
+}
 
 /// Controller GetX untuk fitur Text-to-Sign Language (SIBI & BISINDO).
 class TextToSignController extends GetxController {
@@ -132,6 +155,7 @@ class TextToSignController extends GetxController {
   // ── CATEGORY PACKAGE DOWNLOAD STATE ──────────────────────────────────────
   final RxMap<String, double> categoryDownloadProgress = <String, double>{}.obs;
   final RxMap<String, bool> categoryDownloading = <String, bool>{}.obs;
+  final Map<String, CancelToken> _categoryCancelTokens = {};
 
   @override
   void onInit() {
@@ -192,6 +216,7 @@ class TextToSignController extends GetxController {
   /// Memperbarui query pencarian dan memfilter saran kosakata (autocomplete).
   void updateSearchQuery(String text) {
     currentQuery.value = text;
+    currentVocabPage.value = 1;
     final clean = text.trim().toLowerCase();
 
     if (clean.isEmpty) {
@@ -251,6 +276,7 @@ class TextToSignController extends GetxController {
       TextPosition(offset: suggestion.length),
     );
     currentQuery.value = suggestion;
+    currentVocabPage.value = 1;
     showSuggestions.value = false;
     searchSuggestions.clear();
     searchFocusNode.unfocus();
@@ -266,6 +292,7 @@ class TextToSignController extends GetxController {
   void clearSearch() {
     textController.clear();
     currentQuery.value = '';
+    currentVocabPage.value = 1;
     searchSuggestions.clear();
     showSuggestions.value = false;
     searchSign('');
@@ -454,9 +481,110 @@ class TextToSignController extends GetxController {
 
   // ── 5. DOWNLOAD PAKET KATEGORI OFFLINE ────────────────────────────────────
 
+  /// Menghasilkan daftar kategori paket secara dinamis berdasarkan video yang ada
+  List<CategoryPackageInfo> get dynamicPackageCategories {
+    final Map<String, List<SignVideoEntry>> grouped = {};
+    for (final v in availableVideos) {
+      grouped.putIfAbsent(v.category.toLowerCase().trim(), () => []).add(v);
+    }
+
+    final List<CategoryPackageInfo> list = [];
+    grouped.forEach((category, videos) {
+      final remoteCount = videos
+          .where((v) => v.source == SignVideoSource.remote)
+          .length;
+      final totalCount = videos.length;
+
+      list.add(
+        CategoryPackageInfo(
+          category: category,
+          title: _getCategoryDisplayTitle(category),
+          subtitle: _getCategoryDisplaySubtitle(videos),
+          icon: _getCategoryDisplayIcon(category),
+          totalCount: totalCount,
+          remoteCount: remoteCount,
+        ),
+      );
+    });
+
+    // Urutkan paket: yang masih memiliki video untuk diunduh didahulukan
+    list.sort((a, b) {
+      if (a.remoteCount > 0 && b.remoteCount == 0) return -1;
+      if (a.remoteCount == 0 && b.remoteCount > 0) return 1;
+      return a.title.compareTo(b.title);
+    });
+
+    return list;
+  }
+
+  static String _getCategoryDisplayTitle(String cat) {
+    switch (cat.toLowerCase().trim()) {
+      case 'health':
+        return 'Paket Kesehatan';
+      case 'hajj':
+        return 'Paket Ibadah & Haji';
+      case 'emergency':
+        return 'Paket Darurat';
+      case 'alphabet':
+        return 'Paket Alfabet';
+      case 'question':
+        return 'Paket Tanya Jawab';
+      case 'pronoun':
+        return 'Paket Kata Ganti';
+      case 'movement':
+        return 'Paket Gerakan';
+      case 'activity':
+        return 'Paket Aktivitas';
+      case 'greeting':
+        return 'Paket Salam & Sapaan';
+      case 'general':
+        return 'Paket Umum';
+      default:
+        return 'Paket ${cat.capitalizeFirst ?? cat.toUpperCase()}';
+    }
+  }
+
+  static String _getCategoryDisplaySubtitle(List<SignVideoEntry> videos) {
+    final sample = videos.map((v) => v.label).take(3).join(', ');
+    if (videos.length > 3) {
+      return '$sample, dsb. (${videos.length} video)';
+    }
+    return '$sample (${videos.length} video)';
+  }
+
+  static IconData _getCategoryDisplayIcon(String cat) {
+    switch (cat.toLowerCase().trim()) {
+      case 'health':
+        return Icons.local_hospital_rounded;
+      case 'hajj':
+        return Icons.mosque_rounded;
+      case 'emergency':
+        return Icons.warning_amber_rounded;
+      case 'alphabet':
+        return Icons.spellcheck_rounded;
+      case 'question':
+        return Icons.help_outline_rounded;
+      case 'pronoun':
+        return Icons.people_outline_rounded;
+      case 'movement':
+        return Icons.accessibility_new_rounded;
+      case 'activity':
+        return Icons.directions_run_rounded;
+      case 'greeting':
+        return Icons.waving_hand_rounded;
+      case 'general':
+        return Icons.category_rounded;
+      default:
+        return Icons.folder_special_rounded;
+    }
+  }
+
   /// Mengunduh paket kategori (misal: 'health', 'hajj', 'alphabet').
   Future<void> downloadCategoryPackage(String category) async {
     if (categoryDownloading[category] == true) return;
+
+    final cancelToken = CancelToken();
+    _categoryCancelTokens[category] = cancelToken;
 
     try {
       categoryDownloading[category] = true;
@@ -465,6 +593,7 @@ class TextToSignController extends GetxController {
       await _repository.downloadCategory(
         category: category,
         language: selectedLanguage.value,
+        cancelToken: cancelToken,
         onProgress: (completed, total, progress) {
           categoryDownloadProgress[category] = progress;
         },
@@ -473,26 +602,64 @@ class TextToSignController extends GetxController {
       // Refresh list video agar status icon berubah menjadi tersimpan lokal
       await loadAvailableVideos();
 
+      // Refresh status currentEntry jika bagian dari paket ini
+      if (currentEntry.value != null &&
+          currentEntry.value!.category.toLowerCase() ==
+              category.toLowerCase()) {
+        final reResolved = await _repository.resolveVideoSource(
+          currentEntry.value!,
+        );
+        currentEntry.value = reResolved;
+        if (reResolved.source == SignVideoSource.localCached &&
+            !isVideoPlaying.value) {
+          await playEntry(reResolved);
+        }
+      }
+
       Get.snackbar(
         'Unduhan Berhasil',
-        'Paket ${category.toUpperCase()} telah siap digunakan offline.',
+        'Paket ${_getCategoryDisplayTitle(category)} telah siap digunakan offline.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
     } catch (e) {
-      debugPrint('[TextToSignCtrl] downloadCategoryPackage error: $e');
-      Get.snackbar(
-        'Unduhan Terkendala',
-        'Beberapa video paket gagal diunduh. Silakan coba kembali saat internet stabil.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.shade900,
-        colorText: Colors.white,
-      );
+      if (cancelToken.isCancelled) {
+        debugPrint(
+          '[TextToSignCtrl] downloadCategoryPackage cancelled for $category',
+        );
+        Get.snackbar(
+          'Unduhan Dibatalkan',
+          'Pengunduhan paket ${_getCategoryDisplayTitle(category)} telah dibatalkan.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.black87,
+          colorText: Colors.white,
+        );
+      } else {
+        debugPrint('[TextToSignCtrl] downloadCategoryPackage error: $e');
+        Get.snackbar(
+          'Unduhan Terkendala',
+          'Beberapa video paket gagal diunduh. Silakan coba kembali saat internet stabil.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.shade900,
+          colorText: Colors.white,
+        );
+      }
     } finally {
       categoryDownloading[category] = false;
       categoryDownloadProgress[category] = 1.0;
+      _categoryCancelTokens.remove(category);
     }
+  }
+
+  /// Membatalkan pengunduhan paket kategori yang sedang berlangsung
+  void cancelCategoryPackageDownload(String category) {
+    if (_categoryCancelTokens.containsKey(category)) {
+      _categoryCancelTokens[category]?.cancel('Dibatalkan oleh pengguna');
+      _categoryCancelTokens.remove(category);
+    }
+    categoryDownloading[category] = false;
+    categoryDownloadProgress[category] = 0.0;
   }
 
   // ── 6. CACHE MANAGEMENT ──────────────────────────────────────────────────
@@ -503,6 +670,21 @@ class TextToSignController extends GetxController {
     final count = await _repository.clearDownloadedVideos();
     await loadAvailableVideos();
 
+    // Pastikan currentEntry di-refresh statusnya ke remote jika sebelumnya adalah localCached
+    if (currentEntry.value != null) {
+      final reResolved = await _repository.resolveVideoSource(
+        currentEntry.value!,
+      );
+      currentEntry.value = reResolved;
+      if (reResolved.source == SignVideoSource.remote) {
+        _disposePlayer();
+        statusMessage.value =
+            'Video berada di cloud. Silakan unduh untuk memutar secara offline.';
+      } else if (reResolved.source == SignVideoSource.asset) {
+        await playEntry(reResolved);
+      }
+    }
+
     Get.snackbar(
       'Pembersihan Selesai',
       '$count video unduhan telah dihapus dari memori perangkat.',
@@ -510,6 +692,35 @@ class TextToSignController extends GetxController {
       backgroundColor: Colors.black87,
       colorText: Colors.white,
     );
+  }
+
+  /// Memastikan status currentEntry mencerminkan kondisi file di disk secara real-time
+  Future<void> refreshCurrentEntrySource() async {
+    if (currentEntry.value != null) {
+      final resolved = await _repository.resolveVideoSource(
+        currentEntry.value!,
+      );
+      currentEntry.value = resolved;
+      if (resolved.source == SignVideoSource.remote &&
+          isVideoInitialized.value) {
+        _disposePlayer();
+      }
+    }
+  }
+
+  /// Memilih item kosakata dari daftar: mengisi teks, menyiapkan hasil, dan memutar/meminta unduh
+  Future<void> selectVocabularyItem(SignVideoEntry video) async {
+    textController.text = video.label;
+    currentQuery.value = video.label;
+    currentEntry.value = video;
+    searchResult.value = SignSearchResult(
+      query: video.label,
+      language: selectedLanguage.value,
+      exactMatch: video,
+      candidates: [video],
+      isFound: true,
+    );
+    await playEntry(video);
   }
 
   // ── 7. SPEECH-TO-SIGN (VOICE RECOGNITION) ──────────────────────────────────
@@ -609,22 +820,40 @@ class TextToSignController extends GetxController {
   static const int vocabPageSize = 5;
   final RxInt currentVocabPage = 1.obs;
 
-  /// Jumlah total halaman berdasarkan ukuran halaman 5 video.
-  int get totalVocabPages {
-    if (availableVideos.isEmpty) return 1;
-    return ((availableVideos.length - 1) / vocabPageSize).floor() + 1;
+  /// Kosakata yang difilter berdasarkan query pencarian saat ini.
+  /// Jika query kosong, mengembalikan seluruh [availableVideos].
+  List<SignVideoEntry> get filteredVocabulary {
+    final query = currentQuery.value.trim().toLowerCase();
+    if (query.isEmpty) {
+      return availableVideos;
+    }
+    return availableVideos.where((v) {
+      final labelMatch = v.label.toLowerCase().contains(query);
+      final aliasMatch = v.aliases.any((a) => a.toLowerCase().contains(query));
+      final catMatch = v.category.toLowerCase().contains(query);
+      return labelMatch || aliasMatch || catMatch;
+    }).toList();
   }
 
-  /// Daftar video yang dipotong untuk halaman aktif saat ini.
+  /// Jumlah total halaman berdasarkan ukuran halaman 5 video.
+  int get totalVocabPages {
+    final list = filteredVocabulary;
+    if (list.isEmpty) return 1;
+    return ((list.length - 1) / vocabPageSize).floor() + 1;
+  }
+
+  /// Daftar video yang dipotong untuk halaman aktif saat ini (maksimal 5 video).
   List<SignVideoEntry> get paginatedVocabulary {
-    if (availableVideos.isEmpty) return [];
-    final start = (currentVocabPage.value - 1) * vocabPageSize;
-    if (start >= availableVideos.length) {
-      currentVocabPage.value = 1;
-      return availableVideos.take(vocabPageSize).toList();
+    final list = filteredVocabulary;
+    if (list.isEmpty) return [];
+    final total = totalVocabPages;
+    final page = currentVocabPage.value.clamp(1, total);
+    final start = (page - 1) * vocabPageSize;
+    final end = (start + vocabPageSize).clamp(0, list.length);
+    if (start >= list.length) {
+      return list.take(vocabPageSize).toList();
     }
-    final end = (start + vocabPageSize).clamp(0, availableVideos.length);
-    return availableVideos.sublist(start, end);
+    return list.sublist(start, end);
   }
 
   /// Pindah ke halaman berikutnya.
