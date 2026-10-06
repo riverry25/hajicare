@@ -17,6 +17,10 @@ class SmartbandData {
   final String rawJson;
   final bool isValidLocation;
 
+  /// Default koordinat GPS statis Smartband (Pelataran Masjidil Haram, Makkah)
+  static const double staticDefaultLatitude = 21.422487;
+  static const double staticDefaultLongitude = 39.826206;
+
   const SmartbandData({
     required this.braceletId,
     this.latitude,
@@ -26,6 +30,27 @@ class SmartbandData {
     this.rawJson = '',
     this.isValidLocation = false,
   });
+
+  /// Salin objek SmartbandData dengan field yang diperbarui
+  SmartbandData copyWith({
+    String? braceletId,
+    double? latitude,
+    double? longitude,
+    int? heartRate,
+    DateTime? timestamp,
+    String? rawJson,
+    bool? isValidLocation,
+  }) {
+    return SmartbandData(
+      braceletId: braceletId ?? this.braceletId,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      heartRate: heartRate ?? this.heartRate,
+      timestamp: timestamp ?? this.timestamp,
+      rawJson: rawJson ?? this.rawJson,
+      isValidLocation: isValidLocation ?? this.isValidLocation,
+    );
+  }
 
   /// Factory untuk mem-parse JSON payload dari BLE notification
   /// Melempar [FormatException] jika JSON rusak atau field wajib tidak tersedia
