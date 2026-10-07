@@ -47,12 +47,15 @@ class _ModalSosScreenState extends State<ModalSosScreen>
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
-    // Auto-start countdown ONLY for Jamaah who do not already have an active SOS
+    // Auto-start countdown ONLY for Jamaah who have an active room and do not already have an active SOS
     final isOfficer =
         state.role == UserRole.pendamping || state.role == UserRole.admin;
     final isSelfSosActive = state.self.sosActive;
+    final hasRoom =
+        (state.activeRoomId.value?.trim().isNotEmpty ?? false) ||
+        state.activeRoom.value != null;
 
-    if (!isOfficer && !isSelfSosActive) {
+    if (!isOfficer && !isSelfSosActive && hasRoom) {
       _startCountdown();
     }
   }
@@ -86,6 +89,20 @@ class _ModalSosScreenState extends State<ModalSosScreen>
   }
 
   Future<void> _sendSos() async {
+    final hasRoom =
+        (state.activeRoomId.value?.trim().isNotEmpty ?? false) ||
+        state.activeRoom.value != null;
+    if (!hasRoom) {
+      AppAlert.warning(
+        context,
+        title: 'Belum Terdaftar di Room',
+        message:
+            'Anda harus bergabung ke room pantau rombongan terlebih dahulu untuk menggunakan fitur SOS darurat.',
+        okText: 'Gabung Room',
+        onOk: () => Get.toNamed(AppRoutes.joinRoom),
+      );
+      return;
+    }
     HapticFeedback.heavyImpact();
     final success = await state.triggerSos();
     if (mounted) {
@@ -217,10 +234,8 @@ class _ModalSosScreenState extends State<ModalSosScreen>
             'status': 'active',
             'timestamp': n.createdAt ?? DateTime.now(),
             if (lat != null && lng != null) 'location': GeoPoint(lat, lng),
-            if (n.metadata?['kloter'] != null)
-              'kloter': n.metadata!['kloter'],
-            if (n.metadata?['maktab'] != null)
-              'maktab': n.metadata!['maktab'],
+            if (n.metadata?['kloter'] != null) 'kloter': n.metadata!['kloter'],
+            if (n.metadata?['maktab'] != null) 'maktab': n.metadata!['maktab'],
           });
         }
       }
@@ -868,7 +883,82 @@ class _ModalSosScreenState extends State<ModalSosScreen>
     Color bodyColor,
   ) {
     final self = state.self;
-    final isSosAlreadyActive = self.sosActive || _sosSent;
+    final hasRoom =
+        (state.activeRoomId.value?.trim().isNotEmpty ?? false) ||
+        state.activeRoom.value != null;
+    final isSosAlreadyActive = (self.sosActive || _sosSent) && hasRoom;
+
+    if (!hasRoom) {
+      return Padding(
+        padding: const EdgeInsets.all(AppSpacing.screenEdgeGutter),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const Spacer(),
+            Container(
+              width: 96,
+              height: 96,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.distanceWarning.withValues(alpha: 0.12),
+                border: Border.all(
+                  color: AppColors.distanceWarning.withValues(alpha: 0.35),
+                  width: 1.5,
+                ),
+              ),
+              child: const Center(
+                child: Icon(
+                  Icons.meeting_room_outlined,
+                  size: 46,
+                  color: AppColors.distanceWarning,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              'Belum Terdaftar di Room Pantau',
+              style: AppTypography.titleLarge.copyWith(
+                color: headingColor,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Tombol SOS darurat dinonaktifkan karena Anda belum masuk ke room pantau rombongan. Bergabunglah ke rombongan Anda agar pendamping dan petugas dapat memantau lokasi dan menerima sinyal darurat.',
+              textAlign: TextAlign.center,
+              style: AppTypography.bodySmall.copyWith(
+                color: bodyColor.withValues(alpha: 0.85),
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            ElevatedButton.icon(
+              onPressed: () => Get.toNamed(AppRoutes.joinRoom),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+                elevation: 2,
+              ),
+              icon: const Icon(Icons.group_add_rounded, size: 20),
+              label: const Text(
+                'Gabung ke Room Pantau',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+            ),
+            const Spacer(),
+          ],
+        ),
+      );
+    }
 
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.screenEdgeGutter),

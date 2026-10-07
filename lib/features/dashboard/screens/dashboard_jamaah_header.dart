@@ -326,7 +326,11 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                 // Right Pill: Bantuan Darurat (SOS)
                 Expanded(
                   child: Obx(() {
-                    final hasSos = state.anySosActive;
+                    final hasRoom =
+                        (state.activeRoomId.value?.trim().isNotEmpty ??
+                            false) ||
+                        state.activeRoom.value != null;
+                    final hasSos = hasRoom && state.anySosActive;
                     return Material(
                       color: Colors.transparent,
                       child: InkWell(
@@ -335,6 +339,17 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                         ),
                         onTap: () {
                           HapticFeedback.mediumImpact();
+                          if (!hasRoom) {
+                            AppAlert.warning(
+                              context,
+                              title: 'Belum Terdaftar di Room',
+                              message:
+                                  'Tombol SOS darurat hanya aktif setelah Anda bergabung ke salah satu room pantau rombongan.',
+                              okText: 'Gabung Room',
+                              onOk: () => Get.toNamed(AppRoutes.joinRoom),
+                            );
+                            return;
+                          }
                           Get.toNamed(AppRoutes.modalSos);
                         },
                         child: Ink(

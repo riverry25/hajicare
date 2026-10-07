@@ -8,7 +8,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/hajicare_header.dart';
 import '../controllers/admin_room_controller.dart';
 import '../models/room_model.dart';
@@ -161,9 +160,9 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.screenEdgeGutter,
-                  AppSpacing.sm,
+                  14,
                   AppSpacing.screenEdgeGutter,
-                  AppSpacing.sm,
+                  14,
                 ),
                 child: _buildOverviewHeader(
                   context,
@@ -192,7 +191,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                       bodyColor,
                       primaryColor,
                     ),
-                    const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(height: 12),
                     _buildFilterAndSortRow(
                       context,
                       isDark,
@@ -201,7 +200,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                       bodyColor,
                       primaryColor,
                     ),
-                    const SizedBox(height: AppSpacing.sm + 2),
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),
@@ -314,12 +313,25 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
 
       return Column(
         children: [
-          AppCard(
-            backgroundColor: cardBg,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.sm + 4,
+          Container(
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark
+                    ? AppColors.darkCardBorder
+                    : AppColors.lightCardBorder,
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
             ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
             child: Row(
               children: [
                 Expanded(
@@ -336,10 +348,12 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                 ),
                 Container(
                   width: 1,
-                  height: 38,
-                  color: isDark
-                      ? AppColors.darkCardBorder
-                      : AppColors.canvasCreamSubtle,
+                  height: 44,
+                  color:
+                      (isDark
+                              ? AppColors.darkCardBorder
+                              : AppColors.lightCardBorder)
+                          .withValues(alpha: 0.7),
                 ),
                 Expanded(
                   child: _buildSummaryMetricItem(
@@ -355,10 +369,12 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                 ),
                 Container(
                   width: 1,
-                  height: 38,
-                  color: isDark
-                      ? AppColors.darkCardBorder
-                      : AppColors.canvasCreamSubtle,
+                  height: 44,
+                  color:
+                      (isDark
+                              ? AppColors.darkCardBorder
+                              : AppColors.lightCardBorder)
+                          .withValues(alpha: 0.7),
                 ),
                 Expanded(
                   child: _buildSummaryMetricItem(
@@ -366,7 +382,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                     value: '$totalPendamping',
                     caption: 'Bertugas',
                     icon: Icons.health_and_safety_rounded,
-                    iconColor: AppColors.primaryGold,
+                    iconColor: AppColors.goldPrimary,
                     headingColor: headingColor,
                     bodyColor: bodyColor,
                     isDark: isDark,
@@ -376,25 +392,26 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
             ),
           ),
           if (sosCount > 0) ...[
-            const SizedBox(height: AppSpacing.xs + 2),
+            const SizedBox(height: 10),
             InkWell(
               onTap: () {
                 HapticFeedback.lightImpact();
                 setState(() => _statusFilter = 'sos');
               },
-              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderRadius: BorderRadius.circular(14),
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: 8,
+                  horizontal: 14,
+                  vertical: 10,
                 ),
                 decoration: BoxDecoration(
                   color: AppColors.sosEmergency.withValues(
-                    alpha: isDark ? 0.20 : 0.12,
+                    alpha: isDark ? 0.20 : 0.10,
                   ),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: AppColors.sosEmergency.withValues(alpha: 0.35),
+                    width: 1.2,
                   ),
                 ),
                 child: Row(
@@ -417,6 +434,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                         ),
                       ),
                     ),
+                    const SizedBox(width: 6),
                     Text(
                       'Lihat',
                       style: AppTypography.captionSmall.copyWith(
@@ -452,36 +470,60 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
     required bool isDark,
   }) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 14, color: iconColor),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: AppTypography.captionSmall.copyWith(
-                color: bodyColor.withValues(alpha: 0.8),
-                fontSize: 10.5,
-                fontWeight: FontWeight.w600,
-              ),
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: iconColor.withValues(alpha: isDark ? 0.22 : 0.12),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: iconColor.withValues(alpha: isDark ? 0.35 : 0.20),
+              width: 1.0,
             ),
-          ],
+          ),
+          child: Icon(icon, size: 16, color: iconColor),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 6),
         Text(
           value,
+          textAlign: TextAlign.center,
           style: AppTypography.titleLarge.copyWith(
             color: headingColor,
-            fontWeight: FontWeight.w800,
-            fontSize: 19,
+            fontWeight: FontWeight.w900,
+            fontSize: 18,
+            height: 1.1,
           ),
         ),
-        Text(
-          caption,
-          style: AppTypography.captionSmall.copyWith(
-            color: bodyColor.withValues(alpha: 0.65),
-            fontSize: 10,
+        const SizedBox(height: 3),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.captionSmall.copyWith(
+              color: headingColor.withValues(alpha: 0.85),
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        const SizedBox(height: 1),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          child: Text(
+            caption,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.captionSmall.copyWith(
+              color: bodyColor.withValues(alpha: 0.6),
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
       ],
@@ -500,19 +542,16 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
     return Container(
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark
-              ? AppColors.darkCardBorder
-              : AppColors.canvasCreamSubtle,
+          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: (isDark ? Colors.black : AppColors.primary).withValues(
-              alpha: 0.04,
-            ),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.03),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -530,6 +569,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
           hintText: context.tr('room.searchRoomOrCode'),
           hintStyle: AppTypography.bodySmall.copyWith(
             color: bodyColor.withValues(alpha: 0.55),
+            fontSize: 13,
           ),
           prefixIcon: Icon(
             Icons.search_rounded,
@@ -550,8 +590,8 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
               : null,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: 14,
+            horizontal: 16,
+            vertical: 13,
           ),
         ),
       ),
@@ -591,7 +631,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                     isDark: isDark,
                     onTap: () => setState(() => _statusFilter = 'all'),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 8),
                   _FilterChipItem(
                     label: 'Aktif ($activeCount)',
                     isSelected: _statusFilter == 'active',
@@ -602,7 +642,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                     indicatorColor: AppColors.statusSafe,
                     onTap: () => setState(() => _statusFilter = 'active'),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 8),
                   _FilterChipItem(
                     label: 'Nonaktif ($inactiveCount)',
                     isSelected: _statusFilter == 'inactive',
@@ -613,7 +653,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                     onTap: () => setState(() => _statusFilter = 'inactive'),
                   ),
                   if (sosCount > 0) ...[
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 8),
                     _FilterChipItem(
                       label: '🚨 SOS ($sosCount)',
                       isSelected: _statusFilter == 'sos',
@@ -629,7 +669,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
               ),
             ),
           ),
-          const SizedBox(width: AppSpacing.xs),
+          const SizedBox(width: 8),
 
           // Sort Button
           InkWell(
@@ -641,23 +681,31 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
               bodyColor,
               primaryColor,
             ),
-            borderRadius: BorderRadius.circular(AppRadius.pill),
+            borderRadius: BorderRadius.circular(12),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
               decoration: BoxDecoration(
                 color: cardBg,
-                borderRadius: BorderRadius.circular(AppRadius.pill),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isDark
                       ? AppColors.darkCardBorder
-                      : AppColors.canvasCreamSubtle,
+                      : AppColors.lightCardBorder,
+                  width: 1.2,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.sort_rounded, size: 15, color: primaryColor),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 5),
                   Text(
                     _sortLabel(_sortBy),
                     style: AppTypography.captionSmall.copyWith(
@@ -701,6 +749,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
     HapticFeedback.lightImpact();
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: cardBg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
@@ -709,67 +758,73 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
       ),
       builder: (ctx) {
         return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-              vertical: AppSpacing.md,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(ctx).size.height * 0.88,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: bodyColor.withValues(alpha: 0.25),
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.md,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: bodyColor.withValues(alpha: 0.25),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Text(
-                  'Urutkan Daftar Room',
-                  style: AppTypography.titleMedium.copyWith(
-                    color: headingColor,
-                    fontWeight: FontWeight.bold,
+                  const SizedBox(height: AppSpacing.md),
+                  Text(
+                    'Urutkan Daftar Room',
+                    style: AppTypography.titleMedium.copyWith(
+                      color: headingColor,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                _buildSortOption(
-                  'newest',
-                  'Terbaru Dibuat',
-                  Icons.schedule_rounded,
-                  primaryColor,
-                  headingColor,
-                  ctx,
-                ),
-                _buildSortOption(
-                  'name',
-                  'Nama Room (A - Z)',
-                  Icons.sort_by_alpha_rounded,
-                  primaryColor,
-                  headingColor,
-                  ctx,
-                ),
-                _buildSortOption(
-                  'jamaah',
-                  'Jamaah Terbanyak',
-                  Icons.groups_rounded,
-                  primaryColor,
-                  headingColor,
-                  ctx,
-                ),
-                _buildSortOption(
-                  'sos',
-                  'Paling Prioritas (Ada SOS)',
-                  Icons.warning_rounded,
-                  primaryColor,
-                  headingColor,
-                  ctx,
-                ),
-              ],
+                  const SizedBox(height: AppSpacing.sm),
+                  _buildSortOption(
+                    'newest',
+                    'Terbaru Dibuat',
+                    Icons.schedule_rounded,
+                    primaryColor,
+                    headingColor,
+                    ctx,
+                  ),
+                  _buildSortOption(
+                    'name',
+                    'Nama Room (A - Z)',
+                    Icons.sort_by_alpha_rounded,
+                    primaryColor,
+                    headingColor,
+                    ctx,
+                  ),
+                  _buildSortOption(
+                    'jamaah',
+                    'Jamaah Terbanyak',
+                    Icons.groups_rounded,
+                    primaryColor,
+                    headingColor,
+                    ctx,
+                  ),
+                  _buildSortOption(
+                    'sos',
+                    'Paling Prioritas (Ada SOS)',
+                    Icons.warning_rounded,
+                    primaryColor,
+                    headingColor,
+                    ctx,
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -959,92 +1014,99 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
         ),
       ),
       builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: AppSpacing.lg,
-            right: AppSpacing.lg,
-            top: AppSpacing.md,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + AppSpacing.xl,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: bodyColor.withValues(alpha: 0.25),
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                'Ubah Nama Room',
-                style: AppTypography.titleLarge.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: headingColor,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Kode room "${room.code}" tetap tidak berubah.',
-                style: AppTypography.captionSmall.copyWith(color: bodyColor),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              TextField(
-                controller: textCtrl,
-                inputFormatters: [LengthLimitingTextInputFormatter(100)],
-                autofocus: true,
-                style: AppTypography.bodyMedium.copyWith(color: headingColor),
-                decoration: InputDecoration(
-                  labelText: 'Nama Room Baru',
-                  prefixIcon: Icon(Icons.edit_rounded, color: primaryColor),
-                  filled: true,
-                  fillColor: isDark
-                      ? AppColors.darkScaffold.withValues(alpha: 0.6)
-                      : AppColors.canvasCream.withValues(alpha: 0.35),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                    borderSide: BorderSide(
-                      color: isDark
-                          ? AppColors.darkCardBorder
-                          : AppColors.canvasCreamSubtle,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    foregroundColor: isDark
-                        ? AppColors.darkOnPrimary
-                        : Colors.white,
-                    shape: RoundedRectangleBorder(
+        return SafeArea(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: EdgeInsets.only(
+              left: AppSpacing.lg,
+              right: AppSpacing.lg,
+              top: AppSpacing.md,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + AppSpacing.xl,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: bodyColor.withValues(alpha: 0.25),
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
-                    elevation: 1,
                   ),
-                  onPressed: () {
-                    Navigator.of(ctx).pop();
-                    controller.updateRoomName(context, room.id, textCtrl.text);
-                  },
-                  child: const Text(
-                    'Simpan Perubahan',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14.5,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  'Ubah Nama Room',
+                  style: AppTypography.titleLarge.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: headingColor,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Kode room "${room.code}" tetap tidak berubah.',
+                  style: AppTypography.captionSmall.copyWith(color: bodyColor),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                TextField(
+                  controller: textCtrl,
+                  inputFormatters: [LengthLimitingTextInputFormatter(100)],
+                  autofocus: true,
+                  style: AppTypography.bodyMedium.copyWith(color: headingColor),
+                  decoration: InputDecoration(
+                    labelText: 'Nama Room Baru',
+                    prefixIcon: Icon(Icons.edit_rounded, color: primaryColor),
+                    filled: true,
+                    fillColor: isDark
+                        ? AppColors.darkScaffold.withValues(alpha: 0.6)
+                        : AppColors.canvasCream.withValues(alpha: 0.35),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderSide: BorderSide(
+                        color: isDark
+                            ? AppColors.darkCardBorder
+                            : AppColors.canvasCreamSubtle,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: AppSpacing.lg),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: isDark
+                          ? AppColors.darkOnPrimary
+                          : Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      elevation: 1,
+                    ),
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                      controller.updateRoomName(
+                        context,
+                        room.id,
+                        textCtrl.text,
+                      );
+                    },
+                    child: const Text(
+                      'Simpan Perubahan',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -1068,6 +1130,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
 
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: cardBg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
@@ -1076,170 +1139,176 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
       ),
       builder: (ctx) {
         return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-              vertical: AppSpacing.md,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(ctx).size.height * 0.88,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: bodyColor.withValues(alpha: 0.25),
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.md,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: bodyColor.withValues(alpha: 0.25),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                // Header Room Badge
-                Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: primaryColor.withValues(
-                          alpha: isDark ? 0.22 : 0.12,
-                        ),
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        border: Border.all(
-                          color: primaryColor.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Icon(
-                        Icons.meeting_room_rounded,
-                        color: primaryColor,
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm + 4),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            room.name,
-                            style: AppTypography.titleMedium.copyWith(
-                              color: headingColor,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                  const SizedBox(height: AppSpacing.md),
+                  // Header Room Badge
+                  Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: primaryColor.withValues(
+                            alpha: isDark ? 0.22 : 0.12,
                           ),
-                          Text(
-                            'Kode: ${room.code} • ${room.isActive ? "Aktif Dipantau" : "Nonaktif"}',
-                            style: AppTypography.captionSmall.copyWith(
-                              color: bodyColor.withValues(alpha: 0.75),
-                            ),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          border: Border.all(
+                            color: primaryColor.withValues(alpha: 0.3),
                           ),
-                        ],
+                        ),
+                        child: Icon(
+                          Icons.meeting_room_rounded,
+                          color: primaryColor,
+                          size: 22,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Divider(
-                  height: 1,
-                  color: isDark
-                      ? AppColors.darkCardBorder
-                      : AppColors.canvasCreamSubtle,
-                ),
-                const SizedBox(height: AppSpacing.xs),
+                      const SizedBox(width: AppSpacing.sm + 4),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              room.name,
+                              style: AppTypography.titleMedium.copyWith(
+                                color: headingColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              'Kode: ${room.code} • ${room.isActive ? "Aktif Dipantau" : "Nonaktif"}',
+                              style: AppTypography.captionSmall.copyWith(
+                                color: bodyColor.withValues(alpha: 0.75),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Divider(
+                    height: 1,
+                    color: isDark
+                        ? AppColors.darkCardBorder
+                        : AppColors.canvasCreamSubtle,
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
 
-                _ActionItemTile(
-                  icon: Icons.open_in_new_rounded,
-                  title: context.tr('room.openMonitorRoom'),
-                  subtitle: context.tr('room.openMonitorRoomSub'),
-                  color: primaryColor,
-                  headingColor: headingColor,
-                  bodyColor: bodyColor,
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    controller.selectedRoom.value = room;
-                    controller.subscribeToRoomMembers(room.id);
-                    Get.toNamed(AppRoutes.roomDetail, arguments: room);
-                  },
-                ),
-                _ActionItemTile(
-                  icon: Icons.qr_code_2_rounded,
-                  title: context.tr('room.viewQrCode'),
-                  subtitle:
-                      'Tampilkan QR Code untuk dipindai jamaah/pendamping',
-                  color: primaryColor,
-                  headingColor: headingColor,
-                  bodyColor: bodyColor,
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    RoomQrDialog.show(context, room: room);
-                  },
-                ),
-                _ActionItemTile(
-                  icon: Icons.copy_rounded,
-                  title: 'Salin Kode Undangan (${room.code})',
-                  subtitle: context.tr('room.shareCodeSub'),
-                  color: headingColor,
-                  headingColor: headingColor,
-                  bodyColor: bodyColor,
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    Clipboard.setData(ClipboardData(text: room.code));
-                    AppAlert.info(
-                      context,
-                      title: context.tr('room.codeCopied'),
-                      message:
-                          'Kode rombongan "${room.code}" sudah disalin dan siap ditempel.',
-                    );
-                  },
-                ),
-                _ActionItemTile(
-                  icon: Icons.edit_outlined,
-                  title: context.tr('room.renameRoom'),
-                  subtitle: context.tr('room.renameRoomSub'),
-                  color: headingColor,
-                  headingColor: headingColor,
-                  bodyColor: bodyColor,
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    _showEditNameSheet(context, controller, room);
-                  },
-                ),
-                _ActionItemTile(
-                  icon: room.isActive
-                      ? Icons.pause_circle_outline_rounded
-                      : Icons.play_circle_outline_rounded,
-                  title: room.isActive
-                      ? 'Nonaktifkan Sementara'
-                      : 'Aktifkan Kembali',
-                  subtitle: room.isActive
-                      ? 'Anggota tidak dapat check-in selama nonaktif'
-                      : 'Buka akses check-in anggota',
-                  color: room.isActive
-                      ? AppColors.distanceWarning
-                      : AppColors.statusSafe,
-                  headingColor: headingColor,
-                  bodyColor: bodyColor,
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    controller.promptToggleRoomStatus(context, room);
-                  },
-                ),
-                _ActionItemTile(
-                  icon: Icons.delete_outline_rounded,
-                  title: context.tr('room.deleteMonitorRoom'),
-                  subtitle: context.tr('room.deleteMonitorRoomSub'),
-                  color: AppColors.error,
-                  headingColor: AppColors.error,
-                  bodyColor: bodyColor,
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    controller.promptDeleteRoom(context, room);
-                  },
-                ),
-              ],
+                  _ActionItemTile(
+                    icon: Icons.open_in_new_rounded,
+                    title: context.tr('room.openMonitorRoom'),
+                    subtitle: context.tr('room.openMonitorRoomSub'),
+                    color: primaryColor,
+                    headingColor: headingColor,
+                    bodyColor: bodyColor,
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      controller.selectedRoom.value = room;
+                      controller.subscribeToRoomMembers(room.id);
+                      Get.toNamed(AppRoutes.roomDetail, arguments: room);
+                    },
+                  ),
+                  _ActionItemTile(
+                    icon: Icons.qr_code_2_rounded,
+                    title: context.tr('room.viewQrCode'),
+                    subtitle:
+                        'Tampilkan QR Code untuk dipindai jamaah/pendamping',
+                    color: primaryColor,
+                    headingColor: headingColor,
+                    bodyColor: bodyColor,
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      RoomQrDialog.show(context, room: room);
+                    },
+                  ),
+                  _ActionItemTile(
+                    icon: Icons.copy_rounded,
+                    title: 'Salin Kode Undangan (${room.code})',
+                    subtitle: context.tr('room.shareCodeSub'),
+                    color: headingColor,
+                    headingColor: headingColor,
+                    bodyColor: bodyColor,
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      Clipboard.setData(ClipboardData(text: room.code));
+                      AppAlert.info(
+                        context,
+                        title: context.tr('room.codeCopied'),
+                        message:
+                            'Kode rombongan "${room.code}" sudah disalin dan siap ditempel.',
+                      );
+                    },
+                  ),
+                  _ActionItemTile(
+                    icon: Icons.edit_outlined,
+                    title: context.tr('room.renameRoom'),
+                    subtitle: context.tr('room.renameRoomSub'),
+                    color: headingColor,
+                    headingColor: headingColor,
+                    bodyColor: bodyColor,
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _showEditNameSheet(context, controller, room);
+                    },
+                  ),
+                  _ActionItemTile(
+                    icon: room.isActive
+                        ? Icons.pause_circle_outline_rounded
+                        : Icons.play_circle_outline_rounded,
+                    title: room.isActive
+                        ? 'Nonaktifkan Sementara'
+                        : 'Aktifkan Kembali',
+                    subtitle: room.isActive
+                        ? 'Anggota tidak dapat check-in selama nonaktif'
+                        : 'Buka akses check-in anggota',
+                    color: room.isActive
+                        ? AppColors.distanceWarning
+                        : AppColors.statusSafe,
+                    headingColor: headingColor,
+                    bodyColor: bodyColor,
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      controller.promptToggleRoomStatus(context, room);
+                    },
+                  ),
+                  _ActionItemTile(
+                    icon: Icons.delete_outline_rounded,
+                    title: context.tr('room.deleteMonitorRoom'),
+                    subtitle: context.tr('room.deleteMonitorRoomSub'),
+                    color: AppColors.error,
+                    headingColor: AppColors.error,
+                    bodyColor: bodyColor,
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      controller.promptDeleteRoom(context, room);
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -1325,53 +1394,80 @@ class _FilterChipItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onTap();
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? activeColor.withValues(alpha: isDark ? 0.24 : 0.14)
-              : cardBg,
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          border: Border.all(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7.5),
+          decoration: BoxDecoration(
             color: isSelected
-                ? activeColor
-                : (isDark
-                      ? AppColors.darkCardBorder
-                      : AppColors.canvasCreamSubtle),
-            width: isSelected ? 1.4 : 0.9,
+                ? (indicatorColor != null
+                      ? activeColor.withValues(alpha: isDark ? 0.24 : 0.14)
+                      : (isDark
+                            ? const Color(0xFF2C1E16)
+                            : AppColors.espressoDark))
+                : cardBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected
+                  ? (indicatorColor ?? AppColors.goldPrimary)
+                  : (isDark
+                        ? AppColors.darkCardBorder
+                        : AppColors.lightCardBorder),
+              width: isSelected ? 1.5 : 1.0,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: (indicatorColor ?? AppColors.espressoDark)
+                          .withValues(alpha: isDark ? 0.35 : 0.16),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (indicatorColor != null) ...[
-              Container(
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: indicatorColor,
-                  shape: BoxShape.circle,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (indicatorColor != null) ...[
+                Container(
+                  width: 6.5,
+                  height: 6.5,
+                  decoration: BoxDecoration(
+                    color: indicatorColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+              ],
+              Text(
+                label,
+                style: AppTypography.captionSmall.copyWith(
+                  color: isSelected
+                      ? (indicatorColor != null
+                            ? activeColor
+                            : AppColors.surfaceWhite)
+                      : headingColor.withValues(alpha: 0.85),
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  fontSize: 11.5,
                 ),
               ),
-              const SizedBox(width: 6),
             ],
-            Text(
-              label,
-              style: AppTypography.captionSmall.copyWith(
-                color: isSelected
-                    ? activeColor
-                    : headingColor.withValues(alpha: 0.8),
-                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                fontSize: 11.5,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -1430,29 +1526,44 @@ class _RoomManagementCard extends StatelessWidget {
     final hasSos = sosCount > 0;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.sm + 4),
-      child: AppCard(
-        backgroundColor: cardBg,
-        borderColor: hasSos
-            ? AppColors.sosEmergency.withValues(alpha: 0.6)
-            : (isDark ? AppColors.darkCardBorder : AppColors.canvasCreamSubtle),
-        padding: EdgeInsets.zero,
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: hasSos
+              ? AppColors.sosEmergency.withValues(alpha: 0.65)
+              : (isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (hasSos ? AppColors.sosEmergency : Colors.black).withValues(
+              alpha: isDark ? (hasSos ? 0.30 : 0.22) : (hasSos ? 0.12 : 0.04),
+            ),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadius.card),
+          borderRadius: BorderRadius.circular(20),
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.cardPadding),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top Row: Emblem + Room Name + Status Badge + Actions Menu
+                // ── Top Row: Emblem + Room Name + Status Badge + Actions Menu ──
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // Emblem
                     Container(
-                      width: 44,
-                      height: 44,
+                      width: 46,
+                      height: 46,
                       decoration: BoxDecoration(
                         color: hasSos
                             ? AppColors.sosEmergency.withValues(
@@ -1463,7 +1574,7 @@ class _RoomManagementCard extends StatelessWidget {
                                       alpha: isDark ? 0.18 : 0.10,
                                     )
                                   : bodyColor.withValues(alpha: 0.08)),
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderRadius: BorderRadius.circular(13),
                         border: Border.all(
                           color: hasSos
                               ? AppColors.sosEmergency.withValues(alpha: 0.4)
@@ -1472,6 +1583,7 @@ class _RoomManagementCard extends StatelessWidget {
                                         alpha: 0.25,
                                       )
                                     : bodyColor.withValues(alpha: 0.15)),
+                          width: 1.0,
                         ),
                       ),
                       child: Icon(
@@ -1485,10 +1597,10 @@ class _RoomManagementCard extends StatelessWidget {
                             : (room.isActive
                                   ? AppColors.statusSafe
                                   : bodyColor.withValues(alpha: 0.7)),
-                        size: 22,
+                        size: 23,
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.sm + 4),
+                    const SizedBox(width: 12),
 
                     // Room Title & Metadata
                     Expanded(
@@ -1499,22 +1611,22 @@ class _RoomManagementCard extends StatelessWidget {
                             children: [
                               Expanded(
                                 child: Text(
-                                  room.name,
+                                  room.capitalizedName,
                                   style: AppTypography.titleMedium.copyWith(
                                     color: headingColor,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 16,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              const SizedBox(width: 6),
+                              const SizedBox(width: 8),
                               // Status pill
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 7,
-                                  vertical: 2.5,
+                                  horizontal: 8,
+                                  vertical: 3,
                                 ),
                                 decoration: BoxDecoration(
                                   color:
@@ -1527,13 +1639,23 @@ class _RoomManagementCard extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(
                                     AppRadius.pill,
                                   ),
+                                  border: Border.all(
+                                    color:
+                                        (room.isActive
+                                                ? AppColors.statusSafe
+                                                : bodyColor)
+                                            .withValues(
+                                              alpha: isDark ? 0.35 : 0.25,
+                                            ),
+                                    width: 0.8,
+                                  ),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Container(
-                                      width: 5,
-                                      height: 5,
+                                      width: 5.5,
+                                      height: 5.5,
                                       decoration: BoxDecoration(
                                         color: room.isActive
                                             ? AppColors.statusSafe
@@ -1541,17 +1663,16 @@ class _RoomManagementCard extends StatelessWidget {
                                         shape: BoxShape.circle,
                                       ),
                                     ),
-                                    const SizedBox(width: 4),
+                                    const SizedBox(width: 4.5),
                                     Text(
                                       room.isActive ? 'Aktif' : 'Nonaktif',
-                                      style: AppTypography.captionSmall
-                                          .copyWith(
-                                            color: room.isActive
-                                                ? AppColors.statusSafe
-                                                : bodyColor,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 10,
-                                          ),
+                                      style: TextStyle(
+                                        color: room.isActive
+                                            ? AppColors.statusSafe
+                                            : bodyColor,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 10.5,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -1559,16 +1680,28 @@ class _RoomManagementCard extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 3),
-                          Text(
-                            'Dibuat: ${_formatDate(room.createdAt)}',
-                            style: AppTypography.captionSmall.copyWith(
-                              color: bodyColor.withValues(alpha: 0.65),
-                              fontSize: 11,
-                            ),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today_rounded,
+                                size: 11,
+                                color: bodyColor.withValues(alpha: 0.5),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Dibuat: ${_formatDate(room.createdAt)}',
+                                style: AppTypography.captionSmall.copyWith(
+                                  color: bodyColor.withValues(alpha: 0.65),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ),
+                    const SizedBox(width: 4),
 
                     // Quick More Actions Button
                     IconButton(
@@ -1584,50 +1717,85 @@ class _RoomManagementCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.sm + 2),
+                const SizedBox(height: 12),
 
-                // Middle: Room Code + One-Tap Copy Strip
+                // ── Middle: Room Code + One-Tap Copy Strip ──
                 Container(
+                  width: double.infinity,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
+                    horizontal: 12,
+                    vertical: 9,
                   ),
                   decoration: BoxDecoration(
-                    color:
-                        (isDark
-                                ? AppColors.darkCardBorder
-                                : AppColors.canvasCreamSubtle)
-                            .withValues(alpha: 0.45),
-                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    color: isDark
+                        ? AppColors.darkPrimaryContainer.withValues(alpha: 0.35)
+                        : AppColors.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(13),
+                    border: Border.all(
+                      color: isDark
+                          ? AppColors.darkCardBorder
+                          : AppColors.canvasCreamSubtle,
+                      width: 1.0,
+                    ),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.key_rounded, size: 14, color: primaryColor),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Kode Room: ',
-                        style: AppTypography.captionSmall.copyWith(
-                          color: bodyColor.withValues(alpha: 0.85),
-                          fontSize: 11.5,
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withValues(
+                            alpha: isDark ? 0.20 : 0.12,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                      ),
-                      Text(
-                        room.code,
-                        style: AppTypography.titleSmall.copyWith(
+                        child: Icon(
+                          Icons.key_rounded,
+                          size: 15,
                           color: primaryColor,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.5,
-                          fontSize: 13,
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Kode Room',
+                              style: TextStyle(
+                                color: bodyColor.withValues(alpha: 0.7),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Text(
+                              room.code,
+                              style: TextStyle(
+                                color: headingColor,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 2.0,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // QR Button
                       InkWell(
                         onTap: () => RoomQrDialog.show(context, room: room),
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        child: Padding(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 3,
+                            horizontal: 8,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: cardBg,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isDark
+                                  ? AppColors.darkOutlineVariant
+                                  : const Color(0xFFE2E8F0),
+                            ),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -1637,36 +1805,46 @@ class _RoomManagementCard extends StatelessWidget {
                                 size: 13,
                                 color: primaryColor,
                               ),
-                              const SizedBox(width: 3),
+                              const SizedBox(width: 4),
                               Text(
                                 'QR',
-                                style: AppTypography.captionSmall.copyWith(
+                                style: TextStyle(
                                   color: primaryColor,
-                                  fontWeight: FontWeight.bold,
                                   fontSize: 11,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ],
                           ),
                         ),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 6),
+                      // Salin Button
                       InkWell(
                         onTap: () {
                           HapticFeedback.lightImpact();
                           Clipboard.setData(ClipboardData(text: room.code));
-                          AppAlert.info(
+                          AppAlert.success(
                             context,
                             title: context.tr('room.codeCopied'),
                             message:
-                                'Kode rombongan "${room.code}" sudah disalin dan siap ditempel.',
+                                'Kode rombongan "${room.code}" sudah disalin.',
                           );
                         },
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        child: Padding(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 3,
+                            horizontal: 9,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: cardBg,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isDark
+                                  ? AppColors.darkOutlineVariant
+                                  : const Color(0xFFE2E8F0),
+                            ),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -1679,10 +1857,10 @@ class _RoomManagementCard extends StatelessWidget {
                               const SizedBox(width: 4),
                               Text(
                                 'Salin',
-                                style: AppTypography.captionSmall.copyWith(
+                                style: TextStyle(
                                   color: primaryColor,
-                                  fontWeight: FontWeight.bold,
                                   fontSize: 11,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ],
@@ -1692,18 +1870,17 @@ class _RoomManagementCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: AppSpacing.sm + 2),
+                const SizedBox(height: 12),
 
-                // Bottom: Metric Badges & Enter Room CTA
+                // ── Bottom: Metric Badges & Enter Room CTA ──
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Expanded(
                       child: Wrap(
                         spacing: 6,
                         runSpacing: 6,
                         children: [
-                          // Jamaah Count Pill
                           _MetricBadgePill(
                             icon: Icons.groups_rounded,
                             count: jamaahCount,
@@ -1711,7 +1888,6 @@ class _RoomManagementCard extends StatelessWidget {
                             color: AppColors.emeraldIslamic,
                             isDark: isDark,
                           ),
-                          // Pendamping Count Pill
                           _MetricBadgePill(
                             icon: Icons.health_and_safety_rounded,
                             count: pendampingCount,
@@ -1730,25 +1906,38 @@ class _RoomManagementCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.sm),
-                    // Enter Room Action
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 2),
+                    const SizedBox(width: 10),
+                    // Enter Room Action Pill
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: primaryColor.withValues(
+                          alpha: isDark ? 0.20 : 0.10,
+                        ),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        border: Border.all(
+                          color: primaryColor.withValues(alpha: 0.35),
+                          width: 1.0,
+                        ),
+                      ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             'Pantau Room',
-                            style: AppTypography.captionSmall.copyWith(
+                            style: TextStyle(
                               color: primaryColor,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w800,
                               fontSize: 11.5,
                             ),
                           ),
-                          const SizedBox(width: 3),
+                          const SizedBox(width: 4),
                           Icon(
                             Icons.arrow_forward_ios_rounded,
-                            size: 10.5,
+                            size: 10,
                             color: primaryColor,
                           ),
                         ],
@@ -1784,16 +1973,20 @@ class _MetricBadgePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: isDark ? 0.20 : 0.10),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        color: color.withValues(alpha: isDark ? 0.18 : 0.09),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: color.withValues(alpha: isDark ? 0.30 : 0.18),
+          width: 0.9,
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 4),
+          Icon(icon, size: 12.5, color: color),
+          const SizedBox(width: 4.5),
           Text(
             '$count $label',
             style: AppTypography.captionSmall.copyWith(

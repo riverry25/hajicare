@@ -122,6 +122,24 @@ class AdminRoomController extends GetxController {
         totalPendamping.value = userList
             .where((u) => (u['role'] as String?)?.toLowerCase() == 'pendamping')
             .length;
+
+        // Auto-heal ghost SOS: if user has sosActive == true but has no activeRoomId,
+        // clear sosActive in Firestore so database state is completely clean
+        for (final u in userList) {
+          if (u['sosActive'] == true) {
+            final rId = (u['activeRoomId'] as String?)?.trim();
+            if (rId == null || rId.isEmpty) {
+              final uid = (u['id'] ?? u['uid'])?.toString();
+              if (uid != null && uid.isNotEmpty) {
+                FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(uid)
+                    .update({'sosActive': false})
+                    .catchError((_) {});
+              }
+            }
+          }
+        }
       },
       onError: (e) {
         debugPrint('[AdminRoomController] Error fetching all users: $e');

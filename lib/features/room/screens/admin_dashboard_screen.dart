@@ -14,11 +14,13 @@ import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
 import '../../dashboard/controllers/dashboard_controller.dart';
 import '../../map/screens/interactive_map_screen.dart';
+import '../../map/controllers/map_controller.dart';
+import 'package:latlong2/latlong.dart' hide Path;
+import '../../../core/state/hajicare_controller.dart';
 import '../../prayer/screens/prayer_times_screen.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../controllers/admin_room_controller.dart';
 import '../models/activity_model.dart';
-import '../models/room_model.dart';
 import '../widgets/room_qr_dialog.dart';
 import '../widgets/create_room_dialog.dart';
 import '../../notification/widgets/notification_composer_dialog.dart';
@@ -285,7 +287,7 @@ class _AdminDashboardHome extends StatelessWidget {
             children: [
               // 1. Hero Featured Progress Bento Card (Pastel Sky-Cyan)
               _buildHeroProgressCard(context, isDark),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: AppSpacing.xxl),
 
               // 3. Operational Status & 4-Metric Breakdown (Pastel Sage-Mint Green)
               _buildStatusBreakdownCard(
@@ -295,7 +297,7 @@ class _AdminDashboardHome extends StatelessWidget {
                 bodyColor,
                 primaryColor,
               ),
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.xxxl),
 
               // 5. Room Pantau Section
               _buildRoomPantauSection(
@@ -306,7 +308,7 @@ class _AdminDashboardHome extends StatelessWidget {
                 bodyColor,
                 primaryColor,
               ),
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.xxxl),
 
               // 6. Aktivitas Terbaru
               _buildRecentActivitiesSection(
@@ -317,7 +319,7 @@ class _AdminDashboardHome extends StatelessWidget {
                 bodyColor,
                 primaryColor,
               ),
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.xxxl),
 
               // 7. Bottom Action Pill Button (Reference: Calorie count >>>)
               // 7. Aksi Cepat - PALING BAWAH
@@ -328,7 +330,7 @@ class _AdminDashboardHome extends StatelessWidget {
                 headingColor,
                 primaryColor,
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: AppSpacing.xl),
             ],
           ),
         );
@@ -341,6 +343,136 @@ class _AdminDashboardHome extends StatelessWidget {
     return month >= 1 && month <= 12
         ? context.tr('adminDashboard.month$month')
         : '';
+  }
+
+  // ── Unified Sub Section Header (Matches User Reference Image) ──────────────
+  Widget _buildSubSectionHeader({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    Color? subtitleColor,
+    Widget? trailing,
+    required bool isDark,
+    required Color headingColor,
+    required Color bodyColor,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.darkSurfaceContainerHigh
+                      : const Color(0xFFF0EBE1),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.darkCardBorder
+                        : AppColors.lightCardBorder.withValues(alpha: 0.6),
+                    width: 1.0,
+                  ),
+                ),
+                child: Center(
+                  child: Icon(icon, size: 16.5, color: headingColor),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm + 2),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      style: DashboardTypography.titleSmall.copyWith(
+                        color: headingColor,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14.5,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 1.5),
+                    Text(
+                      subtitle,
+                      style: DashboardTypography.captionSmall.copyWith(
+                        color:
+                            subtitleColor ?? bodyColor.withValues(alpha: 0.72),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (trailing != null) ...[
+          const SizedBox(width: AppSpacing.sm),
+          trailing,
+        ],
+      ],
+    );
+  }
+
+  Widget _buildCircularHeaderButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    required bool isDark,
+    required Color headingColor,
+    double iconSize = 18,
+    String? tooltip,
+  }) {
+    final button = Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        child: Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppColors.darkSurfaceContainer
+                : AppColors.surfaceWhite,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isDark
+                  ? AppColors.darkCardBorder
+                  : AppColors.lightCardBorder,
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.04),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Icon(icon, size: iconSize, color: headingColor),
+          ),
+        ),
+      ),
+    );
+
+    if (tooltip != null) {
+      return Tooltip(message: tooltip, child: button);
+    }
+    return button;
   }
 
   // 5. Room monitoring section

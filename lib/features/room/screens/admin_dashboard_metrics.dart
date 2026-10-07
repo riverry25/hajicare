@@ -261,84 +261,24 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Top Header: Section Title + SOS Warning + Create Room Action (+)
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkSurfaceContainerHigh
-                        : AppColors.canvasCreamSubtle,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.dashboard_customize_rounded,
-                    size: 16,
-                    color: headingColor,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      context.tr('adminDashboard.statusCoordination'),
-                      style: DashboardTypography.titleSmall.copyWith(
-                        color: headingColor,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14.5,
-                      ),
-                    ),
-                    Text(
-                      hasSos
-                          ? context.tr('adminDashboard.sosUrgent', {
-                              'count': activeSos,
-                            })
-                          : context.tr('adminDashboard.allRoomsSafe'),
-                      style: DashboardTypography.captionSmall.copyWith(
-                        color: hasSos
-                            ? AppColors.sosEmergency
-                            : bodyColor.withValues(alpha: 0.7),
-                        fontWeight: FontWeight.w700,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            InkWell(
-              onTap: () => _showCreateRoomSheet(context, controller),
-              borderRadius: BorderRadius.circular(AppRadius.pill),
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkSurfaceContainer
-                      : AppColors.surfaceWhite,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.darkCardBorder
-                        : AppColors.lightCardBorder,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Icon(Icons.add_rounded, size: 20, color: headingColor),
-              ),
-            ),
-          ],
+        _buildSubSectionHeader(
+          icon: Icons.grid_view_rounded,
+          title: context.tr('adminDashboard.statusCoordination'),
+          subtitle: hasSos
+              ? context.tr('adminDashboard.sosUrgent', {'count': activeSos})
+              : context.tr('adminDashboard.allRoomsSafe'),
+          subtitleColor: hasSos ? AppColors.sosEmergency : null,
+          trailing: _buildCircularHeaderButton(
+            icon: Icons.add_rounded,
+            iconSize: 20,
+            tooltip: context.tr('room.createRoomBtn'),
+            isDark: isDark,
+            headingColor: headingColor,
+            onTap: () => _showCreateRoomSheet(context, controller),
+          ),
+          isDark: isDark,
+          headingColor: headingColor,
+          bodyColor: bodyColor,
         ),
         const SizedBox(height: AppSpacing.md),
 

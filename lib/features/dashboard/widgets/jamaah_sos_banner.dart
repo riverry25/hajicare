@@ -17,6 +17,21 @@ class JamaahSosBanner extends StatelessWidget {
   const JamaahSosBanner({super.key, required this.state});
 
   void _handleSosTrigger(BuildContext context) {
+    final hasRoom =
+        (state.activeRoomId.value?.trim().isNotEmpty ?? false) ||
+        state.activeRoom.value != null;
+    if (!hasRoom) {
+      AppAlert.warning(
+        context,
+        title: 'Belum Terdaftar di Room',
+        message:
+            'Tombol SOS darurat hanya aktif setelah Anda bergabung ke salah satu room pantau rombongan.',
+        okText: 'Gabung Room',
+        onOk: () => Get.toNamed(AppRoutes.joinRoom),
+      );
+      return;
+    }
+
     AppAlert.confirm(
       context,
       title: context.tr('sosConfirmTitle'),

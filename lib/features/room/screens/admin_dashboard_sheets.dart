@@ -485,7 +485,7 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                           ),
                         ],
                       ),
-                      const SizedBox(height: AppSpacing.sm),
+                      const SizedBox(height: AppSpacing.md),
 
                       // Search Box
                       Container(
@@ -530,7 +530,7 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                           },
                         ),
                       ),
-                      const SizedBox(height: AppSpacing.sm),
+                      const SizedBox(height: AppSpacing.md),
 
                       // Filter Chips
                       SingleChildScrollView(
@@ -550,7 +550,7 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                                 );
                               },
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 8),
                             _buildModalFilterChip(
                               context.tr('adminDashboard.emergencyFilter'),
                               activeFilter == 'Darurat',
@@ -564,7 +564,7 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                                 );
                               },
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 8),
                             _buildModalFilterChip(
                               context.tr('adminDashboard.monitoringRooms'),
                               activeFilter == 'Kamar',
@@ -578,7 +578,7 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                                 );
                               },
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 8),
                             _buildModalFilterChip(
                               context.tr('adminDashboard.members'),
                               activeFilter == 'Anggota',
@@ -595,7 +595,7 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                           ],
                         ),
                       ),
-                      const SizedBox(height: AppSpacing.sm),
+                      const SizedBox(height: AppSpacing.cardInnerGutter),
 
                       // Paginated Activities List
                       Expanded(
@@ -696,16 +696,21 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                             itemCount: totalItems,
                             separatorBuilder: (context, index) {
                               if (index >= filtered.length - 1) {
-                                return const SizedBox(height: AppSpacing.sm);
+                                return const SizedBox(height: AppSpacing.md);
                               }
-                              return Divider(
-                                height: 1,
-                                thickness: 0.8,
-                                indent: 58,
-                                endIndent: AppSpacing.md,
-                                color: isDark
-                                    ? AppColors.darkCardBorder
-                                    : AppColors.canvasCreamSubtle,
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 4,
+                                ),
+                                child: Divider(
+                                  height: 1,
+                                  thickness: 0.8,
+                                  indent: 62,
+                                  endIndent: AppSpacing.md,
+                                  color: isDark
+                                      ? AppColors.darkCardBorder
+                                      : AppColors.canvasCreamSubtle,
+                                ),
                               );
                             },
                             itemBuilder: (context, idx) {
@@ -853,7 +858,7 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
           color: isSelected
               ? activeColor.withValues(alpha: isDark ? 0.25 : 0.15)

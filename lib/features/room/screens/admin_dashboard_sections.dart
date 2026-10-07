@@ -13,14 +13,20 @@ extension _AdminDashboardSections on _AdminDashboardHome {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          context.tr('adminDashboard.quickActions'),
-          style: DashboardTypography.titleMedium.copyWith(
-            color: headingColor,
-            fontWeight: FontWeight.bold,
-          ),
+        _buildSubSectionHeader(
+          icon: Icons.flash_on_rounded,
+          title: context.tr('adminDashboard.quickActions'),
+          subtitle: activeSos > 0
+              ? context.tr('adminDashboard.activeSosCount', {
+                  'count': activeSos,
+                })
+              : 'Akses cepat modul dan koordinasi darurat',
+          subtitleColor: activeSos > 0 ? AppColors.sosEmergency : null,
+          isDark: isDark,
+          headingColor: headingColor,
+          bodyColor: isDark ? AppColors.darkTextBody : AppColors.textBody,
         ),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: AppSpacing.cardInnerGutter),
 
         // 2x3 Bento Grid of Quick Actions
         Row(
@@ -162,36 +168,38 @@ extension _AdminDashboardSections on _AdminDashboardHome {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              context.tr('adminDashboard.monitoringRooms'),
-              style: DashboardTypography.titleMedium.copyWith(
-                color: headingColor,
-                fontWeight: FontWeight.bold,
+        _buildSubSectionHeader(
+          icon: Icons.meeting_room_outlined,
+          title: context.tr('adminDashboard.monitoringRooms'),
+          subtitle:
+              '${controller.activeRoomsCount} ${context.tr('adminDashboard.monitoredActive')}',
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildCircularHeaderButton(
+                icon: Icons.add_rounded,
+                iconSize: 20,
+                tooltip: context.tr('room.createRoomBtn'),
+                isDark: isDark,
+                headingColor: headingColor,
+                onTap: () => _showCreateRoomSheet(context, controller),
               ),
-            ),
-            TextButton.icon(
-              style: TextButton.styleFrom(
-                minimumSize: const Size(44, 44),
-                foregroundColor: primaryColor,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
+              const SizedBox(width: 8),
+              _buildCircularHeaderButton(
+                icon: Icons.arrow_forward_rounded,
+                iconSize: 17,
+                tooltip: context.tr('dashboard.viewAll'),
+                isDark: isDark,
+                headingColor: headingColor,
+                onTap: () => Get.toNamed(AppRoutes.adminRooms),
               ),
-              icon: Text(
-                context.tr('dashboard.viewAll'),
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
-              label: const Icon(Icons.arrow_forward_ios_rounded, size: 12),
-              onPressed: () => Get.toNamed(AppRoutes.adminRooms),
-            ),
-          ],
+            ],
+          ),
+          isDark: isDark,
+          headingColor: headingColor,
+          bodyColor: bodyColor,
         ),
-
-        const SizedBox(height: AppSpacing.xs),
+        const SizedBox(height: AppSpacing.cardInnerGutter),
 
         if (recentRooms.isEmpty)
           AppCard(
@@ -321,110 +329,34 @@ extension _AdminDashboardSections on _AdminDashboardHome {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Section Header with Live Stream Pill & View All
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: Row(
-                children: [
-                  Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      color: primaryColor.withValues(
-                        alpha: isDark ? 0.20 : 0.12,
-                      ),
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      border: Border.all(
-                        color: primaryColor.withValues(
-                          alpha: isDark ? 0.35 : 0.20,
-                        ),
-                      ),
-                    ),
-                    child: Icon(
-                      Icons.bolt_rounded,
-                      size: 19,
-                      color: primaryColor,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          context.tr('adminDashboard.recentActivity'),
-                          style: DashboardTypography.titleMedium.copyWith(
-                            color: headingColor,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            _LivePulseIndicator(
-                              color: AppColors.statusSafe,
-                              isDark: isDark,
-                            ),
-                            const SizedBox(width: 5),
-                            Expanded(
-                              child: Text(
-                                sortedActivities.isEmpty
-                                    ? context.tr(
-                                        'adminDashboard.realtimeActive',
-                                      )
-                                    : context.tr(
-                                        'adminDashboard.realtimeCount',
-                                        {'count': sortedActivities.length},
-                                      ),
-                                style: DashboardTypography.captionSmall
-                                    .copyWith(
-                                      color: bodyColor.withValues(alpha: 0.75),
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 11,
-                                    ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+        _buildSubSectionHeader(
+          icon: Icons.bolt_rounded,
+          title: context.tr('adminDashboard.recentActivity'),
+          subtitle: sortedActivities.isEmpty
+              ? context.tr('adminDashboard.realtimeActive')
+              : context.tr('adminDashboard.realtimeCount', {
+                  'count': sortedActivities.length,
+                }),
+          trailing: _buildCircularHeaderButton(
+            icon: Icons.arrow_forward_rounded,
+            iconSize: 17,
+            tooltip: context.tr('dashboard.viewAll'),
+            isDark: isDark,
+            headingColor: headingColor,
+            onTap: () => _showAllActivitiesSheet(
+              context,
+              controller,
+              isDark,
+              headingColor,
+              bodyColor,
+              primaryColor,
             ),
-            const SizedBox(width: AppSpacing.xs),
-            TextButton.icon(
-              style: TextButton.styleFrom(
-                minimumSize: const Size(44, 36),
-                foregroundColor: primaryColor,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-              ),
-              icon: Text(
-                context.tr('dashboard.viewAll'),
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-              label: const Icon(Icons.arrow_forward_ios_rounded, size: 11),
-              onPressed: () => _showAllActivitiesSheet(
-                context,
-                controller,
-                isDark,
-                headingColor,
-                bodyColor,
-                primaryColor,
-              ),
-            ),
-          ],
+          ),
+          isDark: isDark,
+          headingColor: headingColor,
+          bodyColor: bodyColor,
         ),
-        const SizedBox(height: AppSpacing.sm + 2),
+        const SizedBox(height: AppSpacing.cardInnerGutter),
 
         // Body: Empty State or Activity Cards List
         if (previewActivities.isEmpty)
@@ -527,14 +459,17 @@ extension _AdminDashboardSections on _AdminDashboardHome {
               children: [
                 for (int idx = 0; idx < previewActivities.length; idx++) ...[
                   if (idx > 0)
-                    Divider(
-                      height: 1,
-                      thickness: 0.8,
-                      indent: 58,
-                      endIndent: AppSpacing.md,
-                      color: isDark
-                          ? AppColors.darkCardBorder
-                          : AppColors.canvasCreamSubtle,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Divider(
+                        height: 1,
+                        thickness: 0.8,
+                        indent: 62,
+                        endIndent: AppSpacing.md,
+                        color: isDark
+                            ? AppColors.darkCardBorder
+                            : AppColors.canvasCreamSubtle,
+                      ),
                     ),
                   _ActivityFeedTile(
                     activity: previewActivities[idx],

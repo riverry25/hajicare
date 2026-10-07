@@ -173,6 +173,8 @@ class RoomQueryService {
           .map((doc) => <String, dynamic>{'id': doc.id, ...doc.data()})
           .where((item) {
             final st = (item['status'] as String?)?.trim().toLowerCase();
+            final rId = (item['roomId'] as String?)?.trim();
+            if (rId == null || rId.isEmpty) return false;
             return activeStatuses.contains(st);
           })
           .toList();

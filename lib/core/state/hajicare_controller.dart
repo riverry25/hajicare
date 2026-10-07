@@ -1054,11 +1054,19 @@ class HajiCareController extends GetxController {
         } catch (_) {}
       }
 
-      final roomName =
-          activeRoom.value?.name ??
-          (roomId != null && roomId.isNotEmpty
-              ? 'Rombongan'
-              : 'Di luar rombongan');
+      // CRITICAL GUARD: User MUST belong to an active monitoring room to trigger SOS
+      if (roomId == null || roomId.trim().isEmpty) {
+        debugPrint(
+          '[HajiCareController] Cannot trigger SOS: user has not joined any room',
+        );
+        if (_self != null && _self!.sosActive) {
+          _self!.sosActive = false;
+          _self!.refresh();
+        }
+        return false;
+      }
+
+      final roomName = activeRoom.value?.name ?? 'Rombongan';
       final userName = _self?.name ?? user.displayName ?? 'Jamaah';
 
       final eventId = await _sosService.trigger(

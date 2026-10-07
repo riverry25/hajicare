@@ -224,7 +224,14 @@ extension _AdminDashboardJamaahSheet on _AdminDashboardHome {
                                         context.tr(
                                           'adminDashboard.notRegisteredRoom',
                                         );
-                                    final isSos = j['sosActive'] == true;
+                                    final hasRoom =
+                                        room != null ||
+                                        (j['activeRoomId'] != null &&
+                                            (j['activeRoomId'] as String)
+                                                .trim()
+                                                .isNotEmpty);
+                                    final isSos =
+                                        j['sosActive'] == true && hasRoom;
                                     final isGps = j['isGpsActive'] == true;
                                     final locUpdatedAt =
                                         j['locationUpdatedAt'] is Timestamp
@@ -240,6 +247,13 @@ extension _AdminDashboardJamaahSheet on _AdminDashboardHome {
                                       dotColor = AppColors.sosEmergency;
                                       statusLabel =
                                           '• ${context.tr('adminDashboard.sosActive')}';
+                                    } else if (!hasRoom) {
+                                      dotColor = bodyColor.withValues(
+                                        alpha: 0.45,
+                                      );
+                                      statusLabel = context.tr(
+                                        'adminDashboard.offline',
+                                      );
                                     } else if (locUpdatedAt != null) {
                                       final diff = DateTime.now().difference(
                                         locUpdatedAt,

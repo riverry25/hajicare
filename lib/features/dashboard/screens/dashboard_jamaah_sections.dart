@@ -1686,6 +1686,21 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                 ),
                 onPressed: () {
                   Get.back();
+                  final state = Get.find<HajiCareController>();
+                  final hasRoom =
+                      (state.activeRoomId.value?.trim().isNotEmpty ?? false) ||
+                      state.activeRoom.value != null;
+                  if (!hasRoom) {
+                    AppAlert.warning(
+                      context,
+                      title: 'Belum Terdaftar di Room',
+                      message:
+                          'Tombol SOS darurat hanya aktif setelah Anda bergabung ke salah satu room pantau rombongan.',
+                      okText: 'Gabung Room',
+                      onOk: () => Get.toNamed(AppRoutes.joinRoom),
+                    );
+                    return;
+                  }
                   Get.toNamed(AppRoutes.modalSos);
                 },
               ),

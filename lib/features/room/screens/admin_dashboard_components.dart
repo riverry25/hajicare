@@ -775,15 +775,15 @@ class _ActivityFeedTile extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.md,
-            vertical: AppSpacing.sm + 4,
+            vertical: 14,
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Icon Badge with alert styling
               Container(
-                width: 38,
-                height: 38,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   color: activity.color.withValues(alpha: isDark ? 0.20 : 0.12),
                   shape: BoxShape.circle,
@@ -805,9 +805,9 @@ class _ActivityFeedTile extends StatelessWidget {
                         ]
                       : null,
                 ),
-                child: Icon(activity.icon, color: activity.color, size: 18),
+                child: Icon(activity.icon, color: activity.color, size: 19),
               ),
-              const SizedBox(width: AppSpacing.md),
+              const SizedBox(width: AppSpacing.cardInnerGutter),
 
               // Content
               Expanded(
@@ -879,14 +879,14 @@ class _ActivityFeedTile extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 5),
 
                     // Description
                     Text(
                       activity.description,
                       style: DashboardTypography.bodySmall.copyWith(
                         color: bodyColor,
-                        height: 1.38,
+                        height: 1.4,
                         fontSize: 12.5,
                       ),
                       maxLines: 2,
@@ -897,16 +897,16 @@ class _ActivityFeedTile extends StatelessWidget {
                     if (activity.roomName != null ||
                         activity.userName != null ||
                         activity.role != null) ...[
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 8),
                       Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
+                        spacing: 8,
+                        runSpacing: 6,
                         children: [
                           if (activity.roomName != null)
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 7,
-                                vertical: 2,
+                                horizontal: 8,
+                                vertical: 3,
                               ),
                               decoration: BoxDecoration(
                                 color:
@@ -923,10 +923,10 @@ class _ActivityFeedTile extends StatelessWidget {
                                 children: [
                                   Icon(
                                     Icons.meeting_room_outlined,
-                                    size: 11,
+                                    size: 11.5,
                                     color: bodyColor.withValues(alpha: 0.8),
                                   ),
-                                  const SizedBox(width: 4),
+                                  const SizedBox(width: 4.5),
                                   Text(
                                     activity.roomName!,
                                     style: DashboardTypography.captionSmall
@@ -943,8 +943,8 @@ class _ActivityFeedTile extends StatelessWidget {
                               activity.role != null)
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 7,
-                                vertical: 2,
+                                horizontal: 8,
+                                vertical: 3,
                               ),
                               decoration: BoxDecoration(
                                 color:
@@ -961,10 +961,10 @@ class _ActivityFeedTile extends StatelessWidget {
                                 children: [
                                   Icon(
                                     Icons.person_outline_rounded,
-                                    size: 11,
+                                    size: 11.5,
                                     color: bodyColor.withValues(alpha: 0.8),
                                   ),
-                                  const SizedBox(width: 4),
+                                  const SizedBox(width: 4.5),
                                   Text(
                                     '${activity.userName ?? ""}${activity.role != null ? " (${activity.role})" : ""}'
                                         .trim(),

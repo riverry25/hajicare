@@ -1,6 +1,7 @@
 // ignore_for_file: use_null_aware_elements
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../../../core/services/trusted_backend_service.dart';
 
 /// Coordinates SOS writes so an emergency is either recorded completely or
@@ -31,9 +32,15 @@ class SosService {
     final normalizedRoomId = (roomId != null && roomId.trim().isNotEmpty)
         ? roomId.trim()
         : null;
+    if (normalizedRoomId == null) {
+      debugPrint(
+        '[SosService] Rejected SOS trigger: missing roomId. User must join a room first.',
+      );
+      return '';
+    }
     final normalizedRoomName = (roomName != null && roomName.trim().isNotEmpty)
         ? roomName.trim()
-        : (normalizedRoomId != null ? 'Rombongan' : 'Di luar rombongan');
+        : 'Rombongan';
 
     final batch = _firestore.batch();
     final eventData = <String, dynamic>{
@@ -41,13 +48,11 @@ class SosService {
       'jamaahId': userId,
       'userName': userName.trim().isNotEmpty ? userName.trim() : 'Jamaah',
       'roomName': normalizedRoomName,
+      'roomId': normalizedRoomId,
       'timestamp': FieldValue.serverTimestamp(),
       'createdAt': FieldValue.serverTimestamp(),
       'status': 'active',
     };
-    if (normalizedRoomId != null) {
-      eventData['roomId'] = normalizedRoomId;
-    }
     if (location != null) {
       eventData['location'] = location;
       eventData['locationUpdatedAt'] = FieldValue.serverTimestamp();
@@ -65,14 +70,12 @@ class SosService {
       'sosTime': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
 
-    if (normalizedRoomId != null) {
-      final memberRef = _firestore
-          .collection('rooms')
-          .doc(normalizedRoomId)
-          .collection('members')
-          .doc(userId);
-      batch.set(memberRef, {'sosActive': true}, SetOptions(merge: true));
-    }
+    final memberRef = _firestore
+        .collection('rooms')
+        .doc(normalizedRoomId)
+        .collection('members')
+        .doc(userId);
+    batch.set(memberRef, {'sosActive': true}, SetOptions(merge: true));
 
     await batch.commit();
 
