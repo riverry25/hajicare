@@ -95,7 +95,9 @@ class NotificationController extends GetxController {
                       .where(
                         (item) =>
                             !knownIds.contains(item.id) &&
-                            (item.isCompanionMessage || item.isCompanionInfo),
+                            (item.isCompanionMessage ||
+                                item.isCompanionInfo ||
+                                item.isSosAlert),
                       )
                       .toList(growable: false)
                 : const <AppNotificationModel>[];
@@ -154,6 +156,38 @@ class NotificationController extends GetxController {
     if (Get.context == null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (Get.context == null) return;
+      if (notification.isSosAlert) {
+        Get.snackbar(
+          '🚨 PANGGILAN DARURAT SOS!',
+          '${notification.senderName ?? 'Jamaah'}: ${notification.message}',
+          snackPosition: SnackPosition.TOP,
+          margin: const EdgeInsets.all(14),
+          borderRadius: 16,
+          duration: const Duration(seconds: 10),
+          icon: const Icon(
+            Icons.emergency_rounded,
+            color: Colors.white,
+            size: 30,
+          ),
+          colorText: Colors.white,
+          backgroundColor: const Color(0xFFD32F2F),
+          mainButton: TextButton(
+            onPressed: () {
+              if (Get.isSnackbarOpen) Get.back();
+              Get.toNamed(AppRoutes.modalSos);
+            },
+            child: const Text(
+              'RESPONS',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1,
+              ),
+            ),
+          ),
+        );
+        return;
+      }
       Get.snackbar(
         notification.isCompanionInfo
             ? 'Informasi Baru dari Jamaah'

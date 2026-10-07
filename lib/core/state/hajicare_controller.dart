@@ -428,11 +428,12 @@ class HajiCareController extends GetxController {
     required String? roomId,
     required bool isAdmin,
   }) {
+    final effectiveRoomId = roomId ?? _cachedRoomId ?? activeRoomId.value;
     final scope = isAdmin
         ? 'admin'
-        : roomId == null
+        : effectiveRoomId == null
         ? 'user:$uid'
-        : 'room:$roomId';
+        : 'room:$effectiveRoomId';
     if (_sosSubscriptionScope == scope && _sosEventsSub != null) return;
 
     _sosEventsSub?.cancel();
@@ -440,9 +441,9 @@ class HajiCareController extends GetxController {
 
     final stream = isAdmin
         ? _roomService.getActiveSosEventsStream()
-        : roomId == null
+        : effectiveRoomId == null
         ? Stream<List<Map<String, dynamic>>>.value(const [])
-        : _roomService.getActiveSosEventsStream(roomId: roomId);
+        : _roomService.getActiveSosEventsStream(roomId: effectiveRoomId);
 
     _sosEventsSub = stream.listen(
       (sosList) {
@@ -586,6 +587,10 @@ class HajiCareController extends GetxController {
           j.locationUpdatedAt = member.locationUpdatedAt ?? DateTime.now();
           j.isGpsActive = true;
         }
+        if (j.sosActive != member.sosActive) {
+          j.sosActive = member.sosActive;
+          j.refresh();
+        }
       } else {
         final newJ = JamaahData(
           id: member.uid,
@@ -597,6 +602,7 @@ class HajiCareController extends GetxController {
           isGpsActive: member.hasLocation,
           onlineStatus: true,
           activeRoomId: activeRoomId.value,
+          sosActive: member.sosActive,
         );
         jamaahList.add(newJ);
       }

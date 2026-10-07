@@ -16,7 +16,10 @@ class RoomMemberModel {
     this.joinedAt,
     this.currentLocation,
     this.locationUpdatedAt,
+    this.sosActive = false,
   });
+
+  final bool sosActive;
 
   bool get isPendamping => role.toLowerCase() == 'pendamping';
   bool get isJamaah => role.toLowerCase() == 'jamaah';
@@ -82,6 +85,7 @@ class RoomMemberModel {
       joinedAt: joinedAt,
       currentLocation: currentLocation,
       locationUpdatedAt: locationUpdatedAt,
+      sosActive: (data['sosActive'] as bool?) ?? false,
     );
   }
 
@@ -90,6 +94,7 @@ class RoomMemberModel {
       'uid': uid,
       'name': name.trim(),
       'role': role.trim().toLowerCase(),
+      'sosActive': sosActive,
       'joinedAt': joinedAt != null
           ? Timestamp.fromDate(joinedAt!)
           : FieldValue.serverTimestamp(),

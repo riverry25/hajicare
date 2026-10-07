@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hajicare/core/routes/app_routes.dart';
+import 'package:hajicare/features/notification/models/notification_model.dart';
+import 'package:hajicare/features/room/models/room_member_model.dart';
 
 void main() {
   group('Emergency SOS HajiCare Tests', () {
@@ -118,5 +120,34 @@ void main() {
 
       expect(distanceText(null, null), 'Koordinat tidak tersedia');
     });
+
+    test('RoomMemberModel default sosActive is false and can be set true', () {
+      final member = RoomMemberModel(
+        uid: 'user_test_1',
+        name: 'Jamaah Budi',
+        role: 'jamaah',
+        sosActive: true,
+      );
+
+      expect(member.sosActive, isTrue);
+      final json = member.toFirestore();
+      expect(json['sosActive'], isTrue);
+    });
+
+    test(
+      'AppNotificationModel correctly recognizes sos_alert notification',
+      () {
+        const notif = AppNotificationModel(
+          id: 'notif_sos_1',
+          recipientId: 'pendamping_uid_1',
+          type: 'sos_alert',
+          title: '🚨 Panggilan Darurat SOS!',
+          message: 'Jamaah Budi membutuhkan bantuan darurat segera!',
+        );
+
+        expect(notif.isSosAlert, isTrue);
+        expect(notif.type, 'sos_alert');
+      },
+    );
   });
 }

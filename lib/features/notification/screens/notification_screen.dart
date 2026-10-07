@@ -11,6 +11,7 @@ import '../../../core/theme/app_typography.dart';
 import '../models/notification_model.dart';
 import '../controllers/notification_controller.dart';
 import '../widgets/notification_composer_dialog.dart';
+import '../../../core/routes/app_routes.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -688,6 +689,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
         onTap: () {
           if (!notif.isRead && Get.isRegistered<NotificationController>()) {
             Get.find<NotificationController>().markNotificationRead(notif.id);
+          }
+          if (notif.isSosAlert) {
+            Get.toNamed(AppRoutes.modalSos);
           }
         },
       ),

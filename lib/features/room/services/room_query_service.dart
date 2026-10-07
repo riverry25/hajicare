@@ -153,23 +153,28 @@ class RoomQueryService {
   Stream<List<Map<String, dynamic>>> getActiveSosEventsStream({
     String? roomId,
   }) {
-    Query<Map<String, dynamic>> query = _firestore.collection('sos_events');
     final normalizedRoomId = roomId?.trim();
+    Query<Map<String, dynamic>> query = _firestore.collection('sos_events');
+
+    // Single-field queries only: served by automatic single-field indexes,
+    // avoiding FAILED_PRECONDITION when composite indexes are not deployed.
     if (normalizedRoomId != null && normalizedRoomId.isNotEmpty) {
       query = query.where('roomId', isEqualTo: normalizedRoomId);
+    } else {
+      query = query.where(
+        'status',
+        whereIn: const ['active', 'baru', 'direspons'],
+      );
     }
-    // Equality/`in` filters only: served by automatic single-field indexes,
-    // so the stream never fails with FAILED_PRECONDITION when the composite
-    // (roomId, status, timestamp) index is not deployed. Ordering is applied
-    // client-side below.
-    query = query.where(
-      'status',
-      whereIn: const ['active', 'baru', 'direspons'],
-    );
 
     return query.limit(_sosWindow).snapshots().map((snapshot) {
+      const activeStatuses = {'active', 'baru', 'direspons'};
       final items = snapshot.docs
           .map((doc) => <String, dynamic>{'id': doc.id, ...doc.data()})
+          .where((item) {
+            final st = (item['status'] as String?)?.trim().toLowerCase();
+            return activeStatuses.contains(st);
+          })
           .toList();
       items.sort(
         (a, b) => _eventTime(b, const [

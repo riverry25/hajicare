@@ -75,7 +75,133 @@ class SosService {
     }
 
     await batch.commit();
+
+    // Dispatch real-time emergency notifications to pendampings & admins
+    // unawaited so that slow network queries do not delay returning eventRef.id.
+    _dispatchSosNotifications(
+      eventId: eventRef.id,
+      senderUid: userId,
+      senderName: userName.trim().isNotEmpty ? userName.trim() : 'Jamaah',
+      roomId: normalizedRoomId,
+      roomName: normalizedRoomName,
+      location: location,
+      kloter: kloter,
+      maktab: maktab,
+    );
+
     return eventRef.id;
+  }
+
+  /// Dispatches high-priority 'sos_alert' notifications to the room's pendampings
+  /// and all admins so they receive alerts and see the badge on their dashboard.
+  Future<void> _dispatchSosNotifications({
+    required String eventId,
+    required String senderUid,
+    required String senderName,
+    required String? roomId,
+    required String roomName,
+    GeoPoint? location,
+    String? kloter,
+    String? maktab,
+  }) async {
+    try {
+      final recipientUids = <String>{};
+
+      // 1. Resolve room pendamping UIDs
+      if (roomId != null && roomId.isNotEmpty) {
+        try {
+          final roomDoc = await _firestore
+              .collection('rooms')
+              .doc(roomId)
+              .get();
+          if (roomDoc.exists) {
+            final data = roomDoc.data() ?? {};
+            final pIds = data['pendampingIds'];
+            if (pIds is List) {
+              for (final id in pIds) {
+                final s = id?.toString().trim();
+                if (s != null && s.isNotEmpty && s != senderUid) {
+                  recipientUids.add(s);
+                }
+              }
+            }
+            final singlePId = (data['pendampingId'] as String?)?.trim();
+            if (singlePId != null &&
+                singlePId.isNotEmpty &&
+                singlePId != senderUid) {
+              recipientUids.add(singlePId);
+            }
+          }
+        } catch (_) {}
+
+        try {
+          final membersSnap = await _firestore
+              .collection('rooms')
+              .doc(roomId)
+              .collection('members')
+              .where('role', isEqualTo: 'pendamping')
+              .get();
+          for (final doc in membersSnap.docs) {
+            final uid = doc.id.trim();
+            if (uid.isNotEmpty && uid != senderUid) {
+              recipientUids.add(uid);
+            }
+          }
+        } catch (_) {}
+      }
+
+      // 2. Resolve admin UIDs
+      try {
+        final adminSnap = await _firestore
+            .collection('users')
+            .where('role', isEqualTo: 'admin')
+            .limit(50)
+            .get();
+        for (final doc in adminSnap.docs) {
+          final uid = doc.id.trim();
+          if (uid.isNotEmpty && uid != senderUid) {
+            recipientUids.add(uid);
+          }
+        }
+      } catch (_) {}
+
+      if (recipientUids.isEmpty) return;
+
+      // 3. Write notification documents for all resolved recipients
+      final batch = _firestore.batch();
+      for (final recipientId in recipientUids) {
+        final notifRef = _firestore.collection('notifications').doc();
+        batch.set(notifRef, {
+          'recipientId': recipientId,
+          'type': 'sos_alert',
+          'title': '🚨 Panggilan Darurat SOS!',
+          'message':
+              '$senderName membutuhkan bantuan darurat segera! ($roomName)',
+          'scope': roomId != null ? 'room' : 'global',
+          if (roomId != null) 'targetRoomId': roomId,
+          'targetUserId': senderUid,
+          'senderId': senderUid,
+          'senderName': senderName,
+          'senderRole': 'jamaah',
+          'relatedId': eventId,
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+          'metadata': {
+            'eventId': eventId,
+            if (roomId != null) 'roomId': roomId,
+            'roomName': roomName,
+            'userName': senderName,
+            if (location != null) 'latitude': location.latitude,
+            if (location != null) 'longitude': location.longitude,
+            if (kloter != null && kloter.isNotEmpty) 'kloter': kloter,
+            if (maktab != null && maktab.isNotEmpty) 'maktab': maktab,
+          },
+        });
+      }
+      await batch.commit();
+    } catch (_) {
+      // Non-fatal: notification dispatch failure should never crash the core SOS trigger
+    }
   }
 
   /// Updates the live GPS location on an active SOS event document.
