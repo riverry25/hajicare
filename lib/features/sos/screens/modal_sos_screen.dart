@@ -11,6 +11,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../notification/controllers/notification_controller.dart';
 
 class ModalSosScreen extends StatefulWidget {
   const ModalSosScreen({super.key});
@@ -25,6 +26,8 @@ class _ModalSosScreenState extends State<ModalSosScreen>
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
 
+  final _dismissedSosIds = <String>{}.obs;
+
   int _countdown = 3;
   bool _isCountingDown = false;
   bool _sosSent = false;
@@ -33,6 +36,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
   void initState() {
     super.initState();
     state = Get.find<HajiCareController>();
+    state.refreshSosEvents();
 
     _pulseController = AnimationController(
       vsync: this,
@@ -123,6 +127,99 @@ class _ModalSosScreenState extends State<ModalSosScreen>
     return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} (${dt.day}/${dt.month}/${dt.year})';
   }
 
+  bool _isItemDismissed(String? id, [String? secondaryId]) {
+    if (id != null && id.isNotEmpty) {
+      if (_dismissedSosIds.contains(id) || state.isSosDismissed(id)) {
+        return true;
+      }
+    }
+    if (secondaryId != null && secondaryId.isNotEmpty) {
+      if (_dismissedSosIds.contains(secondaryId) ||
+          state.isSosDismissed(secondaryId)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Combines all active SOS sources: Firestore sos_events stream,
+  /// room jamaahList with sosActive flag, and incoming sos_alert notifications.
+  List<Map<String, dynamic>> _resolveActiveSosList() {
+    final list = <Map<String, dynamic>>[];
+    final seenIds = <String>{};
+
+    // 1. From Firestore sos_events stream in state
+    for (final event in state.activeSosEvents) {
+      final id =
+          event['id']?.toString() ??
+          event['userId']?.toString() ??
+          event['jamaahId']?.toString();
+      final uId = event['userId']?.toString() ?? event['jamaahId']?.toString();
+      if (_isItemDismissed(id, uId)) continue;
+      if (id != null && seenIds.add(id)) {
+        list.add(Map<String, dynamic>.from(event));
+      }
+    }
+
+    // 2. From room jamaahList (if any jamaah has sosActive == true)
+    for (final j in state.jamaahList) {
+      if (_isItemDismissed(j.id)) continue;
+      if (j.sosActive && seenIds.add(j.id)) {
+        list.add({
+          'id': j.id,
+          'userId': j.id,
+          'jamaahId': j.id,
+          'userName': j.name,
+          'roomName': state.activeRoom.value?.name ?? 'Rombongan',
+          'status': 'active',
+          'timestamp': j.locationUpdatedAt ?? DateTime.now(),
+          if (j.currentLocation != null) 'location': j.currentLocation,
+          if (state.pendampingKloter.value != null)
+            'kloter': state.pendampingKloter.value,
+          if (state.pendampingMaktab.value != null)
+            'maktab': state.pendampingMaktab.value,
+        });
+      }
+    }
+
+    // 3. From incoming unhandled notifications of type sos_alert
+    if (Get.isRegistered<NotificationController>()) {
+      final notifCtrl = Get.find<NotificationController>();
+      for (final n in notifCtrl.notifications) {
+        // ONLY active, UNREAD notifications that haven't been dismissed
+        if (n.isSosAlert && !n.isRead) {
+          final senderId = n.senderId ?? n.targetUserId;
+          final eventId = n.relatedId ?? senderId;
+          if (_isItemDismissed(n.id, eventId) || _isItemDismissed(senderId)) {
+            continue;
+          }
+          if (eventId != null && seenIds.add(eventId)) {
+            final lat = (n.metadata?['latitude'] as num?)?.toDouble();
+            final lng = (n.metadata?['longitude'] as num?)?.toDouble();
+            list.add({
+              'id': eventId,
+              'userId': senderId ?? eventId,
+              'jamaahId': senderId ?? eventId,
+              'userName': n.senderName ?? 'Jamaah',
+              'roomName':
+                  n.metadata?['roomName'] ??
+                  (n.targetRoomId != null ? 'Rombongan' : 'Di luar rombongan'),
+              'status': 'active',
+              'timestamp': n.createdAt ?? DateTime.now(),
+              if (lat != null && lng != null) 'location': GeoPoint(lat, lng),
+              if (n.metadata?['kloter'] != null)
+                'kloter': n.metadata!['kloter'],
+              if (n.metadata?['maktab'] != null)
+                'maktab': n.metadata!['maktab'],
+            });
+          }
+        }
+      }
+    }
+
+    return list;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
@@ -132,8 +229,6 @@ class _ModalSosScreenState extends State<ModalSosScreen>
         ? AppColors.darkTextHeading
         : AppColors.espressoDark;
     final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-    final isOfficer =
-        state.role == UserRole.pendamping || state.role == UserRole.admin;
 
     return Scaffold(
       backgroundColor: scaffoldBg,
@@ -178,7 +273,8 @@ class _ModalSosScreenState extends State<ModalSosScreen>
         ),
         actions: [
           Obx(() {
-            final activeCount = state.activeSosCount.value;
+            final activeSosList = _resolveActiveSosList();
+            final activeCount = activeSosList.length;
             if (activeCount <= 0) return const SizedBox.shrink();
             return Container(
               margin: const EdgeInsets.only(right: 16, left: 4),
@@ -201,9 +297,11 @@ class _ModalSosScreenState extends State<ModalSosScreen>
         ],
       ),
       body: Obx(() {
+        final isOfficer =
+            state.role == UserRole.pendamping || state.role == UserRole.admin;
         // If Officer, show Responder Panel
         if (isOfficer) {
-          final activeSosList = state.activeSosEvents;
+          final activeSosList = _resolveActiveSosList();
           return _buildResponderView(
             context,
             activeSosList,
@@ -609,10 +707,51 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                                 confirmText: context.tr('sos.yesComplete'),
                                 cancelText: context.tr('common.cancel'),
                                 onConfirm: () async {
+                                  // 1. Immediately track as dismissed locally for instant response
+                                  if (userId.isNotEmpty) {
+                                    _dismissedSosIds.add(userId);
+                                  }
+                                  if (eventId != null && eventId.isNotEmpty) {
+                                    _dismissedSosIds.add(eventId);
+                                  }
+                                  final rawId = sos['id'] as String?;
+                                  if (rawId != null && rawId.isNotEmpty) {
+                                    _dismissedSosIds.add(rawId);
+                                  }
+
+                                  // 2. Immediately purge related notifications from controller
+                                  if (Get.isRegistered<
+                                    NotificationController
+                                  >()) {
+                                    final notifCtrl =
+                                        Get.find<NotificationController>();
+                                    final toDelete = notifCtrl.notifications
+                                        .where(
+                                          (n) =>
+                                              n.isSosAlert &&
+                                              (n.id == rawId ||
+                                                  n.id == eventId ||
+                                                  n.relatedId == rawId ||
+                                                  n.relatedId == eventId ||
+                                                  n.senderId == userId ||
+                                                  n.targetUserId == userId),
+                                        )
+                                        .map((n) => n.id)
+                                        .toList();
+                                    for (final notifId in toDelete) {
+                                      notifCtrl.deleteNotification(notifId);
+                                    }
+                                  }
+
+                                  // 3. Call state.dismissSos
                                   final success = await state.dismissSos(
                                     userId,
                                     eventId: eventId,
                                   );
+
+                                  if (mounted) {
+                                    setState(() {});
+                                  }
                                   if (context.mounted) {
                                     if (success) {
                                       AppAlert.success(
@@ -883,6 +1022,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                 onPressed: () async {
                   final uid = state.currentUid;
                   if (uid != null) {
+                    if (uid.isNotEmpty) _dismissedSosIds.add(uid);
                     final success = await state.dismissSos(uid);
                     if (success) {
                       setState(() {

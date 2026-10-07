@@ -149,5 +149,74 @@ void main() {
         expect(notif.type, 'sos_alert');
       },
     );
+
+    test(
+      'SOS Dismissal filtering excludes dismissed items and read notifications',
+      () {
+        final dismissedIds = <String>{'evt_resolved_1', 'user_dismissed_2'};
+
+        bool isDismissed(String? id, [String? secondaryId]) {
+          if (id != null && id.isNotEmpty && dismissedIds.contains(id)) {
+            return true;
+          }
+          if (secondaryId != null &&
+              secondaryId.isNotEmpty &&
+              dismissedIds.contains(secondaryId)) {
+            return true;
+          }
+          return false;
+        }
+
+        // Check dismissed items
+        expect(isDismissed('evt_resolved_1'), isTrue);
+        expect(isDismissed('user_dismissed_2'), isTrue);
+        expect(isDismissed('evt_active_99'), isFalse);
+        expect(isDismissed('evt_active_99', 'user_dismissed_2'), isTrue);
+
+        // Notification filtering: only unread sos_alerts that are not dismissed should be active
+        final notif1 = const AppNotificationModel(
+          id: 'notif_1',
+          recipientId: 'pendamping_1',
+          type: 'sos_alert',
+          title: '🚨 Panggilan Darurat SOS!',
+          message: 'Jamaah membutuhkan bantuan!',
+          relatedId: 'evt_resolved_1',
+          senderId: 'user_1',
+          isRead: false,
+        );
+        final notif2 = const AppNotificationModel(
+          id: 'notif_2',
+          recipientId: 'pendamping_1',
+          type: 'sos_alert',
+          title: '🚨 Panggilan Darurat SOS!',
+          message: 'Jamaah membutuhkan bantuan!',
+          relatedId: 'evt_active_3',
+          senderId: 'user_3',
+          isRead: true, // already read / resolved
+        );
+        final notif3 = const AppNotificationModel(
+          id: 'notif_3',
+          recipientId: 'pendamping_1',
+          type: 'sos_alert',
+          title: '🚨 Panggilan Darurat SOS!',
+          message: 'Jamaah membutuhkan bantuan!',
+          relatedId: 'evt_active_4',
+          senderId: 'user_4',
+          isRead: false, // active unread
+        );
+
+        bool isActiveSosNotification(AppNotificationModel n) {
+          if (!n.isSosAlert || n.isRead) return false;
+          final senderId = n.senderId ?? n.targetUserId;
+          final eventId = n.relatedId ?? senderId;
+          if (isDismissed(n.id, eventId) || isDismissed(senderId)) return false;
+          return true;
+        }
+
+        expect(isActiveSosNotification(notif1), isFalse); // dismissed
+        expect(isActiveSosNotification(notif2), isFalse); // read
+        expect(isActiveSosNotification(notif3), isTrue); // active
+      },
+    );
   });
 }

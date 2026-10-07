@@ -11,6 +11,7 @@ import '../../features/room/models/room_model.dart';
 import '../../features/room/models/room_member_model.dart';
 import '../../features/room/services/room_service.dart';
 import '../../features/sos/services/sos_service.dart';
+import '../../features/notification/controllers/notification_controller.dart';
 
 export '../models/jamaah_data.dart';
 export '../../features/room/models/room_model.dart';
@@ -104,6 +105,11 @@ class HajiCareController extends GetxController {
   // Realtime SOS Events from Firestore
   final activeSosEvents = <Map<String, dynamic>>[].obs;
   final activeSosCount = 0.obs;
+  final dismissedSosIds = <String>{}.obs;
+
+  bool isSosDismissed(String? id) =>
+      id != null && id.isNotEmpty && dismissedSosIds.contains(id);
+
   bool _isSosMutationInFlight = false;
   StreamSubscription? _sosEventsSub;
   String? _sosSubscriptionScope;
@@ -126,6 +132,45 @@ class HajiCareController extends GetxController {
     super.onInit();
     _loadCachedUserData();
     _initAuthListener();
+
+    // Automatically update SOS stream whenever active room or role changes
+    ever(activeRoomId, (String? newRoomId) {
+      final uid = currentUid;
+      if (uid != null) {
+        _sosSubscriptionScope = null;
+        _listenToSosEvents(
+          uid: uid,
+          roomId: newRoomId,
+          isAdmin: _role.value == UserRole.admin,
+        );
+      }
+    });
+
+    ever(_role, (UserRole newRole) {
+      final uid = currentUid;
+      if (uid != null) {
+        _sosSubscriptionScope = null;
+        _listenToSosEvents(
+          uid: uid,
+          roomId: activeRoomId.value,
+          isAdmin: newRole == UserRole.admin,
+        );
+      }
+    });
+  }
+
+  /// Forces an immediate reconnection of the active SOS realtime stream.
+  /// Called when emergency screens like ModalSosScreen are opened.
+  void refreshSosEvents() {
+    final uid = currentUid;
+    if (uid != null) {
+      _sosSubscriptionScope = null;
+      _listenToSosEvents(
+        uid: uid,
+        roomId: activeRoomId.value ?? _cachedRoomId,
+        isAdmin: _role.value == UserRole.admin,
+      );
+    }
   }
 
   Future<void> _loadCachedUserData() async {
@@ -447,11 +492,26 @@ class HajiCareController extends GetxController {
 
     _sosEventsSub = stream.listen(
       (sosList) {
-        activeSosEvents.value = sosList;
-        activeSosCount.value = sosList.length;
+        final filteredList = sosList
+            .where(
+              (event) =>
+                  !isSosDismissed(event['id']?.toString()) &&
+                  !isSosDismissed(event['userId']?.toString()) &&
+                  !isSosDismissed(event['jamaahId']?.toString()),
+            )
+            .toList();
+        activeSosEvents.value = filteredList;
+        activeSosCount.value = filteredList.length;
 
         for (final jamaah in jamaahList) {
-          final isActive = sosList.any(
+          if (isSosDismissed(jamaah.id)) {
+            if (jamaah.sosActive) {
+              jamaah.sosActive = false;
+              jamaah.refresh();
+            }
+            continue;
+          }
+          final isActive = filteredList.any(
             (event) =>
                 event['userId'] == jamaah.id || event['jamaahId'] == jamaah.id,
           );
@@ -462,9 +522,11 @@ class HajiCareController extends GetxController {
         }
 
         if (_self != null) {
-          final isSelfActive = sosList.any(
-            (event) => event['userId'] == uid || event['jamaahId'] == uid,
-          );
+          final isSelfActive =
+              !isSosDismissed(uid) &&
+              filteredList.any(
+                (event) => event['userId'] == uid || event['jamaahId'] == uid,
+              );
           if (_self!.sosActive != isSelfActive) {
             _self!.sosActive = isSelfActive;
             _self!.refresh();
@@ -1043,6 +1105,11 @@ class HajiCareController extends GetxController {
   Future<bool> dismissSos(String id, {String? eventId}) async {
     if (_isSosMutationInFlight) return false;
     _isSosMutationInFlight = true;
+
+    // Immediately mark in dismissed set for instant UI responsiveness
+    if (id.isNotEmpty) dismissedSosIds.add(id);
+    if (eventId != null && eventId.isNotEmpty) dismissedSosIds.add(eventId);
+
     try {
       var roomId = activeRoomId.value?.trim();
       if (roomId == null || roomId.isEmpty) {
@@ -1057,13 +1124,22 @@ class HajiCareController extends GetxController {
         );
         resolvedEventId = match?['id'] as String?;
       }
+      if (resolvedEventId != null && resolvedEventId.isNotEmpty) {
+        dismissedSosIds.add(resolvedEventId);
+      }
 
-      await _roomService.resolveSos(
-        userId: id,
-        roomId: roomId,
-        eventId: resolvedEventId,
-        resolvedByUid: currentUid,
-      );
+      try {
+        await _roomService.resolveSos(
+          userId: id,
+          roomId: roomId,
+          eventId: resolvedEventId,
+          resolvedByUid: currentUid,
+        );
+      } catch (backendError) {
+        debugPrint(
+          '[HajiCareController] RoomService resolveSos error (will continue local purge): $backendError',
+        );
+      }
 
       final index = jamaahList.indexWhere((j) => j.id == id);
       if (index >= 0) {
@@ -1078,6 +1154,35 @@ class HajiCareController extends GetxController {
       // Clear local SOS event ID if we just cancelled our own SOS
       if (id == currentUid) {
         _activeSosEventId = null;
+      }
+
+      // Automatically purge matching sos_alert notifications if NotificationController is registered
+      if (Get.isRegistered<NotificationController>()) {
+        try {
+          final notifCtrl = Get.find<NotificationController>();
+          final toDelete = notifCtrl.notifications
+              .where(
+                (n) =>
+                    n.isSosAlert &&
+                    (n.id == id ||
+                        n.id == eventId ||
+                        n.id == resolvedEventId ||
+                        n.relatedId == id ||
+                        n.relatedId == eventId ||
+                        n.relatedId == resolvedEventId ||
+                        n.senderId == id ||
+                        n.targetUserId == id),
+              )
+              .map((n) => n.id)
+              .toList();
+          for (final notifId in toDelete) {
+            notifCtrl.deleteNotification(notifId);
+          }
+        } catch (e) {
+          debugPrint(
+            '[HajiCareController] Error cleaning up notifications on dismissSos: $e',
+          );
+        }
       }
 
       // Immediately purge from active list locally for instant UI response

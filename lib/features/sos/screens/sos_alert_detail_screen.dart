@@ -20,6 +20,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../map/controllers/map_controller.dart';
 import '../../map/models/map_poi.dart';
+import '../../notification/controllers/notification_controller.dart';
 
 /// Full SOS Alert Detail screen for pendamping / admin.
 ///
@@ -236,6 +237,29 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
       confirmText: context.tr('sos.yesComplete'),
       cancelText: context.tr('common.cancel'),
       onConfirm: () async {
+        if (userId.isNotEmpty) _state.dismissedSosIds.add(userId);
+        if (_eventId != null && _eventId!.isNotEmpty) {
+          _state.dismissedSosIds.add(_eventId!);
+        }
+
+        if (Get.isRegistered<NotificationController>()) {
+          final notifCtrl = Get.find<NotificationController>();
+          final toDelete = notifCtrl.notifications
+              .where(
+                (n) =>
+                    n.isSosAlert &&
+                    (n.id == _eventId ||
+                        n.relatedId == _eventId ||
+                        n.senderId == userId ||
+                        n.targetUserId == userId),
+              )
+              .map((n) => n.id)
+              .toList();
+          for (final notifId in toDelete) {
+            notifCtrl.deleteNotification(notifId);
+          }
+        }
+
         final success = await _state.dismissSos(userId, eventId: _eventId);
         if (mounted) {
           if (success) {
