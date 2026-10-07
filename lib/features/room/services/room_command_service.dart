@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../../core/services/trusted_backend_service.dart';
+import '../models/activity_model.dart';
 import '../models/room_invitation_model.dart';
 import '../models/room_model.dart';
 import 'room_query_service.dart';
@@ -39,6 +40,36 @@ class RoomCommandService {
   TrustedBackendService get _backend =>
       _providedBackend ?? TrustedBackendService();
 
+  Future<void> logActivity({
+    required ActivityType type,
+    required String title,
+    required String description,
+    String? roomId,
+    String? roomName,
+    String? userId,
+    String? userName,
+    String? role,
+    DateTime? timestamp,
+  }) async {
+    try {
+      final act = ActivityModel(
+        id: '',
+        type: type,
+        title: title,
+        description: description,
+        roomId: roomId,
+        roomName: roomName,
+        userId: userId,
+        userName: userName,
+        role: role,
+        timestamp: timestamp ?? DateTime.now(),
+      );
+      await _firestore.collection('activities').add(act.toFirestore());
+    } catch (e) {
+      debugPrint('[RoomCommandService] logActivity error: $e');
+    }
+  }
+
   Future<RoomModel> createRoom({required String name}) async {
     return createRoomByPendamping(name: name);
   }
@@ -54,7 +85,21 @@ class RoomCommandService {
         'maktab': ?maktab,
         'kloter': ?kloter,
       });
-      return await _loadCreatedRoom(result);
+      final room = await _loadCreatedRoom(result);
+      final user = FirebaseAuth.instance.currentUser;
+      final creatorName = user?.displayName ?? 'Pendamping';
+      logActivity(
+        type: ActivityType.roomCreated,
+        title: 'Rombongan Baru Dibuat',
+        description:
+            '$creatorName membuat rombongan "${room.name}" (Kode: ${room.code}).',
+        roomId: room.id,
+        roomName: room.name,
+        userId: user?.uid,
+        userName: creatorName,
+        role: 'pendamping',
+      );
+      return room;
     } catch (error) {
       debugPrint(
         '[RoomCommandService] Backend createRoom failed ($error), using direct Firestore fallback',
@@ -150,6 +195,20 @@ class RoomCommandService {
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
 
+    final activityRef = _firestore.collection('activities').doc();
+    batch.set(activityRef, {
+      'type': 'room_created',
+      'title': 'Rombongan Baru Dibuat',
+      'description':
+          '$creatorName membuat rombongan "$trimmedName" (Kode: $code).',
+      'roomId': newRoomRef.id,
+      'roomName': trimmedName,
+      'userId': user.uid,
+      'userName': creatorName,
+      'role': 'pendamping',
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
     await batch.commit();
 
     return RoomModel(
@@ -218,6 +277,38 @@ class RoomCommandService {
       'isActive': ?isActive,
     };
     await _firestore.collection('rooms').doc(roomId).update(updates);
+
+    final user = FirebaseAuth.instance.currentUser;
+    final actorName = user?.displayName ?? 'Pengurus';
+
+    if (isActive != null) {
+      logActivity(
+        type: isActive
+            ? ActivityType.roomActivated
+            : ActivityType.roomDeactivated,
+        title: isActive ? 'Rombongan Diaktifkan' : 'Rombongan Dinonaktifkan',
+        description: isActive
+            ? 'Rombongan telah diaktifkan kembali untuk operasional oleh $actorName.'
+            : 'Rombongan dinonaktifkan sementara oleh $actorName.',
+        roomId: roomId,
+        userId: user?.uid,
+        userName: actorName,
+        role: 'admin',
+      );
+    }
+    if (name != null && name.trim().isNotEmpty) {
+      logActivity(
+        type: ActivityType.roomUpdated,
+        title: 'Data Rombongan Diperbarui',
+        description:
+            '$actorName mengubah nama rombongan menjadi "${name.trim()}".',
+        roomId: roomId,
+        roomName: name.trim(),
+        userId: user?.uid,
+        userName: actorName,
+        role: 'admin',
+      );
+    }
   }
 
   Future<void> deleteRoom(String roomId) async {
@@ -235,6 +326,18 @@ class RoomCommandService {
       'status': 'inactive',
       'updatedAt': FieldValue.serverTimestamp(),
     });
+
+    final user = FirebaseAuth.instance.currentUser;
+    final actorName = user?.displayName ?? 'Admin';
+    logActivity(
+      type: ActivityType.roomDeactivated,
+      title: 'Rombongan Ditutup/Dihapus',
+      description: 'Rombongan telah ditutup oleh $actorName.',
+      roomId: roomId,
+      userId: user?.uid,
+      userName: actorName,
+      role: 'admin',
+    );
   }
 
   Future<RoomModel> joinRoomByCode(String roomCode) async {
@@ -246,7 +349,20 @@ class RoomCommandService {
       final roomId = result['roomId'] as String?;
       if (roomId != null && roomId.isNotEmpty) {
         final room = await queries.getRoomById(roomId);
-        if (room != null) return room;
+        if (room != null) {
+          final user = FirebaseAuth.instance.currentUser;
+          final uName = user?.displayName ?? 'Anggota';
+          logActivity(
+            type: ActivityType.memberJoined,
+            title: 'Anggota Bergabung',
+            description: '$uName bergabung ke rombongan "${room.name}".',
+            roomId: room.id,
+            roomName: room.name,
+            userId: user?.uid,
+            userName: uName,
+          );
+          return room;
+        }
       }
     } catch (backendError) {
       debugPrint(
@@ -358,6 +474,20 @@ class RoomCommandService {
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
 
+    final activityRef = _firestore.collection('activities').doc();
+    final roomName = (roomData['name'] as String?) ?? 'Rombongan';
+    batch.set(activityRef, {
+      'type': 'member_joined',
+      'title': 'Anggota Bergabung',
+      'description': '$memberName bergabung ke rombongan "$roomName".',
+      'roomId': targetRoomId,
+      'roomName': roomName,
+      'userId': user.uid,
+      'userName': memberName,
+      'role': memberRole,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
     await batch.commit();
 
     return RoomModel.fromFirestore(
@@ -397,6 +527,18 @@ class RoomCommandService {
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
 
+    final activityRef = _firestore.collection('activities').doc();
+    final uName = user.displayName ?? 'Anggota';
+    batch.set(activityRef, {
+      'type': 'member_left',
+      'title': 'Anggota Keluar',
+      'description': '$uName telah keluar dari rombongan.',
+      'roomId': roomId,
+      'userId': user.uid,
+      'userName': uName,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
     await batch.commit();
   }
 
@@ -432,6 +574,16 @@ class RoomCommandService {
       'activeRoomId': null,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+
+    final activityRef = _firestore.collection('activities').doc();
+    batch.set(activityRef, {
+      'type': 'member_left',
+      'title': 'Jamaah Dikeluarkan',
+      'description': 'Jamaah telah dikeluarkan dari rombongan oleh pengurus.',
+      'roomId': roomId,
+      'userId': jamaahUid,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
 
     await batch.commit();
   }
@@ -748,6 +900,22 @@ class RoomCommandService {
     batch.delete(
       _firestore.collection('notifications').doc('invitation_$invitationId'),
     );
+
+    final activityRef = _firestore.collection('activities').doc();
+    final rName = (roomSnap.data()?['name'] as String?) ?? 'Rombongan';
+    batch.set(activityRef, {
+      'type': 'member_joined',
+      'title': 'Undangan Diterima',
+      'description':
+          '$userName menerima undangan dan bergabung ke rombongan "$rName".',
+      'roomId': roomId,
+      'roomName': rName,
+      'userId': user.uid,
+      'userName': userName,
+      'role': 'jamaah',
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
     await batch.commit();
 
     return {'status': 'accepted', 'roomId': roomId};
@@ -892,6 +1060,23 @@ class RoomCommandService {
     try {
       await _firestore.collection('active_sos').doc(userId).delete();
     } catch (_) {}
+
+    // 5. Log resolution activity
+    final currentAuth = FirebaseAuth.instance.currentUser;
+    final actorName =
+        currentAuth?.displayName ?? (isCancel ? 'Pengguna' : 'Petugas');
+    logActivity(
+      type: ActivityType.roomUpdated,
+      title: isCancel
+          ? 'Sinyal SOS Dibatalkan'
+          : 'Sinyal SOS Selesai Ditangani',
+      description: isCancel
+          ? 'Peringatan darurat SOS telah dibatalkan oleh $actorName.'
+          : 'Peringatan darurat SOS berhasil diselesaikan oleh $actorName.',
+      roomId: targetRoomId,
+      userId: userId,
+      userName: actorName,
+    );
   }
 
   Future<void> updateMemberLocation({

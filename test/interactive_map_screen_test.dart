@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_map/flutter_map.dart' as fmap;
@@ -277,5 +278,69 @@ void main() {
         expect(find.byIcon(Icons.directions_run_rounded), findsOneWidget);
       },
     );
+
+    testWidgets(
+      'Deduplicates SOS markers and renders single emergency pin for jamaah',
+      (tester) async {
+        tester.view.physicalSize = const Size(1080, 2400);
+        tester.view.devicePixelRatio = 2.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        Get.put(AppSettingsController(), permanent: true);
+        final hajiCtrl = Get.put(HajiCareController(), permanent: true);
+        MapBinding().dependencies();
+        final mapCtrl = Get.find<MapController>();
+
+        // Add member "Humai" to room members with SOS active at default camera center
+        final humai = RoomMemberModel(
+          uid: 'j-humai-1',
+          name: 'Humai',
+          role: 'jamaah',
+          currentLocation: const GeoPoint(21.4133, 39.8933),
+          locationUpdatedAt: DateTime.now(),
+          sosActive: true,
+        );
+        mapCtrl.roomMembers.assignAll([humai]);
+
+        // Add 2 active SOS events for Humai in HajiCareController (simulating duplicate events)
+        hajiCtrl.activeSosEvents.assignAll([
+          {
+            'id': 'sos-event-1',
+            'userId': 'j-humai-1',
+            'userName': 'Humai',
+            'location': const GeoPoint(21.4133, 39.8933),
+          },
+          {
+            'id': 'sos-event-2',
+            'userId': 'j-humai-1',
+            'userName': 'Humai',
+            'location': const GeoPoint(21.4133, 39.8933),
+          },
+        ]);
+
+        await tester.pumpWidget(
+          GetMaterialApp(
+            theme: AppTheme.lightTheme,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('id'),
+            home: const InteractiveMapScreen(),
+          ),
+        );
+
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+
+        // Exactly one emergency marker banner on the map for Humai (deduplicated from 2 active events)
+        expect(find.text('SOS • Humai'), findsOneWidget);
+        expect(find.byIcon(Icons.sos_rounded), findsOneWidget);
+      },
+    );
   });
 }
+

@@ -229,6 +229,70 @@ class AdminRoomController extends GetxController {
     return rooms.where((r) => r.isActive).take(2).toList();
   }
 
+  /// Synthesizes historical activities from existing rooms and SOS events
+  /// when the Firestore `activities` collection is still empty/new.
+  List<ActivityModel> get effectiveActivities {
+    if (activities.isNotEmpty) return activities;
+
+    final list = <ActivityModel>[];
+    for (final room in rooms) {
+      list.add(
+        ActivityModel(
+          id: 'synth_room_${room.id}',
+          type: room.isActive
+              ? ActivityType.roomCreated
+              : ActivityType.roomDeactivated,
+          title: room.isActive ? 'Rombongan Aktif' : 'Rombongan Nonaktif',
+          description:
+              'Rombongan "${room.name}" (Kode: ${room.code}) terdaftar dalam sistem.',
+          roomId: room.id,
+          roomName: room.name,
+          timestamp: room.createdAt ?? DateTime.now(),
+        ),
+      );
+    }
+    for (final sos in activeSosList) {
+      DateTime time = DateTime.now();
+      final ts = sos['timestamp'] ?? sos['createdAt'];
+      if (ts is Timestamp) time = ts.toDate();
+      list.add(
+        ActivityModel(
+          id: 'synth_sos_${sos['id'] ?? sos['userId']}',
+          type: ActivityType.sosActive,
+          title: 'Peringatan Darurat SOS',
+          description:
+              '${sos['userName'] ?? 'Jamaah'} mengaktifkan sinyal darurat SOS.',
+          roomId: sos['roomId']?.toString(),
+          userId: sos['userId']?.toString(),
+          userName: sos['userName']?.toString(),
+          role: 'jamaah',
+          timestamp: time,
+        ),
+      );
+    }
+    for (final res in resolvedSosList) {
+      DateTime time = DateTime.now();
+      final ts = res['resolvedAt'] ?? res['timestamp'];
+      if (ts is Timestamp) time = ts.toDate();
+      list.add(
+        ActivityModel(
+          id: 'synth_res_${res['id'] ?? res['userId']}',
+          type: ActivityType.roomUpdated,
+          title: 'SOS Selesai Ditangani',
+          description:
+              'Sinyal darurat untuk ${res['userName'] ?? 'Jamaah'} telah diselesaikan.',
+          roomId: res['roomId']?.toString(),
+          userId: res['userId']?.toString(),
+          userName: res['userName']?.toString(),
+          role: 'jamaah',
+          timestamp: time,
+        ),
+      );
+    }
+    list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    return list;
+  }
+
   // ── Cursor-based Activity Pagination (10 per page) ──────────────────────────
 
   Future<void> loadInitialActivities({String filter = 'Semua'}) async {
@@ -247,6 +311,27 @@ class AdminRoomController extends GetxController {
     paginatedActivities.assignAll(result.items);
     _lastActivityDoc = result.lastDoc;
     hasMoreActivities.value = result.hasMore;
+
+    if (paginatedActivities.isEmpty &&
+        activities.isEmpty &&
+        effectiveActivities.isNotEmpty) {
+      final filtered = effectiveActivities.where((a) {
+        if (filter == 'Darurat') return a.type == ActivityType.sosActive;
+        if (filter == 'Kamar') {
+          return a.type == ActivityType.roomCreated ||
+              a.type == ActivityType.roomActivated ||
+              a.type == ActivityType.roomDeactivated ||
+              a.type == ActivityType.roomUpdated;
+        }
+        if (filter == 'Anggota') {
+          return a.type == ActivityType.memberJoined ||
+              a.type == ActivityType.memberLeft;
+        }
+        return true;
+      }).toList();
+      paginatedActivities.assignAll(filtered);
+    }
+
     isActivitiesPageLoading.value = false;
   }
 

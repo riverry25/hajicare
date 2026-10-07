@@ -64,6 +64,8 @@ class BisindoCameraHelper(
     private val pendingHandFrames = LinkedHashMap<Long, HandFrame>()
     private var lastEmittedTimestamp = -1L
 
+    private var isFrontCamera: Boolean = true
+
     fun attachPreviewView(view: PreviewView) {
         previewView = view
         if (isRunning && cameraProvider != null) {
@@ -77,6 +79,25 @@ class BisindoCameraHelper(
             bindCameraUseCases()
         }
     }
+
+    fun switchCamera(): Boolean {
+        isFrontCamera = !isFrontCamera
+        if (isRunning && cameraProvider != null) {
+            bindCameraUseCases()
+        }
+        return isFrontCamera
+    }
+
+    fun setLensFacing(front: Boolean) {
+        if (isFrontCamera != front) {
+            isFrontCamera = front
+            if (isRunning && cameraProvider != null) {
+                bindCameraUseCases()
+            }
+        }
+    }
+
+    fun isFrontCamera(): Boolean = isFrontCamera
 
     fun initialize() {
         try {
@@ -127,9 +148,14 @@ class BisindoCameraHelper(
     private fun bindCameraUseCases() {
         val provider = cameraProvider ?: return
 
-        // Default to front camera for selfie-style sign language capture
+        // Default to front camera, or back camera if toggled/selected
         val hasFrontCamera = provider.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA)
-        val cameraSelector = if (hasFrontCamera) {
+        val hasBackCamera = provider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA)
+        val cameraSelector = if (isFrontCamera && hasFrontCamera) {
+            CameraSelector.DEFAULT_FRONT_CAMERA
+        } else if (!isFrontCamera && hasBackCamera) {
+            CameraSelector.DEFAULT_BACK_CAMERA
+        } else if (hasFrontCamera) {
             CameraSelector.DEFAULT_FRONT_CAMERA
         } else {
             CameraSelector.DEFAULT_BACK_CAMERA

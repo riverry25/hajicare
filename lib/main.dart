@@ -15,6 +15,7 @@ import 'core/state/hajicare_controller.dart';
 import 'package:flutter/foundation.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'features/notification/controllers/notification_controller.dart';
+import 'features/map/controllers/map_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,6 +37,7 @@ void main() async {
   Get.put(AppStartupController(), permanent: true);
   Get.put(HajiCareController(), permanent: true);
   Get.put(NotificationController(), permanent: true);
+  Get.lazyPut<MapController>(() => MapController(), fenix: true);
 
   // Initialize background Adhan Notification & Alarm service for exact prayer alarms
   final adhanNotifService = AdhanNotificationService();

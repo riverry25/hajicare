@@ -4,7 +4,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
@@ -2056,94 +2058,118 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
         : AppColors.espressoDark;
     final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
     final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+    final cardBg = isDark ? AppColors.darkSurface : Colors.white;
+    final dividerColor = isDark
+        ? AppColors.darkCardBorder
+        : AppColors.canvasCreamSubtle;
+
+    // Avatar background color according to role / status
+    Color avatarBg;
+    if (effectiveMember.sosActive) {
+      avatarBg = const Color(0xFFDC2626);
+    } else if (effectiveMember.isPendamping) {
+      avatarBg = const Color(0xFF1D4ED8);
+    } else if (effectiveMember.isJamaah) {
+      avatarBg = AppColors.emeraldIslamic;
+    } else {
+      avatarBg = primaryColor;
+    }
+
+    // Role badge color scheme
+    Color roleBadgeBg;
+    Color roleBadgeTextColor;
+    if (effectiveMember.isPendamping) {
+      roleBadgeBg = isDark
+          ? const Color(0xFF1E3A8A).withValues(alpha: 0.4)
+          : const Color(0xFFE0E7FF);
+      roleBadgeTextColor = isDark
+          ? const Color(0xFF93C5FD)
+          : const Color(0xFF1D4ED8);
+    } else if (effectiveMember.isJamaah) {
+      roleBadgeBg = isDark
+          ? AppColors.emeraldIslamic.withValues(alpha: 0.25)
+          : AppColors.statusSafe.withValues(alpha: 0.12);
+      roleBadgeTextColor = isDark
+          ? const Color(0xFF6EE7B7)
+          : AppColors.statusSafe;
+    } else {
+      roleBadgeBg = primaryColor.withValues(alpha: 0.12);
+      roleBadgeTextColor = primaryColor;
+    }
+
+    final distanceText = _getMemberDistance(effectiveMember);
+
+    // Primary action button colors adaptive to theme (vibrant pill like Image 1)
+    final actionBtnBg = isDark
+        ? AppColors.darkPrimary
+        : (effectiveMember.isPendamping
+              ? const Color(0xFF1D4ED8)
+              : AppColors.emeraldIslamic);
+    final actionBtnFg = isDark ? AppColors.darkOnPrimary : Colors.white;
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (ctx) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Stack(
+              clipBehavior: Clip.none,
               children: [
-                Center(
-                  child: Container(
-                    width: 38,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: bodyColor.withValues(alpha: 0.25),
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                Row(
-                  children: [
-                    Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: effectiveMember.isPendamping
-                            ? const Color(0xFF1D4ED8).withValues(alpha: 0.15)
-                            : (effectiveMember.isJamaah
-                                  ? AppColors.emeraldIslamic.withValues(
-                                      alpha: 0.15,
-                                    )
-                                  : primaryColor.withValues(alpha: 0.15)),
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+                // ── Card Container ──
+                Container(
+                  margin: const EdgeInsets.only(top: 36),
+                  decoration: BoxDecoration(
+                    color: cardBg,
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(color: dividerColor, width: 1),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(
+                          alpha: isDark ? 0.35 : 0.08,
+                        ),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
                       ),
-                      child: Center(
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Clearance for the overlapping floating avatar
+                      const SizedBox(height: 48),
+
+                      // Member Name (centered like title in reference)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: Text(
-                          effectiveMember.name.isNotEmpty
-                              ? effectiveMember.name[0].toUpperCase()
-                              : '?',
-                          style: TextStyle(
-                            color: effectiveMember.isPendamping
-                                ? const Color(0xFF1D4ED8)
-                                : (effectiveMember.isJamaah
-                                      ? AppColors.emeraldIslamic
-                                      : primaryColor),
+                          effectiveMember.name,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.titleLarge.copyWith(
+                            color: headingColor,
                             fontWeight: FontWeight.bold,
-                            fontSize: 22,
+                            fontSize: 18,
+                            letterSpacing: -0.2,
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      const SizedBox(height: 6),
+
+                      // Role Badge / Subtitle (centered like subtitle in reference)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
-                            effectiveMember.name,
-                            style: AppTypography.titleMedium.copyWith(
-                              color: headingColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
+                              horizontal: 10,
+                              vertical: 3,
                             ),
                             decoration: BoxDecoration(
-                              color: effectiveMember.isPendamping
-                                  ? const Color(
-                                      0xFF1D4ED8,
-                                    ).withValues(alpha: 0.12)
-                                  : (effectiveMember.isJamaah
-                                        ? AppColors.emeraldIslamic.withValues(
-                                            alpha: 0.12,
-                                          )
-                                        : primaryColor.withValues(alpha: 0.12)),
+                              color: roleBadgeBg,
                               borderRadius: BorderRadius.circular(
                                 AppRadius.pill,
                               ),
@@ -2151,135 +2177,303 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                             child: Text(
                               effectiveMember.role.toUpperCase(),
                               style: TextStyle(
-                                color: effectiveMember.isPendamping
-                                    ? const Color(0xFF1D4ED8)
-                                    : (effectiveMember.isJamaah
-                                          ? AppColors.emeraldIslamic
-                                          : primaryColor),
+                                color: roleBadgeTextColor,
                                 fontWeight: FontWeight.w700,
-                                fontSize: 10,
+                                fontSize: 10.5,
                                 letterSpacing: 0.8,
                               ),
                             ),
                           ),
+                          if (effectiveMember.sosActive) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.error.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.pill,
+                                ),
+                              ),
+                              child: const Text(
+                                'SOS AKTIF',
+                                style: TextStyle(
+                                  color: AppColors.error,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 10,
+                                  letterSpacing: 0.6,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
+                      const SizedBox(height: 24),
 
-                _buildModalInfoTile(
-                  icon: Icons.access_time_rounded,
-                  label: context.tr('room.attendanceStatus'),
-                  value: effectiveMember.getLocationStatus(),
-                  color: primaryColor,
-                  headingColor: headingColor,
-                  bodyColor: bodyColor,
-                ),
-                const SizedBox(height: 10),
-                _buildModalInfoTile(
-                  icon: Icons.calendar_today_rounded,
-                  label: context.tr('room.joinDate'),
-                  value: effectiveMember.joinedAt != null
-                      ? _formatDate(effectiveMember.joinedAt)
-                      : 'Tidak diketahui',
-                  color: primaryColor,
-                  headingColor: headingColor,
-                  bodyColor: bodyColor,
-                ),
-                if (effectiveMember.hasLocation) ...[
-                  const SizedBox(height: 10),
-                  _buildModalInfoTile(
-                    icon: Icons.location_on_rounded,
-                    label: context.tr('room.locationCoordinates'),
-                    value:
-                        '${effectiveMember.latitude!.toStringAsFixed(5)}, ${effectiveMember.longitude!.toStringAsFixed(5)}',
-                    color: primaryColor,
-                    headingColor: headingColor,
-                    bodyColor: bodyColor,
-                  ),
-                ],
+                      // ── Horizontal Data Rows (matching Image 1 layout) ──
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Column(
+                          children: [
+                            // Row 1: Attendance Status
+                            _buildDetailHorizontalRow(
+                              label: context.tr('room.attendanceStatus'),
+                              valueWidget: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: effectiveMember.hasLocation
+                                          ? AppColors.emeraldIslamic
+                                          : Colors.grey,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    effectiveMember.getLocationStatus(),
+                                    style: TextStyle(
+                                      color: headingColor,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              bodyColor: bodyColor,
+                            ),
+                            Divider(
+                              height: 22,
+                              thickness: 0.8,
+                              color: dividerColor,
+                            ),
 
-                const SizedBox(height: 20),
+                            // Row 2: Distance from User (Jarak)
+                            _buildDetailHorizontalRow(
+                              label: 'Jarak dari Anda',
+                              valueText: distanceText,
+                              headingColor: headingColor,
+                              bodyColor: bodyColor,
+                            ),
+                            Divider(
+                              height: 22,
+                              thickness: 0.8,
+                              color: dividerColor,
+                            ),
 
-                Row(
-                  children: [
-                    if (effectiveMember.hasLocation)
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            Navigator.pop(ctx);
-                            final targetMember = _resolveRealtimeMember(
-                              effectiveMember,
-                            );
-                            if (Get.isRegistered<DashboardController>()) {
-                              Get.find<DashboardController>().changeTab(1);
-                              Get.back();
-                              Future.delayed(
-                                const Duration(milliseconds: 250),
-                                () {
-                                  if (Get.isRegistered<MapController>()) {
-                                    Get.find<MapController>().focusOnMember(
-                                      targetMember,
-                                      autoRoute: false,
+                            // Row 3: Join Date
+                            _buildDetailHorizontalRow(
+                              label: context.tr('room.joinDate'),
+                              valueText: effectiveMember.joinedAt != null
+                                  ? _formatDate(effectiveMember.joinedAt)
+                                  : 'Tidak diketahui',
+                              headingColor: headingColor,
+                              bodyColor: bodyColor,
+                            ),
+
+                            // Row 4: Coordinates (if available)
+                            if (effectiveMember.hasLocation) ...[
+                              Divider(
+                                height: 22,
+                                thickness: 0.8,
+                                color: dividerColor,
+                              ),
+                              _buildDetailHorizontalRow(
+                                label: context.tr('room.locationCoordinates'),
+                                valueText:
+                                    '${effectiveMember.latitude!.toStringAsFixed(5)}, ${effectiveMember.longitude!.toStringAsFixed(5)}',
+                                headingColor: headingColor,
+                                bodyColor: bodyColor,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 26),
+
+                      // ── Bottom Action Button(s) (Image 1 "Get Directions" style) ──
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                        child: Column(
+                          children: [
+                            if (effectiveMember.hasLocation)
+                              SizedBox(
+                                width: double.infinity,
+                                height: 50,
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    Navigator.pop(ctx);
+                                    final targetMember = _resolveRealtimeMember(
+                                      effectiveMember,
                                     );
-                                  }
-                                },
-                              );
-                            } else {
-                              if (Get.isRegistered<MapController>()) {
-                                Get.find<MapController>().focusOnMember(
-                                  targetMember,
-                                  autoRoute: false,
-                                );
-                              }
-                              Get.back();
-                            }
-                          },
-                          icon: const Icon(Icons.map_rounded, size: 16),
-                          label: const Text('Lihat di Peta'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: primaryColor,
-                            side: BorderSide(color: primaryColor),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
+                                    final targetCoord = LatLng(
+                                      targetMember.latitude!,
+                                      targetMember.longitude!,
+                                    );
+                                    if (Get.isRegistered<MapController>()) {
+                                      final mapCtrl = Get.find<MapController>();
+                                      mapCtrl.selectedFilter.value = 0;
+                                      mapCtrl.selectedMember.value =
+                                          targetMember;
+                                      mapCtrl.pendingFocusCoordinate =
+                                          targetCoord;
+                                      mapCtrl.pendingFocusZoom = 17.5;
+                                    }
+                                    if (Get.isRegistered<
+                                      DashboardController
+                                    >()) {
+                                      Get.find<DashboardController>().changeTab(
+                                        1,
+                                      );
+                                      Get.until((route) => route.isFirst);
+                                      Future.delayed(
+                                        const Duration(milliseconds: 250),
+                                        () {
+                                          if (Get.isRegistered<
+                                            MapController
+                                          >()) {
+                                            final mapCtrl =
+                                                Get.find<MapController>();
+                                            mapCtrl.focusOnMember(
+                                              targetMember,
+                                              autoRoute: false,
+                                            );
+                                            mapCtrl.focusCoordinate(
+                                              targetCoord,
+                                              destZoom: 17.5,
+                                            );
+                                          }
+                                        },
+                                      );
+                                    } else {
+                                      if (Get.isRegistered<MapController>()) {
+                                        Get.find<MapController>().focusOnMember(
+                                          targetMember,
+                                          autoRoute: false,
+                                        );
+                                      }
+                                      Get.back();
+                                    }
+                                  },
+                                  icon: const Icon(
+                                    Icons.near_me_rounded,
+                                    size: 18,
+                                  ),
+                                  label: const Text(
+                                    'Lihat di Peta',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14.5,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: actionBtnBg,
+                                    foregroundColor: actionBtnFg,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.pill,
+                                      ),
+                                    ),
+                                    elevation: 0,
+                                  ),
+                                ),
                               ),
+                            if (canManage && effectiveMember.isJamaah) ...[
+                              if (effectiveMember.hasLocation)
+                                const SizedBox(height: 10),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 46,
+                                child: OutlinedButton.icon(
+                                  onPressed: () {
+                                    Navigator.pop(ctx);
+                                    _handleRemoveMember(
+                                      context,
+                                      effectiveMember,
+                                      room,
+                                    );
+                                  },
+                                  icon: const Icon(
+                                    Icons.person_remove_rounded,
+                                    size: 16,
+                                  ),
+                                  label: const Text(
+                                    'Keluarkan dari Rombongan',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13.5,
+                                    ),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppColors.error,
+                                    side: BorderSide(
+                                      color: AppColors.error.withValues(
+                                        alpha: 0.35,
+                                      ),
+                                      width: 1,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.pill,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // ── Overlapping Circular Avatar (top center) ──
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: avatarBg,
+                        border: Border.all(
+                          color: isDark ? AppColors.darkSurface : Colors.white,
+                          width: 4,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(
+                              alpha: isDark ? 0.45 : 0.14,
                             ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          effectiveMember.sosActive
+                              ? 'SOS'
+                              : (effectiveMember.name.isNotEmpty
+                                    ? effectiveMember.name[0].toUpperCase()
+                                    : '?'),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: effectiveMember.sosActive ? 20 : 28,
                           ),
                         ),
                       ),
-                    if (effectiveMember.hasLocation &&
-                        canManage &&
-                        effectiveMember.isJamaah)
-                      const SizedBox(width: 10),
-                    if (canManage && effectiveMember.isJamaah)
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.pop(ctx);
-                            _handleRemoveMember(context, effectiveMember, room);
-                          },
-                          icon: const Icon(
-                            Icons.person_remove_rounded,
-                            size: 16,
-                          ),
-                          label: const Text('Keluarkan'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.error,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
-                              ),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                        ),
-                      ),
-                  ],
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -2289,44 +2483,73 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     );
   }
 
-  Widget _buildModalInfoTile({
-    required IconData icon,
+  String _getMemberDistance(RoomMemberModel member) {
+    if (!member.hasLocation) return 'Lokasi belum tersedia';
+    Position? userPos;
+    if (Get.isRegistered<HajiCareController>()) {
+      userPos = Get.find<HajiCareController>().myCurrentPosition.value;
+    }
+    double? userLat = userPos?.latitude;
+    double? userLng = userPos?.longitude;
+
+    if (userLat == null && Get.isRegistered<MapController>()) {
+      final mapLoc = Get.find<MapController>().currentUserLocation.value;
+      if (mapLoc != null) {
+        userLat = mapLoc.latitude;
+        userLng = mapLoc.longitude;
+      }
+    }
+
+    if (userLat == null || userLng == null) {
+      return 'Belum terdeteksi';
+    }
+
+    final meters = Geolocator.distanceBetween(
+      userLat,
+      userLng,
+      member.latitude!,
+      member.longitude!,
+    );
+
+    if (meters < 1000) {
+      return '±${meters.toStringAsFixed(0)} m dari Anda';
+    } else {
+      return '±${(meters / 1000).toStringAsFixed(1)} km dari Anda';
+    }
+  }
+
+  Widget _buildDetailHorizontalRow({
     required String label,
-    required String value,
-    required Color color,
-    required Color headingColor,
+    String? valueText,
+    Widget? valueWidget,
+    Color? headingColor,
     required Color bodyColor,
   }) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+        Text(
+          label,
+          style: AppTypography.bodySmall.copyWith(
+            color: bodyColor.withValues(alpha: 0.8),
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
           ),
-          child: Icon(icon, size: 16, color: color),
         ),
         const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: AppTypography.captionSmall.copyWith(
-                color: bodyColor.withValues(alpha: 0.7),
-                fontSize: 10.5,
+        Flexible(
+          child:
+              valueWidget ??
+              Text(
+                valueText ?? '-',
+                textAlign: TextAlign.end,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: headingColor,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
               ),
-            ),
-            Text(
-              value,
-              style: AppTypography.bodySmall.copyWith(
-                color: headingColor,
-                fontWeight: FontWeight.w600,
-                fontSize: 12.5,
-              ),
-            ),
-          ],
         ),
       ],
     );

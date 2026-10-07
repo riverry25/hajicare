@@ -6,6 +6,7 @@ class CandidateCompanion {
   final String uid;
   final String name;
   final String? phone;
+  final String? photoUrl;
   final GeoPoint? location;
   final double? distanceMeters;
   final double? bearingDegrees;
@@ -16,6 +17,7 @@ class CandidateCompanion {
     required this.uid,
     required this.name,
     this.phone,
+    this.photoUrl,
     this.location,
     this.distanceMeters,
     this.bearingDegrees,
@@ -53,6 +55,7 @@ class CandidateCompanion {
     String? uid,
     String? name,
     String? phone,
+    String? photoUrl,
     GeoPoint? location,
     double? distanceMeters,
     double? bearingDegrees,
@@ -63,6 +66,7 @@ class CandidateCompanion {
       uid: uid ?? this.uid,
       name: name ?? this.name,
       phone: phone ?? this.phone,
+      photoUrl: photoUrl ?? this.photoUrl,
       location: location ?? this.location,
       distanceMeters: distanceMeters ?? this.distanceMeters,
       bearingDegrees: bearingDegrees ?? this.bearingDegrees,

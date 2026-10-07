@@ -17,8 +17,9 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+
+import '../../dashboard/controllers/dashboard_controller.dart';
 import '../../map/controllers/map_controller.dart';
-import '../../map/models/map_poi.dart';
 import '../../notification/controllers/notification_controller.dart';
 
 /// Full SOS Alert Detail screen for pendamping / admin.
@@ -176,37 +177,88 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
       return;
     }
 
-    final poi = MapPoi(
-      id: 'sos_${_eventId ?? 'alert'}',
-      name: _sosData['userName'] as String? ?? 'Jamaah SOS',
-      category: PoiCategory.place,
-      coordinate: target,
-      statusLabel: 'SOS Aktif',
+    final userId =
+        _sosData['userId'] as String? ??
+        _sosData['jamaahId'] as String? ??
+        _sosData['uid'] as String? ??
+        '';
+    final userName =
+        _sosData['userName'] as String? ??
+        _sosData['name'] as String? ??
+        'Jamaah SOS';
+    final roomId = _sosData['roomId'] as String?;
+
+    // 1. Sync active room in HajiCareController if present
+    if (roomId != null &&
+        roomId.isNotEmpty &&
+        Get.isRegistered<HajiCareController>()) {
+      final hajiCtrl = Get.find<HajiCareController>();
+      hajiCtrl.activeRoomId.value = roomId;
+    }
+
+    // 2. Prepare MapController and select the jamaah member
+    final mapCtrl = Get.isRegistered<MapController>()
+        ? Get.find<MapController>()
+        : Get.put(MapController());
+
+    final member = RoomMemberModel(
+      uid: userId,
+      name: userName,
+      role: 'jamaah',
+      currentLocation:
+          _liveLocation ?? GeoPoint(target.latitude, target.longitude),
+      locationUpdatedAt: _locationUpdatedAt ?? DateTime.now(),
+      sosActive: !_isSosResolved,
     );
 
-    // Pop modals and navigate to map screen
-    if (Get.isRegistered<MapController>()) {
+    mapCtrl.selectedFilter.value =
+        0; // Filter "Semua" so member markers are visible
+    mapCtrl.selectedPoi.value = null;
+    mapCtrl.selectedJamaah.value = null;
+    mapCtrl.selectedMember.value = member;
+    mapCtrl.isBottomSheetOpen.value = true;
+    mapCtrl.pendingFocusCoordinate = target;
+    mapCtrl.pendingFocusZoom = 17.5;
+
+    // Helper to focus camera directly on the jamaah's pin
+    void triggerFocus() {
+      if (mapCtrl.isMapAttached) {
+        mapCtrl.animatedMove(target, 17.5);
+      } else {
+        mapCtrl.focusCoordinate(target, destZoom: 17.5);
+      }
+    }
+
+    // 3. Navigate directly to Interactive Map tab or route
+    if (Get.isRegistered<DashboardController>()) {
+      final dashboardCtrl = Get.find<DashboardController>();
+      dashboardCtrl.changeTab(1);
+      Get.until((route) => route.isFirst);
+    } else {
       Get.until(
         (route) =>
-            route.settings.name == AppRoutes.map ||
             route.settings.name == AppRoutes.interactiveMap ||
+            route.settings.name == AppRoutes.map ||
             route.isFirst,
       );
-      if (Get.currentRoute != AppRoutes.map &&
-          Get.currentRoute != AppRoutes.interactiveMap) {
-        await Get.toNamed(AppRoutes.map);
+      if (Get.currentRoute != AppRoutes.interactiveMap &&
+          Get.currentRoute != AppRoutes.map) {
+        Get.toNamed(AppRoutes.interactiveMap);
       }
-      final mapCtrl = Get.find<MapController>();
-      mapCtrl.animatedMove(target, 17.5);
-      await mapCtrl.requestRouteToPoi(poi);
-    } else {
-      Get.until((route) => route.isFirst);
-      await Get.toNamed(AppRoutes.map);
-      if (Get.isRegistered<MapController>()) {
-        final mapCtrl = Get.find<MapController>();
-        mapCtrl.animatedMove(target, 17.5);
-        await mapCtrl.requestRouteToPoi(poi);
-      }
+    }
+
+    // 4. Repeatedly trigger focus across post-frame and transition animations
+    triggerFocus();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      triggerFocus();
+      Future.delayed(const Duration(milliseconds: 150), triggerFocus);
+      Future.delayed(const Duration(milliseconds: 350), triggerFocus);
+      Future.delayed(const Duration(milliseconds: 600), triggerFocus);
+    });
+
+    // 5. If companion/admin has current GPS location, request route calculation in background
+    if (mapCtrl.currentUserLocation.value != null) {
+      mapCtrl.requestRouteToMember(member);
     }
   }
 

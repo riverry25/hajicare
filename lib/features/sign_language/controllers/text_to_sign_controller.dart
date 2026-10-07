@@ -40,6 +40,7 @@ class TextToSignController extends GetxController {
   // ── REAKTIF STATE ─────────────────────────────────────────────────────────
   final RxString selectedLanguage = 'sibi'.obs; // 'sibi' atau 'bisindo'
   final RxString currentQuery = ''.obs;
+  String _lastSearchedQuery = '';
 
   final Rx<SignSearchResult?> searchResult = Rx<SignSearchResult?>(null);
   final Rx<SignVideoEntry?> currentEntry = Rx<SignVideoEntry?>(null);
@@ -199,6 +200,7 @@ class TextToSignController extends GetxController {
   void setLanguage(String language) {
     if (selectedLanguage.value == language) return;
     selectedLanguage.value = language;
+    _lastSearchedQuery = '';
     _disposePlayer();
     currentEntry.value = null;
     searchResult.value = null;
@@ -207,7 +209,7 @@ class TextToSignController extends GetxController {
 
     // Jalankan ulang pencarian jika ada teks pada text input
     if (textController.text.trim().isNotEmpty) {
-      searchSign(textController.text);
+      searchSign(textController.text, force: true);
     }
   }
 
@@ -266,7 +268,8 @@ class TextToSignController extends GetxController {
     final combined = [...prefixMatches, ...containsMatches].take(6).toList();
 
     searchSuggestions.assignAll(combined);
-    showSuggestions.value = combined.isNotEmpty;
+    // Jangan munculkan popup saran saat pengguna sedang berbicara dengan mikrofon
+    showSuggestions.value = !isListening.value && combined.isNotEmpty;
   }
 
   /// Memilih salah satu saran autocomplete, mengisi input, dan langsung memicu pemutaran video.
@@ -280,7 +283,7 @@ class TextToSignController extends GetxController {
     showSuggestions.value = false;
     searchSuggestions.clear();
     searchFocusNode.unfocus();
-    searchSign(suggestion);
+    searchSign(suggestion, force: true);
   }
 
   /// Menutup popover saran autocomplete.
@@ -290,6 +293,7 @@ class TextToSignController extends GetxController {
 
   /// Menghapus teks input pencarian dan mereset hasil pencarian.
   void clearSearch() {
+    _lastSearchedQuery = '';
     textController.clear();
     currentQuery.value = '';
     currentVocabPage.value = 1;
@@ -299,15 +303,25 @@ class TextToSignController extends GetxController {
   }
 
   /// Mencari dan mencocokkan teks ke video bahasa isyarat.
-  Future<void> searchSign(String text) async {
+  Future<void> searchSign(String text, {bool force = false}) async {
     final query = text.trim();
     currentQuery.value = query;
     if (query.isEmpty) {
+      _lastSearchedQuery = '';
       searchResult.value = null;
       currentEntry.value = null;
       _disposePlayer();
       return;
     }
+
+    // Cegah pencarian ganda / reload berulang jika query sama sudah aktif atau selesai dicari
+    if (!force &&
+        query.toLowerCase() == _lastSearchedQuery.toLowerCase() &&
+        (isSearching.value || searchResult.value != null)) {
+      return;
+    }
+
+    _lastSearchedQuery = query;
 
     try {
       isSearching.value = true;
@@ -339,9 +353,21 @@ class TextToSignController extends GetxController {
   // ── 3. VIDEO PLAYBACK LIFECYCLE ──────────────────────────────────────────
 
   /// Memutar video berdasarkan status source (asset vs localCached vs remote).
-  Future<void> playEntry(SignVideoEntry entry) async {
+  Future<void> playEntry(SignVideoEntry entry, {bool force = false}) async {
     // 1. Selesaikan status sumber aktual
     final resolved = await _repository.resolveVideoSource(entry);
+
+    // Jika video yang sama sudah diinisialisasi dan aktif, jangan dispose & reload
+    if (!force &&
+        _playerController != null &&
+        isVideoInitialized.value &&
+        currentEntry.value?.id == resolved.id) {
+      if (!isVideoPlaying.value) {
+        await _playerController?.play();
+      }
+      return;
+    }
+
     currentEntry.value = resolved;
 
     // Jika video remote dan belum di-cache, jangan inisialisasi player; beri tahu pengguna
@@ -738,8 +764,10 @@ class TextToSignController extends GetxController {
       await service.stopListening();
       isListening.value = false;
       showSuggestions.value = false;
-      if (textController.text.trim().isNotEmpty) {
-        searchSign(textController.text.trim());
+      final text = textController.text.trim();
+      if (text.isNotEmpty &&
+          text.toLowerCase() != _lastSearchedQuery.toLowerCase()) {
+        await searchSign(text);
       }
       return;
     }
@@ -755,10 +783,12 @@ class TextToSignController extends GetxController {
       } else if (status == SpeechStatus.done) {
         isListening.value = false;
         showSuggestions.value = false;
-        if (textController.text.trim().isNotEmpty) {
-          speechStatusMessage.value = 'Terdeteksi: "${textController.text}"';
-          if (!isSearching.value) {
-            searchSign(textController.text.trim());
+        final clean = textController.text.trim();
+        if (clean.isNotEmpty) {
+          speechStatusMessage.value = 'Terdeteksi: "$clean"';
+          if (!isSearching.value &&
+              clean.toLowerCase() != _lastSearchedQuery.toLowerCase()) {
+            searchSign(clean);
           }
         } else {
           speechStatusMessage.value = 'Tekan mikrofon & bicara kata/huruf';
@@ -783,8 +813,11 @@ class TextToSignController extends GetxController {
         currentQuery.value = cleanWords;
         updateSearchQuery(cleanWords);
         if (isFinal) {
+          isListening.value = false;
           showSuggestions.value = false;
+          speechStatusMessage.value = 'Terdeteksi: "$cleanWords"';
           searchSign(cleanWords);
+          service.stopListening();
         }
       }
     };
@@ -810,8 +843,10 @@ class TextToSignController extends GetxController {
       await speechService.stopListening();
       isListening.value = false;
       showSuggestions.value = false;
-      if (textController.text.trim().isNotEmpty) {
-        searchSign(textController.text.trim());
+      final text = textController.text.trim();
+      if (text.isNotEmpty &&
+          text.toLowerCase() != _lastSearchedQuery.toLowerCase()) {
+        await searchSign(text);
       }
     }
   }

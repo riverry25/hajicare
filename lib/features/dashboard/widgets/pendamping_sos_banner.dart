@@ -66,119 +66,163 @@ class PendampingSosBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.cardPadding),
       decoration: BoxDecoration(
-        color: AppColors.sosEmergency,
-        borderRadius: BorderRadius.circular(AppRadius.card),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFE11D48), // Rose Crimson
+            Color(0xFFBE123C), // Deep Crimson
+          ],
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.18),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.sosEmergency.withValues(alpha: 0.35),
+            color: const Color(0xFFBE123C).withValues(alpha: 0.35),
             blurRadius: 18,
-            offset: const Offset(0, 4),
+            offset: const Offset(0, 5),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Header: Icon + Title + Room Tag ────────────────────────────
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              // Pulsing / Soft Frosted Emergency Icon
               Container(
-                padding: const EdgeInsets.all(8),
+                width: 38,
+                height: 38,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: Colors.white.withValues(alpha: 0.18),
                   shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.3),
+                    width: 1.2,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.emergency_rounded,
-                  color: Colors.white,
-                  size: 28,
+                child: const Center(
+                  child: Icon(
+                    Icons.emergency_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
                 ),
               ),
-              const SizedBox(width: AppSpacing.md),
+              const SizedBox(width: AppSpacing.sm + 4),
+              // Title & Room Tag
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          context.tr('sosEmergencyActive'),
-                          style: DashboardTypography.titleMedium.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.3,
-                          ),
+                    Expanded(
+                      child: Text(
+                        context.tr('sosEmergencyActive'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: DashboardTypography.titleMedium.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14.5,
+                          letterSpacing: 0.2,
                         ),
-                        if (roomInfo != null) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.25),
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
-                              ),
-                            ),
-                            child: Text(
-                              roomInfo,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '$sosName ${context.tr('sosNeedsImmediateHelp')}',
-                      style: DashboardTypography.bodySmall.copyWith(
-                        color: Colors.white.withValues(alpha: 0.95),
                       ),
                     ),
+                    if (roomInfo != null) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 2.5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.22),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 80),
+                          child: Text(
+                            roomInfo,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.lg),
+
+          const SizedBox(height: 8),
+
+          // ── Subtitle: Victim description ────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.only(left: 2),
+            child: Text(
+              '$sosName ${context.tr('sosNeedsImmediateHelp')}',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: DashboardTypography.bodySmall.copyWith(
+                color: Colors.white.withValues(alpha: 0.92),
+                fontSize: 12.5,
+                fontWeight: FontWeight.w500,
+                height: 1.35,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: AppSpacing.md),
+
+          // ── Action Buttons Row ──────────────────────────────────────────
           Row(
             children: [
+              // Primary Action: Review Emergency
               Expanded(
                 child: SizedBox(
-                  height: 44,
+                  height: 40,
                   child: ElevatedButton.icon(
                     onPressed: () => Get.toNamed(AppRoutes.modalSos),
                     icon: const Icon(
                       Icons.location_searching_rounded,
-                      size: 18,
+                      size: 16,
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
-                      foregroundColor: AppColors.sosEmergency,
+                      foregroundColor: const Color(0xFFBE123C),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
                       elevation: 0,
                     ),
                     label: Text(
                       context.tr('dashboard.reviewEmergency'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12.5,
                       ),
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
+              // Secondary Action: End SOS
               Expanded(
                 child: SizedBox(
-                  height: 44,
+                  height: 40,
                   child: OutlinedButton(
                     onPressed: () {
                       if (onDismissSos != null && sosUserId.isNotEmpty) {
@@ -188,17 +232,25 @@ class PendampingSosBanner extends StatelessWidget {
                       }
                     },
                     style: OutlinedButton.styleFrom(
+                      backgroundColor: Colors.white.withValues(alpha: 0.16),
                       foregroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.white, width: 1.5),
+                      side: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.55),
+                        width: 1.2,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
                     ),
                     child: Text(
                       context.tr('endSos'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: DashboardTypography.labelLarge.copyWith(
                         color: Colors.white,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12.5,
                       ),
                     ),
                   ),

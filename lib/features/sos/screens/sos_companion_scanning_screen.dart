@@ -1,4 +1,3 @@
-import '../../../core/locales/app_localizations.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
@@ -9,6 +8,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart' as ll;
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/locales/app_localizations.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
@@ -30,6 +30,9 @@ enum SosScanningState {
   noCompanionAvailable,
 }
 
+/// Distance range filters inspired by modern radar UX (Image 2).
+enum RadarDistanceFilter { closest, near50m, near200m, all }
+
 class SosCompanionScanningScreen extends StatefulWidget {
   const SosCompanionScanningScreen({super.key});
 
@@ -48,10 +51,12 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
   late final AnimationController _centerPulseController;
   late final AnimationController _lockOnController;
 
-  // State Machine
+  // State Machine & Data
   SosScanningState _currentState = SosScanningState.detectingGps;
   List<CandidateCompanion> _candidates = [];
   CandidateCompanion? _closestCompanion;
+  CandidateCompanion? _selectedCompanion;
+  RadarDistanceFilter _selectedFilter = RadarDistanceFilter.closest;
   String? _statusDetail;
   StreamSubscription? _gpsPositionSub;
 
@@ -60,28 +65,28 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
     super.initState();
     _state = Get.find<HajiCareController>();
 
-    // 1. Continuous radar sweep line
+    // 1. Continuous radar sweep line & glowing aura
     _sweepController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2400),
+      duration: const Duration(milliseconds: 2600),
     )..repeat();
 
     // 2. Outward expanding ripple waves
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1800),
+      duration: const Duration(milliseconds: 2000),
     )..repeat();
 
-    // 3. Center SOS breathing pulse
+    // 3. Center beacon breathing pulse
     _centerPulseController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 1200),
     )..repeat(reverse: true);
 
-    // 4. Lock-on focus animation when target companion is found
+    // 4. Lock-on focus animation when target companion is selected/found
     _lockOnController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 800),
     );
 
     // Kick off real data detection pipeline
@@ -98,7 +103,7 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
     super.dispose();
   }
 
-  // ── REAL DATA DETECTION PIPELINE (NO FAKE TIMERS) ──────────────────────────
+  // ── REAL DATA DETECTION PIPELINE ───────────────────────────────────────────
 
   Future<void> _startDetectionPipeline() async {
     // ── STEP 1: "Mendeteksi lokasi Anda..." ──────────────────────────────────
@@ -159,19 +164,13 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
 
     // ── STEP 4: "Pendamping ditemukan" ──────────────────────────────────────
     HapticFeedback.mediumImpact();
-    _lockOnController.forward();
-
-    // Smoothly slow down the radar sweep into a gentle glow
-    _sweepController.animateTo(
-      _sweepController.value + 0.5,
-      duration: const Duration(milliseconds: 800),
-      curve: Curves.easeOut,
-    );
+    _lockOnController.forward(from: 0.0);
 
     if (!mounted) return;
     setState(() {
       _currentState = SosScanningState.companionFound;
       _closestCompanion = closest;
+      _selectedCompanion = closest;
       _statusDetail = closest?.formattedDistance ?? 'Terhubung';
     });
   }
@@ -229,6 +228,10 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
         final phone =
             (data['phone'] as String?)?.trim() ??
             (data['phoneNumber'] as String?)?.trim();
+        final photoUrl =
+            (data['photoUrl'] as String?) ??
+            (data['avatarUrl'] as String?) ??
+            (data['profileImageUrl'] as String?);
         final loc = data['currentLocation'];
         GeoPoint? geoPoint;
         if (loc is GeoPoint) {
@@ -258,11 +261,12 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
           updatedAt = rawUpdated.toDate();
         }
 
-        // Add or enrich existing member with phone
+        // Add or enrich existing member with phone and photo
         if (results.containsKey(uid)) {
           final existing = results[uid]!;
           results[uid] = existing.copyWith(
             phone: phone ?? existing.phone,
+            photoUrl: photoUrl ?? existing.photoUrl,
             location: existing.location ?? geoPoint,
             distanceMeters: existing.distanceMeters ?? distance,
             bearingDegrees: existing.bearingDegrees ?? bearing,
@@ -272,6 +276,7 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
             uid: uid,
             name: name,
             phone: phone,
+            photoUrl: photoUrl,
             location: geoPoint,
             distanceMeters: distance,
             bearingDegrees: bearing,
@@ -324,7 +329,7 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
   }
 
   Future<void> _openMapRouteToCompanion() async {
-    final comp = _closestCompanion;
+    final comp = _selectedCompanion ?? _closestCompanion;
     final loc = comp?.location;
     if (loc == null) {
       Get.toNamed(AppRoutes.map);
@@ -365,7 +370,55 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
     }
   }
 
-  // ── STATUS TEXT HELPER ─────────────────────────────────────────────────────
+  void _selectCompanion(CandidateCompanion candidate) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _selectedCompanion = candidate;
+    });
+    _lockOnController.forward(from: 0.0);
+  }
+
+  // ── FILTER & RADAR SCALE COMPUTATION ───────────────────────────────────────
+
+  double get _effectiveMaxRange {
+    switch (_selectedFilter) {
+      case RadarDistanceFilter.closest:
+        final dist = _closestCompanion?.distanceMeters;
+        if (dist != null && dist > 0) {
+          return math.max(40.0, dist * 1.5);
+        }
+        return 60.0;
+      case RadarDistanceFilter.near50m:
+        return 50.0;
+      case RadarDistanceFilter.near200m:
+        return 200.0;
+      case RadarDistanceFilter.all:
+        return 2000.0;
+    }
+  }
+
+  List<CandidateCompanion> get _visibleCandidates {
+    if (_candidates.isEmpty) return [];
+    switch (_selectedFilter) {
+      case RadarDistanceFilter.closest:
+        if (_closestCompanion != null) {
+          return [_closestCompanion!];
+        }
+        return _candidates.take(1).toList();
+      case RadarDistanceFilter.near50m:
+        final in50 = _candidates
+            .where((c) => (c.distanceMeters ?? double.infinity) <= 50.0)
+            .toList();
+        return in50.isNotEmpty ? in50 : _candidates.take(1).toList();
+      case RadarDistanceFilter.near200m:
+        final in200 = _candidates
+            .where((c) => (c.distanceMeters ?? double.infinity) <= 200.0)
+            .toList();
+        return in200.isNotEmpty ? in200 : _candidates.take(2).toList();
+      case RadarDistanceFilter.all:
+        return _candidates;
+    }
+  }
 
   String get _statusTitle {
     switch (_currentState) {
@@ -386,9 +439,9 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
     switch (_currentState) {
       case SosScanningState.detectingGps:
       case SosScanningState.scanningCompanions:
-        return AppColors.accentGoldStar;
+        return AppColors.goldPrimary;
       case SosScanningState.searchingClosest:
-        return const Color(0xFF29B6F6); // Light blue pulse
+        return const Color(0xFF29B6F6);
       case SosScanningState.companionFound:
         return AppColors.statusSafe;
       case SosScanningState.noCompanionAvailable:
@@ -416,161 +469,543 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
-    final scaffoldBg = isDark
-        ? const Color(0xFF0F141C)
-        : const Color(0xFF131B26);
-    const textColor = Colors.white;
+    final scaffoldBg = AppColors.scaffoldColor(context);
+    final textHeading = AppColors.textHeadingColor(context);
+    final textBody = AppColors.textBodyColor(context);
 
     return Scaffold(
       backgroundColor: scaffoldBg,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.close_rounded, color: Colors.white70),
-          onPressed: () => Get.back(),
-        ),
-        title: const Text(
-          'Radar Deteksi Pendamping',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 14),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.sosEmergency.withValues(alpha: 0.25),
-              borderRadius: BorderRadius.circular(AppRadius.pill),
-              border: Border.all(
-                color: AppColors.sosEmergency.withValues(alpha: 0.6),
-              ),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.emergency_rounded,
-                  color: AppColors.sosEmergency,
-                  size: 14,
-                ),
-                SizedBox(width: 4),
-                Text(
-                  'SOS AKTIF',
-                  style: TextStyle(
-                    color: AppColors.sosEmergency,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.5,
+      body: Stack(
+        children: [
+          // 1. Subtle decorative background illumination
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: const Alignment(0.0, -0.1),
+                    radius: 0.9,
+                    colors: isDark
+                        ? [
+                            AppColors.goldPrimary.withValues(alpha: 0.12),
+                            const Color(0xFF261912).withValues(alpha: 0.35),
+                            Colors.transparent,
+                          ]
+                        : [
+                            AppColors.goldLight.withValues(alpha: 0.28),
+                            AppColors.canvasCreamSubtle.withValues(alpha: 0.5),
+                            Colors.transparent,
+                          ],
                   ),
                 ),
-              ],
+              ),
+            ),
+          ),
+
+          // 2. Main content with scrollable protection against text scaling overflows
+          SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final double radarBoxSize = math.min(
+                  constraints.maxWidth - 48,
+                  310.0,
+                );
+
+                return SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.screenEdgeGutter,
+                  ),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Top Section: App Bar + Status Pill
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const SizedBox(height: 8),
+                            _buildTopBar(isDark),
+                            const SizedBox(height: 12),
+                            _buildStatusPill(isDark, textHeading, textBody),
+                          ],
+                        ),
+
+                        // Center Section: Layered Organic Radar with Center Beacon & Avatars
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Center(
+                            child: SizedBox(
+                              width: radarBoxSize,
+                              height: radarBoxSize,
+                              child: _buildRadarStack(radarBoxSize, isDark),
+                            ),
+                          ),
+                        ),
+
+                        // Bottom Section: Distance Filters & Companion Action Card
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildDistanceFilterRow(isDark),
+                            const SizedBox(height: 14),
+                            _buildBottomPanel(isDark),
+                            const SizedBox(height: 16),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ],
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
+    );
+  }
 
-            // ── Status Banner Top ──────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 350),
-                child: Column(
-                  key: ValueKey(_statusTitle),
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(_statusIcon, color: _statusColor, size: 20),
-                        const SizedBox(width: 8),
-                        Text(
-                          _statusTitle,
-                          style: AppTypography.titleMedium.copyWith(
-                            color: textColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 17,
-                          ),
-                        ),
-                      ],
+  // ── TOP BAR & STATUS PILL (Inspired by Image 2 Header) ─────────────────────
+
+  Widget _buildTopBar(bool isDark) {
+    return Row(
+      children: [
+        // Rounded Close Button
+        Semantics(
+          button: true,
+          label: 'Tutup radar',
+          child: Material(
+            color: isDark
+                ? AppColors.darkSurfaceContainer
+                : Colors.white.withValues(alpha: 0.8),
+            shape: const CircleBorder(),
+            clipBehavior: Clip.antiAlias,
+            elevation: isDark ? 0 : 2,
+            shadowColor: Colors.black12,
+            child: InkWell(
+              onTap: () => Get.back(),
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Icon(
+                  Icons.close_rounded,
+                  size: 20,
+                  color: isDark ? Colors.white70 : AppColors.textHeading,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+
+        // Title and localized status
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Radar Deteksi',
+                style: AppTypography.titleLarge.copyWith(
+                  color: AppColors.textHeadingColor(context),
+                  fontWeight: FontWeight.w800,
+                  fontSize: 19,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Pantau Pendamping Terdekat',
+                style: AppTypography.captionSmall.copyWith(
+                  color: AppColors.textSecondaryColor(context),
+                  fontWeight: FontWeight.w600,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+
+        // Emergency SOS Badge
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: AppColors.sosEmergency.withValues(alpha: 0.18),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            border: Border.all(
+              color: AppColors.sosEmergency.withValues(alpha: 0.55),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.sosEmergency.withValues(alpha: 0.15),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.emergency_rounded,
+                color: AppColors.sosEmergency,
+                size: 14,
+              ),
+              SizedBox(width: 4),
+              Text(
+                'SOS AKTIF',
+                style: TextStyle(
+                  color: AppColors.sosEmergency,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.6,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusPill(bool isDark, Color headingColor, Color bodyColor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: isDark
+            ? AppColors.darkSurfaceContainer.withValues(alpha: 0.8)
+            : Colors.white.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(
+          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Status Icon with color
+          Icon(_statusIcon, size: 16, color: _statusColor),
+          const SizedBox(width: 8),
+
+          // Status readout text
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _currentState == SosScanningState.companionFound
+                      ? '${_candidates.length} Pendamping terdeteksi • ${_selectedCompanion?.name ?? "Terdekat"}'
+                      : _statusTitle,
+                  style: AppTypography.captionSmall.copyWith(
+                    color: headingColor,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (_statusDetail != null)
+                  Text(
+                    _statusDetail!,
+                    style: AppTypography.captionSmall.copyWith(
+                      color: bodyColor.withValues(alpha: 0.8),
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w500,
                     ),
-                    const SizedBox(height: 4),
-                    if (_statusDetail != null)
-                      Text(
-                        _statusDetail!,
-                        style: AppTypography.captionSmall.copyWith(
-                          color: Colors.white70,
-                          fontSize: 12,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
+            ),
+          ),
+
+          // Quick re-scan trigger
+          GestureDetector(
+            onTap: _startDetectionPipeline,
+            child: const Icon(
+              Icons.sync_rounded,
+              size: 16,
+              color: AppColors.goldPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── RADAR STACK (Organic Layered Disks + Center Beacon + Floating Avatars) ──
+
+  Widget _buildRadarStack(double size, bool isDark) {
+    final center = Offset(size / 2, size / 2);
+    final maxRadius = size / 2;
+    final activeCompanion = _selectedCompanion ?? _closestCompanion;
+
+    return AnimatedBuilder(
+      animation: Listenable.merge([
+        _sweepController,
+        _pulseController,
+        _centerPulseController,
+        _lockOnController,
+      ]),
+      builder: (context, _) {
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            // 1. Layered Organic Concentric Radar Disks (Image 2 style)
+            CustomPaint(
+              size: Size(size, size),
+              painter: _WinkyOrganicRadarPainter(
+                sweepProgress: _sweepController.value,
+                pulseProgress: _pulseController.value,
+                centerPulse: _centerPulseController.value,
+                lockOnProgress: _lockOnController.value,
+                state: _currentState,
+                isDark: isDark,
+                selectedCompanion: activeCompanion,
+                maxRangeMeters: _effectiveMaxRange,
+              ),
+            ),
+
+            // 2. Central Glowing Beacon (Rounded Triangle / Diamond from Image 2)
+            _buildCenterBeacon(isDark),
+
+            // 3. Floating Interactive Candidate Avatars
+            ..._visibleCandidates.map((cand) {
+              final isSelected = activeCompanion?.uid == cand.uid;
+              final isClosest = _closestCompanion?.uid == cand.uid;
+              final radiusRatio = cand.getRadarRadiusRatio(_effectiveMaxRange);
+              final angle = cand.getRadarAngleRadians();
+
+              final blipDist = maxRadius * radiusRatio;
+              // 0 rad is North (-Y axis)
+              final dx = center.dx + blipDist * math.sin(angle);
+              final dy = center.dy - blipDist * math.cos(angle);
+
+              return Positioned(
+                left: dx - 24,
+                top: dy - 24,
+                child: _RadarCompanionAvatar(
+                  candidate: cand,
+                  isSelected: isSelected,
+                  isClosest: isClosest,
+                  isDark: isDark,
+                  onTap: () => _selectCompanion(cand),
+                ),
+              );
+            }),
+          ],
+        );
+      },
+    );
+  }
+
+  /// Center glowing diamond/rounded triangle beacon matching Image 2
+  Widget _buildCenterBeacon(bool isDark) {
+    final double pulseScale = 1.0 + (0.12 * _centerPulseController.value);
+
+    return Transform.scale(
+      scale: pulseScale,
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            colors: isDark
+                ? [Colors.white, AppColors.goldPrimary, AppColors.espressoDark]
+                : [
+                    AppColors.primary,
+                    AppColors.espressoDark,
+                    AppColors.primaryContainer,
                   ],
-                ),
-              ),
-            ),
-
-            const Spacer(),
-
-            // ── Radar Canvas Visualization ─────────────────────────────────
-            Center(
-              child: SizedBox(
-                width: 280,
-                height: 280,
-                child: AnimatedBuilder(
-                  animation: Listenable.merge([
-                    _sweepController,
-                    _pulseController,
-                    _centerPulseController,
-                    _lockOnController,
-                  ]),
-                  builder: (context, _) {
-                    return CustomPaint(
-                      painter: _RadarPainter(
-                        sweepProgress: _sweepController.value,
-                        pulseProgress: _pulseController.value,
-                        centerPulse: _centerPulseController.value,
-                        lockOnProgress: _lockOnController.value,
-                        state: _currentState,
-                        candidates: _candidates,
-                        closestCandidate: _closestCompanion,
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-
-            const Spacer(),
-
-            // ── Bottom Section: Found Candidate Card or Fallback ───────────
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.screenEdgeGutter,
-                vertical: AppSpacing.md,
-              ),
-              child: _buildBottomPanel(isDark),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: (isDark ? AppColors.goldPrimary : AppColors.primary)
+                  .withValues(alpha: 0.45),
+              blurRadius: 16,
+              spreadRadius: 3,
             ),
           ],
+        ),
+        child: Center(
+          child: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isDark ? Colors.white : AppColors.espressoDark,
+            ),
+            child: Icon(
+              Icons.my_location_rounded,
+              size: 18,
+              color: isDark ? AppColors.espressoDark : AppColors.goldLight,
+            ),
+          ),
         ),
       ),
     );
   }
 
+  // ── DISTANCE FILTER ROW (Direct from Image 2) ──────────────────────────────
+
+  Widget _buildDistanceFilterRow(bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'JARAK JANGKAUAN',
+              style: AppTypography.captionSmall.copyWith(
+                color: isDark
+                    ? AppColors.goldLight
+                    : AppColors.textHeadingColor(context),
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.1,
+                fontSize: 11,
+              ),
+            ),
+            Text(
+              'Skala: ${_effectiveMaxRange < 1000 ? "${_effectiveMaxRange.toInt()}m" : "${(_effectiveMaxRange / 1000).toStringAsFixed(1)}km"}',
+              style: AppTypography.captionSmall.copyWith(
+                color: AppColors.textSecondaryColor(context),
+                fontWeight: FontWeight.w600,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            _buildFilterPill(
+              filter: RadarDistanceFilter.closest,
+              label: 'Terdekat',
+              isDark: isDark,
+            ),
+            const SizedBox(width: 8),
+            _buildFilterPill(
+              filter: RadarDistanceFilter.near50m,
+              label: '< 50m',
+              isDark: isDark,
+            ),
+            const SizedBox(width: 8),
+            _buildFilterPill(
+              filter: RadarDistanceFilter.near200m,
+              label: '< 200m',
+              isDark: isDark,
+            ),
+            const SizedBox(width: 8),
+            _buildFilterPill(
+              filter: RadarDistanceFilter.all,
+              label: 'Semua',
+              isDark: isDark,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilterPill({
+    required RadarDistanceFilter filter,
+    required String label,
+    required bool isDark,
+  }) {
+    final isSelected = _selectedFilter == filter;
+
+    return Expanded(
+      child: Semantics(
+        button: true,
+        selected: isSelected,
+        label: 'Filter jarak $label',
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              setState(() {
+                _selectedFilter = filter;
+              });
+            },
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOut,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? (isDark ? AppColors.goldPrimary : AppColors.primary)
+                    : (isDark ? AppColors.darkSurfaceContainer : Colors.white),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                border: Border.all(
+                  color: isSelected
+                      ? (isDark ? AppColors.goldPrimary : AppColors.primary)
+                      : (isDark
+                            ? AppColors.darkOutline.withValues(alpha: 0.4)
+                            : AppColors.lightCardBorder),
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  if (isSelected)
+                    BoxShadow(
+                      color:
+                          (isDark ? AppColors.goldPrimary : AppColors.primary)
+                              .withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontFamily: AppTypography.headingFontFamily,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    color: isSelected
+                        ? (isDark ? AppColors.espressoDark : Colors.white)
+                        : (isDark ? Colors.white70 : AppColors.textBody),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── BOTTOM PANEL (Companion Card or Scanning State) ────────────────────────
+
   Widget _buildBottomPanel(bool isDark) {
     if (_currentState == SosScanningState.companionFound &&
-        _closestCompanion != null) {
-      final comp = _closestCompanion!;
+        (_selectedCompanion != null || _closestCompanion != null)) {
+      final comp = _selectedCompanion ?? _closestCompanion!;
+      final isClosest = comp.uid == _closestCompanion?.uid;
+
       return AppCard(
         backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
-        borderColor: AppColors.statusSafe.withValues(alpha: 0.6),
+        borderColor: isClosest
+            ? AppColors.statusSafe.withValues(alpha: 0.6)
+            : AppColors.goldPrimary.withValues(alpha: 0.5),
         padding: const EdgeInsets.all(AppSpacing.cardPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -578,23 +1013,64 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
           children: [
             Row(
               children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: AppColors.statusSafe.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.statusSafe.withValues(alpha: 0.4),
+                // Avatar with presence badge
+                Stack(
+                  children: [
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.espressoDark,
+                            AppColors.primaryContainer,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        border: Border.all(
+                          color: isClosest
+                              ? AppColors.statusSafe
+                              : AppColors.goldPrimary,
+                          width: 2,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          comp.name.isNotEmpty
+                              ? comp.name.substring(0, 1).toUpperCase()
+                              : 'P',
+                          style: AppTypography.titleLarge.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                  child: const Icon(
-                    Icons.person_pin_circle_rounded,
-                    color: AppColors.statusSafe,
-                    size: 28,
-                  ),
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        width: 14,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: AppColors.statusSafe,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDark
+                                ? AppColors.darkSurface
+                                : Colors.white,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(width: 12),
+
+                // Name & Distance
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -607,43 +1083,66 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
                               style: AppTypography.titleMedium.copyWith(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
+                                color: AppColors.textHeadingColor(context),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
+                          if (isClosest)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.statusSafe.withValues(
+                                  alpha: 0.15,
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.pill,
+                                ),
+                              ),
+                              child: const Text(
+                                'TERDEKAT',
+                                style: TextStyle(
+                                  color: AppColors.statusSafe,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
                             ),
-                            decoration: BoxDecoration(
-                              color: AppColors.statusSafe.withValues(
-                                alpha: 0.15,
-                              ),
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
-                              ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on_rounded,
+                            size: 14,
+                            color: isClosest
+                                ? AppColors.statusSafe
+                                : AppColors.goldPrimary,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            comp.formattedDistance,
+                            style: AppTypography.captionSmall.copyWith(
+                              color: isClosest
+                                  ? AppColors.statusSafe
+                                  : AppColors.goldPrimary,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12.5,
                             ),
-                            child: const Text(
-                              'TERDEKAT',
-                              style: TextStyle(
-                                color: AppColors.statusSafe,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w900,
-                              ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '• ${comp.isFromRoom ? "Rombongan" : "Petugas"}',
+                            style: AppTypography.captionSmall.copyWith(
+                              color: AppColors.textSecondaryColor(context),
                             ),
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        comp.formattedDistance,
-                        style: AppTypography.captionSmall.copyWith(
-                          color: AppColors.statusSafe,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
                       ),
                     ],
                   ),
@@ -651,25 +1150,34 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
               ],
             ),
             const SizedBox(height: AppSpacing.md),
+
+            // Action Buttons
             Row(
               children: [
                 if (comp.phone != null && comp.phone!.isNotEmpty) ...[
                   Expanded(
                     child: OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.goldPrimary,
-                        side: const BorderSide(color: AppColors.goldPrimary),
+                        foregroundColor: isDark
+                            ? AppColors.goldLight
+                            : AppColors.primary,
+                        side: BorderSide(
+                          color: isDark
+                              ? AppColors.goldPrimary
+                              : AppColors.primary,
+                          width: 1.2,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        padding: const EdgeInsets.symmetric(vertical: 11),
                       ),
                       icon: const Icon(Icons.phone_in_talk_rounded, size: 16),
                       label: const Text(
                         'Hubungi',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 12,
+                          fontSize: 12.5,
                         ),
                       ),
                       onPressed: () => _callCompanion(comp.phone),
@@ -681,20 +1189,24 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
                   flex: 2,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1E60CC),
-                      foregroundColor: Colors.white,
+                      backgroundColor: isDark
+                          ? AppColors.goldPrimary
+                          : AppColors.primary,
+                      foregroundColor: isDark
+                          ? AppColors.espressoDark
+                          : Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      elevation: 2,
+                      padding: const EdgeInsets.symmetric(vertical: 11),
                     ),
                     icon: const Icon(Icons.navigation_rounded, size: 16),
                     label: const Text(
                       'Lihat di Peta',
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12.5,
                       ),
                     ),
                     onPressed: _openMapRouteToCompanion,
@@ -719,13 +1231,13 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
                 const Icon(
                   Icons.warning_amber_rounded,
                   color: AppColors.sosEmergency,
-                  size: 22,
+                  size: 26,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Belum Ada Pendamping di Sekitar',
-                    style: AppTypography.titleSmall.copyWith(
+                    'Pendamping Belum Terdeteksi',
+                    style: AppTypography.titleMedium.copyWith(
                       color: AppColors.sosEmergency,
                       fontWeight: FontWeight.bold,
                     ),
@@ -735,26 +1247,28 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
             ),
             const SizedBox(height: 6),
             Text(
-              'Sinyal SOS Anda tetap tersimpan di sistem darurat pusat. Dekatkan ponsel Anda dan tunggu petugas merespons.',
-              style: AppTypography.captionSmall.copyWith(
-                color: isDark ? AppColors.darkTextBody : AppColors.textBody,
+              'Tetap tenang dan jangan berpindah tempat. Sinyal SOS Anda tetap disiarkan ke posko terdekat.',
+              style: AppTypography.bodySmall.copyWith(
+                color: isDark ? Colors.white70 : AppColors.textBody,
               ),
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
-              child: OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: isDark
-                      ? Colors.white
-                      : AppColors.espressoDark,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.goldPrimary,
+                  foregroundColor: AppColors.espressoDark,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                 ),
-                icon: const Icon(Icons.refresh_rounded, size: 16),
-                label: const Text('Pindai Ulang'),
                 onPressed: _startDetectionPipeline,
+                icon: const Icon(Icons.refresh_rounded, size: 18),
+                label: const Text(
+                  'Pindai Ulang Radar',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
             ),
           ],
@@ -762,31 +1276,54 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
       );
     }
 
-    // Still scanning / detecting
+    // Scanning progress card
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+        color: isDark
+            ? AppColors.darkSurfaceContainer.withValues(alpha: 0.8)
+            : Colors.white,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const SizedBox(
-            width: 14,
-            height: 14,
+            width: 18,
+            height: 18,
             child: CircularProgressIndicator(
-              strokeWidth: 2,
+              strokeWidth: 2.2,
               valueColor: AlwaysStoppedAnimation<Color>(AppColors.goldPrimary),
             ),
           ),
-          const SizedBox(width: 10),
-          Text(
-            'Memindai sinyal radio & GPS...',
-            style: AppTypography.captionSmall.copyWith(
-              color: Colors.white70,
-              fontWeight: FontWeight.w600,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _statusTitle,
+                  style: AppTypography.labelLarge.copyWith(
+                    color: AppColors.textHeadingColor(context),
+                  ),
+                ),
+                Text(
+                  'Tetap tenang & jangan berpindah tempat',
+                  style: AppTypography.captionSmall.copyWith(
+                    color: AppColors.textSecondaryColor(context),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -795,25 +1332,152 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
   }
 }
 
-// ── CUSTOM RADAR PAINTER ─────────────────────────────────────────────────────
+// ── FLOATING COMPANION AVATAR WIDGET (Image 2 style) ─────────────────────────
 
-class _RadarPainter extends CustomPainter {
+class _RadarCompanionAvatar extends StatelessWidget {
+  final CandidateCompanion candidate;
+  final bool isSelected;
+  final bool isClosest;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _RadarCompanionAvatar({
+    required this.candidate,
+    required this.isSelected,
+    required this.isClosest,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ringColor = isSelected
+        ? (isDark ? AppColors.goldPrimary : AppColors.primary)
+        : (isClosest ? AppColors.statusSafe : Colors.white);
+
+    return Semantics(
+      button: true,
+      label:
+          'Pendamping ${candidate.name}, jarak ${candidate.formattedDistance}',
+      child: GestureDetector(
+        onTap: onTap,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Circular Avatar Badge
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [AppColors.espressoDark, AppColors.primaryContainer],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                border: Border.all(
+                  color: ringColor,
+                  width: isSelected || isClosest ? 2.5 : 2.0,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isSelected || isClosest)
+                        ? ringColor.withValues(alpha: 0.5)
+                        : Colors.black.withValues(alpha: 0.3),
+                    blurRadius: isSelected ? 10 : 6,
+                    spreadRadius: isSelected ? 2 : 0,
+                  ),
+                ],
+              ),
+              child: ClipOval(
+                child: candidate.photoUrl != null
+                    ? Image.network(
+                        candidate.photoUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => _buildFallbackInitial(),
+                      )
+                    : _buildFallbackInitial(),
+              ),
+            ),
+            const SizedBox(height: 3),
+
+            // Mini Distance Capsule Tag
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? (isDark ? AppColors.goldPrimary : AppColors.primary)
+                    : (isDark ? Colors.black87 : Colors.white),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                border: Border.all(
+                  color: isSelected ? Colors.transparent : ringColor,
+                  width: 0.8,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.25),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+              child: Text(
+                candidate.distanceMeters != null
+                    ? (candidate.distanceMeters! < 1000
+                          ? '±${candidate.distanceMeters!.round()}m'
+                          : '±${(candidate.distanceMeters! / 1000).toStringAsFixed(1)}k')
+                    : 'Aktif',
+                style: TextStyle(
+                  fontSize: 8.5,
+                  fontWeight: FontWeight.w900,
+                  color: isSelected
+                      ? (isDark ? AppColors.espressoDark : Colors.white)
+                      : (isDark ? Colors.white : AppColors.espressoDark),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFallbackInitial() {
+    return Center(
+      child: Text(
+        candidate.name.isNotEmpty
+            ? candidate.name.substring(0, 1).toUpperCase()
+            : 'P',
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w800,
+          fontSize: 15,
+        ),
+      ),
+    );
+  }
+}
+
+// ── ORGANIC LAYERED RADAR PAINTER (Image 2 Concentric Ripple Disks) ──────────
+
+class _WinkyOrganicRadarPainter extends CustomPainter {
   final double sweepProgress;
   final double pulseProgress;
   final double centerPulse;
   final double lockOnProgress;
   final SosScanningState state;
-  final List<CandidateCompanion> candidates;
-  final CandidateCompanion? closestCandidate;
+  final bool isDark;
+  final CandidateCompanion? selectedCompanion;
+  final double maxRangeMeters;
 
-  _RadarPainter({
+  _WinkyOrganicRadarPainter({
     required this.sweepProgress,
     required this.pulseProgress,
     required this.centerPulse,
     required this.lockOnProgress,
     required this.state,
-    required this.candidates,
-    required this.closestCandidate,
+    required this.isDark,
+    required this.selectedCompanion,
+    required this.maxRangeMeters,
   });
 
   @override
@@ -821,169 +1485,140 @@ class _RadarPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final maxRadius = size.width / 2;
 
-    // 1. Radar Circular Range Grids
-    final gridPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0
-      ..color = const Color(0xFF204060).withValues(alpha: 0.4);
+    // 1. Layered Organic Concentric Disks (Image 2 style)
+    // 4 Distinct smooth translucent discs layered from outermost to innermost
+    final diskLayers = [
+      _RadarDisk(radiusFactor: 1.00, rotationOffset: 0.00),
+      _RadarDisk(radiusFactor: 0.76, rotationOffset: 0.08),
+      _RadarDisk(radiusFactor: 0.54, rotationOffset: -0.05),
+      _RadarDisk(radiusFactor: 0.34, rotationOffset: 0.04),
+    ];
 
-    final rangeRatios = [0.25, 0.5, 0.75, 1.0];
-    for (final ratio in rangeRatios) {
-      canvas.drawCircle(center, maxRadius * ratio, gridPaint);
+    for (int i = 0; i < diskLayers.length; i++) {
+      final disk = diskLayers[i];
+      final r = maxRadius * disk.radiusFactor;
+
+      // Fill Paint (smooth gradients calibrated for Light and Dark modes)
+      final fillPaint = Paint()
+        ..style = PaintingStyle.fill
+        ..shader = RadialGradient(
+          center: Alignment.center,
+          radius: 0.95,
+          colors: isDark
+              ? [
+                  AppColors.goldPrimary.withValues(alpha: 0.08 + (i * 0.04)),
+                  const Color(0xFF2E1C12).withValues(alpha: 0.25 + (i * 0.08)),
+                ]
+              : [
+                  AppColors.goldLight.withValues(alpha: 0.30 + (i * 0.07)),
+                  AppColors.canvasCreamSubtle.withValues(
+                    alpha: 0.40 + (i * 0.09),
+                  ),
+                ],
+        ).createShader(Rect.fromCircle(center: center, radius: r));
+
+      canvas.drawCircle(center, r, fillPaint);
+
+      // Delicate outer edge stroke
+      final strokePaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = isDark ? 1.0 : 1.2
+        ..color = isDark
+            ? AppColors.goldPrimary.withValues(alpha: 0.18 + (i * 0.08))
+            : Colors.white.withValues(alpha: 0.75 + (i * 0.08));
+
+      canvas.drawCircle(center, r, strokePaint);
     }
 
-    // 2. Crosshair Axes
-    final axisPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.8
-      ..color = const Color(0xFF204060).withValues(alpha: 0.3);
-
-    canvas.drawLine(
-      Offset(center.dx, 0),
-      Offset(center.dx, size.height),
-      axisPaint,
-    );
-    canvas.drawLine(
-      Offset(0, center.dy),
-      Offset(size.width, center.dy),
-      axisPaint,
-    );
-
-    // 3. Expanding Ripple Waves (Pulse)
-    if (state != SosScanningState.companionFound &&
-        state != SosScanningState.noCompanionAvailable) {
+    // 2. Expanding Pulse Ripple Waves
+    if (state != SosScanningState.noCompanionAvailable) {
       for (int i = 0; i < 2; i++) {
         final rippleOffset = (pulseProgress + (i * 0.5)) % 1.0;
         final rippleRadius = maxRadius * rippleOffset;
-        final rippleAlpha = (1.0 - rippleOffset).clamp(0.0, 0.4);
+        final rippleAlpha = (1.0 - rippleOffset).clamp(0.0, 0.35);
 
         final ripplePaint = Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.8
-          ..color = AppColors.sosEmergency.withValues(alpha: rippleAlpha);
+          ..strokeWidth = 1.5
+          ..color = (isDark ? AppColors.goldPrimary : AppColors.primary)
+              .withValues(alpha: rippleAlpha);
 
         canvas.drawCircle(center, rippleRadius, ripplePaint);
       }
     }
 
-    // 4. Rotating Sweep Gradient Arc
+    // 3. Rotating Radar Sweep Beam & Glowing Arc
     if (state != SosScanningState.noCompanionAvailable) {
       final sweepAngle = sweepProgress * 2 * math.pi;
 
+      // Soft gradient aura arc
       final sweepPaint = Paint()
         ..style = PaintingStyle.fill
         ..shader = SweepGradient(
           center: Alignment.center,
           startAngle: 0.0,
-          endAngle: math.pi / 2,
+          endAngle: math.pi / 2.5,
           colors: [
             Colors.transparent,
-            AppColors.sosEmergency.withValues(alpha: 0.22),
+            (isDark ? AppColors.goldPrimary : AppColors.primary).withValues(
+              alpha: isDark ? 0.22 : 0.15,
+            ),
           ],
-          transform: GradientRotation(sweepAngle - (math.pi / 2)),
+          transform: GradientRotation(sweepAngle - (math.pi / 2.5)),
         ).createShader(Rect.fromCircle(center: center, radius: maxRadius));
 
       canvas.drawCircle(center, maxRadius, sweepPaint);
 
-      // Leading sweep line
+      // Leading beam line
       final lineEnd = Offset(
         center.dx + maxRadius * math.cos(sweepAngle),
         center.dy + maxRadius * math.sin(sweepAngle),
       );
       final sweepLinePaint = Paint()
-        ..color = AppColors.sosEmergency.withValues(alpha: 0.7)
-        ..strokeWidth = 1.5;
+        ..color = (isDark ? AppColors.goldLight : AppColors.primary).withValues(
+          alpha: 0.6,
+        )
+        ..strokeWidth = 1.4;
       canvas.drawLine(center, lineEnd, sweepLinePaint);
     }
 
-    // 5. Candidate Blips on the Radar
-    for (final cand in candidates) {
-      final isClosest = closestCandidate?.uid == cand.uid;
-      final radiusRatio = cand.getRadarRadiusRatio();
-      final angle = cand.getRadarAngleRadians();
-
+    // 4. Connector Guide Line to Selected Companion
+    if (selectedCompanion != null && state == SosScanningState.companionFound) {
+      final radiusRatio = selectedCompanion!.getRadarRadiusRatio(
+        maxRangeMeters,
+      );
+      final angle = selectedCompanion!.getRadarAngleRadians();
       final blipDist = maxRadius * radiusRatio;
-      // 0 rad is North (-Y axis)
-      final blipPos = Offset(
+      final targetPos = Offset(
         center.dx + blipDist * math.sin(angle),
         center.dy - blipDist * math.cos(angle),
       );
 
-      // Draw blip dot
-      final blipColor = isClosest
-          ? AppColors.statusSafe
-          : AppColors.accentGoldStar;
+      final connectorPaint = Paint()
+        ..color = (isDark ? AppColors.goldPrimary : AppColors.primary)
+            .withValues(alpha: 0.35)
+        ..strokeWidth = 1.2
+        ..style = PaintingStyle.stroke;
 
-      final dotPaint = Paint()
-        ..color = blipColor
-        ..style = PaintingStyle.fill;
-      canvas.drawCircle(blipPos, 4.0, dotPaint);
-
-      // Blip outer glow
-      final glowPaint = Paint()
-        ..color = blipColor.withValues(alpha: 0.35)
-        ..style = PaintingStyle.fill;
-      canvas.drawCircle(blipPos, 8.0, glowPaint);
-
-      // 6. Closest Candidate Lock-on Reticle
-      if (isClosest && state == SosScanningState.companionFound) {
-        final lockScale = 1.0 + (0.35 * (1.0 - lockOnProgress));
-        final ringRadius = 14.0 * lockScale;
-
-        final lockPaint = Paint()
-          ..color = AppColors.statusSafe
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2.0;
-
-        canvas.drawCircle(blipPos, ringRadius, lockPaint);
-
-        // Connector line from center to candidate
-        final connectorPaint = Paint()
-          ..color = AppColors.statusSafe.withValues(alpha: 0.35)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.2;
-        canvas.drawLine(center, blipPos, connectorPaint);
-      }
+      canvas.drawLine(center, targetPos, connectorPaint);
     }
-
-    // 7. Center SOS Hub
-    final centerRadius = 24.0 + (2.5 * centerPulse);
-
-    // Glowing outer ring of hub
-    final hubGlow = Paint()
-      ..color = AppColors.sosEmergency.withValues(alpha: 0.35)
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(center, centerRadius + 6, hubGlow);
-
-    // Solid core of hub
-    final hubCore = Paint()
-      ..shader = const RadialGradient(
-        colors: [Color(0xFFE53935), Color(0xFFB71C1C)],
-      ).createShader(Rect.fromCircle(center: center, radius: centerRadius));
-    canvas.drawCircle(center, centerRadius, hubCore);
-
-    // White text "SOS" inside center core
-    final textPainter = TextPainter(
-      text: const TextSpan(
-        text: 'SOS',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 11,
-          fontWeight: FontWeight.w900,
-          letterSpacing: 0.5,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    textPainter.paint(
-      canvas,
-      Offset(
-        center.dx - (textPainter.width / 2),
-        center.dy - (textPainter.height / 2),
-      ),
-    );
   }
 
   @override
-  bool shouldRepaint(covariant _RadarPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _WinkyOrganicRadarPainter oldDelegate) {
+    return oldDelegate.sweepProgress != sweepProgress ||
+        oldDelegate.pulseProgress != pulseProgress ||
+        oldDelegate.centerPulse != centerPulse ||
+        oldDelegate.lockOnProgress != lockOnProgress ||
+        oldDelegate.isDark != isDark ||
+        oldDelegate.selectedCompanion != selectedCompanion ||
+        oldDelegate.maxRangeMeters != maxRangeMeters;
+  }
+}
+
+class _RadarDisk {
+  final double radiusFactor;
+  final double rotationOffset;
+
+  const _RadarDisk({required this.radiusFactor, required this.rotationOffset});
 }

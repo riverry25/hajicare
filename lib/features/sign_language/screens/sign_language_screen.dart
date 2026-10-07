@@ -50,6 +50,7 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
   final YOLOViewController _yoloController = YOLOViewController();
 
   SignLanguageModel _currentModel = SignLanguageModel.sibi;
+  LensFacing _currentLens = LensFacing.front;
   bool _isCameraActive = false;
   bool _isModelLoading = false;
   bool _isSwitchingModel = false;
@@ -219,6 +220,7 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
     } else if (previousModel == SignLanguageModel.sibi &&
         targetModel == SignLanguageModel.bisindo) {
       if (_isCameraActive) {
+        await _cameraService.setLensFacing(_currentLens == LensFacing.front);
         await _cameraService.startCamera();
         _streamBuffer.resume();
       }
@@ -307,6 +309,7 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
       }
 
       // In BISINDO mode: Native CameraX + MediaPipe manages the camera
+      await _cameraService.setLensFacing(_currentLens == LensFacing.front);
       final started = await _cameraService.startCamera();
       if (!started) {
         if (mounted) {
@@ -323,6 +326,46 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
         setState(() {
           _isCameraActive = true;
           _isModelLoading = false;
+        });
+      }
+    }
+  }
+
+  /// Switches camera between front and back lens for both SIBI and BISINDO pipelines.
+  Future<void> _switchCameraLens() async {
+    final nextLens = _currentLens == LensFacing.front
+        ? LensFacing.back
+        : LensFacing.front;
+
+    HapticFeedback.selectionClick();
+
+    if (_currentModel == SignLanguageModel.sibi) {
+      if (_isCameraActive) {
+        try {
+          await _yoloController.switchCamera();
+        } catch (e) {
+          debugPrint('[SIBI][YOLO] switchCamera error: $e');
+        }
+      }
+      if (mounted) {
+        setState(() {
+          _currentLens = nextLens;
+        });
+      }
+    } else {
+      // BISINDO mode
+      try {
+        if (_isCameraActive) {
+          await _cameraService.switchCamera();
+        } else {
+          await _cameraService.setLensFacing(nextLens == LensFacing.front);
+        }
+      } catch (e) {
+        debugPrint('[BISINDO_CAMERA] switchCamera error: $e');
+      }
+      if (mounted) {
+        setState(() {
+          _currentLens = nextLens;
         });
       }
     }
@@ -589,7 +632,7 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
                   modelPath: SignLanguageModelConfig.sibi.modelAsset,
                   task: YOLOTask.detect,
                   controller: _yoloController,
-                  lensFacing: LensFacing.front,
+                  lensFacing: _currentLens,
                   confidenceThreshold: 0.30,
                   cameraResolution: '480p',
                   streamingConfig: YOLOStreamingConfig.throttled(
@@ -655,6 +698,17 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
                           : AppColors.primaryContainer.withValues(alpha: 0.95),
                     ),
                   ],
+                ),
+              ),
+
+              // 3. Top-Right Switch Camera Button [ 🔄 Depan / Belakang ]
+              Positioned(
+                right: 14,
+                top: 11,
+                child: _SwitchCameraButton(
+                  isFrontCamera: _currentLens == LensFacing.front,
+                  isCameraActive: _isCameraActive,
+                  onTap: _switchCameraLens,
                 ),
               ),
 
@@ -1500,6 +1554,76 @@ class _RoundControl extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Floating Switch Camera Button positioned on the camera preview panel.
+class _SwitchCameraButton extends StatelessWidget {
+  final bool isFrontCamera;
+  final bool isCameraActive;
+  final VoidCallback onTap;
+
+  const _SwitchCameraButton({
+    required this.isFrontCamera,
+    required this.isCameraActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final shortLabel = isFrontCamera ? 'Depan' : 'Belakang';
+
+    return Semantics(
+      button: true,
+      label: 'Ubah ke ${isFrontCamera ? 'kamera belakang' : 'kamera depan'}',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.60),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              border: Border.all(
+                color: isCameraActive
+                    ? AppColors.goldPrimary.withValues(alpha: 0.8)
+                    : Colors.white.withValues(alpha: 0.35),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.35),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.cameraswitch_rounded,
+                  size: 15,
+                  color: isCameraActive ? AppColors.goldPrimary : Colors.white,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  shortLabel,
+                  style: AppTypography.captionSmall.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11.5,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:ultralytics_yolo/ultralytics_yolo.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -20,7 +21,9 @@ import '../services/smart_multi_pass_detector.dart';
 enum RecognitionMode { camera, processing, result }
 
 class MoneyRecognitionScreen extends StatefulWidget {
-  const MoneyRecognitionScreen({super.key});
+  final ImagePicker? imagePicker;
+
+  const MoneyRecognitionScreen({super.key, this.imagePicker});
 
   @override
   State<MoneyRecognitionScreen> createState() => _MoneyRecognitionScreenState();
@@ -29,6 +32,9 @@ class MoneyRecognitionScreen extends StatefulWidget {
 class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
   // Official Ultralytics Controller for Camera Preview
   final YOLOViewController _yoloController = YOLOViewController();
+
+  // Image picker instance for gallery photo selection
+  ImagePicker? _imagePicker;
 
   // Single-image YOLO inference instance
   late final YOLO _yolo;
@@ -161,58 +167,33 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
   // PHOTO CAPTURE & SMART MULTI-PASS INFERENCE WORKFLOW
   // ---------------------------------------------------------------------------
 
-  Future<void> _captureAndAnalyze() async {
-    if (_mode != RecognitionMode.camera) return;
-
-    if (!_isModelLoaded) {
-      Get.snackbar(
-        'Menyiapkan Kamera',
-        'Pemindai uang sedang disiapkan. Tunggu sebentar, lalu coba lagi.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.black87,
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(AppSpacing.md),
-      );
-      return;
-    }
-
+  /// Unified multi-pass image analysis for both camera shots and gallery photos.
+  Future<void> _analyzeImageBytes(
+    Uint8List photoBytes, {
+    String failureMessage =
+        'Uang belum dapat dikenali. Pastikan gambar terang dan tidak buram, lalu coba lagi.',
+  }) async {
     setState(() {
       _mode = RecognitionMode.processing;
       _processingStatus = 'Memeriksa foto uang...';
     });
 
     try {
-      // 1. Capture still photo from live preview
-      Uint8List? photoBytes;
+      // 1. Pause live camera preview while examining result
       try {
-        photoBytes = await _yoloController.capturePhoto(withOverlays: false);
+        await _yoloController.pause();
       } catch (e) {
-        debugPrint('[MoneyAI] capturePhoto error: $e');
+        debugPrint('[MoneyAI] pause error: $e');
       }
 
-      if (photoBytes == null || photoBytes.isEmpty) {
-        try {
-          photoBytes = await _yoloController.captureFrame();
-        } catch (e) {
-          debugPrint('[MoneyAI] captureFrame error: $e');
-        }
-      }
-
-      if (photoBytes == null || photoBytes.isEmpty) {
-        throw Exception('Gagal mengambil gambar dari kamera.');
-      }
-
-      // 2. Pause live camera preview while examining result
-      await _yoloController.pause();
-
-      // 3. Decode image dimensions to ensure pixel-perfect bounding box alignment
+      // 2. Decode image dimensions to ensure pixel-perfect bounding box alignment
       final ui.Image decodedImage = await decodeImageFromList(photoBytes);
       final Size imageSize = Size(
         decodedImage.width.toDouble(),
         decodedImage.height.toDouble(),
       );
 
-      // 4. Run Smart Multi-Pass Pipeline
+      // 3. Run Smart Multi-Pass Pipeline
       final MultiPassDetectionResult result = await _multiPassDetector
           .processImage(
             photoBytes,
@@ -237,7 +218,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
         _mode = RecognitionMode.result;
       });
 
-      // 5. Speak accessible result once (isolated try/catch so speech failure never breaks UI)
+      // 4. Speak accessible result once (isolated try/catch so speech failure never breaks UI)
       try {
         final speech = _ttsService.buildSpeechSentence(
           detections: result.finalDetections,
@@ -251,7 +232,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
         debugPrint('[MoneyTTS] Speech error: $e');
       }
     } catch (e) {
-      debugPrint('[MoneyAI] Capture & inference pipeline error: $e');
+      debugPrint('[MoneyAI] Inference pipeline error: $e');
       if (!mounted) return;
 
       setState(() {
@@ -260,7 +241,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
 
       Get.snackbar(
         'Uang Belum Terbaca',
-        'Uang belum dapat dikenali. Pastikan gambar terang dan tidak buram, lalu coba lagi.',
+        failureMessage,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.black87,
         colorText: Colors.white,
@@ -270,6 +251,118 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
       try {
         await _yoloController.resume();
       } catch (_) {}
+    }
+  }
+
+  /// Default Option: Ambil foto langsung dari kamera.
+  Future<void> _captureAndAnalyze() async {
+    if (_mode != RecognitionMode.camera) return;
+
+    if (!_isModelLoaded) {
+      Get.snackbar(
+        'Menyiapkan Kamera',
+        'Pemindai uang sedang disiapkan. Tunggu sebentar, lalu coba lagi.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.black87,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(AppSpacing.md),
+      );
+      return;
+    }
+
+    try {
+      // 1. Capture still photo from live preview
+      Uint8List? photoBytes;
+      try {
+        photoBytes = await _yoloController.capturePhoto(withOverlays: false);
+      } catch (e) {
+        debugPrint('[MoneyAI] capturePhoto error: $e');
+      }
+
+      if (photoBytes == null || photoBytes.isEmpty) {
+        try {
+          photoBytes = await _yoloController.captureFrame();
+        } catch (e) {
+          debugPrint('[MoneyAI] captureFrame error: $e');
+        }
+      }
+
+      if (photoBytes == null || photoBytes.isEmpty) {
+        throw Exception('Gagal mengambil gambar dari kamera.');
+      }
+
+      await _analyzeImageBytes(photoBytes);
+    } catch (e) {
+      debugPrint('[MoneyAI] Camera capture error: $e');
+      if (!mounted) return;
+
+      Get.snackbar(
+        'Gagal Mengambil Gambar',
+        'Tidak dapat mengambil gambar dari kamera. Silakan coba lagi.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.black87,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(AppSpacing.md),
+      );
+
+      try {
+        await _yoloController.resume();
+      } catch (_) {}
+    }
+  }
+
+  /// Opsi Tambahan: Ambil foto uang dari galeri perangkat untuk dideteksi.
+  Future<void> _pickFromGalleryAndAnalyze() async {
+    if (_mode == RecognitionMode.processing) return;
+
+    if (!_isModelLoaded) {
+      Get.snackbar(
+        'Menyiapkan Pemindai',
+        'Pemindai uang sedang disiapkan. Tunggu sebentar, lalu coba lagi.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.black87,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(AppSpacing.md),
+      );
+      return;
+    }
+
+    try {
+      final picker = widget.imagePicker ?? (_imagePicker ??= ImagePicker());
+      final XFile? pickedFile = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1920,
+        maxHeight: 1920,
+        imageQuality: 95,
+      );
+
+      if (pickedFile == null) {
+        // Pengguna membatalkan pemilihan foto dari galeri
+        return;
+      }
+
+      final Uint8List bytes = await pickedFile.readAsBytes();
+      if (bytes.isEmpty) {
+        throw Exception('File gambar dari galeri kosong atau tidak terbaca.');
+      }
+
+      await _analyzeImageBytes(
+        bytes,
+        failureMessage:
+            'Uang belum dapat dikenali dari foto galeri. Pastikan gambar jelas dan terang, lalu coba lagi.',
+      );
+    } catch (e) {
+      debugPrint('[MoneyAI] Pick gallery error: $e');
+      if (!mounted) return;
+
+      Get.snackbar(
+        'Gagal Membuka Galeri',
+        'Tidak dapat memuat foto dari galeri. Pastikan format gambar didukung.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.black87,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(AppSpacing.md),
+      );
     }
   }
 
@@ -543,6 +636,16 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
             const SizedBox(width: AppSpacing.sm),
 
             _buildRoundCameraControl(
+              icon: _isTorchOn
+                  ? Icons.flash_on_rounded
+                  : Icons.flash_off_rounded,
+              label: _isTorchOn ? 'Matikan lampu' : 'Nyalakan lampu',
+              onTap: _toggleTorch,
+              isActive: _isTorchOn,
+              size: 44,
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            _buildRoundCameraControl(
               icon: _ttsService.isVoiceEnabled
                   ? Icons.volume_up_rounded
                   : Icons.volume_off_rounded,
@@ -551,12 +654,14 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                   : 'Aktifkan suara',
               onTap: _toggleVoice,
               isActive: _ttsService.isVoiceEnabled,
+              size: 44,
             ),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: AppSpacing.xs),
             _buildRoundCameraControl(
               icon: Icons.close_rounded,
               label: 'Tutup pemindai uang',
               onTap: Get.back,
+              size: 44,
             ),
           ],
         ),
@@ -719,19 +824,30 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.38),
+                  color: Colors.black.withValues(alpha: 0.45),
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.16),
+                    color: AppColors.goldPrimary.withValues(alpha: 0.35),
                   ),
                 ),
-                child: Text(
-                  'Posisikan seluruh uang di dalam bingkai',
-                  textAlign: TextAlign.center,
-                  style: AppTypography.captionSmall.copyWith(
-                    color: Colors.white.withValues(alpha: 0.92),
-                    fontWeight: FontWeight.w600,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.center_focus_strong_rounded,
+                      size: 14,
+                      color: AppColors.goldLight,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Foto langsung lewat kamera atau pilih dari galeri',
+                      textAlign: TextAlign.center,
+                      style: AppTypography.captionSmall.copyWith(
+                        color: Colors.white.withValues(alpha: 0.95),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
@@ -748,50 +864,31 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 380),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  _buildRoundCameraControl(
-                    icon: _isTorchOn
-                        ? Icons.flash_on_rounded
-                        : Icons.flash_off_rounded,
-                    label: _isTorchOn ? 'Matikan lampu' : 'Nyalakan lampu',
-                    onTap: _toggleTorch,
-                    isActive: _isTorchOn,
-                    size: sideControlSize,
+                  // 1. OPSI: AMBIL DARI GALERI
+                  _buildBottomActionButton(
+                    icon: Icons.photo_library_rounded,
+                    label: 'Galeri',
+                    tooltip: 'Pilih foto uang dari galeri',
+                    onTap: _pickFromGalleryAndAnalyze,
+                    buttonSize: sideControlSize,
                   ),
-                  Semantics(
-                    label: 'Ambil Foto Uang',
-                    button: true,
-                    child: GestureDetector(
-                      onTap: _captureAndAnalyze,
-                      child: Container(
-                        width: shutterSize,
-                        height: shutterSize,
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 3),
-                          color: Colors.black.withValues(alpha: 0.16),
-                        ),
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white,
-                          ),
-                          child: const Icon(
-                            Icons.document_scanner_rounded,
-                            color: AppColors.espressoDark,
-                            size: 30,
-                          ),
-                        ),
-                      ),
-                    ),
+
+                  // 2. DEFAULT: AMBIL DARI KAMERA LANGSUNG (SHUTTER BESAR)
+                  _buildShutterButton(
+                    size: shutterSize,
+                    onTap: _captureAndAnalyze,
                   ),
-                  _buildRoundCameraControl(
+
+                  // 3. GANTI LENSA KAMERA (DEPAN/BELAKANG)
+                  _buildBottomActionButton(
                     icon: Icons.cameraswitch_rounded,
-                    label: 'Ganti kamera',
+                    label: 'Putar',
+                    tooltip: 'Ganti kamera depan atau belakang',
                     onTap: _switchCamera,
-                    size: sideControlSize,
+                    buttonSize: sideControlSize,
                   ),
                 ],
               ),
@@ -799,6 +896,114 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildBottomActionButton({
+    required IconData icon,
+    required String label,
+    required String tooltip,
+    required VoidCallback onTap,
+    required double buttonSize,
+    bool isActive = false,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Semantics(
+          label: tooltip,
+          button: true,
+          child: Material(
+            color: isActive
+                ? AppColors.goldPrimary.withValues(alpha: 0.24)
+                : Colors.black.withValues(alpha: 0.38),
+            shape: CircleBorder(
+              side: BorderSide(
+                color: isActive
+                    ? AppColors.goldPrimary.withValues(alpha: 0.9)
+                    : Colors.white.withValues(alpha: 0.25),
+                width: 1.2,
+              ),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: onTap,
+              child: SizedBox.square(
+                dimension: buttonSize,
+                child: Icon(
+                  icon,
+                  color: isActive ? AppColors.goldPrimary : Colors.white,
+                  size: buttonSize * 0.48,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          label,
+          style: AppTypography.captionSmall.copyWith(
+            color: Colors.white.withValues(alpha: 0.85),
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildShutterButton({
+    required double size,
+    required VoidCallback onTap,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Semantics(
+          label: 'Ambil Foto Uang (Kamera Langsung)',
+          button: true,
+          child: GestureDetector(
+            onTap: onTap,
+            child: Container(
+              width: size,
+              height: size,
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 3.2),
+                color: Colors.black.withValues(alpha: 0.22),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.goldPrimary.withValues(alpha: 0.30),
+                    blurRadius: 16,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: Container(
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                ),
+                child: const Icon(
+                  Icons.camera_alt_rounded,
+                  color: AppColors.espressoDark,
+                  size: 32,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Kamera',
+          style: AppTypography.captionSmall.copyWith(
+            color: AppColors.goldPrimary,
+            fontSize: 11.5,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
     );
   }
 
@@ -1294,6 +1499,37 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+
+                  // Option to pick another photo directly from gallery
+                  SizedBox(
+                    height: 50,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                          color: AppColors.goldPrimary.withValues(alpha: 0.6),
+                          width: 1.4,
+                        ),
+                        foregroundColor: AppColors.goldLight,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                      ),
+                      onPressed: _pickFromGalleryAndAnalyze,
+                      icon: const Icon(
+                        Icons.photo_library_rounded,
+                        size: 20,
+                        color: AppColors.goldPrimary,
+                      ),
+                      label: Text(
+                        'Pilih Foto Lain dari Galeri',
+                        style: AppTypography.labelLarge.copyWith(
+                          color: AppColors.goldLight,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),

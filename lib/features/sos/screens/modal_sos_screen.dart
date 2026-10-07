@@ -10,7 +10,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../core/widgets/app_card.dart';
 import '../../notification/controllers/notification_controller.dart';
 
 class ModalSosScreen extends StatefulWidget {
@@ -144,6 +143,47 @@ class _ModalSosScreenState extends State<ModalSosScreen>
     return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} (${dt.day}/${dt.month}/${dt.year})';
   }
 
+  String _getWaitTimeNumber(dynamic timestamp) {
+    if (timestamp == null) return '<1';
+    DateTime? dt;
+    if (timestamp is Timestamp) {
+      dt = timestamp.toDate();
+    } else if (timestamp is DateTime) {
+      dt = timestamp;
+    }
+    if (dt == null) return '<1';
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes <= 0) return '<1';
+    if (diff.inHours >= 1) return diff.inHours.toString().padLeft(2, '0');
+    return diff.inMinutes.toString().padLeft(2, '0');
+  }
+
+  String _getWaitTimeUnit(dynamic timestamp) {
+    if (timestamp == null) return 'mnt';
+    DateTime? dt;
+    if (timestamp is Timestamp) {
+      dt = timestamp.toDate();
+    } else if (timestamp is DateTime) {
+      dt = timestamp;
+    }
+    if (dt == null) return 'mnt';
+    final diff = DateTime.now().difference(dt);
+    if (diff.inHours >= 1) return 'jam';
+    return 'mnt';
+  }
+
+  String _getFormattedClockTime(dynamic timestamp) {
+    if (timestamp == null) return '--:--';
+    DateTime? dt;
+    if (timestamp is Timestamp) {
+      dt = timestamp.toDate();
+    } else if (timestamp is DateTime) {
+      dt = timestamp;
+    }
+    if (dt == null) return '--:--';
+    return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  }
+
   bool _isItemDismissed(String? id, [String? secondaryId]) {
     if (id != null && id.isNotEmpty) {
       if (_dismissedSosIds.contains(id) || state.isSosDismissed(id)) {
@@ -247,6 +287,18 @@ class _ModalSosScreenState extends State<ModalSosScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
+    final isOfficer =
+        state.role == UserRole.pendamping || state.role == UserRole.admin;
+
+    // ── Khusus Pendamping: Tampilan baru bergradien mewah mengikuti Gambar 2 ─
+    if (isOfficer) {
+      return Obx(() {
+        final activeSosList = _resolveActiveSosList();
+        return _buildResponderView(context, activeSosList, isDark);
+      });
+    }
+
+    // ── Jamaah: Tampilan Emergency Trigger Panel ────────────────────────────
     final scaffoldBg = isDark ? AppColors.darkScaffold : AppColors.canvasCream;
     final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
     final headingColor = isDark
@@ -292,573 +344,522 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                 ),
               ),
             ),
-            const SizedBox(width: 10),
           ],
         ),
-        actions: [
-          Obx(() {
-            final activeSosList = _resolveActiveSosList();
-            final activeCount = activeSosList.length;
-            if (activeCount <= 0) return const SizedBox.shrink();
-            return Container(
-              margin: const EdgeInsets.only(right: 16, left: 4),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.sosEmergency,
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-              ),
-              child: Text(
-                '$activeCount ${context.tr('sosActiveBadge')}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 11,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            );
-          }),
-        ],
       ),
-      body: Obx(() {
-        final isOfficer =
-            state.role == UserRole.pendamping || state.role == UserRole.admin;
-        // If Officer, show Responder Panel
-        if (isOfficer) {
-          final activeSosList = _resolveActiveSosList();
-          return _buildResponderView(
-            context,
-            activeSosList,
-            isDark,
-            cardBg,
-            headingColor,
-            bodyColor,
-          );
-        }
-
-        // Otherwise (Jamaah), show Emergency Sender Panel
-        return _buildJamaahSenderView(
-          context,
-          isDark,
-          cardBg,
-          headingColor,
-          bodyColor,
-        );
-      }),
+      body: _buildJamaahSenderView(
+        context,
+        isDark,
+        cardBg,
+        headingColor,
+        bodyColor,
+      ),
     );
   }
 
   // ===========================================================================
-  // RESPONDER / OFFICER VIEW (REALTIME ACTIVE SOS LIST FROM FIRESTORE)
+  // RESPONDER / OFFICER VIEW (REFERENSI GAMBAR 2: HERO GRADIENT & FLOATING ISLAND)
   // ===========================================================================
 
   Widget _buildResponderView(
     BuildContext context,
     List<Map<String, dynamic>> activeSosList,
     bool isDark,
-    Color cardBg,
-    Color headingColor,
-    Color bodyColor,
   ) {
-    return ListView(
-      padding: const EdgeInsets.all(AppSpacing.screenEdgeGutter),
-      physics: const BouncingScrollPhysics(),
-      children: [
-        // ── 1. Siren Alert Header Banner ────────────────────────────────────
-        if (activeSosList.isNotEmpty) ...[
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFE53935), Color(0xFFC62828)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFE53935).withValues(alpha: 0.35),
-                  blurRadius: 14,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                ScaleTransition(
-                  scale: _pulseAnimation,
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.22),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.warning_rounded,
-                      color: Colors.white,
-                      size: 26,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm + 4),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        context.tr('sosActiveCallsHeader'),
-                        style: AppTypography.titleMedium.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.5,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        context.tr('sosPilgrimsNeedHelp', {
-                          'count': activeSosList.length,
-                        }),
-                        style: AppTypography.bodySmall.copyWith(
-                          color: Colors.white.withValues(alpha: 0.95),
-                          height: 1.3,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-        ],
+    final activeCount = activeSosList.length;
+    final hasActiveSos = activeCount > 0;
+    final mq = MediaQuery.of(context);
+    final topPadding = mq.padding.top;
 
-        // ── 2. Real Active SOS Cards from Firestore ─────────────────────────
-        if (activeSosList.isEmpty) ...[
-          AppCard(
-            backgroundColor: cardBg,
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.xl),
-              child: Column(
+    return Scaffold(
+      backgroundColor: isDark ? AppColors.darkScaffold : AppColors.canvasCream,
+      body: Stack(
+        children: [
+          // ── 1. Top Hero Gradient Background (Merah Crimson & Kaaba Espresso)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 310 + topPadding,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isDark
+                      ? const [
+                          Color(0xFF7F1D1D),
+                          Color(0xFF5B1111),
+                          Color(0xFF2E1C12),
+                        ]
+                      : const [
+                          Color(0xFFDC2626),
+                          Color(0xFFB91C1C),
+                          Color(0xFF38251A),
+                        ],
+                ),
+              ),
+              child: Stack(
                 children: [
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: AppColors.statusSafe.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.check_circle_outline_rounded,
-                      color: AppColors.statusSafe,
-                      size: 36,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(
-                    context.tr('sosSafeConditionTitle'),
-                    style: AppTypography.titleMedium.copyWith(
-                      color: headingColor,
-                      fontWeight: FontWeight.bold,
+                  // Subtle decorative watermark circles
+                  Positioned(
+                    top: -40,
+                    right: -30,
+                    child: Container(
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.05),
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    context.tr('sosSafeConditionDesc'),
-                    textAlign: TextAlign.center,
-                    style: AppTypography.bodySmall.copyWith(color: bodyColor),
+                  Positioned(
+                    top: 100,
+                    left: -40,
+                    child: Container(
+                      width: 140,
+                      height: 140,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.04),
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
           ),
-        ] else ...[
-          Text(
-            context.tr('sosIncomingCallsList', {'count': activeSosList.length}),
-            style: AppTypography.titleSmall.copyWith(
-              color: headingColor,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
 
-          ...activeSosList.map((sos) {
-            final userName =
-                (sos['userName'] as String?)?.trim().isNotEmpty == true
-                ? (sos['userName'] as String).trim()
-                : 'Jamaah Tanpa Nama';
-            final userId =
-                sos['userId'] as String? ?? sos['jamaahId'] as String? ?? '';
-            final eventId = sos['id'] as String?;
-            final roomName =
-                (sos['roomName'] as String?)?.trim().isNotEmpty == true
-                ? (sos['roomName'] as String).trim()
-                : 'Di luar rombongan';
-            final status = sos['status'] as String? ?? 'active';
-            final timeStr = _formatSosTime(
-              sos['timestamp'] ?? sos['createdAt'],
-            );
-            final loc = sos['location'];
-            final locationLabel = () {
-              if (loc is GeoPoint) {
-                // Show user-friendly label instead of raw coordinates
-                return '📍 Lokasi GPS terdeteksi — tap Lihat Detail';
-              }
-              return '📍 Lokasi belum tersedia';
-            }();
-            final hasLocation = loc is GeoPoint;
-
-            return Container(
-              margin: const EdgeInsets.only(bottom: AppSpacing.md),
-              child: AppCard(
-                backgroundColor: cardBg,
-                borderColor: AppColors.sosEmergency.withValues(alpha: 0.6),
-                padding: const EdgeInsets.all(AppSpacing.cardPadding),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header: User Name + Status Badge
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // ── 2. Scrollable Content Layer ──────────────────────────────────
+          SafeArea(
+            bottom: false,
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                // Top Custom Navigation Bar (Frosted back & title)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                    child: Row(
                       children: [
+                        // Frosted circular back button
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => Get.back(),
+                            borderRadius: BorderRadius.circular(22),
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white.withValues(alpha: 0.18),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.28),
+                                  width: 1,
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.arrow_back_rounded,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        // Title & Subtitle
                         Expanded(
-                          child: Row(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              Text(
+                                context.tr('sosCenterTitle'),
+                                style: const TextStyle(
+                                  fontFamily: AppTypography.headingFontFamily,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 18,
+                                  letterSpacing: -0.3,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const Text(
+                                'Pusat Respon Darurat Jamaah',
+                                style: TextStyle(
+                                  fontFamily: AppTypography.bodyFontFamily,
+                                  color: Colors.white70,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 11.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Active Badge Pill
+                        if (hasActiveSos)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.15),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ScaleTransition(
+                                  scale: _pulseAnimation,
+                                  child: Container(
+                                    width: 7,
+                                    height: 7,
+                                    decoration: const BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: AppColors.sosEmergency,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  '$activeCount AKTIF',
+                                  style: const TextStyle(
+                                    fontFamily: AppTypography.headingFontFamily,
+                                    color: AppColors.sosEmergency,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 11,
+                                    letterSpacing: 0.4,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Top Command Card (Meniru Floating Box pada Gambar 2)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),
+                    child: _buildTopCommandCard(
+                      context,
+                      isDark,
+                      activeCount,
+                      hasActiveSos,
+                    ),
+                  ),
+                ),
+
+                // The Curved Bottom Sheet (White/Cream Island)
+                SliverToBoxAdapter(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.darkSurface
+                          : AppColors.canvasCream,
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(30),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(
+                            alpha: isDark ? 0.35 : 0.08,
+                          ),
+                          blurRadius: 18,
+                          offset: const Offset(0, -6),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Drag handle
+                        Center(
+                          child: Container(
+                            width: 38,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? AppColors.darkOutline.withValues(alpha: 0.6)
+                                  : AppColors.outlineVariant.withValues(
+                                      alpha: 0.6,
+                                    ),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Section Header: Incoming Calls List
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                context.tr('sosIncomingCallsList', {
+                                  'count': activeCount,
+                                }),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.titleMedium.copyWith(
+                                  color: isDark
+                                      ? AppColors.darkTextHeading
+                                      : AppColors.espressoDark,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                            if (hasActiveSos)
                               Container(
-                                width: 40,
-                                height: 40,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
                                 decoration: BoxDecoration(
                                   color: AppColors.sosEmergency.withValues(
-                                    alpha: 0.15,
+                                    alpha: 0.12,
                                   ),
                                   borderRadius: BorderRadius.circular(
-                                    AppRadius.md,
-                                  ),
-                                  border: Border.all(
-                                    color: AppColors.sosEmergency.withValues(
-                                      alpha: 0.35,
-                                    ),
+                                    AppRadius.pill,
                                   ),
                                 ),
-                                child: const Icon(
-                                  Icons.person_pin_circle_rounded,
-                                  color: AppColors.sosEmergency,
-                                  size: 22,
+                                child: Text(
+                                  'Perlu Tindakan',
+                                  style: AppTypography.captionSmall.copyWith(
+                                    color: AppColors.sosEmergency,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 10.5,
+                                  ),
                                 ),
                               ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      userName,
-                                      style: AppTypography.titleSmall.copyWith(
-                                        color: headingColor,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 15,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    Text(
-                                      roomName,
-                                      style: AppTypography.captionSmall
-                                          .copyWith(
-                                            color: bodyColor.withValues(
-                                              alpha: 0.8,
-                                            ),
-                                            fontSize: 11,
-                                          ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
+                          ],
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
+                        const SizedBox(height: 14),
+
+                        // Active SOS Cards or Safe Empty State
+                        if (!hasActiveSos)
+                          _buildSafeEmptyState(context, isDark)
+                        else
+                          ...activeSosList.map(
+                            (sos) =>
+                                _buildReferenceSosCard(context, sos, isDark),
                           ),
-                          decoration: BoxDecoration(
-                            color: AppColors.sosEmergency.withValues(
-                              alpha: 0.15,
-                            ),
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                            border: Border.all(
-                              color: AppColors.sosEmergency.withValues(
-                                alpha: 0.4,
-                              ),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 6,
-                                height: 6,
-                                decoration: const BoxDecoration(
-                                  color: AppColors.sosEmergency,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                status.toUpperCase(),
-                                style: const TextStyle(
-                                  color: AppColors.sosEmergency,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 10,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Emergency Hotline Card
+                        _buildHotlineCard(context, isDark),
                       ],
                     ),
-                    const Divider(height: 20),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-                    // Metadata Row: Time & Distance
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.access_time_rounded,
-                          size: 14,
-                          color: bodyColor,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          timeStr,
-                          style: AppTypography.captionSmall.copyWith(
-                            color: bodyColor,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+  // ── Top Command Card (Meniru Visual Box "From / To" pada Gambar 2) ─────────
+
+  Widget _buildTopCommandCard(
+    BuildContext context,
+    bool isDark,
+    int activeCount,
+    bool hasActiveSos,
+  ) {
+    final cardBg = isDark
+        ? AppColors.darkSurfaceContainer
+        : AppColors.surfaceWhite;
+    final headingColor = isDark
+        ? AppColors.darkTextHeading
+        : AppColors.espressoDark;
+    final subColor = isDark ? AppColors.darkTextBody : AppColors.textMuted;
+
+    final roomName = state.activeRoom.value?.name ?? 'Rombongan Pantau';
+    final kloter = state.pendampingKloter.value;
+    final maktab = state.pendampingMaktab.value;
+    final officerSub = [
+      if (kloter != null && kloter.isNotEmpty) 'Kloter $kloter',
+      if (maktab != null && maktab.isNotEmpty) 'Maktab $maktab',
+      if ((kloter == null || kloter.isEmpty) &&
+          (maktab == null || maktab.isEmpty))
+        roomName,
+    ].join(' • ');
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.10),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : AppColors.espressoDark.withValues(alpha: 0.05),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          // Row 1: Posko Pendamping (Green point)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 2),
+                width: 16,
+                height: 16,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF22C55E).withValues(alpha: 0.15),
+                ),
+                child: Center(
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0xFF22C55E),
                     ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          hasLocation
-                              ? Icons.gps_fixed_rounded
-                              : Icons.gps_not_fixed_rounded,
-                          size: 14,
-                          color: hasLocation
-                              ? AppColors.statusSafe
-                              : bodyColor.withValues(alpha: 0.5),
-                        ),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            locationLabel,
-                            style: AppTypography.captionSmall.copyWith(
-                              color: hasLocation
-                                  ? AppColors.statusSafe
-                                  : bodyColor.withValues(alpha: 0.6),
-                              fontWeight: FontWeight.w600,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-
-                    // Action Buttons (Buka Peta & Selesaikan)
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 3,
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.sosEmergency,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.pill,
-                                ),
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              elevation: 0,
-                            ),
-                            icon: const Icon(
-                              Icons.open_in_new_rounded,
-                              size: 16,
-                            ),
-                            label: const Text(
-                              'Lihat Detail',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12.5,
-                              ),
-                            ),
-                            onPressed: () {
-                              // Pass full SOS data map to detail screen
-                              Get.toNamed(
-                                AppRoutes.sosAlertDetail,
-                                arguments: Map<String, dynamic>.from(sos),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        Expanded(
-                          flex: 2,
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: headingColor,
-                              side: BorderSide(
-                                color: isDark
-                                    ? AppColors.darkCardBorder
-                                    : AppColors.canvasCreamSubtle,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.pill,
-                                ),
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                            ),
-                            child: const Text(
-                              'Selesai',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12.5,
-                              ),
-                            ),
-                            onPressed: () {
-                              AppAlert.confirm(
-                                context,
-                                title: context.tr('sos.completeDialogTitle'),
-                                message:
-                                    'Apakah situasi darurat untuk "$userName" sudah berhasil ditangani?',
-                                confirmText: context.tr('sos.yesComplete'),
-                                cancelText: context.tr('common.cancel'),
-                                onConfirm: () async {
-                                  // 1. Immediately track as dismissed locally for instant response
-                                  if (userId.isNotEmpty) {
-                                    _dismissedSosIds.add(userId);
-                                  }
-                                  if (eventId != null && eventId.isNotEmpty) {
-                                    _dismissedSosIds.add(eventId);
-                                  }
-                                  final rawId = sos['id'] as String?;
-                                  if (rawId != null && rawId.isNotEmpty) {
-                                    _dismissedSosIds.add(rawId);
-                                  }
-
-                                  // 2. Immediately purge related notifications from controller
-                                  if (Get.isRegistered<
-                                    NotificationController
-                                  >()) {
-                                    final notifCtrl =
-                                        Get.find<NotificationController>();
-                                    final toDelete = notifCtrl.notifications
-                                        .where(
-                                          (n) =>
-                                              n.isSosAlert &&
-                                              (n.id == rawId ||
-                                                  n.id == eventId ||
-                                                  n.relatedId == rawId ||
-                                                  n.relatedId == eventId ||
-                                                  n.senderId == userId ||
-                                                  n.targetUserId == userId),
-                                        )
-                                        .map((n) => n.id)
-                                        .toList();
-                                    for (final notifId in toDelete) {
-                                      notifCtrl.deleteNotification(notifId);
-                                    }
-                                  }
-
-                                  // 3. Call state.dismissSos
-                                  final success = await state.dismissSos(
-                                    userId,
-                                    eventId: eventId,
-                                  );
-
-                                  if (mounted) {
-                                    setState(() {});
-                                  }
-                                  if (context.mounted) {
-                                    if (success) {
-                                      AppAlert.success(
-                                        context,
-                                        title: context.tr('sos.completed'),
-                                        message:
-                                            'Panggilan SOS untuk "$userName" sudah diakhiri.',
-                                      );
-                                    } else {
-                                      AppAlert.error(
-                                        context,
-                                        title: context.tr(
-                                          'sos.statusNotChanged',
-                                        ),
-                                        message:
-                                            'Periksa internet, lalu coba akhiri SOS sekali lagi.',
-                                        okText: 'Coba Lagi',
-                                      );
-                                    }
-                                  }
-                                },
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            );
-          }),
-        ],
-
-        const SizedBox(height: AppSpacing.lg),
-
-        // ── 3. Emergency Hotline Info ───────────────────────────────────────
-        Container(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            color:
-                (isDark
-                        ? AppColors.darkSurfaceContainer
-                        : AppColors.canvasCreamSubtle)
-                    .withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(AppRadius.md),
-          ),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.phone_in_talk_rounded,
-                color: AppColors.sosEmergency,
-                size: 20,
-              ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Hotline Darurat Haji Indonesia',
-                      style: AppTypography.titleSmall.copyWith(
-                        color: headingColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
+                      'POSKO PENDAMPING',
+                      style: AppTypography.captionSmall.copyWith(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: subColor,
+                        letterSpacing: 0.5,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
-                      'Pusat Krisis Kemenag: 800-119-999 • Ambulans: 997',
+                      'Siaga Respon Cepat Terhubung',
+                      style: AppTypography.titleSmall.copyWith(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: headingColor,
+                      ),
+                    ),
+                    if (officerSub.isNotEmpty)
+                      Text(
+                        officerSub,
+                        style: AppTypography.captionSmall.copyWith(
+                          fontSize: 11,
+                          color: subColor,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          // Vertical connector line
+          Padding(
+            padding: const EdgeInsets.only(left: 7.5, top: 2, bottom: 2),
+            child: Row(
+              children: [
+                Container(
+                  width: 1.5,
+                  height: 18,
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.15)
+                      : Colors.grey.withValues(alpha: 0.35),
+                ),
+              ],
+            ),
+          ),
+
+          // Row 2: Status Panggilan Darurat (Red pulsing point)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 2),
+                width: 16,
+                height: 16,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color:
+                      (hasActiveSos
+                              ? AppColors.sosEmergency
+                              : const Color(0xFF22C55E))
+                          .withValues(alpha: 0.15),
+                ),
+                child: Center(
+                  child: ScaleTransition(
+                    scale: hasActiveSos
+                        ? _pulseAnimation
+                        : const AlwaysStoppedAnimation(1.0),
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: hasActiveSos
+                            ? AppColors.sosEmergency
+                            : const Color(0xFF22C55E),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'STATUS DARURAT JAMAAH',
                       style: AppTypography.captionSmall.copyWith(
-                        color: bodyColor,
-                        fontSize: 11,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: subColor,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      hasActiveSos
+                          ? '$activeCount Jamaah Perlu Bantuan Segera'
+                          : 'Kondisi Aman Terkendali',
+                      style: AppTypography.titleSmall.copyWith(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: hasActiveSos
+                            ? AppColors.sosEmergency
+                            : const Color(0xFF16A34A),
                       ),
                     ),
                   ],
@@ -866,8 +867,645 @@ class _ModalSosScreenState extends State<ModalSosScreen>
               ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+  // ── SOS Card Mengikuti Desain Referensi Gambar 2 ───────────────────────────
+
+  Widget _buildReferenceSosCard(
+    BuildContext context,
+    Map<String, dynamic> sos,
+    bool isDark,
+  ) {
+    final userName = (sos['userName'] as String?)?.trim().isNotEmpty == true
+        ? (sos['userName'] as String).trim()
+        : 'Jamaah Tanpa Nama';
+    final userId = sos['userId'] as String? ?? sos['jamaahId'] as String? ?? '';
+    final eventId = sos['id'] as String?;
+    final roomName = (sos['roomName'] as String?)?.trim().isNotEmpty == true
+        ? (sos['roomName'] as String).trim()
+        : 'Di luar rombongan';
+    final loc = sos['location'];
+    final hasLocation = loc is GeoPoint;
+    final timestamp = sos['timestamp'] ?? sos['createdAt'];
+    final timeStr = _formatSosTime(timestamp);
+    final clockTime = _getFormattedClockTime(timestamp);
+    final waitTimeNum = _getWaitTimeNumber(timestamp);
+    final waitTimeUnit = _getWaitTimeUnit(timestamp);
+
+    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
+    final headingColor = isDark
+        ? AppColors.darkTextHeading
+        : AppColors.espressoDark;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: AppColors.sosEmergency.withValues(alpha: isDark ? 0.35 : 0.20),
+          width: 1.2,
         ),
-      ],
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.sosEmergency.withValues(
+              alpha: isDark ? 0.18 : 0.07,
+            ),
+            blurRadius: 16,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: Stack(
+          children: [
+            // Bookmark Ribbon in Top Right Corner (Meniru Ribbon "AC" di Gambar 2)
+            Positioned(
+              top: 0,
+              right: 18,
+              child: Column(
+                children: [
+                  ClipPath(
+                    clipper: _RibbonClipper(),
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(8, 6, 8, 10),
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                      child: const Text(
+                        'SOS',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 11,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    clockTime,
+                    style: AppTypography.captionSmall.copyWith(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
+                      color: isDark
+                          ? AppColors.darkTextBody
+                          : AppColors.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Card Main Content
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Top Left: Large wait time typography (matching reference "10 min")
+                  Row(
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'WAKTU TUNGGU',
+                            style: AppTypography.captionSmall.copyWith(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: isDark
+                                  ? AppColors.darkTextBody
+                                  : AppColors.textMuted,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.baseline,
+                            textBaseline: TextBaseline.alphabetic,
+                            children: [
+                              Text(
+                                waitTimeNum,
+                                style: TextStyle(
+                                  fontFamily: AppTypography.headingFontFamily,
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w800,
+                                  height: 1.1,
+                                  color: headingColor,
+                                ),
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                waitTimeUnit,
+                                style: const TextStyle(
+                                  fontFamily: AppTypography.bodyFontFamily,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
+                                  color: AppColors.sosEmergency,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              // GPS Badge
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 7,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color:
+                                      (hasLocation
+                                              ? const Color(0xFF22C55E)
+                                              : AppColors.sosEmergency)
+                                          .withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      hasLocation
+                                          ? Icons.gps_fixed_rounded
+                                          : Icons.gps_off_rounded,
+                                      size: 11,
+                                      color: hasLocation
+                                          ? const Color(0xFF16A34A)
+                                          : AppColors.sosEmergency,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      hasLocation ? 'GPS Aktif' : 'GPS Mati',
+                                      style: TextStyle(
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: hasLocation
+                                            ? const Color(0xFF16A34A)
+                                            : AppColors.sosEmergency,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+
+                  // Route/Timeline Steps (2 Points: Jamaah & Lokasi)
+                  Container(
+                    margin: const EdgeInsets.only(top: 14, bottom: 16),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.darkSurfaceContainer
+                          : const Color(0xFFF9FAFB),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isDark
+                            ? AppColors.darkOutline.withValues(alpha: 0.2)
+                            : const Color(0xFFE5E7EB),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        // Dots & Line
+                        Column(
+                          children: [
+                            Container(
+                              width: 12,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: const Color(
+                                  0xFF22C55E,
+                                ).withValues(alpha: 0.2),
+                                border: Border.all(
+                                  color: const Color(0xFF22C55E),
+                                  width: 3,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              width: 1.5,
+                              height: 22,
+                              margin: const EdgeInsets.symmetric(vertical: 2),
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.15)
+                                  : Colors.grey.withValues(alpha: 0.35),
+                            ),
+                            Container(
+                              width: 12,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: const Color(
+                                  0xFF3B82F6,
+                                ).withValues(alpha: 0.2),
+                                border: Border.all(
+                                  color: const Color(0xFF3B82F6),
+                                  width: 3,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(width: 12),
+                        // Details
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                userName,
+                                style: AppTypography.titleSmall.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14.5,
+                                  color: headingColor,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                roomName,
+                                style: AppTypography.captionSmall.copyWith(
+                                  fontSize: 11,
+                                  color: isDark
+                                      ? AppColors.darkTextBody
+                                      : AppColors.textMuted,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 7),
+                              Text(
+                                hasLocation
+                                    ? '📍 Lokasi GPS terdeteksi — tap Lihat Detail'
+                                    : '📍 Lokasi belum tersedia',
+                                style: AppTypography.captionSmall.copyWith(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: hasLocation
+                                      ? const Color(0xFF16A34A)
+                                      : AppColors.textMuted,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                timeStr,
+                                style: AppTypography.captionSmall.copyWith(
+                                  fontSize: 10.5,
+                                  color: isDark
+                                      ? AppColors.darkTextBody.withValues(
+                                          alpha: 0.7,
+                                        )
+                                      : AppColors.textMuted.withValues(
+                                          alpha: 0.8,
+                                        ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Action Buttons (Text Scale Responsive)
+                  LayoutBuilder(
+                    builder: (context, btnConstraints) {
+                      final textScale = MediaQuery.textScalerOf(
+                        context,
+                      ).scale(1);
+                      final bool stackButtons =
+                          textScale > 1.35 || btnConstraints.maxWidth < 280;
+
+                      final detailBtn = Container(
+                        constraints: const BoxConstraints(minHeight: 42),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(
+                                0xFFEF4444,
+                              ).withValues(alpha: 0.38),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            shape: const StadiumBorder(),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                          ),
+                          icon: const Icon(
+                            Icons.open_in_new_rounded,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                          label: const Text(
+                            'Lihat Detail',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          onPressed: () {
+                            Get.toNamed(
+                              AppRoutes.sosAlertDetail,
+                              arguments: Map<String, dynamic>.from(sos),
+                            );
+                          },
+                        ),
+                      );
+
+                      final finishBtn = ConstrainedBox(
+                        constraints: const BoxConstraints(minHeight: 42),
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: headingColor,
+                            side: BorderSide(
+                              color: isDark
+                                  ? AppColors.darkOutline.withValues(
+                                      alpha: 0.35,
+                                    )
+                                  : AppColors.outlineVariant.withValues(
+                                      alpha: 0.6,
+                                    ),
+                              width: 1.1,
+                            ),
+                            shape: const StadiumBorder(),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 10,
+                            ),
+                          ),
+                          child: const Text(
+                            'Selesai',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12.5,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          onPressed: () => _handleCompleteSos(
+                            context,
+                            sos,
+                            userName,
+                            userId,
+                            eventId,
+                          ),
+                        ),
+                      );
+
+                      if (stackButtons) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            detailBtn,
+                            const SizedBox(height: 8),
+                            finishBtn,
+                          ],
+                        );
+                      }
+
+                      return Row(
+                        children: [
+                          Expanded(flex: 3, child: detailBtn),
+                          const SizedBox(width: 10),
+                          Expanded(flex: 2, child: finishBtn),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Safe Empty State ───────────────────────────────────────────────────────
+
+  Widget _buildSafeEmptyState(BuildContext context, bool isDark) {
+    final cardBg = isDark
+        ? AppColors.darkSurfaceContainer
+        : AppColors.surfaceWhite;
+    final headingColor = isDark
+        ? AppColors.darkTextHeading
+        : AppColors.espressoDark;
+    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0xFF22C55E).withValues(alpha: 0.25),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: const Color(0xFF22C55E).withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.check_circle_outline_rounded,
+              color: Color(0xFF16A34A),
+              size: 36,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            context.tr('sosSafeConditionTitle'),
+            style: AppTypography.titleMedium.copyWith(
+              color: headingColor,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            context.tr('sosSafeConditionDesc'),
+            textAlign: TextAlign.center,
+            style: AppTypography.bodySmall.copyWith(color: bodyColor),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Hotline Darurat Card ───────────────────────────────────────────────────
+
+  Widget _buildHotlineCard(BuildContext context, bool isDark) {
+    final cardBg = isDark
+        ? AppColors.darkSurfaceContainer
+        : AppColors.canvasCreamSubtle.withValues(alpha: 0.6);
+    final headingColor = isDark
+        ? AppColors.darkTextHeading
+        : AppColors.espressoDark;
+    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark
+              ? AppColors.darkOutline.withValues(alpha: 0.2)
+              : AppColors.outlineVariant.withValues(alpha: 0.35),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.sosEmergency.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.phone_in_talk_rounded,
+              color: AppColors.sosEmergency,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Hotline Darurat Haji Indonesia',
+                  style: AppTypography.titleSmall.copyWith(
+                    color: headingColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Pusat Krisis Kemenag: 800-119-999 • Ambulans: 997',
+                  style: AppTypography.captionSmall.copyWith(
+                    color: bodyColor,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Handler Selesaikan SOS ─────────────────────────────────────────────────
+
+  void _handleCompleteSos(
+    BuildContext context,
+    Map<String, dynamic> sos,
+    String userName,
+    String userId,
+    String? eventId,
+  ) {
+    AppAlert.confirm(
+      context,
+      title: context.tr('sos.completeDialogTitle'),
+      message:
+          'Apakah situasi darurat untuk "$userName" sudah berhasil ditangani?',
+      confirmText: context.tr('sos.yesComplete'),
+      cancelText: context.tr('common.cancel'),
+      onConfirm: () async {
+        if (userId.isNotEmpty) {
+          _dismissedSosIds.add(userId);
+        }
+        if (eventId != null && eventId.isNotEmpty) {
+          _dismissedSosIds.add(eventId);
+        }
+        final rawId = sos['id'] as String?;
+        if (rawId != null && rawId.isNotEmpty) {
+          _dismissedSosIds.add(rawId);
+        }
+
+        if (Get.isRegistered<NotificationController>()) {
+          final notifCtrl = Get.find<NotificationController>();
+          final toDelete = notifCtrl.notifications
+              .where(
+                (n) =>
+                    n.isSosAlert &&
+                    (n.id == rawId ||
+                        n.id == eventId ||
+                        n.relatedId == rawId ||
+                        n.relatedId == eventId ||
+                        n.senderId == userId ||
+                        n.targetUserId == userId),
+              )
+              .map((n) => n.id)
+              .toList();
+          for (final notifId in toDelete) {
+            notifCtrl.deleteNotification(notifId);
+          }
+        }
+
+        final success = await state.dismissSos(userId, eventId: eventId);
+
+        if (mounted) {
+          setState(() {});
+        }
+        if (context.mounted) {
+          if (success) {
+            AppAlert.success(
+              context,
+              title: context.tr('sos.completed'),
+              message: 'Panggilan SOS untuk "$userName" sudah diakhiri.',
+            );
+          } else {
+            AppAlert.error(
+              context,
+              title: context.tr('sos.statusNotChanged'),
+              message: 'Periksa internet, lalu coba akhiri SOS sekali lagi.',
+              okText: 'Coba Lagi',
+            );
+          }
+        }
+      },
     );
   }
 
@@ -1228,4 +1866,21 @@ class _ModalSosScreenState extends State<ModalSosScreen>
       ),
     );
   }
+}
+
+/// Custom swallowtail ribbon clipper matching the bookmark badge from reference design.
+class _RibbonClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.lineTo(0, size.height);
+    path.lineTo(size.width / 2, size.height - 6);
+    path.lineTo(size.width, size.height);
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }

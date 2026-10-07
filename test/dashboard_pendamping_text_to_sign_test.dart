@@ -23,7 +23,7 @@ void main() {
   });
 
   testWidgets(
-    'DashboardPendamping renders Text to Sign header button & chip with sign_language icon',
+    'DashboardPendamping renders broadcast header button & Text to Sign chip',
     (tester) async {
       Get.put(AppSettingsController(), permanent: true);
       Get.put(HajiCareController(), permanent: true);
@@ -48,8 +48,10 @@ void main() {
       );
       await tester.pump();
 
-      // Should find the sign language icon in both header and metric chip
-      expect(find.byIcon(Icons.sign_language_rounded), findsNWidgets(2));
+      // Broadcast button in header
+      expect(find.byIcon(Icons.campaign_rounded), findsWidgets);
+      // Text to sign chip
+      expect(find.byIcon(Icons.sign_language_rounded), findsOneWidget);
       expect(find.text('Text to Sign'), findsOneWidget);
       expect(find.text('Bahasa Isyarat'), findsOneWidget);
     },

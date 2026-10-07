@@ -87,4 +87,59 @@ void main() {
       expect(find.text('911'), findsOneWidget);
     },
   );
+
+  testWidgets(
+    'PendampingSosBanner renders active SOS banner cleanly without overflow on narrow width',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      final controller = Get.put(HajiCareController(), permanent: true);
+      controller.activeSosEvents.assignAll([
+        {
+          'id': 'sos-evt-1',
+          'userId': 'usr-1',
+          'userName': 'humai',
+          'roomName': 'Jihad Ardiansyah Room',
+          'status': 'active',
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+      ]);
+      controller.activeSosCount.value = 1;
+
+      await tester.pumpWidget(
+        GetMaterialApp(
+          theme: AppTheme.lightTheme,
+          locale: const Locale('en', 'US'),
+          supportedLocales: const [Locale('id', 'ID'), Locale('en', 'US')],
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            FallbackMaterialLocalizationsDelegate(),
+            FallbackCupertinoLocalizationsDelegate(),
+            FallbackWidgetsLocalizationsDelegate(),
+          ],
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: SizedBox(
+                width: 360,
+                child: PendampingSosBanner(state: controller),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // Check title rendered without errors
+      expect(find.text('EMERGENCY SOS ACTIVE!'), findsOneWidget);
+      expect(find.text('Jihad Ardiansyah Room'), findsOneWidget);
+      expect(find.byIcon(Icons.emergency_rounded), findsOneWidget);
+      expect(find.text('Review Emergency'), findsOneWidget);
+      expect(find.text('End SOS'), findsOneWidget);
+    },
+  );
 }

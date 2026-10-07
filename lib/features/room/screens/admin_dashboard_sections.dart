@@ -317,9 +317,12 @@ extension _AdminDashboardSections on _AdminDashboardHome {
     Color bodyColor,
     Color primaryColor,
   ) {
-    // 1. Ambil semua aktivitas dari source yang tersedia
+    // 1. Ambil semua aktivitas dari source yang tersedia (dengan fallback ke effectiveActivities)
     // 2. Gunakan timestamp aktual & 3. Urutkan DESCENDING
-    final sortedActivities = List<ActivityModel>.from(controller.activities)
+    final sourceActivities = controller.activities.isNotEmpty
+        ? controller.activities
+        : controller.effectiveActivities;
+    final sortedActivities = List<ActivityModel>.from(sourceActivities)
       ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
     // 4. Ambil 3-4 aktivitas terbaru untuk preview card yang padat dan presisi

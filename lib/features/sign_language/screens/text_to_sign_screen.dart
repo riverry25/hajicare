@@ -28,6 +28,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _videoPlayerKey = GlobalKey();
   final GlobalKey _vocabSectionKey = GlobalKey();
+  Worker? _searchResultWorker;
 
   @override
   void initState() {
@@ -44,10 +45,17 @@ class _TextToSignScreenState extends State<TextToSignScreen>
     _pulseAnimation = Tween<double>(begin: 1.0, end: 1.18).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
+
+    _searchResultWorker = ever(controller.searchResult, (result) {
+      if (result != null && result.isFound && result.exactMatch != null) {
+        _scrollToVideoPlayer();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _searchResultWorker?.dispose();
     _scrollController.dispose();
     _pulseController.dispose();
     super.dispose();

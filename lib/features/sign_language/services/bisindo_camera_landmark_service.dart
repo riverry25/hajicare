@@ -146,6 +146,30 @@ class BisindoCameraLandmarkService {
     }
   }
 
+  /// Switches between front and back camera on native CameraX.
+  Future<String> switchCamera() async {
+    try {
+      final String? result = await _methodChannel.invokeMethod<String>(
+        'switchCamera',
+      );
+      return result ?? 'front';
+    } catch (e) {
+      debugPrint('[BISINDO_CAMERA] switchCamera error: $e');
+      return 'front';
+    }
+  }
+
+  /// Explicitly sets the lens facing ('front' or 'back') for native CameraX.
+  Future<void> setLensFacing(bool isFront) async {
+    try {
+      await _methodChannel.invokeMethod<bool>('setLensFacing', {
+        'facing': isFront ? 'front' : 'back',
+      });
+    } catch (e) {
+      debugPrint('[BISINDO_CAMERA] setLensFacing error: $e');
+    }
+  }
+
   /// Handles incoming landmark frames from native Android MediaPipe.
   void _onLandmarkEvent(dynamic event) {
     if (_isDisposed) return;

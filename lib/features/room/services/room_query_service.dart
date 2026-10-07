@@ -145,7 +145,48 @@ class RoomQueryService {
         hasMore: snapshot.docs.length >= limit,
       );
     } catch (error) {
-      debugPrint('[RoomQueryService] activity page failed: $error');
+      debugPrint(
+        '[RoomQueryService] activity page failed ($error), using fallback query',
+      );
+      if (categoryFilter != null && categoryFilter != 'Semua') {
+        try {
+          Query<Map<String, dynamic>> fallbackQuery = _firestore
+              .collection('activities')
+              .orderBy('timestamp', descending: true);
+          if (startAfterDoc != null) {
+            fallbackQuery = fallbackQuery.startAfterDocument(startAfterDoc);
+          }
+          final snap = await fallbackQuery.limit(limit * 3).get();
+          final allItems = snap.docs.map(ActivityModel.fromFirestore).toList();
+          final filtered = allItems
+              .where((a) {
+                if (categoryFilter == 'Darurat') {
+                  return a.type == ActivityType.sosActive;
+                }
+                if (categoryFilter == 'Kamar') {
+                  return a.type == ActivityType.roomCreated ||
+                      a.type == ActivityType.roomActivated ||
+                      a.type == ActivityType.roomDeactivated ||
+                      a.type == ActivityType.roomUpdated;
+                }
+                if (categoryFilter == 'Anggota') {
+                  return a.type == ActivityType.memberJoined ||
+                      a.type == ActivityType.memberLeft;
+                }
+                return true;
+              })
+              .take(limit)
+              .toList();
+
+          return (
+            items: filtered,
+            lastDoc: snap.docs.lastOrNull,
+            hasMore: snap.docs.length >= limit * 3,
+          );
+        } catch (fbError) {
+          debugPrint('[RoomQueryService] fallback query also failed: $fbError');
+        }
+      }
       return (items: <ActivityModel>[], lastDoc: null, hasMore: false);
     }
   }

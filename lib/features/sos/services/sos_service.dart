@@ -77,6 +77,21 @@ class SosService {
         .doc(userId);
     batch.set(memberRef, {'sosActive': true}, SetOptions(merge: true));
 
+    final activityRef = _firestore.collection('activities').doc();
+    final cleanName = userName.trim().isNotEmpty ? userName.trim() : 'Jamaah';
+    batch.set(activityRef, {
+      'type': 'sos_active',
+      'title': 'Peringatan Darurat SOS',
+      'description':
+          '$cleanName mengaktifkan sinyal darurat SOS di rombongan "$normalizedRoomName".',
+      'roomId': normalizedRoomId,
+      'roomName': normalizedRoomName,
+      'userId': userId,
+      'userName': cleanName,
+      'role': 'jamaah',
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
     await batch.commit();
 
     // Dispatch real-time emergency notifications to pendampings & admins

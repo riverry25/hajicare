@@ -215,6 +215,28 @@ class RoomService {
     eventId: eventId,
   );
 
+  Future<void> logActivity({
+    required ActivityType type,
+    required String title,
+    required String description,
+    String? roomId,
+    String? roomName,
+    String? userId,
+    String? userName,
+    String? role,
+    DateTime? timestamp,
+  }) => _commands.logActivity(
+    type: type,
+    title: title,
+    description: description,
+    roomId: roomId,
+    roomName: roomName,
+    userId: userId,
+    userName: userName,
+    role: role,
+    timestamp: timestamp,
+  );
+
   Stream<List<ActivityModel>> getRecentActivitiesStream({int limit = 10}) =>
       _queries.getRecentActivitiesStream(limit: limit);
 

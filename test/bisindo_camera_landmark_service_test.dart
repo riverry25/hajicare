@@ -1,5 +1,7 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hajicare/features/sign_language/models/bisindo_prediction.dart';
+import 'package:hajicare/features/sign_language/services/bisindo_camera_landmark_service.dart';
 import 'package:hajicare/features/sign_language/services/bisindo_inference_service.dart';
 import 'package:hajicare/features/sign_language/services/landmark_stream_buffer.dart';
 
@@ -142,5 +144,51 @@ void main() {
       expect(results.first.label, 'Air');
       expect(lastBufferLen, 48);
     });
+
+    test(
+      'BisindoCameraLandmarkService switchCamera and setLensFacing method channels',
+      () async {
+        final methodCalls = <String, dynamic>{};
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(
+              const MethodChannel(
+                BisindoCameraLandmarkService.kMethodChannelName,
+              ),
+              (call) async {
+                methodCalls[call.method] = call.arguments;
+                if (call.method == 'switchCamera') {
+                  return 'back';
+                }
+                if (call.method == 'setLensFacing') {
+                  return true;
+                }
+                return null;
+              },
+            );
+
+        final service = BisindoCameraLandmarkService(streamBuffer: buffer);
+
+        // Test switchCamera
+        final switched = await service.switchCamera();
+        expect(switched, equals('back'));
+        expect(methodCalls.containsKey('switchCamera'), isTrue);
+
+        // Test setLensFacing
+        await service.setLensFacing(false);
+        expect(methodCalls['setLensFacing'], equals({'facing': 'back'}));
+
+        await service.setLensFacing(true);
+        expect(methodCalls['setLensFacing'], equals({'facing': 'front'}));
+
+        // Clean up mock handler
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(
+              const MethodChannel(
+                BisindoCameraLandmarkService.kMethodChannelName,
+              ),
+              null,
+            );
+      },
+    );
   });
 }

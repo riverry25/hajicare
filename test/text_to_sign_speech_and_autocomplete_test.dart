@@ -117,5 +117,31 @@ void main() {
         expect(thanksAsset!.label, 'Terima Kasih');
       },
     );
+
+    test(
+      'searchSign is idempotent and ignores duplicate query without force',
+      () async {
+        controller.setLanguage('sibi');
+        await controller.searchSign('Bantu');
+        final firstResult = controller.searchResult.value;
+        expect(firstResult, isNotNull);
+
+        // Subsequent identical query should be ignored and not clear/re-trigger
+        await controller.searchSign('bantu');
+        expect(controller.searchResult.value, equals(firstResult));
+      },
+    );
+
+    test(
+      'updateSearchQuery suppresses suggestions when isListening is true',
+      () {
+        controller.setLanguage('sibi');
+        controller.isListening.value = true;
+        controller.updateSearchQuery('dok');
+
+        // Suggestions shouldn't show while speaking into the mic
+        expect(controller.showSuggestions.value, isFalse);
+      },
+    );
   });
 }

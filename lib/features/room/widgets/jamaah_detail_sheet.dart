@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 
 import '../../../core/locales/app_localizations.dart';
@@ -43,13 +44,10 @@ class JamaahDetailSheet extends StatefulWidget {
     required String roomCode,
     VoidCallback? onRemoved,
   }) {
-    final isDark = AppColors.isDark(context);
     return showModalBottomSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (ctx) => JamaahDetailSheet(
         jamaah: jamaah,
         roomId: roomId,
@@ -222,44 +220,73 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
     );
   }
 
-  Widget _buildModalInfoTile({
-    required IconData icon,
+  String _getDistanceText() {
+    if (widget.jamaah.currentLocation == null) return 'Lokasi belum tersedia';
+    Position? userPos;
+    if (Get.isRegistered<HajiCareController>()) {
+      userPos = Get.find<HajiCareController>().myCurrentPosition.value;
+    }
+    double? userLat = userPos?.latitude;
+    double? userLng = userPos?.longitude;
+
+    if (userLat == null && Get.isRegistered<MapController>()) {
+      final mapLoc = Get.find<MapController>().currentUserLocation.value;
+      if (mapLoc != null) {
+        userLat = mapLoc.latitude;
+        userLng = mapLoc.longitude;
+      }
+    }
+
+    if (userLat == null || userLng == null) {
+      return 'Belum terdeteksi';
+    }
+
+    final meters = Geolocator.distanceBetween(
+      userLat,
+      userLng,
+      widget.jamaah.currentLocation!.latitude,
+      widget.jamaah.currentLocation!.longitude,
+    );
+
+    if (meters < 1000) {
+      return '±${meters.toStringAsFixed(0)} m dari Anda';
+    } else {
+      return '±${(meters / 1000).toStringAsFixed(1)} km dari Anda';
+    }
+  }
+
+  Widget _buildDetailHorizontalRow({
     required String label,
-    required String value,
-    required Color color,
-    required Color headingColor,
+    String? valueText,
+    Widget? valueWidget,
+    Color? headingColor,
     required Color bodyColor,
   }) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+        Text(
+          label,
+          style: AppTypography.bodySmall.copyWith(
+            color: bodyColor.withValues(alpha: 0.8),
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
           ),
-          child: Icon(icon, size: 16, color: color),
         ),
         const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: AppTypography.captionSmall.copyWith(
-                color: bodyColor.withValues(alpha: 0.7),
-                fontSize: 10.5,
+        Flexible(
+          child:
+              valueWidget ??
+              Text(
+                valueText ?? '-',
+                textAlign: TextAlign.end,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: headingColor,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
               ),
-            ),
-            Text(
-              value,
-              style: AppTypography.bodySmall.copyWith(
-                color: headingColor,
-                fontWeight: FontWeight.w600,
-                fontSize: 12.5,
-              ),
-            ),
-          ],
         ),
       ],
     );
@@ -272,7 +299,10 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
         ? AppColors.darkTextHeading
         : AppColors.espressoDark;
     final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+    final cardBg = isDark ? AppColors.darkSurface : Colors.white;
+    final dividerColor = isDark
+        ? AppColors.darkCardBorder
+        : AppColors.canvasCreamSubtle;
     final initial = widget.jamaah.name.trim().isNotEmpty
         ? widget.jamaah.name.trim()[0].toUpperCase()
         : '?';
@@ -285,172 +315,297 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
         controller?.role == UserRole.pendamping;
     final hasLocation = widget.jamaah.currentLocation != null;
 
+    final roleBadgeBg = isDark
+        ? AppColors.emeraldIslamic.withValues(alpha: 0.25)
+        : AppColors.statusSafe.withValues(alpha: 0.12);
+    final roleBadgeTextColor = isDark
+        ? const Color(0xFF6EE7B7)
+        : AppColors.statusSafe;
+
+    final distanceText = _getDistanceText();
+
+    final actionBtnBg = isDark
+        ? AppColors.darkPrimary
+        : AppColors.emeraldIslamic;
+    final actionBtnFg = isDark ? AppColors.darkOnPrimary : Colors.white;
+
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Stack(
+          clipBehavior: Clip.none,
           children: [
-            // Drag handle bar
-            Center(
-              child: Container(
-                width: 38,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: bodyColor.withValues(alpha: 0.25),
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                ),
+            // ── Card Container ──
+            Container(
+              margin: const EdgeInsets.only(top: 36),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(color: dividerColor, width: 1),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Space for overlapping floating avatar
+                  const SizedBox(height: 48),
+
+                  // Member Name (centered like title in reference)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(
+                      widget.jamaah.name,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.titleLarge.copyWith(
+                        color: headingColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+
+                  // Role Badge (centered like subtitle in reference)
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: roleBadgeBg,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      child: Text(
+                        'JAMAAH',
+                        style: TextStyle(
+                          color: roleBadgeTextColor,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 10.5,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ── Horizontal Data Rows (matching Image 1 layout) ──
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      children: [
+                        // Row 1: Attendance Status
+                        _buildDetailHorizontalRow(
+                          label: context.tr('room.attendanceStatus'),
+                          valueWidget: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: hasLocation
+                                      ? AppColors.emeraldIslamic
+                                      : Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                _getLocationStatus(),
+                                style: TextStyle(
+                                  color: headingColor,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                          bodyColor: bodyColor,
+                        ),
+                        Divider(
+                          height: 22,
+                          thickness: 0.8,
+                          color: dividerColor,
+                        ),
+
+                        // Row 2: Distance from User (Jarak)
+                        _buildDetailHorizontalRow(
+                          label: 'Jarak dari Anda',
+                          valueText: distanceText,
+                          headingColor: headingColor,
+                          bodyColor: bodyColor,
+                        ),
+                        Divider(
+                          height: 22,
+                          thickness: 0.8,
+                          color: dividerColor,
+                        ),
+
+                        // Row 3: Join Date
+                        _buildDetailHorizontalRow(
+                          label: context.tr('room.joinDate'),
+                          valueText: _joinedAt != null
+                              ? _formatDate(_joinedAt)
+                              : 'Tidak diketahui',
+                          headingColor: headingColor,
+                          bodyColor: bodyColor,
+                        ),
+
+                        // Row 4: Coordinates (if available)
+                        if (hasLocation) ...[
+                          Divider(
+                            height: 22,
+                            thickness: 0.8,
+                            color: dividerColor,
+                          ),
+                          _buildDetailHorizontalRow(
+                            label: context.tr('room.locationCoordinates'),
+                            valueText:
+                                '${widget.jamaah.currentLocation!.latitude.toStringAsFixed(5)}, ${widget.jamaah.currentLocation!.longitude.toStringAsFixed(5)}',
+                            headingColor: headingColor,
+                            bodyColor: bodyColor,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 26),
+
+                  // ── Bottom Action Button(s) (Image 1 "Get Directions" style) ──
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                    child: Column(
+                      children: [
+                        if (hasLocation)
+                          SizedBox(
+                            width: double.infinity,
+                            height: 50,
+                            child: ElevatedButton.icon(
+                              onPressed: _handleViewOnMap,
+                              icon: const Icon(Icons.near_me_rounded, size: 18),
+                              label: const Text(
+                                'Lihat di Peta',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14.5,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: actionBtnBg,
+                                foregroundColor: actionBtnFg,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.pill,
+                                  ),
+                                ),
+                                elevation: 0,
+                              ),
+                            ),
+                          ),
+                        if (canManage) ...[
+                          if (hasLocation) const SizedBox(height: 10),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 46,
+                            child: OutlinedButton.icon(
+                              onPressed: _isRemoving
+                                  ? null
+                                  : _handleRemoveJamaah,
+                              icon: _isRemoving
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              AppColors.error,
+                                            ),
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.person_remove_rounded,
+                                      size: 16,
+                                    ),
+                              label: const Text(
+                                'Keluarkan dari Rombongan',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13.5,
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.error,
+                                side: BorderSide(
+                                  color: AppColors.error.withValues(
+                                    alpha: 0.35,
+                                  ),
+                                  width: 1,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.pill,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
 
-            // Header: Avatar + Name + JAMAAH Badge
-            Row(
-              children: [
-                Container(
-                  width: 50,
-                  height: 50,
+            // ── Overlapping Circular Avatar (top center) ──
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  width: 72,
+                  height: 72,
                   decoration: BoxDecoration(
-                    color: AppColors.emeraldIslamic.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    shape: BoxShape.circle,
+                    color: AppColors.emeraldIslamic,
+                    border: Border.all(
+                      color: isDark ? AppColors.darkSurface : Colors.white,
+                      width: 4,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(
+                          alpha: isDark ? 0.45 : 0.14,
+                        ),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: Center(
                     child: Text(
                       initial,
                       style: const TextStyle(
-                        color: AppColors.emeraldIslamic,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 22,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 28,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.jamaah.name,
-                        style: AppTypography.titleMedium.copyWith(
-                          color: headingColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.emeraldIslamic.withValues(
-                            alpha: 0.12,
-                          ),
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                        ),
-                        child: const Text(
-                          'JAMAAH',
-                          style: TextStyle(
-                            color: AppColors.emeraldIslamic,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 10,
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // Info tiles matching reference
-            _buildModalInfoTile(
-              icon: Icons.access_time_rounded,
-              label: context.tr('room.attendanceStatus'),
-              value: _getLocationStatus(),
-              color: primaryColor,
-              headingColor: headingColor,
-              bodyColor: bodyColor,
-            ),
-            const SizedBox(height: 10),
-            _buildModalInfoTile(
-              icon: Icons.calendar_today_rounded,
-              label: context.tr('room.joinDate'),
-              value: _joinedAt != null
-                  ? _formatDate(_joinedAt)
-                  : 'Tidak diketahui',
-              color: primaryColor,
-              headingColor: headingColor,
-              bodyColor: bodyColor,
-            ),
-            if (hasLocation) ...[
-              const SizedBox(height: 10),
-              _buildModalInfoTile(
-                icon: Icons.location_on_rounded,
-                label: context.tr('room.locationCoordinates'),
-                value:
-                    '${widget.jamaah.currentLocation!.latitude.toStringAsFixed(5)}, ${widget.jamaah.currentLocation!.longitude.toStringAsFixed(5)}',
-                color: primaryColor,
-                headingColor: headingColor,
-                bodyColor: bodyColor,
               ),
-            ],
-
-            const SizedBox(height: 20),
-
-            // Action buttons matching reference
-            Row(
-              children: [
-                if (hasLocation)
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _handleViewOnMap,
-                      icon: const Icon(Icons.map_rounded, size: 16),
-                      label: const Text('Lihat di Peta'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: primaryColor,
-                        side: BorderSide(color: primaryColor),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ),
-                if (hasLocation && canManage) const SizedBox(width: 10),
-                if (canManage)
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: _isRemoving ? null : _handleRemoveJamaah,
-                      icon: _isRemoving
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                              ),
-                            )
-                          : const Icon(Icons.person_remove_rounded, size: 16),
-                      label: const Text('Keluarkan'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.error,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ),
-              ],
             ),
           ],
         ),

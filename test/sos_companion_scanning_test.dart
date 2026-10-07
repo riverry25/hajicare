@@ -139,5 +139,36 @@ void main() {
         contains(SosScanningState.noCompanionAvailable),
       );
     });
+
+    test('RadarDistanceFilter enum contains all 4 distance filter presets', () {
+      expect(RadarDistanceFilter.values.length, equals(4));
+      expect(RadarDistanceFilter.values, contains(RadarDistanceFilter.closest));
+      expect(RadarDistanceFilter.values, contains(RadarDistanceFilter.near50m));
+      expect(
+        RadarDistanceFilter.values,
+        contains(RadarDistanceFilter.near200m),
+      );
+      expect(RadarDistanceFilter.values, contains(RadarDistanceFilter.all));
+    });
+
+    test(
+      'CandidateCompanion supports optional photoUrl and copyWith preserves it',
+      () {
+        const companion = CandidateCompanion(
+          uid: 'user_123',
+          name: 'Apis',
+          distanceMeters: 1.0,
+          photoUrl: 'https://example.com/avatar.jpg',
+        );
+        expect(companion.photoUrl, equals('https://example.com/avatar.jpg'));
+
+        final updated = companion.copyWith(distanceMeters: 5.0);
+        expect(updated.photoUrl, equals('https://example.com/avatar.jpg'));
+        expect(updated.distanceMeters, equals(5.0));
+
+        final newPhoto = companion.copyWith(photoUrl: 'https://example.com/new.jpg');
+        expect(newPhoto.photoUrl, equals('https://example.com/new.jpg'));
+      },
+    );
   });
 }

@@ -264,7 +264,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              _textToSignHeaderButton(context),
+              _broadcastHeaderButton(context, state),
               const SizedBox(width: 8),
               _notifButton(context, state),
             ],
@@ -862,7 +862,10 @@ class DashboardPendampingScreen extends StatelessWidget {
     );
   }
 
-  Widget _textToSignHeaderButton(BuildContext context) {
+  Widget _broadcastHeaderButton(
+    BuildContext context,
+    HajiCareController state,
+  ) {
     return Container(
       width: 44,
       height: 44,
@@ -878,14 +881,18 @@ class DashboardPendampingScreen extends StatelessWidget {
         constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
         padding: EdgeInsets.zero,
         icon: const Icon(
-          Icons.sign_language_rounded,
+          Icons.campaign_rounded,
           color: AppColors.goldLight,
-          size: 21,
+          size: 22,
         ),
-        tooltip: context.tr('dashboard.textToSign'),
+        tooltip: context.tr('dashboard.broadcastNotification'),
         onPressed: () {
           HapticFeedback.lightImpact();
-          Get.toNamed(AppRoutes.textToSign);
+          NotificationComposerDialog.show(
+            context,
+            initialRoomId: state.activeRoomId.value,
+            initialRoomName: state.activeRoom.value?.name,
+          );
         },
       ),
     );
@@ -1113,61 +1120,85 @@ class DashboardPendampingScreen extends StatelessWidget {
   }) {
     return Padding(
       padding: const EdgeInsets.only(top: 8, bottom: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: DashboardTypography.titleMedium.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: headingColor,
-                    fontSize: 15,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: DashboardTypography.captionSmall.copyWith(
-                    color: isDark
-                        ? AppColors.darkTextBody.withValues(alpha: 0.8)
-                        : AppColors.textMuted,
-                    height: 1.3,
-                    fontSize: 11.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          if (actionWidget != null)
-            actionWidget
-          else
-            InkWell(
-              onTap: onAction,
-              borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                child: Text(
-                  actionText,
-                  style: TextStyle(
-                    color: isDark
-                        ? AppColors.goldLight
-                        : AppColors.espressoDark,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12.5,
-                  ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final textScale = MediaQuery.textScalerOf(context).scale(1);
+          final bool isTight = textScale > 1.25 || constraints.maxWidth < 310;
+
+          final titleColumn = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: DashboardTypography.titleMedium.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: headingColor,
+                  fontSize: 15,
                 ),
               ),
-            ),
-        ],
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: DashboardTypography.captionSmall.copyWith(
+                  color: isDark
+                      ? AppColors.darkTextBody.withValues(alpha: 0.8)
+                      : AppColors.textMuted,
+                  height: 1.3,
+                  fontSize: 11.5,
+                ),
+              ),
+            ],
+          );
+
+          final action =
+              actionWidget ??
+              InkWell(
+                onTap: onAction,
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 4,
+                  ),
+                  child: Text(
+                    actionText,
+                    style: TextStyle(
+                      color: isDark
+                          ? AppColors.goldLight
+                          : AppColors.espressoDark,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              );
+
+          if (isTight) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                titleColumn,
+                const SizedBox(height: 4),
+                Align(alignment: Alignment.centerRight, child: action),
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(child: titleColumn),
+              const SizedBox(width: 8),
+              action,
+            ],
+          );
+        },
       ),
     );
   }

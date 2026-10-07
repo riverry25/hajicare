@@ -117,6 +117,27 @@ class MainActivity : FlutterFragmentActivity() {
                         isCameraRequested = false
                         stopBisindoCamera(result)
                     }
+                    "switchCamera" -> {
+                        try {
+                            val helper = getOrCreateCameraHelper()
+                            val isFront = helper.switchCamera()
+                            result.success(if (isFront) "front" else "back")
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error switching camera: ${e.message}", e)
+                            result.error("SWITCH_FAILED", e.message, null)
+                        }
+                    }
+                    "setLensFacing" -> {
+                        try {
+                            val facing = call.argument<String>("facing") ?: "front"
+                            val helper = getOrCreateCameraHelper()
+                            helper.setLensFacing(facing == "front")
+                            result.success(true)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error setting lens facing: ${e.message}", e)
+                            result.error("SET_FACING_FAILED", e.message, null)
+                        }
+                    }
                     else -> result.notImplemented()
                 }
             }

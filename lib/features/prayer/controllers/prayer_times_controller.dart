@@ -139,7 +139,7 @@ class PrayerTimesController extends GetxController {
   Timer? _countdownTimer;
   StreamSubscription<CompassEvent>? _compassSubscription;
   StreamSubscription<Position>? _positionSubscription;
-  bool _hasVibrated = false;
+  DateTime? _lastVibrationTime;
   int _lifecycleGeneration = 0;
 
   bool _isCurrent(int generation) => generation == _lifecycleGeneration;
@@ -586,6 +586,15 @@ class PrayerTimesController extends GetxController {
           }
 
           final heading = event.heading!;
+          final prevHeading = deviceHeading.value;
+          // Filter out micro-jitter sensor noise (< 0.5 degrees)
+          if (prevHeading.isFinite && !prevHeading.isNaN) {
+            final delta = ((heading - prevHeading + 180) % 360 - 180).abs();
+            if (delta < 0.5) {
+              return;
+            }
+          }
+
           deviceHeading.value = heading;
           _updateQiblaOffset(heading);
         },
@@ -615,21 +624,31 @@ class PrayerTimesController extends GetxController {
     }
     qiblaOffset.value = diff;
 
-    // Check alignment within ±5 degrees (355° - 360° or 0° - 5°)
-    final isAligned = diff <= 5.0 || diff >= 355.0;
-
-    if (isAligned && !isQiblaAligned.value && !_hasVibrated) {
-      _hasVibrated = true;
-      try {
-        Vibration.vibrate(duration: 40);
-      } catch (e) {
-        debugPrint('[PrayerTimesController] Vibration error: $e');
-      }
-    } else if (!isAligned) {
-      _hasVibrated = false;
+    // Hysteresis window:
+    // Enter aligned state when within ±4 degrees
+    // Exit aligned state only when deviation exceeds ±7 degrees
+    final currentlyAligned = isQiblaAligned.value;
+    final bool newAligned;
+    if (currentlyAligned) {
+      newAligned = diff <= 7.0 || diff >= 353.0;
+    } else {
+      newAligned = diff <= 4.0 || diff >= 356.0;
     }
 
-    isQiblaAligned.value = isAligned;
+    final now = DateTime.now();
+    if (newAligned && !currentlyAligned) {
+      if (_lastVibrationTime == null ||
+          now.difference(_lastVibrationTime!) > const Duration(seconds: 3)) {
+        _lastVibrationTime = now;
+        try {
+          Vibration.vibrate(duration: 40);
+        } catch (e) {
+          debugPrint('[PrayerTimesController] Vibration error: $e');
+        }
+      }
+    }
+
+    isQiblaAligned.value = newAligned;
   }
 
   /// Check if adhan sound is turned on for the specified prayer

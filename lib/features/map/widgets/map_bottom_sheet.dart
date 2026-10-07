@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/state/hajicare_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
-import '../../../../core/theme/app_sizes.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 
@@ -238,77 +237,165 @@ class _MapBottomSheetState extends State<MapBottomSheet>
               onVerticalDragUpdate: _onVerticalDragUpdate,
               onVerticalDragEnd: _onVerticalDragEnd,
               onVerticalDragCancel: _onVerticalDragCancel,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(AppRadius.xl),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkSurface
-                        : AppColors.surfaceWhite,
-                    borderRadius: BorderRadius.circular(AppRadius.xl),
-                    border: Border.all(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.08)
-                          : AppColors.espressoDark.withValues(alpha: 0.06),
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(
-                          alpha: isDark ? 0.25 : 0.08,
-                        ),
-                        blurRadius: 20,
-                        spreadRadius: 0,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Interactive Drag Handle (Chevron Indicator matching Foto 1)
-                      GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () => _dismissWithAnimation(),
-                        onVerticalDragUpdate: _onVerticalDragUpdate,
-                        onVerticalDragEnd: _onVerticalDragEnd,
-                        onVerticalDragCancel: _onVerticalDragCancel,
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.only(top: 8, bottom: 2),
-                          color: Colors.transparent,
-                          child: Center(
-                            child: Icon(
-                              Icons.keyboard_arrow_up_rounded,
-                              size: 22,
+              child: effectiveMember != null
+                  ? Stack(
+                      clipBehavior: Clip.none,
+                      alignment: Alignment.topCenter,
+                      children: [
+                        // Card container with top margin for overlapping avatar
+                        Container(
+                          margin: const EdgeInsets.only(top: 26),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? AppColors.darkSurface
+                                : AppColors.surfaceWhite,
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
                               color: isDark
-                                  ? AppColors.darkOutline
-                                  : AppColors.outlineVariant.withValues(
-                                      alpha: 0.85,
+                                  ? Colors.white.withValues(alpha: 0.08)
+                                  : AppColors.espressoDark.withValues(
+                                      alpha: 0.06,
                                     ),
+                              width: 1,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(
+                                  alpha: isDark ? 0.35 : 0.09,
+                                ),
+                                blurRadius: 20,
+                                spreadRadius: 0,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(24),
+                            child: _buildSelectedMemberDetail(
+                              context,
+                              effectiveMember,
                             ),
                           ),
                         ),
-                      ),
 
-                      if (effectiveMember != null)
-                        _buildSelectedMemberDetail(context, effectiveMember)
-                      else if (roomMembers != null && roomMembers!.isNotEmpty)
-                        _buildRoomMembersList(context, roomMembers!)
-                      else
-                        _buildLegacyJamaahCard(context),
-                    ],
-                  ), // Column
-                ), // Container
-              ), // ClipRRect
-            ), // GestureDetector
-          ), // Transform.translate
-        ), // Opacity
-      ), // RepaintBoundary
-    ); // Positioned
+                        // Corner Utility: Back to List
+                        if (onBackToList != null)
+                          Positioned(
+                            top: 36,
+                            left: 14,
+                            child: _buildSmallCircularButton(
+                              context: context,
+                              icon: Icons.arrow_back_rounded,
+                              tooltip: 'Kembali ke Daftar',
+                              onTap: onBackToList!,
+                            ),
+                          ),
+
+                        // Corner Utility: Center on Map
+                        if (onCenterOnMember != null)
+                          Positioned(
+                            top: 36,
+                            right: 14,
+                            child: _buildSmallCircularButton(
+                              context: context,
+                              icon: Icons.my_location_rounded,
+                              tooltip: 'Fokus ke Peta',
+                              onTap: onCenterOnMember!,
+                            ),
+                          ),
+
+                        // Overlapping circular avatar popping out at top center
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child: _buildOverlappingAvatar(
+                              context,
+                              effectiveMember,
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? AppColors.darkSurface
+                              : AppColors.surfaceWhite,
+                          borderRadius: BorderRadius.circular(AppRadius.xl),
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : AppColors.espressoDark.withValues(
+                                    alpha: 0.06,
+                                  ),
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(
+                                alpha: isDark ? 0.25 : 0.08,
+                              ),
+                              blurRadius: 20,
+                              spreadRadius: 0,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Interactive Drag Handle
+                            GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () => _dismissWithAnimation(),
+                              onVerticalDragUpdate: _onVerticalDragUpdate,
+                              onVerticalDragEnd: _onVerticalDragEnd,
+                              onVerticalDragCancel: _onVerticalDragCancel,
+                              child: Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
+                                color: Colors.transparent,
+                                child: Center(
+                                  child: Container(
+                                    width: 38,
+                                    height: 4,
+                                    decoration: BoxDecoration(
+                                      color: isDark
+                                          ? AppColors.darkOutline
+                                          : AppColors.outlineVariant.withValues(
+                                              alpha: 0.7,
+                                            ),
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.pill,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            if (roomMembers != null && roomMembers!.isNotEmpty)
+                              _buildRoomMembersList(context, roomMembers!)
+                            else
+                              _buildLegacyJamaahCard(context),
+                          ],
+                        ),
+                      ),
+                    ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
-  // ── 1. SELECTED MEMBER DETAIL CARD ─────────────────────────────────────────
+  // ── 1. SELECTED MEMBER DETAIL CARD (Reference Photo UI & UX) ───────────────
 
   Widget _buildSelectedMemberDetail(
     BuildContext context,
@@ -318,13 +405,13 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     final distText = getMemberDistanceText != null
         ? getMemberDistanceText!(member) ?? 'Lokasi belum tersedia'
         : (member.hasLocation ? 'Lokasi aktif' : 'Lokasi belum tersedia');
-    final locStatus = member.getLocationStatus();
-    final isPendamping = member.isPendamping;
+    final hasRoute =
+        routeDistanceMeters != null && routeDurationSeconds != null;
 
     final mq = MediaQuery.of(context);
-    final double maxDetailHeight = ((mq.size.height * 0.45) - 2).clamp(
-      240.0,
-      420.0,
+    final double maxDetailHeight = ((mq.size.height * 0.46)).clamp(
+      280.0,
+      410.0,
     );
 
     return ConstrainedBox(
@@ -334,181 +421,148 @@ class _MapBottomSheetState extends State<MapBottomSheet>
           if (_isDismissing) return false;
           if (notification is OverscrollNotification &&
               notification.overscroll < 0) {
-            if (_animCtrl.isAnimating) _animCtrl.stop();
-            setState(() {
-              _dragOffset = math.max(
-                0.0,
-                _dragOffset - notification.overscroll * 0.4,
-              );
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted && !_isDismissing) {
+                if (_animCtrl.isAnimating) _animCtrl.stop();
+                setState(() {
+                  _dragOffset = math.max(
+                    0.0,
+                    _dragOffset - notification.overscroll * 0.4,
+                  );
+                });
+              }
             });
           } else if (notification is ScrollEndNotification) {
-            if (_dragOffset > 60.0) {
-              _dismissWithAnimation();
-            } else if (_dragOffset > 0.0) {
-              _springBackAnimation();
-            }
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted && !_isDismissing) {
+                if (_dragOffset > 60.0) {
+                  _dismissWithAnimation();
+                } else if (_dragOffset > 0.0) {
+                  _springBackAnimation();
+                }
+              }
+            });
           }
           return false;
         },
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.cardPadding,
-            AppSpacing.xs,
-            AppSpacing.cardPadding,
-            AppSpacing.md,
-          ),
+          padding: const EdgeInsets.only(bottom: 6),
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                onTap: onCenterOnMember,
-                onVerticalDragUpdate: _onVerticalDragUpdate,
-                onVerticalDragEnd: _onVerticalDragEnd,
-                onVerticalDragCancel: _onVerticalDragCancel,
-                child: Row(
-                  children: [
-                    // Avatar with Role Icon
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: isPendamping
-                            ? AppColors.primaryContainer
-                            : AppColors.secondaryContainer,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isPendamping
-                              ? AppColors.accentGoldStar
-                              : AppColors.statusSafe,
-                          width: 2,
-                        ),
-                      ),
-                      child: Icon(
-                        isPendamping ? Icons.shield : Icons.person,
-                        color: isPendamping
-                            ? AppColors.onPrimaryContainer
-                            : AppColors.onSecondaryContainer,
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    // Name & Role
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  member.name,
-                                  style: AppTypography.titleMedium.copyWith(
-                                    color: isDark
-                                        ? AppColors.darkTextHeading
-                                        : AppColors.espressoDark,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Flexible(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isPendamping
-                                        ? (isDark
-                                              ? AppColors.goldPrimary
-                                                    .withValues(alpha: 0.25)
-                                              : AppColors.accentGoldStar
-                                                    .withValues(alpha: 0.2))
-                                        : AppColors.statusSafe.withValues(
-                                            alpha: 0.15,
-                                          ),
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.pill,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    isPendamping ? 'Pendamping' : 'Jamaah',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: isPendamping
-                                          ? (isDark
-                                                ? AppColors.goldPrimary
-                                                : AppColors.primary)
-                                          : AppColors.statusSafe,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.near_me,
-                                size: 13,
-                                color: member.hasLocation
-                                    ? (isDark
-                                          ? AppColors.goldPrimary
-                                          : AppColors.primary)
-                                    : AppColors.outlineVariant,
-                              ),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  '$distText dari Anda • $locStatus',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AppTypography.bodySmall.copyWith(
-                                    color: isDark
-                                        ? AppColors.darkTextBody
-                                        : AppColors.espressoDark,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Back & Close buttons
-                    if (onBackToList != null)
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back_rounded, size: 20),
-                        color: AppColors.outlineVariant,
-                        tooltip: 'Kembali ke Daftar',
-                        onPressed: onBackToList,
-                      ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded, size: 20),
-                      color: AppColors.outlineVariant,
-                      tooltip: 'Tutup Panel',
-                      onPressed: () => _dismissWithAnimation(),
-                    ),
-                  ],
+              // ── Clearance for overlapping floating avatar ──────────────────
+              const SizedBox(height: 40),
+
+              // ── Member Name (Centered bold title) ──────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 46),
+                child: Text(
+                  member.name,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.titleLarge.copyWith(
+                    color: isDark
+                        ? AppColors.darkTextHeading
+                        : AppColors.espressoDark,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 18,
+                    letterSpacing: -0.3,
+                  ),
                 ),
               ),
-              const SizedBox(height: AppSpacing.md),
-              // Action button
-              SizedBox(
-                width: double.infinity,
-                height: AppSizes.buttonHeightSecondary,
-                child: _buildRouteButton(context, member),
+
+              const SizedBox(height: 3),
+
+              // ── Waktu Terakhir Update Lokasi ──────────────────────────────
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6.5,
+                        height: 6.5,
+                        decoration: BoxDecoration(
+                          color: _getLocationStatusColor(member),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Flexible(
+                        child: Text(
+                          _formatLastLocationUpdate(member),
+                          style: AppTypography.captionSmall.copyWith(
+                            color: isDark
+                                ? AppColors.darkTextBody
+                                : AppColors.textMuted,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              if (routeDistanceMeters != null && routeDurationSeconds != null)
-                _buildRouteInfoBar(context, distText),
+
+              const SizedBox(height: 12),
+
+              // ── 3-Column Metric Box (Kondisi, Jarak, GPS) ───────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _buildThreeColumnStatsBox(
+                  context,
+                  member,
+                  distText,
+                  hasRoute,
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              // ── Primary Pill Button ─────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: SizedBox(
+                  height: 42,
+                  child: _buildPrimaryPillButton(context, member, hasRoute),
+                ),
+              ),
+
+              // ── Dismiss Action (Tutup text button) ─────────────────────────
+              if (member.hasLocation)
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 2, bottom: 2),
+                    child: TextButton(
+                      onPressed: () => _dismissWithAnimation(),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 2,
+                        ),
+                        visualDensity: VisualDensity.compact,
+                        minimumSize: const Size(60, 26),
+                      ),
+                      child: Text(
+                        'Tutup',
+                        style: AppTypography.labelMedium.copyWith(
+                          color: isDark
+                              ? AppColors.darkTextBody
+                              : AppColors.textMuted,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -516,177 +570,186 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     );
   }
 
-  Widget _buildRouteButton(BuildContext context, RoomMemberModel member) {
+  // ── Overlapping Circular Avatar (Centered & Proportional) ───────────────────
+
+  Widget _buildOverlappingAvatar(BuildContext context, RoomMemberModel member) {
     final isDark = AppColors.isDark(context);
+    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
+    final isPendamping = member.isPendamping;
+    final isEmergency = member.sosActive;
 
-    if (!member.hasLocation) {
-      return ElevatedButton.icon(
-        onPressed: null,
-        icon: const Icon(Icons.directions_rounded, size: 18),
-        label: Text(
-          'Lokasi Belum Tersedia',
-          style: AppTypography.labelLarge.copyWith(
-            color: isDark ? AppColors.darkTextBody : AppColors.surfaceWhite,
-          ),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: isDark
-              ? AppColors.darkSurfaceContainer
-              : AppColors.canvasCream,
-          disabledBackgroundColor: isDark
-              ? AppColors.darkSurfaceContainer
-              : AppColors.canvasCream,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.pill),
-          ),
-        ),
-      );
+    final List<Color> gradientColors;
+    if (isEmergency) {
+      gradientColors = const [Color(0xFFFEE2E2), Color(0xFFFECACA)];
+    } else if (isPendamping) {
+      gradientColors = const [Color(0xFFDBEAFE), Color(0xFFBFDBFE)];
+    } else {
+      gradientColors = const [Color(0xFFDCFCE7), Color(0xFFBBF7D0)];
     }
 
-    if (isRouteLoading) {
-      return ElevatedButton.icon(
-        onPressed: null,
-        icon: SizedBox(
-          width: 18,
-          height: 18,
-          child: CircularProgressIndicator(
-            strokeWidth: 2.2,
-            valueColor: AlwaysStoppedAnimation<Color>(
-              isDark ? AppColors.goldPrimary : AppColors.espressoDark,
+    return Container(
+      width: 66,
+      height: 66,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: cardBg,
+        border: Border.all(color: cardBg, width: 3.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.10),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipOval(
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: gradientColors,
             ),
           ),
-        ),
-        label: Text(
-          'Mencari rute jalan kaki...',
-          style: AppTypography.labelLarge.copyWith(
-            color: isDark ? AppColors.darkTextBody : AppColors.outlineVariant,
-          ),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: isDark
-              ? AppColors.darkSurfaceContainer
-              : AppColors.canvasCream,
-          disabledBackgroundColor: isDark
-              ? AppColors.darkSurfaceContainer
-              : AppColors.canvasCream,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.pill),
-            side: BorderSide(
-              color: isDark
-                  ? AppColors.goldPrimary.withValues(alpha: 0.4)
-                  : AppColors.goldLight,
-            ),
-          ),
-        ),
-      );
-    }
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Character Avatar Graphic (Centered cleanly)
+              Center(
+                child: Icon(
+                  Icons.person_rounded,
+                  size: 38,
+                  color: isEmergency
+                      ? AppColors.sosEmergency
+                      : (isPendamping
+                            ? const Color(0xFF2563EB)
+                            : const Color(0xFF16A34A)),
+                ),
+              ),
 
-    if (routeError != null) {
-      return ElevatedButton.icon(
-        onPressed: onRetryRoute,
-        icon: const Icon(Icons.refresh_rounded, size: 18),
-        label: Text(
-          'Rute tidak ditemukan · Coba Lagi',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: AppTypography.labelLarge.copyWith(
-            color: AppColors.surfaceWhite,
-          ),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.sosEmergency,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.pill),
-          ),
-        ),
-      );
-    }
+              // Role / Status Badge on the avatar
+              if (isPendamping)
+                Positioned(
+                  top: 3,
+                  right: 3,
+                  child: Container(
+                    padding: const EdgeInsets.all(2.0),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2563EB),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1.5),
+                    ),
+                    child: const Icon(
+                      Icons.shield_rounded,
+                      size: 10,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
 
-    return ElevatedButton.icon(
-      onPressed: onNavigate,
-      icon: Icon(
-        Icons.directions_walk_rounded,
-        size: 20,
-        color: isDark ? AppColors.espressoDark : AppColors.goldPrimary,
-      ),
-      label: Text(
-        'Arahkan Rute ke ${member.name.split(' ').first}',
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: AppTypography.labelLarge.copyWith(
-          color: isDark ? AppColors.espressoDark : Colors.white,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isDark
-            ? AppColors.goldPrimary
-            : AppColors.espressoDark,
-        foregroundColor: isDark ? AppColors.espressoDark : Colors.white,
-        elevation: 4,
-        shadowColor: AppColors.espressoDark.withValues(alpha: 0.3),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          side: BorderSide(
-            color: isDark
-                ? AppColors.goldPrimary
-                : AppColors.goldPrimary.withValues(alpha: 0.5),
-            width: 1.2,
+              if (isEmergency)
+                Positioned(
+                  top: 3,
+                  right: 3,
+                  child: Container(
+                    padding: const EdgeInsets.all(2.0),
+                    decoration: BoxDecoration(
+                      color: AppColors.sosEmergency,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1.5),
+                    ),
+                    child: const Icon(
+                      Icons.warning_amber_rounded,
+                      size: 10,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildRouteInfoBar(BuildContext context, String directDist) {
+  // ── 3-Column Metric Box (Kondisi, Jarak, GPS) ───────────────────────────────
+
+  Widget _buildThreeColumnStatsBox(
+    BuildContext context,
+    RoomMemberModel member,
+    String distText,
+    bool hasRoute,
+  ) {
     final isDark = AppColors.isDark(context);
+    final containerBg = isDark
+        ? AppColors.darkSurfaceContainer
+        : const Color(0xFFF8FAFC);
+    final borderColor = isDark
+        ? AppColors.darkOutline.withValues(alpha: 0.25)
+        : const Color(0xFFE2E8F0);
+    final isPendamping = member.isPendamping;
+
+    // Stat 1: Status Kondisi Jamaah (Kesehatan / Keselamatan - Pengganti Bintang)
+    final stat1Value = member.sosActive ? 'SOS' : 'Aman';
+    final stat1Label = 'Kondisi';
+
+    // Stat 2: Distance / Route ETA
+    final String stat2Value;
+    final String stat2Label;
+    if (hasRoute && routeDurationSeconds != null) {
+      stat2Value = _formatDuration(routeDurationSeconds!);
+      stat2Label = routeDistanceMeters != null
+          ? _formatDistance(routeDistanceMeters!)
+          : 'Rute';
+    } else {
+      final parts = distText.split(' ');
+      stat2Value = parts.isNotEmpty ? parts.first : '--';
+      stat2Label = parts.length > 1 ? parts.sublist(1).join(' ') : 'Jarak';
+    }
+
+    // Stat 3: Role / GPS Status
+    final stat3Value = isPendamping
+        ? 'Petugas'
+        : (member.hasLocation ? 'Aktif' : 'Off');
+    final stat3Label = isPendamping ? 'Peran' : 'GPS';
+
     return Container(
-      margin: const EdgeInsets.only(top: 14),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.darkSurfaceContainerHigh
-            : AppColors.canvasCream.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: AppColors.goldPrimary.withValues(alpha: isDark ? 0.4 : 0.3),
-        ),
+        color: containerBg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: borderColor, width: 1),
       ),
       child: Row(
         children: [
+          // Column 1: Kondisi Jamaah (Aman / SOS)
           Expanded(
-            child: _buildRouteMetric(
+            child: _buildStatColumn(
               context: context,
-              icon: Icons.near_me_rounded,
-              label: context.tr('maps.direct'),
-              value: directDist,
+              icon: Icons.health_and_safety_rounded,
+              value: stat1Value,
+              label: stat1Label,
+              isEmergency: member.sosActive,
             ),
           ),
-          Container(
-            width: 1,
-            height: 28,
-            color: AppColors.goldPrimary.withValues(alpha: 0.25),
-          ),
+          Container(height: 24, width: 1, color: borderColor),
+          // Column 2: Walk / Jarak
           Expanded(
-            child: _buildRouteMetric(
+            child: _buildStatColumn(
               context: context,
               icon: Icons.directions_walk_rounded,
-              label: context.tr('maps.walking'),
-              value: _formatDistance(routeDistanceMeters!),
+              value: stat2Value,
+              label: stat2Label,
             ),
           ),
-          Container(
-            width: 1,
-            height: 28,
-            color: AppColors.goldPrimary.withValues(alpha: 0.25),
-          ),
+          Container(height: 24, width: 1, color: borderColor),
+          // Column 3: Shield / GPS Status
           Expanded(
-            child: _buildRouteMetric(
+            child: _buildStatColumn(
               context: context,
-              icon: Icons.timer_outlined,
-              label: context.tr('maps.estimate'),
-              value: _formatDuration(routeDurationSeconds!),
+              icon: Icons.shield_outlined,
+              value: stat3Value,
+              label: stat3Label,
             ),
           ),
         ],
@@ -694,49 +757,264 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     );
   }
 
-  Widget _buildRouteMetric({
+  Widget _buildStatColumn({
     required BuildContext context,
     required IconData icon,
-    required String label,
     required String value,
+    required String label,
+    bool isEmergency = false,
   }) {
     final isDark = AppColors.isDark(context);
+    final greenColor = isEmergency
+        ? AppColors.sosEmergency
+        : const Color(0xFF22C55E);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        Icon(icon, size: 18, color: greenColor),
+        const SizedBox(height: 3),
         Row(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 13,
-              color: isDark ? AppColors.goldPrimary : AppColors.primary,
+            Flexible(
+              child: Text(
+                value,
+                style: AppTypography.titleSmall.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  color: isEmergency
+                      ? AppColors.sosEmergency
+                      : (isDark
+                            ? AppColors.darkTextHeading
+                            : AppColors.espressoDark),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: 3),
             Flexible(
               child: Text(
                 label,
+                style: AppTypography.captionSmall.copyWith(
+                  fontSize: 10.5,
+                  color: isDark ? AppColors.darkTextBody : AppColors.textMuted,
+                  fontWeight: FontWeight.w500,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.captionSmall.copyWith(
-                  color: isDark ? AppColors.darkTextBody : AppColors.textMuted,
-                  fontSize: 10,
-                ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: AppTypography.bodySmall.copyWith(
-            color: isDark ? AppColors.darkTextHeading : AppColors.espressoDark,
-            fontWeight: FontWeight.w700,
+      ],
+    );
+  }
+
+  // ── Primary Pill Button (Vibrant green pill button matching reference) ─────
+
+  Widget _buildPrimaryPillButton(
+    BuildContext context,
+    RoomMemberModel member,
+    bool hasRoute,
+  ) {
+    final isDark = AppColors.isDark(context);
+
+    if (!member.hasLocation) {
+      return Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          gradient: const LinearGradient(
+            colors: [Color(0xFF22C55E), Color(0xFF16A34A)],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF22C55E).withValues(alpha: 0.35),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ElevatedButton(
+          onPressed: () => _dismissWithAnimation(),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            shape: const StadiumBorder(),
+          ),
+          child: const Text(
+            'Tutup',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
-      ],
+      );
+    }
+
+    if (isRouteLoading) {
+      return Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          color: isDark
+              ? AppColors.darkSurfaceContainer
+              : const Color(0xFFE2E8F0),
+        ),
+        child: Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.2,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    isDark ? AppColors.goldPrimary : const Color(0xFF16A34A),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Mencari rute jalan kaki...',
+                style: AppTypography.labelLarge.copyWith(
+                  color: isDark
+                      ? AppColors.darkTextBody
+                      : AppColors.espressoDark,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (routeError != null) {
+      return Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          color: AppColors.sosEmergency,
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.sosEmergency.withValues(alpha: 0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: ElevatedButton.icon(
+          onPressed: onRetryRoute,
+          icon: const Icon(
+            Icons.refresh_rounded,
+            size: 18,
+            color: Colors.white,
+          ),
+          label: const Text(
+            'Rute Tidak Ditemukan · Coba Lagi',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 14.5,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            shape: const StadiumBorder(),
+          ),
+        ),
+      );
+    }
+
+    // Default & Loaded route states: Vibrant Green Pill Button matching reference
+    final buttonLabel = hasRoute
+        ? 'Mulai Navigasi'
+        : 'Arahkan Rute ke ${member.name.split(' ').first}';
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF22C55E), Color(0xFF16A34A)],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF22C55E).withValues(alpha: 0.35),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: onNavigate,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: const StadiumBorder(),
+        ),
+        child: Text(
+          buttonLabel,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.2,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSmallCircularButton({
+    required BuildContext context,
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onTap,
+  }) {
+    final isDark = AppColors.isDark(context);
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          child: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppColors.darkSurfaceContainer
+                  : AppColors.canvasCream.withValues(alpha: 0.6),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isDark
+                    ? AppColors.darkOutline.withValues(alpha: 0.25)
+                    : AppColors.outlineVariant.withValues(alpha: 0.35),
+                width: 1,
+              ),
+            ),
+            child: Center(
+              child: Icon(
+                icon,
+                size: 16,
+                color: isDark
+                    ? AppColors.darkTextBody
+                    : AppColors.espressoMedium,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -749,6 +1027,42 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     if (seconds < 60) return '$seconds dtk';
     if (seconds < 3600) return '${seconds ~/ 60} mnt';
     return '${seconds ~/ 3600}j ${(seconds % 3600) ~/ 60}m';
+  }
+
+  String _formatLastLocationUpdate(RoomMemberModel member) {
+    final updatedAt = member.locationUpdatedAt;
+    if (!member.hasLocation || updatedAt == null) {
+      return 'Lokasi belum tersedia';
+    }
+
+    final now = DateTime.now();
+    final diff = now.difference(updatedAt);
+
+    if (diff.isNegative || diff.inSeconds < 45) {
+      return 'Update baru saja';
+    } else if (diff.inMinutes < 60) {
+      return 'Update ${diff.inMinutes} mnt lalu';
+    } else if (diff.inHours < 24) {
+      final hourStr = updatedAt.hour.toString().padLeft(2, '0');
+      final minStr = updatedAt.minute.toString().padLeft(2, '0');
+      return 'Update pukul $hourStr:$minStr';
+    } else {
+      return 'Update ${diff.inDays} hari lalu';
+    }
+  }
+
+  Color _getLocationStatusColor(RoomMemberModel member) {
+    if (member.sosActive) return AppColors.sosEmergency;
+    if (!member.hasLocation || member.locationUpdatedAt == null) {
+      return AppColors.textMuted.withValues(alpha: 0.6);
+    }
+    final diff = DateTime.now().difference(member.locationUpdatedAt!);
+    if (diff.inMinutes <= 5) {
+      return const Color(0xFF22C55E);
+    } else if (diff.inMinutes <= 30) {
+      return const Color(0xFFEAB308);
+    }
+    return AppColors.textMuted;
   }
 
   // ── 2. ROOM MEMBERS LIST PANEL (Gambar 2 Fusion & Compact Design) ──────────
@@ -1074,19 +1388,27 @@ class _MapBottomSheetState extends State<MapBottomSheet>
         if (_isDismissing) return false;
         if (notification is OverscrollNotification &&
             notification.overscroll < 0) {
-          if (_animCtrl.isAnimating) _animCtrl.stop();
-          setState(() {
-            _dragOffset = math.max(
-              0.0,
-              _dragOffset - notification.overscroll * 0.4,
-            );
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && !_isDismissing) {
+              if (_animCtrl.isAnimating) _animCtrl.stop();
+              setState(() {
+                _dragOffset = math.max(
+                  0.0,
+                  _dragOffset - notification.overscroll * 0.4,
+                );
+              });
+            }
           });
         } else if (notification is ScrollEndNotification) {
-          if (_dragOffset > 60.0) {
-            _dismissWithAnimation();
-          } else if (_dragOffset > 0.0) {
-            _springBackAnimation();
-          }
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && !_isDismissing) {
+              if (_dragOffset > 60.0) {
+                _dismissWithAnimation();
+              } else if (_dragOffset > 0.0) {
+                _springBackAnimation();
+              }
+            }
+          });
         }
         return false;
       },
