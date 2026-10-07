@@ -151,6 +151,15 @@ const Map<String, String> dashboardIdTranslations = {
   'dashboard.yourGpsInactiveDesc':
       'Pendamping tidak dapat melacak posisi Anda saat sensor GPS nonaktif.',
   'dashboard.enableGpsNow': 'Aktifkan GPS Sekarang',
+  'dashboard.gpsSignalWeak': 'Sinyal GPS Tidak Diperbarui',
+  'dashboard.gpsSignalWeakDesc':
+      'Lokasi Anda belum diperbarui lebih dari 5 menit. Pastikan GPS aktif dan koneksi internet tersedia.',
+  'dashboard.nearingRadius': 'Mendekati Batas Safe Radius',
+  'dashboard.nearingRadiusDesc':
+      'Anda masih dalam jangkauan rombongan, namun sudah mendekati batas radius aman yang ditetapkan pendamping.',
+  'dashboard.outsideRadius': 'Keluar Safe Radius!',
+  'dashboard.outsideRadiusDesc':
+      'Posisi Anda melampaui batas radius aman yang ditetapkan pendamping. Segera kembali ke rombongan.',
   'dashboard.connectingCompanion': 'Menghubungkan ke Pendamping',
   'dashboard.waitingCompanionLocation':
       'GPS Anda aktif. Menunggu pembaruan lokasi dari pendamping rombongan.',
@@ -413,6 +422,15 @@ const Map<String, String> dashboardEnTranslations = {
   'dashboard.yourGpsInactiveDesc':
       'Your companion cannot track you while GPS is inactive.',
   'dashboard.enableGpsNow': 'Enable GPS Now',
+  'dashboard.gpsSignalWeak': 'GPS Signal Not Updated',
+  'dashboard.gpsSignalWeakDesc':
+      'Your location has not been updated for more than 5 minutes. Make sure GPS is enabled and internet is available.',
+  'dashboard.nearingRadius': 'Approaching Safe Radius Limit',
+  'dashboard.nearingRadiusDesc':
+      'You are still within range of the group, but are nearing the safe radius boundary set by your companion.',
+  'dashboard.outsideRadius': 'Outside Safe Radius!',
+  'dashboard.outsideRadiusDesc':
+      'Your position exceeds the safe radius set by your companion. Please return to the group immediately.',
   'dashboard.connectingCompanion': 'Connecting to Companion',
   'dashboard.waitingCompanionLocation':
       'Your GPS is active. Waiting for companion location updates.',

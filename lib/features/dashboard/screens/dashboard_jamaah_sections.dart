@@ -308,155 +308,309 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     );
   }
 
-  // ── Status Alert Card (Bot Alert Pattern) ─────────────────────────────────
+  // ── Status Alert Card – fully dynamic: GPS state + safe radius tier ───────
   Widget _buildStatusAlertCard(
     BuildContext context,
     JamaahData jamaah,
     bool isDark,
     DashboardController dashboardCtrl,
   ) {
-    if (jamaah.separatedMode) {
-      return Container(
-        padding: const EdgeInsets.all(16),
+    // Wrap with Obx so card re-renders whenever safeRadiusMeters changes
+    // (pendamping can update it at any time).
+    final hc = Get.isRegistered<HajiCareController>()
+        ? Get.find<HajiCareController>()
+        : null;
+
+    return Obx(() {
+      // ── 1. Read live safe radius (reactive) ──────────────────────────────
+      final safeRadius = hc?.safeRadiusMeters.value ?? 200.0;
+
+      // ── 2. Recompute tier against current safeRadius ──────────────────────
+      // JamaahData.tier may be stale; we recompute inline.
+      DistanceTier liveTier;
+      if (jamaah.distance <= safeRadius * 0.5) {
+        liveTier = DistanceTier.aman;
+      } else if (jamaah.distance <= safeRadius) {
+        liveTier = DistanceTier.waspada;
+      } else {
+        liveTier = DistanceTier.terlalujJauh;
+      }
+
+      final bool gpsOn = jamaah.isGpsActive;
+      final bool hasLocation = jamaah.currentLocation != null;
+
+      // Staleness: more than 5 minutes without location update
+      final bool locationStale =
+          hasLocation &&
+          jamaah.locationUpdatedAt != null &&
+          DateTime.now().difference(jamaah.locationUpdatedAt!).inMinutes >= 5;
+
+      // ── Helpers ───────────────────────────────────────────────────────────
+      Widget buildStatusIcon({
+        required Color color,
+        required IconData icon,
+        bool isGradient = false,
+        List<Color>? gradientColors,
+      }) {
+        return Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            gradient: isGradient && gradientColors != null
+                ? LinearGradient(
+                    colors: gradientColors,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : null,
+            color: isGradient ? null : color.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: isGradient
+                ? [
+                    BoxShadow(
+                      color: gradientColors!.first.withValues(alpha: 0.35),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Center(
+            child: Icon(
+              icon,
+              color: isGradient ? Colors.white : color,
+              size: 24,
+            ),
+          ),
+        );
+      }
+
+      Widget buildStatusText({
+        required String title,
+        required String subtitle,
+        required Color titleColor,
+        Color? subtitleColor,
+      }) {
+        return Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  color: titleColor,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  color:
+                      subtitleColor ??
+                      (isDark ? AppColors.darkTextBody : AppColors.textBody),
+                  fontSize: 12,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      Widget buildRadiusBadge() => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF2E1517) : const Color(0xFFFFECEF),
+          color: AppColors.statusSafe.withValues(alpha: isDark ? 0.25 : 0.12),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: AppColors.sosEmergency.withValues(alpha: 0.5),
-            width: 1.5,
+            color: AppColors.statusSafe.withValues(alpha: 0.45),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.sosEmergency.withValues(alpha: 0.12),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
-            ),
-          ],
         ),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: const BoxDecoration(
-                color: AppColors.sosEmergency,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.warning_rounded,
-                color: Colors.white,
-                size: 26,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    context.tr('dashboard.separationWarning'),
-                    style: const TextStyle(
-                      color: AppColors.sosEmergency,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    context.tr('dashboard.separationWarningDesc'),
-                    style: TextStyle(
-                      color: isDark ? Colors.white70 : const Color(0xFF7A1C24),
-                      fontSize: 12,
-                      height: 1.35,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+        child: Text(
+          '≤ ${safeRadius.toInt()} m',
+          style: TextStyle(
+            color: AppColors.statusSafe,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       );
-    }
 
-    // Normal safe connection state
-    final cardBg = isDark
-        ? AppColors.darkSurfaceContainer
-        : AppColors.surfaceWhite;
-    final headingColor = AppColors.textHeadingColor(context);
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
-          width: 1.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+      Widget buildStatusCard({
+        required Color borderColor,
+        required Color bgTint,
+        required Widget icon,
+        required Widget content,
+        Widget? trailing,
+      }) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppColors.darkSurfaceContainer
+                : AppColors.surfaceWhite,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: borderColor, width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: bgTint.withValues(alpha: isDark ? 0.18 : 0.08),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
+          child: Row(
+            children: [
+              icon,
+              const SizedBox(width: 14),
+              content,
+              if (trailing != null) ...[const SizedBox(width: 8), trailing],
+            ],
+          ),
+        );
+      }
+
+      // ── STATE A: GPS mati ─────────────────────────────────────────────────
+      if (!gpsOn) {
+        return buildStatusCard(
+          borderColor: AppColors.error.withValues(alpha: isDark ? 0.55 : 0.4),
+          bgTint: AppColors.error,
+          icon: buildStatusIcon(
+            color: AppColors.error,
+            icon: Icons.location_off_rounded,
+          ),
+          content: buildStatusText(
+            title: context.tr('dashboard.yourGpsInactive'),
+            subtitle: context.tr('dashboard.yourGpsInactiveDesc'),
+            titleColor: AppColors.error,
+            subtitleColor: isDark ? Colors.white60 : const Color(0xFF8B1A1A),
+          ),
+        );
+      }
+
+      // ── STATE B: GPS nyala tapi sinyal stale / lokasi tidak diperbarui ────
+      if (locationStale) {
+        return buildStatusCard(
+          borderColor: AppColors.statusWarning.withValues(alpha: 0.55),
+          bgTint: AppColors.statusWarning,
+          icon: buildStatusIcon(
+            color: AppColors.statusWarning,
+            icon: Icons.signal_wifi_statusbar_connected_no_internet_4_rounded,
+          ),
+          content: buildStatusText(
+            title: context.tr('dashboard.gpsSignalWeak'),
+            subtitle: context.tr('dashboard.gpsSignalWeakDesc'),
+            titleColor: AppColors.statusWarning,
+            subtitleColor: isDark ? Colors.white60 : const Color(0xFF7A5C00),
+          ),
+        );
+      }
+
+      // ── STATE C: GPS nyala, dalam safe radius (aman) ──────────────────────
+      if (liveTier == DistanceTier.aman) {
+        return buildStatusCard(
+          borderColor: AppColors.statusSafe.withValues(
+            alpha: isDark ? 0.5 : 0.35,
+          ),
+          bgTint: AppColors.statusSafe,
+          icon: buildStatusIcon(
+            color: AppColors.statusSafe,
+            icon: Icons.verified_user_rounded,
+            isGradient: true,
+            gradientColors: const [Color(0xFF1B633E), Color(0xFF2E8540)],
+          ),
+          content: buildStatusText(
+            title: context.tr('dashboard.connectedSafe'),
+            subtitle: context.tr('dashboard.connectedSafeDesc'),
+            titleColor: AppColors.textHeadingColor(context),
+          ),
+          trailing: buildRadiusBadge(),
+        );
+      }
+
+      // ── STATE D: GPS nyala, mendekati batas radius (waspada) ─────────────
+      if (liveTier == DistanceTier.waspada) {
+        return buildStatusCard(
+          borderColor: AppColors.statusWarning.withValues(alpha: 0.55),
+          bgTint: AppColors.statusWarning,
+          icon: buildStatusIcon(
+            color: AppColors.statusWarning,
+            icon: Icons.warning_amber_rounded,
+          ),
+          content: buildStatusText(
+            title: context.tr('dashboard.nearingRadius'),
+            subtitle: context.tr('dashboard.nearingRadiusDesc'),
+            titleColor: AppColors.statusWarning,
+            subtitleColor: isDark ? Colors.white60 : const Color(0xFF7A5C00),
+          ),
+          trailing: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF1B633E), Color(0xFF2E8540)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+              color: AppColors.statusWarning.withValues(
+                alpha: isDark ? 0.25 : 0.12,
               ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF1B633E).withValues(alpha: 0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppColors.statusWarning.withValues(alpha: 0.45),
+              ),
             ),
-            child: const Center(
-              child: Icon(
-                Icons.verified_user_rounded,
-                color: Colors.white,
-                size: 24,
+            child: Text(
+              '${jamaah.distance.toInt()} m',
+              style: TextStyle(
+                color: AppColors.statusWarning,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.tr('dashboard.connectedSafe'),
-                  style: TextStyle(
-                    color: headingColor,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  context.tr('dashboard.connectedSafeDesc'),
-                  style: TextStyle(
-                    color: isDark ? AppColors.darkTextBody : AppColors.textBody,
-                    fontSize: 12,
-                    height: 1.35,
-                  ),
-                ),
-              ],
+        );
+      }
+
+      // ── STATE E: Keluar safe radius (terlalu jauh / separatedMode) ────────
+      return buildStatusCard(
+        borderColor: AppColors.sosEmergency.withValues(alpha: 0.55),
+        bgTint: AppColors.sosEmergency,
+        icon: Container(
+          width: 48,
+          height: 48,
+          decoration: const BoxDecoration(
+            color: AppColors.sosEmergency,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.warning_rounded,
+            color: Colors.white,
+            size: 26,
+          ),
+        ),
+        content: buildStatusText(
+          title: context.tr('dashboard.outsideRadius'),
+          subtitle: context.tr('dashboard.outsideRadiusDesc'),
+          titleColor: AppColors.sosEmergency,
+          subtitleColor: isDark ? Colors.white60 : const Color(0xFF7A1C24),
+        ),
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: AppColors.sosEmergency.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppColors.sosEmergency.withValues(alpha: 0.45),
             ),
           ),
-        ],
-      ),
-    );
+          child: Text(
+            '${jamaah.distance.toInt()} m',
+            style: TextStyle(
+              color: AppColors.sosEmergency,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      );
+    });
   }
 
   // ── News & Updates Card (Horizontal Style) ────────────────────────────────

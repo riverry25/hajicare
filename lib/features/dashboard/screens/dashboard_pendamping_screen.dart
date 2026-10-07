@@ -343,6 +343,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(height: 6),
               // Sparkline statistics wave (transparent & gold, enlarged, synced with room)
               MiniSparklineButton(
                 width: 175,
@@ -377,7 +378,8 @@ class DashboardPendampingScreen extends StatelessWidget {
 
           // ── 3 mini metrics ────────────────────────────────────────
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               _textToSignChip(context),
               _metricCol(
@@ -434,6 +436,8 @@ class DashboardPendampingScreen extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             const Icon(
                               Icons.north_west_rounded,
@@ -444,6 +448,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 context.tr('dashboard.trackPilgrim'),
+                                textAlign: TextAlign.center,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
@@ -482,10 +487,13 @@ class DashboardPendampingScreen extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Expanded(
                               child: Text(
                                 context.tr('dashboard.broadcastNotification'),
+                                textAlign: TextAlign.center,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
@@ -887,7 +895,9 @@ class DashboardPendampingScreen extends StatelessWidget {
         splashColor: Colors.white.withValues(alpha: 0.12),
         highlightColor: Colors.white.withValues(alpha: 0.06),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
               height: 29,
@@ -942,6 +952,7 @@ class DashboardPendampingScreen extends StatelessWidget {
             const SizedBox(height: 3),
             Text(
               context.tr('dashboard.signLanguage'),
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.65),
                 fontSize: 11,
@@ -959,10 +970,13 @@ class DashboardPendampingScreen extends StatelessWidget {
   Widget _metricCol({required String value, required String label}) {
     return Expanded(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             value,
+            textAlign: TextAlign.center,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 15,
@@ -975,6 +989,7 @@ class DashboardPendampingScreen extends StatelessWidget {
           const SizedBox(height: 3),
           Text(
             label,
+            textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.65),
               fontSize: 11,

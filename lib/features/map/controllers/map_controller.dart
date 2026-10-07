@@ -19,6 +19,7 @@ import '../../dashboard/models/assistance_request_model.dart';
 import '../../room/services/room_service.dart';
 import '../models/map_poi.dart';
 import '../models/map_search_result.dart';
+import '../services/poi_repository.dart';
 import '../services/poi_service.dart';
 import '../services/route_service.dart';
 
@@ -34,16 +35,27 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   final RouteService _routeService;
   final GeocodingService _geocodingService;
   final PoiService _poiService;
+  final PoiRepository _poiRepository;
 
   MapController({
     RoomService? roomService,
     RouteService? routeService,
     GeocodingService? geocodingService,
     PoiService? poiService,
+    PoiRepository? poiRepository,
   }) : _injectedRoomService = roomService,
        _routeService = routeService ?? RouteService(),
        _geocodingService = geocodingService ?? GeocodingService(),
-       _poiService = poiService ?? PoiService();
+       _poiService = poiService ?? PoiService(),
+       _poiRepository =
+           poiRepository ??
+           DefaultPoiRepository(
+             poiService: poiService ?? PoiService(),
+             geocodingService: geocodingService ?? GeocodingService(),
+           );
+
+  GeocodingService get geocodingService => _geocodingService;
+  PoiRepository get poiRepository => _poiRepository;
 
   RoomService? get _roomService {
     if (_injectedRoomService != null) return _injectedRoomService;
@@ -192,7 +204,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     isPoiLoading.value = true;
     final requestId = ++_poiRequestId;
     try {
-      final realPois = await _poiService.fetchNearbyPois(
+      final realPois = await _poiRepository.fetchNearbyPois(
         center: center,
         radiusMeters: radiusMeters ?? _radiusForZoom(_mapCameraZoom),
         forceRefresh: force,
@@ -763,31 +775,110 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   }
 
   List<MapPoi> get filteredPois {
+    List<MapPoi> list;
     switch (selectedFilter.value) {
       case 0:
-        return pois;
+        list = pois.toList();
+        break;
       case 1:
       case 2:
         return const [];
       case 3:
-        return pois.where((p) => p.category == PoiCategory.medis).toList();
+        list = pois
+            .where(
+              (p) =>
+                  p.category == PoiCategory.medis ||
+                  p.category == PoiCategory.clinic ||
+                  p.category == PoiCategory.pharmacy ||
+                  p.category == PoiCategory.emergency,
+            )
+            .toList();
+        break;
       case 4:
-        return pois
+        list = pois
             .where(
               (p) =>
                   p.category == PoiCategory.toilet ||
                   p.category == PoiCategory.wudhu,
             )
             .toList();
+        break;
       case 5:
-        return pois.where((p) => p.category == PoiCategory.maktab).toList();
+        list = pois.where((p) => p.category == PoiCategory.maktab).toList();
+        break;
       case 6:
-        return pois.where((p) => p.category == PoiCategory.posPantau).toList();
+        list = pois
+            .where(
+              (p) =>
+                  p.category == PoiCategory.posPantau ||
+                  p.category == PoiCategory.police,
+            )
+            .toList();
+        break;
       case 7:
-        return pois.where((p) => p.category == PoiCategory.hotel).toList();
+        list = pois.where((p) => p.category == PoiCategory.hotel).toList();
+        break;
       default:
-        return pois;
+        list = pois.toList();
     }
+
+    // Dynamic zoom-based POI density (Rule 7 & 8)
+    final currentZoom = mapZoom.value;
+    final int maxCount;
+    if (currentZoom < 14.0) {
+      maxCount = 30; // Zoom rendah: 20-30 POI penting saja
+    } else if (currentZoom < 16.0) {
+      maxCount = 60; // Zoom menengah: 30-60 POI
+    } else {
+      maxCount = 120; // Zoom tinggi: 50-100+ POI detail
+    }
+
+    if (list.length <= maxCount) {
+      return list;
+    }
+
+    // Sort by category priority and distance to camera center / user location
+    final refLoc = mapCameraCenter.value ?? currentUserLocation.value;
+    if (refLoc != null) {
+      list.sort((a, b) {
+        if (currentZoom < 14.0) {
+          final aEssential = _isEssentialCategory(a.category);
+          final bEssential = _isEssentialCategory(b.category);
+          if (aEssential != bEssential) {
+            return aEssential ? -1 : 1;
+          }
+        }
+        final distA = calculateDistanceMeters(refLoc, a.coordinate);
+        final distB = calculateDistanceMeters(refLoc, b.coordinate);
+        return distA.compareTo(distB);
+      });
+    }
+
+    final truncated = list.take(maxCount).toList();
+
+    // Preserve selectedPoi so active marker is never hidden by zoom filtering
+    final selected = selectedPoi.value;
+    if (selected != null && !truncated.any((p) => p.id == selected.id)) {
+      if (pois.any((p) => p.id == selected.id)) {
+        truncated.add(selected);
+      }
+    }
+
+    return truncated;
+  }
+
+  static bool _isEssentialCategory(PoiCategory cat) {
+    return cat == PoiCategory.ibadah ||
+        cat == PoiCategory.medis ||
+        cat == PoiCategory.clinic ||
+        cat == PoiCategory.pharmacy ||
+        cat == PoiCategory.emergency ||
+        cat == PoiCategory.hotel ||
+        cat == PoiCategory.maktab ||
+        cat == PoiCategory.posPantau ||
+        cat == PoiCategory.police ||
+        cat == PoiCategory.toilet ||
+        cat == PoiCategory.wudhu;
   }
 
   int _routeRequestId = 0;
@@ -1386,13 +1477,13 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
   // ── SEARCH ACTIONS ─────────────────────────────────────────────────────────
 
-  /// Handles user input in search bar with 500ms debounce and race-condition safety.
+  /// Handles user input in search bar with 350ms debounce and race-condition safety.
   void onSearchQueryChanged(String query) {
     _searchDebounceTimer?.cancel();
 
     final cleanQuery = query.trim();
     if (cleanQuery.isEmpty) {
-      if (searchHistory.isNotEmpty) {
+      if (searchHistory.isNotEmpty || pois.isNotEmpty) {
         searchState.value = MapSearchState.history;
       } else {
         clearSearch();
@@ -1407,20 +1498,22 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       return;
     }
 
-    _searchDebounceTimer = Timer(const Duration(milliseconds: 500), () async {
+    _searchDebounceTimer = Timer(const Duration(milliseconds: 350), () async {
       final currentId = ++_searchRequestId;
       searchState.value = MapSearchState.loading;
       searchErrorMessage.value = '';
 
-      // Dynamic current user location for proximity bias (ranking boost, not hard filter)
+      // Prioritize current GPS location, fallback to active map viewport center
       final userLoc = currentUserLocation.value;
+      final mapCenter = mapCameraCenter.value ?? poiQueryCenter.value;
 
       try {
-        final results = await _geocodingService.searchLocations(
-          cleanQuery,
-          latitude: userLoc?.latitude,
-          longitude: userLoc?.longitude,
-          limit: 10,
+        final results = await _poiRepository.searchPlaces(
+          query: cleanQuery,
+          userLocation: userLoc,
+          viewportCenter: mapCenter,
+          currentPois: pois.toList(),
+          limit: 15,
         );
 
         // Race condition check: discard stale response
@@ -1435,17 +1528,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
           searchResults.clear();
           searchState.value = MapSearchState.empty;
         } else {
-          // Sort by distance from user's current location (nearest first)
-          final sortedResults = List<MapSearchResult>.from(results);
-          final loc = userLoc;
-          if (loc != null) {
-            sortedResults.sort((a, b) {
-              final distA = calculateDistanceMeters(loc, a.coordinate);
-              final distB = calculateDistanceMeters(loc, b.coordinate);
-              return distA.compareTo(distB);
-            });
-          }
-          searchResults.assignAll(sortedResults);
+          searchResults.assignAll(results);
           searchState.value = MapSearchState.results;
         }
       } catch (e) {
@@ -1540,9 +1623,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     }
   }
 
-  /// Displays search history if any items are available.
+  /// Displays search history or recommended nearby places if available.
   void showSearchHistory() {
-    if (searchHistory.isNotEmpty) {
+    if (searchHistory.isNotEmpty || pois.isNotEmpty) {
       searchState.value = MapSearchState.history;
     }
   }
@@ -1559,7 +1642,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     selectedPoi.value = MapPoi(
       id: 'search_${result.id}',
       name: result.name,
-      category: PoiCategory.place,
+      category: result.resolvedCategory,
       coordinate: result.coordinate,
       statusLabel: 'Hasil pencarian',
       subtitle: result.address,
@@ -1604,6 +1687,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     _roomWorker?.dispose();
     _safeRadiusWorker?.dispose();
     _poiRequestId++;
+    _poiRepository.dispose();
     _poiService.dispose();
     flutterMapController.dispose();
     super.onClose();

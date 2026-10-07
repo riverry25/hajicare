@@ -49,11 +49,11 @@ class PoiService {
   Future<List<MapPoi>> fetchNearbyPois({
     required LatLng center,
     int radiusMeters = 2500,
-    int limit = 120,
+    int limit = 180,
     bool forceRefresh = false,
   }) async {
     final safeRadius = radiusMeters.clamp(300, 10000);
-    final safeLimit = limit.clamp(1, 250);
+    final safeLimit = limit.clamp(1, 300);
     final cacheKey = _cacheKey(center, safeRadius);
     final cached = _cache[cacheKey];
     if (!forceRefresh &&
@@ -198,15 +198,16 @@ class PoiService {
   static String _buildQuery(LatLng center, int radius) {
     final around = '$radius,${center.latitude},${center.longitude}';
     return '''
-[out:json][timeout:12];
-nwr(around:$around)[tourism~"^(hotel|hostel|guest_house|motel|apartment|camp_site)\$"];
-out center 70;
-nwr(around:$around)[amenity~"^(restaurant|fast_food|food_court|cafe)\$"];
-out center 120;
-nwr(around:$around)[amenity~"^(atm|bank|fuel|toilets|drinking_water|water_point|hospital|clinic|doctors|pharmacy|place_of_worship|police)\$"];
-out center 140;
-nwr(around:$around)[healthcare~"^(hospital|clinic|doctor|pharmacy|first_aid)\$"];
-out center 80;
+[out:json][timeout:15];
+(
+  nwr(around:$around)[tourism~"^(hotel|hostel|guest_house|motel|apartment|camp_site|attraction|museum|viewpoint)\$"];
+  nwr(around:$around)[amenity~"^(restaurant|fast_food|food_court|cafe|pharmacy|hospital|clinic|doctors|toilets|drinking_water|water_point|place_of_worship|atm|bank|police|bus_station|parking|fuel)\$"];
+  nwr(around:$around)[shop~"^(supermarket|convenience|mall|department_store|chemist)\$"];
+  nwr(around:$around)[healthcare~"^(hospital|clinic|doctor|pharmacy|first_aid)\$"];
+  nwr(around:$around)[aeroway~"^(aerodrome|terminal)\$"];
+  nwr(around:$around)[railway~"^(station|halt)\$"];
+);
+out center 250;
 ''';
   }
 
@@ -214,8 +215,12 @@ out center 80;
     final tourism = tags['tourism'];
     final amenity = tags['amenity'];
     final healthcare = tags['healthcare'];
+    final shop = tags['shop'];
+    final aeroway = tags['aeroway'];
+    final railway = tags['railway'];
     final name = '${tags['name'] ?? ''} ${tags['name:in'] ?? ''}'.toLowerCase();
 
+    // 1. Hotel / Lodging
     if ({
       'hotel',
       'hostel',
@@ -229,30 +234,63 @@ out center 80;
         RegExp(r'maktab|hajj|haji|mina|tent').hasMatch(name)) {
       return PoiCategory.maktab;
     }
-    if ({'hospital', 'clinic', 'doctors', 'pharmacy'}.contains(amenity) ||
-        {
-          'hospital',
-          'clinic',
-          'doctor',
-          'pharmacy',
-          'first_aid',
-        }.contains(healthcare)) {
+
+    // 2. Health & Medical
+    if (amenity == 'pharmacy' || healthcare == 'pharmacy' || shop == 'chemist') {
+      return PoiCategory.pharmacy;
+    }
+    if (healthcare == 'first_aid') {
+      return PoiCategory.emergency;
+    }
+    if ({'clinic', 'doctors', 'doctor'}.contains(amenity) ||
+        {'clinic', 'doctor'}.contains(healthcare)) {
+      return PoiCategory.clinic;
+    }
+    if (amenity == 'hospital' || healthcare == 'hospital') {
       return PoiCategory.medis;
     }
+
+    // 3. Toilets & Wudhu
     if (amenity == 'toilets') return PoiCategory.toilet;
     if ({'drinking_water', 'water_point'}.contains(amenity)) {
       return PoiCategory.wudhu;
     }
+
+    // 4. Safety & Police
     if (amenity == 'police') return PoiCategory.posPantau;
+
+    // 5. Worship / Mosque
     if (amenity == 'place_of_worship') return PoiCategory.ibadah;
+
+    // 6. Food & Drink
     if ({'restaurant', 'fast_food', 'food_court'}.contains(amenity)) {
       return PoiCategory.restaurant;
     }
     if (amenity == 'cafe') return PoiCategory.cafe;
-    if (amenity == 'atm' || (amenity == 'bank' && tags['atm'] == 'yes')) {
-      return PoiCategory.atm;
+
+    // 7. Finance
+    if (amenity == 'atm') return PoiCategory.atm;
+    if (amenity == 'bank') return tags['atm'] == 'yes' ? PoiCategory.atm : PoiCategory.bank;
+
+    // 8. Shopping & Market
+    if (shop == 'supermarket') return PoiCategory.supermarket;
+    if (shop == 'mall' || shop == 'department_store') return PoiCategory.mall;
+    if ({'convenience', 'chemist'}.contains(shop) || shop != null) {
+      return PoiCategory.shopping;
     }
+
+    // 9. Transportation & Parking
+    if (aeroway == 'aerodrome' || aeroway == 'terminal') return PoiCategory.airport;
+    if (railway == 'station' || railway == 'halt') return PoiCategory.train;
+    if (amenity == 'bus_station') return PoiCategory.bus;
+    if (amenity == 'parking') return PoiCategory.parking;
     if (amenity == 'fuel') return PoiCategory.fuel;
+
+    // 10. Tourism & Attractions
+    if ({'attraction', 'museum', 'viewpoint', 'theme_park'}.contains(tourism)) {
+      return PoiCategory.touristAttraction;
+    }
+
     return null;
   }
 

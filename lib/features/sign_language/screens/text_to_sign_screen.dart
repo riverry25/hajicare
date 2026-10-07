@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -1686,8 +1687,9 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                   ),
                   const SizedBox(width: 8),
                   Obx(() {
-                    final queryActive =
-                        controller.currentQuery.value.trim().isNotEmpty;
+                    final queryActive = controller.currentQuery.value
+                        .trim()
+                        .isNotEmpty;
                     final filteredCount = controller.filteredVocabulary.length;
                     final totalCount = controller.availableVideos.length;
 
@@ -1731,7 +1733,9 @@ class _TextToSignScreenState extends State<TextToSignScreen>
               return const Center(
                 child: Padding(
                   padding: EdgeInsets.all(AppSpacing.lg),
-                  child: CircularProgressIndicator(color: AppColors.goldPrimary),
+                  child: CircularProgressIndicator(
+                    color: AppColors.goldPrimary,
+                  ),
                 ),
               );
             }
@@ -1803,12 +1807,9 @@ class _TextToSignScreenState extends State<TextToSignScreen>
               totalPages,
             );
 
-            final totalItems = filteredList.length;
-            final startItem = (currentPage - 1) * TextToSignController.vocabPageSize + 1;
-            final endItem = (startItem + paginatedVideos.length - 1).clamp(
-              startItem,
-              totalItems,
-            );
+            final cardBg = isDark
+                ? AppColors.darkSurfaceContainer
+                : AppColors.surfaceWhite;
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1834,115 +1835,13 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                 ),
                 if (totalPages > 1) ...[
                   const SizedBox(height: AppSpacing.md),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkSurfaceContainer
-                          : AppColors.surfaceWhite,
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
-                      border: Border.all(
-                        color: isDark
-                            ? AppColors.darkOutlineVariant
-                            : AppColors.cardBorderColor(context),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(
-                            alpha: isDark ? 0.2 : 0.04,
-                          ),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Menampilkan $startItem–$endItem dari $totalItems kosakata',
-                              style: AppTypography.captionSmall.copyWith(
-                                color: isDark
-                                    ? AppColors.darkTextBody
-                                    : AppColors.textSecondary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Text(
-                              'Halaman $currentPage / $totalPages',
-                              style: AppTypography.captionSmall.copyWith(
-                                color: isDark
-                                    ? AppColors.goldLight
-                                    : AppColors.goldDark,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            IconButton(
-                              onPressed: currentPage > 1
-                                  ? () {
-                                      controller.previousVocabPage();
-                                      _scrollToVocabularySection();
-                                    }
-                                  : null,
-                              icon: const Icon(Icons.chevron_left_rounded),
-                              tooltip: 'Halaman Sebelumnya',
-                              style: IconButton.styleFrom(
-                                visualDensity: VisualDensity.compact,
-                                foregroundColor: isDark
-                                    ? AppColors.goldLight
-                                    : AppColors.espressoDark,
-                                disabledForegroundColor: isDark
-                                    ? Colors.white24
-                                    : Colors.black26,
-                              ),
-                            ),
-                            Expanded(
-                              child: SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: _buildPageChips(
-                                    totalPages: totalPages,
-                                    currentPage: currentPage,
-                                    isDark: isDark,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: currentPage < totalPages
-                                  ? () {
-                                      controller.nextVocabPage();
-                                      _scrollToVocabularySection();
-                                    }
-                                  : null,
-                              icon: const Icon(Icons.chevron_right_rounded),
-                              tooltip: 'Halaman Selanjutnya',
-                              style: IconButton.styleFrom(
-                                visualDensity: VisualDensity.compact,
-                                foregroundColor: isDark
-                                    ? AppColors.goldLight
-                                    : AppColors.espressoDark,
-                                disabledForegroundColor: isDark
-                                    ? Colors.white24
-                                    : Colors.black26,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                  _buildPaginationFooter(
+                    cardBg,
+                    headingColor,
+                    bodyColor,
+                    isDark,
+                    totalPages,
+                    currentPage,
                   ),
                 ],
               ],
@@ -1953,87 +1852,76 @@ class _TextToSignScreenState extends State<TextToSignScreen>
     );
   }
 
-  List<Widget> _buildPageChips({
-    required int totalPages,
-    required int currentPage,
-    required bool isDark,
-  }) {
-    final chips = <Widget>[];
+  // ===========================================================================
+  // PAGINATION CONTROLS FOOTER (MATCHES ROOM DETAIL UI)
+  // ===========================================================================
+  Widget _buildPaginationFooter(
+    Color cardBg,
+    Color headingColor,
+    Color bodyColor,
+    bool isDark,
+    int totalPages,
+    int currentPage,
+  ) {
+    final canGoPrev = currentPage > 1;
+    final canGoNext = currentPage < totalPages;
 
-    for (int p = 1; p <= totalPages; p++) {
-      final isCurrent = p == currentPage;
-      final showChip = totalPages <= 7 ||
-          p == 1 ||
-          p == totalPages ||
-          (p >= currentPage - 1 && p <= currentPage + 1);
-
-      if (showChip) {
-        final pageNum = p;
-        chips.add(
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 3),
-            child: InkWell(
-              onTap: () {
-                if (pageNum != currentPage) {
-                  controller.goToVocabPage(pageNum);
-                  _scrollToVocabularySection();
-                }
-              },
-              borderRadius: BorderRadius.circular(AppRadius.pill),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: isCurrent
-                      ? AppColors.goldPrimary
-                      : (isDark
-                          ? AppColors.darkPrimaryContainer
-                          : AppColors.canvasCream),
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                  border: Border.all(
-                    color: isCurrent
-                        ? AppColors.goldPrimary
-                        : (isDark
-                            ? AppColors.darkOutlineVariant
-                            : AppColors.canvasCreamSubtle),
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  '$pageNum',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight:
-                        isCurrent ? FontWeight.bold : FontWeight.w500,
-                    color: isCurrent
-                        ? AppColors.espressoDark
-                        : (isDark
-                            ? AppColors.goldLight
-                            : AppColors.textHeading),
-                  ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(
+          color: isDark
+              ? AppColors.darkOutlineVariant
+              : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.chevron_left_rounded),
+            onPressed: canGoPrev
+                ? () {
+                    HapticFeedback.lightImpact();
+                    controller.previousVocabPage();
+                    _scrollToVocabularySection();
+                  }
+                : null,
+            tooltip: 'Halaman Sebelumnya',
+            color: headingColor,
+            disabledColor: bodyColor.withValues(alpha: 0.25),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Halaman $currentPage dari $totalPages',
+                style: AppTypography.captionSmall.copyWith(
+                  color: headingColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
                 ),
               ),
-            ),
+            ],
           ),
-        );
-      } else if ((p == 2 && currentPage > 3) ||
-          (p == totalPages - 1 && currentPage < totalPages - 2)) {
-        chips.add(
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 2),
-            child: Text(
-              '…',
-              style: TextStyle(fontSize: 12, color: AppColors.textMuted),
-            ),
+          IconButton(
+            icon: const Icon(Icons.chevron_right_rounded),
+            onPressed: canGoNext
+                ? () {
+                    HapticFeedback.lightImpact();
+                    controller.nextVocabPage();
+                    _scrollToVocabularySection();
+                  }
+                : null,
+            tooltip: 'Halaman Berikutnya',
+            color: headingColor,
+            disabledColor: bodyColor.withValues(alpha: 0.25),
           ),
-        );
-      }
-    }
-
-    return chips;
+        ],
+      ),
+    );
   }
 
   Widget _buildVocabularyTile(
@@ -2043,11 +1931,8 @@ class _TextToSignScreenState extends State<TextToSignScreen>
     Color headingColor, {
     Key? key,
   }) {
-    return Obx(
-      key: key,
-      () {
-        final isSelected = controller.currentEntry.value?.id == video.id;
-
+    return Obx(key: key, () {
+      final isSelected = controller.currentEntry.value?.id == video.id;
 
       return Material(
         color: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite,

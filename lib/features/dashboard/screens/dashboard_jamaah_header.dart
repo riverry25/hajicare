@@ -224,8 +224,8 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
           // ── 3 Key Metrics Columns ────────────────────────────────
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              _buildMoneyRecognitionMetric(context),
               _buildMetricColumn(
                 value: '$prayerName $cleanPrayerTime',
                 label: context.tr('dashboard.prayerSchedule'),
@@ -234,6 +234,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                 value: gpsDisplay,
                 label: context.tr('dashboard.locationStatus'),
               ),
+              _buildMoneyRecognitionMetric(context),
             ],
           ),
 
@@ -446,7 +447,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
   Widget _buildMoneyRecognitionMetric(BuildContext context) {
     return Expanded(
       child: Align(
-        alignment: Alignment.centerLeft,
+        alignment: Alignment.center,
         child: InkWell(
           onTap: () {
             HapticFeedback.lightImpact();
@@ -503,10 +504,13 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
   Widget _buildMetricColumn({required String value, required String label}) {
     return Expanded(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             value,
+            textAlign: TextAlign.center,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 16,
@@ -519,6 +523,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
           const SizedBox(height: 3),
           Text(
             label,
+            textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.65),
               fontSize: 11,

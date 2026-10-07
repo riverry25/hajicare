@@ -237,64 +237,59 @@ void main() {
       expect(find.text('Hal 2 dari 3'), findsOneWidget);
     });
 
-    testWidgets('TextToSignScreen pumps and vocabulary pagination is verified', (
-      tester,
-    ) async {
-      tester.view.physicalSize = const Size(1080, 2400);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
+    testWidgets(
+      'TextToSignScreen pumps and vocabulary pagination is verified',
+      (tester) async {
+        tester.view.physicalSize = const Size(1080, 2400);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
 
-      final dummyList = List.generate(
-        12,
-        (i) => SignVideoEntry(
-          id: 'test_$i',
-          language: 'sibi',
-          type: 'word',
-          label: 'ItemKata_$i',
-          aliases: const [],
-          category: 'health',
-          version: 1,
-          path: 'assets/video_$i.mp4',
-          source: SignVideoSource.asset,
-        ),
-      );
+        final dummyList = List.generate(
+          12,
+          (i) => SignVideoEntry(
+            id: 'test_$i',
+            language: 'sibi',
+            type: 'word',
+            label: 'ItemKata_$i',
+            aliases: const [],
+            category: 'health',
+            version: 1,
+            path: 'assets/video_$i.mp4',
+            source: SignVideoSource.asset,
+          ),
+        );
 
-      controller.availableVideos.assignAll(dummyList);
-      controller.currentVocabPage.value = 1;
-      Get.put<TextToSignController>(controller);
+        controller.availableVideos.assignAll(dummyList);
+        controller.currentVocabPage.value = 1;
+        Get.put<TextToSignController>(controller);
 
-      await tester.pumpWidget(
-        const GetMaterialApp(
-          home: TextToSignScreen(),
-        ),
-      );
-      await tester.pump(const Duration(seconds: 1));
-      controller.isLoadingVideos.value = false;
-      controller.availableVideos.assignAll(dummyList);
-      controller.currentVocabPage.value = 1;
-      await tester.pump(const Duration(milliseconds: 300));
+        await tester.pumpWidget(const GetMaterialApp(home: TextToSignScreen()));
+        await tester.pump(const Duration(seconds: 1));
+        controller.isLoadingVideos.value = false;
+        controller.availableVideos.assignAll(dummyList);
+        controller.currentVocabPage.value = 1;
+        await tester.pump(const Duration(milliseconds: 300));
 
-      // Vocabulary header and video count badge
-      expect(find.text('Daftar Kosakata'), findsOneWidget);
-      expect(find.text('12 Video'), findsOneWidget);
+        // Vocabulary header and video count badge
+        expect(find.text('Daftar Kosakata'), findsOneWidget);
+        expect(find.text('12 Video'), findsOneWidget);
 
-      // Pagination indicators
-      expect(find.textContaining('Halaman 1 / 3'), findsOneWidget);
-      expect(find.textContaining('Menampilkan 1–5 dari 12 kosakata'), findsOneWidget);
+        // Pagination indicators
+        expect(find.textContaining('Halaman 1 dari 3'), findsOneWidget);
 
-      // Click page 2 chip
-      final page2Chip = find.text('2');
-      expect(page2Chip, findsOneWidget);
-      await tester.tap(page2Chip);
-      await tester.pump(const Duration(milliseconds: 300));
+        // Click next page button
+        final nextButton = find.byTooltip('Halaman Berikutnya');
+        expect(nextButton, findsOneWidget);
+        await tester.tap(nextButton);
+        await tester.pump(const Duration(milliseconds: 300));
 
-      expect(controller.currentVocabPage.value, 2);
-      expect(find.textContaining('Halaman 2 / 3'), findsOneWidget);
-      expect(find.textContaining('Menampilkan 6–10 dari 12 kosakata'), findsOneWidget);
-    });
+        expect(controller.currentVocabPage.value, 2);
+        expect(find.textContaining('Halaman 2 dari 3'), findsOneWidget);
+      },
+    );
 
     test('filteredVocabulary reacts to currentQuery and resets page to 1', () {
       final dummyList = [
@@ -352,5 +347,3 @@ void main() {
     });
   });
 }
-
-
