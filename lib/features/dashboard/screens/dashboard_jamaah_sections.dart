@@ -472,6 +472,44 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
         );
       }
 
+      // ── STATE SOS: Sinyal Darurat SOS Aktif ──────────────────────────────
+      if (hc?.anySosActive == true || jamaah.sosActive) {
+        return buildStatusCard(
+          borderColor: AppColors.sosEmergency,
+          bgTint: AppColors.sosEmergency,
+          icon: buildStatusIcon(
+            color: AppColors.sosEmergency,
+            icon: Icons.emergency_rounded,
+            isGradient: true,
+            gradientColors: const [Color(0xFFFF1744), Color(0xFFD50000)],
+          ),
+          content: buildStatusText(
+            title: 'Sinyal Darurat SOS Aktif',
+            subtitle: 'Bantuan darurat terhubung ke pendamping & petugas.',
+            titleColor: AppColors.sosEmergency,
+            subtitleColor: isDark ? Colors.white70 : const Color(0xFF8B1A1A),
+          ),
+          trailing: InkWell(
+            onTap: () => Get.toNamed(AppRoutes.modalSos),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: AppColors.sosEmergency,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Text(
+                'Lihat Status',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        );
+      }
+
       // ── STATE A: GPS mati ─────────────────────────────────────────────────
       if (!gpsOn) {
         return buildStatusCard(

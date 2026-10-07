@@ -325,39 +325,82 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
 
                 // Right Pill: Bantuan Darurat (SOS)
                 Expanded(
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: const BorderRadius.horizontal(
-                        right: Radius.circular(26),
-                      ),
-                      onTap: () {
-                        HapticFeedback.mediumImpact();
-                        Get.toNamed(AppRoutes.modalSos);
-                      },
-                      child: Center(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              context.tr('dashboard.emergencyHelp'),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                              ),
+                  child: Obx(() {
+                    final hasSos = state.anySosActive;
+                    return Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: const BorderRadius.horizontal(
+                          right: Radius.circular(26),
+                        ),
+                        onTap: () {
+                          HapticFeedback.mediumImpact();
+                          Get.toNamed(AppRoutes.modalSos);
+                        },
+                        child: Ink(
+                          decoration: BoxDecoration(
+                            gradient: hasSos
+                                ? const LinearGradient(
+                                    colors: [
+                                      Color(0xFFFF1744),
+                                      Color(0xFFD50000),
+                                    ],
+                                  )
+                                : null,
+                            borderRadius: const BorderRadius.horizontal(
+                              right: Radius.circular(26),
                             ),
-                            const SizedBox(width: 7),
-                            const Icon(
-                              Icons.north_east_rounded,
-                              color: Colors.white,
-                              size: 16,
+                            boxShadow: hasSos
+                                ? [
+                                    BoxShadow(
+                                      color: const Color(
+                                        0xFFFF1744,
+                                      ).withValues(alpha: 0.5),
+                                      blurRadius: 10,
+                                      spreadRadius: 1,
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: Center(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (hasSos) ...[
+                                  const Icon(
+                                    Icons.warning_amber_rounded,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 6),
+                                ],
+                                Text(
+                                  hasSos
+                                      ? (state.activeSosCount.value > 0
+                                            ? 'SOS (${state.activeSosCount.value})'
+                                            : 'SOS Aktif')
+                                      : context.tr('dashboard.emergencyHelp'),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(width: 7),
+                                Icon(
+                                  hasSos
+                                      ? Icons.arrow_forward_rounded
+                                      : Icons.north_east_rounded,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
-                  ),
+                    );
+                  }),
                 ),
               ],
             ),

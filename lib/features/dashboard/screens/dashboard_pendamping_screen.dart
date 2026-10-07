@@ -655,60 +655,67 @@ class DashboardPendampingScreen extends StatelessWidget {
               );
             }),
 
-            // Status Darurat (only when active)
-            if (state.anySosActive || state.anyJamaahSeparated) ...[
-              _sectionHeader(
-                title: context.tr('dashboard.emergencyStatus'),
-                subtitle: context.tr('dashboard.sosSeparatedSub'),
-                actionText: context.tr('dashboard.viewMap'),
-                onAction: () {
-                  final target =
-                      state.jamaahList.firstWhereOrNull(
-                        (j) => j.sosActive || j.separatedMode,
-                      ) ??
-                      selectedJamaah;
-                  _trackJamaahOnMap(context, target, autoRoute: false);
-                },
-                headingColor: headingColor,
-                isDark: isDark,
-              ),
-              const SizedBox(height: 12),
-              if (state.activeRoomId.value != null)
-                PendampingSosBanner(
-                  state: state,
-                  onDismissSos: (jamaahId) async {
-                    AppAlert.confirm(
-                      context,
-                      title: context.tr('dashboard.endSos'),
-                      message: context.tr('dashboard.endSosConfirm'),
-                      confirmText: context.tr('dashboard.yesEndSos'),
-                      cancelText: context.tr('common.cancel'),
-                      onConfirm: () async {
-                        final success = await state.dismissSos(jamaahId);
-                        if (context.mounted) {
-                          if (success) {
-                            AppAlert.success(
-                              context,
-                              title: context.tr('dashboard.sosEnded'),
-                              message: context.tr('dashboard.sosDisabled'),
-                            );
-                          } else {
-                            AppAlert.error(
-                              context,
-                              title: context.tr('dashboard.sosEndFailed'),
-                              message: context.tr('dashboard.sosEndRetry'),
-                              okText: context.tr('common.tryAgain'),
-                            );
-                          }
-                        }
+            // Status Darurat (only when active) — wrapped in Obx for reactivity
+            Obx(() {
+              final hasSos = state.anySosActive;
+              final hasSeparated = state.anyJamaahSeparated;
+              if (!hasSos && !hasSeparated) return const SizedBox.shrink();
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _sectionHeader(
+                    title: context.tr('dashboard.emergencyStatus'),
+                    subtitle: context.tr('dashboard.sosSeparatedSub'),
+                    actionText: context.tr('dashboard.viewMap'),
+                    onAction: () {
+                      final target =
+                          state.jamaahList.firstWhereOrNull(
+                            (j) => j.sosActive || j.separatedMode,
+                          ) ??
+                          selectedJamaah;
+                      _trackJamaahOnMap(context, target, autoRoute: false);
+                    },
+                    headingColor: headingColor,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(height: 12),
+                  if (hasSos && state.activeRoomId.value != null)
+                    PendampingSosBanner(
+                      state: state,
+                      onDismissSos: (jamaahId) async {
+                        AppAlert.confirm(
+                          context,
+                          title: context.tr('dashboard.endSos'),
+                          message: context.tr('dashboard.endSosConfirm'),
+                          confirmText: context.tr('dashboard.yesEndSos'),
+                          cancelText: context.tr('common.cancel'),
+                          onConfirm: () async {
+                            final success = await state.dismissSos(jamaahId);
+                            if (context.mounted) {
+                              if (success) {
+                                AppAlert.success(
+                                  context,
+                                  title: context.tr('dashboard.sosEnded'),
+                                  message: context.tr('dashboard.sosDisabled'),
+                                );
+                              } else {
+                                AppAlert.error(
+                                  context,
+                                  title: context.tr('dashboard.sosEndFailed'),
+                                  message: context.tr('dashboard.sosEndRetry'),
+                                  okText: context.tr('common.tryAgain'),
+                                );
+                              }
+                            }
+                          },
+                        );
                       },
-                    );
-                  },
-                ),
-              if (state.anyJamaahSeparated)
-                _separatedAlert(context, state, isDark),
-              const SizedBox(height: 26),
-            ],
+                    ),
+                  if (hasSeparated) _separatedAlert(context, state, isDark),
+                  const SizedBox(height: 26),
+                ],
+              );
+            }),
 
             // Monitored Pilgrims Pills
             if (state.activeRoomId.value != null &&
@@ -1693,22 +1700,33 @@ class _PillItem extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: isSelected
-              ? (isDark
-                    ? AppColors.darkPrimaryContainer
-                    : AppColors.canvasCreamSubtle)
+              ? (hasSos
+                    ? (isDark
+                          ? const Color(0xFF4A1010)
+                          : const Color(0xFFFFEBEE))
+                    : (isDark
+                          ? AppColors.darkPrimaryContainer
+                          : AppColors.canvasCreamSubtle))
               : pill.withValues(alpha: isDark ? 0.15 : 0.08),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected
-                ? (isDark ? AppColors.goldLight : AppColors.espressoDark)
+                ? (hasSos
+                      ? AppColors.sosEmergency
+                      : (isDark ? AppColors.goldLight : AppColors.espressoDark))
                 : pill.withValues(alpha: isDark ? 0.38 : 0.28),
             width: isSelected ? 1.8 : 1.2,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: (isDark ? Colors.black : AppColors.espressoDark)
-                        .withValues(alpha: 0.16),
+                    color:
+                        (hasSos
+                                ? AppColors.sosEmergency
+                                : (isDark
+                                      ? Colors.black
+                                      : AppColors.espressoDark))
+                            .withValues(alpha: hasSos ? 0.4 : 0.16),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -1740,7 +1758,11 @@ class _PillItem extends StatelessWidget {
               label,
               style: TextStyle(
                 color: isSelected
-                    ? (isDark ? AppColors.goldLight : AppColors.espressoDark)
+                    ? (hasSos
+                          ? AppColors.sosEmergency
+                          : (isDark
+                                ? AppColors.goldLight
+                                : AppColors.espressoDark))
                     : (isDark
                           ? AppColors.darkTextHeading
                           : AppColors.espressoDark),

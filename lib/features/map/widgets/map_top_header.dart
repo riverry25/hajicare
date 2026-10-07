@@ -150,7 +150,9 @@ class _MapTopHeaderState extends State<MapTopHeader> {
                       const SizedBox(width: 8),
 
                       // Emergency SOS Quick Button
-                      _buildSosButton(),
+                      Get.isRegistered<HajiCareController>()
+                          ? Obx(() => _buildSosButton())
+                          : _buildSosButton(),
                     ],
                   ),
                 ),
@@ -305,11 +307,14 @@ class _MapTopHeaderState extends State<MapTopHeader> {
 
   Widget _buildSosButton() {
     int activeCount = 0;
+    bool anyActive = false;
     if (Get.isRegistered<HajiCareController>()) {
-      activeCount = Get.find<HajiCareController>().activeSosCount.value;
+      final ctrl = Get.find<HajiCareController>();
+      activeCount = ctrl.activeSosCount.value;
+      anyActive = ctrl.anySosActive;
     }
 
-    final hasActiveSos = activeCount > 0;
+    final hasActiveSos = activeCount > 0 || anyActive;
 
     return Material(
       color: Colors.transparent,
@@ -322,23 +327,51 @@ class _MapTopHeaderState extends State<MapTopHeader> {
             gradient: LinearGradient(
               colors: hasActiveSos
                   ? const [Color(0xFFFF1744), Color(0xFFD50000)]
-                  : const [Color(0xFFE53935), Color(0xFFC62828)],
+                  : [
+                      Colors.black.withValues(alpha: 0.60),
+                      Colors.black.withValues(alpha: 0.70),
+                    ],
             ),
             borderRadius: BorderRadius.circular(AppRadius.pill),
+            border: Border.all(
+              color: hasActiveSos
+                  ? Colors.white
+                  : Colors.white.withValues(alpha: 0.22),
+              width: hasActiveSos ? 1.5 : 1.0,
+            ),
+            boxShadow: hasActiveSos
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFFFF1744).withValues(alpha: 0.5),
+                      blurRadius: 10,
+                      spreadRadius: 1,
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                Icons.emergency_rounded,
-                color: Colors.white,
+              Icon(
+                hasActiveSos
+                    ? Icons.warning_amber_rounded
+                    : Icons.emergency_rounded,
+                color: hasActiveSos ? Colors.white : Colors.white70,
                 size: 13,
               ),
               const SizedBox(width: 4),
               Text(
-                hasActiveSos ? 'SOS ($activeCount)' : 'SOS',
-                style: const TextStyle(
-                  color: Colors.white,
+                hasActiveSos
+                    ? (activeCount > 0 ? 'SOS ($activeCount)' : 'SOS AKTIF')
+                    : 'SOS',
+                style: TextStyle(
+                  color: hasActiveSos ? Colors.white : Colors.white70,
                   fontWeight: FontWeight.w900,
                   fontSize: 11,
                   letterSpacing: 0.8,

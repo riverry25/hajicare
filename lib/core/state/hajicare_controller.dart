@@ -1078,6 +1078,20 @@ class HajiCareController extends GetxController {
         _self!.sosActive = true;
         _self!.refresh();
       }
+      if (!activeSosEvents.any((e) => e['userId'] == user.uid)) {
+        activeSosEvents.add({
+          'id': eventId,
+          'userId': user.uid,
+          'userName': userName,
+          'roomId': roomId,
+          'roomName': roomName,
+          'status': 'active',
+          'createdAt': DateTime.now().toIso8601String(),
+          if (myPos != null)
+            'location': GeoPoint(myPos.latitude, myPos.longitude),
+        });
+        activeSosCount.value = activeSosEvents.length;
+      }
       jamaahList.refresh();
       return true;
     } catch (e) {
@@ -1227,7 +1241,9 @@ class HajiCareController extends GetxController {
   }
 
   bool get anySosActive =>
-      activeSosCount.value > 0 || jamaahList.any((j) => j.sosActive);
+      activeSosCount.value > 0 ||
+      (_self?.sosActive ?? false) ||
+      jamaahList.any((j) => j.sosActive);
 
   bool get anyJamaahSeparated => jamaahList.any((j) => j.separatedMode);
 

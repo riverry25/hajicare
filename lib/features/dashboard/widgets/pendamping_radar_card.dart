@@ -422,6 +422,13 @@ class PendampingRadarCard extends StatelessWidget {
       final safeRadius = state.safeRadiusMeters.value;
       // GPS signal is only considered valid if we have a real coordinate AND isGpsActive flag.
       final hasSignal = jamaah.currentLocation != null && jamaah.isGpsActive;
+      final hasSosEvent = state.activeSosEvents.any(
+        (e) =>
+            e['userId'] == jamaah.id ||
+            e['jamaahId'] == jamaah.id ||
+            e['userName'] == jamaah.name,
+      );
+      final isSos = jamaah.sosActive || hasSosEvent;
       final roomId = state.activeRoomId.value ?? '';
       final roomName =
           state.activeRoom.value?.capitalizedName ??
@@ -433,14 +440,21 @@ class PendampingRadarCard extends StatelessWidget {
           color: AppColors.cardBgColor(context),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: AppColors.cardBorderColor(context),
-            width: 1.2,
+            color: isSos
+                ? AppColors.sosEmergency.withValues(alpha: 0.7)
+                : AppColors.cardBorderColor(context),
+            width: isSos ? 1.8 : 1.2,
           ),
           boxShadow: [
             BoxShadow(
-              color: (isDark ? Colors.black : AppColors.espressoDark)
-                  .withValues(alpha: isDark ? 0.35 : 0.08),
-              blurRadius: 18,
+              color: isSos
+                  ? AppColors.sosEmergency.withValues(
+                      alpha: isDark ? 0.25 : 0.15,
+                    )
+                  : (isDark ? Colors.black : AppColors.espressoDark).withValues(
+                      alpha: isDark ? 0.35 : 0.08,
+                    ),
+              blurRadius: isSos ? 22 : 18,
               offset: const Offset(0, 6),
             ),
           ],
@@ -453,20 +467,42 @@ class PendampingRadarCard extends StatelessWidget {
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                gradient: LinearGradient(
-                  colors: isDark
-                      ? [
-                          AppColors.darkSurfaceContainerHigh,
-                          AppColors.darkSurfaceContainerHighest,
-                        ]
-                      : [AppColors.espressoDark, AppColors.primaryContainer],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                gradient: isSos
+                    ? const LinearGradient(
+                        colors: [Color(0xFF5C1010), Color(0xFF380808)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      )
+                    : LinearGradient(
+                        colors: isDark
+                            ? [
+                                AppColors.darkSurfaceContainerHigh,
+                                AppColors.darkSurfaceContainerHighest,
+                              ]
+                            : [
+                                AppColors.espressoDark,
+                                AppColors.primaryContainer,
+                              ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                border: isSos
+                    ? Border.all(
+                        color: AppColors.sosEmergency.withValues(alpha: 0.6),
+                        width: 1.5,
+                      )
+                    : null,
                 boxShadow: [
                   BoxShadow(
-                    color: (isDark ? Colors.black : AppColors.espressoDark)
-                        .withValues(alpha: isDark ? 0.35 : 0.22),
+                    color:
+                        (isSos
+                                ? AppColors.sosEmergency
+                                : (isDark
+                                      ? Colors.black
+                                      : AppColors.espressoDark))
+                            .withValues(
+                              alpha: isSos ? 0.35 : (isDark ? 0.35 : 0.22),
+                            ),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -480,13 +516,15 @@ class PendampingRadarCard extends StatelessWidget {
                     Positioned.fill(
                       child: CustomPaint(
                         painter: _RadarWavesPainter(
-                          waveColor: hasSignal
-                              ? (jamaah.tier == DistanceTier.aman
-                                    ? AppColors.goldLight
-                                    : (jamaah.tier == DistanceTier.waspada
-                                          ? AppColors.distanceWarning
-                                          : AppColors.sosEmergency))
-                              : AppColors.tanLight,
+                          waveColor: isSos
+                              ? AppColors.sosEmergency
+                              : (hasSignal
+                                    ? (jamaah.tier == DistanceTier.aman
+                                          ? AppColors.goldLight
+                                          : (jamaah.tier == DistanceTier.waspada
+                                                ? AppColors.distanceWarning
+                                                : AppColors.sosEmergency))
+                                    : AppColors.tanLight),
                           centerFraction: const Offset(0.85, 0.28),
                         ),
                       ),
@@ -528,14 +566,22 @@ class PendampingRadarCard extends StatelessWidget {
                                   vertical: 4.5,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.28),
+                                  color: isSos
+                                      ? AppColors.sosEmergency.withValues(
+                                          alpha: 0.25,
+                                        )
+                                      : Colors.black.withValues(alpha: 0.28),
                                   borderRadius: BorderRadius.circular(
                                     AppRadius.pill,
                                   ),
                                   border: Border.all(
-                                    color: AppColors.goldLight.withValues(
-                                      alpha: 0.35,
-                                    ),
+                                    color: isSos
+                                        ? AppColors.sosEmergency.withValues(
+                                            alpha: 0.6,
+                                          )
+                                        : AppColors.goldLight.withValues(
+                                            alpha: 0.35,
+                                          ),
                                     width: 1,
                                   ),
                                 ),
@@ -543,16 +589,22 @@ class PendampingRadarCard extends StatelessWidget {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     AnimatedPingDot(
-                                      color: hasSignal
-                                          ? AppColors.accentGoldStar
-                                          : AppColors.outlineVariant,
+                                      color: isSos
+                                          ? AppColors.sosEmergency
+                                          : (hasSignal
+                                                ? AppColors.accentGoldStar
+                                                : AppColors.outlineVariant),
                                       size: 7,
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
-                                      context.tr('dashboard.radarActive'),
-                                      style: const TextStyle(
-                                        color: AppColors.goldLight,
+                                      isSos
+                                          ? 'RADAR SOS'
+                                          : context.tr('dashboard.radarActive'),
+                                      style: TextStyle(
+                                        color: isSos
+                                            ? const Color(0xFFFF8A80)
+                                            : AppColors.goldLight,
                                         fontSize: 10,
                                         fontWeight: FontWeight.w800,
                                         letterSpacing: 0.9,
@@ -569,30 +621,38 @@ class PendampingRadarCard extends StatelessWidget {
                                   vertical: 5,
                                 ),
                                 decoration: BoxDecoration(
-                                  color:
-                                      (hasSignal
-                                              ? jamaah.tier.color
-                                              : AppColors.outline)
-                                          .withValues(alpha: 0.26),
+                                  color: isSos
+                                      ? AppColors.sosEmergency.withValues(
+                                          alpha: 0.4,
+                                        )
+                                      : (hasSignal
+                                                ? jamaah.tier.color
+                                                : AppColors.outline)
+                                            .withValues(alpha: 0.26),
                                   borderRadius: BorderRadius.circular(
                                     AppRadius.pill,
                                   ),
                                   border: Border.all(
-                                    color:
-                                        (hasSignal
-                                                ? jamaah.tier.color
-                                                : AppColors.outline)
-                                            .withValues(alpha: 0.55),
-                                    width: 1.2,
+                                    color: isSos
+                                        ? AppColors.sosEmergency
+                                        : (hasSignal
+                                                  ? jamaah.tier.color
+                                                  : AppColors.outline)
+                                              .withValues(alpha: 0.55),
+                                    width: isSos ? 1.5 : 1.2,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color:
-                                          (hasSignal
-                                                  ? jamaah.tier.color
-                                                  : Colors.black)
-                                              .withValues(alpha: 0.25),
-                                      blurRadius: 8,
+                                      color: isSos
+                                          ? AppColors.sosEmergency.withValues(
+                                              alpha: 0.5,
+                                            )
+                                          : (hasSignal
+                                                    ? jamaah.tier.color
+                                                    : Colors.black)
+                                                .withValues(alpha: 0.25),
+                                      blurRadius: isSos ? 12 : 8,
+                                      spreadRadius: isSos ? 1 : 0,
                                       offset: const Offset(0, 2),
                                     ),
                                   ],
@@ -601,22 +661,26 @@ class PendampingRadarCard extends StatelessWidget {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(
-                                      hasSignal
-                                          ? jamaah.tier.icon
-                                          : Icons.hourglass_top_rounded,
+                                      isSos
+                                          ? Icons.warning_amber_rounded
+                                          : (hasSignal
+                                                ? jamaah.tier.icon
+                                                : Icons.hourglass_top_rounded),
                                       color: Colors.white,
                                       size: 13,
                                     ),
                                     const SizedBox(width: 5),
                                     Text(
-                                      hasSignal
-                                          ? _localizedTierLabel(
-                                              context,
-                                              jamaah.tier,
-                                            ).toUpperCase()
-                                          : context.tr(
-                                              'dashboard.waitingUpper',
-                                            ),
+                                      isSos
+                                          ? 'DARURAT SOS'
+                                          : (hasSignal
+                                                ? _localizedTierLabel(
+                                                    context,
+                                                    jamaah.tier,
+                                                  ).toUpperCase()
+                                                : context.tr(
+                                                    'dashboard.waitingUpper',
+                                                  )),
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 11,
@@ -641,26 +705,37 @@ class PendampingRadarCard extends StatelessWidget {
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: hasSignal
-                                        ? jamaah.tier.color
-                                        : AppColors.goldLight,
-                                    width: 2.2,
+                                    color: isSos
+                                        ? AppColors.sosEmergency
+                                        : (hasSignal
+                                              ? jamaah.tier.color
+                                              : AppColors.goldLight),
+                                    width: isSos ? 2.5 : 2.2,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color:
-                                          (hasSignal
-                                                  ? jamaah.tier.color
-                                                  : AppColors.espressoDark)
-                                              .withValues(alpha: 0.35),
-                                      blurRadius: 8,
+                                      color: isSos
+                                          ? AppColors.sosEmergency.withValues(
+                                              alpha: 0.6,
+                                            )
+                                          : (hasSignal
+                                                    ? jamaah.tier.color
+                                                    : AppColors.espressoDark)
+                                                .withValues(alpha: 0.35),
+                                      blurRadius: isSos ? 12 : 8,
+                                      spreadRadius: isSos ? 1 : 0,
                                     ),
                                   ],
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      AppColors.espressoDark,
-                                      AppColors.primaryContainer,
-                                    ],
+                                  gradient: LinearGradient(
+                                    colors: isSos
+                                        ? const [
+                                            Color(0xFFD32F2F),
+                                            Color(0xFFB71C1C),
+                                          ]
+                                        : const [
+                                            AppColors.espressoDark,
+                                            AppColors.primaryContainer,
+                                          ],
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                   ),
@@ -700,17 +775,23 @@ class PendampingRadarCard extends StatelessWidget {
                                           width: 6.5,
                                           height: 6.5,
                                           decoration: BoxDecoration(
-                                            color: jamaah.isGpsActive
-                                                ? AppColors.statusSafe
-                                                : AppColors.error,
+                                            color: isSos
+                                                ? AppColors.sosEmergency
+                                                : (jamaah.isGpsActive
+                                                      ? AppColors.statusSafe
+                                                      : AppColors.error),
                                             shape: BoxShape.circle,
                                             boxShadow: [
                                               BoxShadow(
                                                 color:
-                                                    (jamaah.isGpsActive
+                                                    (isSos
                                                             ? AppColors
-                                                                  .statusSafe
-                                                            : AppColors.error)
+                                                                  .sosEmergency
+                                                            : (jamaah.isGpsActive
+                                                                  ? AppColors
+                                                                        .statusSafe
+                                                                  : AppColors
+                                                                        .error))
                                                         .withValues(alpha: 0.6),
                                                 blurRadius: 4,
                                                 spreadRadius: 1,
@@ -721,19 +802,25 @@ class PendampingRadarCard extends StatelessWidget {
                                         const SizedBox(width: 6),
                                         Expanded(
                                           child: Text(
-                                            jamaah.isGpsActive
-                                                ? context.tr(
-                                                    'dashboard.gpsStable',
-                                                  )
-                                                : context.tr(
-                                                    'dashboard.gpsDisconnected',
-                                                  ),
+                                            isSos
+                                                ? 'Sinyal Darurat SOS Aktif'
+                                                : (jamaah.isGpsActive
+                                                      ? context.tr(
+                                                          'dashboard.gpsStable',
+                                                        )
+                                                      : context.tr(
+                                                          'dashboard.gpsDisconnected',
+                                                        )),
                                             style: TextStyle(
-                                              color: Colors.white.withValues(
-                                                alpha: 0.85,
-                                              ),
+                                              color: isSos
+                                                  ? const Color(0xFFFF8A80)
+                                                  : Colors.white.withValues(
+                                                      alpha: 0.85,
+                                                    ),
                                               fontSize: 11.5,
-                                              fontWeight: FontWeight.w500,
+                                              fontWeight: isSos
+                                                  ? FontWeight.w700
+                                                  : FontWeight.w500,
                                             ),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
@@ -794,9 +881,11 @@ class PendampingRadarCard extends StatelessWidget {
                                       .copyWith(
                                         fontSize: 32,
                                         fontWeight: FontWeight.w800,
-                                        color: hasSignal
-                                            ? jamaah.tier.color
-                                            : headingColor,
+                                        color: isSos
+                                            ? AppColors.sosEmergency
+                                            : (hasSignal
+                                                  ? jamaah.tier.color
+                                                  : headingColor),
                                         height: 1.1,
                                       ),
                                 ),
@@ -891,9 +980,11 @@ class PendampingRadarCard extends StatelessWidget {
                       backgroundColor: isDark
                           ? AppColors.darkSurfaceContainerHighest
                           : AppColors.canvasCreamSubtle,
-                      color: hasSignal
-                          ? jamaah.tier.color
-                          : AppColors.tanMedium,
+                      color: isSos
+                          ? AppColors.sosEmergency
+                          : (hasSignal
+                                ? jamaah.tier.color
+                                : AppColors.tanMedium),
                       minHeight: 8,
                     ),
                   ),
@@ -917,36 +1008,54 @@ class PendampingRadarCard extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: hasSignal
-                                ? (jamaah.distance <= safeRadius
-                                      ? AppColors.statusSafe.withValues(
-                                          alpha: isDark ? 0.2 : 0.1,
-                                        )
-                                      : AppColors.sosEmergency.withValues(
-                                          alpha: isDark ? 0.2 : 0.1,
-                                        ))
-                                : bodyColor.withValues(alpha: 0.08),
+                            color: isSos
+                                ? AppColors.sosEmergency.withValues(
+                                    alpha: isDark ? 0.25 : 0.15,
+                                  )
+                                : (hasSignal
+                                      ? (jamaah.distance <= safeRadius
+                                            ? AppColors.statusSafe.withValues(
+                                                alpha: isDark ? 0.2 : 0.1,
+                                              )
+                                            : AppColors.sosEmergency.withValues(
+                                                alpha: isDark ? 0.2 : 0.1,
+                                              ))
+                                      : bodyColor.withValues(alpha: 0.08)),
                             borderRadius: BorderRadius.circular(AppRadius.pill),
+                            border: isSos
+                                ? Border.all(
+                                    color: AppColors.sosEmergency.withValues(
+                                      alpha: 0.5,
+                                    ),
+                                    width: 1,
+                                  )
+                                : null,
                           ),
                           child: Text(
-                            hasSignal
-                                ? (jamaah.distance <= safeRadius
-                                      ? '${((jamaah.distance / safeRadius) * 100).toInt()}% ${context.tr('fromRadiusLimit')}'
-                                      : context.tr(
-                                          'dashboard.outsideSafeRadius',
-                                        ))
-                                : context.tr('dashboard.waitingGps'),
+                            isSos
+                                ? '🚨 Butuh Pertolongan Segera (SOS)'
+                                : (hasSignal
+                                      ? (jamaah.distance <= safeRadius
+                                            ? '${((jamaah.distance / safeRadius) * 100).toInt()}% ${context.tr('fromRadiusLimit')}'
+                                            : context.tr(
+                                                'dashboard.outsideSafeRadius',
+                                              ))
+                                      : context.tr('dashboard.waitingGps')),
                             style: DashboardTypography.captionSmall.copyWith(
                               fontSize: 10.5,
-                              color: hasSignal
-                                  ? (jamaah.distance <= safeRadius
-                                        ? (isDark
-                                              ? const Color(0xFF81C784)
-                                              : const Color(0xFF2E7D32))
-                                        : (isDark
-                                              ? const Color(0xFFE57373)
-                                              : AppColors.sosEmergency))
-                                  : bodyColor,
+                              color: isSos
+                                  ? (isDark
+                                        ? const Color(0xFFFF8A80)
+                                        : AppColors.sosEmergency)
+                                  : (hasSignal
+                                        ? (jamaah.distance <= safeRadius
+                                              ? (isDark
+                                                    ? const Color(0xFF81C784)
+                                                    : const Color(0xFF2E7D32))
+                                              : (isDark
+                                                    ? const Color(0xFFE57373)
+                                                    : AppColors.sosEmergency))
+                                        : bodyColor),
                               fontWeight: FontWeight.w700,
                             ),
                             maxLines: 1,
@@ -1223,33 +1332,42 @@ class PendampingRadarCard extends StatelessWidget {
                         onTrackMap?.call();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isDark
-                            ? AppColors.darkPrimaryContainer
-                            : AppColors.espressoDark,
-                        foregroundColor: isDark
-                            ? AppColors.darkPrimary
-                            : AppColors.surfaceWhite,
+                        backgroundColor: isSos
+                            ? AppColors.sosEmergency
+                            : (isDark
+                                  ? AppColors.darkPrimaryContainer
+                                  : AppColors.espressoDark),
+                        foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
-                        elevation: 2,
+                        elevation: isSos ? 3 : 2,
                         shadowColor:
-                            (isDark ? Colors.black : AppColors.espressoDark)
-                                .withValues(alpha: 0.3),
+                            (isSos
+                                    ? AppColors.sosEmergency
+                                    : (isDark
+                                          ? Colors.black
+                                          : AppColors.espressoDark))
+                                .withValues(alpha: isSos ? 0.45 : 0.3),
                         padding: const EdgeInsets.symmetric(horizontal: 14),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.near_me_rounded, size: 17),
+                          Icon(
+                            isSos
+                                ? Icons.emergency_rounded
+                                : Icons.near_me_rounded,
+                            size: 17,
+                          ),
                           const SizedBox(width: 8),
                           Flexible(
                             child: Text(
-                              context.tr('trackOnInteractiveMap'),
-                              style: TextStyle(
-                                color: isDark
-                                    ? AppColors.darkPrimary
-                                    : AppColors.surfaceWhite,
+                              isSos
+                                  ? 'Lacak Darurat di Peta'
+                                  : context.tr('trackOnInteractiveMap'),
+                              style: const TextStyle(
+                                color: Colors.white,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 13.5,
                               ),

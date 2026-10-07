@@ -144,75 +144,84 @@ class _ModalSosScreenState extends State<ModalSosScreen>
 
   /// Combines all active SOS sources: Firestore sos_events stream,
   /// room jamaahList with sosActive flag, and incoming sos_alert notifications.
+  /// Deduplication is done by BOTH eventId AND userId so the same jamaah
+  /// never appears twice across the three sources.
   List<Map<String, dynamic>> _resolveActiveSosList() {
     final list = <Map<String, dynamic>>[];
-    final seenIds = <String>{};
+    // seenEventIds: prevents duplicate Firestore event docs
+    final seenEventIds = <String>{};
+    // seenUserIds: prevents the same user from appearing in multiple sources
+    final seenUserIds = <String>{};
 
-    // 1. From Firestore sos_events stream in state
+    // 1. From Firestore sos_events stream in state (canonical / highest priority)
     for (final event in state.activeSosEvents) {
-      final id =
-          event['id']?.toString() ??
-          event['userId']?.toString() ??
-          event['jamaahId']?.toString();
-      final uId = event['userId']?.toString() ?? event['jamaahId']?.toString();
-      if (_isItemDismissed(id, uId)) continue;
-      if (id != null && seenIds.add(id)) {
+      final eventId = event['id']?.toString();
+      final uId =
+          event['userId']?.toString() ?? event['jamaahId']?.toString() ?? '';
+      if (_isItemDismissed(eventId, uId)) continue;
+      if (uId.isNotEmpty && seenUserIds.contains(uId)) continue;
+      if (eventId != null && seenEventIds.add(eventId)) {
+        if (uId.isNotEmpty) seenUserIds.add(uId);
         list.add(Map<String, dynamic>.from(event));
       }
     }
 
-    // 2. From room jamaahList (if any jamaah has sosActive == true)
+    // 2. From room jamaahList (only add if userId not already covered by source 1)
     for (final j in state.jamaahList) {
       if (_isItemDismissed(j.id)) continue;
-      if (j.sosActive && seenIds.add(j.id)) {
-        list.add({
-          'id': j.id,
-          'userId': j.id,
-          'jamaahId': j.id,
-          'userName': j.name,
-          'roomName': state.activeRoom.value?.name ?? 'Rombongan',
-          'status': 'active',
-          'timestamp': j.locationUpdatedAt ?? DateTime.now(),
-          if (j.currentLocation != null) 'location': j.currentLocation,
-          if (state.pendampingKloter.value != null)
-            'kloter': state.pendampingKloter.value,
-          if (state.pendampingMaktab.value != null)
-            'maktab': state.pendampingMaktab.value,
-        });
-      }
+      if (!j.sosActive) continue;
+      if (seenUserIds.contains(j.id)) continue; // already from Firestore event
+      seenUserIds.add(j.id);
+      seenEventIds.add(j.id);
+      list.add({
+        'id': j.id,
+        'userId': j.id,
+        'jamaahId': j.id,
+        'userName': j.name,
+        'roomName': state.activeRoom.value?.name ?? 'Rombongan',
+        'status': 'active',
+        'timestamp': j.locationUpdatedAt ?? DateTime.now(),
+        if (j.currentLocation != null) 'location': j.currentLocation,
+        if (state.pendampingKloter.value != null)
+          'kloter': state.pendampingKloter.value,
+        if (state.pendampingMaktab.value != null)
+          'maktab': state.pendampingMaktab.value,
+      });
     }
 
     // 3. From incoming unhandled notifications of type sos_alert
+    // Only used as fallback if neither source 1 nor 2 covered this user.
     if (Get.isRegistered<NotificationController>()) {
       final notifCtrl = Get.find<NotificationController>();
       for (final n in notifCtrl.notifications) {
-        // ONLY active, UNREAD notifications that haven't been dismissed
-        if (n.isSosAlert && !n.isRead) {
-          final senderId = n.senderId ?? n.targetUserId;
-          final eventId = n.relatedId ?? senderId;
-          if (_isItemDismissed(n.id, eventId) || _isItemDismissed(senderId)) {
-            continue;
-          }
-          if (eventId != null && seenIds.add(eventId)) {
-            final lat = (n.metadata?['latitude'] as num?)?.toDouble();
-            final lng = (n.metadata?['longitude'] as num?)?.toDouble();
-            list.add({
-              'id': eventId,
-              'userId': senderId ?? eventId,
-              'jamaahId': senderId ?? eventId,
-              'userName': n.senderName ?? 'Jamaah',
-              'roomName':
-                  n.metadata?['roomName'] ??
-                  (n.targetRoomId != null ? 'Rombongan' : 'Di luar rombongan'),
-              'status': 'active',
-              'timestamp': n.createdAt ?? DateTime.now(),
-              if (lat != null && lng != null) 'location': GeoPoint(lat, lng),
-              if (n.metadata?['kloter'] != null)
-                'kloter': n.metadata!['kloter'],
-              if (n.metadata?['maktab'] != null)
-                'maktab': n.metadata!['maktab'],
-            });
-          }
+        if (!n.isSosAlert || n.isRead) continue;
+        final senderId = n.senderId ?? n.targetUserId;
+        final eventId = n.relatedId ?? senderId;
+        if (_isItemDismissed(n.id, eventId) || _isItemDismissed(senderId)) {
+          continue;
+        }
+        // Skip if this userId is already represented
+        if (senderId != null && seenUserIds.contains(senderId)) continue;
+        if (eventId != null && seenEventIds.add(eventId)) {
+          if (senderId != null) seenUserIds.add(senderId);
+          final lat = (n.metadata?['latitude'] as num?)?.toDouble();
+          final lng = (n.metadata?['longitude'] as num?)?.toDouble();
+          list.add({
+            'id': eventId,
+            'userId': senderId ?? eventId,
+            'jamaahId': senderId ?? eventId,
+            'userName': n.senderName ?? 'Jamaah',
+            'roomName':
+                n.metadata?['roomName'] ??
+                (n.targetRoomId != null ? 'Rombongan' : 'Di luar rombongan'),
+            'status': 'active',
+            'timestamp': n.createdAt ?? DateTime.now(),
+            if (lat != null && lng != null) 'location': GeoPoint(lat, lng),
+            if (n.metadata?['kloter'] != null)
+              'kloter': n.metadata!['kloter'],
+            if (n.metadata?['maktab'] != null)
+              'maktab': n.metadata!['maktab'],
+          });
         }
       }
     }
@@ -478,11 +487,12 @@ class _ModalSosScreenState extends State<ModalSosScreen>
             final loc = sos['location'];
             final locationLabel = () {
               if (loc is GeoPoint) {
-                return 'Lat: ${loc.latitude.toStringAsFixed(4)}, '
-                    'Lng: ${loc.longitude.toStringAsFixed(4)}';
+                // Show user-friendly label instead of raw coordinates
+                return '📍 Lokasi GPS terdeteksi — tap Lihat Detail';
               }
-              return 'Lokasi tersedia di Detail';
+              return '📍 Lokasi belum tersedia';
             }();
+            final hasLocation = loc is GeoPoint;
 
             return Container(
               margin: const EdgeInsets.only(bottom: AppSpacing.md),
@@ -619,17 +629,27 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(
-                          Icons.near_me_rounded,
+                        Icon(
+                          hasLocation
+                              ? Icons.gps_fixed_rounded
+                              : Icons.gps_not_fixed_rounded,
                           size: 14,
-                          color: AppColors.sosEmergency,
+                          color: hasLocation
+                              ? AppColors.statusSafe
+                              : bodyColor.withValues(alpha: 0.5),
                         ),
                         const SizedBox(width: 4),
-                        Text(
-                          locationLabel,
-                          style: AppTypography.captionSmall.copyWith(
-                            color: AppColors.sosEmergency,
-                            fontWeight: FontWeight.bold,
+                        Flexible(
+                          child: Text(
+                            locationLabel,
+                            style: AppTypography.captionSmall.copyWith(
+                              color: hasLocation
+                                  ? AppColors.statusSafe
+                                  : bodyColor.withValues(alpha: 0.6),
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
