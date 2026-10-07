@@ -1,5 +1,6 @@
 import '../../../core/locales/app_localizations.dart';
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -1959,6 +1960,86 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     );
   }
 
+  RoomMemberModel _resolveRealtimeMember(RoomMemberModel member) {
+    RoomMemberModel result = member;
+
+    if (Get.isRegistered<HajiCareController>()) {
+      final hajiCtrl = Get.find<HajiCareController>();
+      // 1. If active SOS, use SOS location (most critical realtime signal)
+      final sos = hajiCtrl.activeSosEvents.firstWhereOrNull(
+        (s) =>
+            (s['userId'] == member.uid || s['jamaahId'] == member.uid) &&
+            s['location'] != null,
+      );
+      if (sos != null) {
+        final loc = sos['location'];
+        GeoPoint? geo;
+        if (loc is GeoPoint) {
+          geo = loc;
+        } else if (loc is Map) {
+          final lat = (loc['latitude'] as num?)?.toDouble();
+          final lng = (loc['longitude'] as num?)?.toDouble();
+          if (lat != null && lng != null) geo = GeoPoint(lat, lng);
+        }
+        if (geo != null) {
+          final ts = (sos['locationUpdatedAt'] is Timestamp)
+              ? (sos['locationUpdatedAt'] as Timestamp).toDate()
+              : (sos['timestamp'] is Timestamp
+                    ? (sos['timestamp'] as Timestamp).toDate()
+                    : DateTime.now());
+          result = result.copyWith(
+            currentLocation: geo,
+            locationUpdatedAt: ts,
+            sosActive: true,
+          );
+        }
+      } else {
+        // 2. Check jamaahList
+        final jamaah = hajiCtrl.jamaahList.firstWhereOrNull(
+          (j) => j.id == member.uid,
+        );
+        if (jamaah != null && jamaah.currentLocation != null) {
+          if (!result.hasLocation ||
+              (jamaah.locationUpdatedAt != null &&
+                  (result.locationUpdatedAt == null ||
+                      jamaah.locationUpdatedAt!.isAfter(
+                        result.locationUpdatedAt!,
+                      )))) {
+            result = result.copyWith(
+              currentLocation: jamaah.currentLocation,
+              locationUpdatedAt: jamaah.locationUpdatedAt,
+              sosActive: jamaah.sosActive,
+            );
+          }
+        }
+      }
+    }
+
+    // 3. Check MapController.roomMembers
+    if (Get.isRegistered<MapController>()) {
+      final mapCtrl = Get.find<MapController>();
+      final mapM = mapCtrl.roomMembers.firstWhereOrNull(
+        (m) => m.uid == member.uid,
+      );
+      if (mapM != null && mapM.hasLocation) {
+        if (!result.hasLocation ||
+            (mapM.locationUpdatedAt != null &&
+                (result.locationUpdatedAt == null ||
+                    mapM.locationUpdatedAt!.isAfter(
+                      result.locationUpdatedAt!,
+                    )))) {
+          result = result.copyWith(
+            currentLocation: mapM.currentLocation,
+            locationUpdatedAt: mapM.locationUpdatedAt,
+            sosActive: mapM.sosActive || result.sosActive,
+          );
+        }
+      }
+    }
+
+    return result;
+  }
+
   // ===========================================================================
   // MEMBER DETAIL MODAL SHEET
   // ===========================================================================
@@ -1968,6 +2049,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     RoomModel room,
     bool canManage,
   ) {
+    final effectiveMember = _resolveRealtimeMember(member);
     final isDark = AppColors.isDark(context);
     final headingColor = isDark
         ? AppColors.darkTextHeading
@@ -2007,9 +2089,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       width: 50,
                       height: 50,
                       decoration: BoxDecoration(
-                        color: member.isPendamping
+                        color: effectiveMember.isPendamping
                             ? const Color(0xFF1D4ED8).withValues(alpha: 0.15)
-                            : (member.isJamaah
+                            : (effectiveMember.isJamaah
                                   ? AppColors.emeraldIslamic.withValues(
                                       alpha: 0.15,
                                     )
@@ -2018,13 +2100,13 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       ),
                       child: Center(
                         child: Text(
-                          member.name.isNotEmpty
-                              ? member.name[0].toUpperCase()
+                          effectiveMember.name.isNotEmpty
+                              ? effectiveMember.name[0].toUpperCase()
                               : '?',
                           style: TextStyle(
-                            color: member.isPendamping
+                            color: effectiveMember.isPendamping
                                 ? const Color(0xFF1D4ED8)
-                                : (member.isJamaah
+                                : (effectiveMember.isJamaah
                                       ? AppColors.emeraldIslamic
                                       : primaryColor),
                             fontWeight: FontWeight.bold,
@@ -2039,7 +2121,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            member.name,
+                            effectiveMember.name,
                             style: AppTypography.titleMedium.copyWith(
                               color: headingColor,
                               fontWeight: FontWeight.bold,
@@ -2053,11 +2135,11 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: member.isPendamping
+                              color: effectiveMember.isPendamping
                                   ? const Color(
                                       0xFF1D4ED8,
                                     ).withValues(alpha: 0.12)
-                                  : (member.isJamaah
+                                  : (effectiveMember.isJamaah
                                         ? AppColors.emeraldIslamic.withValues(
                                             alpha: 0.12,
                                           )
@@ -2067,11 +2149,11 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                               ),
                             ),
                             child: Text(
-                              member.role.toUpperCase(),
+                              effectiveMember.role.toUpperCase(),
                               style: TextStyle(
-                                color: member.isPendamping
+                                color: effectiveMember.isPendamping
                                     ? const Color(0xFF1D4ED8)
-                                    : (member.isJamaah
+                                    : (effectiveMember.isJamaah
                                           ? AppColors.emeraldIslamic
                                           : primaryColor),
                                 fontWeight: FontWeight.w700,
@@ -2090,7 +2172,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                 _buildModalInfoTile(
                   icon: Icons.access_time_rounded,
                   label: context.tr('room.attendanceStatus'),
-                  value: member.getLocationStatus(),
+                  value: effectiveMember.getLocationStatus(),
                   color: primaryColor,
                   headingColor: headingColor,
                   bodyColor: bodyColor,
@@ -2099,20 +2181,20 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                 _buildModalInfoTile(
                   icon: Icons.calendar_today_rounded,
                   label: context.tr('room.joinDate'),
-                  value: member.joinedAt != null
-                      ? _formatDate(member.joinedAt)
+                  value: effectiveMember.joinedAt != null
+                      ? _formatDate(effectiveMember.joinedAt)
                       : 'Tidak diketahui',
                   color: primaryColor,
                   headingColor: headingColor,
                   bodyColor: bodyColor,
                 ),
-                if (member.hasLocation) ...[
+                if (effectiveMember.hasLocation) ...[
                   const SizedBox(height: 10),
                   _buildModalInfoTile(
                     icon: Icons.location_on_rounded,
                     label: context.tr('room.locationCoordinates'),
                     value:
-                        '${member.latitude!.toStringAsFixed(5)}, ${member.longitude!.toStringAsFixed(5)}',
+                        '${effectiveMember.latitude!.toStringAsFixed(5)}, ${effectiveMember.longitude!.toStringAsFixed(5)}',
                     color: primaryColor,
                     headingColor: headingColor,
                     bodyColor: bodyColor,
@@ -2123,16 +2205,32 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
                 Row(
                   children: [
-                    if (member.hasLocation)
+                    if (effectiveMember.hasLocation)
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: () {
                             Navigator.pop(ctx);
+                            final targetMember = _resolveRealtimeMember(
+                              effectiveMember,
+                            );
                             if (Get.isRegistered<DashboardController>()) {
                               Get.find<DashboardController>().changeTab(1);
+                              Get.back();
+                              Future.delayed(
+                                const Duration(milliseconds: 250),
+                                () {
+                                  if (Get.isRegistered<MapController>()) {
+                                    Get.find<MapController>().focusOnMember(
+                                      targetMember,
+                                      autoRoute: false,
+                                    );
+                                  }
+                                },
+                              );
+                            } else {
                               if (Get.isRegistered<MapController>()) {
                                 Get.find<MapController>().focusOnMember(
-                                  member,
+                                  targetMember,
                                   autoRoute: false,
                                 );
                               }
@@ -2153,14 +2251,16 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                           ),
                         ),
                       ),
-                    if (member.hasLocation && canManage && member.isJamaah)
+                    if (effectiveMember.hasLocation &&
+                        canManage &&
+                        effectiveMember.isJamaah)
                       const SizedBox(width: 10),
-                    if (canManage && member.isJamaah)
+                    if (canManage && effectiveMember.isJamaah)
                       Expanded(
                         child: ElevatedButton.icon(
                           onPressed: () {
                             Navigator.pop(ctx);
-                            _handleRemoveMember(context, member, room);
+                            _handleRemoveMember(context, effectiveMember, room);
                           },
                           icon: const Icon(
                             Icons.person_remove_rounded,
@@ -2380,6 +2480,13 @@ class _MemberTile extends StatelessWidget {
         ? member.name.trim()[0].toUpperCase()
         : '?';
 
+    // Check if this member has an active SOS event
+    final hasSos = Get.isRegistered<HajiCareController>()
+        ? Get.find<HajiCareController>().activeSosEvents.any(
+            (e) => e['userId'] == member.uid || e['jamaahId'] == member.uid,
+          )
+        : false;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -2396,26 +2503,56 @@ class _MemberTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: badgeBg,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(
-                    color: badgeTextColor.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    initial,
-                    style: TextStyle(
-                      color: badgeTextColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 17,
+              Stack(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: hasSos
+                          ? AppColors.sosEmergency.withValues(alpha: 0.18)
+                          : badgeBg,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(
+                        color: hasSos
+                            ? AppColors.sosEmergency.withValues(alpha: 0.6)
+                            : badgeTextColor.withValues(alpha: 0.3),
+                        width: hasSos ? 1.8 : 1.0,
+                      ),
+                    ),
+                    child: Center(
+                      child: hasSos
+                          ? const Icon(
+                              Icons.sos_rounded,
+                              color: AppColors.sosEmergency,
+                              size: 22,
+                            )
+                          : Text(
+                              initial,
+                              style: TextStyle(
+                                color: badgeTextColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 17,
+                              ),
+                            ),
                     ),
                   ),
-                ),
+                  // SOS pulse dot
+                  if (hasSos)
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      child: Container(
+                        width: 11,
+                        height: 11,
+                        decoration: BoxDecoration(
+                          color: AppColors.sosEmergency,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 1.5),
+                        ),
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(width: AppSpacing.sm + 4),
 
@@ -2437,7 +2574,46 @@ class _MemberTile extends StatelessWidget {
                     const SizedBox(height: 2),
                     Row(
                       children: [
-                        if (member.hasLocation) ...[
+                        if (hasSos) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 5,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.sosEmergency.withValues(
+                                alpha: 0.14,
+                              ),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                color: AppColors.sosEmergency.withValues(
+                                  alpha: 0.4,
+                                ),
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.sos_rounded,
+                                  size: 9,
+                                  color: AppColors.sosEmergency,
+                                ),
+                                SizedBox(width: 3),
+                                Text(
+                                  'SOS AKTIF',
+                                  style: TextStyle(
+                                    color: AppColors.sosEmergency,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                        ] else if (member.hasLocation) ...[
                           Container(
                             width: 6,
                             height: 6,

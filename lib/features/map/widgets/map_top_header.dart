@@ -339,21 +339,6 @@ class _MapTopHeaderState extends State<MapTopHeader> {
                   : Colors.white.withValues(alpha: 0.22),
               width: hasActiveSos ? 1.5 : 1.0,
             ),
-            boxShadow: hasActiveSos
-                ? [
-                    BoxShadow(
-                      color: const Color(0xFFFF1744).withValues(alpha: 0.5),
-                      blurRadius: 10,
-                      spreadRadius: 1,
-                    ),
-                  ]
-                : [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
-                    ),
-                  ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,

@@ -17,7 +17,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../core/widgets/app_card.dart';
 import '../../map/controllers/map_controller.dart';
 import '../../map/models/map_poi.dart';
 import '../../notification/controllers/notification_controller.dart';
@@ -293,6 +292,7 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
         ? AppColors.darkTextHeading
         : AppColors.espressoDark;
     final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
+    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
 
     final userName =
         (_sosData['userName'] as String?)?.trim().isNotEmpty == true
@@ -319,34 +319,27 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
           icon: Icon(Icons.arrow_back_rounded, color: headingColor),
           onPressed: () => Get.back(),
         ),
-        title: Row(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: const BoxDecoration(
-                color: AppColors.sosEmergency,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.emergency_rounded,
-                color: Colors.white,
-                size: 16,
+            Text(
+              'Detail Darurat SOS',
+              style: AppTypography.headlineMedium.copyWith(
+                color: headingColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
               ),
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Detail SOS — $userName',
-                style: AppTypography.headlineMedium.copyWith(
-                  color: headingColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+            Text(
+              _isSosResolved ? 'Sudah Diselesaikan' : 'Aktif · Pantau Lokasi',
+              style: AppTypography.captionSmall.copyWith(
+                color: _isSosResolved
+                    ? AppColors.statusSafe
+                    : AppColors.sosEmergency,
+                fontWeight: FontWeight.w700,
+                fontSize: 10.5,
               ),
             ),
-            const SizedBox(width: 8),
           ],
         ),
         actions: [
@@ -358,14 +351,21 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                 color: AppColors.sosEmergency,
                 borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
-              child: const Text(
-                'AKTIF',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 11,
-                  letterSpacing: 0.5,
-                ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.emergency_rounded, color: Colors.white, size: 12),
+                  SizedBox(width: 4),
+                  Text(
+                    'DARURAT',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 11,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
               ),
             ),
         ],
@@ -374,168 +374,356 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
         padding: const EdgeInsets.all(AppSpacing.screenEdgeGutter),
         physics: const BouncingScrollPhysics(),
         children: [
-          // ── 1. Identity Card ──────────────────────────────────────────────
-          AppCard(
-            backgroundColor: cardBg,
-            borderColor: AppColors.sosEmergency.withValues(alpha: 0.45),
-            padding: const EdgeInsets.all(AppSpacing.cardPadding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: AppColors.sosEmergency.withValues(alpha: 0.14),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.sosEmergency.withValues(alpha: 0.35),
-                        ),
+          // ── 0. Floating Hero Header Card (same pattern as RoomDetailScreen) ──
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Main body card underneath
+              Container(
+                margin: const EdgeInsets.only(top: 30),
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.darkCardBorder
+                        : AppColors.lightCardBorder,
+                    width: 1.2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(
+                        alpha: isDark ? 0.28 : 0.05,
                       ),
-                      child: const Icon(
-                        Icons.person_pin_circle_rounded,
-                        color: AppColors.sosEmergency,
-                        size: 24,
-                      ),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 52, 18, 18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Identity info rows
+                      _buildInfoTile(
+                        icon: Icons.badge_rounded,
+                        label: 'ID Jamaah',
+                        value: userId == '-' ? 'Tidak diketahui' : userId,
+                        color: primaryColor,
+                        headingColor: headingColor,
+                        bodyColor: bodyColor,
+                        isDark: isDark,
+                        cardBg: cardBg,
+                      ),
+                      const SizedBox(height: 8),
+                      _buildInfoTile(
+                        icon: Icons.groups_2_rounded,
+                        label: 'Rombongan',
+                        value: roomName,
+                        color: primaryColor,
+                        headingColor: headingColor,
+                        bodyColor: bodyColor,
+                        isDark: isDark,
+                        cardBg: cardBg,
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
                         children: [
-                          Text(
-                            userName,
-                            style: AppTypography.titleMedium.copyWith(
-                              color: headingColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                          Expanded(
+                            child: _buildInfoTile(
+                              icon: Icons.flight_takeoff_rounded,
+                              label: 'Kloter',
+                              value: (kloter != null && kloter.isNotEmpty)
+                                  ? kloter
+                                  : '-',
+                              color: primaryColor,
+                              headingColor: headingColor,
+                              bodyColor: bodyColor,
+                              isDark: isDark,
+                              cardBg: cardBg,
+                              compact: true,
                             ),
                           ),
-                          Text(
-                            roomName,
-                            style: AppTypography.captionSmall.copyWith(
-                              color: bodyColor.withValues(alpha: 0.75),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildInfoTile(
+                              icon: Icons.hotel_rounded,
+                              label: 'Maktab',
+                              value: (maktab != null && maktab.isNotEmpty)
+                                  ? maktab
+                                  : '-',
+                              color: primaryColor,
+                              headingColor: headingColor,
+                              bodyColor: bodyColor,
+                              isDark: isDark,
+                              cardBg: cardBg,
+                              compact: true,
                             ),
                           ),
                         ],
                       ),
+                      const SizedBox(height: 8),
+                      _buildInfoTile(
+                        icon: Icons.access_time_rounded,
+                        label: 'Waktu SOS',
+                        value: timeStr,
+                        color: AppColors.sosEmergency,
+                        headingColor: headingColor,
+                        bodyColor: bodyColor,
+                        isDark: isDark,
+                        cardBg: cardBg,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Floating hero header (protrudes above card)
+              Positioned(
+                top: 0,
+                left: 14,
+                right: 14,
+                height: 60,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF7F1D1D), Color(0xFFB91C1C)],
                     ),
-                    _StatusBadge(status: status, isResolved: _isSosResolved),
-                  ],
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: AppColors.sosEmergency.withValues(alpha: 0.6),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.sosEmergency.withValues(alpha: 0.4),
+                        blurRadius: 18,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    children: [
+                      // Glow circles
+                      Positioned(
+                        top: -10,
+                        right: -10,
+                        child: Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.07),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: -15,
+                        left: -15,
+                        child: Container(
+                          width: 55,
+                          height: 55,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.05),
+                          ),
+                        ),
+                      ),
+                      // Content
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 38,
+                              height: 38,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.35),
+                                  width: 1.2,
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.sos_rounded,
+                                color: Colors.white,
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    userName,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 15,
+                                      letterSpacing: -0.2,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    'Menekan Tombol Darurat SOS',
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.78,
+                                      ),
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            _StatusBadge(
+                              status: status,
+                              isResolved: _isSosResolved,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const Divider(height: 20),
-                _InfoRow(
-                  icon: Icons.fingerprint_rounded,
-                  label: context.tr('sos.pilgrimId'),
-                  value: userId,
-                  color: bodyColor,
-                  headingColor: headingColor,
-                ),
-                const SizedBox(height: 8),
-                _InfoRow(
-                  icon: Icons.flight_rounded,
-                  label: context.tr('sos.kloterLabel'),
-                  value: (kloter != null && kloter.isNotEmpty) ? kloter : '-',
-                  color: bodyColor,
-                  headingColor: headingColor,
-                ),
-                const SizedBox(height: 8),
-                _InfoRow(
-                  icon: Icons.holiday_village_rounded,
-                  label: context.tr('sos.maktabLabel'),
-                  value: (maktab != null && maktab.isNotEmpty) ? maktab : '-',
-                  color: bodyColor,
-                  headingColor: headingColor,
-                ),
-                const SizedBox(height: 8),
-                _InfoRow(
-                  icon: Icons.access_time_rounded,
-                  label: context.tr('sos.sosTime'),
-                  value: timeStr,
-                  color: bodyColor,
-                  headingColor: headingColor,
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
           const SizedBox(height: AppSpacing.md),
 
-          // ── 2. Location Status ────────────────────────────────────────────
-          AppCard(
-            backgroundColor: cardBg,
-            padding: const EdgeInsets.all(AppSpacing.cardPadding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          // ── 2. Location Status Card ───────────────────────────────────────
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: _freshnessColor().withValues(alpha: 0.35),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.near_me_rounded,
-                      size: 16,
-                      color: _freshnessColor(),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _freshnessColor().withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.near_me_rounded,
+                    size: 18,
+                    color: _freshnessColor(),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
                         _locationFreshness(),
                         style: AppTypography.captionSmall.copyWith(
                           color: _freshnessColor(),
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                    ),
-                    if (_liveLocation != null)
-                      GestureDetector(
-                        onTap: () {
-                          final loc = _liveLocation!;
-                          Clipboard.setData(
-                            ClipboardData(
-                              text:
-                                  '${loc.latitude.toStringAsFixed(6)}, '
-                                  '${loc.longitude.toStringAsFixed(6)}',
-                            ),
-                          );
-                          AppAlert.success(
-                            context,
-                            title: context.tr('sos.coordinatesCopied'),
-                            message: 'Koordinat GPS jamaah sudah disalin.',
-                          );
-                        },
-                        child: const Icon(
-                          Icons.copy_rounded,
-                          size: 15,
-                          color: AppColors.goldPrimary,
+                      Text(
+                        _distanceText(),
+                        style: AppTypography.bodySmall.copyWith(
+                          color: headingColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
                         ),
                       ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _distanceText(),
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.sosEmergency,
-                    fontWeight: FontWeight.bold,
+                    ],
                   ),
                 ),
+                if (_liveLocation != null)
+                  GestureDetector(
+                    onTap: () {
+                      final loc = _liveLocation!;
+                      Clipboard.setData(
+                        ClipboardData(
+                          text:
+                              '${loc.latitude.toStringAsFixed(6)}, '
+                              '${loc.longitude.toStringAsFixed(6)}',
+                        ),
+                      );
+                      AppAlert.success(
+                        context,
+                        title: context.tr('sos.coordinatesCopied'),
+                        message: 'Koordinat GPS jamaah sudah disalin.',
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.06)
+                            : AppColors.canvasCream,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isDark
+                              ? AppColors.darkOutlineVariant
+                              : AppColors.canvasCreamSubtle,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.copy_rounded,
+                            size: 13,
+                            color: AppColors.goldPrimary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Salin',
+                            style: TextStyle(
+                              color: AppColors.goldPrimary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
           const SizedBox(height: AppSpacing.md),
 
           // ── 3. Mini Map ───────────────────────────────────────────────────
-          _buildMiniMap(isDark),
+          _buildMiniMap(isDark, cardBg),
           const SizedBox(height: AppSpacing.md),
 
           // ── 4. Action Buttons ─────────────────────────────────────────────
           if (!_isSosResolved) ...[
             SizedBox(
               width: double.infinity,
-              height: 48,
+              height: 50,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1E60CC),
+                  backgroundColor: const Color(0xFF1E4DC4),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -545,7 +733,7 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                 icon: const Icon(Icons.navigation_rounded, size: 18),
                 label: const Text(
                   'Buat Rute ke Jamaah',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 onPressed: _openRoute,
               ),
@@ -559,8 +747,9 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                       foregroundColor: headingColor,
                       side: BorderSide(
                         color: isDark
-                            ? AppColors.darkCardBorder
-                            : AppColors.canvasCreamSubtle,
+                            ? AppColors.darkOutlineVariant
+                            : AppColors.lightCardBorder,
+                        width: 1.2,
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -569,10 +758,10 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                     ),
                     icon: const Icon(Icons.map_outlined, size: 16),
                     label: const Text(
-                      'Buka di Google Maps',
+                      'Google Maps',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                        fontSize: 12.5,
                       ),
                     ),
                     onPressed: _liveLocation != null ? _openGoogleMaps : null,
@@ -595,7 +784,7 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                       'Selesaikan SOS',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                        fontSize: 12.5,
                       ),
                     ),
                     onPressed: _dismissSos,
@@ -604,31 +793,49 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
               ],
             ),
           ] else ...[
-            // Already resolved
             Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
               decoration: BoxDecoration(
                 color: AppColors.statusSafe.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: AppColors.statusSafe.withValues(alpha: 0.3),
+                  color: AppColors.statusSafe.withValues(alpha: 0.35),
                 ),
               ),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.check_circle_rounded,
-                    color: AppColors.statusSafe,
-                    size: 20,
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.statusSafe.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check_circle_rounded,
+                      color: AppColors.statusSafe,
+                      size: 20,
+                    ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      'Panggilan darurat ini sudah diselesaikan.',
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.statusSafe,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Darurat Sudah Ditangani',
+                          style: AppTypography.bodySmall.copyWith(
+                            color: AppColors.statusSafe,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                          ),
+                        ),
+                        Text(
+                          'Panggilan darurat ini telah diselesaikan oleh petugas.',
+                          style: AppTypography.captionSmall.copyWith(
+                            color: AppColors.statusSafe.withValues(alpha: 0.8),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -641,7 +848,80 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
     );
   }
 
-  Widget _buildMiniMap(bool isDark) {
+  /// Builds a premium info tile matching RoomDetailScreen visual language.
+  Widget _buildInfoTile({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+    required Color headingColor,
+    required Color bodyColor,
+    required bool isDark,
+    required Color cardBg,
+    bool compact = false,
+  }) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 10 : 13,
+        vertical: compact ? 9 : 11,
+      ),
+      decoration: BoxDecoration(
+        color: isDark
+            ? AppColors.darkSurfaceContainer
+            : AppColors.canvasCream.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark
+              ? AppColors.darkCardBorder
+              : AppColors.lightCardBorder.withValues(alpha: 0.6),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppColors.darkPrimaryContainer
+                  : AppColors.canvasCreamSubtle,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 15, color: color),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: bodyColor.withValues(alpha: 0.7),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: headingColor,
+                    fontWeight: FontWeight.w700,
+                    fontSize: compact ? 12 : 12.5,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMiniMap(bool isDark, Color cardBg) {
     final target = _targetLatLng;
     final initialCenter = target ?? const LatLng(21.4135, 39.8930);
 
@@ -796,53 +1076,6 @@ class _StatusBadge extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color color;
-  final Color headingColor;
-
-  const _InfoRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.headingColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 15, color: color.withValues(alpha: 0.65)),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: 72,
-          child: Text(
-            label,
-            style: AppTypography.captionSmall.copyWith(
-              color: color.withValues(alpha: 0.75),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-        const SizedBox(width: 4),
-        Expanded(
-          child: Text(
-            value,
-            style: AppTypography.captionSmall.copyWith(
-              color: headingColor,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

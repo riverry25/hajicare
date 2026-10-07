@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 import '../../../core/locales/app_localizations.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart' as fmap;
@@ -772,6 +773,16 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
             ],
           );
         }),
+        // 5. SOS Alert Marker Layer — reactive to active SOS events (admin & pendamping only)
+        Obx(() {
+          if (!Get.isRegistered<HajiCareController>()) {
+            return const SizedBox.shrink();
+          }
+          final hajiCtrl = Get.find<HajiCareController>();
+          final sosEvents = hajiCtrl.activeSosEvents;
+          if (sosEvents.isEmpty) return const SizedBox.shrink();
+          return fmap.MarkerLayer(markers: _buildSosMarkers(hajiCtrl, mapCtrl));
+        }),
         const fmap.RichAttributionWidget(
           attributions: [
             fmap.TextSourceAttribution('OpenStreetMap contributors'),
@@ -785,6 +796,165 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
   // ---------------------------------------------------------------------------
   // MARKER BUILDERS
   // ---------------------------------------------------------------------------
+
+  /// Builds SOS pin markers for every active SOS event that has a location.
+  /// These markers are shown on the map for admin and pendamping roles.
+  List<fmap.Marker> _buildSosMarkers(
+    HajiCareController hajiCtrl,
+    MapController mapCtrl,
+  ) {
+    final markers = <fmap.Marker>[];
+    final assistanceJamaahId = mapCtrl.activeAssistanceRequest.value?.jamaahId;
+
+    for (final sos in hajiCtrl.activeSosEvents) {
+      // Skip dismissed SOS
+      final sosId = sos['id']?.toString();
+      final userId = sos['userId']?.toString() ?? sos['jamaahId']?.toString();
+      if (hajiCtrl.isSosDismissed(sosId) || hajiCtrl.isSosDismissed(userId)) {
+        continue;
+      }
+
+      // Extract coordinates from GeoPoint or direct lat/lng fields
+      double? lat;
+      double? lng;
+      final locField = sos['location'];
+      if (locField is GeoPoint) {
+        lat = locField.latitude;
+        lng = locField.longitude;
+      } else {
+        final latRaw = sos['latitude'];
+        final lngRaw = sos['longitude'];
+        if (latRaw != null && lngRaw != null) {
+          lat = (latRaw as num).toDouble();
+          lng = (lngRaw as num).toDouble();
+        }
+      }
+
+      if (lat == null || lng == null) continue;
+
+      // Skip if already shown as assistance marker (avoid duplicate)
+      if (assistanceJamaahId != null && assistanceJamaahId == userId) continue;
+
+      final coord = LatLng(lat, lng);
+      final userName = (sos['userName'] as String?)?.trim() ?? 'Jamaah SOS';
+
+      markers.add(
+        fmap.Marker(
+          point: coord,
+          width: 180,
+          height: 88,
+          alignment: Alignment.topCenter,
+          child: RepaintBoundary(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                mapCtrl.animatedMove(coord, 17.5);
+              },
+              child: _buildSosPinMarker(userName),
+            ),
+          ),
+        ),
+      );
+    }
+    return markers;
+  }
+
+  /// Builds the visual SOS pin marker: red pulsing ring + pin + name callout.
+  Widget _buildSosPinMarker(String userName) {
+    const sosColor = Color(0xFFD32F2F);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Name callout banner
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFD32F2F), Color(0xFFB71C1C)],
+            ),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            border: Border.all(color: Colors.white, width: 1.8),
+            boxShadow: [
+              BoxShadow(
+                color: sosColor.withValues(alpha: 0.6),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.sos_rounded, size: 14, color: Colors.white),
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(
+                  userName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.captionSmall.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 11,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 3),
+        // Pulsing pin circle
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            AnimatedBuilder(
+              animation: _pulseController,
+              builder: (context, _) {
+                return Container(
+                  width: 30 + (14 * _pulseController.value),
+                  height: 30 + (14 * _pulseController.value),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: sosColor.withValues(
+                      alpha: 0.40 * (1.0 - _pulseController.value),
+                    ),
+                  ),
+                );
+              },
+            ),
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFEF5350), Color(0xFFB71C1C)],
+                ),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2.2),
+                boxShadow: [
+                  BoxShadow(
+                    color: sosColor.withValues(alpha: 0.6),
+                    blurRadius: 10,
+                    spreadRadius: 1,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.sos_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 
   fmap.Marker _buildSearchMarker(MapSearchResult result) {
     final isDark = AppColors.isDark(context);

@@ -29,6 +29,26 @@ class RoomMemberModel {
   double? get longitude => currentLocation?.longitude;
   bool get hasLocation => currentLocation != null;
 
+  RoomMemberModel copyWith({
+    String? uid,
+    String? name,
+    String? role,
+    DateTime? joinedAt,
+    GeoPoint? currentLocation,
+    DateTime? locationUpdatedAt,
+    bool? sosActive,
+  }) {
+    return RoomMemberModel(
+      uid: uid ?? this.uid,
+      name: name ?? this.name,
+      role: role ?? this.role,
+      joinedAt: joinedAt ?? this.joinedAt,
+      currentLocation: currentLocation ?? this.currentLocation,
+      locationUpdatedAt: locationUpdatedAt ?? this.locationUpdatedAt,
+      sosActive: sosActive ?? this.sosActive,
+    );
+  }
+
   String getLocationStatus([DateTime? now]) {
     if (!hasLocation || locationUpdatedAt == null) {
       return 'Lokasi belum tersedia';

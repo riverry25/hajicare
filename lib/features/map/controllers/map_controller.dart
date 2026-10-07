@@ -238,8 +238,8 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   }
 
   void handleMapReady() {
-    if (isMapReady.value || !isMapAttached) return;
     isMapReady.value = true;
+    if (!isMapAttached) return;
     final camera = flutterMapController.camera;
     onMapPositionChanged(camera.center, camera.zoom, hasGesture: false);
     if (poiQueryCenter.value == null && !isPoiLoading.value) {
@@ -250,6 +250,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       final zoom = pendingFocusZoom ?? 17.0;
       pendingFocusCoordinate = null;
       pendingFocusZoom = null;
+      try {
+        flutterMapController.move(target, zoom);
+      } catch (_) {}
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (isMapAttached) {
           animatedMove(target, zoom);
@@ -904,20 +907,90 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     debugPrint('[FOCUS] member = ${member.name}');
     selectedFilter.value = 0;
     isBottomSheetOpen.value = true;
-    selectedMember.value = member;
     selectedPoi.value = null;
 
-    if (member.hasLocation) {
-      final target = LatLng(member.latitude!, member.longitude!);
+    // Resolve freshest realtime location
+    RoomMemberModel resolvedMember = member;
+
+    // 1. Try to find from current roomMembers in MapController
+    final mapMember = roomMembers.firstWhereOrNull((m) => m.uid == member.uid);
+    if (mapMember != null && mapMember.hasLocation) {
+      if (!resolvedMember.hasLocation ||
+          (mapMember.locationUpdatedAt != null &&
+              (resolvedMember.locationUpdatedAt == null ||
+                  mapMember.locationUpdatedAt!.isAfter(
+                    resolvedMember.locationUpdatedAt!,
+                  )))) {
+        resolvedMember = mapMember;
+      }
+    }
+
+    // 2. Try to find from HajiCareController (activeSosEvents or jamaahList)
+    if (Get.isRegistered<HajiCareController>()) {
+      final hajiCtrl = Get.find<HajiCareController>();
+      final sos = hajiCtrl.activeSosEvents.firstWhereOrNull(
+        (s) =>
+            (s['userId'] == member.uid || s['jamaahId'] == member.uid) &&
+            s['location'] != null,
+      );
+      if (sos != null) {
+        final loc = sos['location'];
+        GeoPoint? geo;
+        if (loc is GeoPoint) {
+          geo = loc;
+        } else if (loc is Map) {
+          final lat = (loc['latitude'] as num?)?.toDouble();
+          final lng = (loc['longitude'] as num?)?.toDouble();
+          if (lat != null && lng != null) geo = GeoPoint(lat, lng);
+        }
+        if (geo != null) {
+          resolvedMember = resolvedMember.copyWith(
+            currentLocation: geo,
+            locationUpdatedAt: (sos['locationUpdatedAt'] is Timestamp)
+                ? (sos['locationUpdatedAt'] as Timestamp).toDate()
+                : (sos['timestamp'] is Timestamp
+                      ? (sos['timestamp'] as Timestamp).toDate()
+                      : DateTime.now()),
+            sosActive: true,
+          );
+        }
+      } else {
+        final jamaah = hajiCtrl.jamaahList.firstWhereOrNull(
+          (j) => j.id == member.uid,
+        );
+        if (jamaah != null && jamaah.currentLocation != null) {
+          if (!resolvedMember.hasLocation ||
+              (jamaah.locationUpdatedAt != null &&
+                  (resolvedMember.locationUpdatedAt == null ||
+                      jamaah.locationUpdatedAt!.isAfter(
+                        resolvedMember.locationUpdatedAt!,
+                      )))) {
+            resolvedMember = resolvedMember.copyWith(
+              currentLocation: jamaah.currentLocation,
+              locationUpdatedAt: jamaah.locationUpdatedAt,
+              sosActive: jamaah.sosActive,
+            );
+          }
+        }
+      }
+    }
+
+    selectedMember.value = resolvedMember;
+
+    if (resolvedMember.hasLocation) {
+      final target = LatLng(
+        resolvedMember.latitude!,
+        resolvedMember.longitude!,
+      );
       focusCoordinate(target, destZoom: 17.0);
     }
 
     final hasUserLoc = currentUserLocation.value != null;
-    final hasDestLoc = member.hasLocation;
+    final hasDestLoc = resolvedMember.hasLocation;
 
     if (autoRoute && hasUserLoc && hasDestLoc) {
       debugPrint('[ROUTE] automatic request started');
-      await requestRouteToMember(member);
+      await requestRouteToMember(resolvedMember);
     } else {
       clearRoute();
       if (!hasUserLoc && autoRoute) {
@@ -1362,13 +1435,22 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   void focusCoordinate(LatLng coordinate, {double destZoom = 17.0}) {
     pendingFocusCoordinate = coordinate;
     pendingFocusZoom = destZoom;
-    if (isMapAttached) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (isMapAttached) {
-          animatedMove(coordinate, destZoom);
-        }
-      });
+
+    void performMove() {
+      if (isMapAttached) {
+        try {
+          flutterMapController.move(coordinate, destZoom);
+        } catch (_) {}
+        animatedMove(coordinate, destZoom);
+      }
     }
+
+    if (isMapAttached) {
+      performMove();
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) => performMove());
+    Future.delayed(const Duration(milliseconds: 300), performMove);
+    Future.delayed(const Duration(milliseconds: 600), performMove);
   }
 
   void animatedMove(LatLng destLocation, double destZoom) {
