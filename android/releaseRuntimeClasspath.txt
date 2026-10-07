@@ -1,0 +1,1526 @@
+Starting a Gradle Daemon, 2 busy Daemons could not be reused, use --status for details
+
+> Configure project :gradle
+WARNING: Unsupported Kotlin plugin version.
+The `embedded-kotlin` and `kotlin-dsl` plugins rely on features of Kotlin `2.2.0` that might work differently than in the requested version `2.2.20`.
+
+> Task :gradle:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle:compileKotlin UP-TO-DATE
+> Task :gradle:compileJava NO-SOURCE
+> Task :gradle:compileGroovy NO-SOURCE
+> Task :gradle:pluginDescriptors UP-TO-DATE
+> Task :gradle:processResources UP-TO-DATE
+> Task :gradle:classes UP-TO-DATE
+> Task :gradle:jar UP-TO-DATE
+
+> Configure project :app
+WARNING: The option setting 'android.builtInKotlin=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: The option setting 'android.newDsl=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':app' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :adhan_foreground_service
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':adhan_foreground_service' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :android_alarm_manager_plus
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':android_alarm_manager_plus' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :audioplayers_android
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':audioplayers_android' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :cloud_firestore
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':cloud_firestore' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :cloud_functions
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':cloud_functions' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :device_info_plus
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':device_info_plus' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :firebase_auth
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':firebase_auth' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :firebase_core
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':firebase_core' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :flutter_blue_plus_android
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':flutter_blue_plus_android' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :flutter_compass
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':flutter_compass' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :flutter_local_notifications
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':flutter_local_notifications' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :flutter_tts
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':flutter_tts' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :geocoding_android
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':geocoding_android' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :geolocator_android
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':geolocator_android' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :google_mlkit_commons
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':google_mlkit_commons' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :google_mlkit_translation
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':google_mlkit_translation' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :google_sign_in_android
+w: file:///C:/Users/Fadli/AppData/Local/Pub/Cache/hosted/pub.dev/google_sign_in_android-7.2.11/android/build.gradle.kts:37:1: 'fun Project.android(configure: Action<LibraryExtension>): Unit' is deprecated. Replaced by com.android.build.api.dsl.LibraryExtension.
+This class is not used for the public extensions in AGP when android.newDsl=true, which is the default in AGP 9.0, and will be removed in AGP 10.0.
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':google_sign_in_android' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :jni
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':jni' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :jni_flutter
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':jni_flutter' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :mobile_scanner
+w: file:///C:/Users/Fadli/AppData/Local/Pub/Cache/hosted/pub.dev/mobile_scanner-7.4.2/android/build.gradle.kts:23:1: 'fun Project.android(configure: Action<LibraryExtension>): Unit' is deprecated. Replaced by com.android.build.api.dsl.LibraryExtension.
+This class is not used for the public extensions in AGP when android.newDsl=true, which is the default in AGP 9.0, and will be removed in AGP 10.0.
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':mobile_scanner' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :package_info_plus
+w: file:///C:/Users/Fadli/AppData/Local/Pub/Cache/hosted/pub.dev/package_info_plus-10.2.2/android/build.gradle.kts:47:1: 'fun Project.android(configure: Action<LibraryExtension>): Unit' is deprecated. Replaced by com.android.build.api.dsl.LibraryExtension.
+This class is not used for the public extensions in AGP when android.newDsl=true, which is the default in AGP 9.0, and will be removed in AGP 10.0.
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':package_info_plus' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :shared_preferences_android
+w: file:///C:/Users/Fadli/AppData/Local/Pub/Cache/hosted/pub.dev/shared_preferences_android-2.4.23/android/build.gradle.kts:43:1: 'fun Project.android(configure: Action<LibraryExtension>): Unit' is deprecated. Replaced by com.android.build.api.dsl.LibraryExtension.
+This class is not used for the public extensions in AGP when android.newDsl=true, which is the default in AGP 9.0, and will be removed in AGP 10.0.
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':shared_preferences_android' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :speech_to_text
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':speech_to_text' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :tflite_flutter
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':tflite_flutter' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :ultralytics_yolo
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':ultralytics_yolo' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :url_launcher_android
+w: file:///C:/Users/Fadli/AppData/Local/Pub/Cache/hosted/pub.dev/url_launcher_android-6.3.30/android/build.gradle.kts:37:1: 'fun Project.android(configure: Action<LibraryExtension>): Unit' is deprecated. Replaced by com.android.build.api.dsl.LibraryExtension.
+This class is not used for the public extensions in AGP when android.newDsl=true, which is the default in AGP 9.0, and will be removed in AGP 10.0.
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':url_launcher_android' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :vibration
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':vibration' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :video_player_android
+w: file:///C:/Users/Fadli/AppData/Local/Pub/Cache/hosted/pub.dev/video_player_android-2.9.5/android/build.gradle.kts:37:1: 'fun Project.android(configure: Action<LibraryExtension>): Unit' is deprecated. Replaced by com.android.build.api.dsl.LibraryExtension.
+This class is not used for the public extensions in AGP when android.newDsl=true, which is the default in AGP 9.0, and will be removed in AGP 10.0.
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':video_player_android' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :wakelock_plus
+w: Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':wakelock_plus' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Task :app:dependencies
+
+------------------------------------------------------------
+Project ':app'
+------------------------------------------------------------
+
+releaseRuntimeClasspath - Runtime classpath of '/release'.
++--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20
+|    +--- org.jetbrains:annotations:13.0 -> 23.0.0
+|    +--- org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0 -> 1.9.10 (c)
+|    +--- org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0 -> 1.9.10 (c)
+|    \--- org.jetbrains.kotlin:kotlin-stdlib-common:2.3.20 (c)
++--- androidx.camera:camera-core:1.3.4 -> 1.6.1
+|    +--- androidx.annotation:annotation:1.8.1 -> 1.9.1
+|    |    \--- androidx.annotation:annotation-jvm:1.9.1
+|    |         \--- org.jetbrains.kotlin:kotlin-stdlib:1.9.24 -> 2.3.20 (*)
+|    +--- androidx.annotation:annotation-experimental:1.4.1
+|    |    \--- org.jetbrains.kotlin:kotlin-stdlib:1.7.10 -> 2.3.20 (*)
+|    +--- androidx.arch.core:core-common:2.1.0 -> 2.2.0
+|    |    \--- androidx.annotation:annotation:1.1.0 -> 1.9.1 (*)
+|    +--- androidx.concurrent:concurrent-futures:1.1.0
+|    |    +--- androidx.annotation:annotation:1.1.0 -> 1.9.1 (*)
+|    |    \--- com.google.guava:listenablefuture:1.0 -> 9999.0-empty-to-avoid-conflict-with-guava
+|    +--- androidx.concurrent:concurrent-futures-ktx:1.1.0
+|    |    +--- androidx.concurrent:concurrent-futures:1.1.0 (*)
+|    |    +--- org.jetbrains.kotlin:kotlin-stdlib:1.3.71 -> 2.3.20 (*)
+|    |    \--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.4 -> 1.11.0
+|    |         \--- org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0
+|    |              +--- org.jetbrains:annotations:23.0.0
+|    |              +--- org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.11.0
+|    |              |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0 (c)
+|    |              |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0 (c)
+|    |              |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.11.0 (c)
+|    |              |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.11.0 (c)
+|    |              |    \--- org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0 (c)
+|    |              \--- org.jetbrains.kotlin:kotlin-stdlib:2.2.20 -> 2.3.20 (*)
+|    +--- androidx.core:core:1.1.0 -> 1.18.0
+|    |    +--- androidx.annotation:annotation:1.8.1 -> 1.9.1 (*)
+|    |    +--- androidx.annotation:annotation-experimental:1.4.1 (*)
+|    |    +--- androidx.collection:collection:1.4.2
+|    |    |    \--- androidx.collection:collection-jvm:1.4.2
+|    |    |         +--- androidx.annotation:annotation:1.8.1 -> 1.9.1 (*)
+|    |    |         +--- org.jetbrains.kotlin:kotlin-stdlib:1.8.22 -> 2.3.20 (*)
+|    |    |         +--- androidx.collection:collection-ktx:1.4.2 (c)
+|    |    |         \--- androidx.collection:collection-ktx:1.3.0 -> 1.4.2 (c)
+|    |    +--- androidx.concurrent:concurrent-futures:1.0.0 -> 1.1.0 (*)
+|    |    +--- androidx.core:core-viewtree:1.0.0
+|    |    |    +--- org.jetbrains.kotlin:kotlin-stdlib -> 2.3.20 (*)
+|    |    |    \--- org.jetbrains.kotlin:kotlin-stdlib:1.8.22 -> 2.3.20 (c)
+|    |    +--- androidx.interpolator:interpolator:1.0.0
+|    |    |    \--- androidx.annotation:annotation:1.0.0 -> 1.9.1 (*)
+|    |    +--- androidx.lifecycle:lifecycle-common:2.6.2 -> 2.10.0
+|    |    |    \--- androidx.lifecycle:lifecycle-common-jvm:2.10.0
+|    |    |         +--- androidx.annotation:annotation:1.9.1 (*)
+|    |    |         +--- org.jetbrains.kotlin:kotlin-stdlib:2.0.21 -> 2.3.20 (*)
+|    |    |         +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0 -> 1.11.0 (*)
+|    |    |         +--- org.jspecify:jspecify:1.0.0
+|    |    |         +--- androidx.lifecycle:lifecycle-common-java8:2.10.0 (c)
+|    |    |         +--- androidx.lifecycle:lifecycle-livedata:2.10.0 (c)
+|    |    |         +--- androidx.lifecycle:lifecycle-livedata-core:2.10.0 (c)
+|    |    |         +--- androidx.lifecycle:lifecycle-livedata-core-ktx:2.10.0 (c)
+|    |    |         +--- androidx.lifecycle:lifecycle-process:2.10.0 (c)
+|    |    |         +--- androidx.lifecycle:lifecycle-runtime:2.10.0 (c)
+|    |    |         +--- androidx.lifecycle:lifecycle-runtime-ktx:2.10.0 (c)
+|    |    |         +--- androidx.lifecycle:lifecycle-service:2.10.0 (c)
+|    |    |         +--- androidx.lifecycle:lifecycle-viewmodel:2.10.0 (c)
+|    |    |         +--- androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0 (c)
+|    |    |         \--- androidx.lifecycle:lifecycle-viewmodel-savedstate:2.10.0 (c)
+|    |    +--- androidx.lifecycle:lifecycle-runtime:2.6.2 -> 2.10.0
+|    |    |    \--- androidx.lifecycle:lifecycle-runtime-android:2.10.0
+|    |    |         +--- androidx.annotation:annotation:1.9.1 (*)
+|    |    |         +--- androidx.arch.core:core-common:2.2.0 (*)
+|    |    |         +--- androidx.arch.core:core-runtime:2.2.0
+|    |    |         |    +--- androidx.annotation:annotation:1.1.0 -> 1.9.1 (*)
+|    |    |         |    \--- androidx.arch.core:core-common:2.2.0 (*)
+|    |    |         +--- androidx.core:core-viewtree:1.0.0 (*)
+|    |    |         +--- androidx.lifecycle:lifecycle-common:2.10.0 (*)
+|    |    |         +--- androidx.profileinstaller:profileinstaller:1.4.0
+|    |    |         |    +--- androidx.annotation:annotation:1.8.1 -> 1.9.1 (*)
+|    |    |         |    +--- androidx.concurrent:concurrent-futures:1.1.0 (*)
+|    |    |         |    +--- androidx.startup:startup-runtime:1.1.1
+|    |    |         |    |    +--- androidx.annotation:annotation:1.1.0 -> 1.9.1 (*)
+|    |    |         |    |    \--- androidx.tracing:tracing:1.0.0 -> 1.3.0
+|    |    |         |    |         \--- androidx.tracing:tracing-android:1.3.0
+|    |    |         |    |              +--- androidx.annotation:annotation:1.8.1 -> 1.9.1 (*)
+|    |    |         |    |              +--- org.jetbrains.kotlin:kotlin-stdlib -> 2.3.20 (*)
+|    |    |         |    |              +--- androidx.tracing:tracing-ktx:1.3.0 (c)
+|    |    |         |    |              \--- org.jetbrains.kotlin:kotlin-stdlib:2.0.21 -> 2.3.20 (c)
+|    |    |         |    \--- com.google.guava:listenablefuture:1.0 -> 9999.0-empty-to-avoid-conflict-with-guava
+|    |    |         +--- org.jetbrains.kotlin:kotlin-stdlib:2.0.21 -> 2.3.20 (*)
+|    |    |         +--- org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0 -> 1.11.0
+|    |    |         |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0 (*)
+|    |    |         |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.11.0 (*)
+|    |    |         |    \--- org.jetbrains.kotlin:kotlin-stdlib:2.2.20 -> 2.3.20 (*)
+|    |    |         +--- org.jspecify:jspecify:1.0.0
+|    |    |         +--- androidx.lifecycle:lifecycle-common:2.10.0 (c)
+|    |    |         +--- androidx.lifecycle:lifecycle-common-java8:2.10.0 (c)
+|    |    |         +--- androidx.lifecycle:lifecycle-livedata:2.10.0 (c)
+|    |    |         +--- androidx.lifecycle:lifecycle-livedata-core:2.10.0 (c)
+|    |    |         +--- androidx.lifecycle:lifecycle-livedata-core-ktx:2.10.0 (c)
+|    |    |         +--- androidx.lifecycle:lifecycle-process:2.10.0 (c)
+|    |    |         +--- androidx.lifecycle:lifecycle-viewmodel:2.10.0 (c)
+|    |    |         +--- androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0 (c)
+|    |    |         +--- androidx.lifecycle:lifecycle-viewmodel-savedstate:2.10.0 (c)
+|    |    |         +--- androidx.lifecycle:lifecycle-runtime-ktx:2.10.0 (c)
+|    |    |         \--- androidx.lifecycle:lifecycle-service:2.10.0 (c)
+|    |    +--- androidx.tracing:tracing:1.2.0 -> 1.3.0 (*)
+|    |    +--- androidx.versionedparcelable:versionedparcelable:1.1.1
+|    |    |    +--- androidx.annotation:annotation:1.1.0 -> 1.9.1 (*)
+|    |    |    \--- androidx.collection:collection:1.0.0 -> 1.4.2 (*)
+|    |    +--- com.google.guava:listenablefuture:1.0 -> 9999.0-empty-to-avoid-conflict-with-guava
+|    |    +--- org.jetbrains.kotlin:kotlin-stdlib:2.1.20 -> 2.3.20 (*)
+|    |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0 -> 1.11.0 (*)
+|    |    +--- org.jspecify:jspecify:1.0.0
+|    |    \--- androidx.core:core-ktx:1.18.0 (c)
+|    +--- androidx.core:core-backported-fixes:1.0.0
+|    |    +--- androidx.annotation:annotation:1.7.0 -> 1.9.1 (*)
+|    |    \--- org.jetbrains.kotlin:kotlin-stdlib:2.0.21 -> 2.3.20 (*)
+|    +--- androidx.exifinterface:exifinterface:1.4.2
+|    |    +--- androidx.annotation:annotation:1.8.1 -> 1.9.1 (*)
+|    |    \--- org.jspecify:jspecify:1.0.0
+|    +--- androidx.lifecycle:lifecycle-common:2.1.0 -> 2.10.0 (*)
+|    +--- androidx.lifecycle:lifecycle-livedata:2.1.0 -> 2.10.0
+|    |    +--- androidx.arch.core:core-common:2.2.0 (*)
+|    |    +--- androidx.arch.core:core-runtime:2.2.0 (*)
+|    |    +--- androidx.lifecycle:lifecycle-livedata-core:2.10.0
+|    |    |    +--- androidx.arch.core:core-common:2.2.0 (*)
+|    |    |    +--- androidx.arch.core:core-runtime:2.2.0 (*)
+|    |    |    +--- androidx.lifecycle:lifecycle-common:2.10.0 (*)
+|    |    |    +--- org.jetbrains.kotlin:kotlin-stdlib:2.0.21 -> 2.3.20 (*)
+|    |    |    +--- org.jspecify:jspecify:1.0.0
+|    |    |    +--- androidx.lifecycle:lifecycle-common:2.10.0 (c)
+|    |    |    +--- androidx.lifecycle:lifecycle-common-java8:2.10.0 (c)
+|    |    |    +--- androidx.lifecycle:lifecycle-livedata:2.10.0 (c)
+|    |    |    +--- androidx.lifecycle:lifecycle-livedata-core-ktx:2.10.0 (c)
+|    |    |    +--- androidx.lifecycle:lifecycle-process:2.10.0 (c)
+|    |    |    +--- androidx.lifecycle:lifecycle-runtime:2.10.0 (c)
+|    |    |    +--- androidx.lifecycle:lifecycle-runtime-ktx:2.10.0 (c)
+|    |    |    +--- androidx.lifecycle:lifecycle-viewmodel:2.10.0 (c)
+|    |    |    +--- androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0 (c)
+|    |    |    +--- androidx.lifecycle:lifecycle-viewmodel-savedstate:2.10.0 (c)
+|    |    |    \--- androidx.lifecycle:lifecycle-service:2.10.0 (c)
+|    |    +--- androidx.lifecycle:lifecycle-livedata-core-ktx:2.10.0
+|    |    |    +--- androidx.lifecycle:lifecycle-livedata-core:2.10.0 (*)
+|    |    |    +--- org.jetbrains.kotlin:kotlin-stdlib:2.0.21 -> 2.3.20 (*)
+|    |    |    +--- androidx.lifecycle:lifecycle-common:2.10.0 (c)
+|    |    |    +--- androidx.lifecycle:lifecycle-common-java8:2.10.0 (c)
+|    |    |    +--- androidx.lifecycle:lifecycle-livedata:2.10.0 (c)
+|    |    |    +--- androidx.lifecycle:lifecycle-livedata-core:2.10.0 (c)
+|    |    |    +--- androidx.lifecycle:lifecycle-process:2.10.0 (c)
+|    |    |    +--- androidx.lifecycle:lifecycle-runtime:2.10.0 (c)
+|    |    |    +--- androidx.lifecycle:lifecycle-runtime-ktx:2.10.0 (c)
+|    |    |    +--- androidx.lifecycle:lifecycle-viewmodel:2.10.0 (c)
+|    |    |    +--- androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0 (c)
+|    |    |    +--- androidx.lifecycle:lifecycle-viewmodel-savedstate:2.10.0 (c)
+|    |    |    \--- androidx.lifecycle:lifecycle-service:2.10.0 (c)
+|    |    +--- org.jetbrains.kotlin:kotlin-stdlib:2.0.21 -> 2.3.20 (*)
+|    |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0 -> 1.11.0 (*)
+|    |    +--- org.jspecify:jspecify:1.0.0
+|    |    +--- androidx.lifecycle:lifecycle-common:2.10.0 (c)
+|    |    +--- androidx.lifecycle:lifecycle-common-java8:2.10.0 (c)
+|    |    +--- androidx.lifecycle:lifecycle-livedata-core:2.10.0 (c)
+|    |    +--- androidx.lifecycle:lifecycle-livedata-core-ktx:2.10.0 (c)
+|    |    +--- androidx.lifecycle:lifecycle-process:2.10.0 (c)
+|    |    +--- androidx.lifecycle:lifecycle-runtime:2.10.0 (c)
+|    |    +--- androidx.lifecycle:lifecycle-runtime-ktx:2.10.0 (c)
+|    |    +--- androidx.lifecycle:lifecycle-viewmodel:2.10.0 (c)
+|    |    +--- androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0 (c)
+|    |    +--- androidx.lifecycle:lifecycle-viewmodel-savedstate:2.10.0 (c)
+|    |    \--- androidx.lifecycle:lifecycle-service:2.10.0 (c)
+|    +--- androidx.lifecycle:lifecycle-livedata-core:2.3.1 -> 2.10.0 (*)
+|    +--- androidx.tracing:tracing:1.3.0 (*)
+|    +--- com.google.auto.value:auto-value-annotations:1.6.3 -> 1.8.1
+|    +--- com.google.guava:listenablefuture:1.0 -> 9999.0-empty-to-avoid-conflict-with-guava
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.1.20 -> 2.3.20 (*)
+|    +--- org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0 -> 1.11.0 (*)
+|    +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0 -> 1.11.0 (*)
+|    +--- org.jspecify:jspecify:1.0.0
+|    +--- androidx.camera:camera-camera2:1.6.1 (c)
+|    +--- androidx.camera:camera-camera2-pipe:1.6.1 (c)
+|    +--- androidx.camera:camera-lifecycle:1.6.1 (c)
+|    +--- androidx.camera:camera-view:1.6.1 (c)
+|    \--- androidx.camera:camera-video:1.6.1 (c)
++--- androidx.camera:camera-camera2:1.3.4 -> 1.6.1
+|    +--- androidx.annotation:annotation:1.8.1 -> 1.9.1 (*)
+|    +--- androidx.annotation:annotation-experimental:1.4.1 (*)
+|    +--- androidx.arch.core:core-common:2.1.0 -> 2.2.0 (*)
+|    +--- androidx.camera:camera-camera2-pipe:1.6.1
+|    |    +--- androidx.annotation:annotation:1.8.1 -> 1.9.1 (*)
+|    |    +--- androidx.camera.featurecombinationquery:featurecombinationquery:1.6.1
+|    |    |    +--- androidx.annotation:annotation:1.7.0 -> 1.9.1 (*)
+|    |    |    +--- com.google.auto.value:auto-value-annotations:1.6.3 -> 1.8.1
+|    |    |    +--- org.jetbrains.kotlin:kotlin-stdlib:2.1.20 -> 2.3.20 (*)
+|    |    |    \--- org.jspecify:jspecify:1.0.0
+|    |    +--- com.google.dagger:dagger:2.59
+|    |    |    +--- jakarta.inject:jakarta.inject-api:2.0.1
+|    |    |    +--- javax.inject:javax.inject:1
+|    |    |    \--- org.jspecify:jspecify:1.0.0
+|    |    +--- org.jetbrains.kotlin:kotlin-stdlib:2.1.20 -> 2.3.20 (*)
+|    |    +--- org.jetbrains.kotlinx:atomicfu:0.28.0
+|    |    |    \--- org.jetbrains.kotlinx:atomicfu-jvm:0.28.0
+|    |    |         \--- org.jetbrains.kotlin:kotlin-stdlib:{prefer 2.1.0} -> 2.3.20 (*)
+|    |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0 -> 1.11.0 (*)
+|    |    +--- androidx.camera:camera-camera2:1.6.1 (c)
+|    |    +--- androidx.camera:camera-core:1.6.1 (c)
+|    |    +--- androidx.camera:camera-lifecycle:1.6.1 (c)
+|    |    +--- androidx.camera:camera-video:1.6.1 (c)
+|    |    \--- androidx.camera:camera-view:1.6.1 (c)
+|    +--- androidx.camera:camera-core:1.6.1 (*)
+|    +--- androidx.concurrent:concurrent-futures-ktx:1.1.0 (*)
+|    +--- androidx.core:core:1.3.2 -> 1.18.0 (*)
+|    +--- androidx.core:core-backported-fixes:1.0.0 (*)
+|    +--- androidx.lifecycle:lifecycle-livedata-core:2.1.0 -> 2.10.0 (*)
+|    +--- com.google.dagger:dagger:2.59 (*)
+|    +--- com.google.guava:listenablefuture:1.0 -> 9999.0-empty-to-avoid-conflict-with-guava
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.1.20 -> 2.3.20 (*)
+|    +--- org.jetbrains.kotlinx:atomicfu:0.28.0 (*)
+|    +--- org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0 -> 1.11.0 (*)
+|    +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0 -> 1.11.0 (*)
+|    +--- org.jspecify:jspecify:1.0.0
+|    +--- androidx.camera:camera-camera2-pipe:1.6.1 (c)
+|    +--- androidx.camera:camera-core:1.6.1 (c)
+|    +--- androidx.camera:camera-lifecycle:1.6.1 (c)
+|    +--- androidx.camera:camera-view:1.6.1 (c)
+|    \--- androidx.camera:camera-video:1.6.1 (c)
++--- androidx.camera:camera-lifecycle:1.3.4 -> 1.6.1
+|    +--- androidx.annotation:annotation:1.7.0 -> 1.9.1 (*)
+|    +--- androidx.annotation:annotation-experimental:1.4.1 (*)
+|    +--- androidx.arch.core:core-common:2.2.0 (*)
+|    +--- androidx.camera:camera-core:1.6.1 (*)
+|    +--- androidx.concurrent:concurrent-futures-ktx:1.1.0 (*)
+|    +--- androidx.core:core:1.1.0 -> 1.18.0 (*)
+|    +--- androidx.lifecycle:lifecycle-common:2.1.0 -> 2.10.0 (*)
+|    +--- androidx.tracing:tracing-ktx:1.2.0 -> 1.3.0
+|    |    +--- androidx.tracing:tracing:1.3.0 (*)
+|    |    \--- androidx.tracing:tracing:1.3.0 (c)
+|    +--- com.google.auto.value:auto-value-annotations:1.6.3 -> 1.8.1
+|    +--- com.google.guava:listenablefuture:1.0 -> 9999.0-empty-to-avoid-conflict-with-guava
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.1.20 -> 2.3.20 (*)
+|    +--- org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0 -> 1.11.0 (*)
+|    +--- org.jspecify:jspecify:1.0.0
+|    +--- androidx.camera:camera-camera2:1.6.1 (c)
+|    +--- androidx.camera:camera-core:1.6.1 (c)
+|    +--- androidx.camera:camera-view:1.6.1 (c)
+|    +--- androidx.camera:camera-camera2-pipe:1.6.1 (c)
+|    \--- androidx.camera:camera-video:1.6.1 (c)
++--- androidx.camera:camera-view:1.3.4 -> 1.6.1
+|    +--- androidx.annotation:annotation:1.8.1 -> 1.9.1 (*)
+|    +--- androidx.annotation:annotation-experimental:1.4.1 (*)
+|    +--- androidx.appcompat:appcompat:1.1.0 -> 1.7.1
+|    |    +--- androidx.activity:activity:1.8.0 -> 1.9.0
+|    |    |    +--- androidx.annotation:annotation:1.1.0 -> 1.9.1 (*)
+|    |    |    +--- androidx.collection:collection:1.0.0 -> 1.4.2 (*)
+|    |    |    +--- androidx.core:core:1.13.0 -> 1.18.0 (*)
+|    |    |    +--- androidx.lifecycle:lifecycle-runtime:2.6.1 -> 2.10.0 (*)
+|    |    |    +--- androidx.lifecycle:lifecycle-viewmodel:2.6.1 -> 2.10.0
+|    |    |    |    \--- androidx.lifecycle:lifecycle-viewmodel-android:2.10.0
+|    |    |    |         +--- androidx.annotation:annotation:1.9.1 (*)
+|    |    |    |         +--- androidx.core:core-viewtree:1.0.0 (*)
+|    |    |    |         +--- org.jetbrains.kotlin:kotlin-stdlib:2.0.21 -> 2.3.20 (*)
+|    |    |    |         +--- org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0 -> 1.11.0 (*)
+|    |    |    |         +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0 -> 1.11.0 (*)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-common:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-common-java8:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-livedata:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-livedata-core:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-livedata-core-ktx:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-process:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-runtime:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-runtime-ktx:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-service:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0 (c)
+|    |    |    |         \--- androidx.lifecycle:lifecycle-viewmodel-savedstate:2.10.0 (c)
+|    |    |    +--- androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.1 -> 2.10.0
+|    |    |    |    \--- androidx.lifecycle:lifecycle-viewmodel-savedstate-android:2.10.0
+|    |    |    |         +--- androidx.annotation:annotation:1.9.1 (*)
+|    |    |    |         +--- androidx.core:core-ktx:1.2.0 -> 1.18.0
+|    |    |    |         |    +--- androidx.annotation:annotation:1.8.1 -> 1.9.1 (*)
+|    |    |    |         |    +--- androidx.core:core:1.18.0 (*)
+|    |    |    |         |    +--- org.jetbrains.kotlin:kotlin-stdlib:2.1.20 -> 2.3.20 (*)
+|    |    |    |         |    \--- androidx.core:core:1.18.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-common:2.10.0 (*)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-livedata-core:2.10.0 (*)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-viewmodel:2.10.0 (*)
+|    |    |    |         +--- androidx.savedstate:savedstate:1.4.0
+|    |    |    |         |    \--- androidx.savedstate:savedstate-android:1.4.0
+|    |    |    |         |         +--- androidx.annotation:annotation:1.8.1 -> 1.9.1 (*)
+|    |    |    |         |         +--- androidx.annotation:annotation:1.9.1 (*)
+|    |    |    |         |         +--- androidx.core:core-ktx:1.13.1 -> 1.18.0 (*)
+|    |    |    |         |         +--- androidx.core:core-viewtree:1.0.0 (*)
+|    |    |    |         |         +--- androidx.lifecycle:lifecycle-common:2.9.2 -> 2.10.0 (*)
+|    |    |    |         |         +--- org.jetbrains.kotlin:kotlin-stdlib -> 2.3.20 (*)
+|    |    |    |         |         +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0 -> 1.11.0 (*)
+|    |    |    |         |         +--- org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.3
+|    |    |    |         |         |    \--- org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.7.3
+|    |    |    |         |         |         +--- org.jetbrains.kotlinx:kotlinx-serialization-bom:1.7.3
+|    |    |    |         |         |         |    +--- org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.7.3 (c)
+|    |    |    |         |         |         |    \--- org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.3 (c)
+|    |    |    |         |         |         \--- org.jetbrains.kotlin:kotlin-stdlib:2.0.20 -> 2.3.20 (*)
+|    |    |    |         |         +--- androidx.savedstate:savedstate-ktx:1.4.0 (c)
+|    |    |    |         |         \--- org.jetbrains.kotlin:kotlin-stdlib:2.0.21 -> 2.3.20 (c)
+|    |    |    |         +--- org.jetbrains.kotlin:kotlin-stdlib:2.0.21 -> 2.3.20 (*)
+|    |    |    |         +--- org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0 -> 1.11.0 (*)
+|    |    |    |         +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0 -> 1.11.0 (*)
+|    |    |    |         +--- org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.3 (*)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-common:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-common-java8:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-livedata:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-livedata-core:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-livedata-core-ktx:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-process:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-runtime:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-runtime-ktx:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-service:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-viewmodel:2.10.0 (c)
+|    |    |    |         \--- androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0 (c)
+|    |    |    +--- androidx.profileinstaller:profileinstaller:1.3.1 -> 1.4.0 (*)
+|    |    |    +--- androidx.savedstate:savedstate:1.2.1 -> 1.4.0 (*)
+|    |    |    +--- androidx.tracing:tracing:1.0.0 -> 1.3.0 (*)
+|    |    |    +--- org.jetbrains.kotlin:kotlin-stdlib:1.8.22 -> 2.3.20 (*)
+|    |    |    \--- androidx.activity:activity-ktx:1.9.0 (c)
+|    |    +--- androidx.annotation:annotation:1.3.0 -> 1.9.1 (*)
+|    |    +--- androidx.appcompat:appcompat-resources:1.7.1
+|    |    |    +--- androidx.annotation:annotation:1.2.0 -> 1.9.1 (*)
+|    |    |    +--- androidx.collection:collection:1.0.0 -> 1.4.2 (*)
+|    |    |    +--- androidx.core:core:1.6.0 -> 1.18.0 (*)
+|    |    |    +--- androidx.vectordrawable:vectordrawable:1.1.0
+|    |    |    |    +--- androidx.annotation:annotation:1.1.0 -> 1.9.1 (*)
+|    |    |    |    +--- androidx.core:core:1.1.0 -> 1.18.0 (*)
+|    |    |    |    \--- androidx.collection:collection:1.1.0 -> 1.4.2 (*)
+|    |    |    +--- androidx.vectordrawable:vectordrawable-animated:1.1.0
+|    |    |    |    +--- androidx.vectordrawable:vectordrawable:1.1.0 (*)
+|    |    |    |    +--- androidx.interpolator:interpolator:1.0.0 (*)
+|    |    |    |    \--- androidx.collection:collection:1.1.0 -> 1.4.2 (*)
+|    |    |    \--- androidx.appcompat:appcompat:1.7.1 (c)
+|    |    +--- androidx.collection:collection:1.0.0 -> 1.4.2 (*)
+|    |    +--- androidx.core:core:1.13.0 -> 1.18.0 (*)
+|    |    +--- androidx.core:core-ktx:1.13.0 -> 1.18.0 (*)
+|    |    +--- androidx.cursoradapter:cursoradapter:1.0.0
+|    |    |    \--- androidx.annotation:annotation:1.0.0 -> 1.9.1 (*)
+|    |    +--- androidx.drawerlayout:drawerlayout:1.0.0
+|    |    |    +--- androidx.annotation:annotation:1.0.0 -> 1.9.1 (*)
+|    |    |    +--- androidx.core:core:1.0.0 -> 1.18.0 (*)
+|    |    |    \--- androidx.customview:customview:1.0.0 -> 1.1.0
+|    |    |         +--- androidx.annotation:annotation:1.1.0 -> 1.9.1 (*)
+|    |    |         +--- androidx.core:core:1.3.0 -> 1.18.0 (*)
+|    |    |         \--- androidx.collection:collection:1.1.0 -> 1.4.2 (*)
+|    |    +--- androidx.emoji2:emoji2:1.3.0
+|    |    |    +--- androidx.annotation:annotation:1.2.0 -> 1.9.1 (*)
+|    |    |    +--- androidx.collection:collection:1.1.0 -> 1.4.2 (*)
+|    |    |    +--- androidx.core:core:1.3.0 -> 1.18.0 (*)
+|    |    |    +--- androidx.lifecycle:lifecycle-process:2.4.1 -> 2.10.0
+|    |    |    |    +--- androidx.annotation:annotation:1.9.1 (*)
+|    |    |    |    +--- androidx.lifecycle:lifecycle-runtime:2.10.0 (*)
+|    |    |    |    +--- androidx.startup:startup-runtime:1.1.1 (*)
+|    |    |    |    +--- org.jetbrains.kotlin:kotlin-stdlib:2.0.21 -> 2.3.20 (*)
+|    |    |    |    +--- androidx.lifecycle:lifecycle-common:2.10.0 (c)
+|    |    |    |    +--- androidx.lifecycle:lifecycle-common-java8:2.10.0 (c)
+|    |    |    |    +--- androidx.lifecycle:lifecycle-livedata:2.10.0 (c)
+|    |    |    |    +--- androidx.lifecycle:lifecycle-livedata-core:2.10.0 (c)
+|    |    |    |    +--- androidx.lifecycle:lifecycle-livedata-core-ktx:2.10.0 (c)
+|    |    |    |    +--- androidx.lifecycle:lifecycle-runtime:2.10.0 (c)
+|    |    |    |    +--- androidx.lifecycle:lifecycle-runtime-ktx:2.10.0 (c)
+|    |    |    |    +--- androidx.lifecycle:lifecycle-viewmodel:2.10.0 (c)
+|    |    |    |    +--- androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0 (c)
+|    |    |    |    +--- androidx.lifecycle:lifecycle-viewmodel-savedstate:2.10.0 (c)
+|    |    |    |    \--- androidx.lifecycle:lifecycle-service:2.10.0 (c)
+|    |    |    +--- androidx.startup:startup-runtime:1.0.0 -> 1.1.1 (*)
+|    |    |    \--- androidx.emoji2:emoji2-views-helper:1.3.0 (c)
+|    |    +--- androidx.emoji2:emoji2-views-helper:1.2.0 -> 1.3.0
+|    |    |    +--- androidx.collection:collection:1.1.0 -> 1.4.2 (*)
+|    |    |    +--- androidx.core:core:1.3.0 -> 1.18.0 (*)
+|    |    |    +--- androidx.emoji2:emoji2:1.3.0 (*)
+|    |    |    \--- androidx.emoji2:emoji2:1.3.0 (c)
+|    |    +--- androidx.fragment:fragment:1.5.4 -> 1.7.1
+|    |    |    +--- androidx.activity:activity:1.8.1 -> 1.9.0 (*)
+|    |    |    +--- androidx.annotation:annotation:1.1.0 -> 1.9.1 (*)
+|    |    |    +--- androidx.annotation:annotation-experimental:1.4.0 -> 1.4.1 (*)
+|    |    |    +--- androidx.collection:collection:1.1.0 -> 1.4.2 (*)
+|    |    |    +--- androidx.core:core-ktx:1.2.0 -> 1.18.0 (*)
+|    |    |    +--- androidx.lifecycle:lifecycle-livedata-core:2.6.1 -> 2.10.0 (*)
+|    |    |    +--- androidx.lifecycle:lifecycle-runtime:2.6.1 -> 2.10.0 (*)
+|    |    |    +--- androidx.lifecycle:lifecycle-viewmodel:2.6.1 -> 2.10.0 (*)
+|    |    |    +--- androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.1 -> 2.10.0 (*)
+|    |    |    +--- androidx.loader:loader:1.0.0 -> 1.1.0
+|    |    |    |    +--- androidx.annotation:annotation:1.0.0 -> 1.9.1 (*)
+|    |    |    |    +--- androidx.core:core:1.0.0 -> 1.18.0 (*)
+|    |    |    |    +--- androidx.lifecycle:lifecycle-livedata-core:2.0.0 -> 2.10.0 (*)
+|    |    |    |    +--- androidx.lifecycle:lifecycle-viewmodel:2.0.0 -> 2.10.0 (*)
+|    |    |    |    \--- androidx.collection:collection:1.0.0 -> 1.4.2 (*)
+|    |    |    +--- androidx.profileinstaller:profileinstaller:1.3.1 -> 1.4.0 (*)
+|    |    |    +--- androidx.savedstate:savedstate:1.2.1 -> 1.4.0 (*)
+|    |    |    +--- androidx.viewpager:viewpager:1.0.0
+|    |    |    |    +--- androidx.annotation:annotation:1.0.0 -> 1.9.1 (*)
+|    |    |    |    +--- androidx.core:core:1.0.0 -> 1.18.0 (*)
+|    |    |    |    \--- androidx.customview:customview:1.0.0 -> 1.1.0 (*)
+|    |    |    +--- org.jetbrains.kotlin:kotlin-stdlib:1.8.22 -> 2.3.20 (*)
+|    |    |    \--- androidx.fragment:fragment-ktx:1.7.1 (c)
+|    |    +--- androidx.lifecycle:lifecycle-runtime:2.6.1 -> 2.10.0 (*)
+|    |    +--- androidx.lifecycle:lifecycle-viewmodel:2.6.1 -> 2.10.0 (*)
+|    |    +--- androidx.profileinstaller:profileinstaller:1.3.1 -> 1.4.0 (*)
+|    |    +--- androidx.resourceinspection:resourceinspection-annotation:1.0.1
+|    |    |    \--- androidx.annotation:annotation:1.1.0 -> 1.9.1 (*)
+|    |    +--- androidx.savedstate:savedstate:1.2.1 -> 1.4.0 (*)
+|    |    +--- org.jetbrains.kotlin:kotlin-stdlib:1.8.22 -> 2.3.20 (*)
+|    |    \--- androidx.appcompat:appcompat-resources:1.7.1 (c)
+|    +--- androidx.arch.core:core-common:2.2.0 (*)
+|    +--- androidx.camera:camera-core:1.6.1 (*)
+|    +--- androidx.camera:camera-lifecycle:1.6.1 (*)
+|    +--- androidx.camera:camera-video:1.6.1
+|    |    +--- androidx.annotation:annotation:1.8.1 -> 1.9.1 (*)
+|    |    +--- androidx.annotation:annotation-experimental:1.4.1 (*)
+|    |    +--- androidx.arch.core:core-common:2.2.0 (*)
+|    |    +--- androidx.camera:camera-core:1.6.1 (*)
+|    |    +--- androidx.concurrent:concurrent-futures:1.1.0 (*)
+|    |    +--- androidx.concurrent:concurrent-futures-ktx:1.1.0 (*)
+|    |    +--- androidx.core:core:1.1.0 -> 1.18.0 (*)
+|    |    +--- androidx.media3:media3-container:1.9.0 -> 1.9.2
+|    |    |    +--- androidx.annotation:annotation:1.6.0 -> 1.9.1 (*)
+|    |    |    \--- androidx.media3:media3-common:1.9.2
+|    |    |         +--- androidx.annotation:annotation:1.6.0 -> 1.9.1 (*)
+|    |    |         +--- org.jetbrains.kotlin:kotlin-bom:1.8.0
+|    |    |         |    +--- org.jetbrains.kotlin:kotlin-stdlib:1.8.0 -> 2.3.20 (c)
+|    |    |         |    +--- org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0 -> 1.9.10 (c)
+|    |    |         |    +--- org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0 -> 1.9.10 (c)
+|    |    |         |    \--- org.jetbrains.kotlin:kotlin-stdlib-common:1.8.0 -> 2.3.20 (c)
+|    |    |         +--- com.google.guava:guava:33.3.1-android -> 33.6.0-android
+|    |    |         |    +--- com.google.guava:failureaccess:1.0.3
+|    |    |         |    +--- com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava
+|    |    |         |    +--- org.jspecify:jspecify:1.0.0
+|    |    |         |    +--- com.google.errorprone:error_prone_annotations:2.47.0
+|    |    |         |    \--- com.google.j2objc:j2objc-annotations:3.1
+|    |    |         +--- androidx.annotation:annotation-experimental:1.3.1 -> 1.4.1 (*)
+|    |    |         +--- androidx.media3:media3-container:1.9.2 (c)
+|    |    |         +--- androidx.media3:media3-database:1.9.2 (c)
+|    |    |         +--- androidx.media3:media3-datasource:1.9.2 (c)
+|    |    |         +--- androidx.media3:media3-decoder:1.9.2 (c)
+|    |    |         +--- androidx.media3:media3-exoplayer:1.9.2 (c)
+|    |    |         +--- androidx.media3:media3-exoplayer-dash:1.9.2 (c)
+|    |    |         +--- androidx.media3:media3-exoplayer-hls:1.9.2 (c)
+|    |    |         +--- androidx.media3:media3-exoplayer-rtsp:1.9.2 (c)
+|    |    |         +--- androidx.media3:media3-exoplayer-smoothstreaming:1.9.2 (c)
+|    |    |         +--- androidx.media3:media3-extractor:1.9.2 (c)
+|    |    |         \--- androidx.media3:media3-muxer:1.9.2 (c)
+|    |    +--- androidx.media3:media3-muxer:1.9.0 -> 1.9.2
+|    |    |    +--- androidx.media3:media3-container:1.9.2 (*)
+|    |    |    +--- androidx.annotation:annotation:1.6.0 -> 1.9.1 (*)
+|    |    |    \--- androidx.media3:media3-common:1.9.2 (*)
+|    |    +--- com.google.auto.value:auto-value-annotations:1.6.3 -> 1.8.1
+|    |    +--- com.google.guava:guava:32.0.1-android -> 33.6.0-android (*)
+|    |    +--- org.jetbrains.kotlin:kotlin-stdlib:2.1.20 -> 2.3.20 (*)
+|    |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0 -> 1.11.0 (*)
+|    |    +--- org.jspecify:jspecify:1.0.0
+|    |    +--- androidx.camera:camera-camera2:1.6.1 (c)
+|    |    +--- androidx.camera:camera-camera2-pipe:1.6.1 (c)
+|    |    +--- androidx.camera:camera-core:1.6.1 (c)
+|    |    +--- androidx.camera:camera-lifecycle:1.6.1 (c)
+|    |    \--- androidx.camera:camera-view:1.6.1 (c)
+|    +--- androidx.camera.viewfinder:viewfinder-core:1.5.1
+|    |    +--- androidx.annotation:annotation:1.8.1 -> 1.9.1 (*)
+|    |    +--- androidx.core:core:1.7.0 -> 1.18.0 (*)
+|    |    +--- androidx.tracing:tracing-ktx:1.2.0 -> 1.3.0 (*)
+|    |    +--- com.google.auto.value:auto-value-annotations:1.6.3 -> 1.8.1
+|    |    +--- org.jetbrains.kotlinx:atomicfu:0.27.0 -> 0.28.0 (*)
+|    |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1 -> 1.11.0 (*)
+|    |    \--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1 -> 1.11.0 (*)
+|    +--- androidx.concurrent:concurrent-futures:1.1.0 (*)
+|    +--- androidx.core:core:1.3.2 -> 1.18.0 (*)
+|    +--- androidx.fragment:fragment:1.1.0 -> 1.7.1 (*)
+|    +--- androidx.lifecycle:lifecycle-common:2.0.0 -> 2.10.0 (*)
+|    +--- androidx.lifecycle:lifecycle-livedata:2.3.1 -> 2.10.0 (*)
+|    +--- androidx.lifecycle:lifecycle-livedata-core:2.3.1 -> 2.10.0 (*)
+|    +--- com.google.auto.value:auto-value-annotations:1.6.3 -> 1.8.1
+|    +--- com.google.guava:listenablefuture:1.0 -> 9999.0-empty-to-avoid-conflict-with-guava
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.1.20 -> 2.3.20 (*)
+|    +--- org.jspecify:jspecify:1.0.0
+|    +--- androidx.camera:camera-camera2:1.6.1 (c)
+|    +--- androidx.camera:camera-camera2-pipe:1.6.1 (c)
+|    +--- androidx.camera:camera-core:1.6.1 (c)
+|    +--- androidx.camera:camera-lifecycle:1.6.1 (c)
+|    \--- androidx.camera:camera-video:1.6.1 (c)
++--- com.google.mediapipe:tasks-vision:0.10.14
+|    +--- androidx.annotation:annotation:1.1.0 -> 1.9.1 (*)
+|    +--- com.google.auto.value:auto-value-annotations:1.8.1
+|    +--- com.google.auto.value:auto-value:1.8.1
+|    +--- com.google.guava:guava:27.0.1-android -> 33.6.0-android (*)
+|    \--- com.google.mediapipe:tasks-core:0.10.14
+|         +--- com.google.flogger:flogger:0.6
+|         |    \--- org.checkerframework:checker-compat-qual:2.5.3
+|         +--- com.google.flogger:flogger-system-backend:0.6
+|         |    +--- com.google.flogger:flogger:0.6 (*)
+|         |    \--- org.checkerframework:checker-compat-qual:2.5.3
+|         +--- com.google.guava:guava:27.0.1-android -> 33.6.0-android (*)
+|         +--- com.google.protobuf:protobuf-javalite:4.26.1
+|         +--- com.google.android.datatransport:transport-api:3.0.0
+|         |    \--- androidx.annotation:annotation:1.1.0 -> 1.9.1 (*)
+|         +--- com.google.android.datatransport:transport-backend-cct:3.1.0
+|         |    +--- androidx.annotation:annotation:1.1.0 -> 1.9.1 (*)
+|         |    +--- com.google.android.datatransport:transport-api:3.0.0 (*)
+|         |    +--- com.google.android.datatransport:transport-runtime:3.1.0
+|         |    |    +--- androidx.annotation:annotation:1.1.0 -> 1.9.1 (*)
+|         |    |    +--- com.google.android.datatransport:transport-api:3.0.0 (*)
+|         |    |    +--- com.google.firebase:firebase-encoders:17.0.0
+|         |    |    |    \--- androidx.annotation:annotation:1.1.0 -> 1.9.1 (*)
+|         |    |    +--- com.google.firebase:firebase-encoders-proto:16.0.0
+|         |    |    |    +--- androidx.annotation:annotation:1.1.0 -> 1.9.1 (*)
+|         |    |    |    \--- com.google.firebase:firebase-encoders:17.0.0 (*)
+|         |    |    \--- javax.inject:javax.inject:1
+|         |    +--- com.google.firebase:firebase-encoders:17.0.0 (*)
+|         |    \--- com.google.firebase:firebase-encoders-json:18.0.0
+|         |         +--- androidx.annotation:annotation:1.1.0 -> 1.9.1 (*)
+|         |         \--- com.google.firebase:firebase-encoders:17.0.0 (*)
+|         \--- com.google.android.datatransport:transport-runtime:3.1.0 (*)
++--- androidx.credentials:credentials:1.3.0 -> 1.6.0
+|    +--- androidx.annotation:annotation:1.8.1 -> 1.9.1 (*)
+|    +--- androidx.biometric:biometric:1.1.0
+|    |    +--- androidx.activity:activity:1.1.0 -> 1.9.0 (*)
+|    |    +--- androidx.appcompat:appcompat:1.2.0 -> 1.7.1 (*)
+|    |    +--- androidx.lifecycle:lifecycle-livedata-core:2.2.0 -> 2.10.0 (*)
+|    |    +--- androidx.lifecycle:lifecycle-viewmodel:2.2.0 -> 2.10.0 (*)
+|    |    +--- androidx.annotation:annotation:1.1.0 -> 1.9.1 (*)
+|    |    +--- androidx.core:core:1.3.2 -> 1.18.0 (*)
+|    |    \--- androidx.fragment:fragment:1.2.5 -> 1.7.1 (*)
+|    +--- androidx.core:core:1.15.0 -> 1.18.0 (*)
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.1.20 -> 2.3.20 (*)
+|    +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0 -> 1.11.0 (*)
+|    +--- org.jspecify:jspecify:1.0.0
+|    \--- androidx.credentials:credentials-play-services-auth:1.6.0 (c)
++--- androidx.credentials:credentials-play-services-auth:1.3.0 -> 1.6.0
+|    +--- androidx.core:core:1.15.0 -> 1.18.0 (*)
+|    +--- androidx.credentials:credentials:1.6.0 (*)
+|    +--- com.google.android.gms:play-services-auth:21.1.1 -> 21.5.1
+|    |    +--- androidx.fragment:fragment:1.5.7 -> 1.7.1 (*)
+|    |    +--- androidx.loader:loader:1.1.0 (*)
+|    |    +--- com.google.android.gms:play-services-auth-api-phone:18.0.2
+|    |    |    +--- com.google.android.gms:play-services-base:18.0.1 -> 18.9.0
+|    |    |    |    +--- androidx.collection:collection:1.0.0 -> 1.4.2 (*)
+|    |    |    |    +--- androidx.core:core:1.9.0 -> 1.18.0 (*)
+|    |    |    |    +--- androidx.fragment:fragment:1.1.0 -> 1.7.1 (*)
+|    |    |    |    +--- com.google.android.gms:play-services-basement:18.9.0
+|    |    |    |    |    +--- androidx.collection:collection:1.0.0 -> 1.4.2 (*)
+|    |    |    |    |    +--- androidx.core:core:1.2.0 -> 1.18.0 (*)
+|    |    |    |    |    \--- androidx.fragment:fragment:1.1.0 -> 1.7.1 (*)
+|    |    |    |    \--- com.google.android.gms:play-services-tasks:18.4.0
+|    |    |    |         \--- com.google.android.gms:play-services-basement:18.8.0 -> 18.9.0 (*)
+|    |    |    +--- com.google.android.gms:play-services-basement:18.0.2 -> 18.9.0 (*)
+|    |    |    \--- com.google.android.gms:play-services-tasks:18.0.1 -> 18.4.0 (*)
+|    |    +--- com.google.android.gms:play-services-auth-base:18.0.10
+|    |    |    +--- androidx.collection:collection:1.0.0 -> 1.4.2 (*)
+|    |    |    +--- com.google.android.gms:play-services-base:18.0.1 -> 18.9.0 (*)
+|    |    |    +--- com.google.android.gms:play-services-basement:18.2.0 -> 18.9.0 (*)
+|    |    |    \--- com.google.android.gms:play-services-tasks:18.0.1 -> 18.4.0 (*)
+|    |    +--- com.google.android.gms:play-services-base:18.5.0 -> 18.9.0 (*)
+|    |    +--- com.google.android.gms:play-services-basement:18.9.0 (*)
+|    |    +--- com.google.android.gms:play-services-fido:20.0.1 -> 21.0.0
+|    |    |    +--- com.google.android.gms:play-services-base:18.3.0 -> 18.9.0 (*)
+|    |    |    +--- com.google.android.gms:play-services-basement:18.3.0 -> 18.9.0 (*)
+|    |    |    +--- com.google.android.gms:play-services-tasks:18.1.0 -> 18.4.0 (*)
+|    |    |    +--- org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.0 -> 1.9.10
+|    |    |    |    \--- org.jetbrains.kotlin:kotlin-stdlib:1.9.10 -> 2.3.20 (*)
+|    |    |    \--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3 -> 1.11.0 (*)
+|    |    +--- com.google.android.gms:play-services-tasks:18.2.0 -> 18.4.0 (*)
+|    |    +--- org.jetbrains.kotlin:kotlin-stdlib:1.8.21 -> 2.3.20 (*)
+|    |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0 -> 1.11.0 (*)
+|    |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0 -> 1.11.0 (*)
+|    |    \--- org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.0 -> 1.11.0
+|    |         +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0 (*)
+|    |         +--- org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.11.0 (*)
+|    |         +--- com.google.android.gms:play-services-tasks:16.0.1 -> 18.4.0 (*)
+|    |         \--- org.jetbrains.kotlin:kotlin-stdlib:2.2.20 -> 2.3.20 (*)
+|    +--- com.google.android.gms:play-services-auth-blockstore:16.4.0
+|    |    +--- com.google.android.gms:play-services-base:18.5.0 -> 18.9.0 (*)
+|    |    +--- com.google.android.gms:play-services-basement:18.4.0 -> 18.9.0 (*)
+|    |    +--- com.google.android.gms:play-services-tasks:18.2.0 -> 18.4.0 (*)
+|    |    \--- org.jetbrains.kotlin:kotlin-stdlib:1.9.0 -> 2.3.20 (*)
+|    +--- com.google.android.gms:play-services-fido:21.0.0 (*)
+|    +--- com.google.android.gms:play-services-identity-credentials:16.0.0-alpha08
+|    |    +--- com.google.android.gms:play-services-base:18.5.0 -> 18.9.0 (*)
+|    |    +--- com.google.android.gms:play-services-basement:18.5.0 -> 18.9.0 (*)
+|    |    +--- com.google.android.gms:play-services-tasks:18.2.0 -> 18.4.0 (*)
+|    |    \--- org.jetbrains.kotlin:kotlin-stdlib:2.1.0 -> 2.3.20 (*)
+|    +--- com.google.android.libraries.identity.googleid:googleid:1.1.0 -> 1.2.0
+|    |    +--- androidx.credentials:credentials:1.6.0-beta01 -> 1.6.0 (*)
+|    |    +--- org.jetbrains.kotlin:kotlin-stdlib:1.8.0 -> 2.3.20 (*)
+|    |    \--- org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0 -> 1.9.10
+|    |         +--- org.jetbrains.kotlin:kotlin-stdlib:1.9.10 -> 2.3.20 (*)
+|    |         \--- org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.10 (*)
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.1.20 -> 2.3.20 (*)
+|    \--- androidx.credentials:credentials:1.6.0 (c)
++--- com.google.android.libraries.identity.googleid:googleid:1.1.1 -> 1.2.0 (*)
++--- io.flutter:armeabi_v7a_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539
++--- io.flutter:arm64_v8a_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539
++--- io.flutter:x86_64_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539
++--- project :adhan_foreground_service
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    +--- androidx.core:core-ktx:1.12.0 -> 1.18.0 (*)
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539
+|         +--- androidx.lifecycle:lifecycle-common:2.7.0 -> 2.10.0 (*)
+|         +--- androidx.lifecycle:lifecycle-common-java8:2.7.0 -> 2.10.0
+|         |    +--- androidx.annotation:annotation:1.8.1 -> 1.9.1 (*)
+|         |    +--- androidx.lifecycle:lifecycle-common:2.10.0 (*)
+|         |    +--- androidx.lifecycle:lifecycle-common:2.10.0 (c)
+|         |    +--- androidx.lifecycle:lifecycle-livedata:2.10.0 (c)
+|         |    +--- androidx.lifecycle:lifecycle-livedata-core:2.10.0 (c)
+|         |    +--- androidx.lifecycle:lifecycle-livedata-core-ktx:2.10.0 (c)
+|         |    +--- androidx.lifecycle:lifecycle-process:2.10.0 (c)
+|         |    +--- androidx.lifecycle:lifecycle-runtime:2.10.0 (c)
+|         |    +--- androidx.lifecycle:lifecycle-runtime-ktx:2.10.0 (c)
+|         |    +--- androidx.lifecycle:lifecycle-viewmodel:2.10.0 (c)
+|         |    +--- androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0 (c)
+|         |    +--- androidx.lifecycle:lifecycle-viewmodel-savedstate:2.10.0 (c)
+|         |    \--- androidx.lifecycle:lifecycle-service:2.10.0 (c)
+|         +--- androidx.lifecycle:lifecycle-process:2.7.0 -> 2.10.0 (*)
+|         +--- androidx.lifecycle:lifecycle-runtime:2.7.0 -> 2.10.0 (*)
+|         +--- androidx.fragment:fragment:1.7.1 (*)
+|         +--- androidx.annotation:annotation:1.8.1 -> 1.9.1 (*)
+|         +--- androidx.tracing:tracing:1.2.0 -> 1.3.0 (*)
+|         +--- androidx.core:core:1.13.1 -> 1.18.0 (*)
+|         +--- androidx.window:window-java:1.2.0
+|         |    +--- androidx.core:core:1.3.2 -> 1.18.0 (*)
+|         |    +--- androidx.window:window:1.2.0
+|         |    |    +--- androidx.annotation:annotation:1.3.0 -> 1.9.1 (*)
+|         |    |    +--- androidx.collection:collection:1.1.0 -> 1.4.2 (*)
+|         |    |    +--- androidx.core:core:1.8.0 -> 1.18.0 (*)
+|         |    |    +--- androidx.window.extensions.core:core:1.0.0
+|         |    |    |    +--- androidx.annotation:annotation:1.6.0 -> 1.9.1 (*)
+|         |    |    |    \--- org.jetbrains.kotlin:kotlin-stdlib:1.8.20 -> 2.3.20 (*)
+|         |    |    +--- org.jetbrains.kotlin:kotlin-stdlib:1.8.22 -> 2.3.20 (*)
+|         |    |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1 -> 1.11.0 (*)
+|         |    |    \--- androidx.window:window-java:1.2.0 (c)
+|         |    +--- org.jetbrains.kotlin:kotlin-stdlib:1.8.22 -> 2.3.20 (*)
+|         |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1 -> 1.11.0 (*)
+|         |    \--- androidx.window:window:1.2.0 (c)
+|         +--- com.getkeepsafe.relinker:relinker:1.4.5
+|         \--- androidx.exifinterface:exifinterface:1.4.1 -> 1.4.2 (*)
++--- project :android_alarm_manager_plus
+|    +--- androidx.core:core-ktx:1.16.0 -> 1.18.0 (*)
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.2.0 -> 2.3.20 (*)
+|    +--- androidx.appcompat:appcompat:1.7.0 -> 1.7.1 (*)
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
++--- project :audioplayers_android
+|    +--- androidx.core:core-ktx:1.9.0 -> 1.18.0 (*)
+|    +--- org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.10 -> 1.9.10 (*)
+|    +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4 -> 1.11.0 (*)
+|    +--- org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4 -> 1.11.0 (*)
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
++--- project :cloud_firestore
+|    +--- project :firebase_core
+|    |    +--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    |    +--- com.google.firebase:firebase-bom:34.19.0
+|    |    |    +--- com.google.firebase:firebase-auth:24.2.0 (c)
+|    |    |    +--- com.google.firebase:firebase-common:22.2.1 (c)
+|    |    |    +--- com.google.firebase:firebase-firestore:26.6.0 (c)
+|    |    |    +--- com.google.firebase:firebase-functions:22.1.1 (c)
+|    |    |    +--- com.google.firebase:firebase-encoders:17.0.0 (c)
+|    |    |    \--- com.google.firebase:firebase-installations:19.1.2 (c)
+|    |    +--- com.google.firebase:firebase-common -> 22.2.1
+|    |    |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0 -> 1.11.0 (*)
+|    |    |    +--- com.google.firebase:firebase-components:19.0.0
+|    |    |    |    +--- com.google.firebase:firebase-annotations:17.0.0
+|    |    |    |    |    \--- javax.inject:javax.inject:1
+|    |    |    |    +--- androidx.annotation:annotation:1.5.0 -> 1.9.1 (*)
+|    |    |    |    \--- com.google.errorprone:error_prone_annotations:2.26.0 -> 2.47.0
+|    |    |    +--- com.google.firebase:firebase-annotations:17.0.0 (*)
+|    |    |    +--- androidx.datastore:datastore-preferences:1.1.7
+|    |    |    |    \--- androidx.datastore:datastore-preferences-android:1.1.7
+|    |    |    |         +--- androidx.datastore:datastore:1.1.7
+|    |    |    |         |    \--- androidx.datastore:datastore-android:1.1.7
+|    |    |    |         |         +--- androidx.annotation:annotation:1.2.0 -> 1.9.1 (*)
+|    |    |    |         |         +--- androidx.datastore:datastore-core:1.1.7
+|    |    |    |         |         |    \--- androidx.datastore:datastore-core-android:1.1.7
+|    |    |    |         |         |         +--- androidx.annotation:annotation:1.7.0 -> 1.9.1 (*)
+|    |    |    |         |         |         +--- org.jetbrains.kotlin:kotlin-parcelize-runtime:1.9.22
+|    |    |    |         |         |         |    +--- org.jetbrains.kotlin:kotlin-stdlib:1.9.22 -> 2.3.20 (*)
+|    |    |    |         |         |         |    \--- org.jetbrains.kotlin:kotlin-android-extensions-runtime:1.9.22
+|    |    |    |         |         |         |         \--- org.jetbrains.kotlin:kotlin-stdlib:1.9.22 -> 2.3.20 (*)
+|    |    |    |         |         |         +--- org.jetbrains.kotlin:kotlin-stdlib:1.8.22 -> 2.3.20 (*)
+|    |    |    |         |         |         +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3 -> 1.11.0 (*)
+|    |    |    |         |         |         +--- androidx.datastore:datastore:1.1.7 (c)
+|    |    |    |         |         |         +--- androidx.datastore:datastore-core-okio:1.1.7 (c)
+|    |    |    |         |         |         +--- androidx.datastore:datastore-preferences:1.1.7 (c)
+|    |    |    |         |         |         +--- androidx.datastore:datastore-preferences-core:1.1.7 (c)
+|    |    |    |         |         |         +--- androidx.datastore:datastore-preferences-proto:1.1.7 (c)
+|    |    |    |         |         |         \--- androidx.datastore:datastore-preferences-external-protobuf:1.1.7 (c)
+|    |    |    |         |         +--- androidx.datastore:datastore-core-okio:1.1.7
+|    |    |    |         |         |    \--- androidx.datastore:datastore-core-okio-jvm:1.1.7
+|    |    |    |         |         |         +--- androidx.datastore:datastore-core:1.1.7 (*)
+|    |    |    |         |         |         +--- com.squareup.okio:okio:3.4.0 -> 3.6.0
+|    |    |    |         |         |         |    \--- com.squareup.okio:okio-jvm:3.6.0
+|    |    |    |         |         |         |         +--- org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.10 (*)
+|    |    |    |         |         |         |         \--- org.jetbrains.kotlin:kotlin-stdlib-common:1.9.10 -> 2.3.20
+|    |    |    |         |         |         |              \--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    |    |    |         |         |         +--- org.jetbrains.kotlin:kotlin-stdlib:1.8.22 -> 2.3.20 (*)
+|    |    |    |         |         |         +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3 -> 1.11.0 (*)
+|    |    |    |         |         |         +--- androidx.datastore:datastore:1.1.7 (c)
+|    |    |    |         |         |         +--- androidx.datastore:datastore-core:1.1.7 (c)
+|    |    |    |         |         |         +--- androidx.datastore:datastore-preferences:1.1.7 (c)
+|    |    |    |         |         |         +--- androidx.datastore:datastore-preferences-core:1.1.7 (c)
+|    |    |    |         |         |         +--- androidx.datastore:datastore-preferences-proto:1.1.7 (c)
+|    |    |    |         |         |         \--- androidx.datastore:datastore-preferences-external-protobuf:1.1.7 (c)
+|    |    |    |         |         +--- com.squareup.okio:okio:3.4.0 -> 3.6.0 (*)
+|    |    |    |         |         +--- org.jetbrains.kotlin:kotlin-stdlib:1.8.22 -> 2.3.20 (*)
+|    |    |    |         |         +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3 -> 1.11.0 (*)
+|    |    |    |         |         +--- androidx.datastore:datastore-core:1.1.7 (c)
+|    |    |    |         |         +--- androidx.datastore:datastore-core-okio:1.1.7 (c)
+|    |    |    |         |         +--- androidx.datastore:datastore-preferences:1.1.7 (c)
+|    |    |    |         |         +--- androidx.datastore:datastore-preferences-core:1.1.7 (c)
+|    |    |    |         |         +--- androidx.datastore:datastore-preferences-proto:1.1.7 (c)
+|    |    |    |         |         \--- androidx.datastore:datastore-preferences-external-protobuf:1.1.7 (c)
+|    |    |    |         +--- androidx.datastore:datastore-preferences-core:1.1.7
+|    |    |    |         |    \--- androidx.datastore:datastore-preferences-core-android:1.1.7
+|    |    |    |         |         +--- androidx.datastore:datastore-core:1.1.7 (*)
+|    |    |    |         |         +--- androidx.datastore:datastore-core-okio:1.1.7 (*)
+|    |    |    |         |         +--- androidx.datastore:datastore-preferences-proto:1.1.7
+|    |    |    |         |         |    +--- androidx.datastore:datastore-preferences-external-protobuf:1.1.7
+|    |    |    |         |         |    |    +--- androidx.datastore:datastore:1.1.7 (c)
+|    |    |    |         |         |    |    +--- androidx.datastore:datastore-core:1.1.7 (c)
+|    |    |    |         |         |    |    +--- androidx.datastore:datastore-core-okio:1.1.7 (c)
+|    |    |    |         |         |    |    +--- androidx.datastore:datastore-preferences:1.1.7 (c)
+|    |    |    |         |         |    |    +--- androidx.datastore:datastore-preferences-core:1.1.7 (c)
+|    |    |    |         |         |    |    \--- androidx.datastore:datastore-preferences-proto:1.1.7 (c)
+|    |    |    |         |         |    +--- androidx.datastore:datastore:1.1.7 (c)
+|    |    |    |         |         |    +--- androidx.datastore:datastore-core:1.1.7 (c)
+|    |    |    |         |         |    +--- androidx.datastore:datastore-core-okio:1.1.7 (c)
+|    |    |    |         |         |    +--- androidx.datastore:datastore-preferences:1.1.7 (c)
+|    |    |    |         |         |    +--- androidx.datastore:datastore-preferences-core:1.1.7 (c)
+|    |    |    |         |         |    \--- androidx.datastore:datastore-preferences-external-protobuf:1.1.7 (c)
+|    |    |    |         |         +--- com.squareup.okio:okio:3.4.0 -> 3.6.0 (*)
+|    |    |    |         |         +--- org.jetbrains.kotlin:kotlin-stdlib:1.8.22 -> 2.3.20 (*)
+|    |    |    |         |         +--- androidx.datastore:datastore:1.1.7 (c)
+|    |    |    |         |         +--- androidx.datastore:datastore-core:1.1.7 (c)
+|    |    |    |         |         +--- androidx.datastore:datastore-core-okio:1.1.7 (c)
+|    |    |    |         |         +--- androidx.datastore:datastore-preferences:1.1.7 (c)
+|    |    |    |         |         +--- androidx.datastore:datastore-preferences-proto:1.1.7 (c)
+|    |    |    |         |         \--- androidx.datastore:datastore-preferences-external-protobuf:1.1.7 (c)
+|    |    |    |         +--- org.jetbrains.kotlin:kotlin-stdlib:1.8.22 -> 2.3.20 (*)
+|    |    |    |         +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3 -> 1.11.0 (*)
+|    |    |    |         +--- androidx.datastore:datastore:1.1.7 (c)
+|    |    |    |         +--- androidx.datastore:datastore-core:1.1.7 (c)
+|    |    |    |         +--- androidx.datastore:datastore-core-okio:1.1.7 (c)
+|    |    |    |         +--- androidx.datastore:datastore-preferences-core:1.1.7 (c)
+|    |    |    |         +--- androidx.datastore:datastore-preferences-proto:1.1.7 (c)
+|    |    |    |         \--- androidx.datastore:datastore-preferences-external-protobuf:1.1.7 (c)
+|    |    |    +--- androidx.annotation:annotation:1.5.0 -> 1.9.1 (*)
+|    |    |    +--- androidx.concurrent:concurrent-futures:1.1.0 (*)
+|    |    |    +--- org.jetbrains.kotlin:kotlin-stdlib:2.0.21 -> 2.3.20 (*)
+|    |    |    +--- com.google.android.gms:play-services-basement:18.9.0 (*)
+|    |    |    \--- com.google.android.gms:play-services-tasks:18.4.0 (*)
+|    |    +--- androidx.annotation:annotation:1.7.0 -> 1.9.1 (*)
+|    |    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    +--- com.google.firebase:firebase-bom:34.19.0 (*)
+|    +--- com.google.firebase:firebase-firestore -> 26.6.0
+|    |    +--- com.google.firebase:protolite-well-known-types:18.0.1
+|    |    |    \--- com.google.protobuf:protobuf-javalite:3.25.5 -> 4.26.1
+|    |    +--- com.google.android.gms:play-services-tasks:18.4.0 (*)
+|    |    +--- com.google.firebase:firebase-annotations:17.0.0 (*)
+|    |    +--- com.google.firebase:firebase-appcheck-interop:17.0.0 -> 17.1.0
+|    |    |    +--- com.google.android.gms:play-services-base:18.0.1 -> 18.9.0 (*)
+|    |    |    \--- com.google.android.gms:play-services-tasks:18.0.1 -> 18.4.0 (*)
+|    |    +--- com.google.firebase:firebase-auth-interop:19.0.2 -> 20.0.0
+|    |    |    +--- com.google.android.gms:play-services-basement:17.0.0 -> 18.9.0 (*)
+|    |    |    +--- com.google.android.gms:play-services-tasks:17.0.0 -> 18.4.0 (*)
+|    |    |    +--- com.google.firebase:firebase-annotations:16.0.0 -> 17.0.0 (*)
+|    |    |    \--- com.google.firebase:firebase-common:20.0.0 -> 22.2.1 (*)
+|    |    +--- com.google.firebase:firebase-common:22.0.1 -> 22.2.1 (*)
+|    |    +--- com.google.firebase:firebase-components:19.0.0 (*)
+|    |    +--- com.google.firebase:firebase-database-collection:18.0.1
+|    |    |    \--- com.google.android.gms:play-services-base:18.0.1 -> 18.9.0 (*)
+|    |    +--- androidx.annotation:annotation:1.5.0 -> 1.9.1 (*)
+|    |    +--- com.google.android.gms:play-services-base:18.9.0 (*)
+|    |    +--- com.google.android.gms:play-services-basement:18.9.0 (*)
+|    |    +--- io.grpc:grpc-android:1.62.2
+|    |    |    +--- io.grpc:grpc-api:1.62.2
+|    |    |    |    +--- com.google.code.findbugs:jsr305:3.0.2
+|    |    |    |    +--- com.google.errorprone:error_prone_annotations:2.23.0 -> 2.47.0
+|    |    |    |    \--- com.google.guava:guava:32.1.3-android -> 33.6.0-android (*)
+|    |    |    +--- io.grpc:grpc-core:1.62.2
+|    |    |    |    +--- io.grpc:grpc-api:1.62.2 (*)
+|    |    |    |    +--- com.google.code.gson:gson:2.10.1 -> 2.12.0
+|    |    |    |    |    \--- com.google.errorprone:error_prone_annotations:2.36.0 -> 2.47.0
+|    |    |    |    +--- com.google.android:annotations:4.1.1.4
+|    |    |    |    +--- org.codehaus.mojo:animal-sniffer-annotations:1.23
+|    |    |    |    +--- com.google.errorprone:error_prone_annotations:2.23.0 -> 2.47.0
+|    |    |    |    +--- com.google.guava:guava:32.1.3-android -> 33.6.0-android (*)
+|    |    |    |    +--- io.perfmark:perfmark-api:0.26.0
+|    |    |    |    \--- io.grpc:grpc-context:1.62.2
+|    |    |    |         \--- io.grpc:grpc-api:1.62.2 (*)
+|    |    |    \--- com.google.guava:guava:32.1.3-android -> 33.6.0-android (*)
+|    |    +--- io.grpc:grpc-okhttp:1.62.2
+|    |    |    +--- io.grpc:grpc-api:1.62.2 (*)
+|    |    |    +--- io.grpc:grpc-util:1.62.2
+|    |    |    |    +--- io.grpc:grpc-api:1.62.2 (*)
+|    |    |    |    +--- io.grpc:grpc-core:1.62.2 (*)
+|    |    |    |    +--- org.codehaus.mojo:animal-sniffer-annotations:1.23
+|    |    |    |    \--- com.google.guava:guava:32.1.3-android -> 33.6.0-android (*)
+|    |    |    +--- io.grpc:grpc-core:1.62.2 (*)
+|    |    |    +--- com.squareup.okio:okio:3.4.0 -> 3.6.0 (*)
+|    |    |    +--- com.google.guava:guava:32.1.3-android -> 33.6.0-android (*)
+|    |    |    \--- io.perfmark:perfmark-api:0.26.0
+|    |    +--- io.grpc:grpc-protobuf-lite:1.62.2
+|    |    |    +--- io.grpc:grpc-api:1.62.2 (*)
+|    |    |    +--- com.google.protobuf:protobuf-javalite:3.25.1 -> 4.26.1
+|    |    |    +--- com.google.code.findbugs:jsr305:3.0.2
+|    |    |    \--- com.google.guava:guava:32.1.3-android -> 33.6.0-android (*)
+|    |    +--- io.grpc:grpc-stub:1.62.2
+|    |    |    +--- io.grpc:grpc-api:1.62.2 (*)
+|    |    |    +--- com.google.guava:guava:32.1.3-android -> 33.6.0-android (*)
+|    |    |    \--- com.google.errorprone:error_prone_annotations:2.23.0 -> 2.47.0
+|    |    +--- org.jetbrains.kotlin:kotlin-stdlib:2.0.21 -> 2.3.20 (*)
+|    |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0 -> 1.11.0 (*)
+|    |    \--- com.google.re2j:re2j:1.6
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
++--- project :cloud_functions
+|    +--- project :firebase_core (*)
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    +--- com.google.firebase:firebase-bom:34.19.0 (*)
+|    +--- com.google.firebase:firebase-functions -> 22.1.1
+|    |    +--- com.google.firebase:firebase-appcheck-interop:17.1.0 (*)
+|    |    +--- com.google.firebase:firebase-common:22.0.1 -> 22.2.1 (*)
+|    |    +--- com.google.firebase:firebase-components:19.0.0 (*)
+|    |    +--- com.google.firebase:firebase-annotations:17.0.0 (*)
+|    |    +--- com.google.firebase:firebase-auth-interop:18.0.0 -> 20.0.0 (*)
+|    |    +--- com.google.firebase:firebase-iid:21.1.0
+|    |    |    +--- androidx.collection:collection:1.0.0 -> 1.4.2 (*)
+|    |    |    +--- androidx.core:core:1.0.0 -> 1.18.0 (*)
+|    |    |    +--- androidx.legacy:legacy-support-core-utils:1.0.0
+|    |    |    |    +--- androidx.annotation:annotation:1.0.0 -> 1.9.1 (*)
+|    |    |    |    +--- androidx.core:core:1.0.0 -> 1.18.0 (*)
+|    |    |    |    +--- androidx.documentfile:documentfile:1.0.0
+|    |    |    |    |    \--- androidx.annotation:annotation:1.0.0 -> 1.9.1 (*)
+|    |    |    |    +--- androidx.loader:loader:1.0.0 -> 1.1.0 (*)
+|    |    |    |    +--- androidx.localbroadcastmanager:localbroadcastmanager:1.0.0
+|    |    |    |    |    \--- androidx.annotation:annotation:1.0.0 -> 1.9.1 (*)
+|    |    |    |    \--- androidx.print:print:1.0.0
+|    |    |    |         \--- androidx.annotation:annotation:1.0.0 -> 1.9.1 (*)
+|    |    |    +--- com.google.android.gms:play-services-basement:17.0.0 -> 18.9.0 (*)
+|    |    |    +--- com.google.android.gms:play-services-cloud-messaging:16.0.0
+|    |    |    |    +--- com.google.android.gms:play-services-basement:17.0.0 -> 18.9.0 (*)
+|    |    |    |    \--- com.google.android.gms:play-services-tasks:17.0.0 -> 18.4.0 (*)
+|    |    |    +--- com.google.android.gms:play-services-stats:17.0.0
+|    |    |    |    +--- androidx.legacy:legacy-support-core-utils:1.0.0 (*)
+|    |    |    |    \--- com.google.android.gms:play-services-basement:17.0.0 -> 18.9.0 (*)
+|    |    |    +--- com.google.android.gms:play-services-tasks:17.0.0 -> 18.4.0 (*)
+|    |    |    +--- com.google.firebase:firebase-iid-interop:17.1.0
+|    |    |    |    +--- com.google.android.gms:play-services-basement:17.0.0 -> 18.9.0 (*)
+|    |    |    |    \--- com.google.android.gms:play-services-tasks:17.0.0 -> 18.4.0 (*)
+|    |    |    +--- com.google.firebase:firebase-installations:16.3.5 -> 19.1.2
+|    |    |    |    +--- com.google.android.gms:play-services-tasks:18.4.0 (*)
+|    |    |    |    +--- com.google.firebase:firebase-annotations:17.0.0 (*)
+|    |    |    |    +--- com.google.firebase:firebase-installations-interop:17.3.0
+|    |    |    |    |    +--- com.google.firebase:firebase-annotations:17.0.0 (*)
+|    |    |    |    |    \--- com.google.android.gms:play-services-tasks:18.4.0 (*)
+|    |    |    |    +--- androidx.datastore:datastore-preferences:1.1.7 (*)
+|    |    |    |    \--- org.jetbrains.kotlin:kotlin-stdlib:2.0.21 -> 2.3.20 (*)
+|    |    |    \--- com.google.firebase:firebase-installations-interop:16.0.1 -> 17.3.0 (*)
+|    |    +--- com.google.firebase:firebase-iid-interop:17.1.0 (*)
+|    |    +--- org.reactivestreams:reactive-streams:1.0.4
+|    |    +--- com.google.android.gms:play-services-tasks:18.4.0 (*)
+|    |    +--- org.jetbrains.kotlin:kotlin-stdlib:2.0.21 -> 2.3.20 (*)
+|    |    +--- com.google.android.gms:play-services-base:18.9.0 (*)
+|    |    +--- com.google.android.gms:play-services-basement:18.9.0 (*)
+|    |    +--- com.squareup.okhttp3:okhttp:4.12.0
+|    |    |    +--- com.squareup.okio:okio:3.6.0 (*)
+|    |    |    \--- org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.21 -> 1.9.10 (*)
+|    |    +--- androidx.annotation:annotation:1.5.0 -> 1.9.1 (*)
+|    |    \--- javax.inject:javax.inject:1
+|    +--- androidx.annotation:annotation:1.7.0 -> 1.9.1 (*)
+|    +--- org.reactivestreams:reactive-streams:1.0.4
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
++--- project :device_info_plus
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
++--- project :firebase_auth
+|    +--- project :firebase_core (*)
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    +--- com.google.firebase:firebase-bom:34.19.0 (*)
+|    +--- com.google.firebase:firebase-auth -> 24.2.0
+|    |    +--- androidx.browser:browser:1.4.0 -> 1.9.0
+|    |    |    +--- androidx.activity:activity:1.9.0 (*)
+|    |    |    +--- androidx.annotation:annotation:1.8.1 -> 1.9.1 (*)
+|    |    |    +--- androidx.annotation:annotation-experimental:1.4.1 (*)
+|    |    |    +--- androidx.collection:collection:1.4.2 (*)
+|    |    |    +--- androidx.concurrent:concurrent-futures:1.0.0 -> 1.1.0 (*)
+|    |    |    +--- androidx.core:core:1.10.0 -> 1.18.0 (*)
+|    |    |    +--- androidx.interpolator:interpolator:1.0.0 (*)
+|    |    |    +--- com.google.guava:listenablefuture:1.0 -> 9999.0-empty-to-avoid-conflict-with-guava
+|    |    |    \--- org.jspecify:jspecify:1.0.0
+|    |    +--- androidx.collection:collection:1.0.0 -> 1.4.2 (*)
+|    |    +--- androidx.credentials:credentials:1.2.0-rc01 -> 1.6.0 (*)
+|    |    +--- androidx.credentials:credentials-play-services-auth:1.2.0-rc01 -> 1.6.0 (*)
+|    |    +--- androidx.fragment:fragment:1.1.0 -> 1.7.1 (*)
+|    |    +--- androidx.localbroadcastmanager:localbroadcastmanager:1.0.0 (*)
+|    |    +--- com.google.android.gms:play-services-auth-api-phone:18.0.2 (*)
+|    |    +--- com.google.android.gms:play-services-basement:18.9.0 (*)
+|    |    +--- com.google.android.gms:play-services-tasks:18.2.0 -> 18.4.0 (*)
+|    |    +--- com.google.android.play:integrity:1.3.0
+|    |    |    +--- com.google.android.gms:play-services-basement:18.1.0 -> 18.9.0 (*)
+|    |    |    +--- com.google.android.gms:play-services-tasks:18.0.2 -> 18.4.0 (*)
+|    |    |    \--- com.google.android.play:core-common:2.0.3 -> 2.0.4
+|    |    +--- com.google.android.recaptcha:recaptcha:18.6.1
+|    |    |    +--- com.google.android.gms:play-services-basement:18.4.0 -> 18.9.0 (*)
+|    |    |    +--- com.google.android.gms:play-services-tasks:18.2.0 -> 18.4.0 (*)
+|    |    |    +--- com.google.android.play:integrity:1.3.0 (*)
+|    |    |    +--- org.jetbrains.kotlin:kotlin-stdlib:1.7.0 -> 2.3.20 (*)
+|    |    |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3 -> 1.11.0 (*)
+|    |    |    \--- org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3 -> 1.11.0 (*)
+|    |    +--- com.google.firebase:firebase-annotations:16.2.0 -> 17.0.0 (*)
+|    |    +--- com.google.firebase:firebase-appcheck-interop:17.0.0 -> 17.1.0 (*)
+|    |    +--- com.google.firebase:firebase-auth-interop:20.0.0 (*)
+|    |    +--- com.google.firebase:firebase-common:21.0.0 -> 22.2.1 (*)
+|    |    +--- com.google.firebase:firebase-components:18.0.0 -> 19.0.0 (*)
+|    |    \--- org.jetbrains.kotlin:kotlin-stdlib:2.0.21 -> 2.3.20 (*)
+|    +--- androidx.annotation:annotation:1.7.0 -> 1.9.1 (*)
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
++--- project :firebase_core (*)
++--- project :flutter_blue_plus_android
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
++--- project :flutter_compass
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
++--- project :flutter_local_notifications
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    +--- androidx.core:core:1.3.0 -> 1.18.0 (*)
+|    +--- androidx.media:media:1.1.0
+|    |    +--- androidx.core:core:1.1.0 -> 1.18.0 (*)
+|    |    \--- androidx.collection:collection:1.0.0 -> 1.4.2 (*)
+|    +--- com.google.code.gson:gson:2.12.0 (*)
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
++--- project :flutter_tts
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.2.20 -> 2.3.20 (*)
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
++--- project :geocoding_android
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
++--- project :geolocator_android
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    +--- com.google.android.gms:play-services-location:21.2.0
+|    |    +--- com.google.android.gms:play-services-base:18.3.0 -> 18.9.0 (*)
+|    |    +--- com.google.android.gms:play-services-basement:18.3.0 -> 18.9.0 (*)
+|    |    +--- com.google.android.gms:play-services-tasks:18.1.0 -> 18.4.0 (*)
+|    |    +--- org.jetbrains.kotlin:kotlin-stdlib:1.9.0 -> 2.3.20 (*)
+|    |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3 -> 1.11.0 (*)
+|    |    \--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3 -> 1.11.0 (*)
+|    +--- androidx.core:core:1.16.0 -> 1.18.0 (*)
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
++--- project :google_mlkit_commons
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    +--- com.google.mlkit:vision-common:17.3.0
+|    |    +--- androidx.exifinterface:exifinterface:1.0.0 -> 1.4.2 (*)
+|    |    +--- com.google.android.datatransport:transport-api:2.2.1 -> 3.0.0 (*)
+|    |    +--- com.google.android.datatransport:transport-backend-cct:2.3.3 -> 3.1.0 (*)
+|    |    +--- com.google.android.datatransport:transport-runtime:2.2.6 -> 3.1.0 (*)
+|    |    +--- com.google.android.gms:play-services-base:18.1.0 -> 18.9.0 (*)
+|    |    +--- com.google.android.gms:play-services-basement:18.1.0 -> 18.9.0 (*)
+|    |    +--- com.google.android.gms:play-services-tasks:18.0.2 -> 18.4.0 (*)
+|    |    +--- com.google.android.odml:image:1.0.0-beta1
+|    |    +--- com.google.firebase:firebase-components:16.1.0 -> 19.0.0 (*)
+|    |    +--- com.google.firebase:firebase-encoders:16.1.0 -> 17.0.0 (*)
+|    |    +--- com.google.firebase:firebase-encoders-json:17.1.0 -> 18.0.0 (*)
+|    |    \--- com.google.mlkit:common:18.6.0 -> 18.11.0
+|    |         +--- androidx.appcompat:appcompat:1.6.1 -> 1.7.1 (*)
+|    |         +--- androidx.core:core:1.0.0 -> 1.18.0 (*)
+|    |         +--- com.google.android.datatransport:transport-api:2.2.1 -> 3.0.0 (*)
+|    |         +--- com.google.android.datatransport:transport-backend-cct:2.3.3 -> 3.1.0 (*)
+|    |         +--- com.google.android.datatransport:transport-runtime:2.2.6 -> 3.1.0 (*)
+|    |         +--- com.google.android.gms:play-services-base:18.5.0 -> 18.9.0 (*)
+|    |         +--- com.google.android.gms:play-services-basement:18.4.0 -> 18.9.0 (*)
+|    |         +--- com.google.android.gms:play-services-tasks:18.2.0 -> 18.4.0 (*)
+|    |         +--- com.google.firebase:firebase-components:16.1.0 -> 19.0.0 (*)
+|    |         +--- com.google.firebase:firebase-encoders:16.1.0 -> 17.0.0 (*)
+|    |         \--- com.google.firebase:firebase-encoders-json:17.1.0 -> 18.0.0 (*)
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
++--- project :google_mlkit_translation
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    +--- com.google.mlkit:translate:17.0.3
+|    |    +--- androidx.core:core:1.9.0 -> 1.18.0 (*)
+|    |    +--- com.google.android.datatransport:transport-api:2.2.1 -> 3.0.0 (*)
+|    |    +--- com.google.android.datatransport:transport-backend-cct:2.3.3 -> 3.1.0 (*)
+|    |    +--- com.google.android.datatransport:transport-runtime:2.2.6 -> 3.1.0 (*)
+|    |    +--- com.google.android.gms:play-services-base:18.5.0 -> 18.9.0 (*)
+|    |    +--- com.google.android.gms:play-services-basement:18.4.0 -> 18.9.0 (*)
+|    |    +--- com.google.android.gms:play-services-tasks:18.2.0 -> 18.4.0 (*)
+|    |    +--- com.google.firebase:firebase-components:16.1.0 -> 19.0.0 (*)
+|    |    +--- com.google.firebase:firebase-encoders:16.1.0 -> 17.0.0 (*)
+|    |    +--- com.google.firebase:firebase-encoders-json:17.1.0 -> 18.0.0 (*)
+|    |    +--- com.google.mlkit:common:18.11.0 (*)
+|    |    \--- com.squareup.okhttp3:okhttp:3.0.0 -> 4.12.0 (*)
+|    +--- project :google_mlkit_commons (*)
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
++--- project :google_sign_in_android
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    +--- androidx.credentials:credentials:1.6.0 (*)
+|    +--- androidx.credentials:credentials-play-services-auth:1.6.0 (*)
+|    +--- com.google.android.libraries.identity.googleid:googleid:1.2.0 (*)
+|    +--- com.google.android.gms:play-services-auth:21.5.1 (*)
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
++--- project :jni
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
++--- project :jni_flutter
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    +--- project :jni (*)
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
++--- project :mobile_scanner
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    +--- com.google.mlkit:barcode-scanning:17.3.0
+|    |    +--- com.google.android.gms:play-services-basement:18.4.0 -> 18.9.0 (*)
+|    |    +--- com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.1
+|    |    |    +--- com.google.android.datatransport:transport-api:2.2.1 -> 3.0.0 (*)
+|    |    |    +--- com.google.android.datatransport:transport-backend-cct:2.3.3 -> 3.1.0 (*)
+|    |    |    +--- com.google.android.datatransport:transport-runtime:2.2.6 -> 3.1.0 (*)
+|    |    |    +--- com.google.android.gms:play-services-base:18.5.0 -> 18.9.0 (*)
+|    |    |    +--- com.google.android.gms:play-services-basement:18.4.0 -> 18.9.0 (*)
+|    |    |    +--- com.google.android.gms:play-services-tasks:18.2.0 -> 18.4.0 (*)
+|    |    |    +--- com.google.android.odml:image:1.0.0-beta1
+|    |    |    +--- com.google.firebase:firebase-components:16.1.0 -> 19.0.0 (*)
+|    |    |    +--- com.google.firebase:firebase-encoders:16.1.0 -> 17.0.0 (*)
+|    |    |    +--- com.google.firebase:firebase-encoders-json:17.1.0 -> 18.0.0 (*)
+|    |    |    +--- com.google.mlkit:barcode-scanning-common:17.0.0
+|    |    |    |    +--- com.google.android.gms:play-services-basement:18.0.0 -> 18.9.0 (*)
+|    |    |    |    \--- com.google.mlkit:vision-common:17.0.0 -> 17.3.0 (*)
+|    |    |    +--- com.google.mlkit:common:18.11.0 (*)
+|    |    |    +--- com.google.mlkit:vision-common:17.3.0 (*)
+|    |    |    \--- com.google.mlkit:vision-interfaces:16.3.0
+|    |    |         +--- com.google.android.gms:play-services-basement:18.1.0 -> 18.9.0 (*)
+|    |    |         \--- com.google.android.gms:play-services-tasks:18.0.2 -> 18.4.0 (*)
+|    |    +--- com.google.mlkit:barcode-scanning-common:17.0.0 (*)
+|    |    +--- com.google.mlkit:common:18.11.0 (*)
+|    |    \--- com.google.mlkit:vision-common:17.3.0 (*)
+|    +--- androidx.camera:camera-lifecycle:1.6.1 (*)
+|    +--- androidx.camera:camera-camera2:1.6.1 (*)
+|    +--- org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0 (*)
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
++--- project :package_info_plus
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
++--- project :shared_preferences_android
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    +--- androidx.datastore:datastore:1.1.7 (*)
+|    +--- androidx.datastore:datastore-preferences:1.1.7 (*)
+|    +--- androidx.preference:preference:1.2.1
+|    |    +--- androidx.annotation:annotation:1.2.0 -> 1.9.1 (*)
+|    |    +--- androidx.appcompat:appcompat:1.1.0 -> 1.7.1 (*)
+|    |    +--- androidx.core:core:1.6.0 -> 1.18.0 (*)
+|    |    +--- androidx.activity:activity-ktx:1.5.1 -> 1.9.0
+|    |    |    +--- androidx.activity:activity:1.9.0 (*)
+|    |    |    +--- androidx.core:core-ktx:1.13.0 -> 1.18.0 (*)
+|    |    |    +--- androidx.lifecycle:lifecycle-runtime-ktx:2.6.1 -> 2.10.0
+|    |    |    |    \--- androidx.lifecycle:lifecycle-runtime-ktx-android:2.10.0
+|    |    |    |         +--- androidx.annotation:annotation:1.9.1 (*)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-runtime:2.10.0 (*)
+|    |    |    |         +--- org.jetbrains.kotlin:kotlin-stdlib:2.0.21 -> 2.3.20 (*)
+|    |    |    |         +--- org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0 -> 1.11.0 (*)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-common:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-common-java8:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-livedata:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-livedata-core:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-livedata-core-ktx:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-process:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-runtime:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-service:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-viewmodel:2.10.0 (c)
+|    |    |    |         +--- androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0 (c)
+|    |    |    |         \--- androidx.lifecycle:lifecycle-viewmodel-savedstate:2.10.0 (c)
+|    |    |    +--- androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1 -> 2.10.0
+|    |    |    |    +--- androidx.lifecycle:lifecycle-viewmodel:2.10.0 (*)
+|    |    |    |    +--- org.jetbrains.kotlin:kotlin-stdlib:2.0.21 -> 2.3.20 (*)
+|    |    |    |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0 -> 1.11.0 (*)
+|    |    |    |    +--- androidx.lifecycle:lifecycle-common:2.10.0 (c)
+|    |    |    |    +--- androidx.lifecycle:lifecycle-common-java8:2.10.0 (c)
+|    |    |    |    +--- androidx.lifecycle:lifecycle-livedata:2.10.0 (c)
+|    |    |    |    +--- androidx.lifecycle:lifecycle-livedata-core:2.10.0 (c)
+|    |    |    |    +--- androidx.lifecycle:lifecycle-livedata-core-ktx:2.10.0 (c)
+|    |    |    |    +--- androidx.lifecycle:lifecycle-process:2.10.0 (c)
+|    |    |    |    +--- androidx.lifecycle:lifecycle-runtime:2.10.0 (c)
+|    |    |    |    +--- androidx.lifecycle:lifecycle-runtime-ktx:2.10.0 (c)
+|    |    |    |    +--- androidx.lifecycle:lifecycle-viewmodel:2.10.0 (c)
+|    |    |    |    +--- androidx.lifecycle:lifecycle-viewmodel-savedstate:2.10.0 (c)
+|    |    |    |    \--- androidx.lifecycle:lifecycle-service:2.10.0 (c)
+|    |    |    +--- androidx.savedstate:savedstate-ktx:1.2.1 -> 1.4.0
+|    |    |    |    +--- androidx.savedstate:savedstate:1.4.0 (*)
+|    |    |    |    +--- org.jetbrains.kotlin:kotlin-stdlib -> 2.3.20 (*)
+|    |    |    |    +--- androidx.savedstate:savedstate:1.4.0 (c)
+|    |    |    |    \--- org.jetbrains.kotlin:kotlin-stdlib:2.0.21 -> 2.3.20 (c)
+|    |    |    +--- org.jetbrains.kotlin:kotlin-stdlib:1.8.22 -> 2.3.20 (*)
+|    |    |    \--- androidx.activity:activity:1.9.0 (c)
+|    |    +--- androidx.fragment:fragment-ktx:1.3.6 -> 1.7.1
+|    |    |    +--- androidx.activity:activity-ktx:1.8.1 -> 1.9.0 (*)
+|    |    |    +--- androidx.collection:collection-ktx:1.1.0 -> 1.4.2
+|    |    |    |    +--- androidx.collection:collection:1.4.2 (*)
+|    |    |    |    \--- androidx.collection:collection:1.4.2 (c)
+|    |    |    +--- androidx.core:core-ktx:1.2.0 -> 1.18.0 (*)
+|    |    |    +--- androidx.fragment:fragment:1.7.1 (*)
+|    |    |    +--- androidx.lifecycle:lifecycle-livedata-core-ktx:2.6.1 -> 2.10.0 (*)
+|    |    |    +--- androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1 -> 2.10.0 (*)
+|    |    |    +--- androidx.savedstate:savedstate-ktx:1.2.1 -> 1.4.0 (*)
+|    |    |    +--- org.jetbrains.kotlin:kotlin-stdlib:1.8.22 -> 2.3.20 (*)
+|    |    |    \--- androidx.fragment:fragment:1.7.1 (c)
+|    |    +--- androidx.recyclerview:recyclerview:1.0.0
+|    |    |    +--- androidx.annotation:annotation:1.0.0 -> 1.9.1 (*)
+|    |    |    +--- androidx.core:core:1.0.0 -> 1.18.0 (*)
+|    |    |    \--- androidx.legacy:legacy-support-core-ui:1.0.0
+|    |    |         +--- androidx.annotation:annotation:1.0.0 -> 1.9.1 (*)
+|    |    |         +--- androidx.core:core:1.0.0 -> 1.18.0 (*)
+|    |    |         +--- androidx.legacy:legacy-support-core-utils:1.0.0 (*)
+|    |    |         +--- androidx.customview:customview:1.0.0 -> 1.1.0 (*)
+|    |    |         +--- androidx.viewpager:viewpager:1.0.0 (*)
+|    |    |         +--- androidx.coordinatorlayout:coordinatorlayout:1.0.0
+|    |    |         |    +--- androidx.annotation:annotation:1.0.0 -> 1.9.1 (*)
+|    |    |         |    +--- androidx.core:core:1.0.0 -> 1.18.0 (*)
+|    |    |         |    \--- androidx.customview:customview:1.0.0 -> 1.1.0 (*)
+|    |    |         +--- androidx.drawerlayout:drawerlayout:1.0.0 (*)
+|    |    |         +--- androidx.slidingpanelayout:slidingpanelayout:1.0.0 -> 1.2.0
+|    |    |         |    +--- androidx.annotation:annotation:1.1.0 -> 1.9.1 (*)
+|    |    |         |    +--- androidx.customview:customview:1.1.0 (*)
+|    |    |         |    +--- androidx.core:core:1.1.0 -> 1.18.0 (*)
+|    |    |         |    +--- androidx.window:window:1.0.0 -> 1.2.0 (*)
+|    |    |         |    \--- androidx.transition:transition:1.4.1
+|    |    |         |         +--- androidx.annotation:annotation:1.1.0 -> 1.9.1 (*)
+|    |    |         |         +--- androidx.core:core:1.1.0 -> 1.18.0 (*)
+|    |    |         |         \--- androidx.collection:collection:1.1.0 -> 1.4.2 (*)
+|    |    |         +--- androidx.interpolator:interpolator:1.0.0 (*)
+|    |    |         +--- androidx.swiperefreshlayout:swiperefreshlayout:1.0.0
+|    |    |         |    +--- androidx.annotation:annotation:1.0.0 -> 1.9.1 (*)
+|    |    |         |    +--- androidx.core:core:1.0.0 -> 1.18.0 (*)
+|    |    |         |    \--- androidx.interpolator:interpolator:1.0.0 (*)
+|    |    |         +--- androidx.asynclayoutinflater:asynclayoutinflater:1.0.0
+|    |    |         |    +--- androidx.annotation:annotation:1.0.0 -> 1.9.1 (*)
+|    |    |         |    \--- androidx.core:core:1.0.0 -> 1.18.0 (*)
+|    |    |         \--- androidx.cursoradapter:cursoradapter:1.0.0 (*)
+|    |    +--- androidx.slidingpanelayout:slidingpanelayout:1.2.0 (*)
+|    |    \--- androidx.collection:collection:1.0.0 -> 1.4.2 (*)
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
++--- project :speech_to_text
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
++--- project :tflite_flutter
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    +--- com.google.ai.edge.litert:litert:1.4.0 -> 2.1.5
+|    |    +--- androidx.lifecycle:lifecycle-runtime:2.10.0 (*)
+|    |    +--- com.google.guava:guava:33.5.0-android -> 33.6.0-android (*)
+|    |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.8.0 -> 1.11.0
+|    |    |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0 (*)
+|    |    |    +--- org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.11.0 (*)
+|    |    |    +--- com.google.guava:guava:32.0.0-jre -> 33.6.0-android (*)
+|    |    |    \--- org.jetbrains.kotlin:kotlin-stdlib:2.2.20 -> 2.3.20 (*)
+|    |    \--- com.google.android.play:ai-delivery:0.1.1-alpha01
+|    |         +--- com.google.android.gms:play-services-basement:18.4.0 -> 18.9.0 (*)
+|    |         +--- com.google.android.gms:play-services-tasks:18.2.0 -> 18.4.0 (*)
+|    |         +--- com.google.android.play:asset-delivery:2.3.0
+|    |         |    +--- androidx.work:work-runtime:2.9.1
+|    |         |    |    +--- androidx.annotation:annotation-experimental:1.0.0 -> 1.4.1 (*)
+|    |         |    |    +--- androidx.core:core:1.9.0 -> 1.18.0 (*)
+|    |         |    |    +--- androidx.lifecycle:lifecycle-livedata:2.5.1 -> 2.10.0 (*)
+|    |         |    |    +--- androidx.lifecycle:lifecycle-service:2.5.1 -> 2.10.0
+|    |         |    |    |    +--- androidx.lifecycle:lifecycle-runtime:2.10.0 (*)
+|    |         |    |    |    +--- org.jetbrains.kotlin:kotlin-stdlib:2.0.21 -> 2.3.20 (*)
+|    |         |    |    |    +--- androidx.lifecycle:lifecycle-common:2.10.0 (c)
+|    |         |    |    |    +--- androidx.lifecycle:lifecycle-common-java8:2.10.0 (c)
+|    |         |    |    |    +--- androidx.lifecycle:lifecycle-livedata:2.10.0 (c)
+|    |         |    |    |    +--- androidx.lifecycle:lifecycle-livedata-core:2.10.0 (c)
+|    |         |    |    |    +--- androidx.lifecycle:lifecycle-livedata-core-ktx:2.10.0 (c)
+|    |         |    |    |    +--- androidx.lifecycle:lifecycle-process:2.10.0 (c)
+|    |         |    |    |    +--- androidx.lifecycle:lifecycle-runtime:2.10.0 (c)
+|    |         |    |    |    +--- androidx.lifecycle:lifecycle-runtime-ktx:2.10.0 (c)
+|    |         |    |    |    +--- androidx.lifecycle:lifecycle-viewmodel:2.10.0 (c)
+|    |         |    |    |    +--- androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0 (c)
+|    |         |    |    |    \--- androidx.lifecycle:lifecycle-viewmodel-savedstate:2.10.0 (c)
+|    |         |    |    +--- androidx.room:room-ktx:2.5.0
+|    |         |    |    |    +--- androidx.room:room-common:2.5.0
+|    |         |    |    |    |    +--- androidx.annotation:annotation:1.3.0 -> 1.9.1 (*)
+|    |         |    |    |    |    \--- org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.20 -> 1.9.10 (*)
+|    |         |    |    |    +--- androidx.room:room-runtime:2.5.0
+|    |         |    |    |    |    +--- androidx.annotation:annotation-experimental:1.1.0 -> 1.4.1 (*)
+|    |         |    |    |    |    +--- androidx.arch.core:core-runtime:2.0.1 -> 2.2.0 (*)
+|    |         |    |    |    |    +--- androidx.room:room-common:2.5.0 (*)
+|    |         |    |    |    |    +--- androidx.sqlite:sqlite:2.3.0
+|    |         |    |    |    |    |    +--- androidx.annotation:annotation:1.0.0 -> 1.9.1 (*)
+|    |         |    |    |    |    |    \--- org.jetbrains.kotlin:kotlin-stdlib:1.7.20 -> 2.3.20 (*)
+|    |         |    |    |    |    \--- androidx.sqlite:sqlite-framework:2.3.0
+|    |         |    |    |    |         +--- androidx.annotation:annotation:1.2.0 -> 1.9.1 (*)
+|    |         |    |    |    |         +--- androidx.sqlite:sqlite:2.3.0 (*)
+|    |         |    |    |    |         \--- org.jetbrains.kotlin:kotlin-stdlib:1.7.20 -> 2.3.20 (*)
+|    |         |    |    |    +--- org.jetbrains.kotlin:kotlin-stdlib:1.7.20 -> 2.3.20 (*)
+|    |         |    |    |    \--- org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4 -> 1.11.0 (*)
+|    |         |    |    +--- androidx.sqlite:sqlite-framework:2.3.0 (*)
+|    |         |    |    +--- androidx.startup:startup-runtime:1.1.1 (*)
+|    |         |    |    +--- com.google.guava:listenablefuture:1.0 -> 9999.0-empty-to-avoid-conflict-with-guava
+|    |         |    |    +--- org.jetbrains.kotlin:kotlin-stdlib:1.8.22 -> 2.3.20 (*)
+|    |         |    |    \--- org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1 -> 1.11.0 (*)
+|    |         |    +--- com.google.android.gms:play-services-basement:18.4.0 -> 18.9.0 (*)
+|    |         |    +--- com.google.android.gms:play-services-tasks:18.2.0 -> 18.4.0 (*)
+|    |         |    \--- com.google.android.play:core-common:2.0.4
+|    |         \--- com.google.android.play:core-common:2.0.4
+|    +--- com.google.ai.edge.litert:litert-gpu:1.4.0
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
++--- project :ultralytics_yolo
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    +--- com.google.ai.edge.litert:litert:2.1.5 (*)
+|    +--- com.google.ai.edge.litert:litert-metadata:1.4.2
+|    |    +--- org.checkerframework:checker-qual:2.5.8
+|    |    \--- com.google.flatbuffers:flatbuffers-java:1.12.0
+|    +--- org.yaml:snakeyaml:2.6
+|    +--- androidx.camera:camera-core:1.6.0 -> 1.6.1 (*)
+|    +--- androidx.camera:camera-camera2:1.6.0 -> 1.6.1 (*)
+|    +--- androidx.camera:camera-lifecycle:1.6.0 -> 1.6.1 (*)
+|    +--- androidx.camera:camera-view:1.6.0 -> 1.6.1 (*)
+|    +--- androidx.core:core-ktx:1.18.0 (*)
+|    +--- androidx.appcompat:appcompat:1.7.1 (*)
+|    +--- com.google.guava:guava:33.6.0-android (*)
+|    +--- project :wakelock_plus
+|    |    +--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    |    +--- project :package_info_plus (*)
+|    |    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
++--- project :url_launcher_android
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    +--- androidx.core:core:1.17.0 -> 1.18.0 (*)
+|    +--- androidx.annotation:annotation:1.9.1 (*)
+|    +--- androidx.browser:browser:1.9.0 (*)
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
++--- project :vibration
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
++--- project :video_player_android
+|    +--- org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
+|    +--- androidx.media3:media3-exoplayer:1.9.2
+|    |    +--- androidx.annotation:annotation:1.6.0 -> 1.9.1 (*)
+|    |    +--- androidx.collection:collection:1.2.0 -> 1.4.2 (*)
+|    |    +--- androidx.core:core:1.8.0 -> 1.18.0 (*)
+|    |    +--- androidx.exifinterface:exifinterface:1.3.6 -> 1.4.2 (*)
+|    |    +--- androidx.media3:media3-common:1.9.2 (*)
+|    |    +--- androidx.media3:media3-container:1.9.2 (*)
+|    |    +--- androidx.media3:media3-datasource:1.9.2
+|    |    |    +--- androidx.annotation:annotation:1.6.0 -> 1.9.1 (*)
+|    |    |    +--- androidx.exifinterface:exifinterface:1.3.6 -> 1.4.2 (*)
+|    |    |    +--- androidx.media3:media3-common:1.9.2 (*)
+|    |    |    \--- androidx.media3:media3-database:1.9.2
+|    |    |         +--- androidx.annotation:annotation:1.6.0 -> 1.9.1 (*)
+|    |    |         \--- androidx.media3:media3-common:1.9.2 (*)
+|    |    +--- androidx.media3:media3-decoder:1.9.2
+|    |    |    +--- androidx.annotation:annotation:1.6.0 -> 1.9.1 (*)
+|    |    |    \--- androidx.media3:media3-common:1.9.2 (*)
+|    |    +--- androidx.media3:media3-extractor:1.9.2
+|    |    |    +--- androidx.annotation:annotation:1.6.0 -> 1.9.1 (*)
+|    |    |    +--- androidx.media3:media3-decoder:1.9.2 (*)
+|    |    |    +--- androidx.media3:media3-common:1.9.2 (*)
+|    |    |    \--- androidx.media3:media3-container:1.9.2 (*)
+|    |    +--- androidx.media3:media3-database:1.9.2 (*)
+|    |    \--- org.jetbrains.kotlin:kotlin-stdlib:2.0.20 -> 2.3.20 (*)
+|    +--- androidx.media3:media3-exoplayer-hls:1.9.2
+|    |    +--- androidx.annotation:annotation:1.6.0 -> 1.9.1 (*)
+|    |    \--- androidx.media3:media3-exoplayer:1.9.2 (*)
+|    +--- androidx.media3:media3-exoplayer-dash:1.9.2
+|    |    +--- androidx.annotation:annotation:1.6.0 -> 1.9.1 (*)
+|    |    \--- androidx.media3:media3-exoplayer:1.9.2 (*)
+|    +--- androidx.media3:media3-exoplayer-rtsp:1.9.2
+|    |    +--- androidx.annotation:annotation:1.6.0 -> 1.9.1 (*)
+|    |    \--- androidx.media3:media3-exoplayer:1.9.2 (*)
+|    +--- androidx.media3:media3-exoplayer-smoothstreaming:1.9.2
+|    |    +--- androidx.annotation:annotation:1.6.0 -> 1.9.1 (*)
+|    |    \--- androidx.media3:media3-exoplayer:1.9.2 (*)
+|    \--- io.flutter:flutter_embedding_release:1.0.0-a804b261645ef8c13eb3d5c44a5c2fb0340c5539 (*)
+\--- project :wakelock_plus (*)
+
+(c) - A dependency constraint, not a dependency. The dependency affected by the constraint occurs elsewhere in the tree.
+(*) - Indicates repeated occurrences of a transitive dependency subtree. Gradle expands transitive dependency subtrees only once per project; repeat occurrences only display the root of the subtree, followed by this annotation.
+
+A web-based, searchable dependency report is available by adding the --scan option.
+
+[Incubating] Problems report is available at: file:///C:/fadli/project/hajicare/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.1.0/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 2m 2s
+5 actionable tasks: 1 executed, 4 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.1.0/userguide/configuration_cache_enabling.html

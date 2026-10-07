@@ -8,7 +8,6 @@ if (keystorePropertiesFile.exists()) {
 
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
     // START: FlutterFire Configuration
     id("com.google.gms.google-services")
     // END: FlutterFire Configuration
@@ -62,7 +61,11 @@ android {
             create("release") {
                 keyAlias = keystoreProperties.getProperty("keyAlias")
                 keyPassword = keystoreProperties.getProperty("keyPassword")
-                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                val storePath = keystoreProperties.getProperty("storeFile")
+                storeFile = if (storePath != null) {
+                    val f = file(storePath)
+                    if (f.exists()) f else rootProject.file(storePath)
+                } else null
                 storePassword = keystoreProperties.getProperty("storePassword")
             }
         }
@@ -70,6 +73,8 @@ android {
 
     buildTypes {
         release {
+            isMinifyEnabled = true
+            isShrinkResources = true
             // Never sign production artifacts with the public debug key. When
             // key.properties is absent, Gradle intentionally emits an unsigned
             // release APK that cannot be accidentally distributed as trusted.

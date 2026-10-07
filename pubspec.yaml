@@ -35,11 +35,11 @@ dependencies:
   qr_flutter: ^4.1.0
   flutter_blue_plus: ^2.3.12
   mobile_scanner: ^7.4.2
-  speech_to_text: ^7.4.0
-  google_mlkit_translation: ^0.14.0
+  speech_to_text: ^7.5.0
+  google_mlkit_translation: ^0.15.1
   url_launcher: ^6.3.2
   cloud_functions: ^6.5.0
-  audioplayers: ^6.1.2
+  audioplayers: ^6.8.1
   flutter_local_notifications: ^22.3.1
   tflite_flutter: ^0.12.1
   android_alarm_manager_plus: ^5.1.1
