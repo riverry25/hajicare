@@ -1435,22 +1435,16 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   void focusCoordinate(LatLng coordinate, {double destZoom = 17.0}) {
     pendingFocusCoordinate = coordinate;
     pendingFocusZoom = destZoom;
-
-    void performMove() {
-      if (isMapAttached) {
-        try {
-          flutterMapController.move(coordinate, destZoom);
-        } catch (_) {}
-        animatedMove(coordinate, destZoom);
-      }
-    }
-
     if (isMapAttached) {
-      performMove();
+      try {
+        flutterMapController.move(coordinate, destZoom);
+      } catch (_) {}
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (isMapAttached) {
+          animatedMove(coordinate, destZoom);
+        }
+      });
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) => performMove());
-    Future.delayed(const Duration(milliseconds: 300), performMove);
-    Future.delayed(const Duration(milliseconds: 600), performMove);
   }
 
   void animatedMove(LatLng destLocation, double destZoom) {
