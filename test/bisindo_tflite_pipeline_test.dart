@@ -31,15 +31,18 @@ void main() {
       expect(lines.last, equals('Z'));
     });
 
-    test('model_metadata.json specifies 48 sequence len and 706 feature dim', () {
-      final file = File('assets/models/bisindo/model_metadata.json');
-      expect(file.existsSync(), isTrue);
-      final jsonMap =
-          json.decode(file.readAsStringSync()) as Map<String, dynamic>;
-      expect(jsonMap['sequence_length'], equals(48));
-      expect(jsonMap['model_input_feature_dim'], equals(706));
-      expect(jsonMap['num_classes'], equals(47));
-    });
+    test(
+      'model_metadata.json specifies 48 sequence len and 706 feature dim',
+      () {
+        final file = File('assets/models/bisindo/model_metadata.json');
+        expect(file.existsSync(), isTrue);
+        final jsonMap =
+            json.decode(file.readAsStringSync()) as Map<String, dynamic>;
+        expect(jsonMap['sequence_length'], equals(48));
+        expect(jsonMap['model_input_feature_dim'], equals(706));
+        expect(jsonMap['num_classes'], equals(47));
+      },
+    );
 
     test('hand_landmarker.task exists and is valid size', () {
       final file = File('android/app/src/main/assets/hand_landmarker.task');

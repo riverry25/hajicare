@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart' as fmap;
@@ -37,13 +38,11 @@ class _NavigationMapViewState extends State<NavigationMapView> {
   Worker? _locationWorker;
   Worker? _bearingWorker;
   Worker? _routeWorker;
+  ml.Symbol? _puckSymbol;
 
   // Touch drag tracking to prevent taps or programmatic anims from disabling follow mode
   Offset? _touchStartPos;
   double _accumulatedDrag = 0.0;
-
-  // Screen coordinate of the user's geographic location (only needed when user pans away)
-  Offset? _puckScreenOffset;
 
   @override
   void initState() {
@@ -52,25 +51,23 @@ class _NavigationMapViewState extends State<NavigationMapView> {
     // Listen for recenter callback from controller
     widget.mapCtrl.onRecenterTriggered = _handleRecenter;
 
-    // Reactively update camera and puck when location changes
+    // Reactively update camera and native puck symbol when location changes
     _locationWorker = ever(widget.mapCtrl.currentUserLocation, (
       ll.LatLng? pos,
     ) {
       if (pos != null) {
         if (widget.mapCtrl.isFollowingUser.value) {
           _scheduleCameraFollow();
-        } else {
-          _updatePuckScreenLocation();
         }
+        _updatePuckNativeSymbol();
       }
     });
 
     _bearingWorker = ever(widget.mapCtrl.navigationBearing, (double bearing) {
       if (widget.mapCtrl.isFollowingUser.value) {
         _scheduleCameraFollow();
-      } else {
-        _updatePuckScreenLocation();
       }
+      _updatePuckNativeSymbol();
     });
 
     _routeWorker = ever(widget.mapCtrl.activeRoute, (List<ll.LatLng> points) {
@@ -146,26 +143,86 @@ class _NavigationMapViewState extends State<NavigationMapView> {
     _maplibreController = controller;
   }
 
+  Future<Uint8List> _generatePuckIconBytes() async {
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder, const Rect.fromLTWH(0, 0, 96, 96));
+
+    // 1. Subtle, serene ambient halo
+    final haloPaint = Paint()
+      ..color = const Color(0xFF22C55E).withValues(alpha: 0.22)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(const Offset(48, 48), 44, haloPaint);
+
+    // 2. High-contrast crisp white boundary ring
+    final borderPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(const Offset(48, 48), 34, borderPaint);
+
+    // 3. Inner vibrant emerald core
+    final corePaint = Paint()
+      ..shader = ui.Gradient.linear(
+        const Offset(48, 18),
+        const Offset(48, 78),
+        [const Color(0xFF22C55E), const Color(0xFF15803D)],
+      )
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(const Offset(48, 48), 28, corePaint);
+
+    // 4. Directional chevron/arrow pointing forward (UP)
+    final path = Path();
+    path.moveTo(48, 28); // Tip
+    path.lineTo(60, 58); // Bottom right
+    path.lineTo(48, 52); // Inner notch
+    path.lineTo(36, 58); // Bottom left
+    path.close();
+
+    final arrowPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(path, arrowPaint);
+
+    final picture = recorder.endRecording();
+    final image = await picture.toImage(96, 96);
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    return byteData!.buffer.asUint8List();
+  }
+
   void _onStyleLoaded() async {
     _isStyleLoaded = true;
+    try {
+      final puckBytes = await _generatePuckIconBytes();
+      await _maplibreController!.addImage('hajicare_nav_puck', puckBytes);
+    } catch (e) {
+      debugPrint('[NavigationMapView] Error registering puck image: $e');
+    }
     await _drawRouteAndMarkers();
   }
 
-  Future<void> _updatePuckScreenLocation() async {
-    if (_maplibreController == null || !mounted) return;
+  Future<void> _updatePuckNativeSymbol() async {
+    if (_maplibreController == null || !_isStyleLoaded) return;
     final userLoc = widget.mapCtrl.currentUserLocation.value;
     if (userLoc == null) return;
+    final bearing = widget.mapCtrl.navigationBearing.value;
     try {
-      final point = await _maplibreController!.toScreenLocation(
-        ml.LatLng(userLoc.latitude, userLoc.longitude),
-      );
-      if (mounted) {
-        final pixelRatio = MediaQuery.of(context).devicePixelRatio;
-        final logicalX = point.x / pixelRatio;
-        final logicalY = point.y / pixelRatio;
-        setState(() {
-          _puckScreenOffset = Offset(logicalX, logicalY);
-        });
+      if (_puckSymbol != null) {
+        await _maplibreController!.updateSymbol(
+          _puckSymbol!,
+          ml.SymbolOptions(
+            geometry: ml.LatLng(userLoc.latitude, userLoc.longitude),
+            iconRotate: bearing,
+          ),
+        );
+      } else {
+        _puckSymbol = await _maplibreController!.addSymbol(
+          ml.SymbolOptions(
+            geometry: ml.LatLng(userLoc.latitude, userLoc.longitude),
+            iconImage: 'hajicare_nav_puck',
+            iconRotate: bearing,
+            iconSize: 0.65,
+            iconAnchor: 'center',
+          ),
+        );
       }
     } catch (_) {}
   }
@@ -175,6 +232,8 @@ class _NavigationMapViewState extends State<NavigationMapView> {
     try {
       await _maplibreController!.clearLines();
       await _maplibreController!.clearCircles();
+      await _maplibreController!.clearSymbols();
+      _puckSymbol = null;
 
       final route = widget.mapCtrl.activeRoute;
       if (route.isNotEmpty) {
@@ -205,20 +264,6 @@ class _NavigationMapViewState extends State<NavigationMapView> {
         );
       }
 
-      // User location native dot inside GL surface
-      final userLoc = widget.mapCtrl.currentUserLocation.value;
-      if (userLoc != null) {
-        await _maplibreController!.addCircle(
-          ml.CircleOptions(
-            geometry: ml.LatLng(userLoc.latitude, userLoc.longitude),
-            circleRadius: 9.0,
-            circleColor: '#22C55E',
-            circleStrokeColor: '#FFFFFF',
-            circleStrokeWidth: 3.5,
-          ),
-        );
-      }
-
       // Red destination marker
       final dest = widget.mapCtrl.currentDestinationCoord;
       if (dest != null) {
@@ -229,6 +274,21 @@ class _NavigationMapViewState extends State<NavigationMapView> {
             circleColor: '#E11D48',
             circleStrokeColor: '#FFFFFF',
             circleStrokeWidth: 3.5,
+          ),
+        );
+      }
+
+      // Native Directional Navigation Puck pinned to userLoc inside GL surface
+      final userLoc = widget.mapCtrl.currentUserLocation.value;
+      final bearing = widget.mapCtrl.navigationBearing.value;
+      if (userLoc != null) {
+        _puckSymbol = await _maplibreController!.addSymbol(
+          ml.SymbolOptions(
+            geometry: ml.LatLng(userLoc.latitude, userLoc.longitude),
+            iconImage: 'hajicare_nav_puck',
+            iconRotate: bearing,
+            iconSize: 0.65,
+            iconAnchor: 'center',
           ),
         );
       }
@@ -290,7 +350,7 @@ class _NavigationMapViewState extends State<NavigationMapView> {
       duration: Duration(milliseconds: durationMs),
     );
 
-    _updatePuckScreenLocation();
+    _updatePuckNativeSymbol();
   }
 
   @override
@@ -310,77 +370,45 @@ class _NavigationMapViewState extends State<NavigationMapView> {
         MapController.defaultMinaBase;
     final bearing = widget.mapCtrl.navigationBearing.value;
     final target = _computeOffsetPoint(userLoc, 65.0, bearing);
-    final size = MediaQuery.of(context).size;
 
-    // In follow mode, the user puck is stably anchored at screen horizontal center and 72% height.
-    // When user pans away (!isFollowingUser), we use dynamic screen coordinates.
-    final isFollowing = widget.mapCtrl.isFollowingUser.value;
-    final effectivePuckOffset = isFollowing
-        ? Offset(size.width / 2, size.height * 0.72)
-        : (_puckScreenOffset != null &&
-                  _puckScreenOffset!.dx > 0 &&
-                  _puckScreenOffset!.dx < size.width &&
-                  _puckScreenOffset!.dy > 0 &&
-                  _puckScreenOffset!.dy < size.height
-              ? _puckScreenOffset!
-              : Offset(size.width / 2, size.height * 0.72));
-
-    return Stack(
-      children: [
-        // 1. Native MapLibre 3D GL Layer with Drag Filtering
-        Listener(
-          onPointerDown: (e) {
-            _touchStartPos = e.position;
-            _accumulatedDrag = 0.0;
-          },
-          onPointerMove: (e) {
-            if (_touchStartPos != null) {
-              _accumulatedDrag += (e.position - _touchStartPos!).distance;
-              _touchStartPos = e.position;
-              // Only disable follow mode on an intentional user pan (> 25px)
-              if (_accumulatedDrag > 25.0) {
-                widget.mapCtrl.onNavigationUserPan();
-              }
-            }
-          },
-          onPointerUp: (_) {
-            _touchStartPos = null;
-            _accumulatedDrag = 0.0;
-          },
-          onPointerCancel: (_) {
-            _touchStartPos = null;
-            _accumulatedDrag = 0.0;
-          },
-          child: ml.MapLibreMap(
-            initialCameraPosition: ml.CameraPosition(
-              target: ml.LatLng(target.latitude, target.longitude),
-              zoom: 18.0,
-              tilt: 55.0,
-              bearing: bearing,
-            ),
-            styleString: _getCartoStyleJson(isDark),
-            onMapCreated: _onMapCreated,
-            onStyleLoadedCallback: _onStyleLoaded,
-            trackCameraPosition: true,
-            compassEnabled: false,
-            attributionButtonPosition: ml.AttributionButtonPosition.bottomLeft,
-            attributionButtonMargins: const math.Point(12, 220),
-            onCameraIdle: () {
-              if (!widget.mapCtrl.isFollowingUser.value) {
-                _updatePuckScreenLocation();
-              }
-            },
-          ),
+    return Listener(
+      onPointerDown: (e) {
+        _touchStartPos = e.position;
+        _accumulatedDrag = 0.0;
+      },
+      onPointerMove: (e) {
+        if (_touchStartPos != null) {
+          _accumulatedDrag += (e.position - _touchStartPos!).distance;
+          _touchStartPos = e.position;
+          // Only disable follow mode on an intentional user pan (> 25px)
+          if (_accumulatedDrag > 25.0) {
+            widget.mapCtrl.onNavigationUserPan();
+          }
+        }
+      },
+      onPointerUp: (_) {
+        _touchStartPos = null;
+        _accumulatedDrag = 0.0;
+      },
+      onPointerCancel: (_) {
+        _touchStartPos = null;
+        _accumulatedDrag = 0.0;
+      },
+      child: ml.MapLibreMap(
+        initialCameraPosition: ml.CameraPosition(
+          target: ml.LatLng(target.latitude, target.longitude),
+          zoom: 18.0,
+          tilt: 55.0,
+          bearing: bearing,
         ),
-
-        // 2. High-Precision Directional Navigation Puck
-        // Dynamically anchored to the exact screen coordinates of userLoc
-        Positioned(
-          left: effectivePuckOffset.dx - 28,
-          top: effectivePuckOffset.dy - 28,
-          child: IgnorePointer(child: _buildNavigationPuck()),
-        ),
-      ],
+        styleString: _getCartoStyleJson(isDark),
+        onMapCreated: _onMapCreated,
+        onStyleLoadedCallback: _onStyleLoaded,
+        trackCameraPosition: true,
+        compassEnabled: false,
+        attributionButtonPosition: ml.AttributionButtonPosition.bottomLeft,
+        attributionButtonMargins: const math.Point(12, 280),
+      ),
     );
   }
 

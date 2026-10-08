@@ -20,7 +20,7 @@ class NavigationRecenterButton extends StatelessWidget {
       if (isFollowing) return const SizedBox.shrink();
 
       return Positioned(
-        bottom: bottomPadding + 220,
+        bottom: bottomPadding + 300,
         left: 0,
         right: 0,
         child: AnimatedOpacity(
