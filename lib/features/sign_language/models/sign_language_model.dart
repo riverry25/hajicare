@@ -73,19 +73,19 @@ class SignLanguageModelConfig {
     expectedInputFeatures: 0,
   );
 
-  /// BISINDO Model: Sequence GRU model (48 frames x 135 features)
-  /// Output: 23 kelas kosakata BISINDO.
+  /// BISINDO Model: MotionGRU model (48 frames x 706 features: 353 base + 353 motion)
+  /// Output: 47 kelas kosakata BISINDO.
   static const SignLanguageModelConfig bisindo = SignLanguageModelConfig(
     model: SignLanguageModel.bisindo,
-    modelAsset: 'assets/models/bisindo/hajicare_bisindo_gru_float32.tflite',
-    labelAsset: 'assets/models/bisindo/labels.json',
-    configAsset: 'assets/models/bisindo/model_config.json',
-    defaultConfidenceThreshold: 0.78,
+    modelAsset: 'assets/models/bisindo/bisindo_motion_gru_float16.tflite',
+    labelAsset: 'assets/models/bisindo/labels.txt',
+    configAsset: 'assets/models/bisindo/model_metadata.json',
+    defaultConfidenceThreshold: 0.70,
     windowSize: 48,
     minimumFrames: 24,
     inferenceStride: 2,
     throttleDuration: Duration(milliseconds: 70),
-    expectedInputFeatures: 135,
+    expectedInputFeatures: 706,
   );
 
   static SignLanguageModelConfig forModel(SignLanguageModel model) {

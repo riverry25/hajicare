@@ -231,6 +231,12 @@ class BisindoRecognitionController extends GetxController {
     }
   }
 
+  /// Commits an externally recognized word directly to the transcript (e.g. from isolated capture).
+  void commitWord(String label) {
+    if (_isClosed) return;
+    _commitLabel(label, DateTime.now());
+  }
+
   /// Handles absence of hands.
   void handleNoHand({DateTime? now}) {
     if (_isClosed) return;

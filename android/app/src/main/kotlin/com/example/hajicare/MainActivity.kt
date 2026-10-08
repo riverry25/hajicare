@@ -163,9 +163,9 @@ class MainActivity : FlutterFragmentActivity() {
             cameraHelper = BisindoCameraHelper(
                 context = applicationContext,
                 lifecycleOwner = this,
-                onLandmarksReady = { landmarks ->
+                onFrameReady = { frameMap ->
                     runOnUiThread {
-                        landmarkEventSink?.success(mapOf("landmarks" to landmarks))
+                        landmarkEventSink?.success(frameMap)
                     }
                 },
                 onError = { errorMessage ->

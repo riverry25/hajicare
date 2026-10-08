@@ -166,7 +166,9 @@ void main() {
         expect(updated.photoUrl, equals('https://example.com/avatar.jpg'));
         expect(updated.distanceMeters, equals(5.0));
 
-        final newPhoto = companion.copyWith(photoUrl: 'https://example.com/new.jpg');
+        final newPhoto = companion.copyWith(
+          photoUrl: 'https://example.com/new.jpg',
+        );
         expect(newPhoto.photoUrl, equals('https://example.com/new.jpg'));
       },
     );

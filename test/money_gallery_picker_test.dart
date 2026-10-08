@@ -33,22 +33,25 @@ void main() {
       expect(screen.imagePicker, equals(mockPicker));
     });
 
-    test('MockImagePicker correctly returns mock image data from gallery', () async {
-      final sampleBytes = Uint8List.fromList([1, 2, 3, 4, 5]);
-      final mockFile = XFile.fromData(
-        sampleBytes,
-        name: 'money_sample.jpg',
-        mimeType: 'image/jpeg',
-      );
-      final mockPicker = MockImagePicker(mockResult: mockFile);
+    test(
+      'MockImagePicker correctly returns mock image data from gallery',
+      () async {
+        final sampleBytes = Uint8List.fromList([1, 2, 3, 4, 5]);
+        final mockFile = XFile.fromData(
+          sampleBytes,
+          name: 'money_sample.jpg',
+          mimeType: 'image/jpeg',
+        );
+        final mockPicker = MockImagePicker(mockResult: mockFile);
 
-      final result = await mockPicker.pickImage(source: ImageSource.gallery);
-      expect(mockPicker.pickImageCalled, isTrue);
-      expect(mockPicker.capturedSource, equals(ImageSource.gallery));
-      expect(result, isNotNull);
+        final result = await mockPicker.pickImage(source: ImageSource.gallery);
+        expect(mockPicker.pickImageCalled, isTrue);
+        expect(mockPicker.capturedSource, equals(ImageSource.gallery));
+        expect(result, isNotNull);
 
-      final bytes = await result!.readAsBytes();
-      expect(bytes, equals(sampleBytes));
-    });
+        final bytes = await result!.readAsBytes();
+        expect(bytes, equals(sampleBytes));
+      },
+    );
   });
 }

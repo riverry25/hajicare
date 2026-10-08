@@ -76,9 +76,9 @@ flutter:
     - assets/models/money_recognition.tflite
     - assets/models/labels.txt
     - assets/models/hajicare_prototypes.json
-    - assets/models/bisindo/hajicare_bisindo_gru_float32.tflite
-    - assets/models/bisindo/labels.json
-    - assets/models/bisindo/model_config.json
+    - assets/models/bisindo/bisindo_motion_gru_float16.tflite
+    - assets/models/bisindo/labels.txt
+    - assets/models/bisindo/model_metadata.json
     - assets/models/sibi/
     - assets/audio/
     - assets/sign_language/offline/bisindo/alfabet/

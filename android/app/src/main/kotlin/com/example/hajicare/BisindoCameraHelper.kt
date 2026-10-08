@@ -7,62 +7,65 @@ import android.os.SystemClock
 import android.util.Log
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.google.mediapipe.framework.image.BitmapImageBuilder
 import com.google.mediapipe.framework.image.MPImage
 import com.google.mediapipe.tasks.core.BaseOptions
 import com.google.mediapipe.tasks.vision.core.RunningMode
+import com.google.mediapipe.tasks.vision.facelandmarker.FaceLandmarker
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarker
-import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarkerResult
-import androidx.camera.view.PreviewView
-import java.util.LinkedHashMap
+import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarker
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Manages CameraX live video stream and Google MediaPipe HandLandmarker only
- * to output 135-d feature vectors [2, 21, 3] for BISINDO sign language inference.
+ * Manages CameraX live stream and MediaPipe Tasks pipeline (HandLandmarker,
+ * PoseLandmarker, FaceLandmarker with blendshapes) for BISINDO MotionGRU sign language recognition.
  *
- * Optimized version: PoseLandmarker removed (not used in BISINDO 135-d pipeline).
- * Frame rate capped at ~15 FPS. HandLandmarker only processes actual hand frames.
+ * Emits unified frame payload to Flutter containing:
+ * - left_hand: 21 points [x, y, z] or null
+ * - right_hand: 21 points [x, y, z] or null
+ * - pose: 33 points [x, y, z] or null
+ * - face_blendshapes: Map<String, Double> of 52 blendshape scores or null
+ * - landmarks: 42 points for backward compatibility
+ * - timestamp: frame uptime timestamp
  *
- * Landmark Index Structure (minimal_hands_only):
- *   Left Hand  : 21 points  (index 0..20)
- *   Right Hand : 21 points  (index 21..41)
- *   Total      : 42 points → preprocessed to 135 floats in Dart preprocessor
+ * Camera & Coordinate Orientation Strategy:
+ * - Camera rotation is applied once via Matrix.postRotate.
+ * - Image bitmaps are NOT mirrored prior to MediaPipe analysis.
+ * - This guarantees anatomical parity: person's left hand is detected as "Left",
+ *   person's right hand as "Right", pose[11] as Left Shoulder, pose[12] as Right Shoulder.
+ * - PreviewView handles UX mirroring automatically for front camera without altering analysis coordinates.
  */
 class BisindoCameraHelper(
     private val context: Context,
     private val lifecycleOwner: LifecycleOwner,
-    private val onLandmarksReady: (List<List<Double>>) -> Unit,
+    private val onFrameReady: (Map<String, Any?>) -> Unit,
     private val onError: (String) -> Unit
 ) {
     companion object {
         private const val TAG = "BISINDO_CAMERA"
-        private const val MIN_FRAME_INTERVAL_MS = 66L // ~15 FPS max
-        private const val MAX_PENDING_FRAMES = 8
+        private const val MIN_FRAME_INTERVAL_MS = 50L // ~20 FPS max for optimal latency and thermals
+        private const val MAX_PROCESSING_DIM = 640
     }
-
-    private data class HandFrame(
-        val left: List<List<Double>>?,
-        val right: List<List<Double>>?
-    )
 
     private var cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private var cameraProvider: ProcessCameraProvider? = null
     private var imageAnalysis: ImageAnalysis? = null
+
     private var handLandmarker: HandLandmarker? = null
+    private var poseLandmarker: PoseLandmarker? = null
+    private var faceLandmarker: FaceLandmarker? = null
 
     @Volatile
     private var previewView: PreviewView? = null
 
     private var isRunning = false
     private var lastProcessedTimestamp = 0L
-
-    // Pending hand frames by source-frame timestamp
-    private val pendingHandFrames = LinkedHashMap<Long, HandFrame>()
-    private var lastEmittedTimestamp = -1L
+    private val isProcessingFrame = AtomicBoolean(false)
 
     private var isFrontCamera: Boolean = true
 
@@ -101,30 +104,70 @@ class BisindoCameraHelper(
 
     fun initialize() {
         try {
-            // Initialize Hand Landmarker only (tracks up to 2 hands)
-            val handBaseOptions = BaseOptions.builder()
-                .setModelAssetPath("hand_landmarker.task")
-                .build()
+            // 1. Hand Landmarker (up to 2 hands)
+            try {
+                val handBaseOptions = BaseOptions.builder()
+                    .setModelAssetPath("hand_landmarker.task")
+                    .build()
 
-            val handOptions = HandLandmarker.HandLandmarkerOptions.builder()
-                .setBaseOptions(handBaseOptions)
-                .setRunningMode(RunningMode.LIVE_STREAM)
-                .setNumHands(2)
-                .setMinHandDetectionConfidence(0.50f)
-                .setMinHandPresenceConfidence(0.50f)
-                .setMinTrackingConfidence(0.50f)
-                .setResultListener { result: HandLandmarkerResult, _: MPImage ->
-                    onHandResult(result)
-                }
-                .setErrorListener { error ->
-                    Log.e(TAG, "HandLandmarker error: ${error.message}")
-                }
-                .build()
+                val handOptions = HandLandmarker.HandLandmarkerOptions.builder()
+                    .setBaseOptions(handBaseOptions)
+                    .setRunningMode(RunningMode.IMAGE)
+                    .setNumHands(2)
+                    .setMinHandDetectionConfidence(0.45f)
+                    .setMinHandPresenceConfidence(0.45f)
+                    .setMinTrackingConfidence(0.45f)
+                    .build()
 
-            handLandmarker = HandLandmarker.createFromOptions(context, handOptions)
-            Log.d(TAG, "MediaPipe HandLandmarker initialized successfully")
+                handLandmarker = HandLandmarker.createFromOptions(context, handOptions)
+                Log.d(TAG, "MediaPipe HandLandmarker initialized successfully")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to initialize HandLandmarker: ${e.message}", e)
+            }
+
+            // 2. Pose Landmarker
+            try {
+                val poseBaseOptions = BaseOptions.builder()
+                    .setModelAssetPath("pose_landmarker.task")
+                    .build()
+
+                val poseOptions = PoseLandmarker.PoseLandmarkerOptions.builder()
+                    .setBaseOptions(poseBaseOptions)
+                    .setRunningMode(RunningMode.IMAGE)
+                    .setMinPoseDetectionConfidence(0.45f)
+                    .setMinPosePresenceConfidence(0.45f)
+                    .setMinTrackingConfidence(0.45f)
+                    .build()
+
+                poseLandmarker = PoseLandmarker.createFromOptions(context, poseOptions)
+                Log.d(TAG, "MediaPipe PoseLandmarker initialized successfully")
+            } catch (e: Exception) {
+                Log.w(TAG, "PoseLandmarker not loaded (continuing with hands): ${e.message}")
+            }
+
+            // 3. Face Landmarker with Blendshapes enabled
+            try {
+                val faceBaseOptions = BaseOptions.builder()
+                    .setModelAssetPath("face_landmarker.task")
+                    .build()
+
+                val faceOptions = FaceLandmarker.FaceLandmarkerOptions.builder()
+                    .setBaseOptions(faceBaseOptions)
+                    .setRunningMode(RunningMode.IMAGE)
+                    .setOutputFaceBlendshapes(true)
+                    .setMinFaceDetectionConfidence(0.45f)
+                    .setMinFacePresenceConfidence(0.45f)
+                    .setMinTrackingConfidence(0.45f)
+                    .build()
+
+                faceLandmarker = FaceLandmarker.createFromOptions(context, faceOptions)
+                Log.d(TAG, "MediaPipe FaceLandmarker with blendshapes initialized successfully")
+            } catch (e: Exception) {
+                Log.w(TAG, "FaceLandmarker not loaded (continuing with hands/pose): ${e.message}")
+            }
+
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to initialize MediaPipe: ${e.message}", e)
+            Log.e(TAG, "Failed to initialize MediaPipe pipeline: ${e.message}", e)
             onError("MediaPipe gagal diinisialisasi: ${e.message}")
         }
     }
@@ -148,7 +191,6 @@ class BisindoCameraHelper(
     private fun bindCameraUseCases() {
         val provider = cameraProvider ?: return
 
-        // Default to front camera, or back camera if toggled/selected
         val hasFrontCamera = provider.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA)
         val hasBackCamera = provider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA)
         val cameraSelector = if (isFrontCamera && hasFrontCamera) {
@@ -181,7 +223,7 @@ class BisindoCameraHelper(
             } else {
                 provider.bindToLifecycle(lifecycleOwner, cameraSelector, imageAnalysis)
             }
-            Log.d(TAG, "started")
+            Log.d(TAG, "Camera started successfully")
         } catch (e: Exception) {
             Log.e(TAG, "Use case binding failed: ${e.message}", e)
             onError("Gagal menghubungkan camera usecase: ${e.message}")
@@ -190,7 +232,8 @@ class BisindoCameraHelper(
 
     private fun processImageProxy(imageProxy: ImageProxy) {
         val currentTime = SystemClock.uptimeMillis()
-        if (currentTime - lastProcessedTimestamp < MIN_FRAME_INTERVAL_MS) {
+        if (currentTime - lastProcessedTimestamp < MIN_FRAME_INTERVAL_MS ||
+            !isProcessingFrame.compareAndSet(false, true)) {
             imageProxy.close()
             return
         }
@@ -213,106 +256,103 @@ class BisindoCameraHelper(
                 true
             )
 
-            val mpImage = BitmapImageBuilder(rotatedBitmap).build()
+            // Downscale to longest side <= 640px preserving aspect ratio for mobile inference performance
+            val maxDim = Math.max(rotatedBitmap.width, rotatedBitmap.height)
+            val processedBitmap = if (maxDim > MAX_PROCESSING_DIM) {
+                val scale = MAX_PROCESSING_DIM.toFloat() / maxDim.toFloat()
+                val targetW = (rotatedBitmap.width * scale).toInt()
+                val targetH = (rotatedBitmap.height * scale).toInt()
+                Bitmap.createScaledBitmap(rotatedBitmap, targetW, targetH, true)
+            } else {
+                rotatedBitmap
+            }
 
-            // Run asynchronous live stream inference (hands only)
-            handLandmarker?.detectAsync(mpImage, currentTime)
+            val mpImage = BitmapImageBuilder(processedBitmap).build()
+
+            // 1. Hands detection
+            var leftHand: List<List<Double>>? = null
+            var rightHand: List<List<Double>>? = null
+
+            val handResult = handLandmarker?.detect(mpImage)
+            if (handResult != null) {
+                val landmarks = handResult.landmarks()
+                val handednesses = handResult.handednesses()
+                for (i in landmarks.indices) {
+                    val handPoints = landmarks[i]
+                    val handList = ArrayList<List<Double>>(21)
+                    for (lm in handPoints) {
+                        handList.add(listOf(lm.x().toDouble(), lm.y().toDouble(), lm.z().toDouble()))
+                    }
+
+                    val label = if (i < handednesses.size && handednesses[i].isNotEmpty()) {
+                        handednesses[i][0].categoryName()
+                    } else {
+                        if (i == 0) "Left" else "Right"
+                    }
+
+                    if (label.equals("Left", ignoreCase = true)) {
+                        leftHand = handList
+                    } else {
+                        rightHand = handList
+                    }
+                }
+            }
+
+            // 2. Pose detection
+            var poseList: List<List<Double>>? = null
+            val poseResult = poseLandmarker?.detect(mpImage)
+            if (poseResult != null && poseResult.landmarks().isNotEmpty()) {
+                val posePoints = poseResult.landmarks()[0]
+                val pList = ArrayList<List<Double>>(posePoints.size)
+                for (lm in posePoints) {
+                    pList.add(listOf(lm.x().toDouble(), lm.y().toDouble(), lm.z().toDouble()))
+                }
+                poseList = pList
+            }
+
+            // 3. Face Blendshapes detection
+            var blendshapesMap: Map<String, Double>? = null
+            val faceResult = faceLandmarker?.detect(mpImage)
+            if (faceResult != null) {
+                val blendshapesOpt = faceResult.faceBlendshapes()
+                val blendshapesList = if (blendshapesOpt.isPresent) blendshapesOpt.get() else null
+                if (blendshapesList != null && blendshapesList.isNotEmpty()) {
+                    val bMap = HashMap<String, Double>(52)
+                    val categories = blendshapesList[0]
+                    for (cat in categories) {
+                        bMap[cat.categoryName()] = cat.score().toDouble()
+                    }
+                    blendshapesMap = bMap
+                }
+            }
+
+            // 4. Assemble payload
+            val payload = HashMap<String, Any?>()
+            payload["left_hand"] = leftHand
+            payload["right_hand"] = rightHand
+            payload["pose"] = poseList
+            payload["face_blendshapes"] = blendshapesMap
+            payload["timestamp"] = currentTime
+
+            // Backward compatibility 42-point landmarks
+            val zeroPoint = listOf(0.0, 0.0, 0.0)
+            val legacyLandmarks = ArrayList<List<Double>>(42)
+            for (i in 0 until 21) {
+                legacyLandmarks.add(leftHand?.getOrNull(i) ?: zeroPoint)
+            }
+            for (i in 0 until 21) {
+                legacyLandmarks.add(rightHand?.getOrNull(i) ?: zeroPoint)
+            }
+            payload["landmarks"] = legacyLandmarks
+
+            onFrameReady(payload)
+
         } catch (e: Exception) {
             Log.e(TAG, "Error processing camera frame: ${e.message}", e)
         } finally {
+            isProcessingFrame.set(false)
             imageProxy.close()
         }
-    }
-
-    private fun onHandResult(result: HandLandmarkerResult) {
-        val landmarks = result.landmarks()
-        val handednesses = result.handednesses()
-
-        var leftHand: List<List<Double>>? = null
-        var rightHand: List<List<Double>>? = null
-
-        for (i in landmarks.indices) {
-            val handPoints = landmarks[i]
-            val handList = mutableListOf<List<Double>>()
-            for (lm in handPoints) {
-                handList.add(listOf(lm.x().toDouble(), lm.y().toDouble(), lm.z().toDouble()))
-            }
-
-            val label = if (i < handednesses.size && handednesses[i].isNotEmpty()) {
-                handednesses[i][0].categoryName()
-            } else {
-                if (i == 0) "Left" else "Right"
-            }
-
-            if (label.equals("Left", ignoreCase = true)) {
-                leftHand = handList
-            } else {
-                rightHand = handList
-            }
-        }
-
-        storeHandResult(result.timestampMs(), leftHand, rightHand)
-    }
-
-    @Synchronized
-    private fun storeHandResult(
-        timestamp: Long,
-        left: List<List<Double>>?,
-        right: List<List<Double>>?
-    ) {
-        pendingHandFrames[timestamp] = HandFrame(left, right)
-        emitHandFrame(timestamp)
-        trimPendingFrames()
-    }
-
-    /** Emits landmark packet for a camera frame if at least one hand is visible. */
-    private fun emitHandFrame(timestamp: Long) {
-        if (timestamp <= lastEmittedTimestamp) return
-
-        val handFrame = pendingHandFrames.remove(timestamp) ?: return
-
-        val left = handFrame.left
-        val right = handFrame.right
-
-        // Require at least one hand to be visible for sign language recognition.
-        if (left == null && right == null) return
-
-        lastEmittedTimestamp = timestamp
-        assembleAndEmitLandmarks(left, right)
-    }
-
-    private fun trimPendingFrames() {
-        while (pendingHandFrames.size > MAX_PENDING_FRAMES) {
-            pendingHandFrames.remove(pendingHandFrames.keys.first())
-        }
-    }
-
-    /**
-     * Assembles 42 hand landmarks [42, 3] in the required sequence:
-     *   Left Hand  : 21 points (0..20)
-     *   Right Hand : 21 points (21..41)
-     *
-     * The Dart BisindoPreprocessor then extracts the 135-d feature vector
-     * from these 42 points. No pose or face landmarks needed.
-     */
-    private fun assembleAndEmitLandmarks(
-        left: List<List<Double>>?,
-        right: List<List<Double>>?
-    ) {
-        val zeroPoint = listOf(0.0, 0.0, 0.0)
-        val totalLandmarks = ArrayList<List<Double>>(42)
-
-        // 1. Left Hand 21 points (0..20)
-        for (i in 0 until 21) {
-            totalLandmarks.add(left?.getOrNull(i) ?: zeroPoint)
-        }
-
-        // 2. Right Hand 21 points (21..41)
-        for (i in 0 until 21) {
-            totalLandmarks.add(right?.getOrNull(i) ?: zeroPoint)
-        }
-
-        onLandmarksReady(totalLandmarks)
     }
 
     fun stopCamera() {
@@ -322,23 +362,18 @@ class BisindoCameraHelper(
         try {
             cameraProvider?.unbindAll()
             imageAnalysis?.clearAnalyzer()
-            clearPendingFrames()
-            Log.d(TAG, "camera stopped")
+            Log.d(TAG, "Camera stopped")
         } catch (e: Exception) {
             Log.e(TAG, "Error stopping camera: ${e.message}", e)
         }
-    }
-
-    @Synchronized
-    private fun clearPendingFrames() {
-        pendingHandFrames.clear()
-        lastEmittedTimestamp = -1L
     }
 
     fun dispose() {
         stopCamera()
         try {
             handLandmarker?.close()
+            poseLandmarker?.close()
+            faceLandmarker?.close()
             cameraExecutor.shutdown()
         } catch (e: Exception) {
             Log.e(TAG, "Error disposing camera helper: ${e.message}", e)

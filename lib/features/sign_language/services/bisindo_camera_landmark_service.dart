@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import 'landmark_stream_buffer.dart';
+import '../models/landmark_frame.dart';
 
 /// Bridges the native Android CameraX + MediaPipe Holistic landmark stream
 /// to the Flutter BISINDO prediction pipeline.
@@ -15,6 +16,7 @@ class BisindoCameraLandmarkService {
   final EventChannel _eventChannel = const EventChannel(kEventChannelName);
 
   final LandmarkStreamBuffer streamBuffer;
+  final void Function(LandmarkFrame frame)? onFrame;
 
   StreamSubscription<dynamic>? _eventSubscription;
   bool _isCameraActive = false;
@@ -27,7 +29,7 @@ class BisindoCameraLandmarkService {
   final ValueNotifier<String?> errorNotifier = ValueNotifier<String?>(null);
   final ValueNotifier<int> framesCountNotifier = ValueNotifier<int>(0);
 
-  BisindoCameraLandmarkService({required this.streamBuffer});
+  BisindoCameraLandmarkService({required this.streamBuffer, this.onFrame});
 
   bool get isCameraActive => _isCameraActive;
   String? get lastError => _lastError;
@@ -174,6 +176,9 @@ class BisindoCameraLandmarkService {
   void _onLandmarkEvent(dynamic event) {
     if (_isDisposed) return;
     if (event is! Map) return;
+
+    final landmarkFrame = LandmarkFrame.fromEvent(event);
+    onFrame?.call(landmarkFrame);
 
     final rawLandmarks = event['landmarks'];
     if (rawLandmarks is! List) return;

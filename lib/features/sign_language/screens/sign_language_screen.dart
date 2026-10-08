@@ -9,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_typography.dart';
 import '../controllers/bisindo_recognition_controller.dart';
+import '../controllers/sign_language_controller.dart';
 import '../models/sign_language_model.dart';
 import '../models/sign_token.dart';
 import '../services/bisindo_camera_landmark_service.dart';
@@ -42,6 +43,7 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
       : AppColors.espressoDark;
 
   late final BisindoRecognitionController _recognition;
+  late final SignLanguageController _isolatedController;
   late final BisindoInferenceService _inferenceService;
   late final LandmarkStreamBuffer _streamBuffer;
   late final BisindoCameraLandmarkService _cameraService;
@@ -97,7 +99,28 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
       },
     );
 
-    _cameraService = BisindoCameraLandmarkService(streamBuffer: _streamBuffer);
+    if (Get.isRegistered<SignLanguageController>()) {
+      _isolatedController = Get.find<SignLanguageController>();
+    } else {
+      _isolatedController = SignLanguageController(
+        onPredictionAccepted: (prediction) {
+          _recognition.commitWord(prediction.label);
+        },
+      );
+      Get.put(_isolatedController);
+    }
+
+    _cameraService = BisindoCameraLandmarkService(
+      streamBuffer: _streamBuffer,
+      onFrame: (frame) {
+        if (_currentModel == SignLanguageModel.bisindo) {
+          _isolatedController.onIncomingLandmarkFrame(frame);
+          if (frame.hasAnyHand) {
+            _recognition.registerHandFrame();
+          }
+        }
+      },
+    );
 
     _applyModelThresholds(_currentModel);
 
@@ -784,6 +807,156 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
                     ),
                   );
                 }),
+
+              // 5. Camera Overlays for BISINDO Isolated Capture
+              if (!isSibi)
+                Obx(() {
+                  final isoState = _isolatedController.state.value;
+                  if (isoState == IsolatedSignState.countdown) {
+                    return Positioned.fill(
+                      child: Container(
+                        color: Colors.black.withValues(alpha: 0.35),
+                        child: Center(
+                          child: Container(
+                            width: 84,
+                            height: 84,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.espressoDark.withValues(
+                                alpha: 0.88,
+                              ),
+                              border: Border.all(
+                                color: AppColors.goldLight,
+                                width: 2.5,
+                              ),
+                            ),
+                            child: Center(
+                              child: Text(
+                                '${_isolatedController.countdownSeconds.value}',
+                                style: AppTypography.displaySmall.copyWith(
+                                  color: AppColors.goldLight,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  } else if (isoState == IsolatedSignState.capturing) {
+                    return Positioned(
+                      top: 14,
+                      left: 14,
+                      right: 14,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.75),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.sosEmergency,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  width: 10,
+                                  height: 10,
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: AppColors.sosEmergency,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Merekam Gerakan BISINDO...',
+                                    style: AppTypography.labelLarge.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  '${_isolatedController.framesCollected.value} frame',
+                                  style: AppTypography.captionSmall.copyWith(
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value:
+                                    _isolatedController.captureProgress.value,
+                                minHeight: 4,
+                                backgroundColor: Colors.white24,
+                                valueColor: const AlwaysStoppedAnimation(
+                                  AppColors.sosEmergency,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  } else if (isoState == IsolatedSignState.processing) {
+                    return Positioned.fill(
+                      child: Container(
+                        color: Colors.black.withValues(alpha: 0.4),
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.espressoDark.withValues(
+                                alpha: 0.9,
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: AppColors.goldLight,
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.2,
+                                    color: AppColors.goldLight,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  'Memproses gerakan...',
+                                  style: AppTypography.bodyMedium.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                }),
             ],
           ),
         ),
@@ -977,90 +1150,204 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
     );
   }
 
-  /// Status & Progress indicator for BISINDO sequence model
+  /// Status & Progress indicator for BISINDO MotionGRU isolated gesture model
   Widget _buildRecognitionStatus() {
+    final isDark = AppColors.isDark(context);
+    final gold = _accent(context);
+
     return Obx(() {
-      final state = _recognition.recognitionState.value;
-      final streak = _recognition.stabilityStreak.value;
-      final maxStreak = _recognition.config.stablePredictionsRequired;
-      final buffer = _recognition.bufferCount.value;
-      final isHand = _recognition.isHandDetected.value;
-      final gold = _accent(context);
+      final isoState = _isolatedController.state.value;
+      final label = _isolatedController.detectedLabel.value;
+      final conf = _isolatedController.confidenceScore.value;
+      final progress = _isolatedController.captureProgress.value;
+      final frames = _isolatedController.framesCollected.value;
+      final guidance = _isolatedController.guidanceMessage.value;
+      final isCapturing = isoState == IsolatedSignState.capturing;
+      final isCountdown = isoState == IsolatedSignState.countdown;
+      final isProcessing = isoState == IsolatedSignState.processing;
+      final isResult = isoState == IsolatedSignState.result;
+      final isError = isoState == IsolatedSignState.error;
 
-      double progress = 0.0;
-      const minBufferRequired = 24;
-
-      if (!isHand) {
-        progress = 0.0;
-      } else if (buffer < minBufferRequired) {
-        progress = buffer / minBufferRequired;
-      } else if (state == SignRecognitionState.recognized) {
-        progress = 1.0;
-      } else {
-        progress = _recognition.holdProgress.value;
-      }
-
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 28),
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.cardBgColor(context),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isResult
+                ? AppColors.emeraldIslamic.withValues(alpha: 0.5)
+                : isError
+                ? AppColors.sosEmergency.withValues(alpha: 0.4)
+                : isCapturing
+                ? AppColors.goldPrimary.withValues(alpha: 0.5)
+                : AppColors.cardBorderColor(context),
+            width: isResult || isError || isCapturing ? 1.5 : 1.0,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Status Header
             Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (state == SignRecognitionState.reading ||
-                    (state == SignRecognitionState.analyzing && streak == 0))
-                  Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation(gold),
-                      ),
-                    ),
-                  ),
-                Flexible(
+                Icon(
+                  isResult
+                      ? Icons.check_circle_rounded
+                      : isError
+                      ? Icons.info_outline_rounded
+                      : isCapturing
+                      ? Icons.fiber_manual_record_rounded
+                      : Icons.front_hand_rounded,
+                  size: 20,
+                  color: isResult
+                      ? AppColors.emeraldIslamic
+                      : isError
+                      ? AppColors.distanceWarning
+                      : isCapturing
+                      ? AppColors.sosEmergency
+                      : gold,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
                   child: Text(
-                    _recognition.statusText,
-                    textAlign: TextAlign.center,
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: state == SignRecognitionState.recognized
+                    isResult
+                        ? 'Terdeteksi: ${label.toUpperCase()}'
+                        : isError && guidance.isNotEmpty
+                        ? guidance
+                        : _isolatedController.stateStatusText,
+                    style: AppTypography.titleSmall.copyWith(
+                      color: isResult
                           ? AppColors.emeraldIslamic
-                          : streak > 0
-                          ? gold
-                          : AppColors.textBodyColor(context),
+                          : AppColors.textHeadingColor(context),
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
+                if (isResult)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.emeraldIslamic.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '${(conf * 100).toStringAsFixed(1)}%',
+                      style: AppTypography.captionSmall.copyWith(
+                        color: AppColors.emeraldIslamic,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
               ],
             ),
-            const SizedBox(height: 10),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 8,
-                backgroundColor: gold.withValues(alpha: 0.15),
-                valueColor: AlwaysStoppedAnimation(
-                  state == SignRecognitionState.recognized
-                      ? AppColors.emeraldIslamic
-                      : AppColors.goldPrimary,
+            const SizedBox(height: 12),
+
+            // Progress bar during capturing / processing
+            if (isCapturing || isCountdown || isProcessing) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: isProcessing ? null : progress,
+                  minHeight: 8,
+                  backgroundColor: gold.withValues(alpha: 0.15),
+                  valueColor: AlwaysStoppedAnimation(
+                    isCapturing ? AppColors.sosEmergency : gold,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 5),
-            Text(
-              buffer < minBufferRequired
-                  ? 'Menyiapkan buffer ($buffer/$minBufferRequired frame)'
-                  : streak > 0
-                  ? 'Tahan gerakan: $streak/$maxStreak konfirmasi stabil'
-                  : 'Arahkan & tahan isyarat di depan kamera',
-              style: AppTypography.captionSmall.copyWith(
-                color: AppColors.textSecondaryColor(context),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    isCountdown
+                        ? 'Bersiap...'
+                        : isCapturing
+                        ? 'Merekam gerakan ($frames frame)'
+                        : 'Memproses model MotionGRU...',
+                    style: AppTypography.captionSmall.copyWith(
+                      color: AppColors.textSecondaryColor(context),
+                    ),
+                  ),
+                  if (isCapturing)
+                    Text(
+                      '${((1.0 - progress) * 2.8).toStringAsFixed(1)}s',
+                      style: AppTypography.captionSmall.copyWith(
+                        color: AppColors.sosEmergency,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                ],
               ),
-            ),
+              const SizedBox(height: 10),
+            ],
+
+            // Action Buttons
+            if (isoState == IsolatedSignState.ready || isResult || isError)
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: !_isCameraActive
+                          ? null
+                          : () {
+                              if (isResult || isError) {
+                                _isolatedController.startCaptureSession();
+                              } else {
+                                _isolatedController.startCaptureSession();
+                              }
+                            },
+                      icon: Icon(
+                        isResult || isError
+                            ? Icons.refresh_rounded
+                            : Icons.radio_button_checked_rounded,
+                        size: 20,
+                      ),
+                      label: Text(
+                        isResult || isError
+                            ? 'REKAM GERAKAN LAGI'
+                            : 'REKAM GERAKAN BISINDO',
+                        style: AppTypography.labelLarge.copyWith(
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                          color: Colors.white,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: gold,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (isResult) ...[
+                    const SizedBox(width: 8),
+                    IconButton.filledTonal(
+                      onPressed: () => _isolatedController.speakCurrentResult(),
+                      icon: const Icon(Icons.volume_up_rounded),
+                      tooltip: 'Dengarkan Suara (TTS)',
+                      style: IconButton.styleFrom(
+                        backgroundColor: gold.withValues(alpha: 0.15),
+                        foregroundColor: gold,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
           ],
         ),
       );

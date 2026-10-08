@@ -25,14 +25,16 @@ void main() {
       expect(config.model, equals(SignLanguageModel.bisindo));
       expect(
         config.modelAsset,
-        equals('assets/models/bisindo/hajicare_bisindo_gru_float32.tflite'),
+        equals('assets/models/bisindo/bisindo_motion_gru_float16.tflite'),
       );
-      expect(config.labelAsset, equals('assets/models/bisindo/labels.json'));
+      expect(config.labelAsset, equals('assets/models/bisindo/labels.txt'));
       expect(
         config.configAsset,
-        equals('assets/models/bisindo/model_config.json'),
+        equals('assets/models/bisindo/model_metadata.json'),
       );
-      expect(config.expectedInputFeatures, equals(135));
+      expect(config.expectedInputFeatures, equals(706));
+      expect(File(config.modelAsset).existsSync(), isTrue);
+      expect(File(config.labelAsset).existsSync(), isTrue);
       expect(config.windowSize, equals(48));
       expect(config.minimumFrames, equals(24));
       expect(File(config.modelAsset).existsSync(), isTrue);
