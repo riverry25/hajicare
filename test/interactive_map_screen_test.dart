@@ -341,5 +341,123 @@ void main() {
         expect(find.byIcon(Icons.sos_rounded), findsOneWidget);
       },
     );
+
+    testWidgets(
+      'Renders single red SOS marker for companion when room member lacks GPS but SOS event has coordinates',
+      (tester) async {
+        tester.view.physicalSize = const Size(1080, 2400);
+        tester.view.devicePixelRatio = 2.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        Get.put(AppSettingsController(), permanent: true);
+        final hajiCtrl = Get.put(HajiCareController(), permanent: true);
+        MapBinding().dependencies();
+        final mapCtrl = Get.find<MapController>();
+
+        // Ferdi is in roomMembers with NO location
+        final ferdi = RoomMemberModel(
+          uid: 'j-ferdi-99',
+          name: 'Ferdi Ahyana Yusri',
+          role: 'jamaah',
+          currentLocation: null,
+          sosActive: false,
+        );
+        mapCtrl.roomMembers.assignAll([ferdi]);
+
+        // Active SOS event has coordinates for Ferdi
+        hajiCtrl.activeSosEvents.assignAll([
+          {
+            'id': 'sos-ferdi-1',
+            'userId': 'j-ferdi-99',
+            'userName': 'Ferdi Ahyana Yusri',
+            'location': const GeoPoint(21.4133, 39.8933),
+          },
+        ]);
+        hajiCtrl.activeSosCount.value = 1;
+
+        await tester.pumpWidget(
+          GetMaterialApp(
+            theme: AppTheme.lightTheme,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('id'),
+            home: const InteractiveMapScreen(),
+          ),
+        );
+
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+
+        // Ferdi's marker should appear, be styled as SOS (red with 'SOS • Ferdi'), and be unique (no duplicate)
+        expect(find.text('SOS • Ferdi'), findsOneWidget);
+        expect(find.byIcon(Icons.sos_rounded), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Renders exactly one SOS marker when room members is empty (admin view) without duplicates',
+      (tester) async {
+        tester.view.physicalSize = const Size(1080, 2400);
+        tester.view.devicePixelRatio = 2.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        Get.put(AppSettingsController(), permanent: true);
+        final hajiCtrl = Get.put(HajiCareController(), permanent: true);
+        MapBinding().dependencies();
+        final mapCtrl = Get.find<MapController>();
+
+        // Admin view with 0 room members
+        mapCtrl.roomMembers.clear();
+
+        // Ferdi in jamaahList with GPS location
+        final ferdi = JamaahData(
+          id: 'j-ferdi-admin',
+          name: 'Ferdi Ahyana Yusri',
+          shortLabel: 'Ferdi',
+          distance: 10,
+          currentLocation: const GeoPoint(21.4133, 39.8933),
+          sosActive: true,
+        );
+        hajiCtrl.jamaahList.assignAll([ferdi]);
+
+        // Also active SOS event for Ferdi
+        hajiCtrl.activeSosEvents.assignAll([
+          {
+            'id': 'sos-ferdi-admin',
+            'userId': 'j-ferdi-admin',
+            'userName': 'Ferdi Ahyana Yusri',
+            'location': const GeoPoint(21.4133, 39.8933),
+          },
+        ]);
+        hajiCtrl.activeSosCount.value = 1;
+
+        await tester.pumpWidget(
+          GetMaterialApp(
+            theme: AppTheme.lightTheme,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('id'),
+            home: const InteractiveMapScreen(),
+          ),
+        );
+
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+
+        // Must find exactly ONE SOS banner and exactly ONE SOS icon (NO DOUBLE POI!)
+        expect(find.text('SOS • Ferdi'), findsOneWidget);
+        expect(find.byIcon(Icons.sos_rounded), findsOneWidget);
+      },
+    );
   });
 }

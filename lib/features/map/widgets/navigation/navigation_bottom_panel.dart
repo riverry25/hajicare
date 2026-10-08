@@ -43,7 +43,7 @@ class NavigationBottomPanel extends StatelessWidget {
     return Positioned(
       left: AppSpacing.md,
       right: AppSpacing.md,
-      bottom: bottomPadding + 12,
+      bottom: bottomPadding + 36,
       child: Obx(() {
         final remDistance = mapCtrl.remainingNavDistance.value;
         final remDuration = mapCtrl.remainingNavDuration.value;

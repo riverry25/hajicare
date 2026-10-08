@@ -65,17 +65,26 @@ class SosService {
     }
 
     batch.set(eventRef, eventData);
-    batch.set(userRef, {
+    final userUpdate = <String, dynamic>{
       'sosActive': true,
       'sosTime': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    };
+    final memberUpdate = <String, dynamic>{'sosActive': true};
+    if (location != null) {
+      userUpdate['currentLocation'] = location;
+      userUpdate['locationUpdatedAt'] = FieldValue.serverTimestamp();
+      memberUpdate['currentLocation'] = location;
+      memberUpdate['locationUpdatedAt'] = FieldValue.serverTimestamp();
+    }
+
+    batch.set(userRef, userUpdate, SetOptions(merge: true));
 
     final memberRef = _firestore
         .collection('rooms')
         .doc(normalizedRoomId)
         .collection('members')
         .doc(userId);
-    batch.set(memberRef, {'sosActive': true}, SetOptions(merge: true));
+    batch.set(memberRef, memberUpdate, SetOptions(merge: true));
 
     final activityRef = _firestore.collection('activities').doc();
     final cleanName = userName.trim().isNotEmpty ? userName.trim() : 'Jamaah';

@@ -778,8 +778,12 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
           );
         }),
 
-        // 4. Marker Layer — rebuilds on room members, location, and filter change
+        // 4. Marker Layer — rebuilds on room members, location, filter change, and emergency SOS alerts
         Obx(() {
+          // Reactively observe SOS state changes so emergency markers update in real time
+          final _ = state.activeSosCount.value;
+          final _ = state.activeSosEvents.length;
+
           final userLocation = mapCtrl.currentUserLocation.value;
           final searchResult = mapCtrl.selectedSearchResult.value;
           final assistanceReq =
@@ -806,9 +810,10 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
               if (hasAssistanceMarker)
                 _buildAssistanceMarker(assistanceReq, mapCtrl),
 
-              // Room Member Markers (filtered, excluding current user and assistance target)
+              // Room Member Markers (filtered, single marker per person, turns RED on SOS)
               if (mapCtrl.roomMembers.isNotEmpty)
                 ..._buildRoomMemberMarkers(
+                  state,
                   mapCtrl,
                   excludeUid: hasAssistanceMarker
                       ? assistanceReq.jamaahId
@@ -833,16 +838,6 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
             ],
           );
         }),
-        // 5. SOS Alert Marker Layer — reactive to active SOS events (admin & pendamping only)
-        Obx(() {
-          if (!Get.isRegistered<HajiCareController>()) {
-            return const SizedBox.shrink();
-          }
-          final hajiCtrl = Get.find<HajiCareController>();
-          final sosEvents = hajiCtrl.activeSosEvents;
-          if (sosEvents.isEmpty) return const SizedBox.shrink();
-          return fmap.MarkerLayer(markers: _buildSosMarkers(hajiCtrl, mapCtrl));
-        }),
         const fmap.RichAttributionWidget(
           attributions: [
             fmap.TextSourceAttribution('OpenStreetMap contributors'),
@@ -856,268 +851,6 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
   // ---------------------------------------------------------------------------
   // MARKER BUILDERS
   // ---------------------------------------------------------------------------
-
-  /// Builds SOS pin markers for every active SOS event that has a location.
-  /// These markers are shown on the map for admin and pendamping roles.
-  List<fmap.Marker> _buildSosMarkers(
-    HajiCareController hajiCtrl,
-    MapController mapCtrl,
-  ) {
-    final markers = <fmap.Marker>[];
-    final assistanceJamaahId = mapCtrl.activeAssistanceRequest.value?.jamaahId;
-    final selfUid =
-        hajiCtrl.currentUid ?? mapCtrl.currentUserId ?? hajiCtrl.self.id;
-    final selfName = hajiCtrl.self.name.trim().toLowerCase();
-
-    final seenUserIds = <String>{};
-    final seenNames = <String>{};
-    final seenCoords = <LatLng>[];
-
-    for (final sos in hajiCtrl.activeSosEvents) {
-      // Skip dismissed SOS
-      final sosId = sos['id']?.toString();
-      final userId = sos['userId']?.toString() ?? sos['jamaahId']?.toString();
-      final rawName = (sos['userName'] as String?)?.trim();
-      final userName = rawName != null && rawName.isNotEmpty
-          ? rawName
-          : 'Jamaah SOS';
-      final normalizedName = userName.toLowerCase();
-
-      if (hajiCtrl.isSosDismissed(sosId) ||
-          (userId != null && hajiCtrl.isSosDismissed(userId))) {
-        continue;
-      }
-
-      // Deduplicate: If an SOS event for this user or name was already processed in this loop, skip!
-      if (userId != null && seenUserIds.contains(userId)) {
-        continue;
-      }
-      if (normalizedName.isNotEmpty &&
-          normalizedName != 'jamaah sos' &&
-          seenNames.contains(normalizedName)) {
-        continue;
-      }
-
-      // Extract coordinates from GeoPoint or direct lat/lng fields
-      double? lat;
-      double? lng;
-      final locField = sos['location'];
-      if (locField is GeoPoint) {
-        lat = locField.latitude;
-        lng = locField.longitude;
-      } else {
-        final latRaw = sos['latitude'];
-        final lngRaw = sos['longitude'];
-        if (latRaw != null && lngRaw != null) {
-          lat = (latRaw as num).toDouble();
-          lng = (lngRaw as num).toDouble();
-        }
-      }
-
-      if (lat == null || lng == null) continue;
-      final validLat = lat;
-      final validLng = lng;
-
-      // Coordinate-level deduplication to avoid exact overlapping SOS markers
-      if (seenCoords.any(
-        (c) =>
-            (c.latitude - validLat).abs() < 0.0002 &&
-            (c.longitude - validLng).abs() < 0.0002,
-      )) {
-        continue;
-      }
-
-      // Check if this user is ALREADY rendered anywhere on the map:
-      // 1. Current user ("Anda")
-      final isSelf =
-          (userId != null && userId == selfUid) ||
-          (normalizedName.isNotEmpty && normalizedName == selfName);
-      if (isSelf) continue;
-
-      // 2. Room member markers (by UID, by Name, or by proximity < 25 meters with matching name)
-      final isAlreadyInRoom = mapCtrl.roomMembers.any((m) {
-        final mName = m.name.trim().toLowerCase();
-        final uidMatch = userId != null && m.uid == userId;
-        final nameMatch =
-            normalizedName.isNotEmpty &&
-            normalizedName != 'jamaah sos' &&
-            (mName == normalizedName ||
-                mName.contains(normalizedName) ||
-                normalizedName.contains(mName));
-        final coordMatch =
-            m.hasLocation &&
-            (m.latitude! - validLat).abs() < 0.00025 &&
-            (m.longitude! - validLng).abs() < 0.00025;
-        return uidMatch || nameMatch || coordMatch;
-      });
-      if (isAlreadyInRoom) continue;
-
-      // 3. Fallback Jamaah list
-      final isAlreadyInJamaahList = hajiCtrl.jamaahList.any((j) {
-        final jName = j.name.trim().toLowerCase();
-        final idMatch = userId != null && j.id == userId;
-        final nameMatch =
-            normalizedName.isNotEmpty &&
-            normalizedName != 'jamaah sos' &&
-            (jName == normalizedName ||
-                jName.contains(normalizedName) ||
-                normalizedName.contains(jName));
-        final coordMatch =
-            j.currentLocation != null &&
-            (j.currentLocation!.latitude - validLat).abs() < 0.00025 &&
-            (j.currentLocation!.longitude - validLng).abs() < 0.00025;
-        return idMatch || nameMatch || coordMatch;
-      });
-      if (isAlreadyInJamaahList) continue;
-
-      // 4. Skip if already shown as assistance marker
-      final activeReqName = mapCtrl.activeAssistanceRequest.value?.jamaahName
-          .trim()
-          .toLowerCase();
-      if (assistanceJamaahId != null &&
-          (assistanceJamaahId == userId ||
-              (normalizedName.isNotEmpty && activeReqName == normalizedName))) {
-        continue;
-      }
-
-      // Mark this user/name/coordinate as seen to prevent duplicates from multiple events
-      if (userId != null) {
-        seenUserIds.add(userId);
-      }
-      if (normalizedName.isNotEmpty && normalizedName != 'jamaah sos') {
-        seenNames.add(normalizedName);
-      }
-
-      final coord = LatLng(validLat, validLng);
-      seenCoords.add(coord);
-
-      markers.add(
-        fmap.Marker(
-          point: coord,
-          width: 170,
-          height: 84,
-          alignment: Alignment.topCenter,
-          child: RepaintBoundary(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () {
-                HapticFeedback.selectionClick();
-                mapCtrl.animatedMove(coord, 17.5);
-                // Open member bottom sheet for this SOS event directly
-                final tempMember = RoomMemberModel(
-                  uid: userId ?? 'sos_${DateTime.now().millisecondsSinceEpoch}',
-                  name: userName,
-                  role: 'jamaah',
-                  currentLocation: GeoPoint(validLat, validLng),
-                  locationUpdatedAt: DateTime.now(),
-                  sosActive: true,
-                );
-                mapCtrl.selectMember(tempMember);
-              },
-              child: _buildSosPinMarker(userName),
-            ),
-          ),
-        ),
-      );
-    }
-    return markers;
-  }
-
-  /// Builds the visual SOS pin marker: red pulsing ring + pin + name callout.
-  Widget _buildSosPinMarker(String userName) {
-    const sosColor = Color(0xFFD32F2F);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Name callout banner
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFD32F2F), Color(0xFFB71C1C)],
-            ),
-            borderRadius: BorderRadius.circular(AppRadius.pill),
-            border: Border.all(color: Colors.white, width: 1.8),
-            boxShadow: [
-              BoxShadow(
-                color: sosColor.withValues(alpha: 0.6),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.sos_rounded, size: 14, color: Colors.white),
-              const SizedBox(width: 5),
-              Flexible(
-                child: Text(
-                  userName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.captionSmall.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 11,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 3),
-        // Pulsing pin circle
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            AnimatedBuilder(
-              animation: _pulseController,
-              builder: (context, _) {
-                return Container(
-                  width: 30 + (14 * _pulseController.value),
-                  height: 30 + (14 * _pulseController.value),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: sosColor.withValues(
-                      alpha: 0.40 * (1.0 - _pulseController.value),
-                    ),
-                  ),
-                );
-              },
-            ),
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFFEF5350), Color(0xFFB71C1C)],
-                ),
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2.2),
-                boxShadow: [
-                  BoxShadow(
-                    color: sosColor.withValues(alpha: 0.6),
-                    blurRadius: 10,
-                    spreadRadius: 1,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.sos_rounded,
-                color: Colors.white,
-                size: 18,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
 
   fmap.Marker _buildSearchMarker(MapSearchResult result) {
     final isDark = AppColors.isDark(context);
@@ -1274,20 +1007,13 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
               Stack(
                 alignment: Alignment.center,
                 children: [
-                  AnimatedBuilder(
-                    animation: _pulseController,
-                    builder: (context, child) {
-                      return Container(
-                        width: 32 + (10 * _pulseController.value),
-                        height: 32 + (10 * _pulseController.value),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0xFFE64A19).withValues(
-                            alpha: 0.35 * (1.0 - _pulseController.value),
-                          ),
-                        ),
-                      );
-                    },
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFFE64A19).withValues(alpha: 0.22),
+                    ),
                   ),
                   Container(
                     width: 32,
@@ -1364,52 +1090,45 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
         ),
         const SizedBox(height: 3),
         RepaintBoundary(
-          child: AnimatedBuilder(
-            animation: _pulseController,
-            builder: (context, child) {
-              return Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(
-                    width: 38 + (_pulseController.value * 8),
-                    height: 38 + (_pulseController.value * 8),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.goldPrimary.withValues(
-                        alpha: 0.35 - (_pulseController.value * 0.22),
-                      ),
-                    ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.goldPrimary.withValues(alpha: 0.22),
+                ),
+              ),
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.darkSurfaceContainer
+                      : AppColors.surfaceWhite,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.goldPrimary
+                        : AppColors.espressoDark,
+                    width: 2.2,
                   ),
-                  Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkSurfaceContainer
-                          : AppColors.surfaceWhite,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isDark
-                            ? AppColors.goldPrimary
-                            : AppColors.espressoDark,
-                        width: 2.2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.25),
-                          blurRadius: 6,
-                        ),
-                      ],
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.25),
+                      blurRadius: 6,
                     ),
-                    child: const Icon(
-                      Icons.navigation_rounded,
-                      color: AppColors.goldPrimary,
-                      size: 19,
-                    ),
-                  ),
-                ],
-              );
-            },
+                  ],
+                ),
+                child: const Icon(
+                  Icons.navigation_rounded,
+                  color: AppColors.goldPrimary,
+                  size: 19,
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -1417,6 +1136,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
   }
 
   List<fmap.Marker> _buildRoomMemberMarkers(
+    HajiCareController state,
     MapController mapCtrl, {
     String? excludeUid,
   }) {
@@ -1425,17 +1145,81 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
     }
 
     final isDark = AppColors.isDark(context);
-    final currentUid = mapCtrl.currentUserId;
+    final currentUid = mapCtrl.currentUserId ?? state.currentUid;
+    final selfName = state.self.name.trim().toLowerCase();
+
+    // 1. Collect room members from current filter
     final members = List<RoomMemberModel>.from(mapCtrl.filteredMembers);
     if (mapCtrl.selectedMember.value != null &&
         !members.any((m) => m.uid == mapCtrl.selectedMember.value!.uid)) {
       members.add(mapCtrl.selectedMember.value!);
     }
+
+    // 2. Incorporate active SOS events not yet present in room members
+    for (final sos in state.activeSosEvents) {
+      final sosId = sos['id']?.toString();
+      final sosUid = sos['userId']?.toString() ?? sos['jamaahId']?.toString();
+      final sosRawName = (sos['userName'] as String?)?.trim();
+      final sosName = (sosRawName != null && sosRawName.isNotEmpty)
+          ? sosRawName
+          : 'Jamaah SOS';
+      final normSosName = sosName.toLowerCase();
+
+      if (state.isSosDismissed(sosId) ||
+          (sosUid != null && state.isSosDismissed(sosUid))) {
+        continue;
+      }
+
+      final isAlreadyPresent = members.any((m) {
+        final mName = m.name.trim().toLowerCase();
+        return (sosUid != null && m.uid == sosUid) ||
+            (normSosName != 'jamaah sos' &&
+                (mName == normSosName ||
+                    mName.contains(normSosName) ||
+                    normSosName.contains(mName)));
+      });
+
+      if (!isAlreadyPresent) {
+        double? lat;
+        double? lng;
+        final locField = sos['location'];
+        if (locField is GeoPoint) {
+          lat = locField.latitude;
+          lng = locField.longitude;
+        } else if (sos['latitude'] != null && sos['longitude'] != null) {
+          lat = (sos['latitude'] as num).toDouble();
+          lng = (sos['longitude'] as num).toDouble();
+        }
+
+        if (lat != null && lng != null) {
+          members.add(
+            RoomMemberModel(
+              uid:
+                  sosUid ??
+                  'sos_${sosId ?? DateTime.now().millisecondsSinceEpoch}',
+              name: sosName,
+              role: 'jamaah',
+              currentLocation: GeoPoint(lat, lng),
+              locationUpdatedAt: DateTime.now(),
+              sosActive: true,
+            ),
+          );
+        }
+      }
+    }
+
     final markers = <fmap.Marker>[];
+    final seenMarkerUids = <String>{};
+    final seenCoords = <LatLng>[];
 
     for (final member in members) {
-      // 1. Never render current user twice
+      // Never render current user twice (already rendered as "Anda")
       if (currentUid != null && member.uid == currentUid) {
+        continue;
+      }
+      if (currentUid != null &&
+          member.name.trim().toLowerCase() == selfName &&
+          !member.isJamaah) {
         continue;
       }
 
@@ -1444,35 +1228,64 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
         continue;
       }
 
-      // 2. Only render marker if member has actual GPS location
-      if (!member.hasLocation) {
+      // Deduplicate by UID: strictly ONE marker per user
+      if (seenMarkerUids.contains(member.uid)) {
         continue;
       }
 
-      final coord = LatLng(member.latitude!, member.longitude!);
+      // Check if this member is in SOS emergency state
+      final matchingSos = state.activeSosEvents.firstWhereOrNull((e) {
+        if (state.isSosDismissed(e['id']?.toString())) return false;
+        final uid = e['userId']?.toString() ?? e['jamaahId']?.toString();
+        final name = e['userName']?.toString().trim().toLowerCase();
+        final mName = member.name.trim().toLowerCase();
+        return ((uid != null && uid == member.uid) ||
+                (name != null &&
+                    name.isNotEmpty &&
+                    (name == mName ||
+                        name.contains(mName) ||
+                        mName.contains(name)))) &&
+            !state.isSosDismissed(e['id']?.toString());
+      });
+      final isEmergency = member.sosActive || matchingSos != null;
+
+      // Extract coordinates (prefer member coordinates, fallback to SOS coordinates)
+      double? lat = member.latitude;
+      double? lng = member.longitude;
+      if ((lat == null || lng == null) && matchingSos != null) {
+        final locField = matchingSos['location'];
+        if (locField is GeoPoint) {
+          lat = locField.latitude;
+          lng = locField.longitude;
+        } else if (matchingSos['latitude'] != null &&
+            matchingSos['longitude'] != null) {
+          lat = (matchingSos['latitude'] as num).toDouble();
+          lng = (matchingSos['longitude'] as num).toDouble();
+        }
+      }
+
+      if (lat == null || lng == null) {
+        continue;
+      }
+
+      final coord = LatLng(lat, lng);
+
+      // Coordinate-level duplicate guard
+      if (seenCoords.any(
+        (c) =>
+            (c.latitude - coord.latitude).abs() < 0.0001 &&
+            (c.longitude - coord.longitude).abs() < 0.0001,
+      )) {
+        continue;
+      }
+
+      seenMarkerUids.add(member.uid);
+      seenCoords.add(coord);
+
       final isSelected =
           mapCtrl.selectedMember.value?.uid == member.uid ||
           mapCtrl.selectedJamaah.value?.id == member.uid;
       final isPendamping = member.isPendamping;
-      final hajiCtrl = Get.isRegistered<HajiCareController>()
-          ? Get.find<HajiCareController>()
-          : null;
-      final isEmergency =
-          member.sosActive ||
-          (hajiCtrl != null &&
-              hajiCtrl.activeSosEvents.any((e) {
-                final uid =
-                    e['userId']?.toString() ?? e['jamaahId']?.toString();
-                final name = e['userName']?.toString().trim().toLowerCase();
-                final mName = member.name.trim().toLowerCase();
-                return ((uid != null && uid == member.uid) ||
-                        (name != null &&
-                            name.isNotEmpty &&
-                            (name == mName ||
-                                name.contains(mName) ||
-                                mName.contains(name)))) &&
-                    !hajiCtrl.isSosDismissed(e['id']?.toString());
-              }));
       final markerColor = isEmergency
           ? AppColors.sosEmergency
           : (isPendamping ? AppColors.goldPrimary : AppColors.statusSafe);
@@ -1510,22 +1323,20 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                     ),
                     decoration: BoxDecoration(
                       color: isEmergency
-                          ? (isDark
-                                ? const Color(0xFF7F1D1D)
-                                : const Color(0xFFFEF2F2))
+                          ? AppColors.sosEmergency
                           : (isDark
                                 ? AppColors.darkSurface
                                 : AppColors.surfaceWhite),
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                       border: Border.all(
                         color: isEmergency
-                            ? AppColors.sosEmergency
+                            ? Colors.white
                             : (isSelected
                                   ? (isDark
                                         ? AppColors.goldPrimary
                                         : AppColors.espressoDark)
                                   : markerColor),
-                        width: isEmergency ? 2.5 : (isSelected ? 2.5 : 1.5),
+                        width: isEmergency ? 2.0 : (isSelected ? 2.5 : 1.5),
                       ),
                       boxShadow: [
                         BoxShadow(
@@ -1533,7 +1344,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                               (isEmergency
                                       ? AppColors.sosEmergency
                                       : Colors.black)
-                                  .withValues(alpha: isEmergency ? 0.45 : 0.18),
+                                  .withValues(alpha: isEmergency ? 0.5 : 0.18),
                           blurRadius: isEmergency ? 10 : 6,
                           offset: const Offset(0, 2),
                         ),
@@ -1549,7 +1360,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                                     ? Icons.shield_rounded
                                     : Icons.person_rounded),
                           size: isEmergency ? 13 : 12,
-                          color: markerColor,
+                          color: isEmergency ? Colors.white : markerColor,
                         ),
                         const SizedBox(width: 4),
                         Flexible(
@@ -1559,9 +1370,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                                 : member.name.split(' ').take(2).join(' '),
                             style: AppTypography.captionSmall.copyWith(
                               color: isEmergency
-                                  ? (isDark
-                                        ? Colors.white
-                                        : AppColors.sosEmergency)
+                                  ? Colors.white
                                   : (isDark
                                         ? AppColors.darkTextHeading
                                         : AppColors.espressoDark),
@@ -1579,7 +1388,9 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                             style: TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.w800,
-                              color: markerColor,
+                              color: isEmergency
+                                  ? Colors.white.withValues(alpha: 0.9)
+                                  : markerColor,
                             ),
                           ),
                         ],
@@ -1588,7 +1399,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
                   ),
                   const SizedBox(height: 3),
 
-                  // Avatar Icon Pin (with gentle pulsing halo if SOS active)
+                  // Avatar Icon Pin (with pulsing red halo if SOS active)
                   Stack(
                     alignment: Alignment.center,
                     children: [
@@ -1675,192 +1486,307 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
 
     final isDark = AppColors.isDark(context);
     final source = state.jamaahList.isNotEmpty
-        ? state.jamaahList
+        ? List<JamaahData>.from(state.jamaahList)
         : [state.self];
-    final list = source.where(
-      (jamaah) =>
-          jamaah.currentLocation != null &&
-          (excludeUid == null || jamaah.id != excludeUid),
-    );
 
-    return list.map((jamaah) {
-      final coord = mapCtrl.getJamaahCoordinate(jamaah);
+    // Include any active SOS event not yet present in jamaahList
+    for (final sos in state.activeSosEvents) {
+      final sosId = sos['id']?.toString();
+      final sosUid = sos['userId']?.toString() ?? sos['jamaahId']?.toString();
+      final sosRawName = (sos['userName'] as String?)?.trim();
+      final sosName = (sosRawName != null && sosRawName.isNotEmpty)
+          ? sosRawName
+          : 'Jamaah SOS';
+      final normSosName = sosName.toLowerCase();
+
+      if (state.isSosDismissed(sosId) ||
+          (sosUid != null && state.isSosDismissed(sosUid))) {
+        continue;
+      }
+
+      final isAlreadyPresent = source.any((j) {
+        final jName = j.name.trim().toLowerCase();
+        return (sosUid != null && j.id == sosUid) ||
+            (normSosName != 'jamaah sos' &&
+                (jName == normSosName ||
+                    jName.contains(normSosName) ||
+                    normSosName.contains(jName)));
+      });
+
+      if (!isAlreadyPresent) {
+        double? lat;
+        double? lng;
+        final locField = sos['location'];
+        if (locField is GeoPoint) {
+          lat = locField.latitude;
+          lng = locField.longitude;
+        } else if (sos['latitude'] != null && sos['longitude'] != null) {
+          lat = (sos['latitude'] as num).toDouble();
+          lng = (sos['longitude'] as num).toDouble();
+        }
+
+        if (lat != null && lng != null) {
+          source.add(
+            JamaahData(
+              id:
+                  sosUid ??
+                  'sos_${sosId ?? DateTime.now().millisecondsSinceEpoch}',
+              name: sosName,
+              shortLabel: sosName.split(' ').first,
+              distance: 0,
+              currentLocation: GeoPoint(lat, lng),
+              locationUpdatedAt: DateTime.now(),
+              sosActive: true,
+            ),
+          );
+        }
+      }
+    }
+
+    final seenUids = <String>{};
+    final seenCoords = <LatLng>[];
+    final markers = <fmap.Marker>[];
+    final currentUid = mapCtrl.currentUserId ?? state.currentUid;
+    final selfName = state.self.name.trim().toLowerCase();
+
+    for (final jamaah in source) {
+      // Skip current user (rendered as "Anda")
+      if (currentUid != null && jamaah.id == currentUid) {
+        continue;
+      }
+      if (jamaah.id == 'self') {
+        continue;
+      }
+      if (currentUid != null &&
+          jamaah.name.trim().toLowerCase() == selfName &&
+          jamaah.id == state.self.id) {
+        continue;
+      }
+
+      // Exclude assistance target to prevent duplicate marker
+      if (excludeUid != null && jamaah.id == excludeUid) {
+        continue;
+      }
+
+      // Deduplicate by ID
+      if (seenUids.contains(jamaah.id)) {
+        continue;
+      }
+
+      final matchingSos = state.activeSosEvents.firstWhereOrNull((e) {
+        if (state.isSosDismissed(e['id']?.toString())) return false;
+        final uid = e['userId']?.toString() ?? e['jamaahId']?.toString();
+        final name = e['userName']?.toString().toLowerCase();
+        final jName = jamaah.name.toLowerCase();
+        return ((uid != null && uid == jamaah.id) ||
+                (name != null &&
+                    name.isNotEmpty &&
+                    (name == jName ||
+                        name.contains(jName) ||
+                        jName.contains(name)))) &&
+            !state.isSosDismissed(e['id']?.toString());
+      });
+      final isEmergency = jamaah.sosActive || matchingSos != null;
+
+      double? lat = jamaah.currentLocation?.latitude;
+      double? lng = jamaah.currentLocation?.longitude;
+      if ((lat == null || lng == null) && matchingSos != null) {
+        final locField = matchingSos['location'];
+        if (locField is GeoPoint) {
+          lat = locField.latitude;
+          lng = locField.longitude;
+        } else if (matchingSos['latitude'] != null &&
+            matchingSos['longitude'] != null) {
+          lat = (matchingSos['latitude'] as num).toDouble();
+          lng = (matchingSos['longitude'] as num).toDouble();
+        }
+      }
+
+      if (lat == null || lng == null) {
+        continue;
+      }
+
+      final coord = LatLng(lat, lng);
+
+      if (seenCoords.any(
+        (c) =>
+            (c.latitude - coord.latitude).abs() < 0.0001 &&
+            (c.longitude - coord.longitude).abs() < 0.0001,
+      )) {
+        continue;
+      }
+
+      seenUids.add(jamaah.id);
+      seenCoords.add(coord);
+
       final isSelected =
           mapCtrl.selectedJamaah.value?.id == jamaah.id ||
           mapCtrl.selectedMember.value?.uid == jamaah.id;
-      final isEmergency =
-          jamaah.sosActive ||
-          state.activeSosEvents.any((e) {
-            final uid = e['userId']?.toString() ?? e['jamaahId']?.toString();
-            final name = e['userName']?.toString().toLowerCase();
-            return (uid == jamaah.id ||
-                    (name != null && name == jamaah.name.toLowerCase())) &&
-                !state.isSosDismissed(e['id']?.toString());
-          });
       final markerColor = isEmergency
           ? AppColors.sosEmergency
           : jamaah.tier.color;
 
-      return fmap.Marker(
-        point: coord,
-        width: 150,
-        height: 85,
-        child: RepaintBoundary(
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () {
-              mapCtrl.animatedMove(coord, 17.0);
-              if (mapCtrl.selectedJamaah.value?.id == jamaah.id &&
-                  mapCtrl.isBottomSheetOpen.value) {
-                mapCtrl.closeBottomSheet();
-              } else {
-                mapCtrl.selectJamaah(jamaah);
-              }
-            },
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isEmergency
-                        ? AppColors.sosEmergency
-                        : (isDark
-                              ? AppColors.darkSurface
-                              : AppColors.surfaceWhite),
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                    border: Border.all(
-                      color: isEmergency
-                          ? Colors.white
-                          : (isSelected
-                                ? (isDark
-                                      ? AppColors.goldPrimary
-                                      : AppColors.espressoDark)
-                                : markerColor),
-                      width: isEmergency ? 2.0 : (isSelected ? 2.5 : 1.5),
+      markers.add(
+        fmap.Marker(
+          point: coord,
+          width: isEmergency ? 165 : 150,
+          height: isEmergency ? 82 : 85,
+          child: RepaintBoundary(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                mapCtrl.animatedMove(coord, 17.0);
+                if (mapCtrl.selectedJamaah.value?.id == jamaah.id &&
+                    mapCtrl.isBottomSheetOpen.value) {
+                  mapCtrl.closeBottomSheet();
+                } else {
+                  mapCtrl.selectJamaah(jamaah);
+                }
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color:
-                            (isEmergency
-                                    ? AppColors.sosEmergency
-                                    : Colors.black)
-                                .withValues(alpha: isEmergency ? 0.4 : 0.18),
-                        blurRadius: isEmergency ? 8 : 6,
-                        offset: const Offset(0, 2),
+                    decoration: BoxDecoration(
+                      color: isEmergency
+                          ? AppColors.sosEmergency
+                          : (isDark
+                                ? AppColors.darkSurface
+                                : AppColors.surfaceWhite),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      border: Border.all(
+                        color: isEmergency
+                            ? Colors.white
+                            : (isSelected
+                                  ? (isDark
+                                        ? AppColors.goldPrimary
+                                        : AppColors.espressoDark)
+                                  : markerColor),
+                        width: isEmergency ? 2.0 : (isSelected ? 2.5 : 1.5),
                       ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        isEmergency
-                            ? Icons.warning_amber_rounded
-                            : Icons.elderly_rounded,
-                        size: 13,
-                        color: isEmergency ? Colors.white : markerColor,
-                      ),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
+                      boxShadow: [
+                        BoxShadow(
+                          color:
+                              (isEmergency
+                                      ? AppColors.sosEmergency
+                                      : Colors.black)
+                                  .withValues(alpha: isEmergency ? 0.5 : 0.18),
+                          blurRadius: isEmergency ? 10 : 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
                           isEmergency
-                              ? 'SOS • ${jamaah.shortLabel}'
-                              : jamaah.shortLabel,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                              ? Icons.warning_amber_rounded
+                              : Icons.elderly_rounded,
+                          size: 13,
+                          color: isEmergency ? Colors.white : markerColor,
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            isEmergency
+                                ? 'SOS • ${jamaah.shortLabel}'
+                                : jamaah.shortLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.captionSmall.copyWith(
+                              color: isEmergency
+                                  ? Colors.white
+                                  : (isDark
+                                        ? AppColors.darkTextHeading
+                                        : AppColors.espressoDark),
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          jamaah.formattedDistance,
                           style: AppTypography.captionSmall.copyWith(
                             color: isEmergency
-                                ? Colors.white
-                                : (isDark
-                                      ? AppColors.darkTextHeading
-                                      : AppColors.espressoDark),
+                                ? Colors.white.withValues(alpha: 0.9)
+                                : markerColor,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        jamaah.formattedDistance,
-                        style: AppTypography.captionSmall.copyWith(
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      if (isEmergency)
+                        AnimatedBuilder(
+                          animation: _pulseController,
+                          builder: (context, _) {
+                            final pulse = _pulseController.value;
+                            return Container(
+                              width: 36 + (12 * pulse),
+                              height: 36 + (12 * pulse),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.sosEmergency.withValues(
+                                  alpha: (0.35 * (1.0 - pulse)).clamp(0.0, 1.0),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      Container(
+                        width: isEmergency ? 38 : 36,
+                        height: isEmergency ? 38 : 36,
+                        decoration: BoxDecoration(
                           color: isEmergency
-                              ? Colors.white.withValues(alpha: 0.9)
-                              : markerColor,
-                          fontWeight: FontWeight.w800,
+                              ? AppColors.sosEmergency
+                              : (isDark
+                                    ? AppColors.darkSurfaceContainer
+                                    : AppColors.surfaceWhite),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isEmergency ? Colors.white : markerColor,
+                            width: isEmergency ? 2.5 : 2.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color:
+                                  (isEmergency
+                                          ? AppColors.sosEmergency
+                                          : Colors.black)
+                                      .withValues(
+                                        alpha: isEmergency ? 0.45 : 0.25,
+                                      ),
+                              blurRadius: isEmergency ? 8 : 6,
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          isEmergency
+                              ? Icons.sos_rounded
+                              : Icons.person_rounded,
+                          color: isEmergency ? Colors.white : markerColor,
+                          size: isEmergency ? 18 : 20,
                         ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 3),
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    if (isEmergency)
-                      AnimatedBuilder(
-                        animation: _pulseController,
-                        builder: (context, _) {
-                          final pulse = _pulseController.value;
-                          return Container(
-                            width: 36 + (12 * pulse),
-                            height: 36 + (12 * pulse),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.sosEmergency.withValues(
-                                alpha: (0.35 * (1.0 - pulse)).clamp(0.0, 1.0),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    Container(
-                      width: isEmergency ? 38 : 36,
-                      height: isEmergency ? 38 : 36,
-                      decoration: BoxDecoration(
-                        color: isEmergency
-                            ? AppColors.sosEmergency
-                            : (isDark
-                                  ? AppColors.darkSurfaceContainer
-                                  : AppColors.surfaceWhite),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isEmergency ? Colors.white : markerColor,
-                          width: isEmergency ? 2.5 : 2.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color:
-                                (isEmergency
-                                        ? AppColors.sosEmergency
-                                        : Colors.black)
-                                    .withValues(
-                                      alpha: isEmergency ? 0.45 : 0.25,
-                                    ),
-                            blurRadius: isEmergency ? 8 : 6,
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        isEmergency ? Icons.sos_rounded : Icons.person_rounded,
-                        color: isEmergency
-                            ? Colors.white
-                            : (isDark
-                                  ? AppColors.goldPrimary
-                                  : AppColors.tanMedium),
-                        size: isEmergency ? 19 : 20,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
       );
-    }).toList();
+    }
+    return markers;
   }
 
   List<fmap.Marker> _buildPoiMarkers(MapController mapCtrl) {

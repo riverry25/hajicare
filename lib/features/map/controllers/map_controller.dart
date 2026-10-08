@@ -23,6 +23,7 @@ import '../models/map_search_result.dart';
 import '../services/poi_repository.dart';
 import '../services/poi_service.dart';
 import '../services/route_service.dart';
+import '../services/navigation_voice_service.dart';
 
 /// Explicit application modes for map interaction.
 enum MapMode { normal, navigationStarting, navigating, arrived }
@@ -56,7 +57,11 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
            DefaultPoiRepository(
              poiService: poiService ?? PoiService(),
              geocodingService: geocodingService ?? GeocodingService(),
-           );
+           ) {
+    isVoiceGuidanceEnabled.listen((enabled) {
+      voiceService.setMuted(!enabled);
+    });
+  }
 
   GeocodingService get geocodingService => _geocodingService;
   PoiRepository get poiRepository => _poiRepository;
@@ -101,6 +106,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   final remainingNavDuration = Rxn<int>();
   final destinationTitle = ''.obs;
   final isVoiceGuidanceEnabled = true.obs;
+  final NavigationVoiceService voiceService = NavigationVoiceService();
   VoidCallback? onRecenterTriggered;
   Position? _previousPosition;
 
@@ -227,6 +233,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     loadSearchHistory();
     _initRoomListener();
     _autoStartGps();
+    isVoiceGuidanceEnabled.listen((enabled) {
+      voiceService.setMuted(!enabled);
+    });
   }
 
   Future<void> refreshNearbyPois(
@@ -632,7 +641,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
         Geolocator.getPositionStream(
           locationSettings: const LocationSettings(
             accuracy: LocationAccuracy.high,
-            distanceFilter: 10,
+            distanceFilter: 2,
           ),
         ).listen(
           (pos) => _applyPosition(pos, publishToRoom: true),
@@ -1466,8 +1475,15 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
     _computeUpcomingManeuver(userLoc);
 
-    // Smooth transition from normal map to full navigation
-    await Future.delayed(const Duration(milliseconds: 600));
+    // Announce start of navigation via voice guidance
+    voiceService.setMuted(!isVoiceGuidanceEnabled.value);
+    voiceService.speak(
+      'Memulai navigasi menuju ${destinationTitle.value}',
+      force: true,
+    );
+
+    // Instant zero-lag transition from normal map to full navigation
+    await Future.delayed(Duration.zero);
     if (mapMode.value == MapMode.navigationStarting) {
       mapMode.value = MapMode.navigating;
     }
@@ -1476,6 +1492,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   /// Exits navigation mode, restores camera to North-up flat view,
   /// and restores the previous place sheet without losing selection.
   void exitNavigation() {
+    voiceService.reset();
     mapMode.value = MapMode.normal;
     isFollowingUser.value = true;
     if (isMapAttached) {
@@ -1564,11 +1581,14 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     if (dest != null) {
       final distToDest = calculateDistanceMeters(userPos, dest);
       if (distToDest <= 20.0) {
-        mapMode.value = MapMode.arrived;
-        remainingNavDistance.value = 0.0;
-        remainingNavDuration.value = 0;
-        nextManeuverInstruction.value = 'Sampai di tujuan';
-        nextManeuverIcon.value = Icons.flag_rounded;
+        if (mapMode.value != MapMode.arrived) {
+          mapMode.value = MapMode.arrived;
+          remainingNavDistance.value = 0.0;
+          remainingNavDuration.value = 0;
+          nextManeuverInstruction.value = 'Sampai di tujuan';
+          nextManeuverIcon.value = Icons.flag_rounded;
+          voiceService.speak('Anda telah sampai di tujuan.', force: true);
+        }
         return;
       }
     }
@@ -1607,6 +1627,15 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
     // 4. Update upcoming maneuver instruction
     _computeUpcomingManeuver(userPos);
+
+    // 5. Voice guidance for upcoming maneuvers
+    if (isVoiceGuidanceEnabled.value && mapMode.value == MapMode.navigating) {
+      voiceService.announceManeuver(
+        instruction: nextManeuverInstruction.value,
+        distanceMeters: nextManeuverDistanceMeters.value,
+        durationSeconds: remainingNavDuration.value,
+      );
+    }
   }
 
   /// Calculates remaining walking distance and ETA along the polyline.
@@ -2109,6 +2138,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
   @override
   void onClose() {
+    voiceService.reset();
     _lifecycleGeneration++;
     _searchDebounceTimer?.cancel();
     _moveAnimCtrl?.dispose();

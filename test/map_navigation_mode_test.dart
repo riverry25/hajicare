@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:hajicare/features/map/controllers/map_controller.dart';
 import 'package:hajicare/features/map/models/map_poi.dart';
+import 'package:hajicare/features/map/services/navigation_voice_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -160,5 +161,39 @@ void main() {
 
       expect(controller.mapMode.value, equals(MapMode.arrived));
     });
+
+    test('isVoiceGuidanceEnabled toggles voiceService muted state', () {
+      expect(controller.isVoiceGuidanceEnabled.value, isTrue);
+      expect(controller.voiceService.isMuted, isFalse);
+
+      controller.isVoiceGuidanceEnabled.value = false;
+      expect(controller.voiceService.isMuted, isTrue);
+
+      controller.isVoiceGuidanceEnabled.value = true;
+      expect(controller.voiceService.isMuted, isFalse);
+    });
+
+    test(
+      'NavigationVoiceService handles announcement and reset without throwing',
+      () async {
+        final voice = NavigationVoiceService();
+        voice.setMuted(false);
+        expect(voice.isMuted, isFalse);
+
+        // Verify announceManeuver does not crash
+        await voice.announceManeuver(
+          instruction: 'Belok kiri',
+          distanceMeters: 50.0,
+          durationSeconds: 120,
+        );
+
+        // Verify arrival call
+        await voice.speak('Anda telah sampai di tujuan.', force: true);
+
+        // Verify reset
+        voice.reset();
+        expect(voice.isMuted, isFalse);
+      },
+    );
   });
 }

@@ -732,10 +732,7 @@ class HajiCareController extends GetxController {
         return;
       }
       _gpsStreamSub = _locationService
-          .getPositionStream(
-            distanceFilter: 10,
-            accuracy: LocationAccuracy.high,
-          )
+          .getPositionStream(distanceFilter: 2, accuracy: LocationAccuracy.high)
           .listen(
             (position) {
               myCurrentPosition.value = position;

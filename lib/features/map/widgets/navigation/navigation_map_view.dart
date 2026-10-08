@@ -30,30 +30,24 @@ class NavigationMapView extends StatefulWidget {
   State<NavigationMapView> createState() => _NavigationMapViewState();
 }
 
-class _NavigationMapViewState extends State<NavigationMapView>
-    with SingleTickerProviderStateMixin {
+class _NavigationMapViewState extends State<NavigationMapView> {
   ml.MapLibreMapController? _maplibreController;
   bool _isStyleLoaded = false;
   Timer? _cameraFollowDebounce;
   Worker? _locationWorker;
   Worker? _bearingWorker;
   Worker? _routeWorker;
-  late AnimationController _pulseController;
 
   // Touch drag tracking to prevent taps or programmatic anims from disabling follow mode
   Offset? _touchStartPos;
   double _accumulatedDrag = 0.0;
 
-  // Screen coordinate of the user's geographic location
+  // Screen coordinate of the user's geographic location (only needed when user pans away)
   Offset? _puckScreenOffset;
 
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1800),
-    )..repeat();
 
     // Listen for recenter callback from controller
     widget.mapCtrl.onRecenterTriggered = _handleRecenter;
@@ -65,16 +59,18 @@ class _NavigationMapViewState extends State<NavigationMapView>
       if (pos != null) {
         if (widget.mapCtrl.isFollowingUser.value) {
           _scheduleCameraFollow();
+        } else {
+          _updatePuckScreenLocation();
         }
-        _updatePuckScreenLocation();
       }
     });
 
     _bearingWorker = ever(widget.mapCtrl.navigationBearing, (double bearing) {
       if (widget.mapCtrl.isFollowingUser.value) {
         _scheduleCameraFollow();
+      } else {
+        _updatePuckScreenLocation();
       }
-      _updatePuckScreenLocation();
     });
 
     _routeWorker = ever(widget.mapCtrl.activeRoute, (List<ll.LatLng> points) {
@@ -88,7 +84,6 @@ class _NavigationMapViewState extends State<NavigationMapView>
     _locationWorker?.dispose();
     _bearingWorker?.dispose();
     _routeWorker?.dispose();
-    _pulseController.dispose();
     if (widget.mapCtrl.onRecenterTriggered == _handleRecenter) {
       widget.mapCtrl.onRecenterTriggered = null;
     }
@@ -154,11 +149,6 @@ class _NavigationMapViewState extends State<NavigationMapView>
   void _onStyleLoaded() async {
     _isStyleLoaded = true;
     await _drawRouteAndMarkers();
-    _animateCameraToFollow(force: true, durationMs: 900);
-    // Delay slightly to update puck screen location after initial camera frame
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (mounted) _updatePuckScreenLocation();
-    });
   }
 
   Future<void> _updatePuckScreenLocation() async {
@@ -322,15 +312,18 @@ class _NavigationMapViewState extends State<NavigationMapView>
     final target = _computeOffsetPoint(userLoc, 65.0, bearing);
     final size = MediaQuery.of(context).size;
 
-    // Use dynamically tracked screen position or reliable geometric default
-    final effectivePuckOffset =
-        _puckScreenOffset != null &&
-            _puckScreenOffset!.dx > 0 &&
-            _puckScreenOffset!.dx < size.width &&
-            _puckScreenOffset!.dy > 0 &&
-            _puckScreenOffset!.dy < size.height
-        ? _puckScreenOffset!
-        : Offset(size.width / 2, size.height * 0.70);
+    // In follow mode, the user puck is stably anchored at screen horizontal center and 72% height.
+    // When user pans away (!isFollowingUser), we use dynamic screen coordinates.
+    final isFollowing = widget.mapCtrl.isFollowingUser.value;
+    final effectivePuckOffset = isFollowing
+        ? Offset(size.width / 2, size.height * 0.72)
+        : (_puckScreenOffset != null &&
+                  _puckScreenOffset!.dx > 0 &&
+                  _puckScreenOffset!.dx < size.width &&
+                  _puckScreenOffset!.dy > 0 &&
+                  _puckScreenOffset!.dy < size.height
+              ? _puckScreenOffset!
+              : Offset(size.width / 2, size.height * 0.72));
 
     return Stack(
       children: [
@@ -371,12 +364,11 @@ class _NavigationMapViewState extends State<NavigationMapView>
             trackCameraPosition: true,
             compassEnabled: false,
             attributionButtonPosition: ml.AttributionButtonPosition.bottomLeft,
-            attributionButtonMargins: const math.Point(12, 190),
-            onCameraMove: (ml.CameraPosition position) {
-              _updatePuckScreenLocation();
-            },
+            attributionButtonMargins: const math.Point(12, 220),
             onCameraIdle: () {
-              _updatePuckScreenLocation();
+              if (!widget.mapCtrl.isFollowingUser.value) {
+                _updatePuckScreenLocation();
+              }
             },
           ),
         ),
@@ -456,62 +448,51 @@ class _NavigationMapViewState extends State<NavigationMapView>
 
   /// Directional navigation chevron puck.
   /// Points forward (UP) along the line of sight in heading-up navigation mode.
+  /// Steady and calm when user is stationary (no fidgeting/pulsing ripples).
   Widget _buildNavigationPuck() {
-    return AnimatedBuilder(
-      animation: _pulseController,
-      builder: (context, child) {
-        final pulseScale = 1.0 + (_pulseController.value * 0.35);
-        final pulseAlpha = (1.0 - _pulseController.value) * 0.45;
-
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            // Pulse Wave
-            Container(
-              width: 56 * pulseScale,
-              height: 56 * pulseScale,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF22C55E).withValues(alpha: pulseAlpha),
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // 1. Subtle, serene ambient aura (fixed, zero jitter)
+        Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: const Color(0xFF22C55E).withValues(alpha: 0.20),
+          ),
+        ),
+        // 2. High-contrast white border ring with subtle shadow
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.25),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
               ),
+            ],
+          ),
+        ),
+        // 3. Inner vibrant emerald core with white navigation heading chevron
+        Container(
+          width: 34,
+          height: 34,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              colors: [Color(0xFF22C55E), Color(0xFF15803D)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
             ),
-            // Outer Halo
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.3),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-            ),
-            // Inner Core with Direction Chevron pointing forward (UP)
-            Container(
-              width: 36,
-              height: 36,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [Color(0xFF22C55E), Color(0xFF15803D)],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-              child: const Icon(
-                Icons.navigation,
-                size: 20,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        );
-      },
+          ),
+          child: const Icon(Icons.navigation, size: 20, color: Colors.white),
+        ),
+      ],
     );
   }
 }
