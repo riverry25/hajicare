@@ -37,6 +37,7 @@ class AppDialog {
     required AppDialogType type,
     required String title,
     required String message,
+    IconData? icon,
     String okText = 'Baik',
     Color? okColor,
     VoidCallback? onOk,
@@ -67,27 +68,29 @@ class AppDialog {
     switch (type) {
       case AppDialogType.success:
         accentColor = AppColors.statusSafe;
-        iconData = Icons.check_circle_rounded;
+        iconData = icon ?? Icons.check_circle_rounded;
         break;
       case AppDialogType.error:
         accentColor = AppColors.sosEmergency;
-        iconData = Icons.cancel_rounded;
+        iconData = icon ?? Icons.cancel_rounded;
         break;
       case AppDialogType.warning:
         accentColor = AppColors.statusWarning;
-        iconData = Icons.warning_amber_rounded;
+        iconData = icon ?? Icons.warning_amber_rounded;
         break;
       case AppDialogType.info:
         accentColor = isDark ? AppColors.goldLight : AppColors.goldPrimary;
-        iconData = Icons.info_rounded;
+        iconData = icon ?? Icons.info_rounded;
         break;
       case AppDialogType.confirm:
         accentColor = isDestructive
             ? AppColors.sosEmergency
             : (isDark ? AppColors.goldLight : AppColors.goldPrimary);
-        iconData = isDestructive
-            ? Icons.delete_forever_rounded
-            : Icons.help_outline_rounded;
+        iconData =
+            icon ??
+            (isDestructive
+                ? Icons.delete_forever_rounded
+                : Icons.help_outline_rounded);
         break;
     }
 
@@ -389,12 +392,14 @@ class AppDialog {
     Color? confirmColor,
     Color? cancelColor,
     bool isDestructive = false,
+    IconData? icon,
   }) async {
     await _show(
       context: context,
       type: AppDialogType.confirm,
       title: title,
       message: message,
+      icon: icon,
       okText: confirmText,
       okColor: confirmColor,
       onOk: onConfirm,

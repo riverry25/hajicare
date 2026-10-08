@@ -1,6 +1,7 @@
 import '../../../core/locales/app_translations.dart';
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart' as fmap;
@@ -22,6 +23,9 @@ import '../models/map_search_result.dart';
 import '../services/poi_repository.dart';
 import '../services/poi_service.dart';
 import '../services/route_service.dart';
+
+/// Explicit application modes for map interaction.
+enum MapMode { normal, navigationStarting, navigating, arrived }
 
 /// State of the location search workflow.
 enum MapSearchState { idle, loading, results, empty, error, history }
@@ -85,6 +89,57 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   final routeError = RxnString();
   final routeDistanceMeters = Rxn<double>();
   final routeDurationSeconds = Rxn<int>();
+
+  // ── NAVIGATION MODE STATE ──────────────────────────────────────────────────
+  final mapMode = MapMode.normal.obs;
+  final isFollowingUser = true.obs;
+  final navigationBearing = 0.0.obs;
+  final nextManeuverInstruction = ''.obs;
+  final nextManeuverDistanceMeters = Rxn<double>();
+  final nextManeuverIcon = Rx<IconData>(Icons.straight_rounded);
+  final remainingNavDistance = Rxn<double>();
+  final remainingNavDuration = Rxn<int>();
+  final destinationTitle = ''.obs;
+  final isVoiceGuidanceEnabled = true.obs;
+  VoidCallback? onRecenterTriggered;
+  Position? _previousPosition;
+
+  bool get isNavigating =>
+      mapMode.value == MapMode.navigating ||
+      mapMode.value == MapMode.navigationStarting ||
+      mapMode.value == MapMode.arrived;
+
+  String get currentDestinationTitle {
+    if (selectedPoi.value != null) return selectedPoi.value!.name;
+    if (selectedMember.value != null) return selectedMember.value!.name;
+    if (selectedJamaah.value != null) return selectedJamaah.value!.name;
+    if (activeAssistanceRequest.value != null) {
+      return 'Bantuan: ${activeAssistanceRequest.value!.jamaahName}';
+    }
+    return 'Tujuan Terpilih';
+  }
+
+  LatLng? get currentDestinationCoord {
+    if (_activeDestination != null) return _activeDestination;
+    if (selectedPoi.value != null) return selectedPoi.value!.coordinate;
+    if (selectedMember.value?.hasLocation == true) {
+      return LatLng(
+        selectedMember.value!.latitude!,
+        selectedMember.value!.longitude!,
+      );
+    }
+    if (selectedJamaah.value?.currentLocation != null) {
+      return getJamaahCoordinate(selectedJamaah.value!);
+    }
+    if (activeAssistanceRequest.value?.latitude != null &&
+        activeAssistanceRequest.value?.longitude != null) {
+      return LatLng(
+        activeAssistanceRequest.value!.latitude!,
+        activeAssistanceRequest.value!.longitude!,
+      );
+    }
+    return null;
+  }
 
   static const LatLng defaultMinaBase = LatLng(21.4135, 39.8930);
   final currentUserLocation = Rxn<LatLng>();
@@ -598,6 +653,11 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     // Live navigation: evaluate route deviation if active route is engaged
     _checkRouteDeviation(newCoord);
 
+    // Live navigation mode: update heading, ETA, maneuver, arrival
+    if (isNavigating) {
+      _updateNavigationProgress(newCoord, position);
+    }
+
     if (publishToRoom) {
       // Dual-gate throttling: minimum 8 seconds AND 10 meters distance
       final now = DateTime.now();
@@ -632,8 +692,10 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
           if (isMapAttached) animatedMove(newCoord, 16.5);
         });
       });
-    } else if (activeRoute.isNotEmpty && _activeDestination != null) {
-      // Active navigation mode: keep camera locked on user movement
+    } else if (activeRoute.isNotEmpty &&
+        _activeDestination != null &&
+        !isNavigating) {
+      // Normal map mode with route: keep camera centered on user movement
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!isClosed && isMapAttached) {
           flutterMapController.move(newCoord, flutterMapController.camera.zoom);
@@ -1343,6 +1405,299 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       _updateRouteTo(getJamaahCoordinate(selectedJamaah.value!));
     } else if (selectedPoi.value != null) {
       _updateRouteTo(selectedPoi.value!.coordinate);
+    }
+  }
+
+  // ── NAVIGATION CONTROLS & BEHAVIOR ─────────────────────────────────────────
+
+  /// Starts full NAVIGATION MODE.
+  /// 1. Verifies destination & GPS.
+  /// 2. Fetches route if not yet loaded.
+  /// 3. Hides clutter and transitions camera to perspective pitch & travel bearing.
+  Future<void> startNavigation() async {
+    final dest = currentDestinationCoord;
+    if (dest == null) {
+      if (Get.context != null) {
+        AppAlert.warning(
+          Get.context!,
+          title: 'Tujuan Belum Dipilih',
+          message: 'Pilih tempat atau anggota tujuan terlebih dahulu.',
+        );
+      }
+      return;
+    }
+
+    final userLoc = currentUserLocation.value;
+    if (userLoc == null) {
+      if (Get.context != null) {
+        AppAlert.warning(
+          Get.context!,
+          title: 'GPS Belum Siap',
+          message: 'Menunggu sinyal GPS aktif sebelum memulai navigasi.',
+        );
+      }
+      return;
+    }
+
+    // Fetch walking route if not yet present
+    if (activeRoute.isEmpty) {
+      await _updateRouteTo(dest);
+      if (activeRoute.isEmpty) {
+        return;
+      }
+    }
+
+    destinationTitle.value = currentDestinationTitle;
+    mapMode.value = MapMode.navigationStarting;
+    isFollowingUser.value = true;
+    isBottomSheetOpen.value = false;
+
+    remainingNavDistance.value = routeDistanceMeters.value;
+    remainingNavDuration.value = routeDurationSeconds.value;
+
+    // Set initial bearing along first route segment
+    if (activeRoute.length >= 2) {
+      final initialBearing = _computeRouteLookaheadBearing(
+        userLoc,
+        activeRoute,
+      );
+      navigationBearing.value = initialBearing;
+    }
+
+    _computeUpcomingManeuver(userLoc);
+
+    // Smooth transition from normal map to full navigation
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (mapMode.value == MapMode.navigationStarting) {
+      mapMode.value = MapMode.navigating;
+    }
+  }
+
+  /// Exits navigation mode, restores camera to North-up flat view,
+  /// and restores the previous place sheet without losing selection.
+  void exitNavigation() {
+    mapMode.value = MapMode.normal;
+    isFollowingUser.value = true;
+    if (isMapAttached) {
+      flutterMapController.rotate(0.0);
+    }
+    if (selectedPoi.value != null ||
+        selectedMember.value != null ||
+        selectedJamaah.value != null ||
+        activeAssistanceRequest.value != null) {
+      isBottomSheetOpen.value = true;
+    }
+  }
+
+  /// Re-engages follow camera mode when user taps the "Pusatkan Kembali" button.
+  void recenterNavigation() {
+    isFollowingUser.value = true;
+    onRecenterTriggered?.call();
+  }
+
+  /// Called when user manually gestures (drag, pan, pinch) the map in navigation mode.
+  void onNavigationUserPan() {
+    if (isNavigating && isFollowingUser.value) {
+      isFollowingUser.value = false;
+    }
+  }
+
+  /// Calculates geodesic bearing in degrees [0, 360) from [start] to [end].
+  double _calculateBearingBetween(LatLng start, LatLng end) {
+    final startLat = start.latitude * (math.pi / 180.0);
+    final startLng = start.longitude * (math.pi / 180.0);
+    final endLat = end.latitude * (math.pi / 180.0);
+    final endLng = end.longitude * (math.pi / 180.0);
+
+    final dLng = endLng - startLng;
+    final y = math.sin(dLng) * math.cos(endLat);
+    final x =
+        math.cos(startLat) * math.sin(endLat) -
+        math.sin(startLat) * math.cos(endLat) * math.cos(dLng);
+
+    final bearingRad = math.atan2(y, x);
+    final bearingDeg = (bearingRad * (180.0 / math.pi) + 360.0) % 360.0;
+    return bearingDeg;
+  }
+
+  /// Interpolates angle smoothly along the shortest arc to eliminate 0° <-> 359° flip.
+  double _smoothAngle(double current, double target, double factor) {
+    double diff = (target - current) % 360.0;
+    if (diff < -180.0) diff += 360.0;
+    if (diff > 180.0) diff -= 360.0;
+    return (current + diff * factor) % 360.0;
+  }
+
+  /// Computes a stable forward-looking bearing along the route ahead of [userPos].
+  /// Looks ahead ~20-30 meters along route geometry to prevent noisy micro-segments from skewing camera.
+  double _computeRouteLookaheadBearing(LatLng userPos, List<LatLng> route) {
+    if (route.length < 2) return navigationBearing.value;
+
+    int nearestIdx = 0;
+    double minDist = double.infinity;
+    for (int i = 0; i < route.length - 1; i++) {
+      final d = _distanceToSegment(userPos, route[i], route[i + 1]);
+      if (d < minDist) {
+        minDist = d;
+        nearestIdx = i;
+      }
+    }
+
+    double accumulatedMeters = 0.0;
+    LatLng targetPoint = route.last;
+    for (int i = nearestIdx; i < route.length - 1; i++) {
+      final segDist = calculateDistanceMeters(route[i], route[i + 1]);
+      accumulatedMeters += segDist;
+      if (accumulatedMeters >= 20.0 || i == route.length - 2) {
+        targetPoint = route[i + 1];
+        break;
+      }
+    }
+
+    return _calculateBearingBetween(userPos, targetPoint);
+  }
+
+  /// Real-time navigation progress handler on each GPS tick.
+  void _updateNavigationProgress(LatLng userPos, Position position) {
+    // 1. Arrival threshold check (< 20 meters)
+    final dest = currentDestinationCoord;
+    if (dest != null) {
+      final distToDest = calculateDistanceMeters(userPos, dest);
+      if (distToDest <= 20.0) {
+        mapMode.value = MapMode.arrived;
+        remainingNavDistance.value = 0.0;
+        remainingNavDuration.value = 0;
+        nextManeuverInstruction.value = 'Sampai di tujuan';
+        nextManeuverIcon.value = Icons.flag_rounded;
+        return;
+      }
+    }
+
+    // 2. Stable travel bearing determination
+    double? targetBearing;
+    if (position.speed > 0.8) {
+      if (position.heading >= 0 &&
+          position.heading <= 360 &&
+          position.heading != 0.0) {
+        targetBearing = position.heading;
+      } else if (_previousPosition != null) {
+        targetBearing = _calculateBearingBetween(
+          LatLng(_previousPosition!.latitude, _previousPosition!.longitude),
+          userPos,
+        );
+      }
+    }
+
+    // If standing still or walking slowly, align smoothly with upcoming route geometry
+    if (targetBearing == null && activeRoute.isNotEmpty) {
+      targetBearing = _computeRouteLookaheadBearing(userPos, activeRoute);
+    }
+
+    if (targetBearing != null) {
+      navigationBearing.value = _smoothAngle(
+        navigationBearing.value,
+        targetBearing,
+        0.35,
+      );
+    }
+    _previousPosition = position;
+
+    // 3. Update remaining distance & duration
+    _updateRemainingDistanceAndEta(userPos);
+
+    // 4. Update upcoming maneuver instruction
+    _computeUpcomingManeuver(userPos);
+  }
+
+  /// Calculates remaining walking distance and ETA along the polyline.
+  void _updateRemainingDistanceAndEta(LatLng userPos) {
+    if (activeRoute.isEmpty) return;
+
+    int nearestIndex = 0;
+    double minDistance = double.infinity;
+    for (int i = 0; i < activeRoute.length; i++) {
+      final d = calculateDistanceMeters(userPos, activeRoute[i]);
+      if (d < minDistance) {
+        minDistance = d;
+        nearestIndex = i;
+      }
+    }
+
+    double remDist = calculateDistanceMeters(
+      userPos,
+      activeRoute[nearestIndex],
+    );
+    for (int i = nearestIndex; i < activeRoute.length - 1; i++) {
+      remDist += calculateDistanceMeters(activeRoute[i], activeRoute[i + 1]);
+    }
+
+    remainingNavDistance.value = remDist;
+    // Average walking speed ~ 1.1 m/s (approx 4.0 km/h)
+    remainingNavDuration.value = (remDist / 1.1).round();
+  }
+
+  /// Computes the next directional maneuver from polyline geometry.
+  void _computeUpcomingManeuver(LatLng userPos) {
+    if (activeRoute.length < 2) {
+      nextManeuverInstruction.value = 'Menuju ke tujuan';
+      nextManeuverDistanceMeters.value = null;
+      nextManeuverIcon.value = Icons.straight_rounded;
+      return;
+    }
+
+    int nearestIndex = 0;
+    double minDistance = double.infinity;
+    for (int i = 0; i < activeRoute.length - 1; i++) {
+      final d = _distanceToSegment(userPos, activeRoute[i], activeRoute[i + 1]);
+      if (d < minDistance) {
+        minDistance = d;
+        nearestIndex = i;
+      }
+    }
+
+    final distToTurn = calculateDistanceMeters(
+      userPos,
+      activeRoute[nearestIndex + 1],
+    );
+
+    if (nearestIndex + 2 < activeRoute.length) {
+      final b1 = _calculateBearingBetween(
+        activeRoute[nearestIndex],
+        activeRoute[nearestIndex + 1],
+      );
+      final b2 = _calculateBearingBetween(
+        activeRoute[nearestIndex + 1],
+        activeRoute[nearestIndex + 2],
+      );
+
+      double angleDiff = (b2 - b1) % 360.0;
+      if (angleDiff > 180.0) angleDiff -= 360.0;
+      if (angleDiff < -180.0) angleDiff += 360.0;
+
+      if (distToTurn <= 150.0) {
+        if (angleDiff > 25.0 && angleDiff < 135.0) {
+          nextManeuverInstruction.value = 'Belok kanan';
+          nextManeuverDistanceMeters.value = distToTurn;
+          nextManeuverIcon.value = Icons.turn_right_rounded;
+          return;
+        } else if (angleDiff < -25.0 && angleDiff > -135.0) {
+          nextManeuverInstruction.value = 'Belok kiri';
+          nextManeuverDistanceMeters.value = distToTurn;
+          nextManeuverIcon.value = Icons.turn_left_rounded;
+          return;
+        }
+      }
+    }
+
+    final totalRem = remainingNavDistance.value ?? distToTurn;
+    if (totalRem < 30.0) {
+      nextManeuverInstruction.value = 'Tujuan di depan Anda';
+      nextManeuverDistanceMeters.value = totalRem;
+      nextManeuverIcon.value = Icons.flag_rounded;
+    } else {
+      nextManeuverInstruction.value = 'Terus lurus mengikuti jalur';
+      nextManeuverDistanceMeters.value = distToTurn;
+      nextManeuverIcon.value = Icons.straight_rounded;
     }
   }
 

@@ -659,35 +659,46 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                                         : AppColors.goldPrimary,
                                   ),
                             label: Text(
-                              widget.isRouteLoading ? 'Mencari Rute…' : 'Rute',
+                              widget.isRouteLoading
+                                  ? 'Mencari Rute…'
+                                  : (widget.routeDistanceMeters != null
+                                        ? 'Mulai Navigasi'
+                                        : 'Rute'),
                               style: AppTypography.labelLarge.copyWith(
-                                color: isDark
-                                    ? AppColors.espressoDark
-                                    : Colors.white,
+                                color: (widget.routeDistanceMeters != null)
+                                    ? Colors.white
+                                    : (isDark
+                                          ? AppColors.espressoDark
+                                          : Colors.white),
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: isDark
-                                  ? AppColors.goldPrimary
-                                  : AppColors.espressoDark,
-                              foregroundColor: isDark
-                                  ? AppColors.espressoDark
-                                  : Colors.white,
+                              backgroundColor:
+                                  widget.routeDistanceMeters != null
+                                  ? const Color(0xFF16A34A)
+                                  : (isDark
+                                        ? AppColors.goldPrimary
+                                        : AppColors.espressoDark),
+                              foregroundColor: Colors.white,
                               elevation: 4,
-                              shadowColor: AppColors.espressoDark.withValues(
-                                alpha: 0.3,
-                              ),
+                              shadowColor:
+                                  (widget.routeDistanceMeters != null
+                                          ? const Color(0xFF16A34A)
+                                          : AppColors.espressoDark)
+                                      .withValues(alpha: 0.35),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(
                                   AppRadius.pill,
                                 ),
                                 side: BorderSide(
-                                  color: isDark
-                                      ? AppColors.goldPrimary
-                                      : AppColors.goldPrimary.withValues(
-                                          alpha: 0.5,
-                                        ),
+                                  color: widget.routeDistanceMeters != null
+                                      ? const Color(0xFF22C55E)
+                                      : (isDark
+                                            ? AppColors.goldPrimary
+                                            : AppColors.goldPrimary.withValues(
+                                                alpha: 0.5,
+                                              )),
                                   width: 1.2,
                                 ),
                               ),

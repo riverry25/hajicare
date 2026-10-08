@@ -65,10 +65,19 @@ class AdminDashboardScreen extends StatelessWidget {
               const ProfileScreen(showBottomNav: false),
             ],
           ),
-          bottomNavigationBar: HajiCareBottomNavBar(
-            currentIndex: dashboardCtrl.currentIndex.value,
-            onTap: dashboardCtrl.changeTab,
-          ),
+          bottomNavigationBar: Obx(() {
+            if (Get.isRegistered<MapController>()) {
+              final mapCtrl = Get.find<MapController>();
+              if (dashboardCtrl.currentIndex.value == 1 &&
+                  mapCtrl.isNavigating) {
+                return const SizedBox.shrink();
+              }
+            }
+            return HajiCareBottomNavBar(
+              currentIndex: dashboardCtrl.currentIndex.value,
+              onTap: dashboardCtrl.changeTab,
+            );
+          }),
         );
       }),
     );

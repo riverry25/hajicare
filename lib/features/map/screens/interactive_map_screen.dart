@@ -26,6 +26,11 @@ import '../widgets/map_bottom_sheet.dart';
 import '../widgets/map_floating_controls.dart';
 import '../widgets/map_search_dropdown.dart';
 import '../widgets/map_top_header.dart';
+import '../widgets/navigation/navigation_arrival_card.dart';
+import '../widgets/navigation/navigation_bottom_panel.dart';
+import '../widgets/navigation/navigation_map_view.dart';
+import '../widgets/navigation/navigation_recenter_button.dart';
+import '../widgets/navigation/navigation_top_card.dart';
 
 /// Fullscreen Interactive Map screen powered by CartoDB/OSM and reactive GetX.
 /// Displays real-time GPS tracking of Jamaah and Pendamping within the same Room.
@@ -141,15 +146,31 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
-          // 1. Core Interactive Map Layer (Layer Peta)
-          RepaintBoundary(child: _buildInteractiveMap(state, mapCtrl)),
-
-          // 2. Dynamic Contextual Bottom Sheets & Compact Member Pill (Panel Anggota & Pendamping)
+          // 1. Core Map Layer (Normal 2D flutter_map OR 3D Perspective NavigationMapView)
           Obx(() {
+            if (mapCtrl.isNavigating) {
+              return RepaintBoundary(
+                child: NavigationMapView(mapCtrl: mapCtrl),
+              );
+            }
+            return RepaintBoundary(child: _buildInteractiveMap(state, mapCtrl));
+          }),
+
+          // 2. Normal Mode: Dynamic Contextual Bottom Sheets & Compact Member Pill
+          Obx(() {
+            if (mapCtrl.isNavigating) return const SizedBox.shrink();
+
             final bottomPadding = MediaQuery.of(context).padding.bottom;
-            final sheetBottomOffset = widget.showBottomNav
-                ? (84.0 + bottomPadding)
-                : (AppSpacing.md + bottomPadding);
+            // When hosted inside dashboard Scaffold (with extendBody: true),
+            // Scaffold._BodyBuilder sets MediaQuery bottom padding to include
+            // the full HajiCareBottomNavBar layout height (approx. 88-120px).
+            // When standalone (showBottomNav: true) or when bottom padding is only
+            // the device window inset, we add the bottom nav bar height (84px).
+            final navBarHeight = (widget.showBottomNav || bottomPadding < 60)
+                ? 84.0
+                : 0.0;
+            // 12px margin places the card cleanly right above the center mic button and dock.
+            final sheetBottomOffset = bottomPadding + navBarHeight + 12.0;
 
             if (!mapCtrl.isBottomSheetOpen.value) {
               final isSearchActive =
@@ -188,7 +209,11 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                     routeDurationSeconds: mapCtrl.routeDurationSeconds.value,
                     onRoute: () {
                       debugPrint('[2] ROUTE BUTTON PRESSED');
-                      mapCtrl.requestRouteToPoi(selectedPoi);
+                      if (mapCtrl.activeRoute.isNotEmpty) {
+                        mapCtrl.startNavigation();
+                      } else {
+                        mapCtrl.requestRouteToPoi(selectedPoi);
+                      }
                     },
                     onCenterOnDestination: () {
                       mapCtrl.animatedMove(selectedPoi.coordinate, 16.5);
@@ -245,7 +270,9 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
               },
               onNavigate: () {
                 debugPrint('[2] ROUTE BUTTON PRESSED');
-                if (mapCtrl.selectedMember.value != null) {
+                if (mapCtrl.activeRoute.isNotEmpty) {
+                  mapCtrl.startNavigation();
+                } else if (mapCtrl.selectedMember.value != null) {
                   mapCtrl.requestRouteToMember(mapCtrl.selectedMember.value!);
                 } else {
                   final j = mapCtrl.selectedJamaah.value ?? state.self;
@@ -299,11 +326,15 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
             );
           }),
 
-          // 3. POI Status Overlay
-          Obx(() => _buildPoiStatusOverlay(context, mapCtrl)),
-
-          // 4. Floating Quick Action Controls (Hamburger, Compass, MyLocation, Zoom In/Out, Focus All, Layers, Band)
+          // 3. Normal Mode: POI Status Overlay
           Obx(() {
+            if (mapCtrl.isNavigating) return const SizedBox.shrink();
+            return _buildPoiStatusOverlay(context, mapCtrl);
+          }),
+
+          // 4. Normal Mode: Floating Quick Action Controls
+          Obx(() {
+            if (mapCtrl.isNavigating) return const SizedBox.shrink();
             final isSearchActive =
                 mapCtrl.searchState.value != MapSearchState.idle ||
                 _searchCtrl.text.trim().isNotEmpty;
@@ -324,9 +355,10 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
             );
           }),
 
-          // 5. Top Header with live GPS tracking status, room status, legend, and filter chips
-          Obx(
-            () => MapTopHeader(
+          // 5. Normal Mode: Top Header with live GPS tracking status
+          Obx(() {
+            if (mapCtrl.isNavigating) return const SizedBox.shrink();
+            return MapTopHeader(
               filters: _getFilters(context),
               selectedFilter: mapCtrl.selectedFilter.value,
               onFilterSelected: mapCtrl.selectFilter,
@@ -343,27 +375,54 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
                   : null,
               nearestInfo: mapCtrl.nearestMemberInfo,
               onRoomTap: mapCtrl.openBottomSheet,
-            ),
-          ),
+            );
+          }),
 
-          // 6. Floating Search Dropdown Overlay (Always on top of all other controls)
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 116,
-            left: 0,
-            right: 0,
-            child: MapSearchDropdown(
-              mapCtrl: mapCtrl,
-              onSelect: (result) {
-                _searchCtrl.text = result.name;
-                mapCtrl.selectSearchResult(result);
-              },
-            ),
-          ),
+          // 6. Normal Mode: Floating Search Dropdown Overlay
+          Obx(() {
+            if (mapCtrl.isNavigating) return const SizedBox.shrink();
+            return Positioned(
+              top: MediaQuery.of(context).padding.top + 116,
+              left: 0,
+              right: 0,
+              child: MapSearchDropdown(
+                mapCtrl: mapCtrl,
+                onSelect: (result) {
+                  _searchCtrl.text = result.name;
+                  mapCtrl.selectSearchResult(result);
+                },
+              ),
+            );
+          }),
+
+          // 7. Navigation Mode HUD Overlays
+          Obx(() {
+            if (!mapCtrl.isNavigating) return const SizedBox.shrink();
+            return Stack(
+              children: [
+                // Top Direction Card
+                NavigationTopCard(mapCtrl: mapCtrl),
+
+                // Re-center Floating Button
+                NavigationRecenterButton(mapCtrl: mapCtrl),
+
+                // Bottom Navigation Information Panel
+                NavigationBottomPanel(mapCtrl: mapCtrl),
+
+                // Arrival Card
+                if (mapCtrl.mapMode.value == MapMode.arrived)
+                  NavigationArrivalCard(mapCtrl: mapCtrl),
+              ],
+            );
+          }),
         ],
       ),
-      bottomNavigationBar: widget.showBottomNav
-          ? const HajiCareBottomNavBar(currentIndex: 1)
-          : null,
+      bottomNavigationBar: Obx(() {
+        if (mapCtrl.isNavigating) return const SizedBox.shrink();
+        return widget.showBottomNav
+            ? const HajiCareBottomNavBar(currentIndex: 1)
+            : const SizedBox.shrink();
+      }),
     );
   }
 }
