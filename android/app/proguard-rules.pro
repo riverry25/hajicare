@@ -119,12 +119,35 @@
 -keep class androidx.credentials.** { *; }
 
 # ============================================================
-# MediaPipe / TFLite / ONNX (ML inference)
+# Hajicare app & Camera helper
+# ============================================================
+-keep class com.example.hajicare.** { *; }
+-dontwarn com.example.hajicare.**
+
+# ============================================================
+# CameraX
+# ============================================================
+-keep class androidx.camera.** { *; }
+-dontwarn androidx.camera.**
+-keep public class androidx.camera.camera2.Camera2Config$DefaultProvider { *; }
+
+# ============================================================
+# MediaPipe / TFLite / LiteRT / ONNX (ML inference)
 # ============================================================
 -keep class com.google.mediapipe.** { *; }
 -dontwarn com.google.mediapipe.**
+-keep class com.google.protobuf.** { *; }
+-dontwarn com.google.protobuf.**
+-keepclassmembers class * extends com.google.protobuf.GeneratedMessageLite { *; }
+-keep class com.google.common.flogger.** { *; }
+-dontwarn com.google.common.flogger.**
+-keepclassmembers class com.google.mediapipe.**$$ExternalSyntheticLambda* { *; }
+-keep class com.google.ai.edge.litert.** { *; }
+-dontwarn com.google.ai.edge.litert.**
 -keep class org.tensorflow.** { *; }
 -dontwarn org.tensorflow.**
+-keep class com.tflite.** { *; }
+-dontwarn com.tflite.**
 -keep class ai.onnxruntime.** { *; }
 -dontwarn ai.onnxruntime.**
 

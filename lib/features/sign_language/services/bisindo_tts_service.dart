@@ -19,6 +19,7 @@ class BisindoTtsService {
       await tts.setSpeechRate(0.5);
       await tts.setPitch(1.0);
       await tts.setVolume(1.0);
+      await tts.awaitSpeakCompletion(true);
 
       tts.setStartHandler(() {
         _isSpeaking = true;

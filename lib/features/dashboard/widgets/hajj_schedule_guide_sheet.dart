@@ -1003,7 +1003,9 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
                                         ? AppColors.darkSurfaceContainerHighest
                                               .withValues(alpha: 0.6)
                                         : Colors.white.withValues(alpha: 0.85)),
-                              borderRadius: BorderRadius.circular(AppRadius.pill),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
                               border: Border.all(
                                 color: isDeedDone
                                     ? AppColors.emeraldIslamic.withValues(
@@ -1039,14 +1041,14 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
                                       fontWeight: FontWeight.w600,
                                       color: isDeedDone
                                           ? AppColors.emeraldIslamic
-                                          : headingColor.withValues(alpha: 0.85),
+                                          : headingColor.withValues(
+                                              alpha: 0.85,
+                                            ),
                                       decoration: isDeedDone
                                           ? TextDecoration.lineThrough
                                           : null,
-                                      decorationColor:
-                                          AppColors.emeraldIslamic.withValues(
-                                        alpha: 0.6,
-                                      ),
+                                      decorationColor: AppColors.emeraldIslamic
+                                          .withValues(alpha: 0.6),
                                     ),
                                   ),
                                 ),

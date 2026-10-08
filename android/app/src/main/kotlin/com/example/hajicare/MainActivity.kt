@@ -44,18 +44,27 @@ class MainActivity : FlutterFragmentActivity() {
             object : PlatformViewFactory(StandardMessageCodec.INSTANCE) {
                 override fun create(context: Context, viewId: Int, args: Any?): PlatformView {
                     return object : PlatformView {
-                        private val previewView = androidx.camera.view.PreviewView(context).also { pv ->
-                            pv.implementationMode = androidx.camera.view.PreviewView.ImplementationMode.COMPATIBLE
-                            activePreviewView = pv
-                            cameraHelper?.attachPreviewView(pv)
+                        private val previewView = try {
+                            androidx.camera.view.PreviewView(context).also { pv ->
+                                pv.implementationMode = androidx.camera.view.PreviewView.ImplementationMode.COMPATIBLE
+                                activePreviewView = pv
+                                cameraHelper?.attachPreviewView(pv)
+                            }
+                        } catch (t: Throwable) {
+                            Log.e(TAG, "Failed creating PreviewView: ${t.message}", t)
+                            View(context)
                         }
 
                         override fun getView(): View = previewView
 
                         override fun dispose() {
-                            if (activePreviewView == previewView) {
-                                cameraHelper?.detachPreviewView()
-                                activePreviewView = null
+                            try {
+                                if (activePreviewView == previewView) {
+                                    cameraHelper?.detachPreviewView()
+                                    activePreviewView = null
+                                }
+                            } catch (t: Throwable) {
+                                Log.e(TAG, "Error disposing PreviewView: ${t.message}", t)
                             }
                         }
                     }
@@ -122,9 +131,9 @@ class MainActivity : FlutterFragmentActivity() {
                             val helper = getOrCreateCameraHelper()
                             val isFront = helper.switchCamera()
                             result.success(if (isFront) "front" else "back")
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Error switching camera: ${e.message}", e)
-                            result.error("SWITCH_FAILED", e.message, null)
+                        } catch (t: Throwable) {
+                            Log.e(TAG, "Error switching camera: ${t.message}", t)
+                            result.error("SWITCH_FAILED", t.message, null)
                         }
                     }
                     "setLensFacing" -> {
@@ -133,9 +142,9 @@ class MainActivity : FlutterFragmentActivity() {
                             val helper = getOrCreateCameraHelper()
                             helper.setLensFacing(facing == "front")
                             result.success(true)
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Error setting lens facing: ${e.message}", e)
-                            result.error("SET_FACING_FAILED", e.message, null)
+                        } catch (t: Throwable) {
+                            Log.e(TAG, "Error setting lens facing: ${t.message}", t)
+                            result.error("SET_FACING_FAILED", t.message, null)
                         }
                     }
                     else -> result.notImplemented()
@@ -165,17 +174,35 @@ class MainActivity : FlutterFragmentActivity() {
                 lifecycleOwner = this,
                 onFrameReady = { frameMap ->
                     runOnUiThread {
-                        landmarkEventSink?.success(frameMap)
+                        try {
+                            landmarkEventSink?.success(frameMap)
+                        } catch (t: Throwable) {
+                            Log.w(TAG, "Error emitting landmark frame: ${t.message}")
+                        }
                     }
                 },
                 onError = { errorMessage ->
                     runOnUiThread {
-                        landmarkEventSink?.error("CAMERA_ERROR", errorMessage, null)
+                        try {
+                            landmarkEventSink?.error("CAMERA_ERROR", errorMessage, null)
+                        } catch (t: Throwable) {
+                            Log.w(TAG, "Error emitting camera error: ${t.message}")
+                        }
                     }
                 }
             )
-            cameraHelper?.initialize()
-            activePreviewView?.let { cameraHelper?.attachPreviewView(it) }
+            try {
+                cameraHelper?.initialize()
+            } catch (t: Throwable) {
+                Log.e(TAG, "Error initializing camera helper: ${t.message}", t)
+            }
+            activePreviewView?.let { pv ->
+                try {
+                    cameraHelper?.attachPreviewView(pv)
+                } catch (t: Throwable) {
+                    Log.e(TAG, "Error attaching initial preview view: ${t.message}", t)
+                }
+            }
         }
         return cameraHelper!!
     }
@@ -185,9 +212,9 @@ class MainActivity : FlutterFragmentActivity() {
             val helper = getOrCreateCameraHelper()
             helper.startCamera()
             result.success(true)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error starting BISINDO camera: ${e.message}", e)
-            result.error("START_FAILED", e.message, null)
+        } catch (t: Throwable) {
+            Log.e(TAG, "Error starting BISINDO camera: ${t.message}", t)
+            result.error("START_FAILED", t.message, null)
         }
     }
 
@@ -195,9 +222,9 @@ class MainActivity : FlutterFragmentActivity() {
         try {
             cameraHelper?.stopCamera()
             result.success(true)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error stopping BISINDO camera: ${e.message}", e)
-            result.error("STOP_FAILED", e.message, null)
+        } catch (t: Throwable) {
+            Log.e(TAG, "Error stopping BISINDO camera: ${t.message}", t)
+            result.error("STOP_FAILED", t.message, null)
         }
     }
 

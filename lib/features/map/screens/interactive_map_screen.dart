@@ -1418,7 +1418,9 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
           ? AppColors.sosEmergency
           : (isPendamping ? AppColors.goldPrimary : AppColors.statusSafe);
       final distMeters = mapCtrl.getDistanceToMember(member);
-      final distText = distMeters != null ? MapController.formatDistance(distMeters) : '';
+      final distText = distMeters != null
+          ? MapController.formatDistance(distMeters)
+          : '';
 
       markers.add(
         fmap.Marker(

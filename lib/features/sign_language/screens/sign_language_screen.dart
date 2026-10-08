@@ -13,16 +13,15 @@ import '../controllers/sign_language_controller.dart';
 import '../models/sign_language_model.dart';
 import '../models/sign_token.dart';
 import '../services/bisindo_camera_landmark_service.dart';
-import '../services/bisindo_inference_service.dart';
 import '../services/bisindo_yolo_service.dart';
-import '../services/landmark_stream_buffer.dart';
 
 /// Realtime Sign Language (SIBI & BISINDO) Recognition Screen.
 /// Best-practice dual pipeline:
 /// - SIBI: Lightweight Ultralytics YOLO object detection with 15 FPS throttling,
 ///   candidate letter badge with circular loader, and instant suggestion pills.
-/// - BISINDO: MediaPipe Holistic landmark stream + sequence GRU model with
-///   TextureView-based platform view keeping camera strictly inside the frame.
+/// - BISINDO: MediaPipe Holistic landmark stream + automatic gesture
+///   segmentation + MotionGRU classifier (hands-free, continuous).
+/// Both models write into one shared, persisted "Transkripsi AI".
 class SignLanguageScreen extends StatefulWidget {
   final SignLanguageModel initialModel;
 
@@ -44,8 +43,6 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
 
   late final BisindoRecognitionController _recognition;
   late final SignLanguageController _isolatedController;
-  late final BisindoInferenceService _inferenceService;
-  late final LandmarkStreamBuffer _streamBuffer;
   late final BisindoCameraLandmarkService _cameraService;
   late final BisindoYoloService _yoloService;
 
@@ -56,7 +53,6 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
   bool _isCameraActive = false;
   bool _isModelLoading = false;
   bool _isSwitchingModel = false;
-  bool _modelReady = false;
   String? _errorMessage;
 
   int _modelSwitchGeneration = 0;
@@ -68,56 +64,26 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
     _currentModel = widget.initialModel;
     _recognition = Get.find<BisindoRecognitionController>();
 
-    if (Get.isRegistered<BisindoInferenceService>()) {
-      _inferenceService = Get.find<BisindoInferenceService>();
-    } else {
-      _inferenceService = BisindoInferenceService();
-      Get.put(_inferenceService);
-    }
-
     _yoloService = BisindoYoloService();
     unawaited(_yoloService.loadLabels());
-
-    final initialConfig = SignLanguageModelConfig.forModel(_currentModel);
-
-    _streamBuffer = LandmarkStreamBuffer(
-      inferenceService: _inferenceService,
-      windowSize: initialConfig.windowSize,
-      minimumFrames: initialConfig.minimumFrames,
-      inferenceStride: initialConfig.inferenceStride,
-      throttleDuration: initialConfig.throttleDuration,
-      onPrediction: (prediction) {
-        if (!mounted || _isSwitchingModel || !_modelReady) return;
-        _recognition.handlePrediction(prediction);
-      },
-      onBufferLengthChanged: (len) {
-        if (!mounted || _isSwitchingModel) return;
-        _recognition.updateBufferCount(len);
-      },
-      onError: (err) {
-        debugPrint('[SIGN_LANGUAGE_SCREEN] Stream buffer error: $err');
-      },
-    );
 
     if (Get.isRegistered<SignLanguageController>()) {
       _isolatedController = Get.find<SignLanguageController>();
     } else {
-      _isolatedController = SignLanguageController(
-        onPredictionAccepted: (prediction) {
-          _recognition.commitWord(prediction.label);
-        },
-      );
+      _isolatedController = SignLanguageController();
       Get.put(_isolatedController);
     }
+    _isolatedController.onPredictionAccepted = (prediction) {
+      _recognition.commitWord(prediction.label, speak: true);
+    };
 
+    // BISINDO frames go only to the MotionGRU live controller.
     _cameraService = BisindoCameraLandmarkService(
-      streamBuffer: _streamBuffer,
       onFrame: (frame) {
-        if (_currentModel == SignLanguageModel.bisindo) {
-          _isolatedController.onIncomingLandmarkFrame(frame);
-          if (frame.hasAnyHand) {
-            _recognition.registerHandFrame();
-          }
+        if (_currentModel != SignLanguageModel.bisindo) return;
+        _isolatedController.onIncomingLandmarkFrame(frame);
+        if (frame.hasAnyHand) {
+          _recognition.registerHandFrame();
         }
       },
     );
@@ -154,23 +120,11 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
     setState(() {
       _isModelLoading = true;
       _errorMessage = null;
-      _modelReady = false;
     });
 
     try {
-      if (_currentModel == SignLanguageModel.bisindo) {
-        final config = SignLanguageModelConfig.forModel(_currentModel);
-        await _inferenceService.loadModel(config);
-
-        if (!mounted || generation != _modelSwitchGeneration) return;
-
-        _streamBuffer.updateConfig(
-          windowSize: config.windowSize,
-          minimumFrames: config.minimumFrames,
-          inferenceStride: config.inferenceStride,
-          throttleDuration: config.throttleDuration,
-        );
-      } else {
+      // BISINDO MotionGRU is initialized by SignLanguageController.onInit.
+      if (_currentModel == SignLanguageModel.sibi) {
         await _yoloService.loadLabels();
       }
 
@@ -178,7 +132,6 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
 
       setState(() {
         _isModelLoading = false;
-        _modelReady = true;
         _errorMessage = null;
       });
     } catch (e) {
@@ -187,7 +140,6 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
 
       setState(() {
         _isModelLoading = false;
-        _modelReady = false;
         _errorMessage = 'Gagal memuat model ${_currentModel.displayName}: $e';
       });
     }
@@ -219,6 +171,9 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
     }
   }
 
+  /// Switches SIBI ⇄ BISINDO. The shared transcript is intentionally kept;
+  /// only transient recognition state is reset. If the camera is running,
+  /// detection continues immediately on the new model.
   Future<void> _switchModel(SignLanguageModel targetModel) async {
     if (_isSwitchingModel || _currentModel == targetModel) return;
 
@@ -232,38 +187,27 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
     });
 
     _applyModelThresholds(targetModel);
-    _recognition.resetTranscript();
-
-    // Isolate hardware pipelines: stop whichever is not needed
-    if (previousModel == SignLanguageModel.bisindo &&
-        targetModel == SignLanguageModel.sibi) {
-      await _cameraService.stopCamera();
-      _streamBuffer.pause();
-      _streamBuffer.clear();
-    } else if (previousModel == SignLanguageModel.sibi &&
-        targetModel == SignLanguageModel.bisindo) {
-      if (_isCameraActive) {
-        await _cameraService.setLensFacing(_currentLens == LensFacing.front);
-        await _cameraService.startCamera();
-        _streamBuffer.resume();
-      }
-    }
+    _recognition.resetRecognitionState();
 
     try {
-      if (targetModel == SignLanguageModel.bisindo) {
-        final targetConfig = SignLanguageModelConfig.forModel(targetModel);
-        await _inferenceService.loadModel(targetConfig);
-
-        if (!mounted || generation != _modelSwitchGeneration) return;
-
-        _streamBuffer.updateConfig(
-          windowSize: targetConfig.windowSize,
-          minimumFrames: targetConfig.minimumFrames,
-          inferenceStride: targetConfig.inferenceStride,
-          throttleDuration: targetConfig.throttleDuration,
-        );
-      } else {
+      // Isolate hardware pipelines: stop whichever is not needed
+      if (previousModel == SignLanguageModel.bisindo &&
+          targetModel == SignLanguageModel.sibi) {
+        _isolatedController.stopContinuous();
+        await _cameraService.stopCamera();
         await _yoloService.loadLabels();
+      } else if (previousModel == SignLanguageModel.sibi &&
+          targetModel == SignLanguageModel.bisindo) {
+        if (_isCameraActive) {
+          await _cameraService.setLensFacing(_currentLens == LensFacing.front);
+          final started = await _cameraService.startCamera();
+          if (!started) {
+            throw StateError(
+              _cameraService.lastError ?? 'Gagal memulai kamera.',
+            );
+          }
+          _isolatedController.startContinuous();
+        }
       }
 
       if (!mounted || generation != _modelSwitchGeneration) return;
@@ -272,17 +216,19 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
         _currentModel = targetModel;
         _isSwitchingModel = false;
         _isModelLoading = false;
-        _modelReady = true;
         _errorMessage = null;
       });
     } catch (e) {
       debugPrint('[SIGN_LANGUAGE_SCREEN] Switch model failed: $e');
       if (!mounted || generation != _modelSwitchGeneration) return;
 
+      _isolatedController.stopContinuous();
+      _recognition.setCameraActive(false);
       setState(() {
+        _currentModel = targetModel;
+        _isCameraActive = false;
         _isSwitchingModel = false;
         _isModelLoading = false;
-        _modelReady = true;
         _errorMessage = 'Gagal beralih ke model ${targetModel.displayName}: $e';
       });
     }
@@ -293,8 +239,8 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
 
     if (_isCameraActive) {
       if (_currentModel == SignLanguageModel.bisindo) {
+        _isolatedController.stopContinuous();
         await _cameraService.stopCamera();
-        _streamBuffer.clear();
       }
       _recognition.setCameraActive(false);
       if (mounted) setState(() => _isCameraActive = false);
@@ -345,6 +291,8 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
       }
 
       _recognition.setCameraActive(true);
+      // Hands-free: detection starts right away, no extra "record" tap.
+      _isolatedController.startContinuous();
       if (mounted) {
         setState(() {
           _isCameraActive = true;
@@ -397,10 +345,9 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
   @override
   void dispose() {
     _modelSwitchGeneration++;
-    _streamBuffer.pause();
+    _isolatedController.stopContinuous();
     _recognition.setCameraActive(false);
     unawaited(_cameraService.dispose());
-    _streamBuffer.dispose();
     _yoloController.dispose();
     super.dispose();
   }
@@ -671,7 +618,6 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
                     if (mounted) {
                       setState(() {
                         _isModelLoading = false;
-                        _modelReady = true;
                       });
                     }
                   },
@@ -808,154 +754,166 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
                   );
                 }),
 
-              // 5. Camera Overlays for BISINDO Isolated Capture
+              // 5. BISINDO overlays: live signing pill, manual capture, result badge
               if (!isSibi)
                 Obx(() {
-                  final isoState = _isolatedController.state.value;
-                  if (isoState == IsolatedSignState.countdown) {
-                    return Positioned.fill(
-                      child: Container(
-                        color: Colors.black.withValues(alpha: 0.35),
-                        child: Center(
-                          child: Container(
-                            width: 84,
-                            height: 84,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.espressoDark.withValues(
-                                alpha: 0.88,
-                              ),
-                              border: Border.all(
-                                color: AppColors.goldLight,
-                                width: 2.5,
-                              ),
-                            ),
-                            child: Center(
-                              child: Text(
-                                '${_isolatedController.countdownSeconds.value}',
-                                style: AppTypography.displaySmall.copyWith(
+                  final liveState = _isolatedController.state.value;
+                  switch (liveState) {
+                    case BisindoLiveState.manualCountdown:
+                      return Positioned.fill(
+                        child: Container(
+                          color: Colors.black.withValues(alpha: 0.35),
+                          child: Center(
+                            child: Container(
+                              width: 84,
+                              height: 84,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.espressoDark.withValues(
+                                  alpha: 0.88,
+                                ),
+                                border: Border.all(
                                   color: AppColors.goldLight,
-                                  fontWeight: FontWeight.w800,
+                                  width: 2.5,
                                 ),
                               ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  } else if (isoState == IsolatedSignState.capturing) {
-                    return Positioned(
-                      top: 14,
-                      left: 14,
-                      right: 14,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.75),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: AppColors.sosEmergency,
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  width: 10,
-                                  height: 10,
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: AppColors.sosEmergency,
+                              child: Center(
+                                child: Text(
+                                  '${_isolatedController.countdownSeconds.value}',
+                                  style: AppTypography.displaySmall.copyWith(
+                                    color: AppColors.goldLight,
+                                    fontWeight: FontWeight.w800,
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    'Merekam Gerakan BISINDO...',
-                                    style: AppTypography.labelLarge.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    case BisindoLiveState.manualCapturing:
+                      return Positioned(
+                        top: 14,
+                        left: 14,
+                        right: 14,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.75),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppColors.sosEmergency,
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 10,
+                                    height: 10,
+                                    decoration: const BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: AppColors.sosEmergency,
                                     ),
                                   ),
-                                ),
-                                Text(
-                                  '${_isolatedController.framesCollected.value} frame',
-                                  style: AppTypography.captionSmall.copyWith(
-                                    color: Colors.white70,
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Rekam Manual BISINDO...',
+                                      style: AppTypography.labelLarge.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    '${_isolatedController.framesCollected.value} frame',
+                                    style: AppTypography.captionSmall.copyWith(
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: LinearProgressIndicator(
+                                  value:
+                                      _isolatedController.captureProgress.value,
+                                  minHeight: 4,
+                                  backgroundColor: Colors.white24,
+                                  valueColor: const AlwaysStoppedAnimation(
+                                    AppColors.sosEmergency,
                                   ),
                                 ),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: LinearProgressIndicator(
-                                value:
-                                    _isolatedController.captureProgress.value,
-                                minHeight: 4,
-                                backgroundColor: Colors.white24,
-                                valueColor: const AlwaysStoppedAnimation(
-                                  AppColors.sosEmergency,
-                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  } else if (isoState == IsolatedSignState.processing) {
-                    return Positioned.fill(
-                      child: Container(
-                        color: Colors.black.withValues(alpha: 0.4),
-                        child: Center(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 14,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.espressoDark.withValues(
-                                alpha: 0.9,
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: AppColors.goldLight,
-                                width: 1,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.2,
-                                    color: AppColors.goldLight,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  'Memproses gerakan...',
-                                  style: AppTypography.bodyMedium.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
+                      );
+                    case BisindoLiveState.signing:
+                      return Positioned(
+                        left: 14,
+                        bottom: 16,
+                        child: _LivePill(
+                          text: 'Membaca gerakan...',
+                          borderColor: AppColors.sosEmergency,
+                          leading: const _PulsingDot(
+                            color: AppColors.sosEmergency,
+                          ),
+                        ),
+                      );
+                    case BisindoLiveState.classifying:
+                      return const Positioned(
+                        left: 14,
+                        bottom: 16,
+                        child: _LivePill(
+                          text: 'Memproses...',
+                          borderColor: AppColors.goldLight,
+                          leading: SizedBox.square(
+                            dimension: 12,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.goldLight,
                             ),
                           ),
                         ),
-                      ),
-                    );
+                      );
+                    case BisindoLiveState.recognized:
+                      return Positioned(
+                        right: 16,
+                        bottom: 16,
+                        child: _GestureCandidateLoader(
+                          label: _isolatedController.detectedLabel.value,
+                          progress: 1.0,
+                          isConfirmed: true,
+                        ),
+                      );
+                    case BisindoLiveState.listening:
+                      return const Positioned(
+                        left: 14,
+                        bottom: 16,
+                        child: _LivePill(
+                          text: 'Siap — lakukan isyarat',
+                          borderColor: AppColors.emeraldIslamic,
+                          leading: Icon(
+                            Icons.front_hand_rounded,
+                            size: 13,
+                            color: AppColors.goldLight,
+                          ),
+                        ),
+                      );
+                    case BisindoLiveState.initializing:
+                    case BisindoLiveState.stopped:
+                    case BisindoLiveState.rejected:
+                    case BisindoLiveState.error:
+                      return const SizedBox.shrink();
                   }
-                  return const SizedBox.shrink();
                 }),
             ],
           ),
@@ -1150,39 +1108,54 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
     );
   }
 
-  /// Status & Progress indicator for BISINDO MotionGRU isolated gesture model
+  /// Compact live status for continuous BISINDO detection + manual fallback.
   Widget _buildRecognitionStatus() {
     final isDark = AppColors.isDark(context);
     final gold = _accent(context);
 
     return Obx(() {
-      final isoState = _isolatedController.state.value;
-      final label = _isolatedController.detectedLabel.value;
+      final liveState = _isolatedController.state.value;
       final conf = _isolatedController.confidenceScore.value;
       final progress = _isolatedController.captureProgress.value;
       final frames = _isolatedController.framesCollected.value;
-      final guidance = _isolatedController.guidanceMessage.value;
-      final isCapturing = isoState == IsolatedSignState.capturing;
-      final isCountdown = isoState == IsolatedSignState.countdown;
-      final isProcessing = isoState == IsolatedSignState.processing;
-      final isResult = isoState == IsolatedSignState.result;
-      final isError = isoState == IsolatedSignState.error;
+      final statusText = _isolatedController.stateStatusText;
 
-      return Container(
+      final isRecognized = liveState == BisindoLiveState.recognized;
+      final isRejected =
+          liveState == BisindoLiveState.rejected ||
+          liveState == BisindoLiveState.error;
+      final isSigning = liveState == BisindoLiveState.signing;
+      final isClassifying = liveState == BisindoLiveState.classifying;
+      final isManualCountdown = liveState == BisindoLiveState.manualCountdown;
+      final isManualCapturing = liveState == BisindoLiveState.manualCapturing;
+      final isRecordingVisual = isSigning || isManualCapturing;
+
+      final canManual =
+          _isCameraActive &&
+          (liveState == BisindoLiveState.listening ||
+              liveState == BisindoLiveState.recognized ||
+              liveState == BisindoLiveState.rejected);
+
+      final Color accentColor = isRecognized
+          ? AppColors.emeraldIslamic
+          : isRejected
+          ? AppColors.distanceWarning
+          : isRecordingVisual
+          ? AppColors.sosEmergency
+          : gold;
+
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.symmetric(horizontal: 16),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 14, 12, 10),
         decoration: BoxDecoration(
           color: AppColors.cardBgColor(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isResult
-                ? AppColors.emeraldIslamic.withValues(alpha: 0.5)
-                : isError
-                ? AppColors.sosEmergency.withValues(alpha: 0.4)
-                : isCapturing
-                ? AppColors.goldPrimary.withValues(alpha: 0.5)
+            color: isRecognized || isRejected || isRecordingVisual
+                ? accentColor.withValues(alpha: 0.5)
                 : AppColors.cardBorderColor(context),
-            width: isResult || isError || isCapturing ? 1.5 : 1.0,
+            width: isRecognized || isRejected || isRecordingVisual ? 1.5 : 1.0,
           ),
           boxShadow: [
             BoxShadow(
@@ -1195,43 +1168,32 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Status Header
             Row(
               children: [
                 Icon(
-                  isResult
+                  isRecognized
                       ? Icons.check_circle_rounded
-                      : isError
+                      : isRejected
                       ? Icons.info_outline_rounded
-                      : isCapturing
+                      : isRecordingVisual
                       ? Icons.fiber_manual_record_rounded
                       : Icons.front_hand_rounded,
                   size: 20,
-                  color: isResult
-                      ? AppColors.emeraldIslamic
-                      : isError
-                      ? AppColors.distanceWarning
-                      : isCapturing
-                      ? AppColors.sosEmergency
-                      : gold,
+                  color: accentColor,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    isResult
-                        ? 'Terdeteksi: ${label.toUpperCase()}'
-                        : isError && guidance.isNotEmpty
-                        ? guidance
-                        : _isolatedController.stateStatusText,
+                    statusText,
                     style: AppTypography.titleSmall.copyWith(
-                      color: isResult
+                      color: isRecognized
                           ? AppColors.emeraldIslamic
                           : AppColors.textHeadingColor(context),
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
-                if (isResult)
+                if (isRecognized)
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
@@ -1251,103 +1213,74 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
                   ),
               ],
             ),
-            const SizedBox(height: 12),
-
-            // Progress bar during capturing / processing
-            if (isCapturing || isCountdown || isProcessing) ...[
+            if (isSigning ||
+                isClassifying ||
+                isManualCountdown ||
+                isManualCapturing) ...[
+              const SizedBox(height: 10),
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: LinearProgressIndicator(
-                  value: isProcessing ? null : progress,
-                  minHeight: 8,
+                  value: isClassifying || isManualCountdown ? null : progress,
+                  minHeight: 6,
                   backgroundColor: gold.withValues(alpha: 0.15),
-                  valueColor: AlwaysStoppedAnimation(
-                    isCapturing ? AppColors.sosEmergency : gold,
-                  ),
+                  valueColor: AlwaysStoppedAnimation(accentColor),
                 ),
               ),
               const SizedBox(height: 6),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    isCountdown
-                        ? 'Bersiap...'
-                        : isCapturing
-                        ? 'Merekam gerakan ($frames frame)'
-                        : 'Memproses model MotionGRU...',
+              Text(
+                isManualCountdown
+                    ? 'Bersiap rekam manual...'
+                    : isManualCapturing
+                    ? 'Rekam manual ($frames frame) • '
+                          '${((1.0 - progress) * 2.8).toStringAsFixed(1)}s'
+                    : isSigning
+                    ? 'Turunkan tangan / diam sejenak setelah selesai ($frames frame)'
+                    : 'Memproses model MotionGRU...',
+                style: AppTypography.captionSmall.copyWith(
+                  color: AppColors.textSecondaryColor(context),
+                ),
+              ),
+            ],
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _isCameraActive
+                        ? 'Deteksi otomatis aktif'
+                        : 'Tekan MULAI untuk deteksi otomatis',
                     style: AppTypography.captionSmall.copyWith(
                       color: AppColors.textSecondaryColor(context),
                     ),
                   ),
-                  if (isCapturing)
-                    Text(
-                      '${((1.0 - progress) * 2.8).toStringAsFixed(1)}s',
-                      style: AppTypography.captionSmall.copyWith(
-                        color: AppColors.sosEmergency,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 10),
-            ],
-
-            // Action Buttons
-            if (isoState == IsolatedSignState.ready || isResult || isError)
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: !_isCameraActive
-                          ? null
-                          : () {
-                              if (isResult || isError) {
-                                _isolatedController.startCaptureSession();
-                              } else {
-                                _isolatedController.startCaptureSession();
-                              }
-                            },
-                      icon: Icon(
-                        isResult || isError
-                            ? Icons.refresh_rounded
-                            : Icons.radio_button_checked_rounded,
-                        size: 20,
-                      ),
-                      label: Text(
-                        isResult || isError
-                            ? 'REKAM GERAKAN LAGI'
-                            : 'REKAM GERAKAN BISINDO',
-                        style: AppTypography.labelLarge.copyWith(
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.5,
-                          color: Colors.white,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: gold,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
+                ),
+                // Temporary manual fallback.
+                TextButton.icon(
+                  onPressed: canManual
+                      ? () => _isolatedController.startCaptureSession()
+                      : null,
+                  icon: const Icon(
+                    Icons.radio_button_checked_rounded,
+                    size: 16,
+                  ),
+                  label: Text(
+                    'Rekam manual',
+                    style: AppTypography.labelLarge.copyWith(
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  if (isResult) ...[
-                    const SizedBox(width: 8),
-                    IconButton.filledTonal(
-                      onPressed: () => _isolatedController.speakCurrentResult(),
-                      icon: const Icon(Icons.volume_up_rounded),
-                      tooltip: 'Dengarkan Suara (TTS)',
-                      style: IconButton.styleFrom(
-                        backgroundColor: gold.withValues(alpha: 0.15),
-                        foregroundColor: gold,
-                      ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: gold,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
                     ),
-                  ],
-                ],
-              ),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       );
@@ -1429,7 +1362,9 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
         ),
         const SizedBox(height: 14),
         Text(
-          'Tahan posisi... lihat progress di kamera',
+          _currentModel == SignLanguageModel.sibi
+              ? 'Tahan posisi... lihat progress di kamera'
+              : 'Isyaratkan satu kata, lalu turunkan tangan / diam sejenak',
           textAlign: TextAlign.center,
           style: AppTypography.caption.copyWith(
             color: isDark ? AppColors.goldLight : AppColors.espressoMedium,
@@ -1499,8 +1434,8 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Text(
         _currentModel == SignLanguageModel.sibi
-            ? 'Model SIBI aktif: Arahkan dan tahan gestur huruf alfabet di depan kamera.'
-            : 'Model BISINDO aktif: Arahkan tangan ke kamera untuk mendeteksi kosakata BISINDO secara realtime.',
+            ? 'Model SIBI aktif: Arahkan dan tahan gestur huruf alfabet. Kata dibacakan saat SPASI ditekan atau setelah jeda sejenak.'
+            : 'Model BISINDO aktif: Deteksi otomatis — setiap kata yang terdeteksi langsung masuk ke transkripsi dan dibacakan. Transkripsi tetap tersimpan saat ganti model.',
         textAlign: TextAlign.center,
         style: AppTypography.captionSmall.copyWith(
           color: AppColors.textSecondaryColor(context),
@@ -1910,6 +1845,85 @@ class _SwitchCameraButton extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Small translucent status pill on the camera preview (BISINDO live mode).
+class _LivePill extends StatelessWidget {
+  final String text;
+  final Color borderColor;
+  final Widget leading;
+
+  const _LivePill({
+    required this.text,
+    required this.borderColor,
+    required this.leading,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.62),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(
+          color: borderColor.withValues(alpha: 0.85),
+          width: 1.2,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          leading,
+          const SizedBox(width: 7),
+          Text(
+            text,
+            style: AppTypography.captionSmall.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Pulsing recording dot used while a BISINDO gesture is being read.
+class _PulsingDot extends StatefulWidget {
+  final Color color;
+
+  const _PulsingDot({required this.color});
+
+  @override
+  State<_PulsingDot> createState() => _PulsingDotState();
+}
+
+class _PulsingDotState extends State<_PulsingDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 700),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: Tween<double>(begin: 0.35, end: 1.0).animate(_controller),
+      child: Container(
+        width: 9,
+        height: 9,
+        decoration: BoxDecoration(shape: BoxShape.circle, color: widget.color),
       ),
     );
   }

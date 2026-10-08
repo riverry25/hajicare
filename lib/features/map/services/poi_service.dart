@@ -236,7 +236,9 @@ out center 250;
     }
 
     // 2. Health & Medical
-    if (amenity == 'pharmacy' || healthcare == 'pharmacy' || shop == 'chemist') {
+    if (amenity == 'pharmacy' ||
+        healthcare == 'pharmacy' ||
+        shop == 'chemist') {
       return PoiCategory.pharmacy;
     }
     if (healthcare == 'first_aid') {
@@ -270,7 +272,9 @@ out center 250;
 
     // 7. Finance
     if (amenity == 'atm') return PoiCategory.atm;
-    if (amenity == 'bank') return tags['atm'] == 'yes' ? PoiCategory.atm : PoiCategory.bank;
+    if (amenity == 'bank') {
+      return tags['atm'] == 'yes' ? PoiCategory.atm : PoiCategory.bank;
+    }
 
     // 8. Shopping & Market
     if (shop == 'supermarket') return PoiCategory.supermarket;
@@ -280,7 +284,9 @@ out center 250;
     }
 
     // 9. Transportation & Parking
-    if (aeroway == 'aerodrome' || aeroway == 'terminal') return PoiCategory.airport;
+    if (aeroway == 'aerodrome' || aeroway == 'terminal') {
+      return PoiCategory.airport;
+    }
     if (railway == 'station' || railway == 'halt') return PoiCategory.train;
     if (amenity == 'bus_station') return PoiCategory.bus;
     if (amenity == 'parking') return PoiCategory.parking;

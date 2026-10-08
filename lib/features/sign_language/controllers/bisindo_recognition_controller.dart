@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../models/bisindo_prediction.dart';
 import '../models/sign_token.dart';
 import '../services/bisindo_tts_service.dart';
+import '../services/sign_transcript_store.dart';
 
 enum SignRecognitionState { idle, reading, analyzing, recognized }
 
@@ -14,22 +15,34 @@ class BisindoRecognitionConfig {
   final Duration duplicateCooldown;
   final Duration handPresenceTimeout;
 
+  /// Spelled letters (SIBI / BISINDO alphabet) are spoken as one word after
+  /// this idle period, or immediately when SPASI is pressed.
+  final Duration letterSpeechIdle;
+
   const BisindoRecognitionConfig({
     this.confidenceThreshold = 0.58,
     this.stablePredictionsRequired = 3,
     this.duplicateCooldown = const Duration(milliseconds: 1200),
     this.handPresenceTimeout = const Duration(milliseconds: 1000),
+    this.letterSpeechIdle = const Duration(milliseconds: 1500),
   }) : assert(stablePredictionsRequired > 0),
        assert(confidenceThreshold >= 0.0 && confidenceThreshold <= 1.0);
 }
 
-/// Manages reactive state, hold-to-confirm stability gate, anti-duplicate cooldown,
-/// token composition, and Indonesian Text-to-Speech.
+/// Owns the single shared "Transkripsi AI" used by both SIBI and BISINDO.
+///
+/// Responsibilities: hold-to-confirm stability gate (SIBI frame stream),
+/// anti-duplicate cooldown, token composition, persistence, and a serialized
+/// Indonesian Text-to-Speech queue.
+///
+/// The transcript is only cleared by [resetTranscript]; model switches and
+/// camera stops must use [resetRecognitionState].
 class BisindoRecognitionController extends GetxController {
   final BisindoRecognitionConfig config;
   final SignLabelParser labelParser;
   final SignTokenComposer tokenComposer;
   final BisindoTtsService ttsService;
+  final SignTranscriptStore transcriptStore;
   final bool autoTick;
 
   BisindoRecognitionController({
@@ -37,8 +50,11 @@ class BisindoRecognitionController extends GetxController {
     this.labelParser = const SignLabelParser(),
     this.tokenComposer = const SignTokenComposer(),
     BisindoTtsService? ttsService,
+    SignTranscriptStore? transcriptStore,
     this.autoTick = true,
-  }) : ttsService = ttsService ?? BisindoTtsService();
+  }) : ttsService = ttsService ?? BisindoTtsService(),
+       transcriptStore =
+           transcriptStore ?? const SharedPrefsSignTranscriptStore();
 
   // Camera & Detection States
   final isCameraActive = false.obs;
@@ -68,6 +84,19 @@ class BisindoRecognitionController extends GetxController {
   String? _lastCommittedLabel;
   bool _isClosed = false;
 
+  // Persistence
+  bool _transcriptTouched = false;
+  Future<void>? _restoreFuture;
+
+  // Speech
+  Future<void> _speechChain = Future<void>.value();
+  int _pendingSpeechCount = 0;
+  DateTime? _lastLetterCommitAt;
+  int _lastSpokenLetterRunEnd = -1;
+
+  /// Completes once the persisted transcript has been restored (if any).
+  Future<void> get restored => _restoreFuture ?? Future<void>.value();
+
   String get statusText {
     if (!isCameraActive.value) return 'Mulai kamera untuk mendeteksi isyarat';
     if (!isHandDetected.value) return 'Posisikan tangan ke kamera';
@@ -96,13 +125,24 @@ class BisindoRecognitionController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    ttsService.initialize();
+    unawaited(ttsService.initialize());
+    _restoreFuture = _restoreTranscript();
     if (autoTick) {
       _ticker = Timer.periodic(
         const Duration(milliseconds: 100),
         (_) => tick(),
       );
     }
+  }
+
+  Future<void> _restoreTranscript() async {
+    final saved = await transcriptStore.load();
+    // Never overwrite anything the user produced while loading.
+    if (_isClosed || _transcriptTouched || saved.isEmpty) return;
+    tokens.assignAll(saved);
+    rawTranscript.value = tokenComposer.compose(tokens);
+    // Restored letters are considered already spoken.
+    _lastSpokenLetterRunEnd = tokens.length;
   }
 
   void setCameraActive(bool active, {DateTime? now}) {
@@ -199,23 +239,31 @@ class BisindoRecognitionController extends GetxController {
     }
   }
 
-  void _commitLabel(String label, DateTime now) {
+  /// Returns the committed token, or null if suppressed/invalid.
+  SignToken? _commitLabel(String label, DateTime now) {
     // Anti Duplicate Cooldown Check
     if (_lastCommittedLabel == label && _lastCommittedAt != null) {
       final elapsed = now.difference(_lastCommittedAt!);
       if (elapsed < config.duplicateCooldown) {
-        return; // Suppress duplicate commit within cooldown
+        return null; // Suppress duplicate commit within cooldown
       }
     }
 
+    final SignToken token;
     try {
-      tokens.add(labelParser.parse(label).toToken());
+      token = labelParser.parse(label).toToken();
     } on FormatException catch (e) {
       debugPrint('[BISINDO] FormatException parsing label $label: $e');
-      return;
+      return null;
     }
 
-    _refreshTranscript();
+    if (token.type == SignTokenType.word) {
+      // A word ends any spelled run: speak it first so audio order matches text.
+      _speakPendingLetters();
+    }
+
+    tokens.add(token);
+    _onTranscriptChanged();
     _lastCommittedLabel = label;
     _lastCommittedAt = now;
     detectedLabel.value = label;
@@ -224,17 +272,29 @@ class BisindoRecognitionController extends GetxController {
     stabilityStreak.value = 0;
     holdProgress.value = 1.0;
 
+    if (token.type == SignTokenType.letter) {
+      _lastLetterCommitAt = now;
+    }
+
     if (kDebugMode) {
       debugPrint(
         '[BISINDO] Committed label: "$label" -> Transcript: "${rawTranscript.value}"',
       );
     }
+    return token;
   }
 
-  /// Commits an externally recognized word directly to the transcript (e.g. from isolated capture).
-  void commitWord(String label) {
-    if (_isClosed) return;
-    _commitLabel(label, DateTime.now());
+  /// Commits an externally recognized label (e.g. BISINDO segment classifier)
+  /// directly to the shared transcript. Words are spoken immediately when
+  /// [speak] is true; letters are spoken as a whole word later.
+  bool commitWord(String label, {bool speak = false, DateTime? now}) {
+    if (_isClosed) return false;
+    final token = _commitLabel(label, now ?? DateTime.now());
+    if (token == null) return false;
+    if (speak && token.type == SignTokenType.word) {
+      _enqueueSpeech(token.value);
+    }
+    return true;
   }
 
   /// Handles absence of hands.
@@ -249,8 +309,11 @@ class BisindoRecognitionController extends GetxController {
   }
 
   void tick({DateTime? now}) {
-    if (_isClosed || !isCameraActive.value) return;
+    if (_isClosed) return;
     final timestamp = now ?? DateTime.now();
+    _maybeSpeakIdleLetters(timestamp);
+
+    if (!isCameraActive.value) return;
     final lastHand = _lastHandSeenAt;
     if (lastHand == null ||
         timestamp.difference(lastHand) >= config.handPresenceTimeout) {
@@ -260,48 +323,121 @@ class BisindoRecognitionController extends GetxController {
 
   void insertSpace() {
     if (tokens.isEmpty || tokens.last.type == SignTokenType.space) return;
+    _speakPendingLetters();
     tokens.add(const SignToken.space());
-    _refreshTranscript();
+    _onTranscriptChanged();
   }
 
   void insertWord(String word) {
     final trimmed = word.trim();
     if (trimmed.isEmpty) return;
     tokens.add(SignToken.word(trimmed));
-    _refreshTranscript();
+    _onTranscriptChanged();
   }
 
   void insertLetter(String letter) {
     final trimmed = letter.trim().toUpperCase();
     if (trimmed.isEmpty) return;
     tokens.add(SignToken.letter(trimmed));
-    _refreshTranscript();
+    _onTranscriptChanged();
   }
 
   void deleteLast() {
     if (tokens.isEmpty) return;
     tokens.removeLast();
-    _refreshTranscript();
+    if (_lastSpokenLetterRunEnd > tokens.length) {
+      _lastSpokenLetterRunEnd = tokens.length;
+    }
+    _onTranscriptChanged();
   }
 
+  /// Clears the shared transcript. Only the user's RESET action should call this.
   void resetTranscript() {
     tokens.clear();
     rawTranscript.value = '';
     _lastCommittedAt = null;
     _lastCommittedLabel = null;
+    _lastLetterCommitAt = null;
+    _lastSpokenLetterRunEnd = -1;
+    _resetRecognition(clearAll: true);
+    _transcriptTouched = true;
+    unawaited(transcriptStore.save(const []));
+  }
+
+  /// Clears transient recognition state (streak, candidate, buffers) while
+  /// keeping the transcript intact. Use for model switches / camera stop.
+  void resetRecognitionState() {
+    if (_isClosed) return;
     _resetRecognition(clearAll: true);
   }
 
   Future<void> speakTranscript() async {
     final text = rawTranscript.value.trim();
     if (text.isEmpty) return;
-    isSpeaking.value = true;
-    try {
-      await ttsService.speak(text);
-    } finally {
-      if (!_isClosed) isSpeaking.value = false;
-    }
+    _lastLetterCommitAt = null;
+    _lastSpokenLetterRunEnd = tokens.length;
+    await _enqueueSpeech(text);
   }
+
+  // ---------------------------------------------------------------------------
+  // Speech helpers
+  // ---------------------------------------------------------------------------
+
+  /// Serializes TTS so consecutive words never cut each other off.
+  Future<void> _enqueueSpeech(String text) {
+    final clean = text.trim();
+    if (clean.isEmpty || _isClosed) return Future<void>.value();
+    _pendingSpeechCount++;
+    isSpeaking.value = true;
+    _speechChain = _speechChain.then((_) async {
+      try {
+        if (!_isClosed) await ttsService.speak(clean);
+      } catch (e) {
+        debugPrint('[SIGN_TTS] speak error: $e');
+      } finally {
+        _pendingSpeechCount--;
+        if (!_isClosed && _pendingSpeechCount <= 0) {
+          _pendingSpeechCount = 0;
+          isSpeaking.value = false;
+        }
+      }
+    });
+    return _speechChain;
+  }
+
+  /// Text of the trailing run of letter tokens not yet spoken, or null.
+  String? _pendingLetterRun() {
+    if (tokens.isEmpty || tokens.length == _lastSpokenLetterRunEnd) {
+      return null;
+    }
+    final buffer = <String>[];
+    for (var i = tokens.length - 1; i >= 0; i--) {
+      final token = tokens[i];
+      if (token.type != SignTokenType.letter) break;
+      buffer.insert(0, token.value);
+    }
+    if (buffer.isEmpty) return null;
+    return buffer.join();
+  }
+
+  void _speakPendingLetters() {
+    final run = _pendingLetterRun();
+    _lastLetterCommitAt = null;
+    if (run == null) return;
+    _lastSpokenLetterRunEnd = tokens.length;
+    _enqueueSpeech(run);
+  }
+
+  void _maybeSpeakIdleLetters(DateTime now) {
+    final lastLetter = _lastLetterCommitAt;
+    if (lastLetter == null) return;
+    if (now.difference(lastLetter) < config.letterSpeechIdle) return;
+    // Still holding a new letter candidate: wait for it to finish.
+    if (stabilityStreak.value > 0) return;
+    _speakPendingLetters();
+  }
+
+  // ---------------------------------------------------------------------------
 
   void _resetRecognition({required bool clearAll}) {
     _consecutivePredictions.clear();
@@ -317,8 +453,10 @@ class BisindoRecognitionController extends GetxController {
     }
   }
 
-  void _refreshTranscript() {
+  void _onTranscriptChanged() {
+    _transcriptTouched = true;
     rawTranscript.value = tokenComposer.compose(tokens);
+    unawaited(transcriptStore.save(List<SignToken>.of(tokens)));
   }
 
   @override

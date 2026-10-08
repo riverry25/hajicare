@@ -137,7 +137,10 @@ class HajjGuideService extends GetxService {
   Future<void> _saveStages() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList(_completedStagesKey, completedStageIds.toList());
+      await prefs.setStringList(
+        _completedStagesKey,
+        completedStageIds.toList(),
+      );
     } catch (e) {
       debugPrint('[HajjGuideService] Gagal menyimpan stages: $e');
     }

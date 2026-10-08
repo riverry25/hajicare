@@ -14,6 +14,24 @@ class SignToken {
 
   const SignToken.space() : this(type: SignTokenType.space, value: ' ');
 
+  Map<String, String> toJson() => {'t': type.name, 'v': value};
+
+  /// Returns null for malformed entries so corrupt storage never crashes.
+  static SignToken? tryFromJson(Object? json) {
+    if (json is! Map) return null;
+    final typeName = json['t'];
+    final value = json['v'];
+    if (typeName is! String || value is! String) return null;
+    for (final type in SignTokenType.values) {
+      if (type.name == typeName) {
+        if (type == SignTokenType.space) return const SignToken.space();
+        if (value.trim().isEmpty) return null;
+        return SignToken(type: type, value: value);
+      }
+    }
+    return null;
+  }
+
   @override
   bool operator ==(Object other) =>
       other is SignToken && other.type == type && other.value == value;

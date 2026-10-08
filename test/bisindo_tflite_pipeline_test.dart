@@ -10,46 +10,35 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('Final Deploy-Ready BISINDO GRU Model Asset Integrity', () {
-    test('hajicare_bisindo_gru_float32.tflite exists and is non-empty', () {
+    test('bisindo_motion_gru_float16.tflite exists and is non-empty', () {
       final file = File(
-        'assets/models/bisindo/hajicare_bisindo_gru_float32.tflite',
+        'assets/models/bisindo/bisindo_motion_gru_float16.tflite',
       );
       expect(file.existsSync(), isTrue);
-      expect(file.lengthSync(), greaterThan(100000));
-      expect(file.lengthSync(), equals(336776));
+      expect(file.lengthSync(), greaterThan(1000000));
     });
 
-    test('labels.json contains exactly 23 classes in correct order', () {
-      final file = File('assets/models/bisindo/labels.json');
+    test('labels.txt contains exactly 47 classes in correct order', () {
+      final file = File('assets/models/bisindo/labels.txt');
       expect(file.existsSync(), isTrue);
-      final jsonMap =
-          json.decode(file.readAsStringSync()) as Map<String, dynamic>;
-      final labelsList = jsonMap['labels'] as List;
-      expect(labelsList.length, equals(23));
-
-      final firstLabel = labelsList[0] as Map<String, dynamic>;
-      expect(firstLabel['id'], equals(0));
-      expect(firstLabel['name'], equals('Air'));
-
-      final thirdLabel = labelsList[2] as Map<String, dynamic>;
-      expect(thirdLabel['id'], equals(2));
-      expect(thirdLabel['name'], equals('Apa Kabar'));
-
-      final lastLabel = labelsList[22] as Map<String, dynamic>;
-      expect(lastLabel['id'], equals(22));
-      expect(lastLabel['name'], equals('Tuli'));
+      final lines = file
+          .readAsLinesSync()
+          .map((l) => l.trim())
+          .where((l) => l.isNotEmpty)
+          .toList();
+      expect(lines.length, equals(47));
+      expect(lines.first, equals('A'));
+      expect(lines.last, equals('Z'));
     });
 
-    test('model_config.json specifies 48 sequence len and 135 feature dim', () {
-      final file = File('assets/models/bisindo/model_config.json');
+    test('model_metadata.json specifies 48 sequence len and 706 feature dim', () {
+      final file = File('assets/models/bisindo/model_metadata.json');
       expect(file.existsSync(), isTrue);
       final jsonMap =
           json.decode(file.readAsStringSync()) as Map<String, dynamic>;
       expect(jsonMap['sequence_length'], equals(48));
-      expect(jsonMap['feature_dim'], equals(135));
-      expect(jsonMap['num_classes'], equals(23));
-      expect(jsonMap['confidence_threshold'], equals(0.78));
-      expect(jsonMap['swap_handedness'], isFalse);
+      expect(jsonMap['model_input_feature_dim'], equals(706));
+      expect(jsonMap['num_classes'], equals(47));
     });
 
     test('hand_landmarker.task exists and is valid size', () {

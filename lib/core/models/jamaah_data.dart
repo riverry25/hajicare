@@ -67,6 +67,8 @@ class JamaahData {
   final String? emergencyContact;
   final String? passportNumber;
   final String? nik;
+  final String? email;
+  final String? role;
 
   JamaahData({
     required this.id,
@@ -89,7 +91,20 @@ class JamaahData {
     this.emergencyContact,
     this.passportNumber,
     this.nik,
+    this.email,
+    this.role,
   }) : tier = _calcTier(distance);
+
+  bool get hasMedicalData =>
+      (bloodType != null && bloodType!.trim().isNotEmpty) ||
+      (allergies != null && allergies!.trim().isNotEmpty) ||
+      (conditions != null && conditions!.trim().isNotEmpty) ||
+      (emergencyContact != null && emergencyContact!.trim().isNotEmpty);
+
+  bool get hasHajjDocs =>
+      (porsi != null && porsi!.trim().isNotEmpty) ||
+      (passportNumber != null && passportNumber!.trim().isNotEmpty) ||
+      (nik != null && nik!.trim().isNotEmpty);
 
   factory JamaahData.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>?;
@@ -143,6 +158,8 @@ class JamaahData {
     final passportNumber =
         (data['passportNumber'] as String?) ?? (data['passport'] as String?);
     final nik = (data['nik'] as String?)?.trim();
+    final email = (data['email'] as String?)?.trim();
+    final role = (data['role'] as String?)?.trim();
 
     DateTime? locationTime;
     if (data['locationUpdatedAt'] is Timestamp) {
@@ -175,6 +192,8 @@ class JamaahData {
       emergencyContact: emergencyContact,
       passportNumber: passportNumber,
       nik: nik,
+      email: email,
+      role: role,
     );
   }
 

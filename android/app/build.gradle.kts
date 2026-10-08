@@ -36,7 +36,7 @@ android {
         versionName = flutter.versionName
 
         ndk {
-            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
         }
     }
 
@@ -73,8 +73,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = false
+            isShrinkResources = false
             // Never sign production artifacts with the public debug key. When
             // key.properties is absent, Gradle intentionally emits an unsigned
             // release APK that cannot be accidentally distributed as trusted.
@@ -98,11 +98,11 @@ flutter {
 }
 
 configurations.all {
-    exclude(group = "com.google.ai.edge.litert", module = "litert-api")
-    exclude(group = "com.google.ai.edge.litert", module = "litert-gpu-api")
     exclude(group = "org.tensorflow", module = "tensorflow-lite")
     exclude(group = "org.tensorflow", module = "tensorflow-lite-api")
     exclude(group = "org.tensorflow", module = "tensorflow-lite-gpu")
+    exclude(group = "com.google.ai.edge.litert", module = "litert-api")
+    exclude(group = "com.google.ai.edge.litert", module = "litert-gpu-api")
 }
 
 dependencies {

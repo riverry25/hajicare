@@ -15,7 +15,9 @@ class BisindoCameraLandmarkService {
   final MethodChannel _methodChannel = const MethodChannel(kMethodChannelName);
   final EventChannel _eventChannel = const EventChannel(kEventChannelName);
 
-  final LandmarkStreamBuffer streamBuffer;
+  /// Optional legacy raw-landmark buffer. The BISINDO MotionGRU pipeline only
+  /// needs [onFrame]; leave this null to skip legacy inference entirely.
+  final LandmarkStreamBuffer? streamBuffer;
   final void Function(LandmarkFrame frame)? onFrame;
 
   StreamSubscription<dynamic>? _eventSubscription;
@@ -29,7 +31,7 @@ class BisindoCameraLandmarkService {
   final ValueNotifier<String?> errorNotifier = ValueNotifier<String?>(null);
   final ValueNotifier<int> framesCountNotifier = ValueNotifier<int>(0);
 
-  BisindoCameraLandmarkService({required this.streamBuffer, this.onFrame});
+  BisindoCameraLandmarkService({this.streamBuffer, this.onFrame});
 
   bool get isCameraActive => _isCameraActive;
   String? get lastError => _lastError;
@@ -70,7 +72,7 @@ class BisindoCameraLandmarkService {
     try {
       _lastError = null;
       errorNotifier.value = null;
-      streamBuffer.clear();
+      streamBuffer?.clear();
       _receivedFramesCount = 0;
       framesCountNotifier.value = 0;
 
@@ -137,7 +139,7 @@ class BisindoCameraLandmarkService {
       if (!_isDisposed && generation == _generation) {
         isStreamingNotifier.value = false;
       }
-      streamBuffer.clear();
+      streamBuffer?.clear();
       _receivedFramesCount = 0;
       if (!_isDisposed && generation == _generation) {
         framesCountNotifier.value = 0;
@@ -179,6 +181,13 @@ class BisindoCameraLandmarkService {
 
     final landmarkFrame = LandmarkFrame.fromEvent(event);
     onFrame?.call(landmarkFrame);
+
+    final buffer = streamBuffer;
+    if (buffer == null) {
+      _receivedFramesCount++;
+      framesCountNotifier.value = _receivedFramesCount;
+      return;
+    }
 
     final rawLandmarks = event['landmarks'];
     if (rawLandmarks is! List) return;
@@ -228,11 +237,11 @@ class BisindoCameraLandmarkService {
     framesCountNotifier.value = _receivedFramesCount;
 
     // Send valid frame to temporal inference buffer
-    streamBuffer.addFrame(frame);
+    buffer.addFrame(frame);
 
     if (_receivedFramesCount == 1 || _receivedFramesCount % 30 == 0) {
       debugPrint(
-        '[BISINDO_CAMERA] landmarks=$expectedCount buffer=${streamBuffer.bufferLength}/${streamBuffer.windowSize}',
+        '[BISINDO_CAMERA] landmarks=$expectedCount buffer=${buffer.bufferLength}/${buffer.windowSize}',
       );
     }
   }
@@ -256,7 +265,7 @@ class BisindoCameraLandmarkService {
       } catch (_) {}
     }
     _isCameraActive = false;
-    streamBuffer.clear();
+    streamBuffer?.clear();
     isStreamingNotifier.dispose();
     errorNotifier.dispose();
     framesCountNotifier.dispose();
