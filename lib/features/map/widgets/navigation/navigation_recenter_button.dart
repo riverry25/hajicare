@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../core/locales/app_localizations.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../controllers/map_controller.dart';
 
@@ -20,7 +21,7 @@ class NavigationRecenterButton extends StatelessWidget {
       if (isFollowing) return const SizedBox.shrink();
 
       return Positioned(
-        bottom: bottomPadding + 300,
+        bottom: bottomPadding + 330,
         left: 0,
         right: 0,
         child: AnimatedOpacity(
@@ -57,18 +58,18 @@ class NavigationRecenterButton extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.navigation_rounded,
                           color: Colors.white,
                           size: 18,
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Text(
-                          'Pusatkan Kembali',
-                          style: TextStyle(
+                          context.tr('maps.recenter'),
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,
                             fontWeight: FontWeight.w700,

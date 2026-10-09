@@ -104,20 +104,21 @@ class RoomQrDialog extends StatelessWidget {
     AppAlert.success(
       context,
       title: context.tr('room.codeCopied'),
-      message: 'Kode rombongan "$effectiveRoomCode" sudah disalin.',
+      message: context.tr('room.codeCopiedMsg', {'code': effectiveRoomCode}),
     );
   }
 
   void _shareText(BuildContext context) {
     HapticFeedback.lightImpact();
-    final shareText =
-        "Assalamu'alaikum, bergabunglah ke rombongan '$effectiveRoomName' di aplikasi HajiCare.\n\nKode rombongan: $effectiveRoomCode\n\nMasukkan kode tersebut pada menu 'Gabung Rombongan' di aplikasi HajiCare.";
+    final shareText = context.tr('room.invitationMessage', {
+      'name': effectiveRoomName,
+      'code': effectiveRoomCode,
+    });
     Clipboard.setData(ClipboardData(text: shareText));
     AppAlert.success(
       context,
       title: context.tr('room.invitationCopied'),
-      message:
-          'Teks undangan sudah disalin dan siap ditempel ke WhatsApp atau grup.',
+      message: context.tr('room.invitationCopiedDesc'),
     );
   }
 
@@ -198,8 +199,8 @@ class RoomQrDialog extends StatelessWidget {
                         const SizedBox(width: 5),
                         Text(
                           effectiveIsActive
-                              ? 'Room Aktif Dipantau'
-                              : 'Room Nonaktif',
+                              ? context.tr('room.activeMonitored')
+                              : context.tr('room.inactive'),
                           style: AppTypography.captionSmall.copyWith(
                             color: effectiveIsActive
                                 ? AppColors.statusSafe
@@ -216,7 +217,7 @@ class RoomQrDialog extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.close_rounded, size: 22),
                 color: bodyColor.withValues(alpha: 0.7),
-                tooltip: 'Tutup',
+                tooltip: context.tr('common.close'),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ],
@@ -230,7 +231,7 @@ class RoomQrDialog extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            'Pindai QR Code ini menggunakan aplikasi Jamaah atau Pendamping untuk langsung bergabung.',
+            context.tr('room.scanQrToJoinDesc'),
             textAlign: TextAlign.center,
             style: AppTypography.bodySmall.copyWith(
               color: bodyColor.withValues(alpha: 0.85),
@@ -316,7 +317,7 @@ class RoomQrDialog extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Ketuk kode di atas untuk menyalin cepat',
+            context.tr('room.tapCodeToCopy'),
             style: AppTypography.captionSmall.copyWith(
               color: bodyColor.withValues(alpha: 0.65),
               fontSize: 11,
@@ -338,9 +339,16 @@ class RoomQrDialog extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   icon: const Icon(Icons.share_rounded, size: 17),
-                  label: const Text(
-                    'Bagikan Teks',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  label: Flexible(
+                    child: Text(
+                      context.tr('room.shareText'),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   onPressed: () => _shareText(context),
                 ),
@@ -360,9 +368,16 @@ class RoomQrDialog extends StatelessWidget {
                     elevation: 1,
                   ),
                   icon: const Icon(Icons.check_rounded, size: 18),
-                  label: const Text(
-                    'Selesai',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  label: Flexible(
+                    child: Text(
+                      context.tr('profile.done'),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
@@ -431,7 +446,7 @@ class RoomQrDialog extends StatelessWidget {
                     const SizedBox(height: 3),
                     // Room subtitle instruction (Left-aligned, matching reference design)
                     Text(
-                      'Pindai QR atau bagikan kode untuk bergabung ke rombongan jamaah ini.',
+                      context.tr('room.scanQrOrShareDesc'),
                       style: AppTypography.captionSmall.copyWith(
                         color: isDark
                             ? Colors.white60
@@ -530,7 +545,7 @@ class RoomQrDialog extends StatelessWidget {
                     const SizedBox(height: 4),
                     Center(
                       child: Text(
-                        'Ketuk kode di atas untuk menyalin cepat',
+                        context.tr('room.tapCodeToCopy'),
                         style: AppTypography.captionSmall.copyWith(
                           color: bodyColor.withValues(alpha: 0.65),
                           fontSize: 10.5,
@@ -553,9 +568,9 @@ class RoomQrDialog extends StatelessWidget {
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
                           onPressed: () => Navigator.of(context).pop(),
-                          child: const Text(
-                            'Tutup',
-                            style: TextStyle(
+                          child: Text(
+                            context.tr('common.close'),
+                            style: const TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 13,
                               letterSpacing: 0.5,
@@ -657,9 +672,9 @@ class RoomQrDialog extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
-                            'KODE & QR ROMBONGAN',
-                            style: TextStyle(
+                          Text(
+                            context.tr('room.qrCodeGroupHeader'),
+                            style: const TextStyle(
                               color: AppColors.goldLight,
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
@@ -717,18 +732,18 @@ class RoomQrDialog extends StatelessWidget {
                           horizontal: 24,
                           vertical: 13.5,
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.share_rounded,
                               size: 16,
                               color: Colors.white,
                             ),
-                            SizedBox(width: 8),
+                            const SizedBox(width: 8),
                             Text(
-                              'BAGIKAN',
-                              style: TextStyle(
+                              context.tr('room.shareText').toUpperCase(),
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w900,
                                 fontSize: 13,

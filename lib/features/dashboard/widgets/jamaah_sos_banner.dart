@@ -23,10 +23,9 @@ class JamaahSosBanner extends StatelessWidget {
     if (!hasRoom) {
       AppAlert.warning(
         context,
-        title: 'Belum Terdaftar di Room',
-        message:
-            'Tombol SOS darurat hanya aktif setelah Anda bergabung ke salah satu room pantau rombongan.',
-        okText: 'Gabung Room',
+        title: context.tr('dashboard.notRegisteredInRoom'),
+        message: context.tr('dashboard.sosNeedsRoomDesc'),
+        okText: context.tr('room.joinRoomTitle'),
         onOk: () => Get.toNamed(AppRoutes.joinRoom),
       );
       return;

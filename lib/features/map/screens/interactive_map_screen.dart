@@ -451,7 +451,7 @@ class _CompactMemberPill extends StatelessWidget {
         ? '$count ${context.tr('maps.pilgrims')}'
         : roleFilter == 2
         ? '$count ${context.tr('maps.companions')}'
-        : '$count Anggota & Pendamping';
+        : context.tr('maps.membersAndCompanions', {'count': count.toString()});
 
     return Positioned(
       left: 0,
@@ -566,7 +566,7 @@ class _CompactMemberPill extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  'Buka',
+                                  context.tr('maps.openSheet'),
                                   style: TextStyle(
                                     color: isDark
                                         ? AppColors.goldPrimary
@@ -611,10 +611,10 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
 
     final isDark = AppColors.isDark(context);
     final label = loading
-        ? 'Memuat tempat nyata di sekitar…'
+        ? context.tr('maps.loadingNearbyPois')
         : error != null
-        ? 'Coba muat tempat lagi'
-        : 'Cari di area ini';
+        ? context.tr('maps.retryLoadPois')
+        : context.tr('maps.searchThisArea');
     final icon = loading
         ? null
         : error != null
@@ -1079,7 +1079,7 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
               ),
               const SizedBox(width: 5),
               Text(
-                'Anda',
+                context.tr('youLabel'),
                 style: AppTypography.captionSmall.copyWith(
                   color: isDark ? AppColors.darkTextHeading : Colors.white,
                   fontWeight: FontWeight.w800,

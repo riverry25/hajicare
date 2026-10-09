@@ -80,10 +80,17 @@ class HajjGuideService extends GetxService {
     String stageId,
     String deed, {
     List<String>? allStageDeeds,
+    String? legacyTitle,
   }) async {
     final key = '$stageId:$deed';
-    if (completedDeedKeys.contains(key)) {
+    final legacyKey = legacyTitle != null ? '$stageId:$legacyTitle' : null;
+    final isDone =
+        completedDeedKeys.contains(key) ||
+        (legacyKey != null && completedDeedKeys.contains(legacyKey));
+
+    if (isDone) {
       completedDeedKeys.remove(key);
+      if (legacyKey != null) completedDeedKeys.remove(legacyKey);
       // Jika salah satu amalan dicabut, tahapan tidak lagi selesai otomatis
       completedStageIds.remove(stageId);
       await _saveStages();
@@ -117,8 +124,10 @@ class HajjGuideService extends GetxService {
   bool isStageCompleted(String stageId) => completedStageIds.contains(stageId);
 
   /// Mengecek apakah suatu amalan sudah ditandai selesai.
-  bool isDeedCompleted(String stageId, String deed) =>
+  bool isDeedCompleted(String stageId, String deed, [String? legacyTitle]) =>
       completedDeedKeys.contains('$stageId:$deed') ||
+      (legacyTitle != null &&
+          completedDeedKeys.contains('$stageId:$legacyTitle')) ||
       completedStageIds.contains(stageId);
 
   /// Mengecek apakah panduan tahapan sedang terbuka.

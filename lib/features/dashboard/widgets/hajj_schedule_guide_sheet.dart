@@ -5,8 +5,21 @@ import '../../../core/locales/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../presentation/dashboard_typography.dart';
+import '../../../core/theme/app_typography.dart';
 import '../services/hajj_guide_service.dart';
+
+/// Model representing a single sub-action / deed in a stage.
+class HajjDeedItem {
+  final String id;
+  final String title;
+  final String legacyTitle;
+
+  const HajjDeedItem({
+    required this.id,
+    required this.title,
+    required this.legacyTitle,
+  });
+}
 
 /// Model representing a Hajj stage milestone in the journey path.
 class HajjStageItem {
@@ -18,7 +31,7 @@ class HajjStageItem {
   final IconData icon;
   final Color color;
   final String desc;
-  final List<String> deeds;
+  final List<HajjDeedItem> deeds;
   final String tips;
 
   const HajjStageItem({
@@ -36,7 +49,7 @@ class HajjStageItem {
 }
 
 /// Attractive, gamified & elder-friendly Hajj Journey Stepper Sheet.
-/// Inspired by modern habit/journey trackers (Image 2) and serpentine milestone paths (Image 3),
+/// Inspired by modern habit/journey trackers and serpentine milestone paths,
 /// adapted harmoniously to HajiCare's design tokens and real manasik workflow.
 class HajjScheduleGuideSheet extends StatefulWidget {
   const HajjScheduleGuideSheet({super.key});
@@ -67,127 +80,222 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
       HajjStageItem(
         id: 'tarwiyah',
         day: context.tr('dashboard.stageTarwiyahDay'),
-        shortDay: '8 Dzul',
+        shortDay: context.tr('dashboard.stageTarwiyahShortDay'),
         title: context.tr('dashboard.stageTarwiyahTitle'),
-        location: 'Mina',
+        location: context.tr('dashboard.locationMina'),
         icon: Icons.location_city_rounded,
         color: AppColors.emeraldIslamic,
         desc: context.tr('dashboard.stageTarwiyahDesc'),
-        deeds: const [
-          'Niat Ihram & Talbiyah',
-          'Menuju Mina',
-          'Salat Qashar 5 Waktu',
-          'Mabit di Mina',
+        deeds: [
+          HajjDeedItem(
+            id: '1',
+            title: context.tr('dashboard.deedTarwiyah1'),
+            legacyTitle: 'Niat Ihram & Talbiyah',
+          ),
+          HajjDeedItem(
+            id: '2',
+            title: context.tr('dashboard.deedTarwiyah2'),
+            legacyTitle: 'Menuju Mina',
+          ),
+          HajjDeedItem(
+            id: '3',
+            title: context.tr('dashboard.deedTarwiyah3'),
+            legacyTitle: 'Salat Qashar 5 Waktu',
+          ),
+          HajjDeedItem(
+            id: '4',
+            title: context.tr('dashboard.deedTarwiyah4'),
+            legacyTitle: 'Mabit di Mina',
+          ),
         ],
-        tips:
-            'Kenakan pakaian ihram dari hotel/maktab. Berniat haji sebelum berangkat dan perbanyak melafalkan kalimat talbiyah selama perjalanan.',
+        tips: context.tr('dashboard.tipsTarwiyah'),
       ),
       HajjStageItem(
         id: 'arafah',
         day: context.tr('dashboard.stageArafahDay'),
-        shortDay: '9 Dzul',
+        shortDay: context.tr('dashboard.stageArafahShortDay'),
         title: context.tr('dashboard.stageArafahTitle'),
-        location: 'Padang Arafah',
+        location: context.tr('dashboard.locationArafah'),
         icon: Icons.wb_sunny_rounded,
         color: const Color(0xFFE65100),
         desc: context.tr('dashboard.stageArafahDesc'),
-        deeds: const [
-          'Menuju Arafah Ba\'da Subuh',
-          'Khutbah Wukuf',
-          'Salat Jamak Taqdim',
-          'Puncak Doa & Dzikir',
+        deeds: [
+          HajjDeedItem(
+            id: '1',
+            title: context.tr('dashboard.deedArafah1'),
+            legacyTitle: 'Menuju Arafah Ba\'da Subuh',
+          ),
+          HajjDeedItem(
+            id: '2',
+            title: context.tr('dashboard.deedArafah2'),
+            legacyTitle: 'Khutbah Wukuf',
+          ),
+          HajjDeedItem(
+            id: '3',
+            title: context.tr('dashboard.deedArafah3'),
+            legacyTitle: 'Salat Jamak Taqdim',
+          ),
+          HajjDeedItem(
+            id: '4',
+            title: context.tr('dashboard.deedArafah4'),
+            legacyTitle: 'Puncak Doa & Dzikir',
+          ),
         ],
-        tips:
-            'Pastikan tetap berada di dalam batas resmi Arafah. Manfaatkan waktu ba\'da zawal hingga terbenam matahari untuk berdoa dan istighfar.',
+        tips: context.tr('dashboard.tipsArafah'),
       ),
       HajjStageItem(
         id: 'muzdalifah',
         day: context.tr('dashboard.stageMuzdalifahDay'),
-        shortDay: 'Mlm 10',
+        shortDay: context.tr('dashboard.stageMuzdalifahShortDay'),
         title: context.tr('dashboard.stageMuzdalifahTitle'),
-        location: 'Muzdalifah',
+        location: context.tr('dashboard.locationMuzdalifah'),
         icon: Icons.nights_stay_rounded,
         color: const Color(0xFF3949AB),
         desc: context.tr('dashboard.stageMuzdalifahDesc'),
-        deeds: const [
-          'Bertolak Ba\'da Maghrib',
-          'Salat Jamak Ta\'khir',
-          'Mabit Hingga Tengah Malam',
-          'Kumpulkan Kerikil',
+        deeds: [
+          HajjDeedItem(
+            id: '1',
+            title: context.tr('dashboard.deedMuzdalifah1'),
+            legacyTitle: 'Bertolak Ba\'da Maghrib',
+          ),
+          HajjDeedItem(
+            id: '2',
+            title: context.tr('dashboard.deedMuzdalifah2'),
+            legacyTitle: 'Salat Jamak Ta\'khir',
+          ),
+          HajjDeedItem(
+            id: '3',
+            title: context.tr('dashboard.deedMuzdalifah3'),
+            legacyTitle: 'Mabit Hingga Tengah Malam',
+          ),
+          HajjDeedItem(
+            id: '4',
+            title: context.tr('dashboard.deedMuzdalifah4'),
+            legacyTitle: 'Kumpulkan Kerikil',
+          ),
         ],
-        tips:
-            'Kumpulkan kerikil seukuran kacang tanah (min. 49 butir untuk Nafar Awal, 70 butir untuk Nafar Tsani). Beristirahat secukupnya sebelum fajar.',
+        tips: context.tr('dashboard.tipsMuzdalifah'),
       ),
       HajjStageItem(
         id: 'nahar',
         day: context.tr('dashboard.stageNaharDay'),
-        shortDay: '10 Dzul',
+        shortDay: context.tr('dashboard.stageNaharShortDay'),
         title: context.tr('dashboard.stageNaharTitle'),
-        location: 'Jamarat & Makkah',
+        location: context.tr('dashboard.locationJamaratMakkah'),
         icon: Icons.flag_rounded,
         color: const Color(0xFFC2185B),
         desc: context.tr('dashboard.stageNaharDesc'),
-        deeds: const [
-          'Lempar Jumrah Aqabah',
-          'Penyembelihan Dam/Hadyu',
-          'Tahallul Awal (Cukur)',
-          'Tawaf Ifadhah & Sa\'i',
+        deeds: [
+          HajjDeedItem(
+            id: '1',
+            title: context.tr('dashboard.deedNahar1'),
+            legacyTitle: 'Lempar Jumrah Aqabah',
+          ),
+          HajjDeedItem(
+            id: '2',
+            title: context.tr('dashboard.deedNahar2'),
+            legacyTitle: 'Penyembelihan Dam/Hadyu',
+          ),
+          HajjDeedItem(
+            id: '3',
+            title: context.tr('dashboard.deedNahar3'),
+            legacyTitle: 'Tahallul Awal (Cukur)',
+          ),
+          HajjDeedItem(
+            id: '4',
+            title: context.tr('dashboard.deedNahar4'),
+            legacyTitle: 'Tawaf Ifadhah & Sa\'i',
+          ),
         ],
-        tips:
-            'Lontar 7 kerikil di Jumrah Aqabah satu per satu sambil bertakbir. Setelah tahallul awal, larangan ihram gugur kecuali hubungan suami istri.',
+        tips: context.tr('dashboard.tipsNahar'),
       ),
       HajjStageItem(
         id: 'tasyrik',
         day: context.tr('dashboard.stageTasyrikDay'),
-        shortDay: '11-13 Dzul',
+        shortDay: context.tr('dashboard.stageTasyrikShortDay'),
         title: context.tr('dashboard.stageTasyrikTitle'),
-        location: 'Mina & Jamarat',
+        location: context.tr('dashboard.locationMinaJamarat'),
         icon: Icons.alt_route_rounded,
         color: const Color(0xFF00897B),
         desc: context.tr('dashboard.stageTasyrikDesc'),
-        deeds: const [
-          'Mabit di Mina',
-          'Lontar 3 Jumrah Tiap Hari',
-          'Zikir Hari Tasyrik',
-          'Pilihan Nafar Awal/Tsani',
+        deeds: [
+          HajjDeedItem(
+            id: '1',
+            title: context.tr('dashboard.deedTasyrik1'),
+            legacyTitle: 'Mabit di Mina',
+          ),
+          HajjDeedItem(
+            id: '2',
+            title: context.tr('dashboard.deedTasyrik2'),
+            legacyTitle: 'Lontar 3 Jumrah Tiap Hari',
+          ),
+          HajjDeedItem(
+            id: '3',
+            title: context.tr('dashboard.deedTasyrik3'),
+            legacyTitle: 'Zikir Hari Tasyrik',
+          ),
+          HajjDeedItem(
+            id: '4',
+            title: context.tr('dashboard.deedTasyrik4'),
+            legacyTitle: 'Pilihan Nafar Awal/Tsani',
+          ),
         ],
-        tips:
-            'Melontar jumrah dilakukan setelah waktu zawal (masuk dzuhur). Ikuti jadwal regu dan kloter demi keamanan dan kenyamanan bersama.',
+        tips: context.tr('dashboard.tipsTasyrik'),
       ),
       HajjStageItem(
         id: 'wada',
         day: context.tr('dashboard.stageWadaDay'),
-        shortDay: 'Wada\'',
+        shortDay: context.tr('dashboard.stageWadaShortDay'),
         title: context.tr('dashboard.stageWadaTitle'),
-        location: 'Masjidil Haram',
+        location: context.tr('dashboard.locationHaram'),
         icon: Icons.mosque_rounded,
         color: const Color(0xFFB78103),
         desc: context.tr('dashboard.stageWadaDesc'),
-        deeds: const [
-          'Tawaf 7 Putaran',
-          'Salat Sunnah Tawaf',
-          'Doa Multazam & Zamzam',
-          'Persiapan Kepulangan',
+        deeds: [
+          HajjDeedItem(
+            id: '1',
+            title: context.tr('dashboard.deedWada1'),
+            legacyTitle: 'Tawaf 7 Putaran',
+          ),
+          HajjDeedItem(
+            id: '2',
+            title: context.tr('dashboard.deedWada2'),
+            legacyTitle: 'Salat Sunnah Tawaf',
+          ),
+          HajjDeedItem(
+            id: '3',
+            title: context.tr('dashboard.deedWada3'),
+            legacyTitle: 'Doa Multazam & Zamzam',
+          ),
+          HajjDeedItem(
+            id: '4',
+            title: context.tr('dashboard.deedWada4'),
+            legacyTitle: 'Persiapan Kepulangan',
+          ),
         ],
-        tips:
-            'Dilakukan sebagai amalan penutup sebelum meninggalkan tanah suci Makkah. Tidak ada Sa\'i dalam Tawaf Wada\'. Jamaah wanita haid mendapat rukhshah.',
+        tips: context.tr('dashboard.tipsWada'),
       ),
     ];
   }
 
-  void _toggleStageCompletion(String id, {List<String>? deeds}) {
+  void _toggleStageCompletion(String id, {List<HajjDeedItem>? deeds}) {
     HapticFeedback.lightImpact();
-    _guideService.toggleStage(id, stageDeeds: deeds);
+    _guideService.toggleStage(id, stageDeeds: deeds?.map((d) => d.id).toList());
     setState(() {});
   }
 
   void _toggleDeedCompletion(
     String stageId,
-    String deed, {
-    List<String>? allDeeds,
+    HajjDeedItem deed, {
+    List<HajjDeedItem>? allDeeds,
   }) {
     HapticFeedback.selectionClick();
-    _guideService.toggleDeed(stageId, deed, allStageDeeds: allDeeds);
+    _guideService.toggleDeed(
+      stageId,
+      deed.id,
+      allStageDeeds: allDeeds?.map((d) => d.id).toList(),
+      legacyTitle: deed.legacyTitle,
+    );
     setState(() {});
   }
 
@@ -303,14 +411,14 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
                       children: [
                         Text(
                           context.tr('dashboard.hajjStagesTitle'),
-                          style: DashboardTypography.titleMedium.copyWith(
+                          style: AppTypography.titleMedium.copyWith(
                             color: headingColor,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         Text(
                           context.tr('dashboard.hajjStagesSub'),
-                          style: DashboardTypography.captionSmall.copyWith(
+                          style: AppTypography.captionSmall.copyWith(
                             color: bodyColor.withValues(alpha: 0.8),
                           ),
                         ),
@@ -460,8 +568,8 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
                       const SizedBox(width: 4),
                       Flexible(
                         child: Text(
-                          'Perjalanan Ibadah Haji',
-                          style: DashboardTypography.captionSmall.copyWith(
+                          context.tr('dashboard.hajjJourneyProgress'),
+                          style: AppTypography.captionSmall.copyWith(
                             color: isDark
                                 ? AppColors.accentGoldStar
                                 : AppColors.goldDark,
@@ -478,8 +586,11 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
               const SizedBox(width: 8),
               Flexible(
                 child: Text(
-                  '$completedCount dari $totalCount Tahap Selesai',
-                  style: DashboardTypography.captionSmall.copyWith(
+                  context.tr('dashboard.hajjStagesCompletedCount', {
+                    'completed': completedCount,
+                    'total': totalCount,
+                  }),
+                  style: AppTypography.captionSmall.copyWith(
                     color: AppColors.emeraldIslamic,
                     fontWeight: FontWeight.bold,
                   ),
@@ -613,7 +724,7 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
                 else
                   Text(
                     '${index + 1}',
-                    style: TextStyle(
+                    style: AppTypography.captionSmall.copyWith(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                       color: bodyColor.withValues(alpha: 0.6),
@@ -622,19 +733,20 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
                 const SizedBox(width: 4),
                 Text(
                   stage.shortDay,
-                  style: TextStyle(
+                  style: AppTypography.captionSmall.copyWith(
                     fontSize: 11,
                     color: isSelected ? headingColor : bodyColor,
                     fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                   ),
                   maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
             const SizedBox(height: 3),
             Text(
               stage.location,
-              style: TextStyle(
+              style: AppTypography.captionSmall.copyWith(
                 fontSize: 10,
                 color: isSelected
                     ? stage.color
@@ -693,7 +805,8 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
 
                 // Milestone Node Icon (Image 3 circular avatar style)
                 InkWell(
-                  onTap: () => _toggleStageCompletion(stage.id),
+                  onTap: () =>
+                      _toggleStageCompletion(stage.id, deeds: stage.deeds),
                   customBorder: const CircleBorder(),
                   child: Stack(
                     alignment: Alignment.center,
@@ -842,7 +955,7 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
                                 ),
                                 child: Text(
                                   stage.day,
-                                  style: TextStyle(
+                                  style: AppTypography.captionSmall.copyWith(
                                     fontSize: 10.5,
                                     fontWeight: FontWeight.w800,
                                     color: stageColor,
@@ -874,13 +987,14 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
                                     Flexible(
                                       child: Text(
                                         stage.location,
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w600,
-                                          color: bodyColor.withValues(
-                                            alpha: 0.85,
-                                          ),
-                                        ),
+                                        style: AppTypography.captionSmall
+                                            .copyWith(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w600,
+                                              color: bodyColor.withValues(
+                                                alpha: 0.85,
+                                              ),
+                                            ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -895,7 +1009,10 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
 
                         // Interactive Checkbox / Mark Done Pill (Image 2 style)
                         InkWell(
-                          onTap: () => _toggleStageCompletion(stage.id),
+                          onTap: () => _toggleStageCompletion(
+                            stage.id,
+                            deeds: stage.deeds,
+                          ),
                           borderRadius: BorderRadius.circular(AppRadius.pill),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
@@ -934,8 +1051,10 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  isCompleted ? 'Selesai' : 'Tandai',
-                                  style: TextStyle(
+                                  isCompleted
+                                      ? context.tr('dashboard.hajjStageDone')
+                                      : context.tr('dashboard.hajjStageMark'),
+                                  style: AppTypography.captionSmall.copyWith(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
                                     color: isCompleted
@@ -954,7 +1073,7 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
                     // Stage Title
                     Text(
                       stage.title,
-                      style: DashboardTypography.labelLarge.copyWith(
+                      style: AppTypography.labelLarge.copyWith(
                         color: headingColor,
                         fontWeight: FontWeight.w800,
                         fontSize: 15,
@@ -965,7 +1084,7 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
                     // Stage Description
                     Text(
                       stage.desc,
-                      style: DashboardTypography.bodySmall.copyWith(
+                      style: AppTypography.bodySmall.copyWith(
                         color: bodyColor.withValues(alpha: 0.85),
                         height: 1.45,
                       ),
@@ -979,7 +1098,8 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
                       children: stage.deeds.map((deed) {
                         final isDeedDone = _guideService.isDeedCompleted(
                           stage.id,
-                          deed,
+                          deed.id,
+                          deed.legacyTitle,
                         );
                         return InkWell(
                           onTap: () => _toggleDeedCompletion(
@@ -990,6 +1110,9 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
                           borderRadius: BorderRadius.circular(AppRadius.pill),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 180),
+                            constraints: BoxConstraints(
+                              maxWidth: MediaQuery.of(context).size.width * 0.7,
+                            ),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
                               vertical: 4,
@@ -1034,9 +1157,9 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
                                 const SizedBox(width: 5),
                                 Flexible(
                                   child: Text(
-                                    deed,
+                                    deed.title,
                                     softWrap: true,
-                                    style: TextStyle(
+                                    style: AppTypography.captionSmall.copyWith(
                                       fontSize: 10.5,
                                       fontWeight: FontWeight.w600,
                                       color: isDeedDone
@@ -1076,8 +1199,8 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
                             const SizedBox(width: 5),
                             Flexible(
                               child: Text(
-                                'Panduan & Catatan Penting',
-                                style: const TextStyle(
+                                context.tr('dashboard.hajjImportantTips'),
+                                style: AppTypography.captionSmall.copyWith(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.goldDark,
@@ -1121,8 +1244,8 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
                             Expanded(
                               child: Text(
                                 stage.tips,
-                                style: TextStyle(
-                                  fontSize: 11,
+                                style: AppTypography.captionSmall.copyWith(
+                                  fontSize: 11.5,
                                   height: 1.45,
                                   color: headingColor.withValues(alpha: 0.9),
                                 ),

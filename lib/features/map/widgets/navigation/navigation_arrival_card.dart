@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/locales/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../controllers/map_controller.dart';
@@ -14,7 +15,7 @@ class NavigationArrivalCard extends StatelessWidget {
     final isDark = AppColors.isDark(context);
     final destTitle = mapCtrl.destinationTitle.value.isNotEmpty
         ? mapCtrl.destinationTitle.value
-        : 'Tujuan Anda';
+        : context.tr('maps.yourDestination');
 
     return Center(
       child: Container(
@@ -66,18 +67,18 @@ class NavigationArrivalCard extends StatelessWidget {
             const SizedBox(height: 18),
 
             // Title
-            const Text(
-              'Alhamdulillah!',
-              style: TextStyle(
+            Text(
+              context.tr('maps.alhamdulillah'),
+              style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
                 color: Color(0xFF16A34A),
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Anda telah tiba di tujuan',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            Text(
+              context.tr('maps.arrivedNotice'),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
 
@@ -132,9 +133,12 @@ class NavigationArrivalCard extends StatelessWidget {
                   ),
                   elevation: 2,
                 ),
-                child: const Text(
-                  'Selesai',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                child: Text(
+                  context.tr('maps.finish'),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),

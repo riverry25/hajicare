@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../../../core/locales/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 
@@ -105,13 +106,13 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                 // ── Hamburger Toggle Button ───────────────────────────────────────
                 Tooltip(
                   message: _isExpanded
-                      ? 'Tutup kontrol peta'
-                      : 'Buka kontrol peta',
+                      ? context.tr('maps.closeMapControls')
+                      : context.tr('maps.openMapControls'),
                   child: Semantics(
                     button: true,
                     label: _isExpanded
-                        ? 'Tutup kontrol peta'
-                        : 'Buka kontrol peta',
+                        ? context.tr('maps.closeMapControls')
+                        : context.tr('maps.openMapControls'),
                     child: Material(
                       color: Colors.transparent,
                       child: InkWell(
@@ -188,7 +189,7 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                             context: context,
                             icon: Icons.explore_rounded,
                             color: AppColors.goldPrimary,
-                            tooltip: 'Arah Kompas / Kiblat',
+                            tooltip: context.tr('maps.compassDirection'),
                             onTap: widget.onCompassTap,
                             child: Transform.rotate(
                               angle: -widget.compassRotation * (math.pi / 180),
@@ -216,7 +217,7 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                             borderColor: widget.isLiveTracking
                                 ? AppColors.goldPrimary
                                 : null,
-                            tooltip: 'Pusatkan ke Lokasi Saya',
+                            tooltip: context.tr('maps.centerMyLocation'),
                             onTap: widget.onLocationTap,
                             child: widget.isLocationLoading
                                 ? SizedBox(
@@ -285,7 +286,7 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                                     _buildMicroButton(
                                       context: context,
                                       icon: Icons.add_rounded,
-                                      tooltip: 'Perbesar Peta',
+                                      tooltip: context.tr('maps.zoomIn'),
                                       onTap: widget.onZoomInTap,
                                       isTop: true,
                                     ),
@@ -304,7 +305,7 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                                     _buildMicroButton(
                                       context: context,
                                       icon: Icons.remove_rounded,
-                                      tooltip: 'Perkecil Peta',
+                                      tooltip: context.tr('maps.zoomOut'),
                                       onTap: widget.onZoomOutTap,
                                       isBottom: true,
                                     ),
@@ -324,7 +325,7 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                             bgColor: isDark
                                 ? AppColors.darkSurface
                                 : AppColors.surfaceWhite,
-                            tooltip: 'Fokus ke Semua Anggota',
+                            tooltip: context.tr('maps.focusAllMembers'),
                             onTap: widget.onFitAllTap,
                           ),
                           const SizedBox(height: AppSpacing.sm),
@@ -337,7 +338,7 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                             bgColor: isDark
                                 ? AppColors.darkSurface
                                 : AppColors.surfaceWhite,
-                            tooltip: 'Ganti Tampilan Peta',
+                            tooltip: context.tr('maps.switchMapLayer'),
                             onTap: widget.onLayersTap,
                           ),
                           const SizedBox(height: AppSpacing.sm),
@@ -353,7 +354,7 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                             borderColor: AppColors.goldPrimary.withValues(
                               alpha: 0.5,
                             ),
-                            tooltip: 'Panggil Gelang Jamaah',
+                            tooltip: context.tr('maps.ringSmartBand'),
                             onTap: widget.onBandTap,
                           ),
                         ],

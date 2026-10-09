@@ -12,7 +12,6 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
-import '../../../core/widgets/hajicare_header.dart';
 import '../controllers/prayer_times_controller.dart';
 
 class PrayerTimesScreen extends StatelessWidget {
@@ -23,6 +22,7 @@ class PrayerTimesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.find<PrayerTimesController>();
     final isDark = AppColors.isDark(context);
+    final headingColor = AppColors.textHeadingColor(context);
     final AppSettingsController? settings =
         Get.isRegistered<AppSettingsController>()
         ? Get.find<AppSettingsController>()
@@ -30,102 +30,10 @@ class PrayerTimesScreen extends StatelessWidget {
 
     return Obx(() {
       settings?.rxLocale.value;
-      controller.isLoadingLocation.value;
 
       return Scaffold(
         backgroundColor: AppColors.scaffoldColor(context),
         extendBody: true,
-        appBar: HajiCareHeader(
-          title: context.tr('prayerTitle').isEmpty
-              ? 'Jadwal Sholat & Kiblat'
-              : context.tr('prayerTitle'),
-          subtitle: context.tr('prayerSubtitle').isEmpty
-              ? 'Waktu sholat akurat & kompas arah Ka\'bah'
-              : context.tr('prayerSubtitle'),
-          icon: Icons.mosque_rounded,
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(
-                right: AppSpacing.screenEdgeGutter,
-              ),
-              child: Center(
-                child: Obx(
-                  () => Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: controller.isLoadingLocation.value
-                          ? null
-                          : () => controller.refreshLocation(),
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      child: Ink(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? AppColors.darkSurfaceContainerHigh
-                              : AppColors.surfaceWhite,
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                          border: Border.all(
-                            color: isDark
-                                ? AppColors.darkOutlineVariant
-                                : AppColors.cardBorderColor(context),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(
-                                alpha: isDark ? 0.12 : 0.04,
-                              ),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (controller.isLoadingLocation.value)
-                              SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: isDark
-                                      ? AppColors.goldPrimary
-                                      : AppColors.espressoDark,
-                                ),
-                              )
-                            else
-                              Icon(
-                                Icons.my_location_rounded,
-                                size: 16,
-                                color: isDark
-                                    ? AppColors.goldPrimary
-                                    : AppColors.espressoDark,
-                              ),
-                            const SizedBox(width: 6),
-                            Text(
-                              controller.isLoadingLocation.value
-                                  ? context.tr('prayerLoading')
-                                  : context.tr('prayerLocation'),
-                              style: AppTypography.captionSmall.copyWith(
-                                color: isDark
-                                    ? AppColors.goldPrimary
-                                    : AppColors.espressoDark,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
         body: RefreshIndicator(
           onRefresh: () => controller.refreshLocation(),
           color: AppColors.goldPrimary,
@@ -134,14 +42,17 @@ class PrayerTimesScreen extends StatelessWidget {
               : AppColors.surfaceWhite,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(
+            padding: EdgeInsets.fromLTRB(
               AppSpacing.screenEdgeGutter,
-              AppSpacing.md,
+              MediaQuery.paddingOf(context).top,
               AppSpacing.screenEdgeGutter,
               100,
             ),
             child: Column(
               children: [
+                // ── Custom Page Header (replaces AppBar) ──────────────────────
+                _buildPageHeader(context, headingColor, isDark),
+
                 // ── Active Adhan Playing Banner ──────────────────────────────────
                 Obx(() {
                   if (!controller.isAdhanPlaying.value) {
@@ -287,122 +198,11 @@ class PrayerTimesScreen extends StatelessWidget {
                   );
                 }),
 
-                // ── Dynamic Location & Hijri Date Bar ───────────────────────────
-                Obx(
-                  () => Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkSurface
-                          : AppColors.surfaceWhite,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      border: Border.all(
-                        color: controller.isUsingFallbackLocation
-                            ? AppColors.error.withValues(
-                                alpha: isDark ? 0.5 : 0.3,
-                              )
-                            : (isDark
-                                  ? AppColors.darkOutlineVariant
-                                  : AppColors.cardBorderColor(context)),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: isDark
-                              ? Colors.black.withValues(alpha: 0.2)
-                              : AppColors.espressoDark.withValues(alpha: 0.04),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Row(
-                            children: [
-                              Icon(
-                                controller.isUsingFallbackLocation
-                                    ? Icons.location_off_outlined
-                                    : Icons.location_on_rounded,
-                                color: controller.isUsingFallbackLocation
-                                    ? AppColors.tanMedium
-                                    : AppColors.goldPrimary,
-                                size: 18,
-                              ),
-                              const SizedBox(width: 6),
-                              Flexible(
-                                child: Text(
-                                  controller.locationName.value,
-                                  style: AppTypography.bodyMedium.copyWith(
-                                    color: AppColors.textHeadingColor(context),
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              if (controller.isUsingFallbackLocation) ...[
-                                const SizedBox(width: 6),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 1.5,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.error.withValues(
-                                      alpha: 0.15,
-                                    ),
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.sm,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    context.tr('prayerFallbackBadge'),
-                                    style: AppTypography.captionSmall.copyWith(
-                                      color: AppColors.error,
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? AppColors.darkSurfaceContainerHigh
-                                : AppColors.canvasCream,
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                            border: Border.all(
-                              color: AppColors.goldPrimary.withValues(
-                                alpha: 0.25,
-                              ),
-                            ),
-                          ),
-                          child: Text(
-                            controller.hijriDateText.value,
-                            style: AppTypography.captionSmall.copyWith(
-                              color: isDark
-                                  ? AppColors.goldPrimary
-                                  : AppColors.espressoDark,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                // ── Dynamic Location & Hijri Date Card (Pilgrim Card Design) ───
+                _buildLocationPilgrimCard(
+                  context: context,
+                  controller: controller,
+                  isDark: isDark,
                 ),
                 const SizedBox(height: AppSpacing.md),
 
@@ -731,10 +531,9 @@ class PrayerTimesScreen extends StatelessWidget {
                                     top: 8,
                                     child: Text(
                                       context.tr('compassNorth'),
-                                      style: const TextStyle(
+                                      style: AppTypography.labelLarge.copyWith(
                                         fontWeight: FontWeight.w800,
                                         color: AppColors.error,
-                                        fontSize: 13,
                                       ),
                                     ),
                                   ),
@@ -742,10 +541,9 @@ class PrayerTimesScreen extends StatelessWidget {
                                     bottom: 8,
                                     child: Text(
                                       context.tr('compassSouth'),
-                                      style: TextStyle(
+                                      style: AppTypography.labelLarge.copyWith(
                                         fontWeight: FontWeight.w800,
                                         color: AppColors.textBodyColor(context),
-                                        fontSize: 13,
                                       ),
                                     ),
                                   ),
@@ -753,10 +551,9 @@ class PrayerTimesScreen extends StatelessWidget {
                                     left: 10,
                                     child: Text(
                                       context.tr('compassWest'),
-                                      style: TextStyle(
+                                      style: AppTypography.labelLarge.copyWith(
                                         fontWeight: FontWeight.w800,
                                         color: AppColors.textBodyColor(context),
-                                        fontSize: 13,
                                       ),
                                     ),
                                   ),
@@ -764,10 +561,9 @@ class PrayerTimesScreen extends StatelessWidget {
                                     right: 10,
                                     child: Text(
                                       context.tr('compassEast'),
-                                      style: TextStyle(
+                                      style: AppTypography.labelLarge.copyWith(
                                         fontWeight: FontWeight.w800,
                                         color: AppColors.textBodyColor(context),
-                                        fontSize: 13,
                                       ),
                                     ),
                                   ),
@@ -1143,6 +939,433 @@ class PrayerTimesScreen extends StatelessWidget {
         bottomNavigationBar: showBottomNav
             ? const HajiCareBottomNavBar(currentIndex: 2)
             : null,
+      );
+    });
+  }
+
+  // ── Custom Page Header: title+subtitle centered like Profile Page ─────────
+  Widget _buildPageHeader(
+    BuildContext context,
+    Color headingColor,
+    bool isDark,
+  ) {
+    final bodyColor = AppColors.textBodyColor(context);
+    final canPop = ModalRoute.of(context)?.canPop ?? false;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 12, 4, 20),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          if (canPop)
+            Positioned(
+              left: 0,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                color: headingColor,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
+            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                context.tr('prayerTitle').isEmpty
+                    ? 'Jadwal Sholat & Kiblat'
+                    : context.tr('prayerTitle'),
+                style: AppTypography.headlineMd.copyWith(
+                  color: headingColor,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                context.tr('prayerSubtitle').isEmpty
+                    ? 'Waktu sholat akurat & kompas arah Ka\'bah'
+                    : context.tr('prayerSubtitle'),
+                style: AppTypography.bodySmall.copyWith(
+                  color: bodyColor,
+                  fontSize: 12.5,
+                  height: 1.4,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Dynamic Location & Hijri Date Card (Pilgrim Card Design) ───────────────
+  Widget _buildLocationPilgrimCard({
+    required BuildContext context,
+    required PrayerTimesController controller,
+    required bool isDark,
+  }) {
+    return Obx(() {
+      final isFallback = controller.isUsingFallbackLocation;
+      final locationName = controller.locationName.value.trim().isNotEmpty
+          ? controller.locationName.value.trim()
+          : (isFallback ? 'Makkah, Arab Saudi' : context.tr('prayerLocation'));
+      final hijriDate = controller.hijriDateText.value.trim().isNotEmpty
+          ? controller.hijriDateText.value.trim()
+          : '1445 H';
+      final isLoading = controller.isLoadingLocation.value;
+
+      return Container(
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            colors: isDark
+                ? const [
+                    AppColors.darkPrimaryContainer,
+                    AppColors.espressoDark,
+                    Color(0xFF160E09),
+                  ]
+                : const [
+                    AppColors.primary,
+                    AppColors.espressoDark,
+                    Color(0xFF23160D),
+                  ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          border: Border.all(
+            color: isFallback
+                ? AppColors.error.withValues(alpha: isDark ? 0.5 : 0.35)
+                : AppColors.goldPrimary.withValues(alpha: isDark ? 0.35 : 0.25),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: (isDark ? Colors.black : AppColors.espressoDark)
+                  .withValues(alpha: isDark ? 0.4 : 0.22),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: isLoading ? null : () => controller.refreshLocation(),
+            borderRadius: BorderRadius.circular(20),
+            child: Stack(
+              children: [
+                // 3D Concentric Ripples in top-right (Pilgrim Card signature aesthetic)
+                Positioned(
+                  top: -45,
+                  right: -45,
+                  child: SizedBox(
+                    width: 220,
+                    height: 220,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Outer ripple ring
+                        Container(
+                          width: 210,
+                          height: 210,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.05),
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                        // Mid ripple ring 2
+                        Container(
+                          width: 160,
+                          height: 160,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.03),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.07),
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                        // Mid ripple ring 1
+                        Container(
+                          width: 110,
+                          height: 110,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.05),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.10),
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                        // Inner ripple
+                        Container(
+                          width: 65,
+                          height: 65,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.08),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.14),
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Glossy Glass Arc Highlight across top
+                Positioned(
+                  top: -50,
+                  left: -30,
+                  right: -30,
+                  height: 110,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.vertical(
+                        bottom: Radius.elliptical(260, 90),
+                      ),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.white.withValues(alpha: 0.16),
+                          Colors.white.withValues(alpha: 0.0),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Content inside Card
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Avatar / Circular Icon with Gold Border & Status Badge
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            width: 54,
+                            height: 54,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: isDark
+                                    ? const [
+                                        AppColors.darkPrimaryContainer,
+                                        AppColors.darkSurfaceContainerHigh,
+                                      ]
+                                    : const [
+                                        AppColors.espressoDark,
+                                        Color(0xFF22160E),
+                                      ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              border: Border.all(
+                                color: isFallback
+                                    ? AppColors.error
+                                    : AppColors.goldPrimary,
+                                width: 2.2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      (isFallback
+                                              ? AppColors.error
+                                              : AppColors.goldPrimary)
+                                          .withValues(alpha: 0.25),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            alignment: Alignment.center,
+                            child: Icon(
+                              isFallback
+                                  ? Icons.location_off_outlined
+                                  : Icons.location_on_rounded,
+                              size: 24,
+                              color: isFallback
+                                  ? AppColors.tanMedium
+                                  : AppColors.goldLight,
+                            ),
+                          ),
+                          Positioned(
+                            right: -2,
+                            bottom: -2,
+                            child: Container(
+                              width: 20,
+                              height: 20,
+                              decoration: BoxDecoration(
+                                color: isFallback
+                                    ? AppColors.error
+                                    : AppColors.goldPrimary,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: isDark
+                                      ? AppColors.espressoDark
+                                      : const Color(0xFF23160D),
+                                  width: 1.8,
+                                ),
+                              ),
+                              alignment: Alignment.center,
+                              child: isLoading
+                                  ? const SizedBox(
+                                      width: 10,
+                                      height: 10,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 1.8,
+                                        color: AppColors.espressoDark,
+                                      ),
+                                    )
+                                  : Icon(
+                                      isFallback
+                                          ? Icons.priority_high_rounded
+                                          : Icons.sync_rounded,
+                                      size: 11,
+                                      color: isFallback
+                                          ? Colors.white
+                                          : AppColors.espressoDark,
+                                    ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 14),
+
+                      // Location Title & Subtitle beside Avatar
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  isFallback
+                                      ? Icons.info_outline_rounded
+                                      : Icons.verified_rounded,
+                                  size: 14,
+                                  color: isFallback
+                                      ? AppColors.tanMedium
+                                      : AppColors.accentGoldStar,
+                                ),
+                                const SizedBox(width: 5),
+                                Flexible(
+                                  child: Text(
+                                    isLoading
+                                        ? context.tr('prayerLoading')
+                                        : (isFallback
+                                              ? context.tr(
+                                                  'prayerFallbackBadge',
+                                                )
+                                              : context.tr('prayerLocation')),
+                                    style: AppTypography.heading(
+                                      color: AppColors.goldLight,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.8,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              locationName,
+                              style: AppTypography.heading(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.2,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+
+                      // Top-Right Glassmorphic Badge (Hijri Date & Status)
+                      Flexible(
+                        flex: 0,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.22),
+                              width: 1.1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  color: isFallback
+                                      ? AppColors.error
+                                      : AppColors.statusSafe,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 120,
+                                ),
+                                child: Text(
+                                  hijriDate,
+                                  style: AppTypography.heading(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       );
     });
   }

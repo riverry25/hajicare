@@ -9,7 +9,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  google_fonts: ^8.2.1
   flutter_localizations:
     sdk: flutter
   vibration: ^3.2.1

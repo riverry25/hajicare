@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../core/locales/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/distance_formatter.dart';
@@ -25,7 +26,7 @@ class NavigationTopCard extends StatelessWidget {
       child: Obx(() {
         final instruction = mapCtrl.nextManeuverInstruction.value.isNotEmpty
             ? mapCtrl.nextManeuverInstruction.value
-            : 'Terus ikuti rute';
+            : context.tr('maps.keepFollowingRoute');
         final distanceMeters = mapCtrl.nextManeuverDistanceMeters.value;
         final icon = mapCtrl.nextManeuverIcon.value;
         final destName = mapCtrl.destinationTitle.value;
@@ -137,7 +138,9 @@ class NavigationTopCard extends StatelessWidget {
                   onPressed: () {
                     mapCtrl.isVoiceGuidanceEnabled.toggle();
                   },
-                  tooltip: isVoiceEnabled ? 'Matikan Suara' : 'Nyalakan Suara',
+                  tooltip: isVoiceEnabled
+                      ? context.tr('maps.muteVoice')
+                      : context.tr('maps.unmuteVoice'),
                   icon: Icon(
                     isVoiceEnabled
                         ? Icons.volume_up_rounded

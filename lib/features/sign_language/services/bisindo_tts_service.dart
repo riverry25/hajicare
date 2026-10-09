@@ -1,5 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+
+import '../../../core/utils/app_logger.dart';
 
 /// Service khusus untuk membaca hasil terjemahan BISINDO menggunakan
 /// Text-to-Speech (TTS) Bahasa Indonesia (`id-ID`).
@@ -35,14 +36,15 @@ class BisindoTtsService {
 
       tts.setErrorHandler((dynamic msg) {
         _isSpeaking = false;
-        debugPrint('[BISINDO][TTS] error: $msg');
+        AppLogger.error('error: $msg', tag: 'BisindoTTS');
       });
 
       _isInitialized = true;
-      debugPrint('[BISINDO][TTS] Initialized with id-ID language');
+      AppLogger.info('Initialized with id-ID language', tag: 'BisindoTTS');
     } catch (e) {
-      debugPrint(
-        '[BISINDO][TTS] Initialization skipped or unavailable in current environment: $e',
+      AppLogger.warn(
+        'Initialization skipped or unavailable in current environment: $e',
+        tag: 'BisindoTTS',
       );
     }
   }
@@ -67,7 +69,7 @@ class BisindoTtsService {
 
       await tts.speak(cleanText);
     } catch (e) {
-      debugPrint('[BISINDO][TTS] Speak error: $e');
+      AppLogger.error('Speak error: $e', tag: 'BisindoTTS');
     }
   }
 
@@ -77,7 +79,7 @@ class BisindoTtsService {
       await _flutterTts?.stop();
       _isSpeaking = false;
     } catch (e) {
-      debugPrint('[BISINDO][TTS] Stop error: $e');
+      AppLogger.error('Stop error: $e', tag: 'BisindoTTS');
     }
   }
 
@@ -87,7 +89,7 @@ class BisindoTtsService {
       await _flutterTts?.stop();
       _isSpeaking = false;
     } catch (e) {
-      debugPrint('[BISINDO][TTS] Dispose error: $e');
+      AppLogger.error('Dispose error: $e', tag: 'BisindoTTS');
     }
     _flutterTts = null;
     _isInitialized = false;

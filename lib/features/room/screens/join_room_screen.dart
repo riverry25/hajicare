@@ -432,7 +432,7 @@ class JoinRoomScreen extends StatelessWidget {
             icon: const Icon(Icons.qr_code_scanner_rounded, size: 22),
             label: Text(
               context.tr('roomScanCompanionQr'),
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              style: AppTypography.button.copyWith(fontWeight: FontWeight.bold),
             ),
             style: OutlinedButton.styleFrom(
               foregroundColor: primaryColor,
@@ -613,9 +613,7 @@ class _ModeTabButton extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
+              style: AppTypography.labelLarge.copyWith(
                 color: isSelected
                     ? (isDark ? AppColors.espressoDark : Colors.white)
                     : AppColors.textSecondaryColor(context),

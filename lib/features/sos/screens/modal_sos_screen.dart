@@ -476,20 +476,17 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                             children: [
                               Text(
                                 context.tr('sosCenterTitle'),
-                                style: const TextStyle(
-                                  fontFamily: AppTypography.headingFontFamily,
+                                style: AppTypography.titleLarge.copyWith(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w800,
-                                  fontSize: 18,
                                   letterSpacing: -0.3,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const Text(
-                                'Pusat Respon Darurat Jamaah',
-                                style: TextStyle(
-                                  fontFamily: AppTypography.bodyFontFamily,
+                              Text(
+                                context.tr('sosCenterSubtitle'),
+                                style: AppTypography.captionSmall.copyWith(
                                   color: Colors.white70,
                                   fontWeight: FontWeight.w500,
                                   fontSize: 11.5,
@@ -534,12 +531,10 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                                 ),
                                 const SizedBox(width: 5),
                                 Text(
-                                  '$activeCount AKTIF',
-                                  style: const TextStyle(
-                                    fontFamily: AppTypography.headingFontFamily,
+                                  '$activeCount ${context.tr('sosActiveBadge')}',
+                                  style: AppTypography.captionSmall.copyWith(
                                     color: AppColors.sosEmergency,
                                     fontWeight: FontWeight.w900,
-                                    fontSize: 11,
                                     letterSpacing: 0.4,
                                   ),
                                 ),
@@ -979,7 +974,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'WAKTU TUNGGU',
+                            context.tr('sosWaitingTime'),
                             style: AppTypography.captionSmall.copyWith(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
@@ -996,8 +991,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                             children: [
                               Text(
                                 waitTimeNum,
-                                style: TextStyle(
-                                  fontFamily: AppTypography.headingFontFamily,
+                                style: AppTypography.heading(
                                   fontSize: 28,
                                   fontWeight: FontWeight.w800,
                                   height: 1.1,
@@ -1007,8 +1001,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                               const SizedBox(width: 3),
                               Text(
                                 waitTimeUnit,
-                                style: const TextStyle(
-                                  fontFamily: AppTypography.bodyFontFamily,
+                                style: AppTypography.bodyText(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 12,
                                   color: AppColors.sosEmergency,
@@ -1226,12 +1219,11 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                             color: Colors.white,
                             size: 16,
                           ),
-                          label: const Text(
-                            'Lihat Detail',
-                            style: TextStyle(
+                          label: Text(
+                            context.tr('sosViewDetail'),
+                            style: AppTypography.labelLarge.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w700,
-                              fontSize: 13,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -1266,9 +1258,9 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                               vertical: 10,
                             ),
                           ),
-                          child: const Text(
-                            'Selesai',
-                            style: TextStyle(
+                          child: Text(
+                            context.tr('done'),
+                            style: AppTypography.labelLarge.copyWith(
                               fontWeight: FontWeight.bold,
                               fontSize: 12.5,
                             ),
@@ -1587,9 +1579,12 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                 elevation: 2,
               ),
               icon: const Icon(Icons.group_add_rounded, size: 20),
-              label: const Text(
-                'Gabung ke Room Pantau',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              label: Text(
+                context.tr('sosJoinMonitoringRoom'),
+                style: AppTypography.button.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
               ),
             ),
             const Spacer(),

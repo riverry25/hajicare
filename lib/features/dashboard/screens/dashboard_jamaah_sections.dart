@@ -156,17 +156,17 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
           const SizedBox(height: 26),
 
-          // ── Section 3: "Tips & Panduan Ibadah" ("News and Updates")
+          // ── Section 3: "Info & Pengumuman" (Dynamic Info Notifications from Companion & Admin)
           _buildSectionHeader(
-            title: context.tr('dashboard.worshipTips'),
-            subtitle: context.tr('dashboard.worshipTipsSub'),
+            title: context.tr('dashboard.companionAndAdminInfo'),
+            subtitle: context.tr('dashboard.companionAndAdminInfoSub'),
             actionText: context.tr('dashboard.viewAll'),
-            onAction: () => Get.toNamed(AppRoutes.hajjDua),
+            onAction: () => Get.toNamed(AppRoutes.notification),
             headingColor: headingColor,
             isDark: isDark,
           ),
           const SizedBox(height: 12),
-          _buildNewsUpdatesCard(context, isDark, headingColor),
+          _buildDynamicInfoList(context, isDark, headingColor),
         ],
       ),
     );
@@ -484,8 +484,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
             gradientColors: const [Color(0xFFFF1744), Color(0xFFD50000)],
           ),
           content: buildStatusText(
-            title: 'Sinyal Darurat SOS Aktif',
-            subtitle: 'Bantuan darurat terhubung ke pendamping & petugas.',
+            title: context.tr('dashboard.sosSignalActive'),
+            subtitle: context.tr('dashboard.sosEmergencyConnected'),
             titleColor: AppColors.sosEmergency,
             subtitleColor: isDark ? Colors.white70 : const Color(0xFF8B1A1A),
           ),
@@ -497,9 +497,9 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                 color: AppColors.sosEmergency,
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Text(
-                'Lihat Status',
-                style: TextStyle(
+              child: Text(
+                context.tr('dashboard.viewStatus'),
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -651,8 +651,318 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     });
   }
 
-  // ── News & Updates Card (Horizontal Style) ────────────────────────────────
-  Widget _buildNewsUpdatesCard(
+  // ── Dynamic Info Notifications Section (Up to 3 newest items from Companion & Admin) ──
+  Widget _buildDynamicInfoList(
+    BuildContext context,
+    bool isDark,
+    Color headingColor,
+  ) {
+    final notifCtrl = Get.isRegistered<NotificationController>()
+        ? Get.find<NotificationController>()
+        : null;
+
+    if (notifCtrl == null) {
+      return _buildEmptyInfoCard(context, isDark, headingColor);
+    }
+
+    return Obx(() {
+      final allNotifs = notifCtrl.notifications;
+      // Filter for notifications of type info, companion_info, announcement, or companion_message
+      final infoItems = allNotifs.where((n) {
+        final t = n.type.toLowerCase().trim();
+        return t == 'info' ||
+            t == 'companion_info' ||
+            t == 'announcement' ||
+            t == 'companion_message';
+      }).toList();
+
+      // Sort newest first
+      infoItems.sort((a, b) {
+        final timeA = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final timeB = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return timeB.compareTo(timeA);
+      });
+
+      // Max 3 latest items
+      final displayList = infoItems.take(3).toList();
+
+      if (displayList.isEmpty) {
+        return _buildEmptyInfoCard(context, isDark, headingColor);
+      }
+
+      return Column(
+        children: displayList.map((notif) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: _buildInfoItemCard(
+              context: context,
+              notif: notif,
+              notifCtrl: notifCtrl,
+              isDark: isDark,
+              headingColor: headingColor,
+            ),
+          );
+        }).toList(),
+      );
+    });
+  }
+
+  Widget _buildInfoItemCard({
+    required BuildContext context,
+    required AppNotificationModel notif,
+    required NotificationController notifCtrl,
+    required bool isDark,
+    required Color headingColor,
+  }) {
+    final cardBg = isDark
+        ? AppColors.darkSurfaceContainer
+        : AppColors.surfaceWhite;
+    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
+    final textScale = MediaQuery.textScalerOf(context).scale(1);
+
+    final isAdmin = (notif.senderRole ?? '').toLowerCase() == 'admin';
+    final isPendamping = (notif.senderRole ?? '').toLowerCase() == 'pendamping';
+
+    // Role-based gradient & badge styling
+    final List<Color> iconGradient;
+    final IconData cardIcon;
+    final String roleBadgeText;
+    final Color roleBadgeColor;
+    final Color roleBadgeBg;
+
+    if (isAdmin) {
+      iconGradient = const [Color(0xFF6366F1), Color(0xFF4338CA)];
+      cardIcon = Icons.admin_panel_settings_rounded;
+      roleBadgeText = context.tr('dashboard.adminUpper');
+      roleBadgeColor = const Color(0xFF6366F1);
+      roleBadgeBg = const Color(
+        0xFF6366F1,
+      ).withValues(alpha: isDark ? 0.2 : 0.1);
+    } else if (isPendamping) {
+      iconGradient = const [Color(0xFFD4A857), Color(0xFFA67C52)];
+      cardIcon = Icons.support_agent_rounded;
+      roleBadgeText = context.tr('dashboard.companionUpper');
+      roleBadgeColor = AppColors.primaryGold;
+      roleBadgeBg = AppColors.primaryGold.withValues(alpha: isDark ? 0.2 : 0.1);
+    } else {
+      iconGradient = const [Color(0xFF0D9488), Color(0xFF0F766E)];
+      cardIcon = Icons.campaign_rounded;
+      roleBadgeText = context.tr('dashboard.infoUpper');
+      roleBadgeColor = const Color(0xFF0D9488);
+      roleBadgeBg = const Color(
+        0xFF0D9488,
+      ).withValues(alpha: isDark ? 0.2 : 0.1);
+    }
+
+    final formattedTime = _formatNotificationTime(context, notif.createdAt);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: !notif.isRead
+              ? AppColors.primaryGold.withValues(alpha: 0.55)
+              : (isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder),
+          width: !notif.isRead ? 1.4 : 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            if (!notif.isRead) {
+              notifCtrl.markNotificationRead(notif.id);
+            }
+            Get.toNamed(AppRoutes.notification);
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: iconGradient,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: iconGradient.first.withValues(alpha: 0.3),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Icon(cardIcon, color: Colors.white, size: 22),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Header Row: Role badge, sender name, time & unread indicator
+                      if (textScale > 1.2) ...[
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: roleBadgeBg,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                roleBadgeText,
+                                style: TextStyle(
+                                  color: roleBadgeColor,
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.4,
+                                ),
+                              ),
+                            ),
+                            if (notif.senderName != null &&
+                                notif.senderName!.trim().isNotEmpty)
+                              Text(
+                                notif.senderName!.trim(),
+                                style: TextStyle(
+                                  color: bodyColor.withValues(alpha: 0.8),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            Text(
+                              formattedTime,
+                              style: TextStyle(
+                                color: bodyColor.withValues(alpha: 0.6),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ] else ...[
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: roleBadgeBg,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                roleBadgeText,
+                                style: TextStyle(
+                                  color: roleBadgeColor,
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.4,
+                                ),
+                              ),
+                            ),
+                            if (notif.senderName != null &&
+                                notif.senderName!.trim().isNotEmpty) ...[
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  notif.senderName!.trim(),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: bodyColor.withValues(alpha: 0.85),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                            const Spacer(),
+                            Text(
+                              formattedTime,
+                              style: TextStyle(
+                                color: bodyColor.withValues(alpha: 0.6),
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            if (!notif.isRead) ...[
+                              const SizedBox(width: 5),
+                              Container(
+                                width: 7,
+                                height: 7,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFEF4444),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
+                      const SizedBox(height: 5),
+                      Text(
+                        notif.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: headingColor,
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
+                          height: 1.25,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        notif.message,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: isDark
+                              ? AppColors.darkTextBody
+                              : AppColors.textBody,
+                          fontSize: 11.5,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyInfoCard(
     BuildContext context,
     bool isDark,
     Color headingColor,
@@ -660,6 +970,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
     final cardBg = isDark
         ? AppColors.darkSurfaceContainer
         : AppColors.surfaceWhite;
+    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -682,31 +993,29 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 54,
-            height: 54,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFD4A857), Color(0xFFA67C52)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
+              color: (isDark ? AppColors.goldLight : AppColors.primaryGold)
+                  .withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(15),
             ),
-            child: const Center(
+            child: Center(
               child: Icon(
-                Icons.wb_sunny_rounded,
-                color: Colors.white,
-                size: 28,
+                Icons.campaign_outlined,
+                color: isDark ? AppColors.goldLight : AppColors.primaryGold,
+                size: 26,
               ),
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  context.tr('dashboard.hotWeatherTip'),
+                  context.tr('dashboard.noInfoYet'),
                   style: TextStyle(
                     color: headingColor,
                     fontSize: 14,
@@ -715,11 +1024,11 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  context.tr('dashboard.hotWeatherTipDesc'),
+                  context.tr('dashboard.noInfoYetDesc'),
                   style: TextStyle(
-                    color: isDark ? AppColors.darkTextBody : AppColors.textBody,
+                    color: bodyColor,
                     fontSize: 12,
-                    height: 1.4,
+                    height: 1.35,
                   ),
                 ),
               ],
@@ -728,6 +1037,23 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
         ],
       ),
     );
+  }
+
+  String _formatNotificationTime(BuildContext context, DateTime? createdAt) {
+    if (createdAt == null) return context.tr('dashboard.justNow');
+    final now = DateTime.now();
+    final diff = now.difference(createdAt);
+    if (diff.inMinutes < 1) {
+      return context.tr('dashboard.justNow');
+    } else if (diff.inHours < 1) {
+      return context.tr('dashboard.minutesAgo', {
+        'minutes': '${diff.inMinutes}',
+      });
+    } else if (diff.inDays < 1) {
+      return '${createdAt.hour.toString().padLeft(2, '0')}:${createdAt.minute.toString().padLeft(2, '0')}';
+    } else {
+      return '${createdAt.day}/${createdAt.month}';
+    }
   }
 
   // ── Dashed Line Painter Helper ────────────────────────────────────────────
@@ -1693,10 +2019,9 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   if (!hasRoom) {
                     AppAlert.warning(
                       context,
-                      title: 'Belum Terdaftar di Room',
-                      message:
-                          'Tombol SOS darurat hanya aktif setelah Anda bergabung ke salah satu room pantau rombongan.',
-                      okText: 'Gabung Room',
+                      title: context.tr('dashboard.notRegisteredInRoom'),
+                      message: context.tr('dashboard.sosNeedsRoomDesc'),
+                      okText: context.tr('room.joinRoomTitle'),
                       onOk: () => Get.toNamed(AppRoutes.joinRoom),
                     );
                     return;
@@ -1777,11 +2102,11 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                   // Heart Rate status text
                   final String hrStatus;
                   if (!isConnected) {
-                    hrStatus = 'Belum tersedia';
+                    hrStatus = context.tr('dashboard.notAvailable');
                   } else if (hr != null && hr > 0) {
-                    hrStatus = 'Sensor Aktif';
+                    hrStatus = context.tr('dashboard.sensorActive');
                   } else {
-                    hrStatus = 'Mengukur...';
+                    hrStatus = context.tr('dashboard.measuring');
                   }
 
                   // GPS status & coordinates display
@@ -1802,12 +2127,14 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                         : SmartbandLdrController.staticGpsLongitude
                               .toStringAsFixed(6);
                   } else if (isGpsFix && lat != null && lng != null) {
-                    gpsStatusText = '🟢 FIX (Statis)';
+                    gpsStatusText =
+                        '🟢 ${context.tr('dashboard.gpsFixStatic')}';
                     gpsStatusColor = AppColors.statusSafe;
                     displayLat = lat.toStringAsFixed(6);
                     displayLng = lng.toStringAsFixed(6);
                   } else {
-                    gpsStatusText = '🟡 Mencari GPS';
+                    gpsStatusText =
+                        '🟡 ${context.tr('dashboard.gpsSearching')}';
                     gpsStatusColor = AppColors.primaryGold;
                     displayLat = SmartbandLdrController.staticGpsLatitude
                         .toStringAsFixed(6);
@@ -1823,7 +2150,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                       children: [
                         // Title & Subtitle
                         Text(
-                          'Pantauan Smartband',
+                          context.tr('dashboard.smartbandMonitoring'),
                           style: DashboardTypography.titleMedium.copyWith(
                             color: headingColor,
                             fontWeight: FontWeight.w800,
@@ -1833,7 +2160,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          'Lokasi & detak jantung jamaah',
+                          context.tr('dashboard.smartbandMonitoringSub'),
                           style: DashboardTypography.bodySmall.copyWith(
                             color: isDark
                                 ? Colors.white70
@@ -1874,24 +2201,24 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                     context,
                                   ).scale(1);
                                   final statusText = isConnected
-                                      ? '🟢 Gelang Terhubung'
+                                      ? '🟢 ${context.tr('dashboard.bandConnected')}'
                                       : (ldrCtrl.isScanning
-                                            ? '🔍 Mencari Smartband...'
+                                            ? '🔍 ${context.tr('dashboard.bandSearching')}'
                                             : (ldrCtrl.isConnecting
-                                                  ? '🔄 Menghubungkan...'
+                                                  ? '🔄 ${context.tr('dashboard.bandConnecting')}'
                                                   : (hasLastLocation
-                                                        ? '🔴 Gelang Terputus'
-                                                        : '🔴 Gelang Belum Terhubung')));
+                                                        ? '🔴 ${context.tr('dashboard.bandDisconnected')}'
+                                                        : '🔴 ${context.tr('dashboard.bandNotConnected')}')));
                                   final statusColor = isConnected
                                       ? AppColors.statusSafe
                                       : (ldrCtrl.isBusy
                                             ? AppColors.primaryGold
                                             : AppColors.statusDanger);
                                   final bleText = isConnected
-                                      ? '🟢 BLE Terhubung'
+                                      ? '🟢 ${context.tr('dashboard.bleConnected')}'
                                       : (ldrCtrl.isBusy
-                                            ? '⏳ BLE Memindai'
-                                            : '🔴 BLE Terputus');
+                                            ? '⏳ ${context.tr('dashboard.bleScanning')}'
+                                            : '🔴 ${context.tr('dashboard.bleDisconnected')}');
 
                                   if (textScale > 1.15) {
                                     return Column(
@@ -1970,7 +2297,12 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Lokasi terakhir: ${lastLat.toStringAsFixed(6)}, ${lastLng.toStringAsFixed(6)}',
+                                      context
+                                          .tr('dashboard.lastLocationCoords')
+                                          .replaceAll(
+                                            '{coords}',
+                                            '${lastLat.toStringAsFixed(6)}, ${lastLng.toStringAsFixed(6)}',
+                                          ),
                                       style: TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w500,
@@ -1978,7 +2310,9 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                       ),
                                     ),
                                     Text(
-                                      'Update terakhir: $relativeTime',
+                                      context
+                                          .tr('dashboard.lastUpdateWithTime')
+                                          .replaceAll('{time}', relativeTime),
                                       style: TextStyle(
                                         fontSize: 10.5,
                                         color: bodyColor.withValues(alpha: 0.6),
@@ -1988,7 +2322,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                 )
                               else
                                 Text(
-                                  'Hubungkan gelang untuk menerima lokasi dan detak jantung jamaah.',
+                                  context.tr('dashboard.connectBandDesc'),
                                   style: TextStyle(
                                     fontSize: 11,
                                     height: 1.3,
@@ -2048,7 +2382,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                         const SizedBox(width: 8),
                                         Flexible(
                                           child: Text(
-                                            'Detak Jantung',
+                                            context.tr('dashboard.heartRate'),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
@@ -2186,7 +2520,9 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                         const SizedBox(width: 8),
                                         Flexible(
                                           child: Text(
-                                            'Lokasi Jamaah',
+                                            context.tr(
+                                              'dashboard.pilgrimLocation',
+                                            ),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
@@ -2246,14 +2582,16 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                               ),
                               const SizedBox(height: 4),
                               _buildDialogDataRow(
-                                label: 'Sumber',
-                                value: 'Smartband (GPS Statis)',
+                                label: context.tr('dashboard.sourceLabel'),
+                                value: context.tr(
+                                  'dashboard.smartbandStaticGps',
+                                ),
                                 headingColor: headingColor,
                                 bodyColor: bodyColor,
                               ),
                               const SizedBox(height: 4),
                               _buildDialogDataRow(
-                                label: 'Update',
+                                label: context.tr('dashboard.updateLabel'),
                                 value: isConnected || hasLastLocation
                                     ? relativeTime
                                     : '—',
@@ -2286,8 +2624,10 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                     ),
                                   ),
                                   icon: const Icon(Icons.map_rounded, size: 16),
-                                  label: const Text(
-                                    'LIHAT LOKASI DI PETA',
+                                  label: Text(
+                                    context.tr(
+                                      'dashboard.viewLocationOnMapUpper',
+                                    ),
                                     style: TextStyle(
                                       fontSize: 11.5,
                                       fontWeight: FontWeight.bold,
@@ -2341,10 +2681,14 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                             ),
                             label: Text(
                               isConnected
-                                  ? 'PUTUSKAN GELANG'
+                                  ? context.tr('dashboard.disconnectBandUpper')
                                   : (ldrCtrl.isBusy
-                                        ? 'MEMPROSES...'
-                                        : 'HUBUNGKAN GELANG'),
+                                        ? context.tr(
+                                            'dashboard.processingUpper',
+                                          )
+                                        : context.tr(
+                                            'dashboard.connectBandUpper',
+                                          )),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w900,
@@ -2379,9 +2723,9 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                               Icons.open_in_new_rounded,
                               size: 15,
                             ),
-                            label: const Text(
-                              'Buka Halaman Penuh',
-                              style: TextStyle(
+                            label: Text(
+                              context.tr('dashboard.openFullScreen'),
+                              style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12.5,
                               ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../core/locales/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -69,18 +70,18 @@ class MapSearchDropdown extends StatelessWidget {
   ) {
     switch (state) {
       case MapSearchState.loading:
-        return _buildLoadingState(isDark);
+        return _buildLoadingState(context, isDark);
       case MapSearchState.empty:
         return _buildMessageState(
           isDark: isDark,
           icon: Icons.location_off_outlined,
-          message: 'Tidak ditemukan lokasi.',
+          message: context.tr('maps.noLocationFound'),
           iconColor: isDark ? Colors.white60 : AppColors.textMuted,
         );
       case MapSearchState.error:
         final msg = mapCtrl.searchErrorMessage.value.isNotEmpty
             ? mapCtrl.searchErrorMessage.value
-            : 'Gagal mencari lokasi. Coba lagi.';
+            : context.tr('maps.searchLocationFailed');
         return _buildMessageState(
           isDark: isDark,
           icon: Icons.error_outline_rounded,
@@ -96,7 +97,7 @@ class MapSearchDropdown extends StatelessWidget {
     }
   }
 
-  Widget _buildLoadingState(bool isDark) {
+  Widget _buildLoadingState(BuildContext context, bool isDark) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
@@ -111,7 +112,7 @@ class MapSearchDropdown extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Text(
-            'Mencari lokasi...',
+            context.tr('maps.searchingLocation'),
             style: AppTypography.bodySmall.copyWith(
               color: isDark
                   ? AppColors.darkTextHeading
@@ -156,7 +157,7 @@ class MapSearchDropdown extends StatelessWidget {
       return _buildMessageState(
         isDark: isDark,
         icon: Icons.location_off_outlined,
-        message: 'Tidak ditemukan lokasi.',
+        message: context.tr('maps.noLocationFound'),
         iconColor: isDark ? Colors.white60 : AppColors.textMuted,
       );
     }
@@ -336,7 +337,7 @@ class MapSearchDropdown extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        'Pencarian Terakhir',
+                        context.tr('maps.recentSearches'),
                         style: AppTypography.captionSmall.copyWith(
                           color: isDark
                               ? AppColors.darkTextHeading
@@ -356,7 +357,7 @@ class MapSearchDropdown extends StatelessWidget {
                         vertical: 2,
                       ),
                       child: Text(
-                        'Hapus Semua',
+                        context.tr('maps.clearAll'),
                         style: AppTypography.captionSmall.copyWith(
                           color: isDark
                               ? AppColors.goldLight
@@ -454,7 +455,7 @@ class MapSearchDropdown extends StatelessWidget {
                           minWidth: 28,
                           minHeight: 28,
                         ),
-                        tooltip: 'Hapus dari riwayat',
+                        tooltip: context.tr('maps.removeFromHistory'),
                         onPressed: () =>
                             mapCtrl.removeSearchHistoryItem(item.id),
                       ),
@@ -486,7 +487,7 @@ class MapSearchDropdown extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'Tempat Terdekat',
+                    context.tr('maps.nearbyPlaces'),
                     style: AppTypography.captionSmall.copyWith(
                       color: isDark
                           ? AppColors.darkTextHeading

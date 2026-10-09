@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:tflite_flutter/tflite_flutter.dart' as tfl;
 
+import '../../../core/utils/app_logger.dart';
 import '../models/bisindo_prediction.dart';
 import '../models/sign_language_model.dart';
 import 'bisindo_preprocessor.dart';
@@ -59,8 +60,9 @@ class BisindoInferenceService implements BisindoPredictor {
 
   /// Safely switches and loads a new sign language model without crashing or leaving half-initialized state.
   Future<void> loadModel(SignLanguageModelConfig modelConfig) async {
-    debugPrint(
-      '[SIGN_LANGUAGE][LOAD] Switching to ${modelConfig.model.displayName}...',
+    AppLogger.info(
+      'Switching to ${modelConfig.model.displayName}...',
+      tag: 'SignLanguageInference',
     );
     await disposeInterpreter();
 
@@ -83,8 +85,9 @@ class BisindoInferenceService implements BisindoPredictor {
             _confidenceThreshold = modelConfig.defaultConfidenceThreshold;
           }
         } catch (e) {
-          debugPrint(
-            '[SIGN_LANGUAGE][LOAD] Config asset load warning ($e), using default threshold: ${modelConfig.defaultConfidenceThreshold}',
+          AppLogger.warn(
+            'Config asset load warning ($e), using default threshold: ${modelConfig.defaultConfidenceThreshold}',
+            tag: 'SignLanguageInference',
           );
           _confidenceThreshold = modelConfig.defaultConfidenceThreshold;
         }
@@ -93,8 +96,9 @@ class BisindoInferenceService implements BisindoPredictor {
       }
 
       // 2. Load labels
-      debugPrint(
-        '[SIGN_LANGUAGE][LOAD] Loading labels from ${modelConfig.labelAsset}...',
+      AppLogger.debug(
+        'Loading labels from ${modelConfig.labelAsset}...',
+        tag: 'SignLanguageInference',
       );
       final labelsStr = await rootBundle.loadString(modelConfig.labelAsset);
       if (modelConfig.labelAsset.endsWith('.json')) {
@@ -127,8 +131,9 @@ class BisindoInferenceService implements BisindoPredictor {
             .toList();
       }
 
-      debugPrint(
-        '[SIGN_LANGUAGE][LOAD] Loaded ${_labels.length} classes for ${modelConfig.model.displayName}: ${_labels.take(6).join(', ')}...',
+      AppLogger.info(
+        'Loaded ${_labels.length} classes for ${modelConfig.model.displayName}: ${_labels.take(6).join(', ')}...',
+        tag: 'SignLanguageInference',
       );
 
       // 3. Load TFLite interpreter
@@ -141,8 +146,9 @@ class BisindoInferenceService implements BisindoPredictor {
         );
         _interpreter = tfl.Interpreter.fromBuffer(bytes, options: options);
       } catch (e) {
-        debugPrint(
-          '[SIGN_LANGUAGE][LOAD] fromBuffer failed ($e), falling back to fromAsset...',
+        AppLogger.warn(
+          'fromBuffer failed ($e), falling back to fromAsset...',
+          tag: 'SignLanguageInference',
         );
         _interpreter = await tfl.Interpreter.fromAsset(
           modelConfig.modelAsset,
@@ -159,8 +165,9 @@ class BisindoInferenceService implements BisindoPredictor {
       final outShape = outTensors.isNotEmpty ? outTensors[0].shape : [];
       final outType = outTensors.isNotEmpty ? outTensors[0].type : null;
 
-      debugPrint(
-        '[SIGN_LANGUAGE][LOAD] ${modelConfig.model.displayName} Input: shape=$inShape, type=$inType; Output: shape=$outShape, type=$outType',
+      AppLogger.debug(
+        '${modelConfig.model.displayName} Input: shape=$inShape, type=$inType; Output: shape=$outShape, type=$outType',
+        tag: 'SignLanguageInference',
       );
 
       final int outClasses = outShape.isNotEmpty ? outShape.last : 0;
@@ -171,12 +178,14 @@ class BisindoInferenceService implements BisindoPredictor {
       }
 
       _isInitialized = true;
-      debugPrint(
-        '[SIGN_LANGUAGE][LOAD] ${modelConfig.model.displayName} initialized successfully ✅',
+      AppLogger.info(
+        '${modelConfig.model.displayName} initialized successfully ✅',
+        tag: 'SignLanguageInference',
       );
     } catch (e, stack) {
-      debugPrint(
-        '[SIGN_LANGUAGE][LOAD] Initialization failed for ${modelConfig.model.displayName}: $e\n$stack',
+      AppLogger.error(
+        'Initialization failed for ${modelConfig.model.displayName}: $e\n$stack',
+        tag: 'SignLanguageInference',
       );
       _isInitialized = false;
       await disposeInterpreter();
@@ -247,8 +256,9 @@ class BisindoInferenceService implements BisindoPredictor {
             (e) => '${_labels[e.key]}: ${(e.value * 100).toStringAsFixed(1)}%',
           )
           .join(', ');
-      debugPrint(
-        '[BISINDO] buffer=48/48 prediction=$predictedLabel confidence=${(topConfidence * 100).toStringAsFixed(1)}% (th=${(_confidenceThreshold * 100).round()}%) inference=${stopwatch.elapsedMilliseconds}ms top3=[$top3Log]',
+      AppLogger.debug(
+        'buffer=48/48 prediction=$predictedLabel confidence=${(topConfidence * 100).toStringAsFixed(1)}% (th=${(_confidenceThreshold * 100).round()}%) inference=${stopwatch.elapsedMilliseconds}ms top3=[$top3Log]',
+        tag: 'SignLanguageInference',
       );
     }
 
@@ -420,7 +430,10 @@ class BisindoInferenceService implements BisindoPredictor {
     try {
       _interpreter?.close();
     } catch (e) {
-      debugPrint('[SIGN_LANGUAGE] Error closing interpreter: $e');
+      AppLogger.error(
+        'Error closing interpreter: $e',
+        tag: 'SignLanguageInference',
+      );
     }
     _interpreter = null;
     _isInitialized = false;

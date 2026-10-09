@@ -48,6 +48,11 @@ class AppNotificationModel {
   bool get isCompanionInfo => type == 'companion_info';
   bool get isCompanionMessage => type == 'companion_message';
   bool get isSosAlert => type == 'sos_alert';
+  bool get isInfo =>
+      type == 'info' ||
+      type == 'companion_info' ||
+      type == 'announcement' ||
+      type == 'companion_message';
 
   factory AppNotificationModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>? ?? {};

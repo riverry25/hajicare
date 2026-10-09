@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../routes/app_routes.dart';
+import '../utils/app_logger.dart';
 import 'hajicare_controller.dart';
 
 enum StartupState { checking, authenticated, unauthenticated }
@@ -115,11 +116,12 @@ class AppStartupController extends GetxController {
   /// IMPORTANT: Does NOT clear `keyOnboardingDone` so onboarding is never shown again.
   Future<void> signOut() async {
     try {
-      debugPrint('[AppStartupController] Signing out...');
+      AppLogger.info('Signing out...', tag: 'AppStartupController');
       await _firebaseAuth.signOut();
     } catch (e) {
-      debugPrint(
-        '[AppStartupController] Error during FirebaseAuth.signOut: $e',
+      AppLogger.error(
+        'Error during FirebaseAuth.signOut: $e',
+        tag: 'AppStartupController',
       );
     }
 
@@ -134,8 +136,9 @@ class AppStartupController extends GetxController {
         );
       }
     } catch (e) {
-      debugPrint(
-        '[AppStartupController] Error clearing prefs during signOut: $e',
+      AppLogger.error(
+        'Error clearing prefs during signOut: $e',
+        tag: 'AppStartupController',
       );
     } finally {
       startupState.value = StartupState.unauthenticated;
@@ -183,7 +186,10 @@ class AppStartupController extends GetxController {
       startupState.value = StartupState.authenticated;
       return await resolveUserRoleDestination(currentUser.uid);
     } catch (e) {
-      debugPrint('[AppStartupController] Error during bootstrap: $e');
+      AppLogger.error(
+        'Error during bootstrap: $e',
+        tag: 'AppStartupController',
+      );
       startupState.value = StartupState.unauthenticated;
       return AppRoutes.login;
     }
@@ -230,9 +236,9 @@ class AppStartupController extends GetxController {
         final rawName =
             data?['name'] as String? ?? data?['displayName'] as String?;
 
-        debugPrint(
-          '[AppStartupController] Resolved role: $effectiveRole '
-          '(claim: $claimedRole, firestore: $firestoreRole)',
+        AppLogger.info(
+          'Resolved role: $effectiveRole (claim: $claimedRole, firestore: $firestoreRole)',
+          tag: 'AppStartupController',
         );
 
         // Immediately sync to HajiCareController if registered
@@ -257,8 +263,9 @@ class AppStartupController extends GetxController {
         return AppRoutes.dashboardJamaah;
       }
     } catch (e) {
-      debugPrint(
-        '[AppStartupController] Firestore role check skipped/timed out: $e',
+      AppLogger.warn(
+        'Firestore role check skipped/timed out: $e',
+        tag: 'AppStartupController',
       );
     }
 
@@ -286,7 +293,10 @@ class AppStartupController extends GetxController {
 
       return AppRoutes.dashboardJamaah;
     } catch (e) {
-      debugPrint('[AppStartupController] Error reading cache fallback: $e');
+      AppLogger.error(
+        'Error reading cache fallback: $e',
+        tag: 'AppStartupController',
+      );
     }
 
     // Default fallback

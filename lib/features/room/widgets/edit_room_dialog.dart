@@ -79,7 +79,7 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
 
     final name = _nameCtrl.text.trim();
     if (name.isEmpty) {
-      setState(() => _inputError = 'Isi nama rombongan terlebih dahulu.');
+      setState(() => _inputError = context.tr('room.emptyRoomName'));
       return;
     }
 
@@ -88,17 +88,12 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
     final radius = double.tryParse(_radiusCtrl.text.trim());
 
     if (name.length > 100 || maktab.length > 60 || kloter.length > 60) {
-      setState(
-        () => _inputError =
-            'Nama maksimal 100 karakter; maktab dan kloter maksimal 60 karakter.',
-      );
+      setState(() => _inputError = context.tr('room.fieldLengthLimit'));
       return;
     }
 
     if (radius == null || radius <= 0 || radius > 10000) {
-      setState(
-        () => _inputError = 'Jarak aman harus antara 1 dan 10.000 meter.',
-      );
+      setState(() => _inputError = context.tr('room.safeRadiusInvalidRange'));
       return;
     }
 
@@ -367,7 +362,7 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        'Ubah Pengaturan Room',
+                        context.tr('room.editRoomSettingsTitle'),
                         style: AppTypography.titleMedium.copyWith(
                           color: headingClr,
                           fontWeight: FontWeight.w800,
@@ -377,7 +372,7 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Perbarui nama room, nomor maktab, nomor kloter, atau batas radius aman.',
+                        context.tr('room.editRoomSettingsDesc'),
                         style: AppTypography.bodySmall.copyWith(
                           color: bodyClr.withValues(alpha: 0.85),
                           height: 1.35,
@@ -417,7 +412,7 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                'Kode: ',
+                                context.tr('room.codePrefix'),
                                 style: TextStyle(
                                   color: bodyClr,
                                   fontSize: 11,
@@ -464,7 +459,7 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
                         children: [
                           Expanded(
                             child: buildUnderlineInput(
-                              label: context.tr('maktabLabelShort'),
+                              label: context.tr('room.maktab'),
                               hint: '10 / Maktab 10',
                               controller: _maktabCtrl,
                               prefixIcon: Icons.apartment_rounded,
@@ -476,7 +471,7 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: buildUnderlineInput(
-                              label: context.tr('kloterLabelShort'),
+                              label: context.tr('room.kloter'),
                               hint: '14 JKS',
                               controller: _kloterCtrl,
                               prefixIcon: Icons.flight_takeoff_rounded,
@@ -541,9 +536,7 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
                                 ? null
                                 : () => Navigator.of(context).pop(false),
                             child: Text(
-                              context.tr('cancel').isEmpty
-                                  ? 'Batal'
-                                  : context.tr('cancel'),
+                              context.tr('common.cancel'),
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 13,
@@ -647,9 +640,9 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
-                            'PENGATURAN ROMBONGAN',
-                            style: TextStyle(
+                          Text(
+                            context.tr('room.groupSettingsHeader'),
+                            style: const TextStyle(
                               color: AppColors.goldLight,
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
@@ -721,9 +714,9 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text(
-                                'SIMPAN',
-                                style: TextStyle(
+                            : Text(
+                                context.tr('common.save'),
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w900,
                                   fontSize: 13,

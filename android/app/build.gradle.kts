@@ -73,8 +73,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
-            isShrinkResources = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             // Never sign production artifacts with the public debug key. When
             // key.properties is absent, Gradle intentionally emits an unsigned
             // release APK that cannot be accidentally distributed as trusted.

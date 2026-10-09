@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import '../../../core/locales/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -93,6 +94,37 @@ class _TextToSignScreenState extends State<TextToSignScreen>
     });
   }
 
+  String _getLocalizedPackageTitle(
+    BuildContext context,
+    String category,
+    String fallback,
+  ) {
+    switch (category.toLowerCase().trim()) {
+      case 'health':
+        return context.tr('sign.pkgHealth');
+      case 'hajj':
+        return context.tr('sign.pkgHajj');
+      case 'emergency':
+        return context.tr('sign.pkgEmergency');
+      case 'alphabet':
+        return context.tr('sign.pkgAlphabet');
+      case 'question':
+        return context.tr('sign.pkgQuestion');
+      case 'pronoun':
+        return context.tr('sign.pkgPronoun');
+      case 'movement':
+        return context.tr('sign.pkgMovement');
+      case 'activity':
+        return context.tr('sign.pkgActivity');
+      case 'greeting':
+        return context.tr('sign.pkgGreeting');
+      case 'general':
+        return context.tr('sign.pkgGeneral');
+      default:
+        return fallback;
+    }
+  }
+
   void _showCacheOptionsDialog(BuildContext context) {
     final isDark = AppColors.isDark(context);
     final headingColor = AppColors.textHeadingColor(context);
@@ -124,7 +156,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
             ),
             const SizedBox(height: AppSpacing.md),
             Text(
-              'Pengaturan Unduhan Video',
+              context.tr('sign.downloadSettingsTitle'),
               style: AppTypography.titleMedium.copyWith(
                 color: headingColor,
                 fontWeight: FontWeight.bold,
@@ -132,7 +164,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
             ),
             const SizedBox(height: 6),
             Text(
-              'Kelola video cloud yang tersimpan di perangkat Anda. Video bawaan aplikasi tidak akan terhapus.',
+              context.tr('sign.downloadSettingsDesc'),
               style: AppTypography.bodySmall.copyWith(
                 color: AppColors.textMuted,
               ),
@@ -152,15 +184,13 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                 ),
               ),
               title: Text(
-                'Perbarui Katalog Cloud',
+                context.tr('sign.refreshCloudCatalog'),
                 style: AppTypography.bodyMedium.copyWith(
                   fontWeight: FontWeight.bold,
                   color: headingColor,
                 ),
               ),
-              subtitle: const Text(
-                'Sinkronkan daftar video terbaru dari server',
-              ),
+              subtitle: Text(context.tr('sign.syncCatalogSubtitle')),
               onTap: () {
                 Get.back();
                 controller.loadAvailableVideos(forceRefresh: true);
@@ -181,15 +211,13 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                 ),
               ),
               title: Text(
-                'Hapus Video Unduhan',
+                context.tr('sign.deleteDownloadedVideos'),
                 style: AppTypography.bodyMedium.copyWith(
                   fontWeight: FontWeight.bold,
                   color: AppColors.sosEmergency,
                 ),
               ),
-              subtitle: const Text(
-                'Bersihkan ruang memori (video bawaan tetap aman)',
-              ),
+              subtitle: Text(context.tr('sign.clearStorageSubtitle')),
               onTap: () {
                 Get.back();
                 controller.clearDownloadedVideos();
@@ -236,17 +264,21 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Teks & Suara ke Isyarat',
+                    context.tr('sign.textAndVoiceToSign'),
                     style: AppTypography.titleLarge.copyWith(
                       color: headingColor,
                       fontWeight: FontWeight.bold,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    'Penerjemah Video SIBI & BISINDO',
+                    context.tr('sign.videoTranslatorSub'),
                     style: AppTypography.captionSmall.copyWith(
                       color: AppColors.textMuted,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
@@ -256,7 +288,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
         actions: [
           IconButton(
             icon: const Icon(Icons.tune_rounded),
-            tooltip: 'Kelola Unduhan',
+            tooltip: context.tr('sign.manageDownloads'),
             onPressed: () => _showCacheOptionsDialog(context),
           ),
         ],
@@ -358,11 +390,15 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                           color: AppColors.goldPrimary,
                         ),
                         const SizedBox(width: 6),
-                        Text(
-                          'Pilih kata dalam kalimat untuk diputar:',
-                          style: AppTypography.captionSmall.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: headingColor,
+                        Expanded(
+                          child: Text(
+                            context.tr('sign.selectCandidateToPlay'),
+                            style: AppTypography.captionSmall.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: headingColor,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
@@ -443,8 +479,8 @@ class _TextToSignScreenState extends State<TextToSignScreen>
           children: [
             Expanded(
               child: _buildLanguageTabItem(
-                label: 'SIBI (Bahasa Isyarat)',
-                subtitle: 'Kata & Kalimat',
+                label: context.tr('sign.sibiTabTitle'),
+                subtitle: context.tr('sign.sibiTabSub'),
                 isActive: active == 'sibi',
                 onTap: () => controller.setLanguage('sibi'),
                 isDark: isDark,
@@ -452,8 +488,8 @@ class _TextToSignScreenState extends State<TextToSignScreen>
             ),
             Expanded(
               child: _buildLanguageTabItem(
-                label: 'BISINDO (Isyarat Alami)',
-                subtitle: 'Alfabet & Isyarat',
+                label: context.tr('sign.bisindoTabTitle'),
+                subtitle: context.tr('sign.bisindoTabSub'),
                 isActive: active == 'bisindo',
                 onTap: () => controller.setLanguage('bisindo'),
                 isDark: isDark,
@@ -573,8 +609,8 @@ class _TextToSignScreenState extends State<TextToSignScreen>
               ),
               decoration: InputDecoration(
                 hintText: controller.selectedLanguage.value == 'sibi'
-                    ? 'Ketik kata misal: Masjid, Bantu, Dokter, Obat, Sakit...'
-                    : 'Ketik kata/huruf misal: Halo, Apa Kabar, A, J, Baik...',
+                    ? context.tr('sign.searchHintSibi')
+                    : context.tr('sign.searchHintBisindo'),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
@@ -609,15 +645,15 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                   IconButton(
                     icon: const Icon(Icons.close_rounded, size: 20),
                     color: AppColors.textMuted,
-                    tooltip: 'Hapus Teks',
+                    tooltip: context.tr('sign.clearSearchText'),
                     onPressed: () => controller.clearSearch(),
                   ),
 
                 // Tombol Mikrofon (Speech-to-Sign)
                 Tooltip(
                   message: isListening
-                      ? 'Sedang Mendengarkan (Ketuk untuk Selesai)'
-                      : 'Bicara (Suara ke Isyarat)',
+                      ? context.tr('sign.listeningTapFinish')
+                      : context.tr('sign.speakVoiceToSign'),
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
@@ -676,7 +712,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                   IconButton(
                     icon: const Icon(Icons.search_rounded),
                     color: isDark ? AppColors.goldLight : AppColors.goldPrimary,
-                    tooltip: 'Cari Video Isyarat',
+                    tooltip: context.tr('sign.searchSignVideo'),
                     onPressed: () {
                       controller.dismissSuggestions();
                       controller.searchSign(controller.textController.text);
@@ -738,7 +774,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Saran Kosakata Isyarat',
+                      context.tr('sign.vocabSuggestions'),
                       style: AppTypography.captionSmall.copyWith(
                         fontWeight: FontWeight.bold,
                         color: isDark
@@ -982,7 +1018,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Ucapkan kata, input akan otomatis terisi...',
+                    context.tr('sign.speakWordPrompt'),
                     style: AppTypography.captionSmall.copyWith(
                       fontSize: 11,
                       color: isDark
@@ -1010,7 +1046,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                 ),
               ),
               child: Text(
-                'Selesai',
+                context.tr('sign.finishListening'),
                 style: AppTypography.captionSmall.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -1128,7 +1164,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Suara ke Bahasa Isyarat',
+                      context.tr('sign.voiceToSignTitle'),
                       style: AppTypography.titleMedium.copyWith(
                         color: headingColor,
                         fontWeight: FontWeight.bold,
@@ -1136,7 +1172,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Ucapkan kata untuk memutar gerakan isyarat otomatis',
+                      context.tr('sign.voiceToSignSub'),
                       style: AppTypography.captionSmall.copyWith(
                         color: AppColors.textMuted,
                       ),
@@ -1277,13 +1313,18 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                         child: Text(
                           isListening
                               ? (controller.recognizedWords.value.isEmpty
-                                    ? 'Mendengarkan... Silakan bicara'
-                                    : 'Mendengar: "${controller.recognizedWords.value}"')
+                                    ? context.tr('sign.listeningPrompt')
+                                    : context.tr('sign.heardWords', {
+                                        'words':
+                                            controller.recognizedWords.value,
+                                      }))
                               : (controller.textController.text
                                         .trim()
                                         .isNotEmpty
-                                    ? 'Kata aktif: "${controller.textController.text}"'
-                                    : 'Ketuk mikrofon besar untuk mulai bicara'),
+                                    ? context.tr('sign.activeWord', {
+                                        'word': controller.textController.text,
+                                      })
+                                    : context.tr('sign.tapBigMicHint')),
                           style: AppTypography.captionSmall.copyWith(
                             color: isListening
                                 ? AppColors.sosEmergency
@@ -1327,7 +1368,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
             ),
             const SizedBox(width: 8),
             Text(
-              'Unduh Paket Offline HajiCare',
+              context.tr('sign.offlinePackagesTitle'),
               style: AppTypography.titleMedium.copyWith(
                 color: headingColor,
                 fontWeight: FontWeight.bold,
@@ -1337,7 +1378,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
         ),
         const SizedBox(height: 4),
         Text(
-          'Simpan seluruh video per kategori sekaligus agar siap digunakan di Tanah Suci tanpa internet.',
+          context.tr('sign.offlinePackagesSub'),
           style: AppTypography.captionSmall.copyWith(
             color: AppColors.textMuted,
           ),
@@ -1357,7 +1398,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                   .map(
                     (pkg) => Container(
                       width: 220,
-                      height: 205,
+                      constraints: const BoxConstraints(minHeight: 215),
                       margin: const EdgeInsets.only(right: AppSpacing.sm),
                       child: _buildDynamicPackageCard(
                         context: context,
@@ -1463,7 +1504,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                         ),
                         const SizedBox(width: 3),
                         Text(
-                          'Offline',
+                          context.tr('sign.statusOffline'),
                           style: AppTypography.captionSmall.copyWith(
                             color: AppColors.statusSafe,
                             fontWeight: FontWeight.bold,
@@ -1484,7 +1525,9 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                     child: Text(
-                      '${package.remoteCount} Cloud',
+                      context.tr('sign.cloudCount', {
+                        'count': '${package.remoteCount}',
+                      }),
                       style: AppTypography.captionSmall.copyWith(
                         color: isDark
                             ? AppColors.goldLight
@@ -1500,7 +1543,11 @@ class _TextToSignScreenState extends State<TextToSignScreen>
 
             // Judul Paket
             Text(
-              package.title,
+              _getLocalizedPackageTitle(
+                context,
+                package.category,
+                package.title,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: AppTypography.bodyMedium.copyWith(
@@ -1511,7 +1558,8 @@ class _TextToSignScreenState extends State<TextToSignScreen>
             const SizedBox(height: 2),
 
             // Subtitle / Preview isi kosakata
-            Expanded(
+            ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 34),
               child: Text(
                 package.subtitle,
                 maxLines: 2,
@@ -1548,7 +1596,9 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${(progress * 100).toInt()}% Mengunduh',
+                          context.tr('sign.downloadingPercent', {
+                            'percent': '${(progress * 100).toInt()}',
+                          }),
                           style: AppTypography.captionSmall.copyWith(
                             fontSize: 10,
                             color: isDark
@@ -1588,7 +1638,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                           ),
                           const SizedBox(width: 2),
                           Text(
-                            'Batal',
+                            context.tr('sign.cancelDownload'),
                             style: AppTypography.captionSmall.copyWith(
                               color: AppColors.sosEmergency,
                               fontWeight: FontWeight.bold,
@@ -1625,7 +1675,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                     const SizedBox(width: 4),
                     Flexible(
                       child: Text(
-                        'Tersimpan Lengkap',
+                        context.tr('sign.savedComplete'),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.captionSmall.copyWith(
@@ -1654,7 +1704,9 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                     elevation: 0,
                   ),
                   child: Text(
-                    'Unduh Paket (${package.remoteCount})',
+                    context.tr('sign.downloadPackage', {
+                      'count': '${package.remoteCount}',
+                    }),
                     style: AppTypography.captionSmall.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -1687,7 +1739,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
               Row(
                 children: [
                   Text(
-                    'Daftar Kosakata',
+                    context.tr('sign.vocabListTitle'),
                     style: AppTypography.titleMedium.copyWith(
                       color: headingColor,
                       fontWeight: FontWeight.bold,
@@ -1712,8 +1764,13 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                       ),
                       child: Text(
                         queryActive
-                            ? '$filteredCount dari $totalCount Video'
-                            : '$totalCount Video',
+                            ? context.tr('sign.vocabCountFiltered', {
+                                'filtered': '$filteredCount',
+                                'total': '$totalCount',
+                              })
+                            : context.tr('sign.vocabCountTotal', {
+                                'total': '$totalCount',
+                              }),
                         style: AppTypography.captionSmall.copyWith(
                           color: isDark
                               ? AppColors.goldLight
@@ -1728,7 +1785,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
               ),
               IconButton(
                 icon: const Icon(Icons.refresh_rounded, size: 20),
-                tooltip: 'Perbarui Daftar',
+                tooltip: context.tr('sign.refreshList'),
                 onPressed: () =>
                     controller.loadAvailableVideos(forceRefresh: true),
               ),
@@ -1754,7 +1811,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                 child: Padding(
                   padding: const EdgeInsets.all(AppSpacing.lg),
                   child: Text(
-                    'Belum ada video tersedia.',
+                    context.tr('sign.noVideosAvailable'),
                     style: AppTypography.bodySmall.copyWith(color: bodyColor),
                   ),
                 ),
@@ -1779,7 +1836,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Tidak ada kosakata yang cocok dengan "$query"',
+                        context.tr('sign.noVocabMatch', {'query': query}),
                         style: AppTypography.bodySmall.copyWith(
                           color: bodyColor,
                         ),
@@ -1789,9 +1846,9 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                       OutlinedButton.icon(
                         onPressed: () => controller.clearSearch(),
                         icon: const Icon(Icons.refresh_rounded, size: 16),
-                        label: const Text(
-                          'Tampilkan Semua Kosakata',
-                          style: TextStyle(fontSize: 12),
+                        label: Text(
+                          context.tr('sign.showAllVocab'),
+                          style: AppTypography.caption,
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: isDark
@@ -1897,22 +1954,25 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                     _scrollToVocabularySection();
                   }
                 : null,
-            tooltip: 'Halaman Sebelumnya',
+            tooltip: context.tr('sign.prevPage'),
             color: headingColor,
             disabledColor: bodyColor.withValues(alpha: 0.25),
           ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Halaman $currentPage dari $totalPages',
-                style: AppTypography.captionSmall.copyWith(
-                  color: headingColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
+          Flexible(
+            child: Text(
+              context.tr('sign.pageOf', {
+                'current': '$currentPage',
+                'total': '$totalPages',
+              }),
+              style: AppTypography.captionSmall.copyWith(
+                color: headingColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
               ),
-            ],
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
           IconButton(
             icon: const Icon(Icons.chevron_right_rounded),
@@ -1923,7 +1983,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                     _scrollToVocabularySection();
                   }
                 : null,
-            tooltip: 'Halaman Berikutnya',
+            tooltip: context.tr('sign.nextPage'),
             color: headingColor,
             disabledColor: bodyColor.withValues(alpha: 0.25),
           ),
@@ -2004,7 +2064,10 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                         ),
                       ),
                       Text(
-                        'Kategori: ${video.category.toUpperCase()} • Tipe: ${video.type.toUpperCase()}',
+                        context.tr('sign.category', {
+                          'category': video.category.toUpperCase(),
+                          'type': video.type.toUpperCase(),
+                        }),
                         style: AppTypography.captionSmall.copyWith(
                           color: AppColors.textMuted,
                         ),
@@ -2012,7 +2075,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                     ],
                   ),
                 ),
-                _buildSourcePill(video.source),
+                _buildSourcePill(context, video.source),
               ],
             ),
           ),
@@ -2021,7 +2084,7 @@ class _TextToSignScreenState extends State<TextToSignScreen>
     });
   }
 
-  Widget _buildSourcePill(SignVideoSource source) {
+  Widget _buildSourcePill(BuildContext context, SignVideoSource source) {
     Color bg;
     Color fg;
     String text;
@@ -2030,17 +2093,17 @@ class _TextToSignScreenState extends State<TextToSignScreen>
       case SignVideoSource.asset:
         bg = AppColors.statusSafe.withValues(alpha: 0.15);
         fg = AppColors.statusSafe;
-        text = 'Offline';
+        text = context.tr('sign.sourceAsset');
         break;
       case SignVideoSource.localCached:
         bg = AppColors.statusSafe.withValues(alpha: 0.15);
         fg = AppColors.statusSafe;
-        text = 'Tersimpan';
+        text = context.tr('sign.sourceLocalCached');
         break;
       case SignVideoSource.remote:
         bg = AppColors.goldPrimary.withValues(alpha: 0.15);
         fg = AppColors.goldPrimary;
-        text = 'Unduh';
+        text = context.tr('sign.sourceRemote');
         break;
     }
 

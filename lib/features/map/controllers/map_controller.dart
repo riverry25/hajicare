@@ -14,6 +14,7 @@ import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/services/geocoding_service.dart';
 import '../../../core/state/hajicare_controller.dart';
+import '../../../core/utils/app_logger.dart';
 import '../../../core/utils/user_feedback_message.dart';
 import '../../dashboard/controllers/dashboard_controller.dart';
 import '../../dashboard/models/assistance_request_model.dart';
@@ -542,13 +543,13 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (isClosed || generation != _lifecycleGeneration) return;
       if (!serviceEnabled) {
-        locationError.value = 'Lokasi ponsel belum aktif';
+        locationError.value = AppTranslations.tr('maps.phoneGpsInactive');
         isLocationLoading.value = false;
         AppAlert.warning(
           Get.context,
           title: AppTranslations.tr('maps.phoneGpsInactive'),
-          message: 'Aktifkan lokasi ponsel agar posisi Anda terlihat di peta.',
-          okText: 'Buka Pengaturan',
+          message: AppTranslations.tr('maps.enablePhoneGpsPrompt'),
+          okText: AppTranslations.tr('maps.openSettings'),
           onOk: () => Geolocator.openLocationSettings(),
         );
         return;
@@ -560,27 +561,29 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
         permission = await Geolocator.requestPermission();
         if (isClosed || generation != _lifecycleGeneration) return;
         if (permission == LocationPermission.denied) {
-          locationError.value = 'Izin lokasi belum diberikan';
+          locationError.value = AppTranslations.tr(
+            'maps.locationPermissionRequired',
+          );
           isLocationLoading.value = false;
           AppAlert.warning(
             Get.context,
             title: AppTranslations.tr('maps.locationPermissionRequired'),
-            message:
-                'Izinkan HajiCare memakai lokasi agar posisi Anda terlihat di peta.',
+            message: AppTranslations.tr('maps.allowLocationPrompt'),
           );
           return;
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
-        locationError.value = 'Izin lokasi belum diberikan';
+        locationError.value = AppTranslations.tr(
+          'maps.locationPermissionRequired',
+        );
         isLocationLoading.value = false;
         AppAlert.warning(
           Get.context,
           title: AppTranslations.tr('maps.openLocationSettings'),
-          message:
-              'Izin lokasi belum diberikan. Buka pengaturan, lalu izinkan akses lokasi untuk HajiCare.',
-          okText: 'Buka Pengaturan',
+          message: AppTranslations.tr('maps.allowLocationSettingsPrompt'),
+          okText: AppTranslations.tr('maps.openSettings'),
           onOk: () => Geolocator.openAppSettings(),
         );
         return;
@@ -958,7 +961,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   int _routeRequestId = 0;
 
   void selectPoi(MapPoi poi) {
-    debugPrint('[SELECT] poi = ${poi.name}');
+    AppLogger.debug('selectPoi: ${poi.name}', tag: 'MapController');
     isBottomSheetOpen.value = true;
     if (selectedPoi.value?.id == poi.id) return;
     if (_activeDestination != null &&
@@ -975,7 +978,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     RoomMemberModel member, {
     bool autoRoute = false,
   }) async {
-    debugPrint('[FOCUS] member = ${member.name}');
+    AppLogger.debug('focusOnMember: ${member.name}', tag: 'MapController');
     selectedFilter.value = 0;
     isBottomSheetOpen.value = true;
     selectedPoi.value = null;
@@ -1060,14 +1063,14 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     final hasDestLoc = resolvedMember.hasLocation;
 
     if (autoRoute && hasUserLoc && hasDestLoc) {
-      debugPrint('[ROUTE] automatic request started');
+      AppLogger.debug('automatic route request started', tag: 'MapController');
       await requestRouteToMember(resolvedMember);
     } else {
       clearRoute();
       if (!hasUserLoc && autoRoute) {
-        routeError.value = 'Lokasi Anda belum ditemukan';
+        routeError.value = AppTranslations.tr('maps.myLocationNotFound');
       } else if (!hasDestLoc) {
-        routeError.value = 'Lokasi anggota belum tersedia';
+        routeError.value = AppTranslations.tr('maps.memberLocationUnavailable');
       }
     }
   }
@@ -1076,7 +1079,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     JamaahData jamaah, {
     bool autoRoute = false,
   }) async {
-    debugPrint('[FOCUS] jamaah = ${jamaah.name}');
+    AppLogger.debug('focusOnJamaah: ${jamaah.name}', tag: 'MapController');
     selectedFilter.value = 0;
     selectedJamaah.value = jamaah;
 
@@ -1147,8 +1150,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     }
 
     if (companion != null) {
-      debugPrint(
-        '[FOCUS] companion = ${companion.name} (hasLocation=${companion.hasLocation})',
+      AppLogger.debug(
+        'focusOnCompanion: ${companion.name} (hasLocation=${companion.hasLocation})',
+        tag: 'MapController',
       );
       await focusOnMember(companion, autoRoute: autoRoute);
       if (companion.hasLocation) {
@@ -1160,7 +1164,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       return companion;
     }
 
-    debugPrint('[FOCUS] No companion found in room');
+    AppLogger.debug('No companion found in room', tag: 'MapController');
     return null;
   }
 
@@ -1185,7 +1189,10 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     AssistanceRequestModel request, {
     bool autoRoute = false,
   }) async {
-    debugPrint('[FOCUS] assistance request = ${request.jamaahName}');
+    AppLogger.debug(
+      'focusOnAssistanceRequest: ${request.jamaahName}',
+      tag: 'MapController',
+    );
     activeAssistanceRequest.value = request;
     selectedFilter.value = 0;
     isBottomSheetOpen.value = true;
@@ -1214,7 +1221,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       focusCoordinate(target, destZoom: 17.5);
 
       if (autoRoute && currentUserLocation.value != null) {
-        debugPrint('[ROUTE] assistance request autoRoute started');
+        AppLogger.debug('assistance autoRoute started', tag: 'MapController');
         await _updateRouteTo(target);
       } else if (!autoRoute) {
         clearRoute();
@@ -1233,9 +1240,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     } else {
       clearRoute();
       if (currentUserLocation.value == null) {
-        routeError.value = 'Lokasi Anda belum ditemukan';
+        routeError.value = AppTranslations.tr('maps.myLocationNotFound');
       } else if (request.latitude == null || request.longitude == null) {
-        routeError.value = 'Koordinat jamaah belum tersedia';
+        routeError.value = AppTranslations.tr('maps.memberLocationUnavailable');
       }
     }
   }
@@ -1271,7 +1278,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     final start = currentUserLocation.value;
     if (start == null) {
       if (!isReroute) clearRoute();
-      routeError.value = 'Lokasi Anda belum ditemukan';
+      routeError.value = AppTranslations.tr('maps.myLocationNotFound');
       return;
     }
 
@@ -1291,7 +1298,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       if (requestId == _routeRequestId) {
         isRouteLoading.value = false;
         if (!isReroute) activeRoute.clear();
-        routeError.value = 'Rute langsung tidak tersedia untuk tujuan ini';
+        routeError.value = AppTranslations.tr('maps.directRouteUnavailable');
       }
       return;
     }
@@ -1304,13 +1311,17 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
       // Race condition check: ignore obsolete responses
       if (requestId != _routeRequestId) {
-        debugPrint(
-          '[ROUTE] obsolete response ignored (request $requestId != $_routeRequestId)',
+        AppLogger.debug(
+          'obsolete route response ignored (request $requestId != $_routeRequestId)',
+          tag: 'MapController',
         );
         return;
       }
 
-      debugPrint('[ROUTE] activeRoute = ${result.points.length}');
+      AppLogger.debug(
+        'activeRoute points: ${result.points.length}',
+        tag: 'MapController',
+      );
 
       activeRoute.assignAll(result.points);
       routeDistanceMeters.value = result.distanceMeters;
@@ -1328,14 +1339,14 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       }
     } on RouteException catch (e) {
       if (requestId != _routeRequestId) return;
-      debugPrint('[ROUTE] ERROR RouteException: ${e.message}');
+      AppLogger.error('RouteException: ${e.message}', tag: 'MapController');
       if (!isReroute) activeRoute.clear();
-      routeError.value = 'Rute langsung tidak tersedia untuk tujuan ini';
+      routeError.value = AppTranslations.tr('maps.directRouteUnavailable');
     } catch (e) {
       if (requestId != _routeRequestId) return;
-      debugPrint('[ROUTE] ERROR unknown: $e');
+      AppLogger.error('Route unknown error: $e', tag: 'MapController');
       if (!isReroute) activeRoute.clear();
-      routeError.value = 'Rute langsung tidak tersedia untuk tujuan ini';
+      routeError.value = AppTranslations.tr('maps.directRouteUnavailable');
     } finally {
       if (requestId == _routeRequestId) {
         isRouteLoading.value = false;
@@ -1354,9 +1365,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     } else {
       clearRoute();
       if (currentUserLocation.value == null) {
-        routeError.value = 'Lokasi Anda belum ditemukan';
+        routeError.value = AppTranslations.tr('maps.myLocationNotFound');
       } else if (!member.hasLocation) {
-        routeError.value = 'Lokasi anggota belum tersedia';
+        routeError.value = AppTranslations.tr('maps.memberLocationUnavailable');
       }
     }
   }
@@ -1371,7 +1382,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       await _updateRouteTo(poi.coordinate);
     } else {
       clearRoute();
-      routeError.value = 'Aktifkan lokasi GPS untuk membuat rute';
+      routeError.value = AppTranslations.tr('maps.enableGpsForRoute');
     }
   }
 
@@ -1386,9 +1397,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     } else {
       clearRoute();
       if (currentUserLocation.value == null) {
-        routeError.value = 'Lokasi Anda belum ditemukan';
+        routeError.value = AppTranslations.tr('maps.myLocationNotFound');
       } else if (jamaah.currentLocation == null) {
-        routeError.value = 'Lokasi jamaah belum tersedia';
+        routeError.value = AppTranslations.tr('maps.memberLocationUnavailable');
       }
     }
   }
@@ -1429,8 +1440,8 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       if (Get.context != null) {
         AppAlert.warning(
           Get.context!,
-          title: 'Tujuan Belum Dipilih',
-          message: 'Pilih tempat atau anggota tujuan terlebih dahulu.',
+          title: AppTranslations.tr('maps.destinationNotSelected'),
+          message: AppTranslations.tr('maps.selectDestinationFirst'),
         );
       }
       return;
@@ -1441,8 +1452,8 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       if (Get.context != null) {
         AppAlert.warning(
           Get.context!,
-          title: 'GPS Belum Siap',
-          message: 'Menunggu sinyal GPS aktif sebelum memulai navigasi.',
+          title: AppTranslations.tr('maps.gpsNotReady'),
+          message: AppTranslations.tr('maps.waitingGpsSignal'),
         );
       }
       return;
@@ -1585,9 +1596,14 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
           mapMode.value = MapMode.arrived;
           remainingNavDistance.value = 0.0;
           remainingNavDuration.value = 0;
-          nextManeuverInstruction.value = 'Sampai di tujuan';
+          nextManeuverInstruction.value = AppTranslations.tr(
+            'maps.maneuverArrived',
+          );
           nextManeuverIcon.value = Icons.flag_rounded;
-          voiceService.speak('Anda telah sampai di tujuan.', force: true);
+          voiceService.speak(
+            AppTranslations.tr('maps.maneuverArrived'),
+            force: true,
+          );
         }
         return;
       }
@@ -1668,7 +1684,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   /// Computes the next directional maneuver from polyline geometry.
   void _computeUpcomingManeuver(LatLng userPos) {
     if (activeRoute.length < 2) {
-      nextManeuverInstruction.value = 'Menuju ke tujuan';
+      nextManeuverInstruction.value = AppTranslations.tr(
+        'maps.maneuverHeading',
+      );
       nextManeuverDistanceMeters.value = null;
       nextManeuverIcon.value = Icons.straight_rounded;
       return;
@@ -1705,12 +1723,16 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
       if (distToTurn <= 150.0) {
         if (angleDiff > 25.0 && angleDiff < 135.0) {
-          nextManeuverInstruction.value = 'Belok kanan';
+          nextManeuverInstruction.value = AppTranslations.tr(
+            'maps.maneuverTurnRight',
+          );
           nextManeuverDistanceMeters.value = distToTurn;
           nextManeuverIcon.value = Icons.turn_right_rounded;
           return;
         } else if (angleDiff < -25.0 && angleDiff > -135.0) {
-          nextManeuverInstruction.value = 'Belok kiri';
+          nextManeuverInstruction.value = AppTranslations.tr(
+            'maps.maneuverTurnLeft',
+          );
           nextManeuverDistanceMeters.value = distToTurn;
           nextManeuverIcon.value = Icons.turn_left_rounded;
           return;
@@ -1720,11 +1742,13 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
     final totalRem = remainingNavDistance.value ?? distToTurn;
     if (totalRem < 30.0) {
-      nextManeuverInstruction.value = 'Tujuan di depan Anda';
+      nextManeuverInstruction.value = AppTranslations.tr('maps.maneuverAhead');
       nextManeuverDistanceMeters.value = totalRem;
       nextManeuverIcon.value = Icons.flag_rounded;
     } else {
-      nextManeuverInstruction.value = 'Terus lurus mengikuti jalur';
+      nextManeuverInstruction.value = AppTranslations.tr(
+        'maps.maneuverKeepStraight',
+      );
       nextManeuverDistanceMeters.value = distToTurn;
       nextManeuverIcon.value = Icons.straight_rounded;
     }
@@ -1920,7 +1944,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
         AppAlert.info(
           Get.context,
           title: AppTranslations.tr('maps.mapViewChanged'),
-          message: 'Peta sederhana sedang digunakan.',
+          message: AppTranslations.tr('maps.simpleMapInUse'),
         );
       }
     } else {
@@ -1929,7 +1953,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
         AppAlert.info(
           Get.context,
           title: AppTranslations.tr('maps.mapViewChanged'),
-          message: 'Peta berwarna sedang digunakan.',
+          message: AppTranslations.tr('maps.coloredMapInUse'),
         );
       }
     }

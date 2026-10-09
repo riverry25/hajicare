@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -92,7 +91,7 @@ class _SplashScreenState extends State<SplashScreen>
                             Text(
                               'رِعَايَةُ الحَجِيجِ وَالمُعْتَمِرِينَ',
                               textAlign: TextAlign.center,
-                              style: GoogleFonts.amiri(
+                              style: AppTypography.arabicText(
                                 fontSize: 23,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.emeraldIslamic,

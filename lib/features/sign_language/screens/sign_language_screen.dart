@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:ultralytics_yolo/ultralytics_yolo.dart';
 
+import '../../../core/locales/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_typography.dart';
@@ -392,11 +393,14 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
               ),
             ),
             const SizedBox(width: 12),
-            Text(
-              'Isyarat ke Teks',
-              style: AppTypography.titleLarge.copyWith(
-                color: AppColors.textHeadingColor(context),
-                fontWeight: FontWeight.w700,
+            Expanded(
+              child: Text(
+                context.tr('sign.signToText'),
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.titleLarge.copyWith(
+                  color: AppColors.textHeadingColor(context),
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],
@@ -448,7 +452,7 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
           Expanded(
             child: _buildModelOptionTab(
               model: SignLanguageModel.sibi,
-              label: 'SIBI (Alfabet)',
+              label: 'SIBI',
               icon: Icons.sort_by_alpha_rounded,
               isSelected: _currentModel == SignLanguageModel.sibi,
               isDisabled: isBusy,
@@ -458,7 +462,7 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
           Expanded(
             child: _buildModelOptionTab(
               model: SignLanguageModel.bisindo,
-              label: 'BISINDO (Kata)',
+              label: 'BISINDO',
               icon: Icons.handshake_rounded,
               isSelected: _currentModel == SignLanguageModel.bisindo,
               isDisabled: isBusy,
@@ -578,18 +582,26 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
                           size: 54,
                         ),
                         const SizedBox(height: 10),
-                        Text(
-                          'Kamera belum aktif',
-                          style: AppTypography.titleMedium.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            context.tr('sign.cameraNotActive'),
+                            textAlign: TextAlign.center,
+                            style: AppTypography.titleMedium.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          'Tekan tombol MULAI di bawah',
-                          style: AppTypography.caption.copyWith(
-                            color: Colors.white.withValues(alpha: 0.7),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            context.tr('sign.pressStartBelow'),
+                            textAlign: TextAlign.center,
+                            style: AppTypography.caption.copyWith(
+                              color: Colors.white.withValues(alpha: 0.7),
+                            ),
                           ),
                         ),
                       ],
@@ -625,7 +637,9 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
                     debugPrint('[SIBI][YOLO] Error: $error');
                     if (mounted) {
                       setState(() {
-                        _errorMessage = 'Gagal memuat YOLO SIBI: $error';
+                        _errorMessage = context.tr('sign.failedLoadYolo', {
+                          'error': '$error',
+                        });
                         _isModelLoading = false;
                       });
                     }
@@ -646,7 +660,9 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _CameraBadge(
-                      text: _isCameraActive ? 'LIVE' : 'STANDBY',
+                      text: context.tr(
+                        _isCameraActive ? 'sign.live' : 'sign.standby',
+                      ),
                       isLive: _isCameraActive,
                       color: _isCameraActive
                           ? AppColors.emeraldIslamic.withValues(alpha: 0.9)
@@ -658,7 +674,7 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
                     ),
                     const SizedBox(width: 8),
                     _CameraBadge(
-                      text: isSibi ? 'SIBI - ALFABET' : 'BISINDO - KATA',
+                      text: isSibi ? 'SIBI' : 'BISINDO',
                       isLive: false,
                       color: isDark
                           ? AppColors.darkPrimaryContainer.withValues(
@@ -713,13 +729,18 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
                             ),
                           ),
                           const SizedBox(width: 12),
-                          Text(
-                            _isSwitchingModel
-                                ? 'Memuat model ${_currentModel.displayName}...'
-                                : 'Menyiapkan pipeline...',
-                            style: AppTypography.bodyMedium.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
+                          Flexible(
+                            child: Text(
+                              _isSwitchingModel
+                                  ? context.tr('sign.loadingModel', {
+                                      'model': _currentModel.displayName,
+                                    })
+                                  : context.tr('sign.preparingPipeline'),
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.bodyMedium.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ],
@@ -824,7 +845,8 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      'Rekam Manual BISINDO...',
+                                      context.tr('sign.manualRecordBisindo'),
+                                      overflow: TextOverflow.ellipsis,
                                       style: AppTypography.labelLarge.copyWith(
                                         color: Colors.white,
                                         fontWeight: FontWeight.w700,
@@ -832,7 +854,10 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
                                     ),
                                   ),
                                   Text(
-                                    '${_isolatedController.framesCollected.value} frame',
+                                    context.tr('sign.framesCount', {
+                                      'count':
+                                          '${_isolatedController.framesCollected.value}',
+                                    }),
                                     style: AppTypography.captionSmall.copyWith(
                                       color: Colors.white70,
                                     ),
@@ -861,7 +886,7 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
                         left: 14,
                         bottom: 16,
                         child: _LivePill(
-                          text: 'Membaca gerakan...',
+                          text: context.tr('sign.readingGesture'),
                           borderColor: AppColors.sosEmergency,
                           leading: const _PulsingDot(
                             color: AppColors.sosEmergency,
@@ -869,13 +894,13 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
                         ),
                       );
                     case BisindoLiveState.classifying:
-                      return const Positioned(
+                      return Positioned(
                         left: 14,
                         bottom: 16,
                         child: _LivePill(
-                          text: 'Memproses...',
+                          text: context.tr('sign.processing'),
                           borderColor: AppColors.goldLight,
-                          leading: SizedBox.square(
+                          leading: const SizedBox.square(
                             dimension: 12,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
@@ -895,13 +920,13 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
                         ),
                       );
                     case BisindoLiveState.listening:
-                      return const Positioned(
+                      return Positioned(
                         left: 14,
                         bottom: 16,
                         child: _LivePill(
-                          text: 'Siap — lakukan isyarat',
+                          text: context.tr('sign.readyDoSign'),
                           borderColor: AppColors.emeraldIslamic,
-                          leading: Icon(
+                          leading: const Icon(
                             Icons.front_hand_rounded,
                             size: 13,
                             color: AppColors.goldLight,
@@ -964,7 +989,7 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'TRANSKRIPSI AI',
+                  context.tr('sign.aiTranscript'),
                   style: AppTypography.labelLarge.copyWith(
                     color: isDark
                         ? AppColors.goldLight
@@ -980,7 +1005,7 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text(
-                  'Mulai isyarat untuk melihat terjemahan...',
+                  context.tr('sign.startSigningHint'),
                   style: AppTypography.bodyMedium.copyWith(
                     color: AppColors.textSecondaryColor(context),
                     fontStyle: FontStyle.italic,
@@ -1021,7 +1046,7 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
                           : AppColors.espressoDark,
                     ),
                     label: Text(
-                      'Dengarkan',
+                      context.tr('sign.listen'),
                       style: AppTypography.labelLarge.copyWith(
                         color: isDark
                             ? AppColors.goldLight
@@ -1118,7 +1143,7 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
       final conf = _isolatedController.confidenceScore.value;
       final progress = _isolatedController.captureProgress.value;
       final frames = _isolatedController.framesCollected.value;
-      final statusText = _isolatedController.stateStatusText;
+      final statusText = _getLocalizedStateStatusText(context, liveState);
 
       final isRecognized = liveState == BisindoLiveState.recognized;
       final isRejected =
@@ -1230,13 +1255,15 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
               const SizedBox(height: 6),
               Text(
                 isManualCountdown
-                    ? 'Bersiap rekam manual...'
+                    ? context.tr('sign.preparingManualRecord')
                     : isManualCapturing
-                    ? 'Rekam manual ($frames frame) • '
-                          '${((1.0 - progress) * 2.8).toStringAsFixed(1)}s'
+                    ? context.tr('sign.manualRecordProgress', {
+                        'frames': '$frames',
+                        'seconds': ((1.0 - progress) * 2.8).toStringAsFixed(1),
+                      })
                     : isSigning
-                    ? 'Turunkan tangan / diam sejenak setelah selesai ($frames frame)'
-                    : 'Memproses model MotionGRU...',
+                    ? context.tr('sign.lowerHandHint', {'frames': '$frames'})
+                    : context.tr('sign.processingModelMotionGru'),
                 style: AppTypography.captionSmall.copyWith(
                   color: AppColors.textSecondaryColor(context),
                 ),
@@ -1248,8 +1275,8 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
                 Expanded(
                   child: Text(
                     _isCameraActive
-                        ? 'Deteksi otomatis aktif'
-                        : 'Tekan MULAI untuk deteksi otomatis',
+                        ? context.tr('sign.autoDetectActive')
+                        : context.tr('sign.pressStartForAuto'),
                     style: AppTypography.captionSmall.copyWith(
                       color: AppColors.textSecondaryColor(context),
                     ),
@@ -1265,7 +1292,7 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
                     size: 16,
                   ),
                   label: Text(
-                    'Rekam manual',
+                    context.tr('sign.manualRecord'),
                     style: AppTypography.labelLarge.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -1294,81 +1321,99 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
 
     return Column(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // 1. STOP / MULAI
-            _RoundControl(
-              label: _isCameraActive ? 'STOP' : 'MULAI',
-              icon: isBusy
-                  ? Icons.hourglass_top_rounded
-                  : _isCameraActive
-                  ? Icons.stop_rounded
-                  : Icons.videocam_rounded,
-              bgColor: _isCameraActive
-                  ? (isDark
-                        ? AppColors.errorContainer.withValues(alpha: 0.3)
-                        : AppColors.errorContainer.withValues(alpha: 0.6))
-                  : (isDark
-                        ? AppColors.emeraldDark.withValues(alpha: 0.4)
-                        : AppColors.emeraldLight),
-              borderColor: _isCameraActive
-                  ? AppColors.sosEmergency.withValues(alpha: 0.5)
-                  : AppColors.emeraldIslamic.withValues(alpha: 0.5),
-              iconColor: _isCameraActive
-                  ? AppColors.sosEmergency
-                  : AppColors.emeraldIslamic,
-              onTap: !isBusy ? _toggleCamera : null,
-            ),
-            const SizedBox(width: 14),
-            // 2. SPASI
-            _RoundControl(
-              label: 'SPASI',
-              icon: Icons.space_bar_rounded,
-              bgColor: isDark
-                  ? AppColors.darkSurfaceContainerHigh
-                  : AppColors.canvasCreamSubtle,
-              borderColor: isDark ? AppColors.darkOutline : AppColors.tanLight,
-              iconColor: isDark
-                  ? AppColors.darkPrimary
-                  : AppColors.espressoDark,
-              onTap: _recognition.insertSpace,
-            ),
-            const SizedBox(width: 14),
-            // 3. HAPUS
-            _RoundControl(
-              label: 'HAPUS',
-              icon: Icons.backspace_rounded,
-              bgColor: isDark
-                  ? AppColors.secondaryContainer.withValues(alpha: 0.25)
-                  : AppColors.secondaryContainer.withValues(alpha: 0.4),
-              borderColor: AppColors.distanceWarning.withValues(alpha: 0.5),
-              iconColor: AppColors.distanceWarning,
-              onTap: _recognition.deleteLast,
-            ),
-            const SizedBox(width: 14),
-            // 4. RESET
-            _RoundControl(
-              label: 'RESET',
-              icon: Icons.restart_alt_rounded,
-              bgColor: isDark
-                  ? AppColors.darkSurfaceContainer
-                  : AppColors.canvasCream,
-              borderColor: AppColors.outlineVariant,
-              iconColor: AppColors.textMuted,
-              onTap: _recognition.resetTranscript,
-            ),
-          ],
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              // 1. STOP / MULAI
+              Expanded(
+                child: _RoundControl(
+                  label: _isCameraActive
+                      ? context.tr('sign.stop')
+                      : context.tr('sign.start'),
+                  icon: isBusy
+                      ? Icons.hourglass_top_rounded
+                      : _isCameraActive
+                      ? Icons.stop_rounded
+                      : Icons.videocam_rounded,
+                  bgColor: _isCameraActive
+                      ? (isDark
+                            ? AppColors.errorContainer.withValues(alpha: 0.3)
+                            : AppColors.errorContainer.withValues(alpha: 0.6))
+                      : (isDark
+                            ? AppColors.emeraldDark.withValues(alpha: 0.4)
+                            : AppColors.emeraldLight),
+                  borderColor: _isCameraActive
+                      ? AppColors.sosEmergency.withValues(alpha: 0.5)
+                      : AppColors.emeraldIslamic.withValues(alpha: 0.5),
+                  iconColor: _isCameraActive
+                      ? AppColors.sosEmergency
+                      : AppColors.emeraldIslamic,
+                  onTap: !isBusy ? _toggleCamera : null,
+                ),
+              ),
+              const SizedBox(width: 8),
+              // 2. SPASI
+              Expanded(
+                child: _RoundControl(
+                  label: context.tr('sign.space'),
+                  icon: Icons.space_bar_rounded,
+                  bgColor: isDark
+                      ? AppColors.darkSurfaceContainerHigh
+                      : AppColors.canvasCreamSubtle,
+                  borderColor: isDark
+                      ? AppColors.darkOutline
+                      : AppColors.tanLight,
+                  iconColor: isDark
+                      ? AppColors.darkPrimary
+                      : AppColors.espressoDark,
+                  onTap: _recognition.insertSpace,
+                ),
+              ),
+              const SizedBox(width: 8),
+              // 3. HAPUS
+              Expanded(
+                child: _RoundControl(
+                  label: context.tr('sign.delete'),
+                  icon: Icons.backspace_rounded,
+                  bgColor: isDark
+                      ? AppColors.secondaryContainer.withValues(alpha: 0.25)
+                      : AppColors.secondaryContainer.withValues(alpha: 0.4),
+                  borderColor: AppColors.distanceWarning.withValues(alpha: 0.5),
+                  iconColor: AppColors.distanceWarning,
+                  onTap: _recognition.deleteLast,
+                ),
+              ),
+              const SizedBox(width: 8),
+              // 4. RESET
+              Expanded(
+                child: _RoundControl(
+                  label: context.tr('sign.reset'),
+                  icon: Icons.restart_alt_rounded,
+                  bgColor: isDark
+                      ? AppColors.darkSurfaceContainer
+                      : AppColors.canvasCream,
+                  borderColor: AppColors.outlineVariant,
+                  iconColor: AppColors.textMuted,
+                  onTap: _recognition.resetTranscript,
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 14),
-        Text(
-          _currentModel == SignLanguageModel.sibi
-              ? 'Tahan posisi... lihat progress di kamera'
-              : 'Isyaratkan satu kata, lalu turunkan tangan / diam sejenak',
-          textAlign: TextAlign.center,
-          style: AppTypography.caption.copyWith(
-            color: isDark ? AppColors.goldLight : AppColors.espressoMedium,
-            fontWeight: FontWeight.w600,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
+            _currentModel == SignLanguageModel.sibi
+                ? context.tr('sign.holdPositionHint')
+                : context.tr('sign.signWordHint'),
+            textAlign: TextAlign.center,
+            style: AppTypography.caption.copyWith(
+              color: isDark ? AppColors.goldLight : AppColors.espressoMedium,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ],
@@ -1398,10 +1443,12 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
                 : const Icon(Icons.record_voice_over_rounded, size: 22),
             label: Text(
               isSpeaking
-                  ? 'Sedang Membaca...'
+                  ? context.tr('sign.readingAloud')
                   : raw.isEmpty
-                  ? 'UCAPKAN (TEKS KOSONG)'
-                  : 'UCAPKAN HASIL',
+                  ? context.tr('sign.speakEmpty')
+                  : context.tr('sign.speakResult'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: AppTypography.button.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
@@ -1434,8 +1481,8 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Text(
         _currentModel == SignLanguageModel.sibi
-            ? 'Model SIBI aktif: Arahkan dan tahan gestur huruf alfabet. Kata dibacakan saat SPASI ditekan atau setelah jeda sejenak.'
-            : 'Model BISINDO aktif: Deteksi otomatis — setiap kata yang terdeteksi langsung masuk ke transkripsi dan dibacakan. Transkripsi tetap tersimpan saat ganti model.',
+            ? context.tr('sign.sibiInstructions')
+            : context.tr('sign.bisindoInstructions'),
         textAlign: TextAlign.center,
         style: AppTypography.captionSmall.copyWith(
           color: AppColors.textSecondaryColor(context),
@@ -1464,13 +1511,49 @@ class _SignLanguageScreenState extends State<SignLanguageScreen> {
           TextButton(
             onPressed: () => _switchModel(_currentModel),
             child: Text(
-              'Coba Lagi',
+              context.tr('sign.retry'),
               style: AppTypography.labelLarge.copyWith(color: AppColors.error),
             ),
           ),
         ],
       ),
     );
+  }
+
+  String _getLocalizedStateStatusText(
+    BuildContext context,
+    BisindoLiveState liveState,
+  ) {
+    switch (liveState) {
+      case BisindoLiveState.initializing:
+        return context.tr('sign.stateInitializing');
+      case BisindoLiveState.stopped:
+        return context.tr('sign.stateStopped');
+      case BisindoLiveState.listening:
+        return context.tr('sign.stateListening');
+      case BisindoLiveState.signing:
+        return context.tr('sign.stateSigning');
+      case BisindoLiveState.classifying:
+        return context.tr('sign.stateClassifying');
+      case BisindoLiveState.recognized:
+        return context.tr('sign.stateRecognized', {
+          'label': _isolatedController.detectedLabel.value.toUpperCase(),
+        });
+      case BisindoLiveState.rejected:
+        return _isolatedController.guidanceMessage.value.isNotEmpty
+            ? _isolatedController.guidanceMessage.value
+            : context.tr('sign.stateRejected');
+      case BisindoLiveState.manualCountdown:
+        return context.tr('sign.stateManualCountdown', {
+          'seconds': '${_isolatedController.countdownSeconds.value}',
+        });
+      case BisindoLiveState.manualCapturing:
+        return context.tr('sign.stateManualCapturing');
+      case BisindoLiveState.error:
+        return _isolatedController.guidanceMessage.value.isNotEmpty
+            ? _isolatedController.guidanceMessage.value
+            : context.tr('sign.stateError');
+    }
   }
 }
 
@@ -1733,13 +1816,14 @@ class _RoundControl extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         InkWell(
           onTap: onTap,
           customBorder: const CircleBorder(),
           child: Container(
-            width: 54,
-            height: 54,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: onTap == null ? bgColor.withValues(alpha: 0.4) : bgColor,
@@ -1769,10 +1853,13 @@ class _RoundControl extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
           style: AppTypography.captionSmall.copyWith(
             color: iconColor,
             fontWeight: FontWeight.w700,
-            letterSpacing: 0.5,
+            letterSpacing: 0.3,
           ),
         ),
       ],
@@ -1794,11 +1881,15 @@ class _SwitchCameraButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final shortLabel = isFrontCamera ? 'Depan' : 'Belakang';
+    final shortLabel = isFrontCamera
+        ? context.tr('sign.frontCamera')
+        : context.tr('sign.backCamera');
 
     return Semantics(
       button: true,
-      label: 'Ubah ke ${isFrontCamera ? 'kamera belakang' : 'kamera depan'}',
+      label: context.tr(
+        isFrontCamera ? 'sign.switchToBack' : 'sign.switchToFront',
+      ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(

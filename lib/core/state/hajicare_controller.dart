@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/jamaah_data.dart';
 import '../services/location_service.dart';
+import '../utils/app_logger.dart';
 import '../../features/room/models/room_model.dart';
 import '../../features/room/models/room_member_model.dart';
 import '../../features/room/services/room_service.dart';
@@ -188,7 +189,10 @@ class HajiCareController extends GetxController {
       // A local preference is never authoritative for privileged access.
       _role.value = UserRole.jamaah;
     } catch (e) {
-      debugPrint('[HajiCareController] Error loading cached room/role: $e');
+      AppLogger.warn(
+        'Error loading cached room/role: $e',
+        tag: 'HajiCareController',
+      );
     }
   }
 
@@ -230,7 +234,10 @@ class HajiCareController extends GetxController {
         await prefs.remove(keyActiveRoomId);
       }
     } catch (e) {
-      debugPrint('[HajiCareController] Error saving user data to cache: $e');
+      AppLogger.error(
+        'Error saving user data to cache: $e',
+        tag: 'HajiCareController',
+      );
     }
 
     // If roomId is valid and user is logged in, start room listeners immediately
@@ -295,7 +302,7 @@ class HajiCareController extends GetxController {
         await applyUserData(roleStr: roleStr, roomId: roomId, name: rawName);
       }
     } catch (e) {
-      debugPrint('[HajiCareController] Error in syncUserData: $e');
+      AppLogger.error('Error in syncUserData: $e', tag: 'HajiCareController');
     }
   }
 
@@ -312,7 +319,10 @@ class HajiCareController extends GetxController {
         }
       });
     } catch (e) {
-      debugPrint('[HajiCareController] Firebase auth listener error: $e');
+      AppLogger.error(
+        'Firebase auth listener error: $e',
+        tag: 'HajiCareController',
+      );
     }
   }
 
@@ -428,8 +438,9 @@ class HajiCareController extends GetxController {
               }
             })
             .catchError((e) {
-              debugPrint(
-                '[HajiCareController] Error persisting snapshot to cache: $e',
+              AppLogger.warn(
+                'Error persisting snapshot to cache: $e',
+                tag: 'HajiCareController',
               );
             });
 
@@ -464,7 +475,7 @@ class HajiCareController extends GetxController {
         _recalculateRealDistance();
       });
     } catch (e) {
-      debugPrint('[HajiCareController] Error loading user doc: $e');
+      AppLogger.error('Error loading user doc: $e', tag: 'HajiCareController');
     }
   }
 
@@ -537,8 +548,9 @@ class HajiCareController extends GetxController {
         }
       },
       onError: (Object error) {
-        debugPrint(
-          '[HajiCareController] Error listening to active SOS events: $error',
+        AppLogger.warn(
+          'Error listening to active SOS events: $error',
+          tag: 'HajiCareController',
         );
       },
     );
@@ -589,7 +601,10 @@ class HajiCareController extends GetxController {
             }
           },
           onError: (e) {
-            debugPrint('[HajiCareController] Error in _roomDocSub: $e');
+            AppLogger.warn(
+              'Error in _roomDocSub: $e',
+              tag: 'HajiCareController',
+            );
           },
         );
 
@@ -722,7 +737,7 @@ class HajiCareController extends GetxController {
         isMyGpsActive.value = false;
       }
     } catch (e) {
-      debugPrint('[HajiCareController] Initial GPS fetch error: $e');
+      AppLogger.warn('Initial GPS fetch error: $e', tag: 'HajiCareController');
       isMyGpsActive.value = false;
     }
 
@@ -741,12 +756,15 @@ class HajiCareController extends GetxController {
               _recalculateRealDistance();
             },
             onError: (e) {
-              debugPrint('[HajiCareController] GPS stream error: $e');
+              AppLogger.warn('GPS stream error: $e', tag: 'HajiCareController');
               isMyGpsActive.value = false;
             },
           );
     } catch (e) {
-      debugPrint('[HajiCareController] Failed to listen to GPS stream: $e');
+      AppLogger.warn(
+        'Failed to listen to GPS stream: $e',
+        tag: 'HajiCareController',
+      );
       isMyGpsActive.value = false;
     }
   }
@@ -801,7 +819,10 @@ class HajiCareController extends GetxController {
         );
       }
     } catch (e) {
-      debugPrint('[HajiCareController] Error broadcasting location: $e');
+      AppLogger.warn(
+        'Error broadcasting location: $e',
+        tag: 'HajiCareController',
+      );
     }
   }
 
@@ -889,8 +910,9 @@ class HajiCareController extends GetxController {
         await _roomService.updateSafeRadius(roomId: roomId, radius: radius);
         return true;
       } catch (e) {
-        debugPrint(
-          '[HajiCareController] Error updating safe radius in Firestore: $e',
+        AppLogger.error(
+          'Error updating safe radius in Firestore: $e',
+          tag: 'HajiCareController',
         );
         safeRadiusMeters.value = previousRadius;
         _recalculateRealDistance();
@@ -930,11 +952,14 @@ class HajiCareController extends GetxController {
         final prefs = await SharedPreferences.getInstance();
         await prefs.remove(keyActiveRoomId);
       } catch (e) {
-        debugPrint('[HajiCareController] Error removing cached roomId: $e');
+        AppLogger.warn(
+          'Error removing cached roomId: $e',
+          tag: 'HajiCareController',
+        );
       }
       return true;
     } catch (e) {
-      debugPrint('[HajiCareController] Error leaving room: $e');
+      AppLogger.error('Error leaving room: $e', tag: 'HajiCareController');
       return false;
     }
   }
@@ -1053,8 +1078,9 @@ class HajiCareController extends GetxController {
 
       // CRITICAL GUARD: User MUST belong to an active monitoring room to trigger SOS
       if (roomId == null || roomId.trim().isEmpty) {
-        debugPrint(
-          '[HajiCareController] Cannot trigger SOS: user has not joined any room',
+        AppLogger.warn(
+          'Cannot trigger SOS: user has not joined any room',
+          tag: 'HajiCareController',
         );
         if (_self != null && _self!.sosActive) {
           _self!.sosActive = false;
@@ -1100,7 +1126,7 @@ class HajiCareController extends GetxController {
       jamaahList.refresh();
       return true;
     } catch (e) {
-      debugPrint('[HajiCareController] Error triggering SOS: $e');
+      AppLogger.error('Error triggering SOS: $e', tag: 'HajiCareController');
       return false;
     } finally {
       _isSosMutationInFlight = false;
@@ -1155,8 +1181,9 @@ class HajiCareController extends GetxController {
           resolvedByUid: currentUid,
         );
       } catch (backendError) {
-        debugPrint(
-          '[HajiCareController] RoomService resolveSos error (will continue local purge): $backendError',
+        AppLogger.warn(
+          'RoomService resolveSos error (will continue local purge): $backendError',
+          tag: 'HajiCareController',
         );
       }
 
@@ -1198,8 +1225,9 @@ class HajiCareController extends GetxController {
             notifCtrl.deleteNotification(notifId);
           }
         } catch (e) {
-          debugPrint(
-            '[HajiCareController] Error cleaning up notifications on dismissSos: $e',
+          AppLogger.warn(
+            'Error cleaning up notifications on dismissSos: $e',
+            tag: 'HajiCareController',
           );
         }
       }
@@ -1215,7 +1243,7 @@ class HajiCareController extends GetxController {
       jamaahList.refresh();
       return true;
     } catch (e) {
-      debugPrint('[HajiCareController] Error dismissing SOS: $e');
+      AppLogger.error('Error dismissing SOS: $e', tag: 'HajiCareController');
       return false;
     } finally {
       _isSosMutationInFlight = false;

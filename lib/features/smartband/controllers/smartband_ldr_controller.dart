@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/app_logger.dart';
 import '../../map/controllers/map_controller.dart';
 import '../models/smartband_data.dart';
 import '../services/smartband_ble_service.dart';
@@ -227,7 +228,7 @@ class SmartbandLdrController extends GetxController {
     });
 
     _bleMessageSub = bleService.statusMessageStream.listen((msg) {
-      debugPrint('[SmartbandLdrController] $msg');
+      AppLogger.debug(msg, tag: 'SmartbandLdr');
     });
   }
 

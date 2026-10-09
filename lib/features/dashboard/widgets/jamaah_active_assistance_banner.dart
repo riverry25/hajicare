@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/locales/app_translations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../models/assistance_request_model.dart';
 import 'companion_contact_sheet.dart';
@@ -67,7 +68,7 @@ class JamaahActiveAssistanceBanner extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Bantuan Sedang Berjalan',
+                      context.tr('dashboard.assistanceInProgress'),
                       style: TextStyle(
                         color: isDark ? Colors.white : const Color(0xFF2E1C12),
                         fontSize: 15,
@@ -173,9 +174,12 @@ class JamaahActiveAssistanceBanner extends StatelessWidget {
                 );
               },
               icon: const Icon(Icons.track_changes_rounded, size: 18),
-              label: const Text(
-                'Lihat Status Bantuan',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+              label: Text(
+                context.tr('dashboard.viewAssistanceStatus'),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFE64A19),

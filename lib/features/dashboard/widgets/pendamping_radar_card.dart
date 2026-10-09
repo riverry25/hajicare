@@ -577,7 +577,9 @@ class PendampingRadarCard extends StatelessWidget {
                                         Expanded(
                                           child: Text(
                                             isSos
-                                                ? 'Sinyal Darurat SOS Aktif'
+                                                ? context.tr(
+                                                    'dashboard.sosSignalActive',
+                                                  )
                                                 : (jamaah.isGpsActive
                                                       ? context.tr(
                                                           'dashboard.gpsStable',
@@ -1194,7 +1196,7 @@ class PendampingRadarCard extends StatelessWidget {
                         Flexible(
                           child: Text(
                             isSos
-                                ? 'Lacak Darurat di Peta'
+                                ? context.tr('dashboard.trackEmergencyOnMap')
                                 : context.tr('trackOnInteractiveMap'),
                             style: const TextStyle(
                               color: Colors.white,

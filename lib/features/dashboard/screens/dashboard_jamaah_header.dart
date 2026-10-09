@@ -272,9 +272,12 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                           if (context.mounted) {
                             AppAlert.info(
                               context,
-                              title: 'Pendamping Belum Terhubung',
-                              message:
-                                  'Belum ada data pendamping dalam room Anda. Pastikan Anda telah bergabung ke room yang sama dengan pendamping.',
+                              title: context.tr(
+                                'dashboard.companionNotConnected',
+                              ),
+                              message: context.tr(
+                                'dashboard.companionNotConnectedDesc',
+                              ),
                             );
                           }
                           return;
@@ -285,9 +288,11 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                         if (!companion.hasLocation && context.mounted) {
                           AppAlert.warning(
                             context,
-                            title: 'Lokasi Belum Tersedia',
-                            message:
-                                'GPS pendamping (${companion.name}) belum aktif atau koordinat belum diperbarui.',
+                            title: context.tr('dashboard.locationUnavailable'),
+                            message: context.tr(
+                              'dashboard.companionGpsUnavailableDesc',
+                              {'name': companion.name},
+                            ),
                           );
                         }
                       },
@@ -342,10 +347,11 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                           if (!hasRoom) {
                             AppAlert.warning(
                               context,
-                              title: 'Belum Terdaftar di Room',
-                              message:
-                                  'Tombol SOS darurat hanya aktif setelah Anda bergabung ke salah satu room pantau rombongan.',
-                              okText: 'Gabung Room',
+                              title: context.tr(
+                                'dashboard.notRegisteredInRoom',
+                              ),
+                              message: context.tr('dashboard.sosNeedsRoomDesc'),
+                              okText: context.tr('room.joinRoomTitle'),
                               onOk: () => Get.toNamed(AppRoutes.joinRoom),
                             );
                             return;
@@ -393,7 +399,9 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                                   hasSos
                                       ? (state.activeSosCount.value > 0
                                             ? 'SOS (${state.activeSosCount.value})'
-                                            : 'SOS Aktif')
+                                            : context.tr(
+                                                'dashboard.sosActiveUpper',
+                                              ))
                                       : context.tr('dashboard.emergencyHelp'),
                                   style: const TextStyle(
                                     color: Colors.white,
@@ -527,7 +535,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                   color: Colors.white.withValues(alpha: 0.14),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: AppColors.goldLight.withValues(alpha: 0.45),
+                    color: AppColors.goldLight.withValues(alpha: 0.6),
                     width: 1.0,
                   ),
                 ),

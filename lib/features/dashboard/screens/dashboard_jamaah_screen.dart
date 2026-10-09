@@ -15,6 +15,7 @@ import '../../map/screens/interactive_map_screen.dart';
 import '../../map/controllers/map_controller.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../notification/controllers/notification_controller.dart';
+import '../../notification/models/notification_model.dart';
 import '../../notification/services/notification_service.dart';
 import '../../prayer/controllers/prayer_times_controller.dart';
 import '../../prayer/screens/prayer_times_screen.dart';

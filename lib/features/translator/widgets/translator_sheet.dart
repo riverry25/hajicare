@@ -48,43 +48,43 @@ class _QuickPhrase {
 List<_QuickPhrase> _getQuickPhrases(BuildContext context) => [
   _QuickPhrase(
     label: context.tr('translator.lostPhrase'),
-    idText: 'Tolong, saya tersesat dan butuh bantuan',
+    idText: context.tr('translator.lostPhraseFull'),
     arText: 'من فضلك، لقد ضللت طريقي وأحتاج إلى مساعدة',
     icon: '🆘',
   ),
   _QuickPhrase(
     label: context.tr('translator.exitPhrase'),
-    idText: 'Di mana pintu keluar Masjidil Haram?',
+    idText: context.tr('translator.exitPhraseFull'),
     arText: 'أين مخرج المسجد الحرام؟',
     icon: '🕋',
   ),
   _QuickPhrase(
     label: context.tr('translator.medicalPhrase'),
-    idText: 'Saya merasa sakit dan butuh dokter',
+    idText: context.tr('translator.medicalPhraseFull'),
     arText: 'أشعر بالمرض وأحتاج إلى طبيب',
     icon: '🩺',
   ),
   _QuickPhrase(
     label: context.tr('translator.toiletPhrase'),
-    idText: 'Di mana toilet dan tempat wudhu terdekat?',
+    idText: context.tr('translator.toiletPhraseFull'),
     arText: 'أين أقرب دورة مياه ومكان للوضوء؟',
     icon: '🚾',
   ),
   _QuickPhrase(
     label: context.tr('translator.zamzamPhrase'),
-    idText: 'Di mana tempat minum air Zamzam?',
+    idText: context.tr('translator.zamzamPhraseFull'),
     arText: 'أين مكان شرب ماء زمزم؟',
     icon: '💧',
   ),
   _QuickPhrase(
     label: context.tr('translator.pricePhrase'),
-    idText: 'Berapa harga barang ini?',
+    idText: context.tr('translator.pricePhraseFull'),
     arText: 'بكم هذا؟',
     icon: '🏷️',
   ),
   _QuickPhrase(
     label: context.tr('translator.taxiPhrase'),
-    idText: 'Tolong antar saya ke hotel ini',
+    idText: context.tr('translator.taxiPhraseFull'),
     arText: 'من فضلك خذني إلى هذا الفندق',
     icon: '🚕',
   ),
@@ -831,7 +831,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'Terjemahkan',
+                          context.tr('translator.translateAction'),
                           style: AppTypography.captionSmall.copyWith(
                             color: primaryColor,
                             fontWeight: FontWeight.w700,
@@ -972,7 +972,9 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                 ? (context.tr('translator.listeningPrompt').isNotEmpty
                       ? context.tr('translator.listeningPrompt')
                       : 'Mendengarkan suara Anda...')
-                : 'Bicara ${_sourceLanguage.name}',
+                : context.tr('translator.speakInLanguage', {
+                    'lang': _sourceLanguage.name,
+                  }),
             textAlign: TextAlign.center,
             style: AppTypography.titleMedium.copyWith(
               color: isListening ? AppColors.sosEmergency : headingColor,
@@ -984,8 +986,8 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
           // Helper Subtitle
           Text(
             isListening
-                ? 'Ketuk tombol lagi untuk selesai bicara'
-                : 'Tekan tombol mikrofon lalu mulai berbicara',
+                ? context.tr('translator.tapToStopListening')
+                : context.tr('translator.tapToStartListening'),
             textAlign: TextAlign.center,
             style: AppTypography.bodySmall.copyWith(
               color: isListening
@@ -1213,7 +1215,10 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
         ),
         const SizedBox(height: AppSpacing.xs),
         SizedBox(
-          height: 38,
+          height: (38.0 * MediaQuery.textScalerOf(context).scale(1.0)).clamp(
+            38.0,
+            56.0,
+          ),
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
@@ -1251,6 +1256,8 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                           color: headingColor,
                           fontWeight: FontWeight.w600,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),

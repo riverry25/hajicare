@@ -7,6 +7,7 @@ import '../../../core/locales/app_translations.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/utils/user_feedback_message.dart';
 
@@ -143,18 +144,18 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
       Widget? prefix,
     }) => InputDecoration(
       labelText: label,
-      labelStyle: TextStyle(
+      labelStyle: AppTypography.caption.copyWith(
         color: bodyColor.withValues(alpha: 0.75),
         fontSize: 13,
         fontWeight: FontWeight.w600,
       ),
       hintText: hint,
-      hintStyle: TextStyle(
+      hintStyle: AppTypography.bodyMedium.copyWith(
         color: bodyColor.withValues(alpha: 0.4),
         fontSize: 14,
       ),
       suffixText: suffix,
-      suffixStyle: TextStyle(
+      suffixStyle: AppTypography.caption.copyWith(
         color: bodyColor.withValues(alpha: 0.6),
         fontSize: 13,
       ),
@@ -169,7 +170,10 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
       errorBorder: underlineErr,
       focusedErrorBorder: underlineErr,
       contentPadding: const EdgeInsets.only(bottom: 8, top: 4),
-      errorStyle: const TextStyle(fontSize: 11, color: AppColors.sosEmergency),
+      errorStyle: AppTypography.captionSmall.copyWith(
+        fontSize: 11,
+        color: AppColors.sosEmergency,
+      ),
       isDense: true,
     );
 
@@ -187,8 +191,8 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'EDIT ROOM',
-              style: TextStyle(
+              context.tr('room.editRoom').toUpperCase(),
+              style: AppTypography.caption.copyWith(
                 color: isDark ? AppColors.goldLight : AppColors.espressoDark,
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
@@ -196,8 +200,8 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
               ),
             ),
             Text(
-              room?.name ?? 'Edit Room',
-              style: TextStyle(
+              room?.name ?? context.tr('room.editRoom'),
+              style: AppTypography.titleMedium.copyWith(
                 color: headingColor,
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
@@ -250,20 +254,20 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
               controller: _nameController,
               inputFormatters: [LengthLimitingTextInputFormatter(100)],
               enabled: !_isSaving,
-              style: TextStyle(
+              style: AppTypography.bodyMedium.copyWith(
                 color: headingColor,
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
               ),
               decoration: dec(
                 label: context.tr('room.roomNameField'),
-                hint: 'Contoh: Rombongan Maktab 48 Kloter 12',
+                hint: context.tr('room.sampleRoomName'),
                 prefix: const Icon(Icons.meeting_room_outlined, size: 20),
               ),
               validator: (v) => (v == null || v.trim().isEmpty)
-                  ? 'Nama room tidak boleh kosong'
+                  ? context.tr('room.emptyRoomName')
                   : v.trim().length > 100
-                  ? 'Nama room maksimal 100 karakter'
+                  ? context.tr('room.nameMax100')
                   : null,
             ),
             const SizedBox(height: 24),
@@ -277,13 +281,13 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
                     controller: _maktabController,
                     inputFormatters: [LengthLimitingTextInputFormatter(60)],
                     enabled: !_isSaving,
-                    style: TextStyle(
+                    style: AppTypography.bodyMedium.copyWith(
                       color: headingColor,
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                     ),
                     decoration: dec(
-                      label: context.tr('maktabLabelShort'),
+                      label: context.tr('room.maktab'),
                       hint: '48',
                       prefix: const Icon(Icons.apartment_rounded, size: 19),
                     ),
@@ -295,13 +299,13 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
                     controller: _kloterController,
                     inputFormatters: [LengthLimitingTextInputFormatter(60)],
                     enabled: !_isSaving,
-                    style: TextStyle(
+                    style: AppTypography.bodyMedium.copyWith(
                       color: headingColor,
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                     ),
                     decoration: dec(
-                      label: context.tr('kloterLabelShort'),
+                      label: context.tr('room.kloter'),
                       hint: '14 JKS',
                       prefix: const Icon(
                         Icons.flight_takeoff_rounded,
@@ -324,7 +328,7 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
               ],
-              style: TextStyle(
+              style: AppTypography.bodyMedium.copyWith(
                 color: headingColor,
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -337,14 +341,11 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
               ),
               validator: (v) {
                 if (v == null || v.trim().isEmpty) {
-                  return 'Radius aman wajib diisi';
+                  return context.tr('room.safeRadiusRequired');
                 }
                 final n = double.tryParse(v.trim());
-                if (n == null || n <= 0) {
-                  return 'Masukkan angka positif lebih dari 0';
-                }
-                if (n > 10000) {
-                  return 'Radius aman maksimal 10.000 meter';
+                if (n == null || n <= 0 || n > 10000) {
+                  return context.tr('room.safeRadiusInvalidRange');
                 }
                 return null;
               },
@@ -369,7 +370,7 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
                     Flexible(
                       child: Text(
                         _errorMessage!,
-                        style: const TextStyle(
+                        style: AppTypography.caption.copyWith(
                           fontSize: 12,
                           color: AppColors.sosEmergency,
                           fontWeight: FontWeight.w500,
@@ -419,9 +420,9 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
                               : AppColors.surfaceWhite,
                         ),
                       )
-                    : const Text(
-                        'SIMPAN PERUBAHAN',
-                        style: TextStyle(
+                    : Text(
+                        context.tr('common.save'),
+                        style: AppTypography.button.copyWith(
                           fontWeight: FontWeight.w800,
                           fontSize: 14,
                           letterSpacing: 1.5,

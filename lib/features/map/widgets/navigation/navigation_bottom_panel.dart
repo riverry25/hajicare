@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../core/locales/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -42,14 +43,14 @@ class NavigationBottomPanel extends StatelessWidget {
     return 1;
   }
 
-  String _getStatusPillLabel(int activeStep) {
+  String _getStatusPillLabel(int activeStep, BuildContext context) {
     switch (activeStep) {
       case 3:
-        return 'Telah Sampai di Tujuan';
+        return context.tr('maps.arrivedAtDestination');
       case 2:
-        return 'Mendekati Tujuan';
+        return context.tr('maps.approachingDestination');
       default:
-        return 'Sedang Menuju Lokasi';
+        return context.tr('maps.headingToDestination');
     }
   }
 
@@ -91,7 +92,7 @@ class NavigationBottomPanel extends StatelessWidget {
         final remDuration = mapCtrl.remainingNavDuration.value;
         final destTitle = mapCtrl.destinationTitle.value.isNotEmpty
             ? mapCtrl.destinationTitle.value
-            : 'Tujuan Anda';
+            : context.tr('maps.yourDestination');
 
         final durationText = _formatDurationMinutes(remDuration);
         final distanceText = remDistance != null
@@ -99,7 +100,7 @@ class NavigationBottomPanel extends StatelessWidget {
             : '-- m';
         final arrivalClock = _formatEtaClock(remDuration);
         final activeStep = _getCurrentStep(remDistance);
-        final statusLabel = _getStatusPillLabel(activeStep);
+        final statusLabel = _getStatusPillLabel(activeStep, context);
         final destIcon = _getDestinationIcon();
         final destColor = _getDestinationColor();
 
@@ -274,7 +275,9 @@ class NavigationBottomPanel extends StatelessWidget {
                             ),
                             const SizedBox(height: 3),
                             Text(
-                              '$durationText tersisa · Jalur pejalan kaki',
+                              context.tr('maps.remainingTimeWalking', {
+                                'time': durationText,
+                              }),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: AppTypography.captionSmall.copyWith(
@@ -348,7 +351,7 @@ class NavigationBottomPanel extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'Keluar Navigasi',
+                                  context.tr('maps.exitNavigation'),
                                   style: AppTypography.button.copyWith(
                                     color: isDark
                                         ? const Color(0xFFFCA5A5)
@@ -401,10 +404,16 @@ class NavigationBottomPanel extends StatelessWidget {
   Widget _buildMilestoneStepper(BuildContext context, int activeStep) {
     final isDark = AppColors.isDark(context);
     final steps = [
-      {'title': 'Mulai', 'icon': Icons.flag_rounded},
-      {'title': 'Di Jalan', 'icon': Icons.directions_walk_rounded},
-      {'title': 'Mendekat', 'icon': Icons.near_me_rounded},
-      {'title': 'Sampai', 'icon': Icons.place_rounded},
+      {'title': context.tr('maps.stepStart'), 'icon': Icons.flag_rounded},
+      {
+        'title': context.tr('maps.stepOnTheWay'),
+        'icon': Icons.directions_walk_rounded,
+      },
+      {
+        'title': context.tr('maps.stepApproaching'),
+        'icon': Icons.near_me_rounded,
+      },
+      {'title': context.tr('maps.stepArrived'), 'icon': Icons.place_rounded},
     ];
 
     return Row(
@@ -510,11 +519,10 @@ class NavigationBottomPanel extends StatelessWidget {
   void _confirmExit(BuildContext context) {
     AppDialog.confirm(
       context: context,
-      title: 'Keluar dari Navigasi?',
-      message:
-          'Apakah Anda ingin menghentikan mode panduan navigasi dan kembali ke tampilan peta biasa?',
-      confirmText: 'Keluar',
-      cancelText: 'Lanjutkan',
+      title: context.tr('maps.exitNavTitle'),
+      message: context.tr('maps.exitNavConfirm'),
+      confirmText: context.tr('maps.exitAction'),
+      cancelText: context.tr('maps.continueAction'),
       confirmColor: AppColors.sosEmergency,
       isDestructive: true,
       icon: Icons.close_rounded,

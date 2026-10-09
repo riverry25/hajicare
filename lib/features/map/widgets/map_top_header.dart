@@ -209,7 +209,7 @@ class _MapTopHeaderState extends State<MapTopHeader> {
           Text(
             widget.gpsAccuracy > 0
                 ? 'GPS ±${widget.gpsAccuracy.round()}m'
-                : 'GPS Aktif',
+                : context.tr('maps.gpsActive'),
             style: TextStyle(
               color: isDark ? Colors.white : const Color(0xFF3C4043),
               fontWeight: FontWeight.w700,
@@ -228,7 +228,7 @@ class _MapTopHeaderState extends State<MapTopHeader> {
         ? widget.nearestInfo!
         : (widget.memberSummary != null && widget.memberSummary!.isNotEmpty
               ? widget.memberSummary!.split('·').first.trim()
-              : 'Terhubung');
+              : context.tr('room.connected'));
 
     return Material(
       color: Colors.transparent,
@@ -353,7 +353,9 @@ class _MapTopHeaderState extends State<MapTopHeader> {
               const SizedBox(width: 4),
               Text(
                 hasActiveSos
-                    ? (activeCount > 0 ? 'SOS ($activeCount)' : 'SOS AKTIF')
+                    ? (activeCount > 0
+                          ? 'SOS ($activeCount)'
+                          : 'SOS ${context.tr("sosActiveBadge")}')
                     : 'SOS',
                 style: TextStyle(
                   color: hasActiveSos ? Colors.white : Colors.white70,
@@ -374,12 +376,12 @@ class _MapTopHeaderState extends State<MapTopHeader> {
   // ===========================================================================
 
   Widget _buildSearchBar(BuildContext context, bool isDark) {
-    String displayName = 'Jamaah';
+    String displayName = context.tr('maps.pilgrims');
     String? photoUrl;
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        displayName = user.displayName ?? 'Jamaah';
+        displayName = user.displayName ?? context.tr('maps.pilgrims');
         photoUrl = user.photoURL;
       }
     } catch (_) {}
@@ -475,7 +477,7 @@ class _MapTopHeaderState extends State<MapTopHeader> {
               splashRadius: 18,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-              tooltip: 'Hapus Pencarian',
+              tooltip: context.tr('maps.clearSearch'),
               onPressed: () {
                 _effectiveSearchCtrl.clear();
                 widget.onClearSearch?.call();
@@ -493,7 +495,7 @@ class _MapTopHeaderState extends State<MapTopHeader> {
             splashRadius: 18,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-            tooltip: 'Pencarian Suara',
+            tooltip: context.tr('maps.voiceSearchTitle'),
             onPressed: () async {
               final voiceQuery = await MapVoiceSearchSheet.show(context);
               if (voiceQuery != null && voiceQuery.trim().isNotEmpty) {

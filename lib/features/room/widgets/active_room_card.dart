@@ -47,7 +47,10 @@ class ActiveRoomCard extends StatelessWidget {
 
       final hasRoom = roomId != null && roomId.isNotEmpty;
       final roomName =
-          room?.name ?? (hasRoom ? 'Room Pemantauan' : 'Belum Ada Room');
+          room?.name ??
+          (hasRoom
+              ? context.tr('dashboard.monitoringRoom')
+              : context.tr('dashboard.noRoomYet'));
       final roomCode = room?.code ?? '';
 
       // ── Unconnected State (Belum Memiliki Room) ───────────────────────────
@@ -105,8 +108,8 @@ class ActiveRoomCard extends StatelessWidget {
                       children: [
                         Text(
                           isPendamping
-                              ? 'Belum Ada Room Aktif'
-                              : 'Belum Terhubung ke Room',
+                              ? context.tr('dashboard.noActiveRoomYet')
+                              : context.tr('dashboard.notConnectedToRoom'),
                           style: TextStyle(
                             color: headingColor,
                             fontSize: 16,
@@ -116,8 +119,8 @@ class ActiveRoomCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           isPendamping
-                              ? 'Buat room baru atau gabung ke room yang sudah ada untuk memantau radar posisi jamaah.'
-                              : 'Gabung room untuk mengaktifkan pemantauan lokasi pendamping dan darurat SOS.',
+                              ? context.tr('dashboard.companionNoRoomDesc')
+                              : context.tr('dashboard.jamaahNoRoomDesc'),
                           style: TextStyle(
                             color: bodyColor,
                             fontSize: 12,
@@ -137,9 +140,9 @@ class ActiveRoomCard extends StatelessWidget {
                       child: OutlinedButton.icon(
                         onPressed: () => Get.toNamed('/join_room'),
                         icon: const Icon(Icons.login_rounded, size: 16),
-                        label: const Text(
-                          'Gabung Room',
-                          style: TextStyle(
+                        label: Text(
+                          context.tr('room.joinRoomTitle'),
+                          style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
@@ -161,9 +164,9 @@ class ActiveRoomCard extends StatelessWidget {
                       child: ElevatedButton.icon(
                         onPressed: () => Get.toNamed('/join_room'),
                         icon: const Icon(Icons.add_business_rounded, size: 16),
-                        label: const Text(
-                          'Buat Room',
-                          style: TextStyle(
+                        label: Text(
+                          context.tr('room.createRoomTitle'),
+                          style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
@@ -189,9 +192,9 @@ class ActiveRoomCard extends StatelessWidget {
                   child: ElevatedButton.icon(
                     onPressed: () => Get.toNamed('/join_room'),
                     icon: const Icon(Icons.login_rounded, size: 16),
-                    label: const Text(
-                      'Gabung Room Monitoring',
-                      style: TextStyle(
+                    label: Text(
+                      context.tr('dashboard.joinMonitoringRoom'),
+                      style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
                       ),
@@ -277,7 +280,7 @@ class ActiveRoomCard extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Kamar & Maktab',
+                                  context.tr('dashboard.roomAndMaktab'),
                                   style: TextStyle(
                                     color: isDark
                                         ? Colors.white60
@@ -327,7 +330,7 @@ class ActiveRoomCard extends StatelessWidget {
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                       child: Text(
-                                        'Aktif',
+                                        context.tr('room.active'),
                                         style: TextStyle(
                                           color: isDark
                                               ? AppColors.goldLight
@@ -367,7 +370,7 @@ class ActiveRoomCard extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Pendamping Maktab',
+                                  context.tr('dashboard.maktabCompanion'),
                                   style: TextStyle(
                                     color: isDark
                                         ? Colors.white60
@@ -391,7 +394,9 @@ class ActiveRoomCard extends StatelessWidget {
                                       child: Text(
                                         state.pendampingName.value.isNotEmpty
                                             ? state.pendampingName.value
-                                            : 'Petugas Maktab',
+                                            : context.tr(
+                                                'dashboard.maktabOfficer',
+                                              ),
                                         style: TextStyle(
                                           color: headingColor,
                                           fontSize: 15,
@@ -414,9 +419,9 @@ class ActiveRoomCard extends StatelessWidget {
                                         ),
                                         borderRadius: BorderRadius.circular(4),
                                       ),
-                                      child: const Text(
-                                        'Siaga',
-                                        style: TextStyle(
+                                      child: Text(
+                                        context.tr('dashboard.standby'),
+                                        style: const TextStyle(
                                           color: AppColors.statusSafe,
                                           fontSize: 10,
                                           fontWeight: FontWeight.w700,
@@ -480,7 +485,9 @@ class ActiveRoomCard extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  isPendamping ? 'Jamaah' : 'Anggota',
+                                  isPendamping
+                                      ? context.tr('room.roleJamaah')
+                                      : context.tr('dashboard.members'),
                                   style: TextStyle(
                                     color: isDark
                                         ? Colors.white60
@@ -519,7 +526,7 @@ class ActiveRoomCard extends StatelessWidget {
                             size: 17,
                           ),
                         ),
-                        tooltip: 'Pengaturan Room',
+                        tooltip: context.tr('room.groupSettingsBadge'),
                         padding: EdgeInsets.zero,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -548,7 +555,7 @@ class ActiveRoomCard extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 10),
                                 Text(
-                                  'Edit Room',
+                                  context.tr('room.editRoom'),
                                   style: TextStyle(
                                     color: headingColor,
                                     fontWeight: FontWeight.w600,
@@ -558,19 +565,19 @@ class ActiveRoomCard extends StatelessWidget {
                             ),
                           ),
                           const PopupMenuDivider(height: 8),
-                          const PopupMenuItem(
+                          PopupMenuItem(
                             value: 'delete',
                             child: Row(
                               children: [
-                                Icon(
+                                const Icon(
                                   Icons.delete_forever_rounded,
                                   size: 20,
                                   color: AppColors.sosEmergency,
                                 ),
-                                SizedBox(width: 10),
+                                const SizedBox(width: 10),
                                 Text(
-                                  'Hapus Room',
-                                  style: TextStyle(
+                                  context.tr('room.deleteRoom'),
+                                  style: const TextStyle(
                                     color: AppColors.sosEmergency,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -622,9 +629,9 @@ class ActiveRoomCard extends StatelessWidget {
                         roomCode: roomCode,
                       ),
                       icon: const Icon(Icons.people_alt_rounded, size: 16),
-                      label: const Text(
-                        'Daftar Jamaah',
-                        style: TextStyle(
+                      label: Text(
+                        context.tr('dashboard.pilgrimList'),
+                        style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
@@ -651,9 +658,9 @@ class ActiveRoomCard extends StatelessWidget {
                         Icons.person_add_alt_1_rounded,
                         size: 16,
                       ),
-                      label: const Text(
-                        'Undang Jamaah',
-                        style: TextStyle(
+                      label: Text(
+                        context.tr('room.invitePilgrimNow'),
+                        style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
@@ -685,9 +692,9 @@ class ActiveRoomCard extends StatelessWidget {
                         }
                       },
                       icon: const Icon(Icons.qr_code_2_rounded, size: 16),
-                      label: const Text(
-                        'QR Room',
-                        style: TextStyle(
+                      label: Text(
+                        context.tr('dashboard.qrRoom'),
+                        style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
@@ -714,9 +721,9 @@ class ActiveRoomCard extends StatelessWidget {
                         Get.toNamed(AppRoutes.roomDetail, arguments: room);
                       },
                       icon: const Icon(Icons.meeting_room_rounded, size: 16),
-                      label: const Text(
-                        'Detail Room',
-                        style: TextStyle(
+                      label: Text(
+                        context.tr('room.roomDetailTitle'),
+                        style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
@@ -813,14 +820,16 @@ class ActiveRoomCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Daftar Jamaah di Room',
+                          context.tr('dashboard.pilgrimsInRoom'),
                           style: AppTypography.titleMedium.copyWith(
                             color: headingColor,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         Text(
-                          '${jamaahList.length} Jamaah terdaftar • Ketuk untuk detail / kelola',
+                          context.tr('dashboard.pilgrimsRegisteredTapDetail', {
+                            'count': '${jamaahList.length}',
+                          }),
                           style: AppTypography.captionSmall.copyWith(
                             color: bodyColor,
                           ),
@@ -848,7 +857,7 @@ class ActiveRoomCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'Belum ada jamaah di room ini',
+                            context.tr('dashboard.noRegisteredPilgrims'),
                             style: AppTypography.bodyMedium.copyWith(
                               color: bodyColor,
                             ),
@@ -863,7 +872,7 @@ class ActiveRoomCard extends StatelessWidget {
                               Icons.person_add_alt_1_rounded,
                               size: 16,
                             ),
-                            label: const Text('Undang Jamaah Sekarang'),
+                            label: Text(context.tr('room.invitePilgrimNow')),
                           ),
                         ],
                       ),
@@ -1014,7 +1023,7 @@ class ActiveRoomCard extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Hapus Room?',
+                    context.tr('room.deleteRoomTitle'),
                     style: AppTypography.titleMedium.copyWith(
                       color: headingColor,
                       fontWeight: FontWeight.bold,
@@ -1028,15 +1037,9 @@ class ActiveRoomCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Apakah Anda yakin ingin menghapus Room "${room.name}" (${room.code})?',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: headingColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Semua Jamaah di dalam Room akan dikeluarkan dan akses mereka ke fitur Room akan dihentikan.',
+                  context.tr('room.deleteRoomDesc', {
+                    'name': '${room.name} (${room.code})',
+                  }),
                   style: AppTypography.bodySmall.copyWith(
                     color: bodyColor,
                     height: 1.4,
@@ -1050,7 +1053,7 @@ class ActiveRoomCard extends StatelessWidget {
                     ? null
                     : () => Navigator.of(dialogCtx).pop(),
                 child: Text(
-                  'Batal',
+                  context.tr('common.cancel'),
                   style: TextStyle(
                     color: bodyColor,
                     fontWeight: FontWeight.w600,
@@ -1079,8 +1082,9 @@ class ActiveRoomCard extends StatelessWidget {
                             AppAlert.success(
                               context,
                               title: context.tr('room.roomDeleted'),
-                              message:
-                                  'Rombongan "${room.name}" sudah dihapus.',
+                              message: context.tr('room.roomDeletedDesc', {
+                                'name': room.name,
+                              }),
                             );
                           }
                         } catch (e) {
@@ -1093,8 +1097,9 @@ class ActiveRoomCard extends StatelessWidget {
                               title: context.tr('room.deleteFailed'),
                               message: UserFeedbackMessage.from(
                                 e,
-                                fallback:
-                                    'Rombongan belum dapat dihapus. Silakan coba lagi.',
+                                fallback: context.tr(
+                                  'room.deleteFailedFallback',
+                                ),
                               ),
                             );
                           }
@@ -1111,7 +1116,7 @@ class ActiveRoomCard extends StatelessWidget {
                       )
                     : const Icon(Icons.delete_forever_rounded, size: 18),
                 label: Text(
-                  isDeleting ? 'Menghapus...' : 'Hapus Room',
+                  isDeleting ? '...' : context.tr('room.deleteRoom'),
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
@@ -1280,8 +1285,10 @@ class _RadarWaveStatisticWidgetState extends State<_RadarWaveStatisticWidget>
         : (widget.isDark ? const Color(0xFF34D399) : const Color(0xFF059669));
 
     final badgeText = isWarning
-        ? 'Di Luar Radius'
-        : '${effectiveRadius.round()} m Aman';
+        ? context.tr('dashboard.outOfRadiusBadge')
+        : context.tr('dashboard.metersSafeBadge', {
+            'meters': '${effectiveRadius.round()}',
+          });
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1302,7 +1309,7 @@ class _RadarWaveStatisticWidgetState extends State<_RadarWaveStatisticWidget>
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'Radius Radar',
+                  context.tr('room.radarRadius'),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,

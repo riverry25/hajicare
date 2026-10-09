@@ -783,9 +783,11 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                   elevation: 0,
                 ),
                 icon: const Icon(Icons.navigation_rounded, size: 18),
-                label: const Text(
-                  'Buat Rute ke Jamaah',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                label: Text(
+                  context.tr('sosCreateRoute'),
+                  style: AppTypography.button.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 onPressed: _openRoute,
               ),
@@ -809,9 +811,9 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     icon: const Icon(Icons.map_outlined, size: 16),
-                    label: const Text(
+                    label: Text(
                       'Google Maps',
-                      style: TextStyle(
+                      style: AppTypography.labelLarge.copyWith(
                         fontWeight: FontWeight.bold,
                         fontSize: 12.5,
                       ),
@@ -832,9 +834,9 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     icon: const Icon(Icons.check_circle_rounded, size: 16),
-                    label: const Text(
-                      'Selesaikan SOS',
-                      style: TextStyle(
+                    label: Text(
+                      context.tr('sosResolveAlert'),
+                      style: AppTypography.labelLarge.copyWith(
                         fontWeight: FontWeight.bold,
                         fontSize: 12.5,
                       ),
@@ -948,7 +950,7 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
               children: [
                 Text(
                   label,
-                  style: TextStyle(
+                  style: AppTypography.captionSmall.copyWith(
                     color: bodyColor.withValues(alpha: 0.7),
                     fontSize: 10,
                     fontWeight: FontWeight.w500,
@@ -957,7 +959,7 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                 const SizedBox(height: 1),
                 Text(
                   value,
-                  style: TextStyle(
+                  style: AppTypography.bodySmall.copyWith(
                     color: headingColor,
                     fontWeight: FontWeight.w700,
                     fontSize: compact ? 12 : 12.5,

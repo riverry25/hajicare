@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:ultralytics_yolo/ultralytics_yolo.dart';
 
+import '../../../core/utils/app_logger.dart';
 import '../models/bisindo_prediction.dart';
 
 /// Dedicated service for YOLO SIBI & BISINDO Alphabet recognition.
@@ -159,7 +160,10 @@ class BisindoYoloService {
               (c) => '${c.label}: ${(c.confidence * 100).toStringAsFixed(1)}%',
             )
             .join(', ');
-        debugPrint('[SIGN_LANGUAGE][YOLO] Detected: $resolvedLabel ($summary)');
+        AppLogger.debug(
+          'Detected: $resolvedLabel ($summary)',
+          tag: 'SignLanguageYolo',
+        );
       }
     }
 

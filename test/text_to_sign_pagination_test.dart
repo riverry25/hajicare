@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:hajicare/core/locales/app_localizations.dart';
 import 'package:hajicare/features/sign_language/controllers/text_to_sign_controller.dart';
 import 'package:hajicare/features/sign_language/models/sign_video_entry.dart';
 import 'package:hajicare/features/sign_language/screens/text_to_sign_screen.dart';
@@ -266,7 +268,23 @@ void main() {
         controller.currentVocabPage.value = 1;
         Get.put<TextToSignController>(controller);
 
-        await tester.pumpWidget(const GetMaterialApp(home: TextToSignScreen()));
+        await tester.pumpWidget(
+          GetMaterialApp(
+            translations: AppTranslations(),
+            locale: const Locale('id'),
+            supportedLocales: AppTranslations.supportedLocales,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              FallbackMaterialLocalizationsDelegate(),
+              FallbackCupertinoLocalizationsDelegate(),
+              FallbackWidgetsLocalizationsDelegate(),
+            ],
+            home: const TextToSignScreen(),
+          ),
+        );
         await tester.pump(const Duration(seconds: 1));
         controller.isLoadingVideos.value = false;
         controller.availableVideos.assignAll(dummyList);
@@ -283,6 +301,8 @@ void main() {
         // Click next page button
         final nextButton = find.byTooltip('Halaman Berikutnya');
         expect(nextButton, findsOneWidget);
+        await tester.ensureVisible(nextButton);
+        await tester.pump(const Duration(milliseconds: 300));
         await tester.tap(nextButton);
         await tester.pump(const Duration(milliseconds: 300));
 

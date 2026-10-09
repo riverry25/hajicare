@@ -139,9 +139,12 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
         foregroundColor: isDark ? AppColors.darkOnPrimary : Colors.white,
         elevation: 3,
         icon: const Icon(Icons.add_rounded, size: 22),
-        label: const Text(
-          'Buat Room Baru',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+        label: Text(
+          context.tr('room.createRoomTitle'),
+          style: AppTypography.button.copyWith(
+            fontWeight: FontWeight.bold,
+            fontSize: 13.5,
+          ),
         ),
       ),
       body: RefreshIndicator(
@@ -941,9 +944,11 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                   ),
                 ),
                 icon: const Icon(Icons.refresh_rounded, size: 16),
-                label: const Text(
-                  'Reset Filter & Pencarian',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                label: Text(
+                  context.tr('room.resetFilterSearch'),
+                  style: AppTypography.button.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 onPressed: () {
                   HapticFeedback.lightImpact();
@@ -969,9 +974,11 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
                   elevation: 2,
                 ),
                 icon: const Icon(Icons.add_rounded, size: 20),
-                label: const Text(
-                  'Buat Room Baru',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                label: Text(
+                  context.tr('room.createRoomTitle'),
+                  style: AppTypography.button.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 onPressed: () => _showCreateRoomSheet(context, controller),
               ),
@@ -1760,8 +1767,8 @@ class _RoomManagementCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Kode Room',
-                              style: TextStyle(
+                              context.tr('room.roomCode'),
+                              style: AppTypography.captionSmall.copyWith(
                                 color: bodyColor.withValues(alpha: 0.7),
                                 fontSize: 10,
                                 fontWeight: FontWeight.w500,
@@ -1769,7 +1776,7 @@ class _RoomManagementCard extends StatelessWidget {
                             ),
                             Text(
                               room.code,
-                              style: TextStyle(
+                              style: AppTypography.titleMedium.copyWith(
                                 color: headingColor,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: 2.0,
@@ -1827,8 +1834,9 @@ class _RoomManagementCard extends StatelessWidget {
                           AppAlert.success(
                             context,
                             title: context.tr('room.codeCopied'),
-                            message:
-                                'Kode rombongan "${room.code}" sudah disalin.',
+                            message: context.tr('room.codeCopiedMsg', {
+                              'code': room.code,
+                            }),
                           );
                         },
                         borderRadius: BorderRadius.circular(8),
@@ -1856,10 +1864,9 @@ class _RoomManagementCard extends StatelessWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                'Salin',
-                                style: TextStyle(
+                                context.tr('room.copyCode'),
+                                style: AppTypography.captionSmall.copyWith(
                                   color: primaryColor,
-                                  fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),

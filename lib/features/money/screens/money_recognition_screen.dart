@@ -9,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/app_logger.dart';
 import '../models/currency_code.dart';
 import '../models/money_detection.dart';
 import '../services/currency_rate_service.dart';
@@ -119,9 +120,10 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
       );
 
       if (loaded) {
-        debugPrint('[MoneyAI] Multi-currency model ready ✅');
-        debugPrint('[MoneyAI] model = $_modelAssetPath');
-        debugPrint('[MoneyAI] labels = 32 (SAR, IDR, USD)');
+        AppLogger.info(
+          'Multi-currency model ready ($_modelAssetPath)',
+          tag: 'MoneyAI',
+        );
       }
 
       if (mounted) {
@@ -130,7 +132,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
         });
       }
     } catch (e) {
-      debugPrint('[MoneyAI] Failed to load YOLO model: $e');
+      AppLogger.error('Failed to load YOLO model: $e', tag: 'MoneyAI');
       if (mounted) {
         setState(() {
           _modelError =

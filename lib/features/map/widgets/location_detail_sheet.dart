@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/locales/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -203,7 +204,7 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
   Widget build(BuildContext context) {
     final formattedDistance = distanceMeters != null
         ? DistanceFormatter.format(distanceMeters)
-        : 'Aktifkan GPS untuk melihat jarak';
+        : context.tr('maps.enableGpsForDistance');
 
     final isDark = AppColors.isDark(context);
     final opacity = (1.0 - (_dragOffset / 280.0)).clamp(0.0, 1.0);
@@ -419,15 +420,27 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                                   color: AppColors.goldPrimary,
                                 ),
                                 const SizedBox(width: 4),
-                                Text(
-                                  distanceMeters != null
-                                      ? '~${math.max(1, (distanceMeters! / 70).ceil())} mnt jalan kaki · $formattedDistance'
-                                      : formattedDistance,
-                                  style: AppTypography.captionSmall.copyWith(
-                                    color: isDark
-                                        ? AppColors.goldPrimary
-                                        : AppColors.espressoDark,
-                                    fontWeight: FontWeight.w800,
+                                Flexible(
+                                  child: Text(
+                                    distanceMeters != null
+                                        ? context.tr('maps.walkingTimeFormat', {
+                                            'min': math
+                                                .max(
+                                                  1,
+                                                  (distanceMeters! / 70).ceil(),
+                                                )
+                                                .toString(),
+                                            'dist': formattedDistance,
+                                          })
+                                        : formattedDistance,
+                                    style: AppTypography.captionSmall.copyWith(
+                                      color: isDark
+                                          ? AppColors.goldPrimary
+                                          : AppColors.espressoDark,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],
@@ -519,7 +532,7 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                         if (poi.website != null)
                           _buildMetadata(
                             Icons.language_rounded,
-                            'Situs tersedia',
+                            context.tr('maps.websiteAvailable'),
                             isDark,
                           ),
                       ],
@@ -543,9 +556,9 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                                 widget.onCenterOnDestination ??
                                 () => _dismissWithAnimation(),
                             icon: const Icon(Icons.map_outlined, size: 16),
-                            label: const Text(
-                              'Lihat di Peta',
-                              style: TextStyle(
+                            label: Text(
+                              context.tr('maps.viewOnMap'),
+                              style: const TextStyle(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -584,9 +597,9 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                               Icons.open_in_new_rounded,
                               size: 16,
                             ),
-                            label: const Text(
-                              'Buka di Google Maps',
-                              style: TextStyle(
+                            label: Text(
+                              context.tr('maps.openInGoogleMaps'),
+                              style: const TextStyle(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -623,7 +636,7 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                       icon: Icons.directions_walk_rounded,
                       text:
                           '${DistanceFormatter.format(widget.routeDistanceMeters)}'
-                          '${widget.routeDurationSeconds == null ? '' : ' · ${(widget.routeDurationSeconds! / 60).ceil()} menit'}',
+                          '${widget.routeDurationSeconds == null ? '' : ' · ${context.tr("maps.minutesDuration", {"min": (widget.routeDurationSeconds! / 60).ceil().toString()})}'}',
                       color: AppColors.statusSafe,
                       isDark: isDark,
                     ),
@@ -660,10 +673,10 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                                   ),
                             label: Text(
                               widget.isRouteLoading
-                                  ? 'Mencari Rute…'
+                                  ? context.tr('maps.findingRoute')
                                   : (widget.routeDistanceMeters != null
-                                        ? 'Mulai Navigasi'
-                                        : 'Rute'),
+                                        ? context.tr('maps.startNavigation')
+                                        : context.tr('maps.routeAction')),
                               style: AppTypography.labelLarge.copyWith(
                                 color: (widget.routeDistanceMeters != null)
                                     ? Colors.white
@@ -721,7 +734,7 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                                   : AppColors.espressoDark,
                             ),
                             label: Text(
-                              'Bagikan',
+                              context.tr('maps.shareLocation'),
                               style: AppTypography.labelLarge.copyWith(
                                 color: isDark
                                     ? AppColors.darkTextHeading

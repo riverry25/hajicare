@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
+import '../../../core/locales/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -99,7 +100,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            'Ketik Kalimat atau Pilih Kata',
+            context.tr('sign.emptyPlayerTitle'),
             style: AppTypography.titleMedium.copyWith(
               color: headingColor,
               fontWeight: FontWeight.bold,
@@ -108,7 +109,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'Penerjemah akan menampilkan video peragaan bahasa isyarat SIBI atau BISINDO secara nyata.',
+            context.tr('sign.emptyPlayerSub'),
             style: AppTypography.bodySmall.copyWith(color: bodyColor),
             textAlign: TextAlign.center,
           ),
@@ -164,18 +165,24 @@ class SignVideoPlayerWidget extends StatelessWidget {
                         color: headingColor,
                         fontWeight: FontWeight.bold,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Video berada di cloud (${entry.category.toUpperCase()})',
+                      context.tr('sign.videoInCloud', {
+                        'category': entry.category.toUpperCase(),
+                      }),
                       style: AppTypography.captionSmall.copyWith(
                         color: AppColors.textMuted,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
-              _buildSourceBadge(entry.source),
+              _buildSourceBadge(context, entry.source),
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -203,7 +210,9 @@ class SignVideoPlayerWidget extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
-                    'Mengunduh video ${(progress * 100).toInt()}%...',
+                    context.tr('sign.downloadingProgress', {
+                      'percent': '${(progress * 100).toInt()}',
+                    }),
                     style: AppTypography.bodySmall.copyWith(
                       color: AppColors.goldPrimary,
                       fontWeight: FontWeight.w600,
@@ -219,7 +228,11 @@ class SignVideoPlayerWidget extends StatelessWidget {
               child: ElevatedButton.icon(
                 onPressed: () => controller.downloadAndPlay(entry),
                 icon: const Icon(Icons.download_rounded),
-                label: const Text('Unduh Video untuk Offline'),
+                label: Text(
+                  context.tr('sign.downloadVideoForOffline'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryContainer,
                   foregroundColor: Colors.white,
@@ -253,13 +266,18 @@ class SignVideoPlayerWidget extends StatelessWidget {
           color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
         ),
       ),
-      child: const Center(
+      child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(color: AppColors.goldPrimary),
-            SizedBox(height: AppSpacing.md),
-            Text('Menyiapkan pemutar video...'),
+            const CircularProgressIndicator(color: AppColors.goldPrimary),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              context.tr('sign.preparingVideoPlayer'),
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textSecondaryColor(context),
+              ),
+            ),
           ],
         ),
       ),
@@ -384,7 +402,9 @@ class SignVideoPlayerWidget extends StatelessWidget {
                         size: 28,
                       ),
                       onPressed: controller.togglePlayPause,
-                      tooltip: isPlaying ? 'Jeda' : 'Putar',
+                      tooltip: isPlaying
+                          ? context.tr('sign.pause')
+                          : context.tr('sign.play'),
                     ),
                     IconButton(
                       icon: Icon(
@@ -393,7 +413,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
                         size: 22,
                       ),
                       onPressed: controller.replay,
-                      tooltip: 'Ulangi Video',
+                      tooltip: context.tr('sign.replay'),
                     ),
                     const Spacer(),
 
@@ -428,18 +448,25 @@ class SignVideoPlayerWidget extends StatelessWidget {
                           color: headingColor,
                           fontWeight: FontWeight.bold,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Bahasa: ${entry.language.toUpperCase()} • Kategori: ${entry.category.toUpperCase()}',
+                        context.tr('sign.langCategoryMeta', {
+                          'lang': entry.language.toUpperCase(),
+                          'category': entry.category.toUpperCase(),
+                        }),
                         style: AppTypography.captionSmall.copyWith(
                           color: AppColors.textMuted,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
                 ),
-                _buildSourceBadge(entry.source),
+                _buildSourceBadge(context, entry.source),
               ],
             ),
           ),
@@ -450,7 +477,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
 
   // ── BADGE STATUS ───────────────────────────────────────────────────────────
 
-  Widget _buildSourceBadge(SignVideoSource source) {
+  Widget _buildSourceBadge(BuildContext context, SignVideoSource source) {
     Color bg;
     Color fg;
     IconData icon;
@@ -484,17 +511,32 @@ class SignVideoPlayerWidget extends StatelessWidget {
         children: [
           Icon(icon, size: 14, color: fg),
           const SizedBox(width: 4),
-          Text(
-            source.displayName,
-            style: AppTypography.captionSmall.copyWith(
-              color: fg,
-              fontWeight: FontWeight.bold,
-              fontSize: 10,
+          Flexible(
+            child: Text(
+              _localizedSource(context, source),
+              style: AppTypography.captionSmall.copyWith(
+                color: fg,
+                fontWeight: FontWeight.bold,
+                fontSize: 10,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
       ),
     );
+  }
+
+  String _localizedSource(BuildContext context, SignVideoSource source) {
+    switch (source) {
+      case SignVideoSource.asset:
+        return context.tr('sign.sourceAsset');
+      case SignVideoSource.localCached:
+        return context.tr('sign.sourceLocalCached');
+      case SignVideoSource.remote:
+        return context.tr('sign.sourceRemote');
+    }
   }
 
   String _formatDuration(Duration d) {

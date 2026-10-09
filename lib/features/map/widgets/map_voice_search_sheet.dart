@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import '../../../../core/locales/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -41,7 +42,7 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
   bool _speechEnabled = false;
   bool _isListening = false;
   String _recognizedWords = '';
-  String _statusMessage = 'Menyiapkan mikrofon...';
+  String _statusMessage = '';
   double _soundLevel = 0.0;
 
   late AnimationController _pulseController;
@@ -88,15 +89,15 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
           if (status == 'listening') {
             setState(() {
               _isListening = true;
-              _statusMessage = 'Mendengarkan... Silakan bicara';
+              _statusMessage = context.tr('maps.voiceListeningPrompt');
             });
           } else if (status == 'notListening' || status == 'done') {
             setState(() {
               _isListening = false;
               if (_recognizedWords.isNotEmpty) {
-                _statusMessage = 'Selesai mendengarkan';
+                _statusMessage = context.tr('maps.voiceDoneListening');
               } else {
-                _statusMessage = 'Ketuk ikon mikrofon untuk berbicara lagi';
+                _statusMessage = context.tr('maps.voiceTapToSpeak');
               }
             });
           }
@@ -107,8 +108,8 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
             _isListening = false;
             _statusMessage =
                 errorNotification.errorMsg.contains('error_no_match')
-                ? 'Suara tidak terdeteksi. Coba lagi atau pilih rekomendasi.'
-                : 'Mikrofon siap. Ketuk untuk mencoba lagi.';
+                ? context.tr('maps.voiceNoMatch')
+                : context.tr('maps.voiceReady');
           });
         },
       );
@@ -119,8 +120,7 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
           _startListening();
         } else {
           setState(() {
-            _statusMessage =
-                'Izin mikrofon diperlukan atau layanan suara tidak tersedia.';
+            _statusMessage = context.tr('maps.voicePermissionRequired');
           });
         }
       }
@@ -128,8 +128,7 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
       if (mounted) {
         setState(() {
           _speechEnabled = false;
-          _statusMessage =
-              'Layanan suara offline. Anda bisa menggunakan saran cepat di bawah.';
+          _statusMessage = context.tr('maps.voiceOffline');
         });
       }
     }
@@ -145,7 +144,7 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
     setState(() {
       _recognizedWords = '';
       _isListening = true;
-      _statusMessage = 'Mendengarkan... Silakan bicara';
+      _statusMessage = context.tr('maps.voiceListeningPrompt');
     });
 
     try {
@@ -254,7 +253,7 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
                     Icon(Icons.mic_rounded, color: primaryColor, size: 22),
                     const SizedBox(width: 8),
                     Text(
-                      'Pencarian Suara',
+                      context.tr('maps.voiceSearchTitle'),
                       style: AppTypography.titleMedium.copyWith(
                         color: headingColor,
                         fontWeight: FontWeight.bold,
@@ -265,7 +264,7 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
                 IconButton(
                   icon: const Icon(Icons.close_rounded, size: 22),
                   color: bodyColor,
-                  tooltip: 'Tutup',
+                  tooltip: context.tr('common.close'),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
@@ -274,7 +273,9 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
 
             // Live status prompt
             Text(
-              _statusMessage,
+              _statusMessage.isNotEmpty
+                  ? _statusMessage
+                  : context.tr('maps.voicePreparingMic'),
               textAlign: TextAlign.center,
               style: AppTypography.bodySmall.copyWith(
                 color: _isListening
@@ -389,8 +390,8 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
                       _recognizedWords.isNotEmpty
                           ? '"$_recognizedWords"'
                           : (_isListening
-                                ? 'Katakan nama lokasi...'
-                                : 'Ketuk mic di atas atau pilih saran cepat di bawah'),
+                                ? context.tr('maps.voiceSayLocation')
+                                : context.tr('maps.voiceTapOrSelect')),
                       textAlign: TextAlign.center,
                       style: AppTypography.bodyMedium.copyWith(
                         color: _recognizedWords.isNotEmpty
@@ -413,7 +414,7 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
                         Icons.arrow_forward_rounded,
                         color: primaryColor,
                       ),
-                      tooltip: 'Cari Sekarang',
+                      tooltip: context.tr('maps.voiceSearchNow'),
                       onPressed: () => _submitRecognized(_recognizedWords),
                     ),
                   ],
@@ -426,7 +427,7 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                'Saran Pencarian Cepat:',
+                context.tr('maps.voiceQuickSuggestions'),
                 style: AppTypography.captionSmall.copyWith(
                   color: bodyColor.withValues(alpha: 0.8),
                   fontWeight: FontWeight.bold,

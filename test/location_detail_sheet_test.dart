@@ -1,10 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hajicare/core/locales/app_localizations.dart';
 import 'package:hajicare/features/map/models/map_poi.dart';
 import 'package:hajicare/features/map/widgets/location_detail_sheet.dart';
 import 'package:latlong2/latlong.dart';
 
 void main() {
+  Widget buildTestApp({required Widget child}) {
+    return MaterialApp(
+      locale: const Locale('id'),
+      supportedLocales: AppTranslations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        FallbackMaterialLocalizationsDelegate(),
+        FallbackCupertinoLocalizationsDelegate(),
+        FallbackWidgetsLocalizationsDelegate(),
+      ],
+      home: Scaffold(body: child),
+    );
+  }
+
   final poi = MapPoi(
     id: 'osm_node_42',
     name: 'Hotel Dinamis',
@@ -27,16 +46,14 @@ void main() {
     var routeTaps = 0;
     var shareTaps = 0;
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: Align(
-            alignment: Alignment.bottomCenter,
-            child: LocationDetailSheet(
-              poi: poi,
-              distanceMeters: 350,
-              onRoute: () => routeTaps++,
-              onShare: () => shareTaps++,
-            ),
+      buildTestApp(
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: LocationDetailSheet(
+            poi: poi,
+            distanceMeters: 350,
+            onRoute: () => routeTaps++,
+            onShare: () => shareTaps++,
           ),
         ),
       ),
@@ -60,15 +77,13 @@ void main() {
   ) async {
     var routeTaps = 0;
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: Align(
-            alignment: Alignment.bottomCenter,
-            child: LocationDetailSheet(
-              poi: poi,
-              isRouteLoading: true,
-              onRoute: () => routeTaps++,
-            ),
+      buildTestApp(
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: LocationDetailSheet(
+            poi: poi,
+            isRouteLoading: true,
+            onRoute: () => routeTaps++,
           ),
         ),
       ),
@@ -87,20 +102,18 @@ void main() {
       Uri? launchedUri;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Align(
-              alignment: Alignment.bottomCenter,
-              child: LocationDetailSheet(
-                poi: poi,
-                routeError: 'Rute langsung tidak tersedia untuk tujuan ini',
-                userCoordinate: const LatLng(-6.175, 106.827),
-                onCenterOnDestination: () => centerMapTaps++,
-                uriLauncher: (uri) async {
-                  launchedUri = uri;
-                  return true;
-                },
-              ),
+        buildTestApp(
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: LocationDetailSheet(
+              poi: poi,
+              routeError: 'Rute langsung tidak tersedia untuk tujuan ini',
+              userCoordinate: const LatLng(-6.175, 106.827),
+              onCenterOnDestination: () => centerMapTaps++,
+              uriLauncher: (uri) async {
+                launchedUri = uri;
+                return true;
+              },
             ),
           ),
         ),

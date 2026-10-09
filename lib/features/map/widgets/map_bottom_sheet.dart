@@ -403,8 +403,11 @@ class _MapBottomSheetState extends State<MapBottomSheet>
   ) {
     final isDark = AppColors.isDark(context);
     final distText = getMemberDistanceText != null
-        ? getMemberDistanceText!(member) ?? 'Lokasi belum tersedia'
-        : (member.hasLocation ? 'Lokasi aktif' : 'Lokasi belum tersedia');
+        ? getMemberDistanceText!(member) ??
+              context.tr('maps.locationUnavailable')
+        : (member.hasLocation
+              ? context.tr('maps.locationActive')
+              : context.tr('maps.locationUnavailable'));
     final hasRoute =
         routeDistanceMeters != null && routeDurationSeconds != null;
 
@@ -495,7 +498,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                       const SizedBox(width: 5),
                       Flexible(
                         child: Text(
-                          _formatLastLocationUpdate(member),
+                          _formatLastLocationUpdate(member, context),
                           style: AppTypography.captionSmall.copyWith(
                             color: isDark
                                 ? AppColors.darkTextBody
@@ -552,7 +555,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                         minimumSize: const Size(60, 26),
                       ),
                       child: Text(
-                        'Tutup',
+                        context.tr('common.close'),
                         style: AppTypography.labelMedium.copyWith(
                           color: isDark
                               ? AppColors.darkTextBody
@@ -690,8 +693,10 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     final isPendamping = member.isPendamping;
 
     // Stat 1: Status Kondisi Jamaah (Kesehatan / Keselamatan - Pengganti Bintang)
-    final stat1Value = member.sosActive ? 'SOS' : 'Aman';
-    final stat1Label = 'Kondisi';
+    final stat1Value = member.sosActive
+        ? 'SOS'
+        : context.tr('maps.conditionSafe');
+    final stat1Label = context.tr('maps.conditionLabel');
 
     // Stat 2: Distance / Route ETA
     final String stat2Value;
@@ -700,18 +705,22 @@ class _MapBottomSheetState extends State<MapBottomSheet>
       stat2Value = _formatDuration(routeDurationSeconds!);
       stat2Label = routeDistanceMeters != null
           ? _formatDistance(routeDistanceMeters!)
-          : 'Rute';
+          : context.tr('maps.routeLabel');
     } else {
       final parts = distText.split(' ');
       stat2Value = parts.isNotEmpty ? parts.first : '--';
-      stat2Label = parts.length > 1 ? parts.sublist(1).join(' ') : 'Jarak';
+      stat2Label = parts.length > 1
+          ? parts.sublist(1).join(' ')
+          : context.tr('maps.distanceLabel');
     }
 
     // Stat 3: Role / GPS Status
     final stat3Value = isPendamping
-        ? 'Petugas'
-        : (member.hasLocation ? 'Aktif' : 'Off');
-    final stat3Label = isPendamping ? 'Peran' : 'GPS';
+        ? context.tr('maps.rolePetugas')
+        : (member.hasLocation
+              ? context.tr('maps.statusActive')
+              : context.tr('maps.statusOff'));
+    final stat3Label = isPendamping ? context.tr('maps.roleLabel') : 'GPS';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -844,9 +853,9 @@ class _MapBottomSheetState extends State<MapBottomSheet>
             shadowColor: Colors.transparent,
             shape: const StadiumBorder(),
           ),
-          child: const Text(
-            'Tutup',
-            style: TextStyle(
+          child: Text(
+            context.tr('common.close'),
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 16,
               fontWeight: FontWeight.w700,
@@ -880,7 +889,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
               ),
               const SizedBox(width: 10),
               Text(
-                'Mencari rute jalan kaki...',
+                context.tr('maps.searchingWalkingRoute'),
                 style: AppTypography.labelLarge.copyWith(
                   color: isDark
                       ? AppColors.darkTextBody
@@ -914,11 +923,11 @@ class _MapBottomSheetState extends State<MapBottomSheet>
             size: 18,
             color: Colors.white,
           ),
-          label: const Text(
-            'Rute Tidak Ditemukan · Coba Lagi',
+          label: Text(
+            context.tr('maps.routeNotFoundRetry'),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 14.5,
               fontWeight: FontWeight.w700,
@@ -935,8 +944,10 @@ class _MapBottomSheetState extends State<MapBottomSheet>
 
     // Default & Loaded route states: Vibrant Green Pill Button matching reference
     final buttonLabel = hasRoute
-        ? 'Mulai Navigasi'
-        : 'Arahkan Rute ke ${member.name.split(' ').first}';
+        ? context.tr('maps.startNavigation')
+        : context.tr('maps.routeToName', {
+            'name': member.name.split(' ').first,
+          });
 
     return Container(
       decoration: BoxDecoration(
@@ -1029,25 +1040,30 @@ class _MapBottomSheetState extends State<MapBottomSheet>
     return '${seconds ~/ 3600}j ${(seconds % 3600) ~/ 60}m';
   }
 
-  String _formatLastLocationUpdate(RoomMemberModel member) {
+  String _formatLastLocationUpdate(
+    RoomMemberModel member,
+    BuildContext context,
+  ) {
     final updatedAt = member.locationUpdatedAt;
     if (!member.hasLocation || updatedAt == null) {
-      return 'Lokasi belum tersedia';
+      return context.tr('maps.locationUnavailable');
     }
 
     final now = DateTime.now();
     final diff = now.difference(updatedAt);
 
     if (diff.isNegative || diff.inSeconds < 45) {
-      return 'Update baru saja';
+      return context.tr('maps.updateJustNow');
     } else if (diff.inMinutes < 60) {
-      return 'Update ${diff.inMinutes} mnt lalu';
+      return context.tr('maps.updateMinutesAgo', {
+        'min': diff.inMinutes.toString(),
+      });
     } else if (diff.inHours < 24) {
       final hourStr = updatedAt.hour.toString().padLeft(2, '0');
       final minStr = updatedAt.minute.toString().padLeft(2, '0');
-      return 'Update pukul $hourStr:$minStr';
+      return context.tr('maps.updateAtTime', {'time': '$hourStr:$minStr'});
     } else {
-      return 'Update ${diff.inDays} hari lalu';
+      return context.tr('maps.updateDaysAgo', {'days': diff.inDays.toString()});
     }
   }
 
@@ -1162,43 +1178,47 @@ class _MapBottomSheetState extends State<MapBottomSheet>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // Left Title block
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Pilih Anggota',
-                      style: AppTypography.titleSmall.copyWith(
-                        color: isDark
-                            ? AppColors.darkTextBody
-                            : AppColors.textMuted,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12.5,
-                        letterSpacing: 0.2,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        context.tr('maps.selectMember'),
+                        style: AppTypography.titleSmall.copyWith(
+                          color: isDark
+                              ? AppColors.darkTextBody
+                              : AppColors.textMuted,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12.5,
+                          letterSpacing: 0.2,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      'Rombongan',
-                      style: AppTypography.displayMedium.copyWith(
-                        color: AppColors.textHeadingColor(context),
-                        fontWeight: FontWeight.w900,
-                        fontSize: 19,
-                        height: 1.1,
+                      const SizedBox(height: 1),
+                      Text(
+                        context.tr('maps.groupTitle'),
+                        style: AppTypography.displayMedium.copyWith(
+                          color: AppColors.textHeadingColor(context),
+                          fontWeight: FontWeight.w900,
+                          fontSize: 19,
+                          height: 1.1,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${members.length} anggota terdaftar',
-                      style: AppTypography.captionSmall.copyWith(
-                        color: isDark
-                            ? AppColors.goldLight
-                            : AppColors.secondary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 10.5,
+                      const SizedBox(height: 2),
+                      Text(
+                        context.tr('maps.membersRegistered', {
+                          'count': members.length.toString(),
+                        }),
+                        style: AppTypography.captionSmall.copyWith(
+                          color: isDark
+                              ? AppColors.goldLight
+                              : AppColors.secondary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 10.5,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
 
                 // Right Action Buttons
@@ -1209,8 +1229,8 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                       context: context,
                       icon: Icons.search_rounded,
                       tooltip: _isSearchOpen
-                          ? 'Tutup Pencarian'
-                          : 'Cari Anggota',
+                          ? context.tr('maps.closeSearch')
+                          : context.tr('maps.searchMember'),
                       isActive: _isSearchOpen,
                       onTap: () {
                         setState(() {
@@ -1226,7 +1246,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                     _buildCircularHeaderButton(
                       context: context,
                       icon: Icons.close_rounded,
-                      tooltip: 'Tutup Dialog',
+                      tooltip: context.tr('maps.closeDialog'),
                       onTap: () => _dismissWithAnimation(),
                     ),
                   ],
@@ -1361,18 +1381,18 @@ class _MapBottomSheetState extends State<MapBottomSheet>
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 20),
         alignment: Alignment.center,
-        child: const Column(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
+            const Icon(
               Icons.search_off_rounded,
               size: 28,
               color: AppColors.outlineVariant,
             ),
-            SizedBox(height: 6),
+            const SizedBox(height: 6),
             Text(
-              'Tidak ada anggota yang cocok',
-              style: TextStyle(
+              context.tr('maps.noMatchingMembers'),
+              style: const TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textMuted,
@@ -1428,8 +1448,11 @@ class _MapBottomSheetState extends State<MapBottomSheet>
           itemBuilder: (context, index) {
             final m = filtered[index];
             final dist = getMemberDistanceText != null
-                ? getMemberDistanceText!(m) ?? 'Lokasi -'
-                : (m.hasLocation ? 'Lokasi aktif' : 'Lokasi -');
+                ? getMemberDistanceText!(m) ??
+                      context.tr('maps.locationUnavailable')
+                : (m.hasLocation
+                      ? context.tr('maps.locationActive')
+                      : context.tr('maps.locationUnavailable'));
             final isPendamping = m.isPendamping;
             final locStatus = m.getLocationStatus();
             final isOnline = locStatus == 'Online';
@@ -1474,9 +1497,23 @@ class _MapBottomSheetState extends State<MapBottomSheet>
             final arrowBtnIconColor = isDark
                 ? AppColors.darkTextHeading
                 : AppColors.espressoDark;
-            final displayStatus = locStatus == 'Lokasi tidak diperbarui'
-                ? 'Tidak diperbarui'
-                : locStatus;
+            final String displayStatus;
+            if (!m.hasLocation || m.locationUpdatedAt == null) {
+              displayStatus = context.tr('maps.locationUnavailable');
+            } else {
+              final seconds = DateTime.now()
+                  .difference(m.locationUpdatedAt!)
+                  .inSeconds;
+              if (seconds <= 30) {
+                displayStatus = 'Online';
+              } else if (seconds <= 120) {
+                displayStatus = context.tr('maps.lastSeenSecondsAgo', {
+                  'seconds': seconds.toString(),
+                });
+              } else {
+                displayStatus = context.tr('maps.notUpdated');
+              }
+            }
 
             return Material(
               color: Colors.transparent,
@@ -1626,7 +1663,9 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                           ),
                         ),
                         child: Text(
-                          isPendamping ? '👑 Pendamping' : 'Jamaah',
+                          isPendamping
+                              ? '👑 ${context.tr('maps.rolePetugas')}'
+                              : context.tr('maps.roleJamaah'),
                           style: TextStyle(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w800,
@@ -1821,7 +1860,7 @@ class _MapBottomSheetState extends State<MapBottomSheet>
                 color: isDark ? AppColors.espressoDark : AppColors.goldPrimary,
               ),
               label: Text(
-                'Mulai Navigasi',
+                context.tr('maps.startNavigation'),
                 style: AppTypography.labelLarge.copyWith(
                   color: isDark ? AppColors.espressoDark : Colors.white,
                   fontWeight: FontWeight.w800,
