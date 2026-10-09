@@ -1445,7 +1445,11 @@ const Map<String, String> enTranslations = {
   'translator.lostPhraseFull': 'Help, I am lost and need assistance',
   'translator.medicalPhrase': 'Medical / Doctor',
   'translator.medicalPhraseFull': 'I feel sick and need a doctor',
+  'translator.modelDownloadFailed':
+      'Language pack not ready. Check internet connection and try again.',
   'translator.outputPlaceholder': 'Translation results will appear here…',
+  'translator.preparingSourceModel': 'Preparing source language pack…',
+  'translator.preparingTargetModel': 'Preparing target language pack…',
   'translator.pricePhrase': 'Ask Price',
   'translator.pricePhraseFull': 'How much is this item?',
   'translator.quickPhrasesTitle': 'Essential Hajj & Umrah Phrases',
@@ -1453,6 +1457,11 @@ const Map<String, String> enTranslations = {
   'translator.selectTargetLang': 'Select Target Language',
   'translator.speakInLanguage': 'Speak in {lang}',
   'translator.speakPrompt': 'Speak in Your Language',
+  'translator.speechDone': 'Finished listening',
+  'translator.speechNoMatch': 'No speech detected. Please try again.',
+  'translator.speechPermissionDenied': 'Microphone permission required.',
+  'translator.speechReady': 'Ready to listen.',
+  'translator.speechUnavailable': 'Voice service unavailable.',
   'translator.subtitle': 'Hajj & Umrah Voice & Text Translation',
   'translator.tapToStartListening':
       'Press microphone button then start speaking',

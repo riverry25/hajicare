@@ -1467,7 +1467,11 @@ final Map<String, String> jvTranslations = {
   'translator.lostPhraseFull': 'Tulung, kula kesasar lan butuh pitulungan',
   'translator.medicalPhrase': 'Medis / Dhokter',
   'translator.medicalPhraseFull': 'Kula rumaos gerah lan butuh dhokter',
+  'translator.modelDownloadFailed':
+      'Paket basa durung sumadya. Priksa internet, banjur cobi malih.',
   'translator.outputPlaceholder': 'Asil terjemahan badhe katingal ing mriki…',
+  'translator.preparingSourceModel': 'Nyamektakake paket basa sumber…',
+  'translator.preparingTargetModel': 'Nyamektakake paket basa tujuan…',
   'translator.pricePhrase': 'Nyuwun Pirsa Regi',
   'translator.pricePhraseFull': 'Pira regane barang iki?',
   'translator.quickPhrasesTitle': 'Ukara Wigati Kaji & Umrah',
@@ -1475,6 +1479,11 @@ final Map<String, String> jvTranslations = {
   'translator.selectTargetLang': 'Pilih Basa Tujuan',
   'translator.speakInLanguage': 'Ngomong {lang}',
   'translator.speakPrompt': 'Matura nganggo Basa Panjenengan',
+  'translator.speechDone': 'Rampung mirengake',
+  'translator.speechNoMatch': 'Swanten mboten kepireng. Mangga cobi malih.',
+  'translator.speechPermissionDenied': 'Izin mikrofon dipun betahaken.',
+  'translator.speechReady': 'Sumadya mirengake.',
+  'translator.speechUnavailable': 'Layanan swanten mboten sumadya.',
   'translator.subtitle': 'Terjemahan Swanten & Teks Kaji/Umrah',
   'translator.tapToStartListening':
       'Pencet tombol mikropon banjur wiwit ngomong',

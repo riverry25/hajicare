@@ -1462,7 +1462,11 @@ final Map<String, String> suTranslations = {
   'translator.lostPhraseFull': 'Tulung, abdi kasasar sareng peryogi bantosan',
   'translator.medicalPhrase': 'Médis / Dokter',
   'translator.medicalPhraseFull': 'Abdi karaos udur sareng peryogi dokter',
+  'translator.modelDownloadFailed':
+      'Paket basa teu acan sayagi. Pariksa internét, teras cobian deui.',
   'translator.outputPlaceholder': 'Hasil tarjamahan bakal nembongan di dieu…',
+  'translator.preparingSourceModel': 'Nyiapkeun paket basa sumber…',
+  'translator.preparingTargetModel': 'Nyiapkeun paket basa tujuan…',
   'translator.pricePhrase': 'Naroskeun Pangaos',
   'translator.pricePhraseFull': 'Sabaraha pangaos barang ieu?',
   'translator.quickPhrasesTitle': 'Frasa Penting Haji & Umrah',
@@ -1470,6 +1474,11 @@ final Map<String, String> suTranslations = {
   'translator.selectTargetLang': 'Pilih Basa Tujuan',
   'translator.speakInLanguage': 'Nyarios {lang}',
   'translator.speakPrompt': 'Nyarios dina Basa Anjeun',
+  'translator.speechDone': 'Rengse ngadangukeun',
+  'translator.speechNoMatch': 'Sora teu kauninga. Mangga cobian deui.',
+  'translator.speechPermissionDenied': 'Widi mikrofon diperyogikeun.',
+  'translator.speechReady': 'Sayagi ngadangukeun.',
+  'translator.speechUnavailable': 'Layanan sora teu sayagi.',
   'translator.subtitle': 'Tarjamahan Sora & Téks Haji/Umrah',
   'translator.tapToStartListening':
       'Pencét tombol mikrofon teras mimitian nyarios',

@@ -1455,7 +1455,11 @@ const Map<String, String> idTranslations = {
   'translator.lostPhraseFull': 'Tolong, saya tersesat dan butuh bantuan',
   'translator.medicalPhrase': 'Medis / Dokter',
   'translator.medicalPhraseFull': 'Saya merasa sakit dan butuh dokter',
+  'translator.modelDownloadFailed':
+      'Paket bahasa belum siap. Periksa internet, lalu coba lagi.',
   'translator.outputPlaceholder': 'Hasil terjemahan akan tampil di sini…',
+  'translator.preparingSourceModel': 'Menyiapkan paket bahasa sumber…',
+  'translator.preparingTargetModel': 'Menyiapkan paket bahasa tujuan…',
   'translator.pricePhrase': 'Tanya Harga',
   'translator.pricePhraseFull': 'Berapa harga barang ini?',
   'translator.quickPhrasesTitle': 'Frasa Penting Haji & Umrah',
@@ -1463,6 +1467,11 @@ const Map<String, String> idTranslations = {
   'translator.selectTargetLang': 'Pilih Bahasa Tujuan',
   'translator.speakInLanguage': 'Bicara {lang}',
   'translator.speakPrompt': 'Bicara dalam Bahasa Anda',
+  'translator.speechDone': 'Selesai mendengarkan',
+  'translator.speechNoMatch': 'Suara tidak terdeteksi. Silakan coba lagi.',
+  'translator.speechPermissionDenied': 'Izin mikrofon diperlukan.',
+  'translator.speechReady': 'Siap mendengarkan.',
+  'translator.speechUnavailable': 'Layanan suara tidak tersedia.',
   'translator.subtitle': 'Terjemahan Suara & Teks Haji/Umrah',
   'translator.tapToStartListening':
       'Tekan tombol mikrofon lalu mulai berbicara',

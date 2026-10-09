@@ -31,60 +31,83 @@ const List<_LanguageOption> _kLanguages = [
 ];
 
 /// Quick phrases commonly needed by Indonesian pilgrims in Mecca/Medina.
+/// Quick phrases commonly needed by pilgrims in Mecca/Medina.
 class _QuickPhrase {
   final String label;
   final String idText;
+  final String enText;
   final String arText;
   final String icon;
 
   const _QuickPhrase({
     required this.label,
     required this.idText,
+    required this.enText,
     required this.arText,
     required this.icon,
   });
+
+  String getTextForCode(String code) {
+    switch (code) {
+      case 'id':
+        return idText;
+      case 'en':
+        return enText;
+      case 'ar':
+        return arText;
+      default:
+        return idText;
+    }
+  }
 }
 
 List<_QuickPhrase> _getQuickPhrases(BuildContext context) => [
   _QuickPhrase(
     label: context.tr('translator.lostPhrase'),
-    idText: context.tr('translator.lostPhraseFull'),
+    idText: 'Tolong, saya tersesat dan butuh bantuan',
+    enText: 'Help, I am lost and need assistance',
     arText: 'من فضلك، لقد ضللت طريقي وأحتاج إلى مساعدة',
     icon: '🆘',
   ),
   _QuickPhrase(
     label: context.tr('translator.exitPhrase'),
-    idText: context.tr('translator.exitPhraseFull'),
+    idText: 'Di mana pintu keluar Masjidil Haram?',
+    enText: 'Where is the exit of Masjidil Haram?',
     arText: 'أين مخرج المسجد الحرام؟',
     icon: '🕋',
   ),
   _QuickPhrase(
     label: context.tr('translator.medicalPhrase'),
-    idText: context.tr('translator.medicalPhraseFull'),
+    idText: 'Saya merasa sakit dan butuh dokter',
+    enText: 'I feel sick and need a doctor',
     arText: 'أشعر بالمرض وأحتاج إلى طبيب',
     icon: '🩺',
   ),
   _QuickPhrase(
     label: context.tr('translator.toiletPhrase'),
-    idText: context.tr('translator.toiletPhraseFull'),
+    idText: 'Di mana toilet dan tempat wudhu terdekat?',
+    enText: 'Where is the nearest restroom and wudhu area?',
     arText: 'أين أقرب دورة مياه ومكان للوضوء؟',
     icon: '🚾',
   ),
   _QuickPhrase(
     label: context.tr('translator.zamzamPhrase'),
-    idText: context.tr('translator.zamzamPhraseFull'),
+    idText: 'Di mana tempat minum air Zamzam?',
+    enText: 'Where can I drink Zamzam water?',
     arText: 'أين مكان شرب ماء زمزم؟',
     icon: '💧',
   ),
   _QuickPhrase(
     label: context.tr('translator.pricePhrase'),
-    idText: context.tr('translator.pricePhraseFull'),
+    idText: 'Berapa harga barang ini?',
+    enText: 'How much is this item?',
     arText: 'بكم هذا؟',
     icon: '🏷️',
   ),
   _QuickPhrase(
     label: context.tr('translator.taxiPhrase'),
-    idText: context.tr('translator.taxiPhraseFull'),
+    idText: 'Tolong antar saya ke hotel ini',
+    enText: 'Please take me to this hotel',
     arText: 'من فضلك خذني إلى هذا الفندق',
     icon: '🚕',
   ),
@@ -147,6 +170,45 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
     orElse: () => _kLanguages[1],
   );
 
+  String _getBarLanguageName(String code) {
+    switch (code) {
+      case 'id':
+        return context.tr('translator.langIndonesia');
+      case 'ar':
+        return 'العربية';
+      case 'en':
+        return context.tr('translator.langEnglish');
+      default:
+        return code;
+    }
+  }
+
+  String _getSpeechLanguageName(String code) {
+    switch (code) {
+      case 'id':
+        return context.tr('translator.langIndonesia');
+      case 'ar':
+        return context.tr('translator.langArabic');
+      case 'en':
+        return context.tr('translator.langEnglish');
+      default:
+        return code;
+    }
+  }
+
+  String _getLanguageDisplayName(String code) {
+    switch (code) {
+      case 'id':
+        return context.tr('translator.langIndonesia');
+      case 'ar':
+        return context.tr('translator.langArabic');
+      case 'en':
+        return context.tr('translator.langEnglish');
+      default:
+        return code;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -159,8 +221,24 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
 
     _speechService.onStatusChanged = (status, message) {
       if (!mounted) return;
+      String? localizedMessage;
+      if (status == SpeechStatus.idle) {
+        localizedMessage = null;
+      } else if (status == SpeechStatus.permissionDenied) {
+        localizedMessage = context.tr('translator.speechPermissionDenied');
+      } else if (status == SpeechStatus.serviceUnavailable) {
+        localizedMessage = context.tr('translator.speechUnavailable');
+      } else if (message.contains('tidak terdeteksi') ||
+          message.contains('no_match')) {
+        localizedMessage = context.tr('translator.speechNoMatch');
+      } else if (status == SpeechStatus.done) {
+        localizedMessage = null;
+      } else {
+        localizedMessage = message;
+      }
+
       setState(() {
-        _speechMessage = status == SpeechStatus.idle ? null : message;
+        _speechMessage = localizedMessage;
       });
       if (status == SpeechStatus.done &&
           _inputController.text.trim().isNotEmpty) {
@@ -208,6 +286,8 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
       return;
     }
 
+    setState(() {});
+
     _debounceTimer = Timer(const Duration(milliseconds: 600), () {
       _performTranslation();
     });
@@ -219,7 +299,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
 
     setState(() {
       _isTranslating = true;
-      _statusMessage = AppTranslations.tr('translator.translating');
+      _statusMessage = context.tr('translator.translating');
     });
 
     try {
@@ -231,7 +311,17 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
         source: source,
         target: target,
         onStatusUpdate: (status) {
-          if (mounted) setState(() => _statusMessage = status);
+          if (!mounted) return;
+          String localizedStatus = status;
+          if (status.contains('Menyiapkan bahasa sumber')) {
+            localizedStatus = context.tr('translator.preparingSourceModel');
+          } else if (status.contains('Menyiapkan bahasa tujuan')) {
+            localizedStatus = context.tr('translator.preparingTargetModel');
+          } else if (status.contains('Bahasa belum siap') ||
+              status.contains('Bahasa belum dapat disiapkan')) {
+            localizedStatus = context.tr('translator.modelDownloadFailed');
+          }
+          setState(() => _statusMessage = localizedStatus);
         },
       );
 
@@ -247,7 +337,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
       if (mounted) {
         setState(() {
           _isTranslating = false;
-          _statusMessage = AppTranslations.tr('translator.translationError');
+          _statusMessage = context.tr('translator.translationError');
         });
       }
     }
@@ -310,18 +400,15 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
 
   void _applyQuickPhrase(_QuickPhrase phrase) {
     HapticFeedback.selectionClick();
-    if (_sourceCode == 'id' && _targetCode == 'ar') {
+    final sourceText = phrase.getTextForCode(_sourceCode);
+    final targetText = phrase.getTextForCode(_targetCode);
+
+    if (sourceText.isNotEmpty &&
+        targetText.isNotEmpty &&
+        sourceText != targetText) {
       setState(() {
-        _inputController.text = phrase.idText;
-        _resultText = phrase.arText;
-        _isTranslating = false;
-        _statusMessage = '';
-      });
-      return;
-    } else if (_sourceCode == 'ar' && _targetCode == 'id') {
-      setState(() {
-        _inputController.text = phrase.arText;
-        _resultText = phrase.idText;
+        _inputController.text = sourceText;
+        _resultText = targetText;
         _isTranslating = false;
         _statusMessage = '';
       });
@@ -329,9 +416,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
     }
 
     setState(() {
-      _inputController.text = (_sourceCode == 'ar')
-          ? phrase.arText
-          : phrase.idText;
+      _inputController.text = sourceText;
     });
 
     _performTranslation();
@@ -408,7 +493,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                       style: const TextStyle(fontSize: 24),
                     ),
                     title: Text(
-                      lang.name,
+                      _getLanguageDisplayName(lang.code),
                       style: AppTypography.bodyMedium.copyWith(
                         color: isSelected
                             ? (isDark
@@ -618,7 +703,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                     const SizedBox(width: AppSpacing.xs),
                     Flexible(
                       child: Text(
-                        _sourceLanguage.name,
+                        _getBarLanguageName(_sourceLanguage.code),
                         style: AppTypography.labelLarge.copyWith(
                           color: headingColor,
                           fontWeight: FontWeight.w600,
@@ -695,7 +780,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                     const SizedBox(width: AppSpacing.xs),
                     Flexible(
                       child: Text(
-                        _targetLanguage.name,
+                        _getBarLanguageName(_targetLanguage.code),
                         style: AppTypography.labelLarge.copyWith(
                           color: headingColor,
                           fontWeight: FontWeight.w600,
@@ -785,65 +870,78 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                InkWell(
-                  onTap: _clearInput,
-                  borderRadius: BorderRadius.circular(AppRadius.xs),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 4,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.clear_rounded,
-                          size: 16,
-                          color: bodyColor.withValues(alpha: 0.6),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          context.tr('translator.clear'),
-                          style: AppTypography.captionSmall.copyWith(
+                Flexible(
+                  child: InkWell(
+                    onTap: _clearInput,
+                    borderRadius: BorderRadius.circular(AppRadius.xs),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 4,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.clear_rounded,
+                            size: 16,
                             color: bodyColor.withValues(alpha: 0.6),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              context.tr('translator.clear'),
+                              style: AppTypography.captionSmall.copyWith(
+                                color: bodyColor.withValues(alpha: 0.6),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-                InkWell(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    _performTranslation();
-                  },
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: primaryColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          context.tr('translator.translateAction'),
-                          style: AppTypography.captionSmall.copyWith(
-                            color: primaryColor,
-                            fontWeight: FontWeight.w700,
+                const SizedBox(width: AppSpacing.xs),
+                Flexible(
+                  child: InkWell(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      _performTranslation();
+                    },
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: primaryColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              context.tr('translator.translateAction'),
+                              style: AppTypography.captionSmall.copyWith(
+                                color: primaryColor,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 4),
-                        Icon(
-                          Icons.arrow_forward_rounded,
-                          size: 14,
-                          color: primaryColor,
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 14,
+                            color: primaryColor,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -969,11 +1067,9 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
           // Primary Title Label
           Text(
             isListening
-                ? (context.tr('translator.listeningPrompt').isNotEmpty
-                      ? context.tr('translator.listeningPrompt')
-                      : 'Mendengarkan suara Anda...')
+                ? context.tr('translator.listeningPrompt')
                 : context.tr('translator.speakInLanguage', {
-                    'lang': _sourceLanguage.name,
+                    'lang': _getSpeechLanguageName(_sourceLanguage.code),
                   }),
             textAlign: TextAlign.center,
             style: AppTypography.titleMedium.copyWith(
@@ -1056,18 +1152,22 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
           // Header of Output Box
           Row(
             children: [
-              Text(
-                context.tr('translator.translationResult', {
-                  'lang': _targetLanguage.name,
-                }),
-                style: AppTypography.captionSmall.copyWith(
-                  color: primaryColor,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.3,
+              Expanded(
+                child: Text(
+                  context.tr('translator.translationResult', {
+                    'lang': _getBarLanguageName(_targetLanguage.code),
+                  }),
+                  style: AppTypography.captionSmall.copyWith(
+                    color: primaryColor,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.3,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const Spacer(),
-              if (_isTranslating)
+              if (_isTranslating) ...[
+                const SizedBox(width: AppSpacing.xs),
                 SizedBox(
                   width: 14,
                   height: 14,
@@ -1076,6 +1176,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                     color: primaryColor,
                   ),
                 ),
+              ],
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -1193,6 +1294,10 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
     Color bodyColor,
     Color primaryColor,
   ) {
+    final textScale = MediaQuery.textScalerOf(context).scale(1.0);
+    final quickPhraseHeight = (42.0 * textScale).clamp(42.0, 68.0);
+    final phrases = _getQuickPhrases(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1204,35 +1309,37 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
               color: AppColors.accentGoldStar,
             ),
             const SizedBox(width: 6),
-            Text(
-              context.tr('translator.quickPhrasesTitle'),
-              style: AppTypography.labelLarge.copyWith(
-                color: headingColor,
-                fontWeight: FontWeight.w700,
+            Expanded(
+              child: Text(
+                context.tr('translator.quickPhrasesTitle'),
+                style: AppTypography.labelLarge.copyWith(
+                  color: headingColor,
+                  fontWeight: FontWeight.w700,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
         ),
         const SizedBox(height: AppSpacing.xs),
         SizedBox(
-          height: (38.0 * MediaQuery.textScalerOf(context).scale(1.0)).clamp(
-            38.0,
-            56.0,
-          ),
+          height: quickPhraseHeight,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
-            itemCount: _getQuickPhrases(context).length,
+            itemCount: phrases.length,
             separatorBuilder: (context, index) => const SizedBox(width: 8),
             itemBuilder: (context, index) {
-              final phrase = _getQuickPhrases(context)[index];
+              final phrase = phrases[index];
               return InkWell(
                 onTap: () => _applyQuickPhrase(phrase),
                 borderRadius: BorderRadius.circular(AppRadius.pill),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
+                  alignment: Alignment.center,
+                  padding: EdgeInsets.symmetric(
                     horizontal: 12,
-                    vertical: 6,
+                    vertical: (4.0 * textScale).clamp(2.0, 8.0),
                   ),
                   decoration: BoxDecoration(
                     color: isDark
@@ -1247,6 +1354,7 @@ class _HajiCareTranslatorSheetState extends State<HajiCareTranslatorSheet>
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(phrase.icon, style: const TextStyle(fontSize: 14)),
                       const SizedBox(width: 6),
