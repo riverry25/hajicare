@@ -4,23 +4,22 @@ import 'package:flutter/services.dart';
 import 'package:tflite_flutter/tflite_flutter.dart' as tfl;
 
 import '../models/bisindo_prediction.dart';
+import '../models/sign_language_model.dart';
 
-/// Production TFLite classifier service for BISINDO MotionGRU float16 model.
+/// Production TFLite classifier service for MotionGRU float16 models (SIBI & BISINDO).
 ///
 /// Input: [1, 48, 706] float32
-/// Output: [1, 47] float32 (softmax probabilities)
+/// Output: [1, num_classes] float32 (softmax probabilities)
 class BisindoClassifierService {
-  static const String kModelAssetPath =
-      'assets/models/bisindo/bisindo_motion_gru_float16.tflite';
-  static const String kLabelsAssetPath = 'assets/models/bisindo/labels.txt';
-  static const String kMetadataAssetPath =
-      'assets/models/bisindo/model_metadata.json';
-
   static const double kDefaultConfidenceThreshold = 0.70;
   static const int kExpectedSequenceLen = 48;
   static const int kExpectedBaseFeatureDim = 353;
   static const int kExpectedInputFeatureDim = 706;
   static const int kExpectedNumClasses = 47;
+
+  SignLanguageModelConfig _currentConfig = SignLanguageModelConfig.bisindo;
+  SignLanguageModel get currentModel => _currentConfig.model;
+  SignLanguageModelConfig get currentConfig => _currentConfig;
 
   tfl.Interpreter? _interpreter;
   List<String> _labels = [];
@@ -37,69 +36,70 @@ class BisindoClassifierService {
   Map<String, dynamic> get metadata => Map.unmodifiable(_metadata);
 
   /// Initializes the classifier by loading metadata, labels, and the TFLite model.
-  Future<void> initialize() async {
+  Future<void> initialize({
+    SignLanguageModel model = SignLanguageModel.bisindo,
+  }) async {
+    await loadModel(SignLanguageModelConfig.forModel(model));
+  }
+
+  /// Hot-swaps the active model (SIBI or BISINDO) cleanly and smoothly.
+  Future<void> loadModel(SignLanguageModelConfig config) async {
     if (_isDisposed) return;
-    if (_isInitialized) return;
+
+    // Safely close existing interpreter
+    try {
+      _interpreter?.close();
+    } catch (_) {}
+    _interpreter = null;
+    _isInitialized = false;
+    _currentConfig = config;
 
     try {
-      debugPrint('[BISINDO_CLASSIFIER] Initializing MotionGRU service...');
+      debugPrint(
+        '[SIGN_CLASSIFIER] Initializing ${config.model.displayName} MotionGRU service...',
+      );
 
-      // 1. Load and validate metadata
-      final metadataStr = await rootBundle.loadString(kMetadataAssetPath);
-      _metadata = json.decode(metadataStr) as Map<String, dynamic>;
+      // 1. Load and validate metadata if available
+      if (config.configAsset != null) {
+        try {
+          final metadataStr = await rootBundle.loadString(config.configAsset!);
+          _metadata = json.decode(metadataStr) as Map<String, dynamic>;
 
-      final seqLen = _metadata['sequence_length'] as int? ?? 48;
-      final baseDim = _metadata['base_feature_dim'] as int? ?? 353;
-      final inDim = _metadata['model_input_feature_dim'] as int? ?? 706;
-      final numClasses = _metadata['num_classes'] as int? ?? 47;
-
-      if (seqLen != kExpectedSequenceLen ||
-          baseDim != kExpectedBaseFeatureDim ||
-          inDim != kExpectedInputFeatureDim ||
-          numClasses != kExpectedNumClasses) {
-        final err =
-            'Model metadata mismatch: seq=$seqLen (exp $kExpectedSequenceLen), base=$baseDim (exp $kExpectedBaseFeatureDim), in=$inDim (exp $kExpectedInputFeatureDim), classes=$numClasses (exp $kExpectedNumClasses)';
-        if (kDebugMode) {
-          throw StateError(err);
-        } else {
-          debugPrint('[BISINDO_CLASSIFIER] Warning: $err');
+          if (_metadata.containsKey(
+            'recommended_confidence_threshold_initial',
+          )) {
+            _confidenceThreshold =
+                (_metadata['recommended_confidence_threshold_initial'] as num)
+                    .toDouble();
+          } else {
+            _confidenceThreshold = config.defaultConfidenceThreshold;
+          }
+        } catch (e) {
+          debugPrint(
+            '[SIGN_CLASSIFIER] Metadata load warning ($e), using default threshold: ${config.defaultConfidenceThreshold}',
+          );
+          _confidenceThreshold = config.defaultConfidenceThreshold;
         }
-      }
-
-      if (_metadata.containsKey('recommended_confidence_threshold_initial')) {
-        _confidenceThreshold =
-            (_metadata['recommended_confidence_threshold_initial'] as num)
-                .toDouble();
       } else {
-        _confidenceThreshold = kDefaultConfidenceThreshold;
+        _confidenceThreshold = config.defaultConfidenceThreshold;
       }
 
       // 2. Load labels dynamically
-      final labelsStr = await rootBundle.loadString(kLabelsAssetPath);
+      final labelsStr = await rootBundle.loadString(config.labelAsset);
       _labels = labelsStr
           .split('\n')
           .map((l) => l.trim())
           .where((l) => l.isNotEmpty)
           .toList();
 
-      if (_labels.length != kExpectedNumClasses) {
-        final err =
-            'Labels count (${_labels.length}) does not match expected $kExpectedNumClasses';
-        if (kDebugMode) {
-          throw StateError(err);
-        } else {
-          debugPrint('[BISINDO_CLASSIFIER] Warning: $err');
-        }
-      }
-
       debugPrint(
-        '[BISINDO_CLASSIFIER] Loaded ${_labels.length} classes: ${_labels.take(5).join(', ')} ... ${_labels.last}',
+        '[SIGN_CLASSIFIER] Loaded ${_labels.length} classes for ${config.model.displayName}: ${_labels.take(5).join(', ')} ... ${_labels.last}',
       );
 
       // 3. Load TFLite interpreter
       final options = tfl.InterpreterOptions()..threads = 2;
       try {
-        final byteData = await rootBundle.load(kModelAssetPath);
+        final byteData = await rootBundle.load(config.modelAsset);
         final bytes = byteData.buffer.asUint8List(
           byteData.offsetInBytes,
           byteData.lengthInBytes,
@@ -107,10 +107,10 @@ class BisindoClassifierService {
         _interpreter = tfl.Interpreter.fromBuffer(bytes, options: options);
       } catch (e) {
         debugPrint(
-          '[BISINDO_CLASSIFIER] fromBuffer load failed ($e), falling back to fromAsset...',
+          '[SIGN_CLASSIFIER] fromBuffer load failed ($e), falling back to fromAsset...',
         );
         _interpreter = await tfl.Interpreter.fromAsset(
-          kModelAssetPath,
+          config.modelAsset,
           options: options,
         );
       }
@@ -120,16 +120,14 @@ class BisindoClassifierService {
       final outTensors = _interpreter!.getOutputTensors();
 
       if (inTensors.isEmpty || outTensors.isEmpty) {
-        throw StateError(
-          '[BISINDO_CLASSIFIER] Interpreter has missing tensors',
-        );
+        throw StateError('[SIGN_CLASSIFIER] Interpreter has missing tensors');
       }
 
       final inShape = inTensors[0].shape;
       final outShape = outTensors[0].shape;
 
       debugPrint(
-        '[BISINDO_CLASSIFIER] Input shape: $inShape, type: ${inTensors[0].type}; Output shape: $outShape, type: ${outTensors[0].type}',
+        '[SIGN_CLASSIFIER] ${config.model.displayName} Input: $inShape, type: ${inTensors[0].type}; Output: $outShape, type: ${outTensors[0].type}',
       );
 
       // Validate input shape: [1, 48, 706]
@@ -137,22 +135,26 @@ class BisindoClassifierService {
           inShape[1] != kExpectedSequenceLen ||
           inShape[2] != kExpectedInputFeatureDim) {
         final err =
-            'Input tensor shape $inShape does not match expected [1, $kExpectedSequenceLen, $kExpectedInputFeatureDim]';
+            'Input tensor shape $inShape does not match expected [1, $kExpectedSequenceLen, $kExpectedInputFeatureDim] for ${config.model.displayName}';
         if (kDebugMode) throw StateError(err);
       }
 
-      // Validate output shape: [1, 47]
+      // Validate output shape: [1, num_classes]
       if (outShape.length != 2 || outShape[1] != _labels.length) {
         final err =
-            'Output tensor shape $outShape does not match label count ${_labels.length}';
+            'Output tensor shape $outShape does not match label count ${_labels.length} for ${config.model.displayName}';
         if (kDebugMode) throw StateError(err);
       }
 
       _isInitialized = true;
-      debugPrint('[BISINDO_CLASSIFIER] Initialized successfully ✅');
+      debugPrint(
+        '[SIGN_CLASSIFIER] ${config.model.displayName} initialized successfully ✅',
+      );
     } catch (e, st) {
       _isInitialized = false;
-      debugPrint('[BISINDO_CLASSIFIER] Initialization error: $e\n$st');
+      debugPrint(
+        '[SIGN_CLASSIFIER] Initialization error for ${config.model.displayName}: $e\n$st',
+      );
       await dispose();
       rethrow;
     }

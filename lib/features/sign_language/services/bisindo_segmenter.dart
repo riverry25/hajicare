@@ -104,6 +104,7 @@ class BisindoSegmenter {
   BisindoSegmenterPhase get phase => _phase;
   bool get isActive => _phase == BisindoSegmenterPhase.active;
   int get activeFrameCount => _active.length;
+  List<LandmarkFrame> get activeFrames => List.unmodifiable(_active);
   double get smoothedMotion => _smoothedMotion;
 
   void reset() {

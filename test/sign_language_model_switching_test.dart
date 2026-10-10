@@ -1,6 +1,9 @@
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hajicare/features/sign_language/controllers/sign_language_controller.dart';
 import 'package:hajicare/features/sign_language/models/sign_language_model.dart';
+import 'package:hajicare/features/sign_language/screens/sign_language_screen.dart';
 import 'package:hajicare/features/sign_language/services/bisindo_inference_service.dart';
 import 'package:hajicare/features/sign_language/services/bisindo_preprocessor.dart';
 import 'package:hajicare/features/sign_language/services/landmark_stream_buffer.dart';
@@ -12,12 +15,21 @@ void main() {
     test('SIBI configuration uses correct assets and dimensions', () {
       final config = SignLanguageModelConfig.sibi;
       expect(config.model, equals(SignLanguageModel.sibi));
-      expect(config.modelAsset, equals('assets/models/sibi/sibi.tflite'));
-      expect(config.labelAsset, equals('assets/models/sibi/labels_sibi.txt'));
-      expect(config.windowSize, equals(12));
-      expect(config.minimumFrames, equals(1));
+      expect(
+        config.modelAsset,
+        equals('assets/models/sibi/sibi_motion_gru_float16.tflite'),
+      );
+      expect(config.labelAsset, equals('assets/models/sibi/labels.txt'));
+      expect(
+        config.configAsset,
+        equals('assets/models/sibi/model_metadata.json'),
+      );
+      expect(config.expectedInputFeatures, equals(706));
+      expect(config.windowSize, equals(48));
+      expect(config.minimumFrames, equals(24));
       expect(File(config.modelAsset).existsSync(), isTrue);
       expect(File(config.labelAsset).existsSync(), isTrue);
+      expect(File(config.configAsset!).existsSync(), isTrue);
     });
 
     test('BISINDO configuration uses correct assets and dimensions', () {
@@ -191,5 +203,107 @@ void main() {
       // BISINDO's result was safely discarded.
       expect(resolvedModel, equals(SignLanguageModel.sibi));
     });
+  });
+
+  group('Streaming Gesture Suggestion & Hold-to-Confirm Tests', () {
+    test(
+      'SignLanguageController initializes with empty candidate and zero progress',
+      () {
+        final controller = SignLanguageController();
+        expect(controller.streamingCandidate.value, isEmpty);
+        expect(controller.suggestionProgress.value, equals(0.0));
+        expect(controller.isCandidateConfirmed.value, isFalse);
+      },
+    );
+
+    test(
+      'Stop continuous or model switch clears streaming suggestion state',
+      () {
+        final controller = SignLanguageController();
+        controller.streamingCandidate.value = 'A';
+        controller.suggestionProgress.value = 0.5;
+        controller.isCandidateConfirmed.value = false;
+
+        controller.stopContinuous();
+
+        expect(controller.streamingCandidate.value, isEmpty);
+        expect(controller.suggestionProgress.value, equals(0.0));
+        expect(controller.isCandidateConfirmed.value, isFalse);
+      },
+    );
+
+    test(
+      'Simulated streaming candidate morphing updates candidate and adapts progress',
+      () {
+        final controller = SignLanguageController();
+
+        // Candidate 1: "A"
+        controller.streamingCandidate.value = 'A';
+        controller.suggestionProgress.value = 0.4;
+        expect(controller.streamingCandidate.value, equals('A'));
+        expect(controller.suggestionProgress.value, equals(0.4));
+
+        // User changes hand shape midway to "B"
+        controller.streamingCandidate.value = 'B';
+        controller.suggestionProgress.value = 0.25;
+        expect(controller.streamingCandidate.value, equals('B'));
+        expect(controller.suggestionProgress.value, equals(0.25));
+
+        // Progress completes to 1.0 (confirmed)
+        controller.suggestionProgress.value = 1.0;
+        controller.isCandidateConfirmed.value = true;
+        expect(controller.suggestionProgress.value, equals(1.0));
+        expect(controller.isCandidateConfirmed.value, isTrue);
+      },
+    );
+
+    testWidgets(
+      'GestureCandidateLoader renders candidate display without any SARAN or TERKONFIRMASI text',
+      (tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: GestureCandidateLoader(
+                label: 'A',
+                progress: 0.5,
+                isConfirmed: false,
+              ),
+            ),
+          ),
+        );
+
+        // Verify character is displayed
+        expect(find.text('A'), findsOneWidget);
+
+        // Verify 'SARAN' and 'TERKONFIRMASI' labels are completely absent
+        expect(find.text('SARAN'), findsNothing);
+        expect(find.text('saran'), findsNothing);
+        expect(find.text('TERKONFIRMASI'), findsNothing);
+
+        // Verify smooth tween animation builder is present
+        expect(find.byType(TweenAnimationBuilder<double>), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'GestureCandidateLoader displays check icon when confirmed and no SARAN text',
+      (tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: GestureCandidateLoader(
+                label: 'halo',
+                progress: 1.0,
+                isConfirmed: true,
+              ),
+            ),
+          ),
+        );
+
+        expect(find.text('HALO'), findsOneWidget);
+        expect(find.text('SARAN'), findsNothing);
+        expect(find.byIcon(Icons.check_circle_rounded), findsOneWidget);
+      },
+    );
   });
 }

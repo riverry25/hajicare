@@ -299,86 +299,11 @@ class BisindoInferenceService implements BisindoPredictor {
       );
     }
 
-    if (_activeModel == SignLanguageModel.sibi) {
-      return _predictSibi(landmarks.last);
-    } else {
-      return _predictBisindo(landmarks);
-    }
+    return _predictSequence(landmarks);
   }
 
-  /// Single-frame inference for SIBI Alphabet model.
-  BisindoPrediction _predictSibi(List<List<double>> frame) {
-    final interpreter = _interpreter;
-    if (interpreter == null || !_isInitialized) {
-      return const BisindoPrediction(
-        classId: -1,
-        label: '',
-        confidence: 0.0,
-        distance: 1.0,
-        candidates: [],
-        isRecognized: false,
-      );
-    }
-
-    final bool hasRight = BisindoPreprocessor.hasRightHand(frame);
-    final bool hasLeft = BisindoPreprocessor.hasLeftHand(frame);
-
-    if (!hasRight && !hasLeft) {
-      return const BisindoPrediction(
-        classId: -1,
-        label: '',
-        confidence: 0.0,
-        distance: 1.0,
-        candidates: [],
-        isRecognized: false,
-      );
-    }
-
-    final Float32List inputTensor =
-        BisindoPreprocessor.processSibiAlphabetFrame(frame);
-    final List<List<double>> input = [inputTensor];
-    final List<List<double>> output = [
-      List<double>.filled(_labels.length, 0.0),
-    ];
-
-    interpreter.run(input, output);
-
-    final List<double> probs = output[0];
-    final List<MapEntry<int, double>> indexedProbs = [];
-    for (int i = 0; i < probs.length; i++) {
-      indexedProbs.add(MapEntry(i, probs[i]));
-    }
-    indexedProbs.sort((a, b) => b.value.compareTo(a.value));
-
-    final topIdx = indexedProbs.first.key;
-    final topConfidence = indexedProbs.first.value;
-    final predictedLabel = _labels[topIdx];
-    final isRecognized = topConfidence >= _confidenceThreshold;
-
-    final candidates = indexedProbs
-        .take(5)
-        .map(
-          (e) => BisindoCandidate(
-            classId: e.key,
-            label: _labels[e.key],
-            distance: (1.0 - e.value).clamp(0.0, 1.0),
-            confidence: e.value,
-          ),
-        )
-        .toList();
-
-    return BisindoPrediction(
-      classId: topIdx,
-      label: predictedLabel,
-      confidence: topConfidence,
-      distance: (1.0 - topConfidence).clamp(0.0, 1.0),
-      candidates: candidates,
-      isRecognized: isRecognized,
-    );
-  }
-
-  /// Sequence-based inference for BISINDO GRU model.
-  BisindoPrediction _predictBisindo(List<List<List<double>>> landmarks) {
+  /// Sequence-based inference for MotionGRU models (both SIBI and BISINDO).
+  BisindoPrediction _predictSequence(List<List<List<double>>> landmarks) {
     final List<List<List<double>>> sourceFrames;
     if (landmarks.length >= kExpectedSequenceLen) {
       sourceFrames = landmarks.sublist(landmarks.length - kExpectedSequenceLen);

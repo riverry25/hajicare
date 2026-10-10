@@ -144,9 +144,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             ],
                           ),
                           padding: EdgeInsets.fromLTRB(
+                            24,
                             26,
-                            26,
-                            26,
+                            24,
                             MediaQuery.paddingOf(context).bottom + 28,
                           ),
                           child: Column(

@@ -29,6 +29,8 @@ enum SignLanguageModel {
         return 'Penerjemah gerakan kosakata BISINDO.';
     }
   }
+
+  SignLanguageModelConfig get config => SignLanguageModelConfig.forModel(this);
 }
 
 /// Konfigurasi terpusat untuk setiap model bahasa isyarat.
@@ -59,18 +61,19 @@ class SignLanguageModelConfig {
     required this.expectedInputFeatures,
   });
 
-  /// SIBI Model: YOLO object detection model (`assets/models/sibi/sibi.tflite`)
-  /// Output: 53 classes from `assets/models/sibi/labels_sibi.txt`.
+  /// SIBI Model: MotionGRU model (48 frames x 706 features: 353 base + 353 motion)
+  /// Output: 72 kelas kosakata & alfabet SIBI.
   static const SignLanguageModelConfig sibi = SignLanguageModelConfig(
     model: SignLanguageModel.sibi,
-    modelAsset: 'assets/models/sibi/sibi.tflite',
-    labelAsset: 'assets/models/sibi/labels_sibi.txt',
-    defaultConfidenceThreshold: 0.30,
-    windowSize: 12,
-    minimumFrames: 1,
-    inferenceStride: 1,
-    throttleDuration: Duration(milliseconds: 50),
-    expectedInputFeatures: 0,
+    modelAsset: 'assets/models/sibi/sibi_motion_gru_float16.tflite',
+    labelAsset: 'assets/models/sibi/labels.txt',
+    configAsset: 'assets/models/sibi/model_metadata.json',
+    defaultConfidenceThreshold: 0.70,
+    windowSize: 48,
+    minimumFrames: 24,
+    inferenceStride: 2,
+    throttleDuration: Duration(milliseconds: 70),
+    expectedInputFeatures: 706,
   );
 
   /// BISINDO Model: MotionGRU model (48 frames x 706 features: 353 base + 353 motion)
