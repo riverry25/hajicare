@@ -96,6 +96,19 @@ final Map<String, String> jvTranslations = {
   'auth.featureInclusive': 'Inklusif',
   'auth.featureSafe': 'Aman',
   'auth.forgotPassword': 'Kesupen tembung sandi?',
+  'auth.forgotPasswordSubtitle':
+      'Lebokaken alamat email akun panjenengan. Kita badhe ngintun tautan kagem ngreset sandi.',
+  'auth.forgotPasswordTitle': 'Nata Ulang Tembung Sandi',
+  'auth.orContinueWith': 'utawi lajengaken kaliyan',
+  'auth.registerSubtitleClean':
+      'Lengkapi data kagem pendampingan ibadah ingkang aman',
+  'auth.resetLinkSent':
+      'Tautan reset tembung sandi sampun kakintun dhateng email panjenengan. Mangga dipunpriksa.',
+  'auth.sendResetLink': 'Kintun Tautan Reset',
+  'auth.tabSignIn': 'Mlebet',
+  'auth.tabSignUp': 'Daftar',
+  'auth.welcomeSubtitleClean': 'Mlebet dhateng akun HajiCare panjenengan',
+  'auth.welcomeTitleClean': 'Sugeng Rawuh!',
   'auth.fullNameHint': 'Tuladha: Ahmad Dahlan',
   'auth.fullNameLabel': 'Asma Jangkep Miturut Dhokumèn',
   'auth.googleSignIn': 'Mlebet kaliyan Google',

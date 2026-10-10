@@ -92,6 +92,19 @@ final Map<String, String> suTranslations = {
   'auth.featureInclusive': 'Inklusif',
   'auth.featureSafe': 'Aman',
   'auth.forgotPassword': 'Hilap kecap sandi?',
+  'auth.forgotPasswordSubtitle':
+      'Lebetkeun alamat email akun anjeun. Kami bakal ngirimkeun tautan pikeun ngareset kecap sandi.',
+  'auth.forgotPasswordTitle': 'Nyetel Ulang Kecap Sandi',
+  'auth.orContinueWith': 'atanapi teraskeun nganggo',
+  'auth.registerSubtitleClean':
+      'Lengkepan data kanggo pendampingan ibadah anu aman',
+  'auth.resetLinkSent':
+      'Tumbu reset kecap sandi parantos dikirim ka email anjeun. Mangga parios kotak lebet atanapi spam.',
+  'auth.sendResetLink': 'Kirim Tumbu Reset',
+  'auth.tabSignIn': 'Lebet',
+  'auth.tabSignUp': 'Daptar',
+  'auth.welcomeSubtitleClean': 'Lebet ka akun HajiCare anjeun',
+  'auth.welcomeTitleClean': 'Wilujeng Sumping!',
   'auth.fullNameHint': 'Conto: Ahmad Dahlan',
   'auth.fullNameLabel': 'Nami Lengkep Nurutkeun Dokumén',
   'auth.googleSignIn': 'Lebet nganggo Google',

@@ -109,13 +109,11 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
   void _onUserMapInteraction() {
     _mapIdleTimer?.cancel();
     if (!_isMapInteracting) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && !_isMapInteracting) {
-          setState(() {
-            _isMapInteracting = true;
-          });
-        }
-      });
+      if (mounted) {
+        setState(() {
+          _isMapInteracting = true;
+        });
+      }
     }
     _mapIdleTimer = Timer(const Duration(milliseconds: 1500), () {
       if (mounted) {
@@ -378,24 +376,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
             );
           }),
 
-          // 6. Normal Mode: Floating Search Dropdown Overlay
-          Obx(() {
-            if (mapCtrl.isNavigating) return const SizedBox.shrink();
-            return Positioned(
-              top: MediaQuery.of(context).padding.top + 116,
-              left: 0,
-              right: 0,
-              child: MapSearchDropdown(
-                mapCtrl: mapCtrl,
-                onSelect: (result) {
-                  _searchCtrl.text = result.name;
-                  mapCtrl.selectSearchResult(result);
-                },
-              ),
-            );
-          }),
-
-          // 7. Navigation Mode HUD Overlays
+          // 6. Navigation Mode HUD Overlays
           Obx(() {
             if (!mapCtrl.isNavigating) return const SizedBox.shrink();
             return Stack(
@@ -415,6 +396,23 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
               ],
             );
           }),
+
+          // 7. Normal Mode: Floating Search Dropdown Overlay
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 116,
+            left: 0,
+            right: 0,
+            child: Obx(() {
+              if (mapCtrl.isNavigating) return const SizedBox.shrink();
+              return MapSearchDropdown(
+                mapCtrl: mapCtrl,
+                onSelect: (result) {
+                  _searchCtrl.text = result.name;
+                  mapCtrl.selectSearchResult(result);
+                },
+              );
+            }),
+          ),
         ],
       ),
       bottomNavigationBar: Obx(() {

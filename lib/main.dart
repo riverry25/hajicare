@@ -20,28 +20,30 @@ import 'features/map/controllers/map_controller.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  // Initialize AndroidAlarmManager for background exact alarms
-  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-    try {
-      await AndroidAlarmManager.initialize();
-    } catch (e) {
-      debugPrint('[Main] AndroidAlarmManager initialization error: $e');
-    }
-  }
-
-  // Register global permanent controllers before runApp.
+  // Register settings early so settings load can run in parallel with Firebase init
   final settings = Get.put(AppSettingsController(), permanent: true);
-  await settings.loadSettings();
+  final adhanNotifService = AdhanNotificationService();
+
+  // Parallelize independent startup tasks concurrently to eliminate cold startup waterfall
+  await Future.wait([
+    Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
+    settings.loadSettings(),
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
+      AndroidAlarmManager.initialize().catchError((e) {
+        debugPrint('[Main] AndroidAlarmManager initialization error: $e');
+        return false;
+      }),
+    adhanNotifService.initialize().catchError((e) {
+      debugPrint('[Main] AdhanNotificationService initialization error: $e');
+    }),
+  ]);
+
+  // Register global permanent controllers after Firebase is ready
   Get.put(AppStartupController(), permanent: true);
   Get.put(HajiCareController(), permanent: true);
   Get.put(NotificationController(), permanent: true);
   Get.lazyPut<MapController>(() => MapController(), fenix: true);
 
-  // Initialize background Adhan Notification & Alarm service for exact prayer alarms
-  final adhanNotifService = AdhanNotificationService();
-  await adhanNotifService.initialize();
   unawaited(adhanNotifService.scheduleFromPreferences());
 
   runApp(const HajiCareApp());

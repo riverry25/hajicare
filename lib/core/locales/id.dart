@@ -93,6 +93,19 @@ const Map<String, String> idTranslations = {
   'auth.featureInclusive': 'Inklusif',
   'auth.featureSafe': 'Aman',
   'auth.forgotPassword': 'Lupa kata sandi?',
+  'auth.forgotPasswordSubtitle':
+      'Masukkan alamat email akun Anda. Kami akan mengirimkan tautan untuk menyetel ulang kata sandi.',
+  'auth.forgotPasswordTitle': 'Atur Ulang Kata Sandi',
+  'auth.orContinueWith': 'atau lanjutkan dengan',
+  'auth.registerSubtitleClean':
+      'Lengkapi data untuk pendampingan ibadah yang aman',
+  'auth.resetLinkSent':
+      'Tautan reset kata sandi telah dikirim ke email Anda. Silakan periksa kotak masuk atau spam.',
+  'auth.sendResetLink': 'Kirim Tautan Reset',
+  'auth.tabSignIn': 'Masuk',
+  'auth.tabSignUp': 'Daftar',
+  'auth.welcomeSubtitleClean': 'Masuk ke akun HajiCare Anda',
+  'auth.welcomeTitleClean': 'Selamat Datang!',
   'auth.fullNameHint': 'Contoh: Ahmad Dahlan',
   'auth.fullNameLabel': 'Nama Lengkap Sesuai Dokumen',
   'auth.googleSignIn': 'Masuk dengan Google',

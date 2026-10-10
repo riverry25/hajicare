@@ -88,6 +88,18 @@ const Map<String, String> enTranslations = {
   'auth.featureInclusive': 'Inclusive',
   'auth.featureSafe': 'Safe',
   'auth.forgotPassword': 'Forgot password?',
+  'auth.forgotPasswordSubtitle':
+      'Enter your account email. We will send you a password reset link.',
+  'auth.forgotPasswordTitle': 'Reset Password',
+  'auth.orContinueWith': 'or continue with',
+  'auth.registerSubtitleClean': 'Complete details for safe worship assistance',
+  'auth.resetLinkSent':
+      'A password reset link has been sent to your email. Please check your inbox or spam.',
+  'auth.sendResetLink': 'Send Reset Link',
+  'auth.tabSignIn': 'Sign In',
+  'auth.tabSignUp': 'Sign Up',
+  'auth.welcomeSubtitleClean': 'Sign in to your HajiCare account',
+  'auth.welcomeTitleClean': 'Welcome!',
   'auth.fullNameHint': 'e.g. Ahmad Dahlan',
   'auth.fullNameLabel': 'Full Name as on Documents',
   'auth.googleSignIn': 'Sign in with Google',

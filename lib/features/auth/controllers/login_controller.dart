@@ -18,6 +18,7 @@ class LoginController extends GetxController {
   final rememberMe = true.obs;
   final isLoading = false.obs;
   final isGoogleLoading = false.obs;
+  final isResetPasswordLoading = false.obs;
   final errorMessage = RxnString();
 
   static const String _googleServerClientId =
@@ -506,6 +507,74 @@ class LoginController extends GetxController {
       message: message,
       okText: 'Coba Lagi',
     );
+  }
+
+  Future<bool> sendPasswordReset(String rawEmail) async {
+    final email = rawEmail.trim();
+    if (email.isEmpty) {
+      AppDialog.error(
+        title: AppTranslations.tr('auth.forgotPasswordTitle'),
+        message: AppTranslations.tr('auth.emptyCredentials'),
+        okText: AppTranslations.tr('auth.tryAgain'),
+      );
+      return false;
+    }
+
+    if (!GetUtils.isEmail(email)) {
+      AppDialog.error(
+        title: AppTranslations.tr('auth.forgotPasswordTitle'),
+        message: AppTranslations.tr('auth.errInvalidEmail'),
+        okText: AppTranslations.tr('auth.tryAgain'),
+      );
+      return false;
+    }
+
+    try {
+      isResetPasswordLoading.value = true;
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+
+      AppDialog.success(
+        title: AppTranslations.tr('auth.forgotPasswordTitle'),
+        message: AppTranslations.tr('auth.resetLinkSent'),
+        okText: AppTranslations.tr('next'),
+      );
+      return true;
+    } on FirebaseAuthException catch (e) {
+      final String msg;
+      switch (e.code) {
+        case 'user-not-found':
+          msg = AppTranslations.tr('auth.errUserNotFound');
+          break;
+        case 'invalid-email':
+          msg = AppTranslations.tr('auth.errInvalidEmail');
+          break;
+        case 'too-many-requests':
+          msg = AppTranslations.tr('auth.errTooManyRequests');
+          break;
+        case 'network-request-failed':
+          msg = AppTranslations.tr('auth.errNetworkFailed');
+          break;
+        default:
+          msg = AppTranslations.tr('auth.errDefaultLogin');
+      }
+      AppDialog.error(
+        title: AppTranslations.tr('auth.forgotPasswordTitle'),
+        message: msg,
+        okText: AppTranslations.tr('auth.tryAgain'),
+      );
+      return false;
+    } catch (_) {
+      AppDialog.error(
+        title: AppTranslations.tr('auth.forgotPasswordTitle'),
+        message: AppTranslations.tr('auth.loginGeneralError'),
+        okText: AppTranslations.tr('auth.tryAgain'),
+      );
+      return false;
+    } finally {
+      if (!isClosed) {
+        isResetPasswordLoading.value = false;
+      }
+    }
   }
 
   Future<String?> _promptRoleSelection(BuildContext context) async {

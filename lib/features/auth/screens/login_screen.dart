@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/locales/app_localizations.dart';
-import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -10,660 +9,94 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/pill_button.dart';
 import '../controllers/login_controller.dart';
+import '../controllers/register_controller.dart';
+import '../widgets/forgot_password_sheet.dart';
 
-class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
+class LoginScreen extends StatefulWidget {
+  final int initialTab;
+
+  const LoginScreen({super.key, this.initialTab = 0});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  late int _activeTabIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _activeTabIndex = widget.initialTab.clamp(0, 1);
+  }
+
+  void _switchTab(int index) {
+    if (_activeTabIndex != index) {
+      setState(() {
+        _activeTabIndex = index;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<LoginController>();
+    final loginController = Get.find<LoginController>();
+    final registerController = Get.find<RegisterController>();
     final isDark = AppColors.isDark(context);
 
+    // Dominant clean white palette in light mode, elegant warm charcoal in dark mode
+    final scaffoldBg = isDark ? AppColors.darkScaffold : AppColors.surfaceWhite;
+    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
+    final cardBorder = isDark
+        ? AppColors.darkCardBorder
+        : AppColors.lightCardBorder;
+
     return Scaffold(
-      backgroundColor: AppColors.scaffoldColor(context),
+      backgroundColor: scaffoldBg,
       body: SafeArea(
+        top: false,
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.screenEdgeGutter,
-            AppSpacing.lg,
-            AppSpacing.screenEdgeGutter,
-            AppSpacing.xl,
-          ),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // ============================================================
-              // TOP BRAND HEADER
+              // TOP HEADER: CURVED ARCH WITH HAJI PHOTO (assets/images/haji.webp)
               // ============================================================
-              Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: AppColors.espressoDark,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.goldPrimary.withValues(alpha: 0.5),
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.espressoDark.withValues(alpha: 0.16),
-                          blurRadius: 14,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: ClipOval(
-                      child: Image.asset(
-                        'assets/icon.jpeg',
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const Icon(
-                              Icons.mosque_rounded,
-                              color: AppColors.goldPrimary,
-                              size: 24,
-                            ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(width: AppSpacing.sm),
-
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'HajiCare',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTypography.titleLarge.copyWith(
-                            color: AppColors.textHeadingColor(context),
-                            fontWeight: FontWeight.w800,
-                            height: 1,
-                          ),
-                        ),
-                        const SizedBox(height: 5),
-                        Text(
-                          context.tr('appTagline'),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTypography.captionSmall.copyWith(
-                            color: AppColors.tanMedium,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(width: AppSpacing.sm),
-
-                  // Security status chip
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.cardBgColor(context),
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      border: Border.all(
-                        color: AppColors.cardBorderColor(context),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.espressoDark.withValues(alpha: 0.03),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.verified_user_rounded,
-                          size: 14,
-                          color: isDark
-                              ? const Color(0xFF4ADE80)
-                              : AppColors.statusPositive,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          context.tr('auth.officialSafe'),
-                          style: AppTypography.captionSmall.copyWith(
-                            color: isDark
-                                ? const Color(0xFF4ADE80)
-                                : AppColors.statusPositive,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 24),
+              _CurvedArchHeader(isDark: isDark),
 
               // ============================================================
-              // WELCOME / JOURNEY INTRO BANNER
+              // WELCOME HEADLINE & SUBTITLE (CLEAN & SPACIOUS)
               // ============================================================
-              Container(
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.espressoDark, Color(0xFF22160E)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(AppRadius.xl),
-                  border: Border.all(
-                    color: AppColors.goldPrimary.withValues(alpha: 0.28),
-                    width: 1.2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.espressoDark.withValues(alpha: 0.20),
-                      blurRadius: 26,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Stack(
-                  children: [
-                    // Decorative ambient circles
-                    Positioned(
-                      right: -30,
-                      top: -40,
-                      child: Container(
-                        width: 140,
-                        height: 140,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.goldPrimary.withValues(alpha: 0.08),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      right: 40,
-                      bottom: -50,
-                      child: Container(
-                        width: 100,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.goldPrimary.withValues(alpha: 0.05),
-                        ),
-                      ),
-                    ),
-
-                    Padding(
-                      padding: const EdgeInsets.all(AppSpacing.cardPadding),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Luxury badge
-                          GestureDetector(
-                            onTap: () {
-                              debugPrint(
-                                '[DEMO] Tapping badge -> navigating to Sign Language',
-                              );
-                              Get.toNamed(AppRoutes.signLanguage);
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 11,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.surfaceWhite.withValues(
-                                  alpha: 0.12,
-                                ),
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.pill,
-                                ),
-                                border: Border.all(
-                                  color: AppColors.goldPrimary.withValues(
-                                    alpha: 0.35,
-                                  ),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.auto_awesome_rounded,
-                                    size: 14,
-                                    color: AppColors.goldPrimary,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Flexible(
-                                    child: Text(
-                                      context.tr('auth.demoBadge'),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: AppTypography.captionSmall
-                                          .copyWith(
-                                            color: AppColors.canvasCream,
-                                            fontWeight: FontWeight.w700,
-                                            letterSpacing: 0.2,
-                                          ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 18),
-
-                          // Main heading
-                          RichText(
-                            text: TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: context.tr('auth.welcomeHeading'),
-                                  style: AppTypography.displayMedium.copyWith(
-                                    color: AppColors.canvasCream,
-                                    fontWeight: FontWeight.w500,
-                                    height: 1.1,
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: context.tr('auth.welcomeGreeting'),
-                                  style: AppTypography.displayMedium.copyWith(
-                                    color: AppColors.goldPrimary,
-                                    fontWeight: FontWeight.w800,
-                                    height: 1.1,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 10),
-
-                          // Description
-                          ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 360),
-                            child: Text(
-                              context.tr('auth.welcomeDesc'),
-                              style: AppTypography.bodyMedium.copyWith(
-                                color: AppColors.canvasCream.withValues(
-                                  alpha: 0.85,
-                                ),
-                                height: 1.45,
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 18),
-
-                          // Mini feature tags
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              _WelcomeFeature(
-                                icon: Icons.shield_outlined,
-                                label: context.tr('auth.featureSafe'),
-                              ),
-                              _WelcomeFeature(
-                                icon: Icons.people_outline_rounded,
-                                label: context.tr('auth.featureConnected'),
-                              ),
-                              _WelcomeFeature(
-                                icon: Icons.accessibility_new_rounded,
-                                label: context.tr('auth.featureInclusive'),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // ============================================================
-              // LOGIN FORM CARD
-              // ============================================================
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.cardPadding),
-                decoration: BoxDecoration(
-                  color: AppColors.cardBgColor(context),
-                  borderRadius: BorderRadius.circular(AppRadius.xl),
-                  border: Border.all(color: AppColors.cardBorderColor(context)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.espressoDark.withValues(alpha: 0.05),
-                      blurRadius: 24,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.screenEdgeGutter,
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Form heading
-                    Row(
-                      children: [
-                        Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? AppColors.darkSurfaceContainerHighest
-                                : AppColors.canvasCream,
-                            borderRadius: BorderRadius.circular(13),
-                            border: Border.all(
-                              color: AppColors.goldPrimary.withValues(
-                                alpha: isDark ? 0.40 : 0.25,
-                              ),
-                            ),
-                          ),
-                          child: Icon(
-                            Icons.login_rounded,
-                            color: isDark
-                                ? AppColors.goldLight
-                                : AppColors.espressoDark,
-                            size: 21,
-                          ),
-                        ),
-
-                        const SizedBox(width: 12),
-
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                context.tr('auth.loginCardTitle'),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: AppTypography.titleMedium.copyWith(
-                                  color: AppColors.textHeadingColor(context),
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                context.tr('auth.loginCardSubtitle'),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: AppTypography.captionSmall.copyWith(
-                                  color: isDark
-                                      ? AppColors.darkTextBody
-                                      : AppColors.textMuted,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // EMAIL FIELD
+                    const SizedBox(height: 18),
                     Text(
-                      context.tr('auth.email'),
-                      style: AppTypography.bodyMedium.copyWith(
+                      context.tr('auth.welcomeTitleClean'),
+                      textAlign: TextAlign.center,
+                      style: AppTypography.displayLarge.copyWith(
                         color: AppColors.textHeadingColor(context),
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
                       ),
                     ),
-
-                    const SizedBox(height: 8),
-
-                    AppTextField(
-                      controller: controller.emailController,
-                      hintText: context.tr('auth.emailHint'),
-                      keyboardType: TextInputType.emailAddress,
-                      prefixIcon: const Icon(
-                        Icons.email_outlined,
-                        color: AppColors.tanMedium,
-                        size: 20,
-                      ),
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    // PASSWORD FIELD
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            context.tr('auth.password'),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTypography.bodyMedium.copyWith(
-                              color: AppColors.textHeadingColor(context),
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: () {
-                            // Forgot password hook
-                          },
-                          child: Text(
-                            context.tr('auth.forgotPassword'),
-                            style: AppTypography.captionSmall.copyWith(
-                              color: isDark
-                                  ? AppColors.goldAccent
-                                  : AppColors.secondary,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    Obx(
-                      () => AppTextField(
-                        controller: controller.passwordController,
-                        hintText: context.tr('auth.passwordHint'),
-                        obscureText: controller.obscurePassword.value,
-                        prefixIcon: const Icon(
-                          Icons.lock_outline_rounded,
-                          color: AppColors.tanMedium,
-                          size: 20,
-                        ),
-                        suffixIcon: IconButton(
-                          splashRadius: 20,
-                          tooltip: controller.obscurePassword.value
-                              ? context.tr('auth.showPassword')
-                              : context.tr('auth.hidePassword'),
-                          icon: Icon(
-                            controller.obscurePassword.value
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                            color: AppColors.textBody,
-                            size: 20,
-                          ),
-                          onPressed: controller.togglePasswordVisibility,
-                        ),
-                      ),
-                    ),
-
                     const SizedBox(height: 6),
-
-                    // REMEMBER ME
-                    Obx(
-                      () => Row(
-                        children: [
-                          SizedBox(
-                            width: 38,
-                            height: 38,
-                            child: Checkbox(
-                              value: controller.rememberMe.value,
-                              onChanged: (value) =>
-                                  controller.setRememberMe(value ?? true),
-                              activeColor: isDark
-                                  ? AppColors.goldPrimary
-                                  : AppColors.espressoDark,
-                              checkColor: isDark
-                                  ? AppColors.espressoDark
-                                  : Colors.white,
-                              side: BorderSide(
-                                color: isDark
-                                    ? AppColors.goldLight
-                                    : AppColors.goldLight,
-                                width: 1.5,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () => controller.setRememberMe(
-                                !controller.rememberMe.value,
-                              ),
-                              child: Text(
-                                context.tr('auth.rememberMe'),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: AppTypography.caption.copyWith(
-                                  color: isDark
-                                      ? AppColors.darkTextHeading
-                                      : AppColors.textBodyColor(context),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    // LOGIN BUTTON
-                    Obx(
-                      () => SizedBox(
-                        width: double.infinity,
-                        height: 54,
-                        child: PillButton(
-                          label: controller.isLoading.value
-                              ? context.tr('auth.loginLoading')
-                              : context.tr('auth.loginBtn'),
-                          icon: Icons.arrow_forward_rounded,
-                          color: isDark
-                              ? AppColors.goldPrimary
-                              : AppColors.espressoDark,
-                          textColor: isDark
-                              ? AppColors.espressoDark
-                              : AppColors.surfaceWhite,
-                          onPressed: controller.isLoading.value
-                              ? null
-                              : () => controller.login(),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    // DIVIDER
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Divider(
-                            color: AppColors.cardBorderColor(context),
-                            height: 1,
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 14),
-                          child: Text(
-                            context.tr('auth.orDivider'),
-                            style: AppTypography.captionSmall.copyWith(
-                              color: isDark
-                                  ? AppColors.darkTextBody
-                                  : AppColors.tanMedium,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Divider(
-                            color: AppColors.cardBorderColor(context),
-                            height: 1,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // GOOGLE SIGN-IN
-                    Obx(
-                      () => SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: OutlinedButton(
-                          onPressed: controller.isLoading.value
-                              ? null
-                              : () => controller.loginWithGoogle(),
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: isDark
-                                ? AppColors.darkSurfaceContainerHighest
-                                : AppColors.canvasCream.withValues(alpha: 0.35),
-                            side: BorderSide(
-                              color: isDark
-                                  ? AppColors.goldLight.withValues(alpha: 0.35)
-                                  : AppColors.cardBorderColor(context),
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
-                              ),
-                            ),
-                          ),
-                          child: controller.isGoogleLoading.value
-                              ? const SizedBox(
-                                  width: 22,
-                                  height: 22,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.2,
-                                    color: AppColors.goldPrimary,
-                                  ),
-                                )
-                              : Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const _GoogleLogo(size: 20),
-                                    const SizedBox(width: 10),
-                                    Flexible(
-                                      child: Text(
-                                        context.tr('auth.googleSignIn'),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: AppTypography.bodyMedium
-                                            .copyWith(
-                                              color: isDark
-                                                  ? AppColors.darkTextHeading
-                                                  : AppColors.espressoDark,
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 250),
+                      child: Text(
+                        _activeTabIndex == 0
+                            ? context.tr('auth.welcomeSubtitleClean')
+                            : context.tr('auth.registerSubtitleClean'),
+                        key: ValueKey<int>(_activeTabIndex),
+                        textAlign: TextAlign.center,
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.textSecondaryColor(context),
+                          height: 1.45,
                         ),
                       ),
                     ),
@@ -674,171 +107,101 @@ class LoginScreen extends StatelessWidget {
               const SizedBox(height: 24),
 
               // ============================================================
-              // REGISTER REDIRECTION LINK
+              // CURVED WHITE CARD CONTAINER WITH SECONDARY BACKGROUND CURVE
+              // (Lower Z-Index curve behind primary form card)
               // ============================================================
-              Center(
-                child: GestureDetector(
-                  onTap: () => Get.toNamed(AppRoutes.register),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 6,
-                      horizontal: 12,
-                    ),
-                    child: RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        text: '${context.tr('auth.noAccount')} ',
-                        style: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.textBodyColor(context),
-                        ),
-                        children: [
-                          TextSpan(
-                            text: context.tr('auth.registerNow'),
-                            style: AppTypography.bodyMedium.copyWith(
-                              color: isDark
-                                  ? AppColors.goldAccent
-                                  : AppColors.espressoDark,
-                              fontWeight: FontWeight.w800,
-                              decoration: TextDecoration.underline,
-                              decorationColor: isDark
-                                  ? AppColors.goldAccent
-                                  : AppColors.goldPrimary,
-                              decorationThickness: 2,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.screenEdgeGutter,
+                  12,
+                  AppSpacing.screenEdgeGutter,
+                  AppSpacing.xl,
                 ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // ============================================================
-              // HELP / SUPPORT BANNER
-              // ============================================================
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 13,
-                ),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkSurfaceContainer
-                      : AppColors.cardBgColor(context).withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.darkCardBorder
-                        : AppColors.cardBorderColor(context),
-                  ),
-                ),
-                child: Row(
+                child: Stack(
+                  clipBehavior: Clip.none,
                   children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? AppColors.darkSurfaceContainerHighest
-                            : AppColors.canvasCream,
-                        borderRadius: BorderRadius.circular(11),
-                        border: Border.all(
-                          color: AppColors.goldPrimary.withValues(alpha: 0.25),
+                    // ── Lower Z-Index Secondary Curve (Without Image) ────────
+                    Positioned(
+                      top: -10,
+                      left: 6,
+                      right: 6,
+                      bottom: -6,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? AppColors.darkSurfaceContainer
+                              : AppColors.canvasCream,
+                          borderRadius: BorderRadius.circular(38),
+                          border: Border.all(
+                            color: AppColors.goldPrimary.withValues(
+                              alpha: isDark ? 0.35 : 0.28,
+                            ),
+                            width: 1.2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.espressoDark.withValues(
+                                alpha: isDark ? 0.22 : 0.05,
+                              ),
+                              blurRadius: 18,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
-                      ),
-                      child: const Icon(
-                        Icons.support_agent_rounded,
-                        color: AppColors.sosEmergency,
-                        size: 19,
                       ),
                     ),
 
-                    const SizedBox(width: 12),
-
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            context.tr('auth.helpTitle'),
-                            style: AppTypography.captionSmall.copyWith(
-                              color: AppColors.textHeadingColor(context),
-                              fontWeight: FontWeight.w800,
+                    // ── Higher Z-Index Primary White Form Card ───────────────
+                    Container(
+                      padding: const EdgeInsets.all(AppSpacing.cardPadding),
+                      decoration: BoxDecoration(
+                        color: cardBg,
+                        borderRadius: BorderRadius.circular(AppRadius.xxl),
+                        border: Border.all(color: cardBorder, width: 1.2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.espressoDark.withValues(
+                              alpha: isDark ? 0.25 : 0.05,
                             ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            context.tr('auth.helpSubtitle'),
-                            style: AppTypography.captionSmall.copyWith(
-                              color: isDark
-                                  ? AppColors.darkTextBody
-                                  : AppColors.textMuted,
-                            ),
+                            blurRadius: 24,
+                            offset: const Offset(0, 6),
                           ),
                         ],
                       ),
-                    ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // ── Tab Pill Switcher (Sign In vs Sign Up) ─────────
+                          _TabPillSwitcher(
+                            selectedIndex: _activeTabIndex,
+                            onTabChanged: _switchTab,
+                            isDark: isDark,
+                          ),
 
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 14,
-                      color: isDark ? AppColors.goldLight : AppColors.tanMedium,
+                          const SizedBox(height: 24),
+
+                          // ── Tab Form Views (Animated) ──────────────────────
+                          AnimatedCrossFade(
+                            firstChild: _SignInForm(
+                              controller: loginController,
+                              onSwitchToRegister: () => _switchTab(1),
+                              isDark: isDark,
+                            ),
+                            secondChild: _SignUpForm(
+                              controller: registerController,
+                              loginController: loginController,
+                              onSwitchToLogin: () => _switchTab(0),
+                              isDark: isDark,
+                            ),
+                            crossFadeState: _activeTabIndex == 0
+                                ? CrossFadeState.showFirst
+                                : CrossFadeState.showSecond,
+                            duration: const Duration(milliseconds: 250),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Security footer note
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.lock_outline_rounded,
-                    color: isDark
-                        ? AppColors.goldPrimary
-                        : AppColors.statusPositive,
-                    size: 15,
-                  ),
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: Text(
-                      context.tr('auth.encryptedNote'),
-                      textAlign: TextAlign.center,
-                      style: AppTypography.captionSmall.copyWith(
-                        color: isDark
-                            ? AppColors.darkTextBody
-                            : AppColors.tanMedium,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-
-              Center(
-                child: TextButton.icon(
-                  onPressed: () => Get.offAllNamed(AppRoutes.dashboardJamaah),
-                  icon: const Icon(
-                    Icons.developer_mode_rounded,
-                    size: 16,
-                    color: AppColors.goldPrimary,
-                  ),
-                  label: Text(
-                    context.tr('auth.demoModeBtn'),
-                    style: AppTypography.captionSmall.copyWith(
-                      color: isDark
-                          ? AppColors.goldLight
-                          : AppColors.espressoDark,
-                      fontWeight: FontWeight.w700,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
                 ),
               ),
             ],
@@ -849,33 +212,137 @@ class LoginScreen extends StatelessWidget {
   }
 }
 
-class _WelcomeFeature extends StatelessWidget {
-  final IconData icon;
-  final String label;
+// =============================================================================
+// HEADER: SEMICIRCLE / CURVED ARCH CONTAINER WITH REAL HAJI PHOTO
+// =============================================================================
+class _CurvedArchHeader extends StatelessWidget {
+  final bool isDark;
 
-  const _WelcomeFeature({required this.icon, required this.label});
+  const _CurvedArchHeader({required this.isDark});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceWhite.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(
-          color: AppColors.goldPrimary.withValues(alpha: 0.22),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+    final screenWidth = MediaQuery.of(context).size.width;
+    const headerHeight = 215.0;
+
+    return SizedBox(
+      height: headerHeight,
+      width: screenWidth,
+      child: Stack(
+        alignment: Alignment.topCenter,
         children: [
-          Icon(icon, size: 14, color: AppColors.goldPrimary),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: AppTypography.captionSmall.copyWith(
-              color: AppColors.canvasCream,
-              fontWeight: FontWeight.w700,
+          // Semicircle curved photo backdrop
+          CustomPaint(
+            foregroundPainter: _CurvedArchBorderPainter(
+              color: AppColors.goldPrimary.withValues(
+                alpha: isDark ? 0.6 : 0.45,
+              ),
+              strokeWidth: 2.0,
+            ),
+            child: ClipPath(
+              clipper: const _CurvedArchClipper(),
+              child: SizedBox(
+                height: headerHeight,
+                width: screenWidth,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Ka'bah & Pilgrims image blending with header curve
+                    Image.asset(
+                      'assets/images/haji.webp',
+                      fit: BoxFit.cover,
+                      alignment: const Alignment(0, -0.2),
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: isDark
+                            ? AppColors.espressoDark
+                            : AppColors.canvasCream,
+                        child: const Center(
+                          child: Icon(
+                            Icons.mosque_rounded,
+                            color: AppColors.goldPrimary,
+                            size: 50,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Atmospheric gradient overlay for contrast & elegance
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.black.withValues(alpha: 0.35),
+                            Colors.black.withValues(alpha: 0.05),
+                            isDark
+                                ? AppColors.darkScaffold.withValues(alpha: 0.55)
+                                : Colors.black.withValues(alpha: 0.30),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Refined HajiCare floating brand pill
+          Positioned(
+            top: 48,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.darkSurface.withValues(alpha: 0.78)
+                    : Colors.white.withValues(alpha: 0.90),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                border: Border.all(
+                  color: AppColors.goldPrimary.withValues(alpha: 0.5),
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 22,
+                    height: 22,
+                    decoration: const BoxDecoration(shape: BoxShape.circle),
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/icon.jpeg',
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(
+                              Icons.mosque_rounded,
+                              size: 16,
+                              color: AppColors.goldPrimary,
+                            ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'HajiCare',
+                    style: AppTypography.titleSmall.copyWith(
+                      color: isDark
+                          ? AppColors.darkTextHeading
+                          : AppColors.espressoDark,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -884,6 +351,859 @@ class _WelcomeFeature extends StatelessWidget {
   }
 }
 
+class _CurvedArchClipper extends CustomClipper<Path> {
+  const _CurvedArchClipper();
+
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.lineTo(0, size.height - 45);
+    path.quadraticBezierTo(
+      size.width / 2,
+      size.height,
+      size.width,
+      size.height - 45,
+    );
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+class _CurvedArchBorderPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+
+  const _CurvedArchBorderPainter({required this.color, this.strokeWidth = 2.0});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path();
+    path.moveTo(0, size.height - 45);
+    path.quadraticBezierTo(
+      size.width / 2,
+      size.height,
+      size.width,
+      size.height - 45,
+    );
+
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _CurvedArchBorderPainter oldDelegate) =>
+      oldDelegate.color != color || oldDelegate.strokeWidth != strokeWidth;
+}
+
+// =============================================================================
+// TAB PILL SWITCHER (Masuk vs Daftar)
+// =============================================================================
+class _TabPillSwitcher extends StatelessWidget {
+  final int selectedIndex;
+  final ValueChanged<int> onTabChanged;
+  final bool isDark;
+
+  const _TabPillSwitcher({
+    required this.selectedIndex,
+    required this.onTabChanged,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final pillBg = isDark
+        ? AppColors.darkSurfaceContainerHighest
+        : const Color(0xFFF4EFEA);
+
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: pillBg,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(
+          color: isDark
+              ? AppColors.darkCardBorder
+              : AppColors.canvasCreamSubtle,
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _TabButton(
+              title: context.tr('auth.tabSignIn'),
+              isSelected: selectedIndex == 0,
+              onTap: () => onTabChanged(0),
+              isDark: isDark,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: _TabButton(
+              title: context.tr('auth.tabSignUp'),
+              isSelected: selectedIndex == 1,
+              onTap: () => onTabChanged(1),
+              isDark: isDark,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TabButton extends StatelessWidget {
+  final String title;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final bool isDark;
+
+  const _TabButton({
+    required this.title,
+    required this.isSelected,
+    required this.onTap,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final activeBg = isDark ? AppColors.goldPrimary : AppColors.espressoDark;
+    final activeText = isDark ? AppColors.espressoDark : Colors.white;
+    final inactiveText = isDark
+        ? AppColors.darkTextBody.withValues(alpha: 0.7)
+        : AppColors.textMuted;
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: isSelected ? activeBg : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.espressoDark.withValues(
+                      alpha: isDark ? 0.2 : 0.1,
+                    ),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Text(
+          title,
+          style: AppTypography.bodySmall.copyWith(
+            color: isSelected ? activeText : inactiveText,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// TAB 1: FORM MASUK (SIGN IN)
+// =============================================================================
+class _SignInForm extends StatelessWidget {
+  final LoginController controller;
+  final VoidCallback onSwitchToRegister;
+  final bool isDark;
+
+  const _SignInForm({
+    required this.controller,
+    required this.onSwitchToRegister,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Email
+        Text(
+          context.tr('auth.email'),
+          style: AppTypography.labelLarge.copyWith(
+            color: AppColors.textHeadingColor(context),
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        AppTextField(
+          controller: controller.emailController,
+          hintText: context.tr('auth.emailHint'),
+          keyboardType: TextInputType.emailAddress,
+          prefixIcon: const Icon(
+            Icons.mail_outline_rounded,
+            color: AppColors.tanMedium,
+            size: 20,
+          ),
+        ),
+
+        const SizedBox(height: 18),
+
+        // Password
+        Text(
+          context.tr('auth.password'),
+          style: AppTypography.labelLarge.copyWith(
+            color: AppColors.textHeadingColor(context),
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        Obx(
+          () => AppTextField(
+            controller: controller.passwordController,
+            hintText: context.tr('auth.passwordHint'),
+            obscureText: controller.obscurePassword.value,
+            prefixIcon: const Icon(
+              Icons.lock_outline_rounded,
+              color: AppColors.tanMedium,
+              size: 20,
+            ),
+            suffixIcon: IconButton(
+              splashRadius: 20,
+              tooltip: controller.obscurePassword.value
+                  ? context.tr('auth.showPassword')
+                  : context.tr('auth.hidePassword'),
+              icon: Icon(
+                controller.obscurePassword.value
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                color: AppColors.textBody,
+                size: 20,
+              ),
+              onPressed: controller.togglePasswordVisibility,
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // Utility Row: Remember Me & Forgot Password
+        Row(
+          children: [
+            Obx(
+              () => SizedBox(
+                width: 24,
+                height: 24,
+                child: Checkbox(
+                  value: controller.rememberMe.value,
+                  onChanged: (val) => controller.setRememberMe(val ?? true),
+                  activeColor: isDark
+                      ? AppColors.goldPrimary
+                      : AppColors.espressoDark,
+                  checkColor: isDark ? AppColors.espressoDark : Colors.white,
+                  side: BorderSide(
+                    color: isDark ? AppColors.goldLight : AppColors.tanMedium,
+                    width: 1.5,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: GestureDetector(
+                onTap: () =>
+                    controller.setRememberMe(!controller.rememberMe.value),
+                child: Text(
+                  context.tr('auth.rememberMe'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textSecondaryColor(context),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            GestureDetector(
+              onTap: () => ForgotPasswordSheet.show(
+                context,
+                initialEmail: controller.emailController.text,
+              ),
+              child: Text(
+                context.tr('auth.forgotPassword'),
+                style: AppTypography.captionSmall.copyWith(
+                  color: isDark ? AppColors.goldAccent : AppColors.espressoDark,
+                  fontWeight: FontWeight.w700,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 22),
+
+        // Login Button
+        Obx(
+          () => SizedBox(
+            height: 52,
+            child: PillButton(
+              label: controller.isLoading.value
+                  ? context.tr('auth.loginLoading')
+                  : context.tr('auth.loginBtn'),
+              icon: Icons.arrow_forward_rounded,
+              color: isDark ? AppColors.goldPrimary : AppColors.espressoDark,
+              textColor: isDark
+                  ? AppColors.espressoDark
+                  : AppColors.surfaceWhite,
+              onPressed: controller.isLoading.value ? null : controller.login,
+            ),
+          ),
+        ),
+
+        // Centered Spacing between Login Button and Google Sign-In
+        const SizedBox(height: 20),
+
+        // Centered Divider
+        _DividerWithText(text: context.tr('auth.orDivider'), isDark: isDark),
+
+        const SizedBox(height: 20),
+
+        // Google Sign-In Button
+        _GoogleSignInButton(controller: controller, isDark: isDark),
+
+        const SizedBox(height: 22),
+
+        // Switch to Register link
+        Center(
+          child: GestureDetector(
+            onTap: onSwitchToRegister,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+              child: RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  text: '${context.tr('auth.noAccount')} ',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textSecondaryColor(context),
+                  ),
+                  children: [
+                    TextSpan(
+                      text: context.tr('auth.registerNow'),
+                      style: AppTypography.bodySmall.copyWith(
+                        color: isDark
+                            ? AppColors.goldAccent
+                            : AppColors.espressoDark,
+                        fontWeight: FontWeight.w800,
+                        decoration: TextDecoration.underline,
+                        decorationColor: isDark
+                            ? AppColors.goldAccent
+                            : AppColors.goldPrimary,
+                        decorationThickness: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// =============================================================================
+// TAB 2: FORM DAFTAR (SIGN UP)
+// =============================================================================
+class _SignUpForm extends StatelessWidget {
+  final RegisterController controller;
+  final LoginController loginController;
+  final VoidCallback onSwitchToLogin;
+  final bool isDark;
+
+  const _SignUpForm({
+    required this.controller,
+    required this.loginController,
+    required this.onSwitchToLogin,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Role Selector (Compact)
+        Text(
+          context.tr('auth.registerAs'),
+          style: AppTypography.labelLarge.copyWith(
+            color: AppColors.textHeadingColor(context),
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        Obx(
+          () => Row(
+            children: [
+              Expanded(
+                child: _RoleChoiceCard(
+                  title: context.tr('roleJamaah'),
+                  subtitle: context.tr('auth.roleHajjUmrah'),
+                  icon: Icons.person_outline_rounded,
+                  isSelected: controller.selectedRole.value == 'jamaah',
+                  onTap: () => controller.setRole('jamaah'),
+                  isDark: isDark,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _RoleChoiceCard(
+                  title: context.tr('auth.roleCompanion'),
+                  subtitle: context.tr('auth.roleFamilyMuthawif'),
+                  icon: Icons.health_and_safety_outlined,
+                  isSelected: controller.selectedRole.value == 'pendamping',
+                  onTap: () => controller.setRole('pendamping'),
+                  isDark: isDark,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 18),
+
+        // Full Name
+        Text(
+          context.tr('fullNameLabel'),
+          style: AppTypography.labelLarge.copyWith(
+            color: AppColors.textHeadingColor(context),
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        AppTextField(
+          controller: controller.fullNameController,
+          hintText: context.tr('auth.fullNameHint'),
+          prefixIcon: const Icon(
+            Icons.person_outline_rounded,
+            color: AppColors.tanMedium,
+            size: 20,
+          ),
+        ),
+
+        const SizedBox(height: 18),
+
+        // Nomor Porsi / NIK (Optional)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Flexible(
+              child: Text(
+                context.tr('auth.porsiOrNikLabel'),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.labelLarge.copyWith(
+                  color: AppColors.textHeadingColor(context),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.darkSurfaceContainerHighest
+                    : AppColors.canvasCream,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+              ),
+              child: Text(
+                context.tr('common.optional'),
+                style: AppTypography.captionSmall.copyWith(
+                  color: AppColors.tanMedium,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 10,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+
+        AppTextField(
+          controller: controller.porsiController,
+          hintText: context.tr('auth.porsiOrNikHint'),
+          keyboardType: TextInputType.number,
+          prefixIcon: const Icon(
+            Icons.credit_card_outlined,
+            color: AppColors.tanMedium,
+            size: 20,
+          ),
+        ),
+
+        const SizedBox(height: 18),
+
+        // Active Email
+        Text(
+          context.tr('auth.activeEmail'),
+          style: AppTypography.labelLarge.copyWith(
+            color: AppColors.textHeadingColor(context),
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        AppTextField(
+          controller: controller.emailController,
+          hintText: context.tr('auth.emailHint'),
+          keyboardType: TextInputType.emailAddress,
+          prefixIcon: const Icon(
+            Icons.mail_outline_rounded,
+            color: AppColors.tanMedium,
+            size: 20,
+          ),
+        ),
+
+        const SizedBox(height: 18),
+
+        // Password
+        Text(
+          context.tr('auth.password'),
+          style: AppTypography.labelLarge.copyWith(
+            color: AppColors.textHeadingColor(context),
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        Obx(
+          () => AppTextField(
+            controller: controller.passwordController,
+            hintText: context.tr('auth.passwordMin6Hint'),
+            obscureText: controller.obscurePassword.value,
+            prefixIcon: const Icon(
+              Icons.lock_outline_rounded,
+              color: AppColors.tanMedium,
+              size: 20,
+            ),
+            suffixIcon: IconButton(
+              splashRadius: 20,
+              tooltip: controller.obscurePassword.value
+                  ? context.tr('auth.showPassword')
+                  : context.tr('auth.hidePassword'),
+              icon: Icon(
+                controller.obscurePassword.value
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                color: AppColors.textBody,
+                size: 20,
+              ),
+              onPressed: controller.togglePasswordVisibility,
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 6),
+
+        Text(
+          context.tr('auth.passwordMin6Desc'),
+          style: AppTypography.captionSmall.copyWith(
+            color: AppColors.textSecondaryColor(context),
+          ),
+        ),
+
+        const SizedBox(height: 22),
+
+        // Register Button
+        Obx(
+          () => SizedBox(
+            height: 52,
+            child: PillButton(
+              label: controller.isLoading.value
+                  ? context.tr('auth.registering')
+                  : context.tr('auth.createAccountNow'),
+              icon: Icons.check_circle_outline_rounded,
+              color: isDark ? AppColors.goldPrimary : AppColors.espressoDark,
+              textColor: isDark
+                  ? AppColors.espressoDark
+                  : AppColors.surfaceWhite,
+              onPressed: controller.isLoading.value
+                  ? null
+                  : controller.register,
+            ),
+          ),
+        ),
+
+        // Centered Spacing between Register Button and Google Sign-In
+        const SizedBox(height: 20),
+
+        // Centered Divider
+        _DividerWithText(text: context.tr('auth.orDivider'), isDark: isDark),
+
+        const SizedBox(height: 20),
+
+        // Google Sign-In Button
+        _GoogleSignInButton(controller: loginController, isDark: isDark),
+
+        const SizedBox(height: 22),
+
+        // Switch to Login link
+        Center(
+          child: GestureDetector(
+            onTap: onSwitchToLogin,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+              child: RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  text: context.tr('auth.alreadyHaveAccount'),
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textSecondaryColor(context),
+                  ),
+                  children: [
+                    TextSpan(
+                      text: context.tr('auth.loginNow'),
+                      style: AppTypography.bodySmall.copyWith(
+                        color: isDark
+                            ? AppColors.goldAccent
+                            : AppColors.espressoDark,
+                        fontWeight: FontWeight.w800,
+                        decoration: TextDecoration.underline,
+                        decorationColor: isDark
+                            ? AppColors.goldAccent
+                            : AppColors.goldPrimary,
+                        decorationThickness: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// =============================================================================
+// ROLE SELECTION CARD
+// =============================================================================
+class _RoleChoiceCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final bool isDark;
+
+  const _RoleChoiceCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final activeBorderColor = isDark
+        ? AppColors.goldPrimary
+        : AppColors.espressoDark;
+    final inactiveBorderColor = isDark
+        ? AppColors.darkCardBorder
+        : AppColors.canvasCreamSubtle;
+    final activeBg = isDark
+        ? AppColors.darkSurfaceContainerHighest
+        : AppColors.canvasCream;
+    final inactiveBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? activeBg : inactiveBg,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(
+            color: isSelected ? activeBorderColor : inactiveBorderColor,
+            width: isSelected ? 1.6 : 1.0,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 20,
+              color: isSelected
+                  ? (isDark ? AppColors.goldPrimary : AppColors.espressoDark)
+                  : AppColors.tanMedium,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.captionSmall.copyWith(
+                      color: AppColors.textHeadingColor(context),
+                      fontWeight: isSelected
+                          ? FontWeight.w800
+                          : FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.captionSmall.copyWith(
+                      fontSize: 10,
+                      color: AppColors.textSecondaryColor(context),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              Icon(
+                Icons.check_circle_rounded,
+                size: 16,
+                color: isDark ? AppColors.goldPrimary : AppColors.espressoDark,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// DIVIDER WITH TEXT (VERTICALLY & HORIZONTALLY CENTERED)
+// =============================================================================
+class _DividerWithText extends StatelessWidget {
+  final String text;
+  final bool isDark;
+
+  const _DividerWithText({required this.text, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final dividerColor = isDark
+        ? AppColors.darkCardBorder
+        : AppColors.canvasCreamSubtle;
+
+    return Center(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(child: Divider(color: dividerColor, height: 1)),
+          Flexible(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: Text(
+                text,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.captionSmall.copyWith(
+                  color: AppColors.textSecondaryColor(context),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+          Expanded(child: Divider(color: dividerColor, height: 1)),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// GOOGLE SIGN-IN BUTTON
+// =============================================================================
+class _GoogleSignInButton extends StatelessWidget {
+  final LoginController controller;
+  final bool isDark;
+
+  const _GoogleSignInButton({required this.controller, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(
+      () => SizedBox(
+        height: 50,
+        child: OutlinedButton(
+          onPressed:
+              controller.isLoading.value || controller.isGoogleLoading.value
+              ? null
+              : controller.loginWithGoogle,
+          style: OutlinedButton.styleFrom(
+            backgroundColor: isDark
+                ? AppColors.darkSurfaceContainerHighest
+                : AppColors.surfaceWhite,
+            side: BorderSide(
+              color: isDark
+                  ? AppColors.darkCardBorder
+                  : AppColors.canvasCreamSubtle,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+            ),
+          ),
+          child: controller.isGoogleLoading.value
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.0,
+                    color: AppColors.goldPrimary,
+                  ),
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const _GoogleLogo(size: 18),
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: Text(
+                        context.tr('auth.googleSignIn'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.textHeadingColor(context),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// AUTHENTIC GOOGLE LOGO
+// =============================================================================
 class _GoogleLogo extends StatelessWidget {
   final double size;
 
@@ -899,7 +1219,7 @@ class _GoogleLogo extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Color(0x18000000),
+            color: Color(0x14000000),
             blurRadius: 4,
             offset: Offset(0, 1),
           ),
