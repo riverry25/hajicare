@@ -55,157 +55,170 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: scaffoldBg,
       body: SafeArea(
         top: false,
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // ============================================================
-              // TOP HEADER: CURVED ARCH WITH HAJI PHOTO (assets/images/haji.webp)
-              // ============================================================
-              _CurvedArchHeader(isDark: isDark),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final hasKeyboard = MediaQuery.viewInsetsOf(context).bottom > 0;
+            // Prevent scrolling on login tab when screen space is adequate and keyboard is closed
+            final canScroll =
+                _activeTabIndex == 1 ||
+                hasKeyboard ||
+                constraints.maxHeight < 680;
 
-              // ============================================================
-              // WELCOME HEADLINE & SUBTITLE (CLEAN & SPACIOUS)
-              // ============================================================
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.screenEdgeGutter,
-                ),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 18),
-                    Text(
-                      context.tr('auth.welcomeTitleClean'),
-                      textAlign: TextAlign.center,
-                      style: AppTypography.displayLarge.copyWith(
-                        color: AppColors.textHeadingColor(context),
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.5,
-                      ),
+            return SingleChildScrollView(
+              physics: canScroll
+                  ? const ClampingScrollPhysics()
+                  : const NeverScrollableScrollPhysics(),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // ============================================================
+                  // TOP HEADER: CURVED ARCH WITH HAJI PHOTO (assets/images/haji.webp)
+                  // ============================================================
+                  _CurvedArchHeader(isDark: isDark),
+
+                  // ============================================================
+                  // WELCOME HEADLINE & SUBTITLE (CLEAN & SPACIOUS)
+                  // ============================================================
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.screenEdgeGutter,
                     ),
-                    const SizedBox(height: 6),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 250),
-                      child: Text(
-                        _activeTabIndex == 0
-                            ? context.tr('auth.welcomeSubtitleClean')
-                            : context.tr('auth.registerSubtitleClean'),
-                        key: ValueKey<int>(_activeTabIndex),
-                        textAlign: TextAlign.center,
-                        style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.textSecondaryColor(context),
-                          height: 1.45,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // ============================================================
-              // CURVED WHITE CARD CONTAINER WITH SECONDARY BACKGROUND CURVE
-              // (Lower Z-Index curve behind primary form card)
-              // ============================================================
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.screenEdgeGutter,
-                  12,
-                  AppSpacing.screenEdgeGutter,
-                  AppSpacing.xl,
-                ),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    // ── Lower Z-Index Secondary Curve (Without Image) ────────
-                    Positioned(
-                      top: -10,
-                      left: 6,
-                      right: 6,
-                      bottom: -6,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? AppColors.darkSurfaceContainer
-                              : AppColors.canvasCream,
-                          borderRadius: BorderRadius.circular(38),
-                          border: Border.all(
-                            color: AppColors.goldPrimary.withValues(
-                              alpha: isDark ? 0.35 : 0.28,
-                            ),
-                            width: 1.2,
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 14),
+                        Text(
+                          context.tr('auth.welcomeTitleClean'),
+                          textAlign: TextAlign.center,
+                          style: AppTypography.displayLarge.copyWith(
+                            color: AppColors.textHeadingColor(context),
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.5,
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.espressoDark.withValues(
-                                alpha: isDark ? 0.22 : 0.05,
+                        ),
+                        const SizedBox(height: 4),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 250),
+                          child: Text(
+                            _activeTabIndex == 0
+                                ? context.tr('auth.welcomeSubtitleClean')
+                                : context.tr('auth.registerSubtitleClean'),
+                            key: ValueKey<int>(_activeTabIndex),
+                            textAlign: TextAlign.center,
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.textSecondaryColor(context),
+                              height: 1.45,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // ============================================================
+                  // CURVED WHITE CARD CONTAINER WITH SECONDARY BACKGROUND CURVE
+                  // (Lower Z-Index curve behind primary form card)
+                  // ============================================================
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.screenEdgeGutter,
+                      12,
+                      AppSpacing.screenEdgeGutter,
+                      AppSpacing.xl,
+                    ),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        // ── Lower Z-Index Secondary Curve (Without Image) ────────
+                        Positioned(
+                          top: -10,
+                          left: 6,
+                          right: 6,
+                          bottom: -6,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? AppColors.darkSurfaceContainer
+                                  : AppColors.canvasCream,
+                              borderRadius: BorderRadius.circular(38),
+                              border: Border.all(
+                                color: AppColors.goldPrimary.withValues(
+                                  alpha: isDark ? 0.35 : 0.28,
+                                ),
+                                width: 1.2,
                               ),
-                              blurRadius: 18,
-                              offset: const Offset(0, 4),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.espressoDark.withValues(
+                                    alpha: isDark ? 0.22 : 0.05,
+                                  ),
+                                  blurRadius: 18,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
-                      ),
+
+                        // ── Higher Z-Index Primary White Form Card ───────────────
+                        Container(
+                          padding: const EdgeInsets.all(AppSpacing.cardPadding),
+                          decoration: BoxDecoration(
+                            color: cardBg,
+                            borderRadius: BorderRadius.circular(AppRadius.xxl),
+                            border: Border.all(color: cardBorder, width: 1.2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.espressoDark.withValues(
+                                  alpha: isDark ? 0.25 : 0.05,
+                                ),
+                                blurRadius: 24,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // ── Tab Pill Switcher (Sign In vs Sign Up) ─────────
+                              _TabPillSwitcher(
+                                selectedIndex: _activeTabIndex,
+                                onTabChanged: _switchTab,
+                                isDark: isDark,
+                              ),
+
+                              const SizedBox(height: 24),
+
+                              // ── Tab Form Views (Animated) ──────────────────────
+                              AnimatedCrossFade(
+                                firstChild: _SignInForm(
+                                  controller: loginController,
+                                  onSwitchToRegister: () => _switchTab(1),
+                                  isDark: isDark,
+                                ),
+                                secondChild: _SignUpForm(
+                                  controller: registerController,
+                                  loginController: loginController,
+                                  onSwitchToLogin: () => _switchTab(0),
+                                  isDark: isDark,
+                                ),
+                                crossFadeState: _activeTabIndex == 0
+                                    ? CrossFadeState.showFirst
+                                    : CrossFadeState.showSecond,
+                                duration: const Duration(milliseconds: 250),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-
-                    // ── Higher Z-Index Primary White Form Card ───────────────
-                    Container(
-                      padding: const EdgeInsets.all(AppSpacing.cardPadding),
-                      decoration: BoxDecoration(
-                        color: cardBg,
-                        borderRadius: BorderRadius.circular(AppRadius.xxl),
-                        border: Border.all(color: cardBorder, width: 1.2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.espressoDark.withValues(
-                              alpha: isDark ? 0.25 : 0.05,
-                            ),
-                            blurRadius: 24,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // ── Tab Pill Switcher (Sign In vs Sign Up) ─────────
-                          _TabPillSwitcher(
-                            selectedIndex: _activeTabIndex,
-                            onTabChanged: _switchTab,
-                            isDark: isDark,
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          // ── Tab Form Views (Animated) ──────────────────────
-                          AnimatedCrossFade(
-                            firstChild: _SignInForm(
-                              controller: loginController,
-                              onSwitchToRegister: () => _switchTab(1),
-                              isDark: isDark,
-                            ),
-                            secondChild: _SignUpForm(
-                              controller: registerController,
-                              loginController: loginController,
-                              onSwitchToLogin: () => _switchTab(0),
-                              isDark: isDark,
-                            ),
-                            crossFadeState: _activeTabIndex == 0
-                                ? CrossFadeState.showFirst
-                                : CrossFadeState.showSecond,
-                            duration: const Duration(milliseconds: 250),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
@@ -229,119 +242,101 @@ class _CurvedArchHeader extends StatelessWidget {
       height: headerHeight,
       width: screenWidth,
       child: Stack(
+        clipBehavior: Clip.none,
         alignment: Alignment.topCenter,
         children: [
-          // Semicircle curved photo backdrop
+          // ── Curved drop shadow underneath image (replaces border) ──
           CustomPaint(
-            foregroundPainter: _CurvedArchBorderPainter(
-              color: AppColors.goldPrimary.withValues(
-                alpha: isDark ? 0.6 : 0.45,
-              ),
-              strokeWidth: 2.0,
-            ),
-            child: ClipPath(
-              clipper: const _CurvedArchClipper(),
-              child: SizedBox(
-                height: headerHeight,
-                width: screenWidth,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    // Ka'bah & Pilgrims image blending with header curve
-                    Image.asset(
-                      'assets/images/haji.webp',
-                      fit: BoxFit.cover,
-                      alignment: const Alignment(0, -0.2),
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        color: isDark
-                            ? AppColors.espressoDark
-                            : AppColors.canvasCream,
-                        child: const Center(
-                          child: Icon(
-                            Icons.mosque_rounded,
-                            color: AppColors.goldPrimary,
-                            size: 50,
-                          ),
-                        ),
-                      ),
-                    ),
+            size: Size(screenWidth, headerHeight),
+            painter: _CurvedArchShadowPainter(isDark: isDark),
+          ),
 
-                    // Atmospheric gradient overlay for contrast & elegance
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.black.withValues(alpha: 0.35),
-                            Colors.black.withValues(alpha: 0.05),
-                            isDark
-                                ? AppColors.darkScaffold.withValues(alpha: 0.55)
-                                : Colors.black.withValues(alpha: 0.30),
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
+          // ── Semicircle curved photo backdrop (no border) ──
+          ClipPath(
+            clipper: const _CurvedArchClipper(),
+            child: SizedBox(
+              height: headerHeight,
+              width: screenWidth,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Ka'bah & Pilgrims image blending with header curve
+                  Image.asset(
+                    'assets/images/haji.webp',
+                    fit: BoxFit.cover,
+                    alignment: const Alignment(0, -0.2),
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: isDark
+                          ? AppColors.espressoDark
+                          : AppColors.canvasCream,
+                      child: const Center(
+                        child: Icon(
+                          Icons.mosque_rounded,
+                          color: AppColors.goldPrimary,
+                          size: 50,
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+
+                  // Atmospheric gradient overlay for contrast & elegance
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.black.withValues(alpha: 0.35),
+                          Colors.black.withValues(alpha: 0.05),
+                          isDark
+                              ? AppColors.darkScaffold.withValues(alpha: 0.55)
+                              : Colors.black.withValues(alpha: 0.30),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
 
-          // Refined HajiCare floating brand pill
+          // Top-left floating HajiCare circular icon (brand mark only)
           Positioned(
-            top: 48,
+            top: MediaQuery.paddingOf(context).top > 0
+                ? MediaQuery.paddingOf(context).top + 8
+                : 44,
+            left: AppSpacing.screenEdgeGutter,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
+                shape: BoxShape.circle,
                 color: isDark
-                    ? AppColors.darkSurface.withValues(alpha: 0.78)
-                    : Colors.white.withValues(alpha: 0.90),
-                borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ? AppColors.darkSurface.withValues(alpha: 0.88)
+                    : Colors.white.withValues(alpha: 0.95),
                 border: Border.all(
                   color: AppColors.goldPrimary.withValues(alpha: 0.5),
                   width: 1.2,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
+                    color: Colors.black.withValues(alpha: 0.18),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
                 ],
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 22,
-                    height: 22,
-                    decoration: const BoxDecoration(shape: BoxShape.circle),
-                    child: ClipOval(
-                      child: Image.asset(
-                        'assets/icon.jpeg',
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const Icon(
-                              Icons.mosque_rounded,
-                              size: 16,
-                              color: AppColors.goldPrimary,
-                            ),
-                      ),
-                    ),
+              padding: const EdgeInsets.all(2.5),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/icon.jpeg',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => const Icon(
+                    Icons.mosque_rounded,
+                    size: 20,
+                    color: AppColors.goldPrimary,
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'HajiCare',
-                    style: AppTypography.titleSmall.copyWith(
-                      color: isDark
-                          ? AppColors.darkTextHeading
-                          : AppColors.espressoDark,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.2,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -354,15 +349,14 @@ class _CurvedArchHeader extends StatelessWidget {
 class _CurvedArchClipper extends CustomClipper<Path> {
   const _CurvedArchClipper();
 
-  @override
-  Path getClip(Size size) {
+  static Path getArchPath(Size size) {
     final path = Path();
-    path.lineTo(0, size.height - 45);
+    path.lineTo(0, size.height - 15);
     path.quadraticBezierTo(
       size.width / 2,
       size.height,
       size.width,
-      size.height - 45,
+      size.height - 70,
     );
     path.lineTo(size.width, 0);
     path.close();
@@ -370,37 +364,44 @@ class _CurvedArchClipper extends CustomClipper<Path> {
   }
 
   @override
+  Path getClip(Size size) => getArchPath(size);
+
+  @override
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
 
-class _CurvedArchBorderPainter extends CustomPainter {
-  final Color color;
-  final double strokeWidth;
+class _CurvedArchShadowPainter extends CustomPainter {
+  final bool isDark;
 
-  const _CurvedArchBorderPainter({required this.color, this.strokeWidth = 2.0});
+  const _CurvedArchShadowPainter({required this.isDark});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final path = Path();
-    path.moveTo(0, size.height - 45);
-    path.quadraticBezierTo(
-      size.width / 2,
-      size.height,
-      size.width,
-      size.height - 45,
-    );
+    final path = _CurvedArchClipper.getArchPath(size);
 
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth;
+    final shadowColor = isDark
+        ? Colors.black.withValues(alpha: 0.55)
+        : AppColors.espressoDark.withValues(alpha: 0.16);
 
-    canvas.drawPath(path, paint);
+    // Multi-layered shadow for rich natural depth underneath the curve
+    // Layer 1: Ambient soft blur spreading underneath
+    final ambientPaint = Paint()
+      ..color = shadowColor
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16);
+
+    canvas.drawPath(path.shift(const Offset(0, 6)), ambientPaint);
+
+    // Layer 2: Deeper contact shadow right at the curve edge
+    final contactPaint = Paint()
+      ..color = shadowColor.withValues(alpha: isDark ? 0.35 : 0.10)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+
+    canvas.drawPath(path.shift(const Offset(0, 2)), contactPaint);
   }
 
   @override
-  bool shouldRepaint(covariant _CurvedArchBorderPainter oldDelegate) =>
-      oldDelegate.color != color || oldDelegate.strokeWidth != strokeWidth;
+  bool shouldRepaint(covariant _CurvedArchShadowPainter oldDelegate) =>
+      oldDelegate.isDark != isDark;
 }
 
 // =============================================================================
@@ -553,7 +554,7 @@ class _SignInForm extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 18),
+        const SizedBox(height: 14),
 
         // Password
         Text(
@@ -591,7 +592,7 @@ class _SignInForm extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
 
         // Utility Row: Remember Me & Forgot Password
         Row(
@@ -650,12 +651,12 @@ class _SignInForm extends StatelessWidget {
           ],
         ),
 
-        const SizedBox(height: 22),
+        const SizedBox(height: 16),
 
         // Login Button
         Obx(
           () => SizedBox(
-            height: 52,
+            height: 48,
             child: PillButton(
               label: controller.isLoading.value
                   ? context.tr('auth.loginLoading')
@@ -671,17 +672,17 @@ class _SignInForm extends StatelessWidget {
         ),
 
         // Centered Spacing between Login Button and Google Sign-In
-        const SizedBox(height: 20),
+        const SizedBox(height: 14),
 
         // Centered Divider
         _DividerWithText(text: context.tr('auth.orDivider'), isDark: isDark),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 14),
 
         // Google Sign-In Button
         _GoogleSignInButton(controller: controller, isDark: isDark),
 
-        const SizedBox(height: 22),
+        const SizedBox(height: 16),
 
         // Switch to Register link
         Center(
