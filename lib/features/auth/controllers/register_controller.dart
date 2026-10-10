@@ -15,7 +15,8 @@ class RegisterController extends GetxController {
   final errorMessage = RxnString();
 
   final fullNameController = TextEditingController();
-  final porsiController = TextEditingController();
+  final nikController = TextEditingController();
+  TextEditingController get porsiController => nikController;
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
@@ -35,7 +36,7 @@ class RegisterController extends GetxController {
     errorMessage.value = null;
 
     final name = fullNameController.text.trim();
-    final porsi = porsiController.text.trim();
+    final nik = nikController.text.trim();
     final email = emailController.text.trim();
     final password = passwordController.text;
     final chosenRole = selectedRole.value.trim().toLowerCase();
@@ -81,8 +82,7 @@ class RegisterController extends GetxController {
         'displayName': name,
         'email': email,
         'normalizedEmail': email.toLowerCase(),
-        'nomorPorsi': porsi,
-        'porsi': porsi,
+        'nik': nik,
         'role': effectiveRole,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
@@ -98,7 +98,7 @@ class RegisterController extends GetxController {
       try {
         await TrustedBackendService().call('ensureUserProfile', {
           'name': name,
-          'nomorPorsi': porsi,
+          'nik': nik,
           'requestedRole': effectiveRole,
         });
         debugPrint('=== Cloud Function ensureUserProfile succeeded');
@@ -178,7 +178,7 @@ class RegisterController extends GetxController {
   @override
   void onClose() {
     fullNameController.dispose();
-    porsiController.dispose();
+    nikController.dispose();
     emailController.dispose();
     passwordController.dispose();
     super.onClose();

@@ -87,6 +87,9 @@ class _CommunicationGestureDialogState
   void _showAudioHelpDialog(BuildContext context) {
     final isDark = AppColors.isDark(context);
     final headingColor = AppColors.textHeadingColor(context);
+    final controller = Get.isRegistered<CommunicationController>()
+        ? Get.find<CommunicationController>()
+        : Get.put(CommunicationController());
 
     showDialog<void>(
       context: context,
@@ -115,9 +118,7 @@ class _CommunicationGestureDialogState
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  context.tr('quickComm.audioHelpTitle').isNotEmpty
-                      ? context.tr('quickComm.audioHelpTitle')
-                      : 'Bantuan Audio',
+                  context.tr('quickComm.audioHelpTitle'),
                   style: AppTypography.titleMedium.copyWith(
                     color: headingColor,
                     fontWeight: FontWeight.w800,
@@ -132,9 +133,7 @@ class _CommunicationGestureDialogState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  context.tr('quickComm.audioHelpDesc').isNotEmpty
-                      ? context.tr('quickComm.audioHelpDesc')
-                      : 'Jika suara belum terdengar di ponsel Anda, periksa tips berikut:',
+                  context.tr('quickComm.audioHelpDesc'),
                   style: AppTypography.bodySmall.copyWith(
                     color: isDark ? AppColors.darkTextBody : AppColors.textBody,
                     height: 1.4,
@@ -143,29 +142,140 @@ class _CommunicationGestureDialogState
                 const SizedBox(height: 14),
                 _buildHelpItem(
                   icon: Icons.volume_up_rounded,
-                  title: 'Volume Media Ponsel',
-                  subtitle:
-                      'Pastikan volume Media/Multimedia dinaikkan (bukan hanya nada dering panggilan).',
+                  title: context.tr('quickComm.audioHelpVolumeTitle'),
+                  subtitle: context.tr('quickComm.audioHelpVolumeDesc'),
                   isDark: isDark,
                   headingColor: headingColor,
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 _buildHelpItem(
                   icon: Icons.notifications_active_rounded,
-                  title: 'Mode Dering (Bukan Hening)',
-                  subtitle:
-                      'Pada iPhone atau HP tertentu, matikan tombol fisik hening (silent switch).',
+                  title: context.tr('quickComm.audioHelpRingerTitle'),
+                  subtitle: context.tr('quickComm.audioHelpRingerDesc'),
                   isDark: isDark,
                   headingColor: headingColor,
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 _buildHelpItem(
                   icon: Icons.language_rounded,
-                  title: 'Paket Suara Bahasa Arab',
-                  subtitle:
-                      'Pastikan Google TTS atau Samsung TTS di HP mengaktifkan suara Bahasa Arab.',
+                  title: context.tr('quickComm.audioHelpVoiceTitle'),
+                  subtitle: context.tr('quickComm.audioHelpVoiceDesc'),
                   isDark: isDark,
                   headingColor: headingColor,
+                  trailing: Obx(() {
+                    final isReady = controller.isArabicVoiceAvailable.value;
+                    return Container(
+                      margin: const EdgeInsets.only(top: 8),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: isReady
+                            ? const Color(0xFF2E7D32).withValues(alpha: 0.1)
+                            : AppColors.goldPrimary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        border: Border.all(
+                          color: isReady
+                              ? const Color(0xFF2E7D32).withValues(alpha: 0.35)
+                              : AppColors.goldPrimary.withValues(alpha: 0.35),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                isReady
+                                    ? Icons.check_circle_rounded
+                                    : Icons.info_outline_rounded,
+                                size: 16,
+                                color: isReady
+                                    ? const Color(0xFF2E7D32)
+                                    : AppColors.goldPrimary,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  isReady
+                                      ? context.tr('quickComm.arabicVoiceReady')
+                                      : context.tr(
+                                          'quickComm.arabicVoiceNotInstalled',
+                                        ),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: isReady
+                                        ? const Color(0xFF2E7D32)
+                                        : (isDark
+                                              ? AppColors.goldLight
+                                              : AppColors.espressoDark),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                controller.installOrDownloadArabicVoice();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.goldPrimary,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                  horizontal: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.pill,
+                                  ),
+                                ),
+                                visualDensity: VisualDensity.compact,
+                              ),
+                              icon: const Icon(
+                                Icons.download_rounded,
+                                size: 16,
+                              ),
+                              label: Text(
+                                context.tr('quickComm.installArabicVoice'),
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: () {
+                                controller.openTtsSettings();
+                              },
+                              style: TextButton.styleFrom(
+                                visualDensity: VisualDensity.compact,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
+                              ),
+                              child: Text(
+                                context.tr('quickComm.openTtsSettings'),
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  color: isDark
+                                      ? AppColors.goldLight
+                                      : AppColors.goldPrimary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
                 ),
               ],
             ),
@@ -174,9 +284,7 @@ class _CommunicationGestureDialogState
             TextButton(
               onPressed: () => Navigator.of(dialogCtx).pop(),
               child: Text(
-                context.tr('btn.close').isNotEmpty
-                    ? context.tr('btn.close')
-                    : 'Tutup',
+                context.tr('common.close'),
                 style: const TextStyle(
                   color: AppColors.goldPrimary,
                   fontWeight: FontWeight.w700,
@@ -195,6 +303,7 @@ class _CommunicationGestureDialogState
     required String subtitle,
     required bool isDark,
     required Color headingColor,
+    Widget? trailing,
   }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,6 +331,7 @@ class _CommunicationGestureDialogState
                   height: 1.3,
                 ),
               ),
+              ?trailing,
             ],
           ),
         ),
@@ -707,6 +817,82 @@ class _CommunicationGestureDialogState
               ),
             ),
 
+            // ── Arabic Voice Download Prompt Banner (If Missing) ──────────
+            Obx(() {
+              if (controller.isArabicVoiceAvailable.value ||
+                  !controller.isTtsInitialized.value) {
+                return const SizedBox.shrink();
+              }
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.screenEdgeGutter,
+                  vertical: 3,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.goldPrimary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(
+                      color: AppColors.goldPrimary.withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.download_for_offline_rounded,
+                        color: AppColors.goldPrimary,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          context.tr('quickComm.voiceDownloadPrompt'),
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: isDark
+                                ? AppColors.goldLight
+                                : AppColors.espressoDark,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: () {
+                          controller.installOrDownloadArabicVoice();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.goldPrimary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          visualDensity: VisualDensity.compact,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                          ),
+                        ),
+                        child: Text(
+                          context.tr('quickComm.downloadVoice'),
+                          style: const TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+
             // ── Search Bar ────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(
@@ -842,10 +1028,28 @@ class _CommunicationGestureDialogState
                         ),
                       ),
                     ),
+                    if (!controller.isArabicVoiceAvailable.value) ...[
+                      TextButton(
+                        onPressed: () =>
+                            controller.installOrDownloadArabicVoice(),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        child: Text(
+                          context.tr('quickComm.downloadVoice'),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.sosEmergency,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
                     TextButton(
                       onPressed: () => _showAudioHelpDialog(context),
                       style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
                         visualDensity: VisualDensity.compact,
                       ),
                       child: Text(

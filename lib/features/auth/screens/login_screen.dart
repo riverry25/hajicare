@@ -44,12 +44,12 @@ class _LoginScreenState extends State<LoginScreen> {
     final registerController = Get.find<RegisterController>();
     final isDark = AppColors.isDark(context);
 
-    // Dominant clean white palette in light mode, elegant warm charcoal in dark mode
-    final scaffoldBg = isDark ? AppColors.darkScaffold : AppColors.surfaceWhite;
+    // Dominant clean palette in light mode (canvas cream backdrop), elegant warm charcoal in dark mode
+    final scaffoldBg = isDark ? AppColors.darkScaffold : AppColors.canvasCream;
     final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
     final cardBorder = isDark
         ? AppColors.darkCardBorder
-        : AppColors.lightCardBorder;
+        : AppColors.espressoDark.withValues(alpha: 0.10);
 
     return Scaffold(
       backgroundColor: scaffoldBg,
@@ -69,115 +69,85 @@ class _LoginScreenState extends State<LoginScreen> {
                   ? const ClampingScrollPhysics()
                   : const NeverScrollableScrollPhysics(),
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // ============================================================
-                  // TOP HEADER: CURVED ARCH WITH HAJI PHOTO (assets/images/haji.webp)
-                  // ============================================================
-                  _CurvedArchHeader(isDark: isDark),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // ============================================================
+                      // TOP HEADER: CURVED ARCH WITH HAJI PHOTO (assets/images/haji.webp)
+                      // ============================================================
+                      _CurvedArchHeader(isDark: isDark),
 
-                  // ============================================================
-                  // WELCOME HEADLINE & SUBTITLE (CLEAN & SPACIOUS)
-                  // ============================================================
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.screenEdgeGutter,
-                    ),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 14),
-                        Text(
-                          context.tr('auth.welcomeTitleClean'),
-                          textAlign: TextAlign.center,
-                          style: AppTypography.displayLarge.copyWith(
-                            color: AppColors.textHeadingColor(context),
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.5,
-                          ),
+                      // ============================================================
+                      // WELCOME HEADLINE & SUBTITLE (CLEAN & SPACIOUS)
+                      // ============================================================
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.screenEdgeGutter,
                         ),
-                        const SizedBox(height: 4),
-                        AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 250),
-                          child: Text(
-                            _activeTabIndex == 0
-                                ? context.tr('auth.welcomeSubtitleClean')
-                                : context.tr('auth.registerSubtitleClean'),
-                            key: ValueKey<int>(_activeTabIndex),
-                            textAlign: TextAlign.center,
-                            style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.textSecondaryColor(context),
-                              height: 1.45,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ============================================================
-                  // CURVED WHITE CARD CONTAINER WITH SECONDARY BACKGROUND CURVE
-                  // (Lower Z-Index curve behind primary form card)
-                  // ============================================================
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.screenEdgeGutter,
-                      12,
-                      AppSpacing.screenEdgeGutter,
-                      AppSpacing.xl,
-                    ),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        // ── Lower Z-Index Secondary Curve (Without Image) ────────
-                        Positioned(
-                          top: -10,
-                          left: 6,
-                          right: 6,
-                          bottom: -6,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? AppColors.darkSurfaceContainer
-                                  : AppColors.canvasCream,
-                              borderRadius: BorderRadius.circular(38),
-                              border: Border.all(
-                                color: AppColors.goldPrimary.withValues(
-                                  alpha: isDark ? 0.35 : 0.28,
-                                ),
-                                width: 1.2,
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 20),
+                            Text(
+                              context.tr('auth.welcomeTitleClean'),
+                              textAlign: TextAlign.center,
+                              style: AppTypography.displayLarge.copyWith(
+                                color: AppColors.textHeadingColor(context),
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.5,
                               ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.espressoDark.withValues(
-                                    alpha: isDark ? 0.22 : 0.05,
-                                  ),
-                                  blurRadius: 18,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
                             ),
-                          ),
+                            const SizedBox(height: 4),
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 250),
+                              child: Text(
+                                _activeTabIndex == 0
+                                    ? context.tr('auth.welcomeSubtitleClean')
+                                    : context.tr('auth.registerSubtitleClean'),
+                                key: ValueKey<int>(_activeTabIndex),
+                                textAlign: TextAlign.center,
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: AppColors.textSecondaryColor(context),
+                                  height: 1.45,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
+                      ),
 
-                        // ── Higher Z-Index Primary White Form Card ───────────────
-                        Container(
-                          padding: const EdgeInsets.all(AppSpacing.cardPadding),
+                      const SizedBox(height: 30),
+
+                      // ============================================================
+                      // SHEET-STYLE FORM CONTAINER (Photo 3 reference: Top Curve & Top Border)
+                      // ============================================================
+                      Expanded(
+                        child: Container(
                           decoration: BoxDecoration(
                             color: cardBg,
-                            borderRadius: BorderRadius.circular(AppRadius.xxl),
-                            border: Border.all(color: cardBorder, width: 1.2),
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(36),
+                            ),
+                            border: Border(
+                              top: BorderSide(color: cardBorder, width: 1.5),
+                            ),
                             boxShadow: [
                               BoxShadow(
                                 color: AppColors.espressoDark.withValues(
-                                  alpha: isDark ? 0.25 : 0.05,
+                                  alpha: isDark ? 0.35 : 0.07,
                                 ),
                                 blurRadius: 24,
-                                offset: const Offset(0, 6),
+                                offset: const Offset(0, -6),
                               ),
                             ],
+                          ),
+                          padding: EdgeInsets.fromLTRB(
+                            26,
+                            26,
+                            26,
+                            MediaQuery.paddingOf(context).bottom + 28,
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -212,10 +182,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             ],
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             );
           },
@@ -804,13 +774,13 @@ class _SignUpForm extends StatelessWidget {
 
         const SizedBox(height: 18),
 
-        // Nomor Porsi / NIK (Optional)
+        // NIK (Nomor Induk Kependudukan - Optional)
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Flexible(
               child: Text(
-                context.tr('auth.porsiOrNikLabel'),
+                context.tr('auth.nikLabel'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.labelLarge.copyWith(
@@ -841,11 +811,11 @@ class _SignUpForm extends StatelessWidget {
         const SizedBox(height: 8),
 
         AppTextField(
-          controller: controller.porsiController,
-          hintText: context.tr('auth.porsiOrNikHint'),
+          controller: controller.nikController,
+          hintText: context.tr('auth.nikHint'),
           keyboardType: TextInputType.number,
           prefixIcon: const Icon(
-            Icons.credit_card_outlined,
+            Icons.badge_outlined,
             color: AppColors.tanMedium,
             size: 20,
           ),

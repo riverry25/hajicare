@@ -146,6 +146,10 @@ final Map<String, String> suTranslations = {
   'auth.personalData': 'Data Pribadi',
   'auth.personalDataDesc': 'Anggo data saluyu sareng idéntitas resmi',
   'auth.personalDataSubtitle': 'Émbaran akun dasar',
+  'auth.nikHint': 'Lebetkeun 16 digit NIK',
+  'auth.nikInfo':
+      'NIK ngabantosan verifikasi data jamaah sareng pendamping sacara merenah.',
+  'auth.nikLabel': 'NIK (Nomer Induk Padumuk)',
   'auth.porsiOrNikHint': 'Lebetkeun nomer porsi atanapi NIK',
   'auth.porsiOrNikInfo':
       'Data ieu mantuan HajiCare ngahubungkeun rombongan sareng maktab kalayan akurat.',
@@ -1999,4 +2003,22 @@ final Map<String, String> suTranslations = {
   'quickComm.phrase.bathroom': 'Dimana jamban / toilet?',
   'quickComm.phrase.wheelchair': 'Abdi peryogi korsi roda',
   'quickComm.phrase.police': 'Dimana kantor pulisi?',
+  'btn.close': 'Tutup',
+  'quickComm.audioHelpVolumeTitle': 'Volume Média HP',
+  'quickComm.audioHelpVolumeDesc':
+      'Pastikeun volume Média/Multimédia ditaékkeun (sanés ngan saukur nada dering telepon).',
+  'quickComm.audioHelpRingerTitle': 'Mode Dering (Henteu Hening)',
+  'quickComm.audioHelpRingerDesc':
+      'Dina iPhone atanapi HP tangtu, pareuman tombol fisik hening (silent switch).',
+  'quickComm.audioHelpVoiceTitle': 'Paket Sora Basa Arab',
+  'quickComm.audioHelpVoiceDesc':
+      'Pastikeun Google TTS atanapi Samsung TTS dina HP parantos masang data sora Basa Arab.',
+  'quickComm.installArabicVoice': 'Unduh / Pasang Paket Sora Arab',
+  'quickComm.arabicVoiceReady': 'Paket sora Basa Arab aktip & siap dianggo',
+  'quickComm.arabicVoiceNotInstalled':
+      'Paket sora Basa Arab teu acan katémbong dina parangkat ieu',
+  'quickComm.openTtsSettings': 'Buka Setélan Sora (TTS)',
+  'quickComm.voiceDownloadPrompt':
+      'Paket sora Basa Arab teu acan dipasang. Unduh ayeuna supados lafal kalimah tiasa jelas.',
+  'quickComm.downloadVoice': 'Unduh Sora',
 };

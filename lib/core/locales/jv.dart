@@ -150,6 +150,10 @@ final Map<String, String> jvTranslations = {
   'auth.personalData': 'Data Dhiri',
   'auth.personalDataDesc': 'Ginakaken data trep kaliyan idhentitas resmi',
   'auth.personalDataSubtitle': 'Katrangan akun dhasar',
+  'auth.nikHint': 'Lebetaken 16 digit NIK',
+  'auth.nikInfo':
+      'NIK mbiyantu verifikasi dhata jamaah lan pendamping kanthi trep.',
+  'auth.nikLabel': 'NIK (Nomer Induk Kependudukan)',
   'auth.porsiOrNikHint': 'Lebetaken nomer porsi utawi NIK',
   'auth.porsiOrNikInfo':
       'Data menika mbiyantu HajiCare ngubungaken rombongan lan maktab kanthi trep.',
@@ -2002,4 +2006,23 @@ final Map<String, String> jvTranslations = {
   'quickComm.phrase.bathroom': 'Wonten pundi jedhing / pakiwan?',
   'quickComm.phrase.wheelchair': 'Kula butuh kursi rodha',
   'quickComm.phrase.police': 'Wonten pundi kantor polisi?',
+  'btn.close': 'Tutup',
+  'quickComm.audioHelpVolumeTitle': 'Volume Media HP',
+  'quickComm.audioHelpVolumeDesc':
+      'Pastiaken volume Media/Multimedia dipun-inggahaken (mboten namung swanten nada dering).',
+  'quickComm.audioHelpRingerTitle': 'Mode Dering (Mboten Hening)',
+  'quickComm.audioHelpRingerDesc':
+      'Wonten iPhone utawi HP tartamtu, mateni tombol fisik hening (silent switch).',
+  'quickComm.audioHelpVoiceTitle': 'Paket Swanten Basa Arab',
+  'quickComm.audioHelpVoiceDesc':
+      'Pastiaken Google TTS utawi Samsung TTS ing HP sampun masang data swanten Basa Arab.',
+  'quickComm.installArabicVoice': 'Unduh / Pasang Paket Swanten Arab',
+  'quickComm.arabicVoiceReady':
+      'Paket swanten Basa Arab aktif & siyap dipun-ginakaken',
+  'quickComm.arabicVoiceNotInstalled':
+      'Paket swanten Basa Arab dereng kapanggih ing piranti niki',
+  'quickComm.openTtsSettings': 'Bikak Setelan Swanten (TTS)',
+  'quickComm.voiceDownloadPrompt':
+      'Paket swanten Basa Arab dereng dipunpasang. Unduh sakmenika supados lafal saged cetha.',
+  'quickComm.downloadVoice': 'Unduh Swanten',
 };

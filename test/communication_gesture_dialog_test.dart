@@ -170,5 +170,100 @@ void main() {
       expect(find.text('Dimana hotel saya?'), findsOneWidget);
       expect(find.text('Tolong, saya butuh dokter'), findsNothing);
     });
+
+    testWidgets(
+      'Opens Audio Help dialog in English, shows localized content and Close button without btn.close bug',
+      (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.lightTheme,
+            locale: const Locale('en'),
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              FallbackMaterialLocalizationsDelegate(),
+              FallbackCupertinoLocalizationsDelegate(),
+              FallbackWidgetsLocalizationsDelegate(),
+            ],
+            home: const Scaffold(body: CommunicationGestureDialog()),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+
+        // Find and tap help button
+        final helpBtn = find.byIcon(Icons.help_outline_rounded);
+        expect(helpBtn, findsOneWidget);
+        await tester.tap(helpBtn);
+        await tester.pumpAndSettle();
+
+        // Check dialog content in English
+        expect(find.text('Audio Help'), findsOneWidget);
+        expect(find.text('Device Media Volume'), findsOneWidget);
+        expect(find.text('Ring Mode (Not Silent)'), findsOneWidget);
+        expect(find.text('Arabic Voice Pack'), findsOneWidget);
+        expect(find.text('Download / Install Arabic Voice'), findsOneWidget);
+
+        // Verify close button is localized as "Close" and NOT "btn.close"
+        expect(find.text('btn.close'), findsNothing);
+        expect(find.text('Close'), findsOneWidget);
+
+        // Tap close button and verify dialog dismisses
+        await tester.tap(find.text('Close'));
+        await tester.pumpAndSettle();
+        expect(find.text('Audio Help'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'Opens Audio Help dialog in Indonesian, shows Tutup button and localized voice pack controls',
+      (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.lightTheme,
+            locale: const Locale('id'),
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              FallbackMaterialLocalizationsDelegate(),
+              FallbackCupertinoLocalizationsDelegate(),
+              FallbackWidgetsLocalizationsDelegate(),
+            ],
+            home: const Scaffold(body: CommunicationGestureDialog()),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+
+        // Tap help icon
+        await tester.tap(find.byIcon(Icons.help_outline_rounded));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Bantuan Audio'), findsOneWidget);
+        expect(find.text('Volume Media Ponsel'), findsOneWidget);
+        expect(find.text('Mode Dering (Bukan Hening)'), findsOneWidget);
+        expect(find.text('Paket Suara Bahasa Arab'), findsOneWidget);
+        expect(find.text('Unduh / Pasang Paket Suara Arab'), findsOneWidget);
+
+        // Verify close button is "Tutup" and NOT "btn.close"
+        expect(find.text('btn.close'), findsNothing);
+        expect(find.text('Tutup'), findsOneWidget);
+
+        // Tap download voice pack button inside dialog
+        await tester.tap(find.text('Unduh / Pasang Paket Suara Arab'));
+        await tester.pumpAndSettle();
+
+        // Close dialog
+        await tester.tap(find.text('Tutup'));
+        await tester.pumpAndSettle();
+        expect(find.text('Bantuan Audio'), findsNothing);
+      },
+    );
   });
 }

@@ -27,6 +27,7 @@ class MainActivity : FlutterFragmentActivity() {
         private const val EVENT_CHANNEL_NAME = "com.hajicare.bisindo/landmarks"
         private const val PREVIEW_VIEW_TYPE = "com.hajicare.bisindo/camera_preview"
         private const val CAMERA_PERMISSION_REQUEST_CODE = 1001
+        private const val TTS_INSTALLER_CHANNEL = "com.hajicare.tts/voice_installer"
     }
 
     private var cameraHelper: BisindoCameraHelper? = null
@@ -151,7 +152,43 @@ class MainActivity : FlutterFragmentActivity() {
                 }
             }
 
-
+        // 4. Setup MethodChannel for TTS Voice Pack installation and settings
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, TTS_INSTALLER_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "installVoiceData" -> {
+                        try {
+                            val installIntent = Intent(android.speech.tts.TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            startActivity(installIntent)
+                            result.success(true)
+                        } catch (e: Exception) {
+                            try {
+                                val settingsIntent = Intent("com.android.settings.TTS_SETTINGS").apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                                startActivity(settingsIntent)
+                                result.success(true)
+                            } catch (e2: Exception) {
+                                result.error("TTS_INSTALL_FAILED", e2.message, null)
+                            }
+                        }
+                    }
+                    "openTtsSettings" -> {
+                        try {
+                            val settingsIntent = Intent("com.android.settings.TTS_SETTINGS").apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            startActivity(settingsIntent)
+                            result.success(true)
+                        } catch (e: Exception) {
+                            result.error("TTS_SETTINGS_FAILED", e.message, null)
+                        }
+                    }
+                    else -> result.notImplemented()
+                }
+            }
     }
 
     override fun onRequestPermissionsResult(

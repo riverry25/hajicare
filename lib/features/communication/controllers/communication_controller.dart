@@ -2,8 +2,10 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/locales/app_localizations.dart';
 
@@ -42,6 +44,8 @@ class CommunicationController extends GetxController {
   final activePhrase = ''.obs;
   final hasTtsError = false.obs;
   final isTtsInitialized = false.obs;
+  final isArabicVoiceAvailable = false.obs;
+  final isCheckingVoice = false.obs;
   final searchQuery = ''.obs;
 
   final List<PhraseItem> phrases = const [
@@ -232,6 +236,7 @@ class CommunicationController extends GetxController {
         if (isAvailable == true || isAvailable == 1) {
           await _tts.setLanguage(loc);
           languageSet = true;
+          isArabicVoiceAvailable.value = true;
           debugPrint('[TTS] Selected available Arabic locale: $loc');
           break;
         }
@@ -240,7 +245,25 @@ class CommunicationController extends GetxController {
       debugPrint('[TTS] isLanguageAvailable check error: $e');
     }
 
+    if (!languageSet && !kIsWeb && Platform.isAndroid) {
+      try {
+        for (final loc in candidateLocales) {
+          final installed = await _tts.isLanguageInstalled(loc);
+          if (installed == true || installed == 1) {
+            await _tts.setLanguage(loc);
+            languageSet = true;
+            isArabicVoiceAvailable.value = true;
+            debugPrint('[TTS] Found installed Arabic locale: $loc');
+            break;
+          }
+        }
+      } catch (e) {
+        debugPrint('[TTS] isLanguageInstalled check error: $e');
+      }
+    }
+
     if (!languageSet) {
+      isArabicVoiceAvailable.value = false;
       // Default attempt
       try {
         await _tts.setLanguage('ar-SA');
@@ -249,6 +272,81 @@ class CommunicationController extends GetxController {
           await _tts.setLanguage('ar');
         } catch (_) {}
       }
+    } else {
+      isArabicVoiceAvailable.value = true;
+    }
+  }
+
+  /// Refreshes Arabic voice availability status.
+  Future<bool> checkArabicVoiceStatus() async {
+    isCheckingVoice.value = true;
+    try {
+      await _configureArabicLanguage();
+      return isArabicVoiceAvailable.value;
+    } finally {
+      isCheckingVoice.value = false;
+    }
+  }
+
+  /// Triggers automated Arabic voice pack installation on Android, or opens store / settings.
+  Future<void> installOrDownloadArabicVoice() async {
+    try {
+      if (!kIsWeb && Platform.isAndroid) {
+        const channel = MethodChannel('com.hajicare.tts/voice_installer');
+        try {
+          final res = await channel.invokeMethod<bool>('installVoiceData');
+          if (res == true) {
+            // Re-check voice status after a short delay
+            Future.delayed(const Duration(seconds: 3), () {
+              checkArabicVoiceStatus();
+            });
+            return;
+          }
+        } catch (e) {
+          debugPrint('[TTS] Native installVoiceData error: $e');
+        }
+      }
+
+      // Fallback: Google Speech Services on Play Store
+      final playStoreUri = Uri.parse(
+        'market://details?id=com.google.android.tts',
+      );
+      if (await canLaunchUrl(playStoreUri)) {
+        await launchUrl(playStoreUri, mode: LaunchMode.externalApplication);
+      } else {
+        final webUri = Uri.parse(
+          'https://play.google.com/store/apps/details?id=com.google.android.tts',
+        );
+        if (await canLaunchUrl(webUri)) {
+          await launchUrl(webUri, mode: LaunchMode.externalApplication);
+        }
+      }
+    } catch (e) {
+      debugPrint('[TTS] installOrDownloadArabicVoice error: $e');
+    }
+  }
+
+  /// Opens system Text-to-Speech settings directly.
+  Future<void> openTtsSettings() async {
+    try {
+      if (!kIsWeb && Platform.isAndroid) {
+        const channel = MethodChannel('com.hajicare.tts/voice_installer');
+        try {
+          final res = await channel.invokeMethod<bool>('openTtsSettings');
+          if (res == true) return;
+        } catch (e) {
+          debugPrint('[TTS] Native openTtsSettings error: $e');
+        }
+      }
+
+      final playStoreUri = Uri.parse(
+        'market://details?id=com.google.android.tts',
+      );
+      if (await canLaunchUrl(playStoreUri)) {
+        await launchUrl(playStoreUri, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      debugPrint('[TTS] openTtsSettings error: $e');
     }
   }
 

@@ -94,7 +94,9 @@ class CommunicationScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Tunjukkan Layar atau Putar Suara',
+                        context.tr('quickComm.showLocals').isNotEmpty
+                            ? context.tr('quickComm.showLocals')
+                            : 'Tunjukkan Layar atau Putar Suara',
                         style: AppTypography.captionSmall.copyWith(
                           color: AppColors.textHeadingColor(context),
                           fontWeight: FontWeight.w800,
@@ -102,7 +104,9 @@ class CommunicationScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Tekan tombol pengeras suara untuk melafalkan ke warga lokal atau petugas.',
+                        context.tr('quickComm.tipBanner').isNotEmpty
+                            ? context.tr('quickComm.tipBanner')
+                            : 'Tekan tombol pengeras suara untuk melafalkan ke warga lokal atau petugas.',
                         style: AppTypography.captionSmall.copyWith(
                           color: AppColors.textMuted,
                           height: 1.3,
@@ -252,7 +256,9 @@ class CommunicationScreen extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        'PENTING / DARURAT',
+                        context.tr('quickComm.urgentBadge').isNotEmpty
+                            ? context.tr('quickComm.urgentBadge')
+                            : 'PENTING / DARURAT',
                         style: AppTypography.captionSmall.copyWith(
                           color: AppColors.sosEmergency,
                           fontWeight: FontWeight.w800,

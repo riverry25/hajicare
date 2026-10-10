@@ -141,6 +141,10 @@ const Map<String, String> enTranslations = {
   'auth.personalData': 'Personal Data',
   'auth.personalDataDesc': 'Use data corresponding to your official ID',
   'auth.personalDataSubtitle': 'Basic account information',
+  'auth.nikHint': 'Enter your 16-digit ID number (NIK)',
+  'auth.nikInfo':
+      'National ID helps accurately identify pilgrim and companion records.',
+  'auth.nikLabel': 'National ID Number (NIK)',
   'auth.porsiOrNikHint': 'Enter portion number or ID',
   'auth.porsiOrNikInfo':
       'This data helps HajiCare accurately link your group and maktab.',
@@ -1971,4 +1975,22 @@ const Map<String, String> enTranslations = {
   'quickComm.phrase.bathroom': 'Where is the restroom / toilet?',
   'quickComm.phrase.wheelchair': 'I need a wheelchair',
   'quickComm.phrase.police': 'Where is the police station?',
+  'btn.close': 'Close',
+  'quickComm.audioHelpVolumeTitle': 'Device Media Volume',
+  'quickComm.audioHelpVolumeDesc':
+      'Ensure Media/Multimedia volume is turned up (not just call ringtone volume).',
+  'quickComm.audioHelpRingerTitle': 'Ring Mode (Not Silent)',
+  'quickComm.audioHelpRingerDesc':
+      'On iPhone or certain devices, turn off the physical silent switch.',
+  'quickComm.audioHelpVoiceTitle': 'Arabic Voice Pack',
+  'quickComm.audioHelpVoiceDesc':
+      'Ensure Google TTS or Samsung TTS on your device has downloaded Arabic voice data.',
+  'quickComm.installArabicVoice': 'Download / Install Arabic Voice',
+  'quickComm.arabicVoiceReady': 'Arabic voice pack is active & ready to use',
+  'quickComm.arabicVoiceNotInstalled':
+      'Arabic voice pack is not yet installed on this device',
+  'quickComm.openTtsSettings': 'Open Voice (TTS) Settings',
+  'quickComm.voiceDownloadPrompt':
+      'Arabic voice pack not installed. Download now for clear phrase pronunciation.',
+  'quickComm.downloadVoice': 'Download Voice',
 };

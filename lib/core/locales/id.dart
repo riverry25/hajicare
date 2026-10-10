@@ -147,6 +147,10 @@ const Map<String, String> idTranslations = {
   'auth.personalData': 'Data Diri',
   'auth.personalDataDesc': 'Gunakan data sesuai identitas resmi Anda',
   'auth.personalDataSubtitle': 'Informasi akun dasar',
+  'auth.nikHint': 'Masukkan 16 digit NIK',
+  'auth.nikInfo':
+      'NIK membantu identifikasi data jamaah dan pendamping secara akurat.',
+  'auth.nikLabel': 'NIK (Nomor Induk Kependudukan)',
   'auth.porsiOrNikHint': 'Masukkan nomor porsi atau NIK',
   'auth.porsiOrNikInfo':
       'Data ini membantu HajiCare mengaitkan rombongan dan maktab secara akurat.',
@@ -1988,4 +1992,23 @@ const Map<String, String> idTranslations = {
   'quickComm.phrase.bathroom': 'Dimana toilet / kamar mandi?',
   'quickComm.phrase.wheelchair': 'Saya butuh kursi roda',
   'quickComm.phrase.police': 'Dimana kantor polisi?',
+  'btn.close': 'Tutup',
+  'quickComm.audioHelpVolumeTitle': 'Volume Media Ponsel',
+  'quickComm.audioHelpVolumeDesc':
+      'Pastikan volume Media/Multimedia dinaikkan (bukan hanya nada dering panggilan).',
+  'quickComm.audioHelpRingerTitle': 'Mode Dering (Bukan Hening)',
+  'quickComm.audioHelpRingerDesc':
+      'Pada iPhone atau HP tertentu, matikan tombol fisik hening (silent switch).',
+  'quickComm.audioHelpVoiceTitle': 'Paket Suara Bahasa Arab',
+  'quickComm.audioHelpVoiceDesc':
+      'Pastikan Google TTS atau Samsung TTS di HP mengaktifkan dan memasang suara Bahasa Arab.',
+  'quickComm.installArabicVoice': 'Unduh / Pasang Paket Suara Arab',
+  'quickComm.arabicVoiceReady':
+      'Paket suara Bahasa Arab aktif & siap digunakan',
+  'quickComm.arabicVoiceNotInstalled':
+      'Paket suara Bahasa Arab belum terpasang di HP ini',
+  'quickComm.openTtsSettings': 'Buka Pengaturan Suara (TTS)',
+  'quickComm.voiceDownloadPrompt':
+      'Paket suara Bahasa Arab belum terpasang. Unduh sekarang agar pelafalan bersuara jernih.',
+  'quickComm.downloadVoice': 'Unduh Suara',
 };
