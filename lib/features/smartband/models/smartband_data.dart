@@ -1,18 +1,26 @@
 import 'dart:convert';
 
 /// Model representasi data telemetri dari ESP32-S3 Smartband
-/// Format JSON yang diterima:
-/// {
-///   "braceletId": "HCG-001",
-///   "latitude": -6.140214,
-///   "longitude": 106.232288,
-///   "heartRate": 82
-/// }
+/// Dilengkapi 5 sensor:
+/// 1. Detak Jantung (MAX30102) -> heartRate (BPM)
+/// 2. Suhu Tubuh (MCP9808) -> temperature (°C)
+/// 3. Deteksi Jatuh & Gerak (MPU6050) -> fallDetected, roll, pitch, accelG
+/// 4. GPS (NEO-6M) -> latitude, longitude, satellites, isValidLocation
+/// 5. Baterai LiPo -> batteryLevel (%), batteryVoltage (V), isCharging
 class SmartbandData {
   final String braceletId;
   final double? latitude;
   final double? longitude;
   final int heartRate;
+  final double? temperature;
+  final bool fallDetected;
+  final double? roll;
+  final double? pitch;
+  final double? accelG;
+  final int? batteryLevel;
+  final double? batteryVoltage;
+  final bool isCharging;
+  final int? satellites;
   final DateTime timestamp;
   final String rawJson;
   final bool isValidLocation;
@@ -26,6 +34,15 @@ class SmartbandData {
     this.latitude,
     this.longitude,
     required this.heartRate,
+    this.temperature,
+    this.fallDetected = false,
+    this.roll,
+    this.pitch,
+    this.accelG,
+    this.batteryLevel,
+    this.batteryVoltage,
+    this.isCharging = false,
+    this.satellites,
     required this.timestamp,
     this.rawJson = '',
     this.isValidLocation = false,
@@ -37,6 +54,15 @@ class SmartbandData {
     double? latitude,
     double? longitude,
     int? heartRate,
+    double? temperature,
+    bool? fallDetected,
+    double? roll,
+    double? pitch,
+    double? accelG,
+    int? batteryLevel,
+    double? batteryVoltage,
+    bool? isCharging,
+    int? satellites,
     DateTime? timestamp,
     String? rawJson,
     bool? isValidLocation,
@@ -46,6 +72,15 @@ class SmartbandData {
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       heartRate: heartRate ?? this.heartRate,
+      temperature: temperature ?? this.temperature,
+      fallDetected: fallDetected ?? this.fallDetected,
+      roll: roll ?? this.roll,
+      pitch: pitch ?? this.pitch,
+      accelG: accelG ?? this.accelG,
+      batteryLevel: batteryLevel ?? this.batteryLevel,
+      batteryVoltage: batteryVoltage ?? this.batteryVoltage,
+      isCharging: isCharging ?? this.isCharging,
+      satellites: satellites ?? this.satellites,
       timestamp: timestamp ?? this.timestamp,
       rawJson: rawJson ?? this.rawJson,
       isValidLocation: isValidLocation ?? this.isValidLocation,
@@ -62,32 +97,44 @@ class SmartbandData {
       );
     }
 
-    double? lat;
-    if (json['latitude'] != null) {
-      if (json['latitude'] is num) {
-        lat = (json['latitude'] as num).toDouble();
-      } else {
-        lat = double.tryParse(json['latitude'].toString());
-      }
+    double? parseDouble(dynamic val) {
+      if (val == null) return null;
+      if (val is num) return val.toDouble();
+      return double.tryParse(val.toString());
     }
 
-    double? lng;
-    if (json['longitude'] != null) {
-      if (json['longitude'] is num) {
-        lng = (json['longitude'] as num).toDouble();
-      } else {
-        lng = double.tryParse(json['longitude'].toString());
-      }
+    int? parseInt(dynamic val) {
+      if (val == null) return null;
+      if (val is num) return val.toInt();
+      return int.tryParse(val.toString());
     }
+
+    bool parseBool(dynamic val) {
+      if (val == null) return false;
+      if (val is bool) return val;
+      final str = val.toString().toLowerCase();
+      return str == 'true' || str == '1';
+    }
+
+    final double? lat = parseDouble(json['latitude']);
+    final double? lng = parseDouble(json['longitude']);
 
     int hr = 0;
     if (json['heartRate'] != null) {
-      if (json['heartRate'] is num) {
-        hr = (json['heartRate'] as num).toInt();
-      } else {
-        hr = int.tryParse(json['heartRate'].toString()) ?? 0;
-      }
+      hr = parseInt(json['heartRate']) ?? 0;
     }
+
+    final double? temp = parseDouble(json['temperature'] ?? json['temp']);
+    final bool fall = parseBool(json['fallDetected'] ?? json['fall']);
+    final double? rollVal = parseDouble(json['roll']);
+    final double? pitchVal = parseDouble(json['pitch']);
+    final double? gForce = parseDouble(json['accelG'] ?? json['gForce']);
+    final int? bat = parseInt(
+      json['batteryLevel'] ?? json['battery'] ?? json['bat'],
+    );
+    final double? batVolt = parseDouble(json['batteryVoltage'] ?? json['volt']);
+    final bool charging = parseBool(json['isCharging'] ?? json['charging']);
+    final int? sats = parseInt(json['satellites'] ?? json['sats']);
 
     // Validasi lokasi geografis:
     // Koordinat (0.0, 0.0) atau koordinat di luar batas bumi dianggap belum valid (misal GPS fix belum dapat)
@@ -107,6 +154,15 @@ class SmartbandData {
       latitude: lat,
       longitude: lng,
       heartRate: hr < 0 ? 0 : hr,
+      temperature: temp,
+      fallDetected: fall,
+      roll: rollVal,
+      pitch: pitchVal,
+      accelG: gForce,
+      batteryLevel: bat,
+      batteryVoltage: batVolt,
+      isCharging: charging,
+      satellites: sats,
       timestamp: DateTime.now(),
       rawJson: raw,
       isValidLocation: validLoc,
@@ -129,12 +185,21 @@ class SmartbandData {
     'latitude': latitude,
     'longitude': longitude,
     'heartRate': heartRate,
+    'temperature': temperature,
+    'fallDetected': fallDetected,
+    'roll': roll,
+    'pitch': pitch,
+    'accelG': accelG,
+    'batteryLevel': batteryLevel,
+    'batteryVoltage': batteryVoltage,
+    'isCharging': isCharging,
+    'satellites': satellites,
     'timestamp': timestamp.toIso8601String(),
     'isValidLocation': isValidLocation,
   };
 
   @override
   String toString() {
-    return 'SmartbandData(braceletId: $braceletId, lat: $latitude, lng: $longitude, hr: $heartRate, validLoc: $isValidLocation)';
+    return 'SmartbandData(braceletId: $braceletId, lat: $latitude, lng: $longitude, hr: $heartRate, temp: $temperature, fall: $fallDetected, bat: $batteryLevel%, validLoc: $isValidLocation)';
   }
 }

@@ -1,3 +1,6 @@
+import 'package:flutter/widgets.dart';
+import '../../../core/locales/app_translations.dart';
+
 /// Supported currency codes in HajiCare multi-currency money recognition.
 enum CurrencyCode {
   sar,
@@ -28,7 +31,7 @@ enum CurrencyCode {
     }
   }
 
-  /// Official localized display name in Indonesian.
+  /// Official localized display name in Indonesian (fallback).
   String get displayName {
     switch (this) {
       case CurrencyCode.sar:
@@ -37,6 +40,18 @@ enum CurrencyCode {
         return 'Rupiah Indonesia';
       case CurrencyCode.usd:
         return 'Dolar Amerika';
+    }
+  }
+
+  /// Dynamic multi-language display name based on active app locale.
+  String getLocalizedName(BuildContext context) {
+    switch (this) {
+      case CurrencyCode.sar:
+        return context.tr('money.currencySar');
+      case CurrencyCode.idr:
+        return context.tr('money.currencyIdr');
+      case CurrencyCode.usd:
+        return context.tr('money.currencyUsd');
     }
   }
 

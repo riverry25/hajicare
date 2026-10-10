@@ -200,6 +200,39 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
     }
   }
 
+  String _getDisplayName(BuildContext context) {
+    if (poi.name.trim().isEmpty ||
+        poi.name.trim() == poi.category.label.trim()) {
+      return poi.category.localizedLabel(context);
+    }
+    return poi.name;
+  }
+
+  String _localizeTag(String tag, BuildContext context) {
+    final clean = tag.trim().toLowerCase();
+    if (clean == 'gratis' || clean == 'free') {
+      return context.tr('maps.tagFree');
+    }
+    if (clean == 'akses kursi roda' || clean == 'wheelchair accessible') {
+      return context.tr('maps.tagWheelchair');
+    }
+    final starsMatch = RegExp(
+      r'^(bintang|stars?)\s*(\d+)',
+      caseSensitive: false,
+    ).firstMatch(tag);
+    if (starsMatch != null) {
+      return context.tr('maps.tagStars', {'count': starsMatch.group(2) ?? ''});
+    }
+    final roomsMatch = RegExp(
+      r'^(\d+)\s*(kamar|rooms?)',
+      caseSensitive: false,
+    ).firstMatch(tag);
+    if (roomsMatch != null) {
+      return context.tr('maps.tagRooms', {'count': roomsMatch.group(1) ?? ''});
+    }
+    return tag;
+  }
+
   @override
   Widget build(BuildContext context) {
     final formattedDistance = distanceMeters != null
@@ -281,8 +314,11 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                   ),
 
                   // ── CATEGORY BADGE & STATUS ROW ──
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    runSpacing: 6,
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -306,12 +342,14 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                           children: [
                             Icon(poi.icon, size: 13, color: poi.color),
                             const SizedBox(width: 5),
-                            Text(
-                              poi.category.label,
-                              style: AppTypography.captionSmall.copyWith(
-                                color: poi.color,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 10.5,
+                            Flexible(
+                              child: Text(
+                                poi.category.localizedLabel(context),
+                                style: AppTypography.captionSmall.copyWith(
+                                  color: poi.color,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 10.5,
+                                ),
                               ),
                             ),
                           ],
@@ -348,14 +386,16 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                               ),
                             ),
                             const SizedBox(width: 5),
-                            Text(
-                              poi.statusLabel,
-                              style: TextStyle(
-                                color: isDark
-                                    ? Colors.white70
-                                    : AppColors.espressoDark,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
+                            Flexible(
+                              child: Text(
+                                poi.localizedStatusLabel(context),
+                                style: TextStyle(
+                                  color: isDark
+                                      ? Colors.white70
+                                      : AppColors.espressoDark,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
                           ],
@@ -403,7 +443,7 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              poi.name,
+                              _getDisplayName(context),
                               style: AppTypography.titleMedium.copyWith(
                                 color: AppColors.textHeadingColor(context),
                                 fontWeight: FontWeight.w800,
@@ -503,7 +543,7 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                             ),
                           ),
                           child: Text(
-                            tag,
+                            _localizeTag(tag, context),
                             style: TextStyle(
                               color: isDark
                                   ? Colors.white70
@@ -644,13 +684,13 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
 
                   const SizedBox(height: 20),
 
-                  // Actions Row: Rute (Primary 52px) & Bagikan (Secondary)
+                  // Actions Row: Rute (Primary) & Bagikan (Secondary)
                   Row(
                     children: [
                       Expanded(
                         flex: 3,
-                        child: SizedBox(
-                          height: 52,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(minHeight: 48),
                           child: ElevatedButton.icon(
                             onPressed: widget.isRouteLoading ? null : onRoute,
                             icon: widget.isRouteLoading
@@ -671,19 +711,22 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                                         ? AppColors.espressoDark
                                         : AppColors.goldPrimary,
                                   ),
-                            label: Text(
-                              widget.isRouteLoading
-                                  ? context.tr('maps.findingRoute')
-                                  : (widget.routeDistanceMeters != null
-                                        ? context.tr('maps.startNavigation')
-                                        : context.tr('maps.routeAction')),
-                              style: AppTypography.labelLarge.copyWith(
-                                color: (widget.routeDistanceMeters != null)
-                                    ? Colors.white
-                                    : (isDark
-                                          ? AppColors.espressoDark
-                                          : Colors.white),
-                                fontWeight: FontWeight.w800,
+                            label: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                widget.isRouteLoading
+                                    ? context.tr('maps.findingRoute')
+                                    : (widget.routeDistanceMeters != null
+                                          ? context.tr('maps.startNavigation')
+                                          : context.tr('maps.routeAction')),
+                                style: AppTypography.labelLarge.copyWith(
+                                  color: (widget.routeDistanceMeters != null)
+                                      ? Colors.white
+                                      : (isDark
+                                            ? AppColors.espressoDark
+                                            : Colors.white),
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
@@ -694,6 +737,10 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                                         ? AppColors.goldPrimary
                                         : AppColors.espressoDark),
                               foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 12,
+                              ),
                               elevation: 4,
                               shadowColor:
                                   (widget.routeDistanceMeters != null
@@ -722,8 +769,8 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                       const SizedBox(width: AppSpacing.sm),
                       Expanded(
                         flex: 2,
-                        child: SizedBox(
-                          height: 52,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(minHeight: 48),
                           child: OutlinedButton.icon(
                             onPressed: onShare,
                             icon: Icon(
@@ -733,13 +780,16 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                                   ? AppColors.darkTextHeading
                                   : AppColors.espressoDark,
                             ),
-                            label: Text(
-                              context.tr('maps.shareLocation'),
-                              style: AppTypography.labelLarge.copyWith(
-                                color: isDark
-                                    ? AppColors.darkTextHeading
-                                    : AppColors.espressoDark,
-                                fontWeight: FontWeight.w700,
+                            label: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                context.tr('maps.shareLocation'),
+                                style: AppTypography.labelLarge.copyWith(
+                                  color: isDark
+                                      ? AppColors.darkTextHeading
+                                      : AppColors.espressoDark,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
                             style: OutlinedButton.styleFrom(
@@ -748,6 +798,10 @@ class _LocationDetailSheetState extends State<LocationDetailSheet>
                                   : AppColors.canvasCream.withValues(
                                       alpha: 0.35,
                                     ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 12,
+                              ),
                               side: BorderSide(
                                 color: AppColors.cardBorderColor(context),
                                 width: 1.2,

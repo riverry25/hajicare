@@ -28,13 +28,20 @@ class NavigationBottomPanel extends StatelessWidget {
     return '$h:$m';
   }
 
-  String _formatDurationMinutes(int? durationSeconds) {
-    if (durationSeconds == null || durationSeconds <= 0) return '1 mnt';
+  String _formatDurationMinutes(int? durationSeconds, BuildContext context) {
+    if (durationSeconds == null || durationSeconds <= 0) {
+      return context.tr('maps.oneMinute');
+    }
     final minutes = (durationSeconds / 60).ceil();
-    if (minutes < 60) return '$minutes mnt';
+    if (minutes < 60) {
+      return context
+          .tr('maps.minutesDuration', {'min': minutes.toString()})
+          .replaceAll('·', '')
+          .trim();
+    }
     final hours = minutes ~/ 60;
     final remMin = minutes % 60;
-    return '${hours}j ${remMin}m';
+    return context.tr('maps.hoursMinutesDuration', {'h': hours, 'm': remMin});
   }
 
   int _getCurrentStep(double? remDist) {
@@ -94,7 +101,7 @@ class NavigationBottomPanel extends StatelessWidget {
             ? mapCtrl.destinationTitle.value
             : context.tr('maps.yourDestination');
 
-        final durationText = _formatDurationMinutes(remDuration);
+        final durationText = _formatDurationMinutes(remDuration, context);
         final distanceText = remDistance != null
             ? DistanceFormatter.format(remDistance)
             : '-- m';
@@ -329,8 +336,8 @@ class NavigationBottomPanel extends StatelessWidget {
                   children: [
                     // Primary Action: Keluar Navigasi (Prominent Pill)
                     Expanded(
-                      child: SizedBox(
-                        height: 48,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(minHeight: 48),
                         child: Material(
                           color: isDark
                               ? const Color(0xFFEF4444).withValues(alpha: 0.14)
@@ -339,28 +346,39 @@ class NavigationBottomPanel extends StatelessWidget {
                           child: InkWell(
                             onTap: () => _confirmExit(context),
                             borderRadius: BorderRadius.circular(AppRadius.pill),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.close_rounded,
-                                  size: 20,
-                                  color: isDark
-                                      ? const Color(0xFFFCA5A5)
-                                      : const Color(0xFFDC2626),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  context.tr('maps.exitNavigation'),
-                                  style: AppTypography.button.copyWith(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.close_rounded,
+                                    size: 20,
                                     color: isDark
                                         ? const Color(0xFFFCA5A5)
                                         : const Color(0xFFDC2626),
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        context.tr('maps.exitNavigation'),
+                                        style: AppTypography.button.copyWith(
+                                          color: isDark
+                                              ? const Color(0xFFFCA5A5)
+                                              : const Color(0xFFDC2626),
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -496,20 +514,29 @@ class NavigationBottomPanel extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        Text(
-          label,
-          style: AppTypography.captionSmall.copyWith(
-            fontSize: 11,
-            fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w600,
-            color: isCurrent
-                ? (isDark ? const Color(0xFF86EFAC) : const Color(0xFF15803D))
-                : (isActive
-                      ? (isDark
-                            ? AppColors.darkTextHeading
-                            : AppColors.textHeading)
-                      : (isDark
-                            ? AppColors.darkTextBody.withValues(alpha: 0.5)
-                            : AppColors.textMuted)),
+        SizedBox(
+          width: 58,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              maxLines: 1,
+              style: AppTypography.captionSmall.copyWith(
+                fontSize: 11,
+                fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w600,
+                color: isCurrent
+                    ? (isDark
+                          ? const Color(0xFF86EFAC)
+                          : const Color(0xFF15803D))
+                    : (isActive
+                          ? (isDark
+                                ? AppColors.darkTextHeading
+                                : AppColors.textHeading)
+                          : (isDark
+                                ? AppColors.darkTextBody.withValues(alpha: 0.5)
+                                : AppColors.textMuted)),
+              ),
+            ),
           ),
         ),
       ],

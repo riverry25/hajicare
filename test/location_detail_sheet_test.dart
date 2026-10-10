@@ -7,9 +7,13 @@ import 'package:hajicare/features/map/widgets/location_detail_sheet.dart';
 import 'package:latlong2/latlong.dart';
 
 void main() {
-  Widget buildTestApp({required Widget child}) {
+  Widget buildTestApp({
+    required Widget child,
+    Locale locale = const Locale('id'),
+    TextScaler textScaler = TextScaler.noScaling,
+  }) {
     return MaterialApp(
-      locale: const Locale('id'),
+      locale: locale,
       supportedLocales: AppTranslations.supportedLocales,
       localizationsDelegates: const [
         AppLocalizations.delegate,
@@ -20,7 +24,13 @@ void main() {
         FallbackCupertinoLocalizationsDelegate(),
         FallbackWidgetsLocalizationsDelegate(),
       ],
-      home: Scaffold(body: child),
+      home: MediaQuery(
+        data: MediaQueryData(
+          textScaler: textScaler,
+          size: const Size(360, 640),
+        ),
+        child: Scaffold(body: child),
+      ),
     );
   }
 
@@ -137,4 +147,120 @@ void main() {
       expect(launchedUri.toString(), contains('106.8'));
     },
   );
+
+  testWidgets(
+    'displays fully localized category, status, and tags in English',
+    (tester) async {
+      final wudhuPoi = MapPoi(
+        id: 'osm_node_99',
+        name: 'Air & Wudhu',
+        category: PoiCategory.wudhu,
+        coordinate: const LatLng(-6.2, 106.8),
+        openingHours: '24/7',
+        statusLabel: 'Buka 24 jam',
+        tags: const ['Gratis', 'Akses kursi roda'],
+      );
+
+      await tester.pumpWidget(
+        buildTestApp(
+          locale: const Locale('en'),
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: LocationDetailSheet(
+              poi: wudhuPoi,
+              distanceMeters: 250,
+              onRoute: () {},
+              onShare: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Check category badge translates
+      expect(find.text('Water & Wudhu'), findsAtLeastNWidgets(1));
+      // Check status translates
+      expect(find.text('Open 24 hours'), findsOneWidget);
+      // Check tags translate
+      expect(find.text('Free'), findsOneWidget);
+      expect(find.text('Wheelchair accessible'), findsOneWidget);
+      // Check buttons translate
+      expect(find.text('Route'), findsOneWidget);
+      expect(find.text('Share'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'renders cleanly without overflow under high accessibility font scaling (2.0x)',
+    (tester) async {
+      final hotelPoi = MapPoi(
+        id: 'osm_node_42',
+        name: 'Hotel Mewah Grand Makkah Super Bintang Lima',
+        category: PoiCategory.hotel,
+        coordinate: const LatLng(-6.2, 106.8),
+        openingHours: '24/7',
+        statusLabel: 'Buka 24 jam',
+        tags: const ['Bintang 5', 'Akses kursi roda', 'Gratis'],
+      );
+
+      await tester.pumpWidget(
+        buildTestApp(
+          locale: const Locale('id'),
+          textScaler: const TextScaler.linear(2.0),
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: LocationDetailSheet(
+              poi: hotelPoi,
+              distanceMeters: 1200,
+              onRoute: () {},
+              onShare: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('displays localized category in Javanese and Sundanese', (
+    tester,
+  ) async {
+    final wudhuPoi = MapPoi(
+      id: 'osm_node_99',
+      name: 'Air & Wudhu',
+      category: PoiCategory.wudhu,
+      coordinate: const LatLng(-6.2, 106.8),
+      openingHours: '24/7',
+      statusLabel: 'Buka 24 jam',
+    );
+
+    // Test Javanese
+    await tester.pumpWidget(
+      buildTestApp(
+        locale: const Locale('jv'),
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: LocationDetailSheet(poi: wudhuPoi),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Toya & Wudhu'), findsAtLeastNWidgets(1));
+
+    // Test Sundanese
+    await tester.pumpWidget(
+      buildTestApp(
+        locale: const Locale('su'),
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: LocationDetailSheet(poi: wudhuPoi),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Cai & Wudhu'), findsAtLeastNWidgets(1));
+  });
 }

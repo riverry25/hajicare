@@ -969,16 +969,20 @@ class _MapBottomSheetState extends State<MapBottomSheet>
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
           shape: const StadiumBorder(),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
-        child: Text(
-          buttonLabel,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.2,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            buttonLabel,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.2,
+            ),
           ),
         ),
       ),
@@ -1849,35 +1853,48 @@ class _MapBottomSheetState extends State<MapBottomSheet>
             ],
           ),
           const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton.icon(
-              onPressed: onNavigate,
-              icon: Icon(
-                Icons.directions_walk_rounded,
-                size: 20,
-                color: isDark ? AppColors.espressoDark : AppColors.goldPrimary,
-              ),
-              label: Text(
-                context.tr('maps.startNavigation'),
-                style: AppTypography.labelLarge.copyWith(
-                  color: isDark ? AppColors.espressoDark : Colors.white,
-                  fontWeight: FontWeight.w800,
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: onNavigate,
+                icon: Icon(
+                  Icons.directions_walk_rounded,
+                  size: 20,
+                  color: isDark
+                      ? AppColors.espressoDark
+                      : AppColors.goldPrimary,
                 ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: isDark
-                    ? AppColors.goldPrimary
-                    : AppColors.espressoDark,
-                foregroundColor: isDark ? AppColors.espressoDark : Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                  side: BorderSide(
-                    color: isDark
-                        ? AppColors.goldPrimary
-                        : AppColors.goldPrimary.withValues(alpha: 0.5),
-                    width: 1.2,
+                label: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    context.tr('maps.startNavigation'),
+                    style: AppTypography.labelLarge.copyWith(
+                      color: isDark ? AppColors.espressoDark : Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isDark
+                      ? AppColors.goldPrimary
+                      : AppColors.espressoDark,
+                  foregroundColor: isDark
+                      ? AppColors.espressoDark
+                      : Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    side: BorderSide(
+                      color: isDark
+                          ? AppColors.goldPrimary
+                          : AppColors.goldPrimary.withValues(alpha: 0.5),
+                      width: 1.2,
+                    ),
                   ),
                 ),
               ),

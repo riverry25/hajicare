@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
+import '../../../../core/locales/app_localizations.dart';
 
 /// Categories derived from OpenStreetMap tags. No category implies that a
 /// place exists unless it was returned by the data provider.
@@ -56,6 +57,34 @@ enum PoiCategory {
     PoiCategory.airport => 'Bandara / Airport',
     PoiCategory.touristAttraction => 'Objek Wisata & Bersejarah',
     PoiCategory.place => 'Lokasi Umum',
+  };
+
+  String localizedLabel(BuildContext context) => switch (this) {
+    PoiCategory.maktab => context.tr('maps.poi.maktab'),
+    PoiCategory.medis => context.tr('maps.poi.medis'),
+    PoiCategory.clinic => context.tr('maps.poi.clinic'),
+    PoiCategory.pharmacy => context.tr('maps.poi.pharmacy'),
+    PoiCategory.emergency => context.tr('maps.poi.emergency'),
+    PoiCategory.toilet => context.tr('maps.poi.toilet'),
+    PoiCategory.wudhu => context.tr('maps.poi.wudhu'),
+    PoiCategory.posPantau => context.tr('maps.poi.posPantau'),
+    PoiCategory.police => context.tr('maps.poi.police'),
+    PoiCategory.ibadah => context.tr('maps.poi.ibadah'),
+    PoiCategory.hotel => context.tr('maps.poi.hotel'),
+    PoiCategory.restaurant => context.tr('maps.poi.restaurant'),
+    PoiCategory.cafe => context.tr('maps.poi.cafe'),
+    PoiCategory.shopping => context.tr('maps.poi.shopping'),
+    PoiCategory.supermarket => context.tr('maps.poi.supermarket'),
+    PoiCategory.mall => context.tr('maps.poi.mall'),
+    PoiCategory.atm => context.tr('maps.poi.atm'),
+    PoiCategory.bank => context.tr('maps.poi.bank'),
+    PoiCategory.fuel => context.tr('maps.poi.fuel'),
+    PoiCategory.parking => context.tr('maps.poi.parking'),
+    PoiCategory.bus => context.tr('maps.poi.bus'),
+    PoiCategory.train => context.tr('maps.poi.train'),
+    PoiCategory.airport => context.tr('maps.poi.airport'),
+    PoiCategory.touristAttraction => context.tr('maps.poi.touristAttraction'),
+    PoiCategory.place => context.tr('maps.poi.place'),
   };
 
   IconData get defaultIcon => switch (this) {
@@ -157,5 +186,31 @@ class MapPoi {
   Uri? get openStreetMapUri {
     if (osmType == null || osmId == null) return null;
     return Uri.https('www.openstreetmap.org', '/$osmType/$osmId');
+  }
+
+  String localizedStatusLabel(BuildContext context) {
+    final clean = statusLabel.trim().toLowerCase();
+    if (clean == 'buka 24 jam' || clean == 'open 24 hours') {
+      return context.tr('maps.open24Hours');
+    }
+    if (clean == 'data openstreetmap') {
+      return context.tr('maps.osmData');
+    }
+    if (clean.startsWith('jam: ') ||
+        clean.startsWith('hours: ') ||
+        clean.startsWith('buka ') ||
+        clean.startsWith('open ')) {
+      final hours = statusLabel
+          .replaceFirst(
+            RegExp(
+              r'^(Jam:\s*|Hours:\s*|Buka\s*|Open\s*)',
+              caseSensitive: false,
+            ),
+            '',
+          )
+          .trim();
+      return context.tr('maps.hoursFormat', {'hours': hours});
+    }
+    return statusLabel;
   }
 }

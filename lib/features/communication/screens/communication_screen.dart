@@ -275,9 +275,9 @@ class CommunicationScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
 
-                  // Indonesian Meaning
+                  // Localized Meaning
                   Text(
-                    phrase.indonesian,
+                    phrase.localizedMeaning(context),
                     style: AppTypography.titleMedium.copyWith(
                       color: AppColors.textHeadingColor(context),
                       fontWeight: FontWeight.w800,

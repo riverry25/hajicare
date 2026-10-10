@@ -136,9 +136,9 @@
   "split_mode": "stratified",
   "recommended_confidence_threshold_initial": 0.7,
   "test_metrics": {
-    "accuracy": 0.9635761589403974,
-    "macro_f1": 0.9517024204231896,
-    "weighted_f1": 0.9631005998309629,
-    "balanced_accuracy": 0.9530732860520095
+    "accuracy": 0.9746031746031746,
+    "macro_f1": 0.9669791823207275,
+    "weighted_f1": 0.9746336982427208,
+    "balanced_accuracy": 0.9684397163120567
   }
 }

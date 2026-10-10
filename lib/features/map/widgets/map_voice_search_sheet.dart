@@ -48,15 +48,15 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
 
-  static const List<String> _quickSuggestions = [
-    'Posko Medis',
-    'Tempat Wudhu',
-    'Toilet Terdekat',
-    'Tenda Mina',
-    'Maktab 11',
-    'Masjid Al Haram',
-    'Terminal Bus',
-    'Pos Pantau',
+  static const List<String> _quickSuggestionKeys = [
+    'maps.suggestMedical',
+    'maps.suggestWudhu',
+    'maps.suggestToilet',
+    'maps.suggestMinaTent',
+    'maps.suggestMaktab11',
+    'maps.suggestHaram',
+    'maps.suggestBusTerminal',
+    'maps.suggestGuardPost',
   ];
 
   @override
@@ -439,7 +439,8 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: _quickSuggestions.map((suggestion) {
+              children: _quickSuggestionKeys.map((key) {
+                final suggestion = context.tr(key);
                 return InkWell(
                   onTap: () => _submitRecognized(suggestion),
                   borderRadius: BorderRadius.circular(AppRadius.pill),

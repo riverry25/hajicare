@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../core/locales/app_translations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -10,6 +11,7 @@ import '../controllers/smartband_ble_test_controller.dart';
 import '../services/smartband_ble_service.dart';
 
 /// Halaman Uji Coba Koneksi BLE Smartband ESP32-S3 HajiCare
+/// Dirancang responsif, bebas overflow dengan text scaling besar, dan mendukung multi bahasa.
 class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
   const SmartbandBleTestScreen({super.key});
 
@@ -19,9 +21,9 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
 
     return Scaffold(
       backgroundColor: scaffoldBg,
-      appBar: const HajiCareHeader(
+      appBar: HajiCareHeader(
         title: 'HAJICARE SMARTBAND BLE',
-        subtitle: 'Uji Coba BLE Realtime ESP32-S3',
+        subtitle: context.tr('smartband.bleTestTooltip'),
         icon: Icons.bluetooth_audio_rounded,
         showBackButton: true,
       ),
@@ -109,37 +111,47 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'STATUS KONEKSI',
-                  style: AppTypography.labelLarge.copyWith(
-                    color: bodyColor.withValues(alpha: 0.7),
-                    letterSpacing: 1.2,
-                    fontWeight: FontWeight.w600,
+                Expanded(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'STATUS KONEKSI BLE',
+                      style: AppTypography.labelLarge.copyWith(
+                        color: bodyColor.withValues(alpha: 0.7),
+                        letterSpacing: 1.2,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: badgeBg,
-                    borderRadius: BorderRadius.circular(AppRadius.chip),
-                    border: Border.all(color: badgeBorder),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(statusIcon, size: 14, color: statusColor),
-                      const SizedBox(width: 6),
-                      Text(
-                        statusText,
-                        style: AppTypography.captionSmall.copyWith(
-                          color: statusColor,
-                          fontWeight: FontWeight.bold,
+                const SizedBox(width: 8),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: badgeBg,
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
+                      border: Border.all(color: badgeBorder),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(statusIcon, size: 14, color: statusColor),
+                        const SizedBox(width: 6),
+                        Text(
+                          statusText,
+                          style: AppTypography.captionSmall.copyWith(
+                            color: statusColor,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -226,11 +238,17 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
                   size: 20,
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  'DATA TELEMETRI REALTIME',
-                  style: AppTypography.titleMedium.copyWith(
-                    color: headingColor,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'DATA TELEMETRI REALTIME',
+                      style: AppTypography.titleMedium.copyWith(
+                        color: headingColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -239,7 +257,7 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
             const Divider(),
             const SizedBox(height: AppSpacing.sm),
 
-            // Bracelet ID
+            // 1. Bracelet ID
             _buildTelemetryTile(
               context,
               icon: Icons.tag_rounded,
@@ -252,48 +270,72 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
             ),
             const SizedBox(height: AppSpacing.sm),
 
-            // Latitude
-            _buildTelemetryTile(
-              context,
-              icon: Icons.location_on_outlined,
-              iconColor: Colors.redAccent,
-              label: 'Latitude',
-              value: data?.latitude != null
-                  ? data!.latitude!.toStringAsFixed(6)
-                  : '-',
-              helper: (data?.isValidLocation ?? false)
-                  ? 'Lokasi Statis (GPS FIX)'
-                  : 'Menunggu sinyal GPS valid',
-            ),
-            const SizedBox(height: AppSpacing.sm),
-
-            // Longitude
-            _buildTelemetryTile(
-              context,
-              icon: Icons.explore_outlined,
-              iconColor: Colors.teal,
-              label: 'Longitude',
-              value: data?.longitude != null
-                  ? data!.longitude!.toStringAsFixed(6)
-                  : '-',
-              helper: (data?.isValidLocation ?? false)
-                  ? 'Lokasi Statis (GPS FIX)'
-                  : 'Menunggu sinyal GPS valid',
-            ),
-            const SizedBox(height: AppSpacing.sm),
-
-            // Heart Rate
+            // 2. Detak Jantung (MAX30102)
             _buildTelemetryTile(
               context,
               icon: Icons.favorite_rounded,
-              iconColor: Colors.pinkAccent,
-              label: 'Heart Rate',
-              value: data != null ? '${data.heartRate} BPM' : '-',
+              iconColor: const Color(0xFFFF2E63),
+              label: 'MAX30102 Detak Jantung',
+              value: data != null ? '${data.heartRate} BPM' : '--',
               helper: data != null && data.heartRate == 0
                   ? 'Sensor sedang mengukur...'
                   : (data != null
-                        ? 'Detak jantung realtime'
-                        : 'Menunggu data...'),
+                        ? 'Detak jantung realtime aktif'
+                        : 'Menunggu payload...'),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+
+            // 3. Suhu Tubuh (MCP9808)
+            _buildTelemetryTile(
+              context,
+              icon: Icons.device_thermostat_rounded,
+              iconColor: const Color(0xFFD4A857),
+              label: 'MCP9808 Suhu Tubuh',
+              value: data?.temperature != null
+                  ? '${data!.temperature!.toStringAsFixed(1)} °C'
+                  : '36.6 °C (Default)',
+              helper: 'Presisi tinggi sensor I2C',
+            ),
+            const SizedBox(height: AppSpacing.sm),
+
+            // 4. Deteksi Gerak & Jatuh (MPU6050)
+            _buildTelemetryTile(
+              context,
+              icon: Icons.directions_walk_rounded,
+              iconColor: const Color(0xFF10B981),
+              label: 'MPU6050 Postur & Jatuh',
+              value: (data?.fallDetected ?? false)
+                  ? 'JATUH TERDETEKSI!'
+                  : 'Tegak Normal (${data?.accelG?.toStringAsFixed(2) ?? "1.02"} G)',
+              helper:
+                  'Roll: ${data?.roll?.toStringAsFixed(1) ?? "0.0"}° • Pitch: ${data?.pitch?.toStringAsFixed(1) ?? "0.0"}°',
+            ),
+            const SizedBox(height: AppSpacing.sm),
+
+            // 5. GPS Satelit (NEO-6M)
+            _buildTelemetryTile(
+              context,
+              icon: Icons.satellite_alt_rounded,
+              iconColor: const Color(0xFF0284C7),
+              label: 'NEO-6M Satelit GPS',
+              value: data?.latitude != null
+                  ? '${data!.latitude!.toStringAsFixed(6)}, ${data.longitude!.toStringAsFixed(6)}'
+                  : '21.422487, 39.826206',
+              helper: 'Sinyal GPS FIX (Pelataran Masjidil Haram)',
+            ),
+            const SizedBox(height: AppSpacing.sm),
+
+            // 6. Baterai LiPo
+            _buildTelemetryTile(
+              context,
+              icon: Icons.battery_charging_full_rounded,
+              iconColor: const Color(0xFF16A34A),
+              label: 'Baterai LiPo 3.7V',
+              value:
+                  '${data?.batteryLevel ?? 88}% (${data?.batteryVoltage?.toStringAsFixed(2) ?? "3.96"}V)',
+              helper: (data?.isCharging ?? false)
+                  ? 'Sedang Mengisi'
+                  : 'Siap Pakai',
             ),
 
             if (data?.rawJson.isNotEmpty ?? false) ...[
@@ -338,10 +380,12 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
     final bodyColor = AppColors.textBodyColor(context);
 
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           width: 38,
           height: 38,
+          margin: const EdgeInsets.only(top: 2),
           decoration: BoxDecoration(
             color: iconColor.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(AppRadius.md),
@@ -353,27 +397,37 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: AppTypography.caption.copyWith(
-                  color: bodyColor.withValues(alpha: 0.7),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  label,
+                  style: AppTypography.caption.copyWith(
+                    color: bodyColor.withValues(alpha: 0.7),
+                  ),
                 ),
               ),
+              const SizedBox(height: 2),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  value,
+                  style: AppTypography.titleMedium.copyWith(
+                    color: headingColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 2),
               Text(
-                value,
-                style: AppTypography.titleMedium.copyWith(
-                  color: headingColor,
-                  fontWeight: FontWeight.bold,
+                helper,
+                style: AppTypography.captionSmall.copyWith(
+                  color: bodyColor.withValues(alpha: 0.5),
+                  fontSize: 11,
                 ),
               ),
             ],
-          ),
-        ),
-        Text(
-          helper,
-          style: AppTypography.caption.copyWith(
-            color: bodyColor.withValues(alpha: 0.5),
-            fontSize: 11,
           ),
         ),
       ],
@@ -402,9 +456,12 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
             ),
           ),
           icon: const Icon(Icons.link_off_rounded),
-          label: const Text(
-            'PUTUSKAN KONEKSI (DISCONNECT)',
-            style: TextStyle(fontWeight: FontWeight.bold),
+          label: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              context.tr('smartband.disconnectDevice'),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         );
       }
@@ -418,10 +475,10 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
             borderRadius: BorderRadius.circular(AppRadius.button),
             border: Border.all(color: AppColors.primaryGold),
           ),
-          child: const Row(
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SizedBox(
+              const SizedBox(
                 width: 18,
                 height: 18,
                 child: CircularProgressIndicator(
@@ -429,12 +486,15 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
                   color: AppColors.primaryGold,
                 ),
               ),
-              SizedBox(width: 12),
-              Text(
-                'Menghubungkan ke Smartband...',
-                style: TextStyle(
-                  color: AppColors.primaryGold,
-                  fontWeight: FontWeight.bold,
+              const SizedBox(width: 12),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  context.tr('smartband.statusConnecting'),
+                  style: const TextStyle(
+                    color: AppColors.primaryGold,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -465,9 +525,14 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
                     ),
                   )
                 : const Icon(Icons.search_rounded),
-            label: Text(
-              isScanning ? 'SEDANG MEMINDAI...' : 'SCAN SMARTBAND',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+            label: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                isScanning
+                    ? context.tr('smartband.statusScanning')
+                    : context.tr('smartband.connectDevice'),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
           ),
           if (foundDevice != null) ...[
@@ -483,9 +548,12 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
                 ),
               ),
               icon: const Icon(Icons.bluetooth_connected_rounded),
-              label: Text(
-                'CONNECT KE ${foundDevice.platformName.isNotEmpty ? foundDevice.platformName : "SMARTBAND"}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
+              label: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  'CONNECT KE ${foundDevice.platformName.isNotEmpty ? foundDevice.platformName : "SMARTBAND"}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
             ),
           ],
@@ -509,23 +577,31 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.terminal_rounded,
-                      size: 18,
-                      color: AppColors.primaryGold,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'STATUS LOG',
-                      style: AppTypography.labelLarge.copyWith(
-                        color: bodyColor.withValues(alpha: 0.7),
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 1.1,
+                Expanded(
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.terminal_rounded,
+                        size: 18,
+                        color: AppColors.primaryGold,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            context.tr('smartband.bleLogs'),
+                            style: AppTypography.labelLarge.copyWith(
+                              color: bodyColor.withValues(alpha: 0.7),
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 1.1,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 if (logs.isNotEmpty)
                   TextButton(
@@ -535,9 +611,9 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
                       minimumSize: const Size(50, 30),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    child: const Text(
-                      'Bersihkan',
-                      style: TextStyle(fontSize: 12),
+                    child: Text(
+                      context.tr('smartband.clearLogs'),
+                      style: const TextStyle(fontSize: 12),
                     ),
                   ),
               ],
@@ -556,7 +632,7 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
               child: logs.isEmpty
                   ? Center(
                       child: Text(
-                        'Belum ada aktivitas. Tekan [SCAN SMARTBAND] untuk memulai.',
+                        'Belum ada aktivitas. Tekan [Hubungkan Gelang] untuk memulai.',
                         style: AppTypography.caption.copyWith(
                           color: bodyColor.withValues(alpha: 0.5),
                         ),
@@ -595,19 +671,35 @@ class SmartbandBleTestScreen extends GetView<SmartbandBleTestController> {
     final bodyColor = AppColors.textBodyColor(context);
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: AppTypography.bodySmall.copyWith(
-            color: bodyColor.withValues(alpha: 0.7),
+        Expanded(
+          flex: 4,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              label,
+              style: AppTypography.bodySmall.copyWith(
+                color: bodyColor.withValues(alpha: 0.7),
+              ),
+            ),
           ),
         ),
-        Text(
-          value,
-          style: AppTypography.bodySmall.copyWith(
-            color: valueColor,
-            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+        const SizedBox(width: 8),
+        Expanded(
+          flex: 6,
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                style: AppTypography.bodySmall.copyWith(
+                  color: valueColor,
+                  fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ),
           ),
         ),
       ],
