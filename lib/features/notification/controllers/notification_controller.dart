@@ -97,7 +97,9 @@ class NotificationController extends GetxController {
                             !knownIds.contains(item.id) &&
                             (item.isCompanionMessage ||
                                 item.isCompanionInfo ||
-                                item.isSosAlert),
+                                item.isSosAlert ||
+                                item.isRoomDeleted ||
+                                item.isMemberLeft),
                       )
                       .toList(growable: false)
                 : const <AppNotificationModel>[];
@@ -182,6 +184,68 @@ class NotificationController extends GetxController {
                 color: Colors.white,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 1,
+              ),
+            ),
+          ),
+        );
+        return;
+      }
+      if (notification.isRoomDeleted) {
+        Get.snackbar(
+          '⚠️ Rombongan Dihapus',
+          notification.message,
+          snackPosition: SnackPosition.TOP,
+          margin: const EdgeInsets.all(14),
+          borderRadius: 16,
+          duration: const Duration(seconds: 6),
+          icon: const Icon(
+            Icons.delete_forever_rounded,
+            color: Colors.white,
+            size: 28,
+          ),
+          colorText: Colors.white,
+          backgroundColor: const Color(0xFFC62828),
+          mainButton: TextButton(
+            onPressed: () {
+              if (Get.isSnackbarOpen) Get.back();
+              Get.toNamed(AppRoutes.notification);
+            },
+            child: const Text(
+              'BUKA',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        );
+        return;
+      }
+      if (notification.isMemberLeft) {
+        Get.snackbar(
+          '🚪 Jamaah Keluar Rombongan',
+          notification.message,
+          snackPosition: SnackPosition.TOP,
+          margin: const EdgeInsets.all(14),
+          borderRadius: 16,
+          duration: const Duration(seconds: 6),
+          icon: const Icon(
+            Icons.person_remove_rounded,
+            color: Colors.white,
+            size: 28,
+          ),
+          colorText: Colors.white,
+          backgroundColor: const Color(0xFFE65100),
+          mainButton: TextButton(
+            onPressed: () {
+              if (Get.isSnackbarOpen) Get.back();
+              Get.toNamed(AppRoutes.notification);
+            },
+            child: const Text(
+              'BUKA',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ),

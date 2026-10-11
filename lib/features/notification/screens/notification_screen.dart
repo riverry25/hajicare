@@ -317,10 +317,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
       final realNotifs = controller.notifications
           .where(
             (item) =>
-                !item.isRoomInvitation &&
-                item.type != 'room_invitation' &&
-                (item.relatedId == null ||
-                    !pendingInvitationIds.contains(item.relatedId)),
+                item.relatedId == null ||
+                !pendingInvitationIds.contains(item.relatedId),
           )
           .toList(growable: false);
 
@@ -621,6 +619,14 @@ class _NotificationScreenState extends State<NotificationScreen> {
       icon = Icons.person_remove_rounded;
       iconColor = AppColors.error;
       category = 'DIKELUARKAN DARI ROOM';
+    } else if (notif.isRoomDeleted) {
+      icon = Icons.delete_forever_rounded;
+      iconColor = AppColors.error;
+      category = 'ROMBONGAN DIHAPUS';
+    } else if (notif.isMemberLeft) {
+      icon = Icons.person_remove_outlined;
+      iconColor = AppColors.statusWarning;
+      category = 'JAMAAH KELUAR';
     } else if (notif.isRoomJoined) {
       icon = Icons.check_circle_outline_rounded;
       iconColor = AppColors.statusPositive;

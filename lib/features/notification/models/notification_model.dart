@@ -43,6 +43,8 @@ class AppNotificationModel {
   bool get isRoomInvitation => type == 'room_invitation';
   bool get isRoomJoined => type == 'room_joined';
   bool get isRoomRemoved => type == 'room_removed';
+  bool get isRoomDeleted => type == 'room_deleted';
+  bool get isMemberLeft => type == 'member_left' || type == 'jamaah_left';
   bool get isAnnouncement => type == 'announcement';
   bool get isPickupRequest => type == 'pickup_request';
   bool get isCompanionInfo => type == 'companion_info';

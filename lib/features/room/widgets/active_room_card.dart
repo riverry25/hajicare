@@ -218,6 +218,11 @@ class ActiveRoomCard extends StatelessWidget {
         );
       }
 
+      // ── Syncing / Skeleton State (Memiliki Room Tapi Data Sedang Dimuat) ───
+      if (room == null) {
+        return ActiveRoomSkeletonCard(isDark: isDark);
+      }
+
       // ── Connected State (Memiliki Room Aktif) ──────────────────────────────
       return Container(
         decoration: BoxDecoration(
@@ -607,7 +612,7 @@ class ActiveRoomCard extends StatelessWidget {
 
             // ── Interactive Wavy Statistic: Radius Radar (Replaces Kode Room & linear bars) ──
             _RadarWaveStatisticWidget(
-              radius: room?.safeRadius ?? state.safeRadiusMeters.value,
+              radius: room.safeRadius,
               currentDistance: state.calculatedDistance.value,
               isDark: isDark,
               headingColor: headingColor,
@@ -1565,4 +1570,297 @@ class _RadarWavePainter extends CustomPainter {
       old.isTapped != isTapped ||
       old.waveColor != waveColor ||
       old.isDark != isDark;
+}
+
+/// Shimmering skeleton loading card displayed when room is connected
+/// but activeRoom document data is still synchronizing from Firestore.
+class ActiveRoomSkeletonCard extends StatefulWidget {
+  final bool? isDark;
+
+  const ActiveRoomSkeletonCard({super.key, this.isDark});
+
+  @override
+  State<ActiveRoomSkeletonCard> createState() => _ActiveRoomSkeletonCardState();
+}
+
+class _ActiveRoomSkeletonCardState extends State<ActiveRoomSkeletonCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _animCtrl;
+  late final Animation<double> _pulseAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _animCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    )..repeat(reverse: true);
+    _pulseAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeInOut);
+  }
+
+  @override
+  void dispose() {
+    _animCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = widget.isDark ?? AppColors.isDark(context);
+    final cardBg = dark ? AppColors.darkSurface : AppColors.surfaceWhite;
+    final primaryColor = dark ? AppColors.darkPrimary : AppColors.primaryGold;
+    final headingColor = dark
+        ? AppColors.darkTextHeading
+        : AppColors.espressoDark;
+
+    return AnimatedBuilder(
+      animation: _pulseAnim,
+      builder: (context, child) {
+        final shimmerAlpha = 0.25 + (_pulseAnim.value * 0.35);
+        final baseShimmerColor = dark
+            ? Colors.white.withValues(alpha: shimmerAlpha * 0.3)
+            : const Color(0xFFCBD5E1).withValues(alpha: shimmerAlpha);
+
+        return Container(
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(24),
+              bottomLeft: Radius.circular(24),
+              bottomRight: Radius.circular(24),
+              topRight: Radius.circular(52),
+            ),
+            border: Border.all(
+              color: dark
+                  ? AppColors.darkOutlineVariant
+                  : const Color(0xFFF1F5F9),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: dark
+                    ? Colors.black.withValues(alpha: 0.3)
+                    : const Color(0xFF1E293B).withValues(alpha: 0.05),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Top Row: 2 metrics on left + Gauge on right
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Room name item placeholder
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 3.5,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color:
+                                    (dark
+                                            ? AppColors.goldLight
+                                            : AppColors.primaryGold)
+                                        .withValues(alpha: shimmerAlpha),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    width: 80,
+                                    height: 10,
+                                    decoration: BoxDecoration(
+                                      color: baseShimmerColor,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 110,
+                                        height: 15,
+                                        decoration: BoxDecoration(
+                                          color: baseShimmerColor,
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        width: 42,
+                                        height: 14,
+                                        decoration: BoxDecoration(
+                                          color: primaryColor.withValues(
+                                            alpha: shimmerAlpha * 0.4,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        // Companion item placeholder
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 3.5,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color:
+                                    (dark
+                                            ? AppColors.darkSecondary
+                                            : AppColors.tanMedium)
+                                        .withValues(alpha: shimmerAlpha),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    width: 95,
+                                    height: 10,
+                                    decoration: BoxDecoration(
+                                      color: baseShimmerColor,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 100,
+                                        height: 14,
+                                        decoration: BoxDecoration(
+                                          color: baseShimmerColor,
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        width: 46,
+                                        height: 14,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.statusSafe
+                                              .withValues(
+                                                alpha: shimmerAlpha * 0.4,
+                                              ),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Circular gauge placeholder
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: baseShimmerColor, width: 4),
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation(
+                                primaryColor.withValues(alpha: 0.8),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            context.tr('room.syncing'),
+                            style: TextStyle(
+                              color: headingColor.withValues(alpha: 0.7),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Divider(
+                height: 1,
+                color: dark
+                    ? AppColors.darkCardBorder
+                    : const Color(0xFFE2E8F0),
+              ),
+              const SizedBox(height: 14),
+              // Synchronizing message row
+              Row(
+                children: [
+                  Icon(
+                    Icons.sync_rounded,
+                    size: 15,
+                    color: primaryColor.withValues(alpha: 0.9),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      context.tr('room.syncingPleaseWait'),
+                      style: TextStyle(
+                        color: headingColor.withValues(alpha: 0.75),
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }

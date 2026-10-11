@@ -36,6 +36,9 @@ exports.reviewPendampingAccess = callable((auth, data) =>
 exports.createRoom = callable((auth, data) => room.createRoom(db, auth, data));
 exports.joinRoomByCode = callable((auth, data) => room.joinRoomByCode(db, auth, data));
 exports.leaveRoom = callable((auth, data) => room.leaveRoom(db, auth, data));
+exports.setCoOwner = callable((auth, data) => room.setCoOwner(db, auth, data));
+exports.removeCoOwner = callable((auth, data) => room.removeCoOwner(db, auth, data));
+exports.transferOwnership = callable((auth, data) => room.transferOwnership(db, auth, data));
 exports.updateRoomSettings = callable((auth, data) =>
   room.updateRoomSettings(db, auth, data));
 exports.removeJamaah = callable((auth, data) => room.removeJamaah(db, auth, data));

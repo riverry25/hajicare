@@ -183,7 +183,7 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
         AppAlert.success(
           context,
           title: context.tr('room.changesSaved'),
-          message: 'Pengaturan rombongan "$name" sudah diperbarui.',
+          message: context.tr('room.roomSettingsUpdatedDesc', {'name': name}),
         );
       }
     } catch (e) {
@@ -192,7 +192,7 @@ class _EditRoomDialogState extends State<EditRoomDialog> {
           _isSaving = false;
           _inputError = UserFeedbackMessage.from(
             e,
-            fallback: 'Perubahan belum dapat disimpan. Silakan coba lagi.',
+            fallback: context.tr('room.roomSettingsSaveFailedFallback'),
           );
         });
       }

@@ -29,16 +29,24 @@ service cloud.firestore {
     }
 
     function isRoomMember(roomId) {
-      return signedIn() && exists(
+      return signedIn() && roomId != null && roomId != '' && exists(
         /databases/$(database)/documents/rooms/$(roomId)/members/$(request.auth.uid)
       );
     }
 
     function isRoomManager(roomId) {
-      return isClaimedPendamping() && isRoomMember(roomId) &&
+      return isRoomMember(roomId) && (
+        isClaimedPendamping() ||
         get(
           /databases/$(database)/documents/rooms/$(roomId)/members/$(request.auth.uid)
-        ).data.role == 'pendamping';
+        ).data.role in ['pendamping', 'petugas'] ||
+        (
+          exists(/databases/$(database)/documents/rooms/$(roomId)) && (
+            get(/databases/$(database)/documents/rooms/$(roomId)).data.createdBy == request.auth.uid ||
+            get(/databases/$(database)/documents/rooms/$(roomId)).data.get('coOwnerId', '') == request.auth.uid
+          )
+        )
+      );
     }
 
     function isValidCompanionMessage() {
@@ -50,55 +58,86 @@ service cloud.firestore {
         roomId is string && roomId.size() > 0 &&
         recipientId is string && recipientId.size() > 0 &&
         data.get('senderId', '') == request.auth.uid &&
-        data.get('senderRole', '') == 'jamaah' &&
+        data.get('senderRole', '') in ['jamaah', 'pendamping'] &&
         data.get('targetUserId', '') == recipientId &&
         data.get('scope', '') in ['user', 'all_companions'] &&
         data.get('title', '') is string &&
         data.get('title', '').size() > 0 &&
-        data.get('title', '').size() <= 80 &&
+        data.get('title', '').size() <= 100 &&
         data.get('message', '') is string &&
         data.get('message', '').size() > 0 &&
         data.get('message', '').size() <= 500 &&
         data.get('isRead', true) == false &&
         get(/databases/$(database)/documents/rooms/$(roomId)).data.isActive == true &&
-        get(
-          /databases/$(database)/documents/rooms/$(roomId)/members/$(request.auth.uid)
-        ).data.role == 'jamaah' &&
-        get(
-          /databases/$(database)/documents/rooms/$(roomId)/members/$(recipientId)
-        ).data.role == 'pendamping';
+        isRoomMember(roomId) &&
+        exists(/databases/$(database)/documents/rooms/$(roomId)/members/$(recipientId));
     }
 
     match /users/{uid} {
+      // Pembacaan akun pengguna diizinkan untuk semua pengguna terotentikasi (signedIn),
+      // agar pencarian email jamaah untuk undangan rombongan dan pemindaian pendamping dapat berjalan.
       allow read: if signedIn();
 
-      // Self-registration: client may create its own profile only during
-      // initial sign-up and with role 'jamaah', 'pendamping', or 'petugas'.
-      // Admin role can NEVER be created by client.
+      // 2. Registrasi mandiri: pengguna dapat memilih mendaftar sebagai 'jamaah'
+      // atau 'pendamping' (atau 'petugas'). Peran 'admin' TIDAK PERNAH bisa dibuat oleh client.
       allow create: if isSelf(uid) &&
         request.resource.data.get('role', 'jamaah') in ['jamaah', 'pendamping', 'petugas'];
 
-      // Clients may edit personal/medical/location fields, but never escalate to admin.
+      // 3. Update profil: Pengguna memperbarui profil miliknya sendiri (nama, kontak darurat,
+      // GPS pribadi, status SOS, rekam medis). Dilarang keras menaikkan peran ke 'admin'.
       allow update: if isSelf(uid) &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'allergies', 'bloodType', 'conditions', 'currentLocation',
           'displayName', 'emergencyContact', 'isGpsActive',
           'locationUpdatedAt', 'name', 'nomorPorsi', 'porsi', 'photoUrl', 'updatedAt',
-          'email', 'normalizedEmail', 'role', 'activeRoomId', 'sosActive', 'sosTime'
+          'email', 'normalizedEmail', 'role', 'activeRoomId', 'sosActive', 'sosTime',
+          'phone', 'phoneNumber', 'nik', 'maktab', 'kloter'
         ]) &&
         request.resource.data.get('role', resource.data.get('role', 'jamaah')) != 'admin';
+
       allow delete: if false;
     }
 
     match /rooms/{roomId} {
       allow read: if signedIn();
       allow create: if signedIn();
-      allow update: if signedIn();
+
+      // Update rombongan:
+      // A. Admin atau Owner Utama dapat mengubah semua pengaturan termasuk createdBy dan coOwnerId.
+      // B. Owner Kedua / Pengelola rombongan dapat mengubah pengaturan operasional (nama, maktab, safeRadius),
+      //    namun DILARANG mengubah createdBy atau coOwnerId.
+      // C. Anggota bergabung via direct-join hanya dapat memperbarui memberCount, updatedAt, pendampingIds.
+      allow update: if signedIn() && (
+        isAdmin() ||
+        resource.data.createdBy == request.auth.uid ||
+        (
+          isRoomManager(roomId) &&
+          request.resource.data.createdBy == resource.data.createdBy &&
+          request.resource.data.get('coOwnerId', null) == resource.data.get('coOwnerId', null)
+        ) ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'memberCount', 'updatedAt', 'pendampingIds'
+        ])
+      );
+
       allow delete: if isAdmin() || (signedIn() && resource.data.createdBy == request.auth.uid);
 
       match /members/{memberUid} {
-        allow read: if signedIn();
-        allow create, update: if isSelf(memberUid);
+        // Hanya sesama anggota rombongan atau admin yang dapat membaca daftar anggota rombongan
+        allow read: if signedIn() && (isAdmin() || isRoomMember(roomId));
+
+        // Pengguna mendaftarkan dirinya sendiri ke rombongan sesuai perannya (jamaah atau pendamping).
+        // Peran 'admin' dilarang. Dilarang bergabung ke rombongan yang nonaktif atau sedang dihapus.
+        allow create: if isSelf(memberUid) &&
+          request.resource.data.get('role', 'jamaah') in ['jamaah', 'pendamping', 'petugas'] &&
+          get(/databases/$(database)/documents/rooms/$(roomId)).data.get('isActive', true) == true &&
+          get(/databases/$(database)/documents/rooms/$(roomId)).data.get('status', 'active') != 'deleting';
+
+        // Pengguna memperbarui data anggota miliknya sendiri (lokasi GPS, status SOS, waktu aktif).
+        // Dilarang menaikkan peran ke admin.
+        allow update: if isSelf(memberUid) &&
+          request.resource.data.get('role', resource.data.get('role', 'jamaah')) != 'admin';
+
         allow delete: if isSelf(memberUid) || isAdmin() || isRoomManager(roomId);
       }
     }
@@ -109,12 +148,19 @@ service cloud.firestore {
         resource.data.toUserId == request.auth.uid ||
         resource.data.fromUserId == request.auth.uid
       );
-      allow create: if signedIn();
+
+      // Pengirim undangan harus sesuai dengan pengguna yang login
+      allow create: if signedIn() &&
+        request.resource.data.fromUserId == request.auth.uid;
+
+      // Penerima dan pengirim hanya dapat memperbarui status respon undangan
       allow update: if signedIn() && (
-        isAdmin() ||
-        resource.data.toUserId == request.auth.uid ||
-        resource.data.fromUserId == request.auth.uid
+        isAdmin() || (
+          (resource.data.toUserId == request.auth.uid || resource.data.fromUserId == request.auth.uid) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'respondedAt'])
+        )
       );
+
       allow delete: if signedIn() && (
         isAdmin() ||
         resource.data.fromUserId == request.auth.uid
@@ -127,18 +173,26 @@ service cloud.firestore {
         resource.data.recipientId == request.auth.uid ||
         resource.data.senderId == request.auth.uid
       );
-      // Companion messages prefer a trusted callable. A strictly validated
-      // direct write keeps delivery working while that callable is unavailable.
+
+      // Pesan antar anggota rombongan divalidasi ketat (isValidCompanionMessage),
+      // sedangkan notifikasi langsung lainnya memvalidasi senderId dan batas ukuran teks.
       allow create: if signedIn() && (
         (
           request.resource.data.get('type', '') != 'pickup_request' &&
           request.resource.data.get('type', '') != 'companion_info' &&
-          request.resource.data.get('type', '') != 'companion_message'
+          request.resource.data.get('type', '') != 'companion_message' &&
+          request.resource.data.senderId == request.auth.uid &&
+          request.resource.data.title is string &&
+          request.resource.data.title.size() <= 100 &&
+          request.resource.data.message is string &&
+          request.resource.data.message.size() <= 500
         ) || isValidCompanionMessage()
       );
+
       allow update: if signedIn() &&
         resource.data.recipientId == request.auth.uid &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
+
       allow delete: if signedIn() && (
         isAdmin() ||
         resource.data.recipientId == request.auth.uid ||
@@ -167,27 +221,38 @@ service cloud.firestore {
           )
         );
 
-      allow update: if isAdmin() || (
-        signedIn() &&
+      allow update: if signedIn() && (
+        // Kasus 1: Jamaah korban memperbarui lokasi GPS live pada event SOS aktif miliknya
         (
-          resource.data.userId == request.auth.uid ||
-          (resource.data.get('roomId', null) != null && isRoomManager(resource.data.roomId))
-        ) &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'respondedAt', 'respondedBy', 'respondedByName',
-          'resolvedAt', 'resolvedBy', 'cancelledAt', 'cancelledBy', 'status'
-        ]) &&
-        request.resource.data.status in ['direspons', 'selesai', 'cancelled'] && (
+          resource.data.userId == request.auth.uid &&
+          resource.data.status == 'active' &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'location', 'locationUpdatedAt'
+          ])
+        ) ||
+        // Kasus 2: Transisi status penanganan ('direspons', 'selesai', 'cancelled')
+        (
           (
-            request.resource.data.status == 'direspons' &&
-            request.resource.data.respondedBy == request.auth.uid &&
-            request.resource.data.respondedByName is string
-          ) || (
-            request.resource.data.status == 'selesai' &&
-            request.resource.data.resolvedBy == request.auth.uid
-          ) || (
-            request.resource.data.status == 'cancelled' &&
-            request.resource.data.cancelledBy == request.auth.uid
+            isAdmin() ||
+            resource.data.userId == request.auth.uid ||
+            (resource.data.get('roomId', null) != null && isRoomManager(resource.data.roomId))
+          ) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'respondedAt', 'respondedBy', 'respondedByName',
+            'resolvedAt', 'resolvedBy', 'cancelledAt', 'cancelledBy', 'status'
+          ]) &&
+          request.resource.data.status in ['direspons', 'selesai', 'cancelled'] && (
+            (
+              request.resource.data.status == 'direspons' &&
+              request.resource.data.respondedBy == request.auth.uid &&
+              request.resource.data.respondedByName is string
+            ) || (
+              request.resource.data.status == 'selesai' &&
+              request.resource.data.resolvedBy == request.auth.uid
+            ) || (
+              request.resource.data.status == 'cancelled' &&
+              request.resource.data.cancelledBy == request.auth.uid
+            )
           )
         )
       );
@@ -197,13 +262,26 @@ service cloud.firestore {
 
     match /activities/{activityId} {
       allow read: if isAdmin();
-      allow write: if false;
+      // Mengizinkan pencatatan log aktivitas dari aksi pengguna sendiri (append-only)
+      // Menjamin batch write transaksi SOS dan join rombongan tidak gagal
+      allow create: if signedIn() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.type is string;
+      allow update, delete: if false;
     }
 
-    // Room codes collection: allows signed-in users to lookup/create room mapping
+    // Pemetaan kode rombongan (room codes)
     match /roomCodes/{code} {
-      allow read, create, update: if signedIn();
-      allow delete: if signedIn();
+      allow read: if signedIn();
+      allow create: if signedIn() &&
+        request.resource.data.roomId is string &&
+        request.resource.data.roomId.size() > 0;
+      allow update: if false;
+      allow delete: if isAdmin() || (
+        signedIn() &&
+        exists(/databases/$(database)/documents/rooms/$(resource.data.roomId)) &&
+        get(/databases/$(database)/documents/rooms/$(resource.data.roomId)).data.createdBy == request.auth.uid
+      );
     }
 
     match /active_sos/{uid} {

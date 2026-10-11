@@ -26,9 +26,13 @@ class JoinRoomController extends GetxController {
   final createKloterController = TextEditingController();
 
   final isLoading = false.obs;
+  final isSyncing = false.obs;
+  final syncStatus = ''.obs;
   final errorMessage = RxnString();
 
   Worker? _roomWorker;
+  bool _isActionInProgress = false;
+  bool _isNavigating = false;
 
   bool get isPendamping {
     if (!Get.isRegistered<HajiCareController>()) return false;
@@ -65,6 +69,9 @@ class JoinRoomController extends GetxController {
     }
 
     _roomWorker = ever<String?>(state.activeRoomId, (roomId) {
+      if (_isActionInProgress || isSyncing.value || _isNavigating || isClosed) {
+        return;
+      }
       if (roomId != null && roomId.trim().isNotEmpty) {
         _navigateToDashboard();
       }
@@ -72,14 +79,25 @@ class JoinRoomController extends GetxController {
   }
 
   void _navigateToDashboard() {
-    if (isClosed) return;
+    if (isClosed || _isNavigating) return;
+    _isNavigating = true;
+
     final state = Get.isRegistered<HajiCareController>()
         ? Get.find<HajiCareController>()
         : null;
     final isP = state?.role == UserRole.pendamping;
-    Get.offAllNamed(
-      isP ? AppRoutes.dashboardPendamping : AppRoutes.dashboardJamaah,
-    );
+    final targetRoute = isP
+        ? AppRoutes.dashboardPendamping
+        : AppRoutes.dashboardJamaah;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (isClosed) return;
+      // Close any active dialogs or bottom sheets before resetting root routes
+      while (Get.isDialogOpen == true || Get.isBottomSheetOpen == true) {
+        Get.back();
+      }
+      Get.offAllNamed(targetRoute);
+    });
   }
 
   /// Pendamping: Buat Room baru dengan auto-generated unique code
@@ -116,6 +134,7 @@ class JoinRoomController extends GetxController {
 
     isLoading.value = true;
     errorMessage.value = null;
+    _isActionInProgress = true;
 
     try {
       final room = await _roomService.createRoomByPendamping(
@@ -126,29 +145,42 @@ class JoinRoomController extends GetxController {
         kloter: kloter.isNotEmpty ? kloter : null,
       );
 
-      // Reactively apply to state
-      await state.applyUserData(roleStr: 'pendamping', roomId: room.id);
-      state.activeRoom.value = room;
-
+      // Transition to sync phase with skeleton loader
       isLoading.value = false;
+      isSyncing.value = true;
+      syncStatus.value = AppTranslations.tr('room.syncingRoomData');
+
+      // Reactively apply to state
+      state.activeRoom.value = room;
+      await state.applyUserData(roleStr: 'pendamping', roomId: room.id);
+
+      syncStatus.value = AppTranslations.tr('room.syncingMembers');
+      await Future.delayed(const Duration(milliseconds: 650));
+
+      syncStatus.value = AppTranslations.tr('room.syncSuccessReady');
+      await Future.delayed(const Duration(milliseconds: 550));
 
       // Show Room Created Success Modal with Code & QR
-      if (Get.context != null) {
+      if (Get.context != null && Get.context!.mounted) {
         await _showRoomCreatedDialog(Get.context!, room);
       }
 
       _navigateToDashboard();
     } on RoomException catch (e) {
       isLoading.value = false;
+      isSyncing.value = false;
       errorMessage.value = e.message;
       _showErrorAlert(e.message);
     } catch (e) {
       isLoading.value = false;
+      isSyncing.value = false;
       errorMessage.value = UserFeedbackMessage.from(
         e,
         fallback: 'Rombongan belum dapat dibuat. Silakan coba lagi.',
       );
       _showErrorAlert(errorMessage.value!);
+    } finally {
+      _isActionInProgress = false;
     }
   }
 
@@ -203,6 +235,7 @@ class JoinRoomController extends GetxController {
 
     isLoading.value = true;
     errorMessage.value = null;
+    _isActionInProgress = true;
 
     try {
       final joinedRoom = await _roomService.joinRoomByCode(
@@ -212,33 +245,36 @@ class JoinRoomController extends GetxController {
         role: effectiveRole,
       );
 
-      await state.applyUserData(roleStr: effectiveRole, roomId: joinedRoom.id);
-      state.activeRoom.value = joinedRoom;
-
+      // Transition to sync phase with skeleton loader
       isLoading.value = false;
+      isSyncing.value = true;
+      syncStatus.value = AppTranslations.tr('room.syncingRoomData');
 
-      if (Get.context != null) {
-        AppAlert.success(
-          Get.context,
-          title: AppTranslations.tr('room.joinedSuccess'),
-          message: AppTranslations.tr('room.joinedSuccessDesc', {
-            'name': joinedRoom.name,
-          }),
-        );
-      }
+      state.activeRoom.value = joinedRoom;
+      await state.applyUserData(roleStr: effectiveRole, roomId: joinedRoom.id);
+
+      syncStatus.value = AppTranslations.tr('room.syncingMembers');
+      await Future.delayed(const Duration(milliseconds: 650));
+
+      syncStatus.value = AppTranslations.tr('room.syncSuccessReady');
+      await Future.delayed(const Duration(milliseconds: 550));
 
       _navigateToDashboard();
     } on RoomException catch (e) {
       isLoading.value = false;
+      isSyncing.value = false;
       errorMessage.value = e.message;
       _showErrorAlert(e.message);
     } catch (e) {
       isLoading.value = false;
+      isSyncing.value = false;
       errorMessage.value = UserFeedbackMessage.from(
         e,
         fallback: AppTranslations.tr('room.joinFailedFallback'),
       );
       _showErrorAlert(errorMessage.value!);
+    } finally {
+      _isActionInProgress = false;
     }
   }
 

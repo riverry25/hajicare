@@ -243,7 +243,10 @@ final Map<String, String> suTranslations = {
   'commGestureTitle': 'Komunikasi & Isyarat',
   'commTitle': 'Komunikasi Sora & Isyarat',
   'common.and': 'sareng',
+  'common.back': 'Mulang',
   'common.close': 'Tutup',
+  'common.confirm': 'Konfirmasi',
+  'common.copy': 'Salin',
   'common.editData': 'Robi Datar',
   'common.next': 'Lajeng',
   'common.optional': 'Opsional',
@@ -884,6 +887,7 @@ final Map<String, String> suTranslations = {
   'profile.nameChangedSuccessDesc': 'Nami anjeun ayeuna "{name}".',
   'profile.newName': 'Nami Anyar',
   'profile.nik': 'NIK',
+  'profile.email': 'Surélék',
   'profile.noRoomConnected': 'Teu Acan Aya Room Nyambung',
   'profile.notConnectedToRoom':
       'Anjeun teu acan nyambung kana room rombongan mana waé',
@@ -1020,6 +1024,8 @@ final Map<String, String> suTranslations = {
   'room.roomCreatedDesc': 'Rombongan "{name}" didamel kalayan kode {code}.',
   'room.roomDeleted': 'Rombongan Dihapus',
   'room.roomDeletedDesc': 'Rombongan "{name}" parantos dihapus.',
+  'room.memberLeftTitle': 'Jamaah Kaluar ti Rombongan',
+  'room.memberLeftDesc': '{name} parantos kaluar ti rombongan "{room}".',
   'room.roomMonitoringBadge': 'ROOM PAMANTAUAN',
   'room.roomNameChangeFailed': 'Nami Teu Acan Dirobih',
   'room.roomNameChangeFailedFallback':
@@ -1057,6 +1063,10 @@ final Map<String, String> suTranslations = {
   'room.statusUpdatedDesc': 'Rombongan parantos {status}.',
   'room.syncTime': 'Sinkron: {time}',
   'room.syncing': 'Nuju nyinkronkeun',
+  'room.syncingRoomData': 'Ngahubungkeun ka rombongan...',
+  'room.syncingMembers': 'Nyiapkeun data anggota & lokasi...',
+  'room.syncingPleaseWait': 'Nyingkronkeun data pamantauan, mangga antosan...',
+  'room.syncSuccessReady': 'Rombongan parantos siap! Ngalihkeun ka beranda...',
   'room.totalMembers': 'Jumlah Anggota',
   'room.totalRooms': 'Jumlah Room',
   'room.viewOnMap': 'Tingal dina Peta',
@@ -1075,6 +1085,53 @@ final Map<String, String> suTranslations = {
   'room.kloter': 'Kloter',
   'room.createdAtDate': 'Didamel dina {date}',
   'room.viewShareQrBtn': 'Tingal & Bagikeun Kode QR Room',
+  'room.leaveRoomBtn': 'Kaluar Room',
+  'room.leaveRoomTitle': 'Kaluar ti Rombongan',
+  'room.leaveRoomDesc':
+      'Naha anjeun yakin hoyong kaluar ti rombongan ieu? Anjeun kedah gabung deui upami hoyong lebet deui.',
+  'room.leaveRoomConfirm': 'Kaluar Room',
+  'room.leaveRoomSuccess': 'Kasil Kaluar',
+  'room.leaveRoomSuccessDesc': 'Anjeun parantos hasil kaluar ti rombongan.',
+  'room.leaveRoomFailed': 'Gagal Kaluar Rombongan',
+  'room.deleteRoomConfirmMessage':
+      'Naha anjeun yakin hoyong ngahapus room ieu? Sadaya jamaah sareng pendamping bakal dikaluarkeun sacara otomatis. Room teu tiasa dianggo deui kanggo gabung.',
+  'room.transferOwnerTitle': 'Mindahkeun Kapamilikan & Kaluar',
+  'room.transferOwnerDesc':
+      'Salaku pamilik, kapamilikan rombongan bakal dialihkeun ka {name}. Anjeun bakal kaluar ti rombongan ieu. Teraskeun?',
+  'room.soleOwnerCannotLeaveTitle': 'Teu Tiasa Kaluar',
+  'room.soleOwnerCannotLeaveDesc':
+      'Anjeun mangrupikeun hiji-hijina Pendamping/Pamilik di rombongan ieu. Supados rombongan tiasa tetep diatur, punten ulem Pendamping sanes sateuacanna, atanapi hapus rombongan.',
+  'room.rolePrimaryOwner': 'Owner Utama',
+  'room.roleCoOwner': 'Owner Kadua',
+  'room.setCoOwnerBtn': 'Tunjuk salaku Owner Kadua',
+  'room.replaceCoOwnerBtn': 'Ganti salaku Owner Kadua',
+  'room.removeCoOwnerBtn': 'Cabut Status Owner Kadua',
+  'room.transferOwnershipBtn': 'Wariskeun Kapamilikan Utama',
+  'room.setCoOwnerConfirm':
+      'Jantenkeun {name} salaku Owner Kadua? Anjeunna bakal nampi hak administratif tambahan dina rombongan ieu.',
+  'room.setCoOwnerSuccess': 'Owner Kadua Hasil Ditunjuk',
+  'room.setCoOwnerSuccessDesc':
+      '{name} ayeuna resmi janten Owner Kadua dina rombongan ieu.',
+  'room.removeCoOwnerConfirm':
+      'Cabut status Owner Kadua ti {name}? Anjeunna bakal wangsul janten Pendamping biasa.',
+  'room.removeCoOwnerSuccess': 'Status Owner Kadua Dicabut',
+  'room.removeCoOwnerSuccessDesc':
+      '{name} parantos wangsul janten Pendamping biasa.',
+  'room.transferOwnershipConfirm':
+      'Alihkeun kapamilikan utama rombongan ka {name}? Anjeun bakal janten Pendamping biasa sareng sanes Owner Utama deui.',
+  'room.transferOwnershipSuccess': 'Kapamilikan Utama Dialihkeun',
+  'room.transferOwnershipSuccessDesc':
+      'Kapamilikan utama rombongan ayeuna resmi dicepeng ku {name}.',
+  'room.bequeathAndLeaveTitle': 'Wariskeun Kapamilikan sareng Kaluar?',
+  'room.bequeathToCoOwnerDesc':
+      'Kapamilikan room bakal dialihkeun ka {name}. Saatos proses hasil, akun anjeun bakal dikaluarkeun ti room.',
+  'room.bequeathAndLeaveAction': 'Wariskeun sareng Kaluar',
+  'room.noCoOwnerSelectCompanionTitle': 'Pilih Pendamping Panerus',
+  'room.noCoOwnerSelectCompanionDesc':
+      'Room ieu teu acan gaduh Owner Kadua. Pilih Pendamping anu bakal nampi kapamilikan sateuacan anjeun kaluar.',
+  'room.bequeathToSelectedDesc':
+      'Jantenkeun {name} salaku Owner Utama sareng kaluar ti room? Akun anjeun bakal dikaluarkeun ti rombongan saatos proses réngsé.',
+  'room.nearestCompanion': 'Pendamping Pangcaketna',
   'room.maktabGroupSub': 'Grup Maktab / Delegasi',
   'room.active': 'Aktif',
   'room.inactive': 'Teu Aktif',
@@ -1126,6 +1183,51 @@ final Map<String, String> suTranslations = {
   'room.editRoomSettingsDesc':
       'Robi nami room, nomer maktab, nomer kloter, atanapi wates radius aman.',
   'room.groupSettingsHeader': 'PANGATURAN ROMBONGAN',
+  'room.roomClosedTitle': 'Rombongan Ditutup',
+  'room.roomClosedDesc':
+      'Rombongan ieu parantos teu aktip atanapi parantos dihapus.',
+  'room.membershipStatusTitle': 'Status Kaanggotaan',
+  'room.membershipRevokedDesc':
+      'Anjeun parantos henteu kadaptar dina rombongan ieu.',
+  'room.deletingRoomLoading': 'Nuju ngahapus rombongan...',
+  'room.settingCoOwnerLoading': 'Netepkeun Owner Kadua...',
+  'room.setCoOwnerFailed': 'Gagal Nunjuk Owner Kadua',
+  'room.setCoOwnerFailedFallback':
+      'Teu tiasa nunjuk Owner Kadua. Mangga cobi deui.',
+  'room.removingCoOwnerLoading': 'Nyabut status Owner Kadua...',
+  'room.removeCoOwnerFailed': 'Gagal Nyabut Owner Kadua',
+  'room.removeCoOwnerFailedFallback':
+      'Teu tiasa nyabut status Owner Kadua. Mangga cobi deui.',
+  'room.transferringOwnershipLoading': 'Mindahkeun kapamilikan utama...',
+  'room.transferOwnershipFailed': 'Gagal Mindahkeun Kapamilikan',
+  'room.transferOwnershipFailedFallback':
+      'Teu tiasa mindahkeun kapamilikan room. Mangga cobi deui.',
+  'room.leavingRoomLoading': 'Nuju ngolah kaluar room...',
+  'room.leaveRoomBequeathedSuccessDesc':
+      'Anjeun parantos kaluar ti rombongan sareng kapamilikan utama dialihkeun ka {name}.',
+  'room.leaveRoomFailedFallback':
+      'Teu acan tiasa kaluar ti rombongan. Mangga cobi deui.',
+  'room.onlineStatus': 'Online',
+  'room.lastSeenSecondsAgo': 'Panungtung katingal {seconds} dtk kapungkur',
+  'room.locationNotUpdated': 'Lokasi teu diénggalkeun',
+  'room.defaultOfficerCompanion': 'Petugas / Pendamping',
+  'room.defaultMemberName': 'Anggota',
+  'room.defaultActorOfficer': 'Petugas Maktab',
+  'room.roomSettingsUpdatedDesc':
+      'Setélan rombongan "{name}" parantos diropéa.',
+  'room.roomSettingsSaveFailedFallback':
+      'Parobahan teu acan tiasa disimpen. Mangga cobi deui.',
+  'room.emergencyContact': 'Kontak Darurat',
+  'room.contactCall': 'Hubungi Kontak',
+  'room.copySummary': 'Salin Ringkesan',
+  'room.sosActiveUrgentBanner': 'SOS DARURAT AKTIP - Butuh Pitulung Geuwat!',
+  'room.statusAndLocationHeader': 'STATUS & LOKASI JAMAAH',
+  'room.medicalEmergencyDataHeader': 'DATA MÉDIS & DARURAT (PPIH)',
+  'room.callEmergencyContact': 'Hubungi Kontak Darurat ({contact})',
+  'room.callFailedTitle': 'Gagal Muka Telepon',
+  'room.callFailedDesc': 'Teu tiasa nelepon ka nomer {number}.',
+  'room.copiedSuccess': '{label} parantos disalin: {value}',
+  'room.officialDocsHeader': 'DOKUMÉN & IDÉNTITAS RESMI',
   'safetyDesc':
       'Pantau lokasi kulawarga sacara langsung ngagunakeun radar jarak pinter sareng peringatan darurat instan.',
   'safetyTitle': 'Kasalametan Kapantau',

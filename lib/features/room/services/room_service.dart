@@ -134,7 +134,21 @@ class RoomService {
     required String userName,
     required String role,
     String? roomName,
-  }) => _commands.leaveRoom(roomId);
+    String? successorUid,
+  }) => _commands.leaveRoom(roomId, successorUid: successorUid);
+
+  Future<void> setCoOwner({
+    required String roomId,
+    required String newCoOwnerUid,
+  }) => _commands.setCoOwner(roomId: roomId, newCoOwnerUid: newCoOwnerUid);
+
+  Future<void> removeCoOwner({required String roomId}) =>
+      _commands.removeCoOwner(roomId: roomId);
+
+  Future<void> transferOwnership({
+    required String roomId,
+    required String newOwnerUid,
+  }) => _commands.transferOwnership(roomId: roomId, newOwnerUid: newOwnerUid);
 
   Future<void> removeJamaahFromRoom({
     required String roomId,
@@ -142,7 +156,15 @@ class RoomService {
     required String actorUid,
     required String actorName,
     required String actorRole,
-  }) => _commands.removeJamaah(roomId: roomId, jamaahUid: jamaahUid);
+    String? roomName,
+  }) => _commands.removeJamaah(
+    roomId: roomId,
+    jamaahUid: jamaahUid,
+    actorUid: actorUid,
+    actorName: actorName,
+    actorRole: actorRole,
+    roomName: roomName,
+  );
 
   Future<RoomInvitationModel> inviteJamaahByEmail({
     required String roomId,

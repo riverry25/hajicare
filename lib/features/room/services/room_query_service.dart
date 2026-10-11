@@ -79,14 +79,23 @@ class RoomQueryService {
         .collection('invitations')
         .where('toUserId', isEqualTo: uid)
         .where('status', isEqualTo: 'pending')
-        .orderBy('createdAt', descending: true)
-        .limit(50)
         .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map(RoomInvitationModel.fromFirestore)
-              .toList(growable: false),
-        );
+        .map((snapshot) {
+          final items =
+              snapshot.docs
+                  .map(RoomInvitationModel.fromFirestore)
+                  .toList(growable: true)
+                ..sort((a, b) {
+                  final aTime =
+                      a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+                  final bTime =
+                      b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+                  return bTime.compareTo(aTime);
+                });
+          return items.length <= 50
+              ? List<RoomInvitationModel>.unmodifiable(items)
+              : List<RoomInvitationModel>.unmodifiable(items.take(50));
+        });
   }
 
   Stream<List<ActivityModel>> getRecentActivitiesStream({int limit = 10}) {

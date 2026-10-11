@@ -176,13 +176,17 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                       ),
                       child: Text(
                         hasRoom
-                            ? context.tr('dashboard.officerDistance')
+                            ? (state.nearestPendamping.value != null
+                                  ? '${context.tr('room.nearestCompanion')}: ${state.nearestPendamping.value!.name}'
+                                  : context.tr('dashboard.officerDistance'))
                             : context.tr('dashboard.notConnectedToRoom'),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],

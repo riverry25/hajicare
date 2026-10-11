@@ -10,70 +10,86 @@ class AppAlert {
   AppAlert._();
 
   /// Menampilkan dialog sukses.
-  static void success(
+  static Future<void> success(
     BuildContext? context, {
     String title = 'Berhasil',
     required String message,
     VoidCallback? onOk,
     String okText = 'Selesai',
+    Duration? autoDismissDuration,
+    VoidCallback? onDismiss,
   }) {
-    AppDialog.success(
+    return AppDialog.success(
       context: context,
       title: title,
       message: message,
       onOk: onOk,
       okText: okText,
+      autoDismissDuration: autoDismissDuration,
+      onDismiss: onDismiss,
     );
   }
 
   /// Menampilkan dialog error.
-  static void error(
+  static Future<void> error(
     BuildContext? context, {
     String title = 'Belum Berhasil',
     required String message,
     VoidCallback? onOk,
     String okText = 'Tutup',
+    Duration? autoDismissDuration,
+    VoidCallback? onDismiss,
   }) {
-    AppDialog.error(
+    return AppDialog.error(
       context: context,
       title: title,
       message: message,
       onOk: onOk,
       okText: okText,
+      autoDismissDuration: autoDismissDuration,
+      onDismiss: onDismiss,
     );
   }
 
   /// Menampilkan dialog peringatan.
-  static void warning(
+  static Future<void> warning(
     BuildContext? context, {
     String title = 'Perhatian',
     required String message,
     VoidCallback? onOk,
     String okText = 'Mengerti',
+    Duration? autoDismissDuration,
+    VoidCallback? onDismiss,
   }) {
-    AppDialog.warning(
+    return AppDialog.warning(
       context: context,
       title: title,
       message: message,
       onOk: onOk,
       okText: okText,
+      autoDismissDuration: autoDismissDuration,
+      onDismiss: onDismiss,
     );
   }
 
   /// Menampilkan dialog informasi.
-  static void info(
+  static Future<void> info(
     BuildContext? context, {
     String title = 'Informasi',
     required String message,
     VoidCallback? onOk,
     String okText = 'Baik',
+    Duration? autoDismissDuration,
+    VoidCallback? onDismiss,
   }) {
-    AppDialog.info(
+    return AppDialog.info(
       context: context,
       title: title,
       message: message,
       onOk: onOk,
       okText: okText,
+      autoDismissDuration: autoDismissDuration,
+      onDismiss: onDismiss,
     );
   }
 

@@ -1114,8 +1114,23 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
   /// and centers the map camera on their real-time pin.
   /// Returns the focused [RoomMemberModel], or null if no companion is found.
   Future<RoomMemberModel?> focusOnCompanion({bool autoRoute = false}) async {
-    // 1. Try to find companion from roomMembers (prefer one with real GPS location)
-    RoomMemberModel? companion =
+    RoomMemberModel? companion;
+
+    // 1. Prioritize nearest companion if resolved by HajiCareController
+    if (Get.isRegistered<HajiCareController>()) {
+      final hajiCtrl = Get.find<HajiCareController>();
+      final nearest = hajiCtrl.nearestPendamping.value;
+      if (nearest != null) {
+        companion =
+            roomMembers.firstWhereOrNull((m) => m.uid == nearest.uid) ??
+            hajiCtrl.activeRoomMembers.firstWhereOrNull(
+              (m) => m.uid == nearest.uid,
+            );
+      }
+    }
+
+    // 2. Try to find companion from roomMembers (prefer one with real GPS location)
+    companion ??=
         pendampingMembers.firstWhereOrNull((m) => m.hasLocation) ??
         pendampingMembers.firstOrNull;
 

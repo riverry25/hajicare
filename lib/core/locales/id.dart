@@ -243,7 +243,10 @@ const Map<String, String> idTranslations = {
   'commGestureTitle': 'Komunikasi & Isyarat',
   'commTitle': 'Komunikasi Suara & Isyarat',
   'common.and': 'dan',
+  'common.back': 'Kembali',
   'common.close': 'Tutup',
+  'common.confirm': 'Konfirmasi',
+  'common.copy': 'Salin',
   'common.editData': 'Ubah Data',
   'common.next': 'Lanjut',
   'common.optional': 'Opsional',
@@ -881,6 +884,7 @@ const Map<String, String> idTranslations = {
   'profile.nameChangedSuccessDesc': 'Nama Anda sekarang "{name}".',
   'profile.newName': 'Nama Baru',
   'profile.nik': 'NIK',
+  'profile.email': 'Email',
   'profile.noRoomConnected': 'Belum Ada Room Terhubung',
   'profile.notConnectedToRoom':
       'Anda belum terhubung ke room rombongan manapun',
@@ -1016,6 +1020,8 @@ const Map<String, String> idTranslations = {
   'room.roomCreatedDesc': 'Rombongan "{name}" dibuat dengan kode {code}.',
   'room.roomDeleted': 'Rombongan Dihapus',
   'room.roomDeletedDesc': 'Rombongan "{name}" telah dihapus.',
+  'room.memberLeftTitle': 'Jamaah Keluar Rombongan',
+  'room.memberLeftDesc': '{name} telah keluar dari rombongan "{room}".',
   'room.roomMonitoringBadge': 'ROOM PEMANTAUAN',
   'room.roomNameChangeFailed': 'Nama Belum Diubah',
   'room.roomNameChangeFailedFallback':
@@ -1052,6 +1058,10 @@ const Map<String, String> idTranslations = {
   'room.statusUpdatedDesc': 'Rombongan berhasil {status}.',
   'room.syncTime': 'Sinkron: {time}',
   'room.syncing': 'Menyinkronkan',
+  'room.syncingRoomData': 'Menghubungkan ke rombongan...',
+  'room.syncingMembers': 'Menyiapkan data anggota & lokasi...',
+  'room.syncingPleaseWait': 'Menyinkronkan data pemantauan, mohon tunggu...',
+  'room.syncSuccessReady': 'Rombongan siap! Mengalihkan ke beranda...',
   'room.totalMembers': 'Total Anggota',
   'room.totalRooms': 'Total Room',
   'room.viewOnMap': 'Lihat di Peta',
@@ -1070,6 +1080,53 @@ const Map<String, String> idTranslations = {
   'room.kloter': 'Kloter',
   'room.createdAtDate': 'Dibuat pada {date}',
   'room.viewShareQrBtn': 'Lihat & Bagikan QR Code Room',
+  'room.leaveRoomBtn': 'Keluar Room',
+  'room.leaveRoomTitle': 'Keluar dari Rombongan',
+  'room.leaveRoomDesc':
+      'Apakah kamu yakin ingin keluar dari rombongan ini? Kamu perlu bergabung kembali jika ingin masuk lagi.',
+  'room.leaveRoomConfirm': 'Keluar Room',
+  'room.leaveRoomSuccess': 'Berhasil Keluar',
+  'room.leaveRoomSuccessDesc': 'Anda telah berhasil keluar dari rombongan.',
+  'room.leaveRoomFailed': 'Gagal Keluar Rombongan',
+  'room.deleteRoomConfirmMessage':
+      'Apakah kamu yakin ingin menghapus room ini? Semua jamaah dan pendamping akan dikeluarkan secara otomatis. Room tidak dapat digunakan lagi untuk bergabung.',
+  'room.transferOwnerTitle': 'Alihkan Kepemilikan & Keluar',
+  'room.transferOwnerDesc':
+      'Sebagai pemilik, kepemilikan rombongan akan dialihkan kepada {name}. Kamu akan keluar dari rombongan ini dan perlu bergabung kembali jika ingin masuk lagi. Lanjutkan?',
+  'room.soleOwnerCannotLeaveTitle': 'Tidak Dapat Keluar',
+  'room.soleOwnerCannotLeaveDesc':
+      'Kamu adalah satu-satunya Pendamping/Pemilik di rombongan ini. Agar rombongan tetap dapat dikelola, silakan undang Pendamping lain terlebih dahulu sebagai penerus kepemilikan, atau hapus rombongan jika kegiatan telah selesai.',
+  'room.rolePrimaryOwner': 'Owner Utama',
+  'room.roleCoOwner': 'Owner Kedua',
+  'room.setCoOwnerBtn': 'Tunjuk sebagai Owner Kedua',
+  'room.replaceCoOwnerBtn': 'Ganti sebagai Owner Kedua',
+  'room.removeCoOwnerBtn': 'Cabut Status Owner Kedua',
+  'room.transferOwnershipBtn': 'Wariskan Kepemilikan Utama',
+  'room.setCoOwnerConfirm':
+      'Jadikan {name} sebagai Owner Kedua? Ia akan mendapatkan hak administratif tambahan pada rombongan ini.',
+  'room.setCoOwnerSuccess': 'Owner Kedua Berhasil Ditunjuk',
+  'room.setCoOwnerSuccessDesc':
+      '{name} kini resmi menjadi Owner Kedua pada rombongan ini.',
+  'room.removeCoOwnerConfirm':
+      'Cabut status Owner Kedua dari {name}? Ia akan kembali menjadi Pendamping biasa.',
+  'room.removeCoOwnerSuccess': 'Status Owner Kedua Dicabut',
+  'room.removeCoOwnerSuccessDesc':
+      '{name} telah kembali menjadi Pendamping biasa.',
+  'room.transferOwnershipConfirm':
+      'Alihkan kepemilikan utama rombongan kepada {name}? Anda akan menjadi Pendamping biasa dan tidak lagi menjadi Owner Utama.',
+  'room.transferOwnershipSuccess': 'Kepemilikan Utama Dialihkan',
+  'room.transferOwnershipSuccessDesc':
+      'Kepemilikan utama rombongan kini resmi dipegang oleh {name}.',
+  'room.bequeathAndLeaveTitle': 'Wariskan Kepemilikan dan Keluar?',
+  'room.bequeathToCoOwnerDesc':
+      'Kepemilikan room akan dialihkan kepada {name}. Setelah proses berhasil, akun kamu akan dikeluarkan dari room.',
+  'room.bequeathAndLeaveAction': 'Wariskan dan Keluar',
+  'room.noCoOwnerSelectCompanionTitle': 'Pilih Pendamping Penerus',
+  'room.noCoOwnerSelectCompanionDesc':
+      'Room ini belum memiliki Owner Kedua. Pilih Pendamping yang akan menerima kepemilikan sebelum kamu keluar.',
+  'room.bequeathToSelectedDesc':
+      'Jadikan {name} sebagai Owner Utama dan keluar dari room? Akun kamu akan dikeluarkan dari rombongan setelah proses selesai.',
+  'room.nearestCompanion': 'Pendamping Terdekat',
   'room.maktabGroupSub': 'Grup Maktab / Delegasi',
   'room.active': 'Aktif',
   'room.inactive': 'Nonaktif',
@@ -1121,6 +1178,50 @@ const Map<String, String> idTranslations = {
   'room.editRoomSettingsDesc':
       'Perbarui nama room, nomor maktab, nomor kloter, atau batas radius aman.',
   'room.groupSettingsHeader': 'PENGATURAN ROMBONGAN',
+  'room.roomClosedTitle': 'Rombongan Ditutup',
+  'room.roomClosedDesc': 'Rombongan ini sudah tidak aktif atau telah dihapus.',
+  'room.membershipStatusTitle': 'Status Keanggotaan',
+  'room.membershipRevokedDesc':
+      'Anda sudah tidak terdaftar dalam rombongan ini.',
+  'room.deletingRoomLoading': 'Sedang menghapus rombongan...',
+  'room.settingCoOwnerLoading': 'Menetapkan Owner Kedua...',
+  'room.setCoOwnerFailed': 'Gagal Menunjuk Owner Kedua',
+  'room.setCoOwnerFailedFallback':
+      'Tidak dapat menunjuk Owner Kedua. Silakan coba lagi.',
+  'room.removingCoOwnerLoading': 'Mencabut status Owner Kedua...',
+  'room.removeCoOwnerFailed': 'Gagal Mencabut Owner Kedua',
+  'room.removeCoOwnerFailedFallback':
+      'Tidak dapat mencabut status Owner Kedua. Silakan coba lagi.',
+  'room.transferringOwnershipLoading': 'Mengalihkan kepemilikan utama...',
+  'room.transferOwnershipFailed': 'Gagal Mengalihkan Kepemilikan',
+  'room.transferOwnershipFailedFallback':
+      'Tidak dapat mengalihkan kepemilikan room. Silakan coba lagi.',
+  'room.leavingRoomLoading': 'Sedang memproses keluar room...',
+  'room.leaveRoomBequeathedSuccessDesc':
+      'Anda telah keluar dari rombongan dan kepemilikan utama dialihkan kepada {name}.',
+  'room.leaveRoomFailedFallback':
+      'Belum dapat keluar dari rombongan. Silakan coba lagi.',
+  'room.onlineStatus': 'Online',
+  'room.lastSeenSecondsAgo': 'Terakhir terlihat {seconds} dtk lalu',
+  'room.locationNotUpdated': 'Lokasi tidak diperbarui',
+  'room.defaultOfficerCompanion': 'Petugas / Pendamping',
+  'room.defaultMemberName': 'Anggota',
+  'room.defaultActorOfficer': 'Petugas Maktab',
+  'room.roomSettingsUpdatedDesc':
+      'Pengaturan rombongan "{name}" sudah diperbarui.',
+  'room.roomSettingsSaveFailedFallback':
+      'Perubahan belum dapat disimpan. Silakan coba lagi.',
+  'room.emergencyContact': 'Kontak Darurat',
+  'room.contactCall': 'Hubungi Kontak',
+  'room.copySummary': 'Salin Ringkasan',
+  'room.sosActiveUrgentBanner': 'SOS DARURAT AKTIF - Butuh Bantuan Segera!',
+  'room.statusAndLocationHeader': 'STATUS & LOKASI JAMAAH',
+  'room.medicalEmergencyDataHeader': 'DATA MEDIS & DARURAT (PPIH)',
+  'room.callEmergencyContact': 'Hubungi Kontak Darurat ({contact})',
+  'room.callFailedTitle': 'Gagal Membuka Panggilan',
+  'room.callFailedDesc': 'Tidak dapat melakukan panggilan ke nomor {number}.',
+  'room.copiedSuccess': '{label} berhasil disalin: {value}',
+  'room.officialDocsHeader': 'DOKUMEN & IDENTITAS RESMI',
   'safetyDesc':
       'Pantau lokasi keluarga secara real-time dengan radar jarak pintar dan peringatan darurat instan.',
   'safetyTitle': 'Keselamatan Terpantau',

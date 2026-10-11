@@ -205,7 +205,47 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
   // ── Actions & Helpers ──────────────────────────────────────────────────────
 
   String _formatDate(DateTime? dt) {
-    if (dt == null) return 'Tidak diketahui';
+    if (dt == null) return context.tr('room.unknown');
+    String lang = 'id';
+    try {
+      lang = Localizations.localeOf(context).languageCode;
+    } catch (_) {
+      lang = Get.locale?.languageCode ?? 'id';
+    }
+
+    if (lang == 'en') {
+      const monthsEn = [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December',
+      ];
+      return '${dt.day} ${monthsEn[dt.month - 1]} ${dt.year}';
+    } else if (lang == 'su') {
+      const monthsSu = [
+        'Januari',
+        'Pébruari',
+        'Maret',
+        'April',
+        'Méi',
+        'Juni',
+        'Juli',
+        'Agustus',
+        'Séptémber',
+        'Oktober',
+        'Nopémber',
+        'Désémber',
+      ];
+      return '${dt.day} ${monthsSu[dt.month - 1]} ${dt.year}';
+    }
     const months = [
       'Januari',
       'Februari',
@@ -227,24 +267,24 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
     final loc = _resolvedLocation;
     final time = _resolvedLocationTime;
     if (loc == null || time == null) {
-      return 'Lokasi belum tersedia';
+      return context.tr('room.locationNotAvailable');
     }
     final currentTime = now ?? DateTime.now();
     final diff = currentTime.difference(time);
     final seconds = diff.inSeconds;
 
     if (seconds <= 30) {
-      return 'Online';
+      return context.tr('room.onlineStatus');
     } else if (seconds <= 120) {
-      return 'Terakhir terlihat $seconds dtk lalu';
+      return context.tr('room.lastSeenSecondsAgo', {'seconds': seconds});
     } else {
-      return 'Lokasi tidak diperbarui';
+      return context.tr('room.locationNotUpdated');
     }
   }
 
   String _getDistanceText() {
     final loc = _resolvedLocation;
-    if (loc == null) return 'Lokasi belum tersedia';
+    if (loc == null) return context.tr('room.locationNotAvailable');
     Position? userPos;
     if (Get.isRegistered<HajiCareController>()) {
       userPos = Get.find<HajiCareController>().myCurrentPosition.value;
@@ -261,7 +301,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
     }
 
     if (userLat == null || userLng == null) {
-      return 'Belum terdeteksi';
+      return context.tr('room.notDetected');
     }
 
     final meters = Geolocator.distanceBetween(
@@ -272,9 +312,13 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
     );
 
     if (meters < 1000) {
-      return '±${meters.toStringAsFixed(0)} m dari Anda';
+      return context.tr('room.metersFromYou', {
+        'meters': meters.toStringAsFixed(0),
+      });
     } else {
-      return '±${(meters / 1000).toStringAsFixed(1)} km dari Anda';
+      return context.tr('room.kmFromYou', {
+        'km': (meters / 1000).toStringAsFixed(1),
+      });
     }
   }
 
@@ -283,7 +327,9 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
     HapticFeedback.lightImpact();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$label berhasil disalin: $value'),
+        content: Text(
+          context.tr('room.copiedSuccess', {'label': label, 'value': value}),
+        ),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
       ),
@@ -301,8 +347,8 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
         if (mounted) {
           AppAlert.warning(
             context,
-            title: 'Gagal Membuka Panggilan',
-            message: 'Tidak dapat melakukan panggilan ke nomor $phoneNumber.',
+            title: context.tr('room.callFailedTitle'),
+            message: context.tr('room.callFailedDesc', {'number': phoneNumber}),
           );
         }
       }
@@ -310,8 +356,8 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
       if (mounted) {
         AppAlert.warning(
           context,
-          title: 'Gagal Membuka Panggilan',
-          message: 'Terjadi kesalahan saat memanggil $phoneNumber: $e',
+          title: context.tr('room.callFailedTitle'),
+          message: context.tr('room.callFailedDesc', {'number': phoneNumber}),
         );
       }
     }
@@ -355,7 +401,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
     AppAlert.confirm(
       context,
       title: context.tr('room.removeMemberTitle'),
-      message: 'Keluarkan "$_resolvedName" dari rombongan ini?',
+      message: context.tr('room.removeConfirmPrompt', {'name': _resolvedName}),
       confirmText: context.tr('room.removeAction'),
       cancelText: context.tr('common.cancel'),
       isDestructive: true,
@@ -368,6 +414,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
             actorUid: user.uid,
             actorName: actorName,
             actorRole: actorRole,
+            roomName: widget.roomName,
           );
 
           if (!mounted) return;
@@ -390,7 +437,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
             title: context.tr('room.memberRemoveFailed'),
             message: UserFeedbackMessage.from(
               e,
-              fallback: 'Jamaah belum dapat dikeluarkan. Silakan coba lagi.',
+              fallback: context.tr('room.memberRemoveFailedFallback'),
             ),
           );
         }
@@ -599,7 +646,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                               : null,
                           onCopy: _resolvedEmergencyContact != null
                               ? () => _copyToClipboard(
-                                  'Kontak Darurat',
+                                  context.tr('room.emergencyContact'),
                                   _resolvedEmergencyContact!,
                                 )
                               : null,
@@ -613,7 +660,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                           bodyColor: bodyColor,
                           onCopy: _resolvedPassport != null
                               ? () => _copyToClipboard(
-                                  'Nomor Paspor',
+                                  context.tr('profile.passportNumber'),
                                   _resolvedPassport!,
                                 )
                               : null,
@@ -623,7 +670,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                           Divider(height: 18, color: dividerColor),
                           _buildMedSheetRow(
                             context,
-                            label: 'Email',
+                            label: context.tr('profile.email'),
                             value: _resolvedEmail!,
                             headingColor: headingColor,
                             bodyColor: bodyColor,
@@ -657,9 +704,9 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                             onPressed: () =>
                                 _makePhoneCall(_resolvedEmergencyContact!),
                             icon: const Icon(Icons.call_rounded, size: 18),
-                            label: const Text(
-                              'Hubungi Kontak',
-                              style: TextStyle(
+                            label: Text(
+                              context.tr('room.contactCall'),
+                              style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 13,
                               ),
@@ -695,9 +742,9 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                               _copyToClipboard('Ringkasan PPIH', summary);
                             },
                             icon: const Icon(Icons.copy_rounded, size: 18),
-                            label: const Text(
-                              'Salin Ringkasan',
-                              style: TextStyle(
+                            label: Text(
+                              context.tr('room.copySummary'),
+                              style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 13,
                               ),
@@ -1082,7 +1129,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'SOS DARURAT AKTIF - Butuh Bantuan Segera!',
+                                  context.tr('room.sosActiveUrgentBanner'),
                                   style: AppTypography.labelLarge.copyWith(
                                     color: AppColors.sosEmergency,
                                     fontWeight: FontWeight.w800,
@@ -1235,7 +1282,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: _buildSectionCard(
                           context: context,
-                          title: 'STATUS & LOKASI JAMAAH',
+                          title: context.tr('room.statusAndLocationHeader'),
                           icon: Icons.navigation_rounded,
                           iconColor: AppColors.emeraldIslamic,
                           cardBg: sectionBg,
@@ -1275,7 +1322,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
 
                             // Distance from User
                             _buildDetailHorizontalRow(
-                              label: 'Jarak dari Anda',
+                              label: context.tr('room.distanceFromYou'),
                               valueText: distanceText,
                               headingColor: headingColor,
                               bodyColor: bodyColor,
@@ -1287,7 +1334,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                               label: context.tr('room.joinDate'),
                               valueText: _joinedAt != null
                                   ? _formatDate(_joinedAt)
-                                  : 'Tidak diketahui',
+                                  : context.tr('room.unknown'),
                               headingColor: headingColor,
                               bodyColor: bodyColor,
                             ),
@@ -1317,7 +1364,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: _buildSectionCard(
                           context: context,
-                          title: 'DATA MEDIS & DARURAT (PPIH)',
+                          title: context.tr('room.medicalEmergencyDataHeader'),
                           icon: Icons.medical_services_rounded,
                           iconColor: AppColors.sosEmergency,
                           cardBg: sectionBg,
@@ -1397,7 +1444,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                                   : null,
                               onCopy: hasEmergencyContact
                                   ? () => _copyToClipboard(
-                                      'Kontak Darurat',
+                                      context.tr('room.emergencyContact'),
                                       _resolvedEmergencyContact!,
                                     )
                                   : null,
@@ -1412,7 +1459,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: _buildSectionCard(
                           context: context,
-                          title: 'DOKUMEN & IDENTITAS RESMI',
+                          title: context.tr('room.officialDocsHeader'),
                           icon: Icons.badge_rounded,
                           iconColor: AppColors.goldPrimary,
                           cardBg: sectionBg,
@@ -1427,7 +1474,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                               bodyColor: bodyColor,
                               onCopy: _resolvedPorsi != null
                                   ? () => _copyToClipboard(
-                                      'Nomor Porsi',
+                                      context.tr('profile.portionNumber'),
                                       _resolvedPorsi!,
                                     )
                                   : null,
@@ -1442,7 +1489,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                               bodyColor: bodyColor,
                               onCopy: _resolvedPassport != null
                                   ? () => _copyToClipboard(
-                                      'Nomor Paspor',
+                                      context.tr('profile.passportNumber'),
                                       _resolvedPassport!,
                                     )
                                   : null,
@@ -1456,7 +1503,10 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                               headingColor: headingColor,
                               bodyColor: bodyColor,
                               onCopy: _resolvedNik != null
-                                  ? () => _copyToClipboard('NIK', _resolvedNik!)
+                                  ? () => _copyToClipboard(
+                                      context.tr('profile.nik'),
+                                      _resolvedNik!,
+                                    )
                                   : null,
                             ),
 
@@ -1465,12 +1515,14 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                                 _resolvedEmail!.isNotEmpty) ...[
                               Divider(height: 16, color: dividerColor),
                               _buildDetailHorizontalRow(
-                                label: 'Email',
+                                label: context.tr('profile.email'),
                                 valueText: _resolvedEmail!,
                                 headingColor: headingColor,
                                 bodyColor: bodyColor,
-                                onCopy: () =>
-                                    _copyToClipboard('Email', _resolvedEmail!),
+                                onCopy: () => _copyToClipboard(
+                                  context.tr('profile.email'),
+                                  _resolvedEmail!,
+                                ),
                               ),
                             ],
                           ],
@@ -1494,9 +1546,9 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                                     Icons.near_me_rounded,
                                     size: 18,
                                   ),
-                                  label: const Text(
-                                    'Lihat di Peta',
-                                    style: TextStyle(
+                                  label: Text(
+                                    context.tr('room.viewOnMap'),
+                                    style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14,
                                     ),
@@ -1530,7 +1582,9 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                                     color: AppColors.emeraldIslamic,
                                   ),
                                   label: Text(
-                                    'Hubungi Kontak Darurat (${_resolvedEmergencyContact!})',
+                                    context.tr('room.callEmergencyContact', {
+                                      'contact': _resolvedEmergencyContact!,
+                                    }),
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 13,
@@ -1579,9 +1633,9 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                                           Icons.person_remove_rounded,
                                           size: 16,
                                         ),
-                                  label: const Text(
-                                    'Keluarkan dari Rombongan',
-                                    style: TextStyle(
+                                  label: Text(
+                                    context.tr('room.removeFromRoom'),
+                                    style: const TextStyle(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 13,
                                     ),

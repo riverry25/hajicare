@@ -9,7 +9,6 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_card.dart';
 import '../controllers/join_room_controller.dart';
 import '../widgets/qr_scanner_dialog.dart';
-import '../../../core/state/app_settings_controller.dart';
 
 class JoinRoomScreen extends StatelessWidget {
   const JoinRoomScreen({super.key});
@@ -17,9 +16,6 @@ class JoinRoomScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<JoinRoomController>();
-    final settings = Get.isRegistered<AppSettingsController>()
-        ? Get.find<AppSettingsController>()
-        : null;
     final isDark = AppColors.isDark(context);
     final scaffoldBg = AppColors.scaffoldColor(context);
     final cardBg = AppColors.cardBgColor(context);
@@ -27,97 +23,96 @@ class JoinRoomScreen extends StatelessWidget {
     final bodyColor = AppColors.textBodyColor(context);
     final primaryColor = isDark ? AppColors.goldLight : AppColors.goldPrimary;
 
-    return Obx(() {
-      settings?.rxLocale.value;
-      return Scaffold(
+    return Scaffold(
+      backgroundColor: scaffoldBg,
+      appBar: AppBar(
         backgroundColor: scaffoldBg,
-        appBar: AppBar(
-          backgroundColor: scaffoldBg,
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: headingColor,
-              size: 20,
-            ),
-            onPressed: () {
-              if (Navigator.of(context).canPop()) {
-                Get.back();
-              } else {
-                controller.selectedMode.value == 0
-                    ? Get.offAllNamed('/dashboard_pendamping')
-                    : (controller.isPendamping
-                          ? Get.offAllNamed('/dashboard_pendamping')
-                          : Get.offAllNamed('/dashboard_jamaah'));
-              }
-            },
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: headingColor,
+            size: 20,
           ),
-          title: Text(
-            controller.isPendamping
-                ? context.tr('profileRoomMonitoring')
-                : context.tr('room.joinRoomTitle'),
+          onPressed: () {
+            if (controller.isSyncing.value) return;
+            if (Navigator.of(context).canPop()) {
+              Get.back();
+            } else {
+              controller.selectedMode.value == 0
+                  ? Get.offAllNamed('/dashboard_pendamping')
+                  : (controller.isPendamping
+                        ? Get.offAllNamed('/dashboard_pendamping')
+                        : Get.offAllNamed('/dashboard_jamaah'));
+            }
+          },
+        ),
+        title: Obx(
+          () => Text(
+            controller.isSyncing.value
+                ? context.tr('room.syncing')
+                : (controller.isPendamping
+                      ? context.tr('profileRoomMonitoring')
+                      : context.tr('room.joinRoomTitle')),
             style: AppTypography.titleMedium.copyWith(
               color: headingColor,
               fontWeight: FontWeight.bold,
             ),
           ),
-          centerTitle: true,
         ),
-        body: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.screenEdgeGutter,
-                vertical: AppSpacing.md,
-              ),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 480),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Top Hero Icon
-                    Center(
-                      child: Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              primaryColor.withValues(alpha: 0.18),
-                              primaryColor.withValues(alpha: 0.05),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: primaryColor.withValues(alpha: 0.35),
-                            width: 2,
-                          ),
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.screenEdgeGutter,
+              vertical: AppSpacing.md,
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Top Hero Icon
+                  Center(
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            primaryColor.withValues(alpha: 0.18),
+                            primaryColor.withValues(alpha: 0.05),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                        child: Center(
-                          child: Icon(
-                            Icons.meeting_room_rounded,
-                            size: 38,
-                            color: primaryColor,
-                          ),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: primaryColor.withValues(alpha: 0.35),
+                          width: 2,
+                        ),
+                      ),
+                      child: Center(
+                        child: Icon(
+                          Icons.meeting_room_rounded,
+                          size: 38,
+                          color: primaryColor,
                         ),
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.md),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
 
-                    // Header Title & Subtitle
-                    Obx(() {
-                      final isCreating =
-                          controller.isPendamping &&
-                          controller.selectedMode.value == 0;
+                  // Header Title & Subtitle
+                  Obx(() {
+                    if (controller.isSyncing.value) {
                       return Column(
                         children: [
                           Text(
-                            isCreating
-                                ? context.tr('roomCreateNew')
-                                : context.tr('room.joinRoomTitle'),
+                            context.tr('room.syncingRoomData'),
                             textAlign: TextAlign.center,
                             style: AppTypography.headlineMedium.copyWith(
                               color: headingColor,
@@ -126,9 +121,7 @@ class JoinRoomScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: AppSpacing.xs),
                           Text(
-                            isCreating
-                                ? context.tr('roomCreateSubtitle')
-                                : context.tr('roomJoinSubtitle'),
+                            context.tr('room.syncingPleaseWait'),
                             textAlign: TextAlign.center,
                             style: AppTypography.bodySmall.copyWith(
                               color: bodyColor,
@@ -137,91 +130,133 @@ class JoinRoomScreen extends StatelessWidget {
                           ),
                         ],
                       );
-                    }),
-                    const SizedBox(height: AppSpacing.lg),
-
-                    // Mode Switcher for Pendamping
-                    if (controller.isPendamping) ...[
-                      Obx(
-                        () => Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? AppColors.darkSurface
-                                : AppColors.canvasCream,
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                            border: Border.all(
-                              color: isDark
-                                  ? AppColors.darkCardBorder
-                                  : AppColors.lightCardBorder,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: _ModeTabButton(
-                                  label: context.tr('room.createRoomBtn'),
-                                  icon: Icons.add_business_rounded,
-                                  isSelected:
-                                      controller.selectedMode.value == 0,
-                                  primaryColor: primaryColor,
-                                  headingColor: headingColor,
-                                  isDark: isDark,
-                                  onTap: () =>
-                                      controller.selectedMode.value = 0,
-                                ),
-                              ),
-                              Expanded(
-                                child: _ModeTabButton(
-                                  label: context.tr('room.joinRoomTitle'),
-                                  icon: Icons.login_rounded,
-                                  isSelected:
-                                      controller.selectedMode.value == 1,
-                                  primaryColor: primaryColor,
-                                  headingColor: headingColor,
-                                  isDark: isDark,
-                                  onTap: () =>
-                                      controller.selectedMode.value = 1,
-                                ),
-                              ),
-                            ],
+                    }
+                    final isCreating =
+                        controller.isPendamping &&
+                        controller.selectedMode.value == 0;
+                    return Column(
+                      children: [
+                        Text(
+                          isCreating
+                              ? context.tr('roomCreateNew')
+                              : context.tr('room.joinRoomTitle'),
+                          textAlign: TextAlign.center,
+                          style: AppTypography.headlineMedium.copyWith(
+                            color: headingColor,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                    ],
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          isCreating
+                              ? context.tr('roomCreateSubtitle')
+                              : context.tr('roomJoinSubtitle'),
+                          textAlign: TextAlign.center,
+                          style: AppTypography.bodySmall.copyWith(
+                            color: bodyColor,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
+                  const SizedBox(height: AppSpacing.lg),
 
-                    // Main Form Card
-                    AppCard(
-                      backgroundColor: cardBg,
-                      child: Padding(
-                        padding: const EdgeInsets.all(AppSpacing.lg),
-                        child: Obx(() {
-                          if (controller.isPendamping &&
-                              controller.selectedMode.value == 0) {
-                            return _buildCreateRoomForm(
-                              context,
-                              controller,
-                              primaryColor,
-                              headingColor,
-                              isDark,
-                            );
-                          } else {
-                            return _buildJoinRoomForm(
-                              context,
-                              controller,
-                              primaryColor,
-                              headingColor,
-                              isDark,
-                            );
-                          }
-                        }),
-                      ),
+                  // Mode Switcher for Pendamping
+                  if (controller.isPendamping) ...[
+                    Obx(() {
+                      if (controller.isSyncing.value) {
+                        return const SizedBox.shrink();
+                      }
+                      return Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? AppColors.darkSurface
+                              : AppColors.canvasCream,
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          border: Border.all(
+                            color: isDark
+                                ? AppColors.darkCardBorder
+                                : AppColors.lightCardBorder,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: _ModeTabButton(
+                                label: context.tr('room.createRoomBtn'),
+                                icon: Icons.add_business_rounded,
+                                isSelected: controller.selectedMode.value == 0,
+                                primaryColor: primaryColor,
+                                headingColor: headingColor,
+                                isDark: isDark,
+                                onTap: () => controller.selectedMode.value = 0,
+                              ),
+                            ),
+                            Expanded(
+                              child: _ModeTabButton(
+                                label: context.tr('room.joinRoomTitle'),
+                                icon: Icons.login_rounded,
+                                isSelected: controller.selectedMode.value == 1,
+                                primaryColor: primaryColor,
+                                headingColor: headingColor,
+                                isDark: isDark,
+                                onTap: () => controller.selectedMode.value = 1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+
+                  // Main Form Card
+                  AppCard(
+                    backgroundColor: cardBg,
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      child: Obx(() {
+                        if (controller.isSyncing.value) {
+                          return _buildSyncingSkeleton(
+                            context,
+                            controller,
+                            primaryColor,
+                            headingColor,
+                            bodyColor,
+                            isDark,
+                          );
+                        }
+                        if (controller.isPendamping &&
+                            controller.selectedMode.value == 0) {
+                          return _buildCreateRoomForm(
+                            context,
+                            controller,
+                            primaryColor,
+                            headingColor,
+                            isDark,
+                          );
+                        } else {
+                          return _buildJoinRoomForm(
+                            context,
+                            controller,
+                            primaryColor,
+                            headingColor,
+                            isDark,
+                          );
+                        }
+                      }),
                     ),
-                    const SizedBox(height: AppSpacing.lg),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
 
-                    // Bottom Info & Switch Account
-                    Center(
+                  // Bottom Info & Switch Account
+                  Obx(() {
+                    if (controller.isSyncing.value) {
+                      return const SizedBox.shrink();
+                    }
+                    return Center(
                       child: TextButton.icon(
                         onPressed: () => controller.switchAccount(),
                         icon: Icon(
@@ -236,15 +271,15 @@ class JoinRoomScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                    );
+                  }),
+                ],
               ),
             ),
           ),
         ),
-      );
-    });
+      ),
+    );
   }
 
   Widget _buildCreateRoomForm(
@@ -563,6 +598,152 @@ class JoinRoomScreen extends StatelessWidget {
             ),
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildSyncingSkeleton(
+    BuildContext context,
+    JoinRoomController controller,
+    Color primaryColor,
+    Color headingColor,
+    Color bodyColor,
+    bool isDark,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(height: AppSpacing.sm),
+        // Rotating Sync Progress Header
+        Center(
+          child: Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.12),
+              border: Border.all(
+                color: primaryColor.withValues(alpha: 0.4),
+                width: 1.5,
+              ),
+            ),
+            child: Center(
+              child: SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  valueColor: AlwaysStoppedAnimation(primaryColor),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        // Real-time status text
+        Obx(
+          () => Text(
+            controller.syncStatus.value.isNotEmpty
+                ? controller.syncStatus.value
+                : context.tr('room.syncingRoomData'),
+            textAlign: TextAlign.center,
+            style: AppTypography.titleMedium.copyWith(
+              color: headingColor,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          context.tr('room.syncingPleaseWait'),
+          textAlign: TextAlign.center,
+          style: AppTypography.bodySmall.copyWith(
+            color: bodyColor.withValues(alpha: 0.8),
+            height: 1.35,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+
+        // Shimmering Preview Container
+        Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkSurface : AppColors.canvasCream,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(
+              color: isDark
+                  ? AppColors.darkCardBorder
+                  : AppColors.canvasCreamSubtle,
+              width: 1.2,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: primaryColor.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.meeting_room_rounded,
+                      size: 18,
+                      color: primaryColor,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 140,
+                          height: 14,
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.15)
+                                : const Color(
+                                    0xFFCBD5E1,
+                                  ).withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          width: 90,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : const Color(0xFFE2E8F0),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                child: LinearProgressIndicator(
+                  minHeight: 5,
+                  backgroundColor: isDark
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : const Color(0xFFE2E8F0),
+                  valueColor: AlwaysStoppedAnimation(primaryColor),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
       ],
     );
   }

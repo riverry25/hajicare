@@ -30,7 +30,7 @@ local.properties
 *.crt
 *.mobileprovision
 
-# Service Account credentials & private API keys
+# Service Account credentials, private API keys & auth secrets
 service-account*.json
 tools/seed/service-account.json
 **/service-account*.json
@@ -40,6 +40,10 @@ tools/seed/service-account.json
 !secret.example.json
 config.json
 auth_secrets.json
+
+# Firebase client options with private API keys (use firebase_options.example.dart as template)
+lib/firebase_options.dart
+!lib/firebase_options.example.dart
 
 # ------------------------------------------------------------------------------
 # 2. FLUTTER & DART BUILD ARTIFACTS
@@ -55,6 +59,8 @@ build/
 **/build/
 coverage/
 **/coverage/
+*.lcov
+*.lcov.info
 
 # Symbolication & Obfuscation mappings
 app.*.symbols
@@ -101,13 +107,20 @@ releaseRuntimeClasspath.txt
 *.dSYM
 
 # ------------------------------------------------------------------------------
-# 5. NODE.JS / SEED TOOLS
+# 5. NODE.JS / CLOUD FUNCTIONS / EMULATORS / SEED TOOLS
 # ------------------------------------------------------------------------------
 node_modules/
 **/node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+package-lock.json.bak
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+functions/.env.*
+functions/.runtimeconfig.json
 
 # ------------------------------------------------------------------------------
 # 6. IDE, EDITORS & OS JUNK
@@ -122,6 +135,7 @@ ehthumbs.db
 *.swp
 *.swo
 *~
+*.bak
 .atom/
 .build/
 .buildlog/
@@ -137,21 +151,38 @@ migrate_working_dir/
 .idea/
 
 # Visual Studio Code workspace state (keep team configs launch.json & settings.json)
+.vscode/*
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
 .vscode/*.code-workspace
 
 # ------------------------------------------------------------------------------
-# 7. AI AGENTS, ASSISTANT SKILLS & TEMPORARY MARKDOWN
+# 7. AI AGENTS, ASSISTANT SKILLS, LOCAL SESSIONS & CACHES
 # ------------------------------------------------------------------------------
-# Antigravity / AI Agent downloaded skill caches & sessions
-.agents/skills/
-skills-lock.json
-.agents/sessions/
-.agents/history/
+# Ignore agent skills, caches, history, and sessions (preserve project rules)
+.agents/*
+!.agents/rules/
 .gemini/
+skills-lock.json
 
-# Scratch & temporary developer markdown notes
+# ------------------------------------------------------------------------------
+# 8. MARKDOWN, PROMPTS, AUDITS & WORKING NOTES (KEEP ONLY PUBLIC REPO DOCS)
+# ------------------------------------------------------------------------------
+# Ignore all root-level developer markdown files, prompts, context & audits
+/*.md
+!/README.md
+!/CHANGELOG.md
+!/CONTRIBUTING.md
+!/LICENSE.md
+
+# Ignore AI planning documents, drafts, scratchpads & temporary notes
+docs/superpowers/
+docs/**/plans/
+docs/**/drafts/
+docs/**/brain/
 scratch/
-scratch/*.md
+scratch/*
 *.tmp.md
 *.scratch.md
 notes.md
