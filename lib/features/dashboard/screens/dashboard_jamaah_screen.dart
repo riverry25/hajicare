@@ -29,6 +29,9 @@ import '../widgets/distance_sparkline_widget.dart';
 import '../widgets/companion_contact_sheet.dart';
 import '../widgets/hajj_schedule_guide_sheet.dart';
 import '../widgets/jamaah_active_assistance_banner.dart';
+import 'package:flutter_map/flutter_map.dart' as fmap;
+import 'package:latlong2/latlong.dart';
+import '../../../core/constants/app_constants.dart';
 import '../services/assistance_request_service.dart';
 
 part 'dashboard_jamaah_header.dart';
@@ -36,6 +39,11 @@ part 'dashboard_jamaah_sections.dart';
 
 class DashboardJamaahScreen extends StatelessWidget {
   const DashboardJamaahScreen({super.key});
+
+  /// Menampilkan dialog pemantauan smartband (ramah lansia, tanpa lat/lng teknis)
+  static void showSmartbandDialog(BuildContext context) {
+    const DashboardJamaahScreen()._showSmartBandDialog(context);
+  }
 
   @override
   Widget build(BuildContext context) {
