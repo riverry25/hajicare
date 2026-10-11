@@ -218,5 +218,106 @@ void main() {
         expect(isActiveSosNotification(notif3), isTrue); // active
       },
     );
+
+    test(
+      'Google Maps URL generation creates correct navigation or search URI',
+      () {
+        Uri buildGoogleMapsUrl({
+          required double targetLat,
+          required double targetLng,
+          double? companionLat,
+          double? companionLng,
+        }) {
+          if (companionLat != null && companionLng != null) {
+            return Uri.parse(
+              'https://www.google.com/maps/dir/?api=1'
+              '&origin=$companionLat,$companionLng'
+              '&destination=$targetLat,$targetLng'
+              '&travelmode=walking',
+            );
+          }
+          return Uri.parse(
+            'https://www.google.com/maps/search/?api=1'
+            '&query=$targetLat,$targetLng',
+          );
+        }
+
+        // 1. With companion location -> walking turn-by-turn directions
+        final navUrl = buildGoogleMapsUrl(
+          targetLat: 21.4225,
+          targetLng: 39.8262,
+          companionLat: 21.4230,
+          companionLng: 39.8270,
+        );
+        expect(
+          navUrl.toString(),
+          'https://www.google.com/maps/dir/?api=1&origin=21.423,39.827&destination=21.4225,39.8262&travelmode=walking',
+        );
+        expect(navUrl.queryParameters['travelmode'], 'walking');
+        expect(navUrl.queryParameters['origin'], '21.423,39.827');
+        expect(navUrl.queryParameters['destination'], '21.4225,39.8262');
+
+        // 2. Without companion location -> search pin query
+        final searchUrl = buildGoogleMapsUrl(
+          targetLat: 21.4225,
+          targetLng: 39.8262,
+        );
+        expect(
+          searchUrl.toString(),
+          'https://www.google.com/maps/search/?api=1&query=21.4225,39.8262',
+        );
+        expect(searchUrl.queryParameters['query'], '21.4225,39.8262');
+
+        // 3. Native geo: URI scheme
+        final geoUri = Uri.parse('geo:21.4225,39.8262?q=21.4225,39.8262');
+        expect(geoUri.scheme, 'geo');
+        expect(geoUri.path, '21.4225,39.8262');
+      },
+    );
+
+    test(
+      'SOS location parser extracts coordinates from multiple payload variants',
+      () {
+        (double, double)? parseCoords(Map<String, dynamic> data) {
+          final loc = data['location'];
+          if (loc is Map) {
+            final lat = loc['latitude'] ?? loc['lat'];
+            final lng = loc['longitude'] ?? loc['lng'];
+            final dLat = lat is num ? lat.toDouble() : double.tryParse('$lat');
+            final dLng = lng is num ? lng.toDouble() : double.tryParse('$lng');
+            if (dLat != null && dLng != null) return (dLat, dLng);
+          } else {
+            final lat = data['latitude'] ?? data['lat'];
+            final lng = data['longitude'] ?? data['lng'];
+            final dLat = lat is num ? lat.toDouble() : double.tryParse('$lat');
+            final dLng = lng is num ? lng.toDouble() : double.tryParse('$lng');
+            if (dLat != null && dLng != null) return (dLat, dLng);
+          }
+          return null;
+        }
+
+        // Map payload
+        expect(
+          parseCoords({
+            'location': {'latitude': 21.42, 'longitude': 39.82},
+          }),
+          (21.42, 39.82),
+        );
+        // String map payload
+        expect(
+          parseCoords({
+            'location': {'lat': '21.42', 'lng': '39.82'},
+          }),
+          (21.42, 39.82),
+        );
+        // Top-level payload
+        expect(parseCoords({'latitude': 21.425, 'longitude': 39.825}), (
+          21.425,
+          39.825,
+        ));
+        // Empty payload
+        expect(parseCoords({}), isNull);
+      },
+    );
   });
 }

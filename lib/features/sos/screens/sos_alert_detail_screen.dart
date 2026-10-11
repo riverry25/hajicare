@@ -67,7 +67,44 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
     final loc = data['location'];
     if (loc is GeoPoint) {
       _liveLocation = loc;
+    } else if (loc is Map) {
+      final lat = loc['latitude'] ?? loc['lat'] ?? loc['_latitude'];
+      final lng = loc['longitude'] ?? loc['lng'] ?? loc['_longitude'];
+      final dLat = lat is num ? lat.toDouble() : double.tryParse('$lat');
+      final dLng = lng is num ? lng.toDouble() : double.tryParse('$lng');
+      if (dLat != null && dLng != null) {
+        _liveLocation = GeoPoint(dLat, dLng);
+      }
+    } else {
+      final lat = data['latitude'] ?? data['lat'];
+      final lng = data['longitude'] ?? data['lng'];
+      final dLat = lat is num ? lat.toDouble() : double.tryParse('$lat');
+      final dLng = lng is num ? lng.toDouble() : double.tryParse('$lng');
+      if (dLat != null && dLng != null) {
+        _liveLocation = GeoPoint(dLat, dLng);
+      }
     }
+
+    if (_liveLocation == null) {
+      final userId =
+          data['userId'] as String? ?? data['jamaahId'] as String? ?? '';
+      if (userId.isNotEmpty) {
+        final jamaah = _state.jamaahList
+            .where((m) => m.id == userId)
+            .firstOrNull;
+        if (jamaah?.currentLocation != null) {
+          _liveLocation = jamaah!.currentLocation;
+        } else {
+          final member = _state.activeRoomMembers
+              .where((m) => m.uid == userId)
+              .firstOrNull;
+          if (member?.currentLocation != null) {
+            _liveLocation = member!.currentLocation;
+          }
+        }
+      }
+    }
+
     final updatedAt = data['locationUpdatedAt'];
     if (updatedAt is Timestamp) {
       _locationUpdatedAt = updatedAt.toDate();
@@ -264,13 +301,70 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
 
   Future<void> _openGoogleMaps() async {
     final target = _targetLatLng;
-    if (target == null) return;
-    final uri = Uri.parse(
-      'https://www.google.com/maps/search/?api=1'
-      '&query=${target.latitude},${target.longitude}',
+    if (target == null) {
+      AppAlert.warning(
+        context,
+        title: context.tr('maps.locationUnavailable'),
+        message:
+            'Posisi GPS jamaah belum terdeteksi. Silakan coba sesaat lagi.',
+      );
+      return;
+    }
+
+    final myPos = _state.myCurrentPosition.value;
+    final Uri googleMapsUrl;
+    if (myPos != null) {
+      googleMapsUrl = Uri.parse(
+        'https://www.google.com/maps/dir/?api=1'
+        '&origin=${myPos.latitude},${myPos.longitude}'
+        '&destination=${target.latitude},${target.longitude}'
+        '&travelmode=walking',
+      );
+    } else {
+      googleMapsUrl = Uri.parse(
+        'https://www.google.com/maps/search/?api=1'
+        '&query=${target.latitude},${target.longitude}',
+      );
+    }
+
+    final geoUri = Uri.parse(
+      'geo:${target.latitude},${target.longitude}?q=${target.latitude},${target.longitude}',
     );
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+
+    try {
+      // 1. Try launching Google Maps in external app
+      final launched = await launchUrl(
+        googleMapsUrl,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        // 2. Try geo: scheme
+        final launchedGeo = await launchUrl(
+          geoUri,
+          mode: LaunchMode.externalApplication,
+        );
+        if (!launchedGeo) {
+          // 3. Fallback to platform default browser
+          await launchUrl(googleMapsUrl, mode: LaunchMode.platformDefault);
+        }
+      }
+    } catch (e) {
+      debugPrint(
+        '[SosAlertDetailScreen] External launch failed: $e. Trying platformDefault.',
+      );
+      try {
+        await launchUrl(googleMapsUrl, mode: LaunchMode.platformDefault);
+      } catch (err) {
+        debugPrint('[SosAlertDetailScreen] Failed to launch Google Maps: $err');
+        if (mounted) {
+          AppAlert.error(
+            context,
+            title: 'Gagal Membuka Google Maps',
+            message:
+                'Tidak dapat membuka Google Maps atau browser di perangkat ini.',
+          );
+        }
+      }
     }
   }
 
@@ -770,9 +864,11 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
 
           // ── 4. Action Buttons ─────────────────────────────────────────────
           if (!_isSosResolved) ...[
-            SizedBox(
-              width: double.infinity,
-              height: 50,
+            ConstrainedBox(
+              constraints: const BoxConstraints(
+                minHeight: 48,
+                minWidth: double.infinity,
+              ),
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1E4DC4),
@@ -781,6 +877,10 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: 12,
+                  ),
                 ),
                 icon: const Icon(Icons.navigation_rounded, size: 18),
                 label: Text(
@@ -793,58 +893,91 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: headingColor,
-                      side: BorderSide(
-                        color: isDark
-                            ? AppColors.darkOutlineVariant
-                            : AppColors.lightCardBorder,
-                        width: 1.2,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+            Builder(
+              builder: (ctx) {
+                final isLargeText =
+                    MediaQuery.textScalerOf(ctx).scale(1.0) > 1.35;
+
+                final mapsButton = OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: headingColor,
+                    side: BorderSide(
+                      color: isDark
+                          ? AppColors.darkOutlineVariant
+                          : AppColors.lightCardBorder,
+                      width: 1.2,
                     ),
-                    icon: const Icon(Icons.map_outlined, size: 16),
-                    label: Text(
-                      'Google Maps',
-                      style: AppTypography.labelLarge.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12.5,
-                      ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
-                    onPressed: _liveLocation != null ? _openGoogleMaps : null,
+                    minimumSize: const Size(0, 44),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: AppSpacing.sm,
+                    ),
                   ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.statusSafe,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                      ),
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                  icon: const Icon(Icons.map_outlined, size: 16),
+                  label: Text(
+                    'Google Maps',
+                    style: AppTypography.labelLarge.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12.5,
                     ),
-                    icon: const Icon(Icons.check_circle_rounded, size: 16),
-                    label: Text(
-                      context.tr('sosResolveAlert'),
-                      style: AppTypography.labelLarge.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12.5,
-                      ),
-                    ),
-                    onPressed: _dismissSos,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
+                  onPressed: _openGoogleMaps,
+                );
+
+                final resolveButton = ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.statusSafe,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    elevation: 0,
+                    minimumSize: const Size(0, 44),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: AppSpacing.sm,
+                    ),
+                  ),
+                  icon: const Icon(Icons.check_circle_rounded, size: 16),
+                  label: Text(
+                    context.tr('sosResolveAlert'),
+                    style: AppTypography.labelLarge.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12.5,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  onPressed: _dismissSos,
+                );
+
+                if (isLargeText) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      mapsButton,
+                      const SizedBox(height: AppSpacing.xs),
+                      resolveButton,
+                    ],
+                  );
+                }
+
+                return IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(child: mapsButton),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(child: resolveButton),
+                    ],
+                  ),
+                );
+              },
             ),
           ] else ...[
             Container(

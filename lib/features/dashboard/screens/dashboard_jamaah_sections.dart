@@ -120,18 +120,37 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
           const SizedBox(height: 24),
 
           // ── Section 1: "Status & Peringatan" ("Bot Alert") ────────
-          _buildSectionHeader(
-            title: context.tr('dashboard.statusAndAlert'),
-            subtitle: context.tr('dashboard.gpsMonitoringSub'),
-            actionText: context.tr('dashboard.viewMap'),
-            onAction: () => dashboardCtrl.changeTab(1),
-            headingColor: headingColor,
-            isDark: isDark,
-          ),
-          const SizedBox(height: 12),
-          _buildStatusAlertCard(context, jamaah, isDark, dashboardCtrl),
+          // Hanya ditampilkan jika jamaah sudah tergabung dalam room pemantauan
+          // atau terdapat alarm darurat SOS aktif. Jika belum memiliki room, section
+          // ini disembunyikan agar tidak menampilkan status "Terkoneksi & Aman" semu.
+          Obx(() {
+            final hasRoom =
+                (state.activeRoomId.value != null &&
+                    state.activeRoomId.value!.trim().isNotEmpty) ||
+                (state.activeRoom.value != null);
+            final hasSos = state.anySosActive || jamaah.sosActive;
 
-          const SizedBox(height: 26),
+            if (!hasRoom && !hasSos) {
+              return const SizedBox.shrink();
+            }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionHeader(
+                  title: context.tr('dashboard.statusAndAlert'),
+                  subtitle: context.tr('dashboard.gpsMonitoringSub'),
+                  actionText: context.tr('dashboard.viewMap'),
+                  onAction: () => dashboardCtrl.changeTab(1),
+                  headingColor: headingColor,
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 12),
+                _buildStatusAlertCard(context, jamaah, isDark, dashboardCtrl),
+                const SizedBox(height: 26),
+              ],
+            );
+          }),
 
           // ── Section 2: "Kamar & Maktab" ───────────────────────────
           _buildSectionHeader(
@@ -506,6 +525,32 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                 ),
               ),
             ),
+          ),
+        );
+      }
+
+      // ── STATE NO ROOM: Belum terhubung ke room ───────────────────────────
+      final hasRoom =
+          (hc?.activeRoomId.value != null &&
+              hc!.activeRoomId.value!.trim().isNotEmpty) ||
+          hc?.activeRoom.value != null;
+      if (!hasRoom) {
+        final headingColor = isDark
+            ? AppColors.darkTextHeading
+            : AppColors.espressoDark;
+        return buildStatusCard(
+          borderColor: isDark
+              ? AppColors.darkCardBorder
+              : const Color(0xFFCBD5E1),
+          bgTint: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+          icon: buildStatusIcon(
+            color: AppColors.statusWarning,
+            icon: Icons.meeting_room_outlined,
+          ),
+          content: buildStatusText(
+            title: context.tr('dashboard.notConnectedToRoom'),
+            subtitle: context.tr('dashboard.jamaahNoRoomDesc'),
+            titleColor: headingColor,
           ),
         );
       }

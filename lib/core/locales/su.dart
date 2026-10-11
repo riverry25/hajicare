@@ -1107,6 +1107,8 @@ final Map<String, String> suTranslations = {
   'room.replaceCoOwnerBtn': 'Ganti salaku Owner Kadua',
   'room.removeCoOwnerBtn': 'Cabut Status Owner Kadua',
   'room.transferOwnershipBtn': 'Wariskeun Kapamilikan Utama',
+  'room.transferAction': 'Waruskeun',
+  'room.revokeAction': 'Cabut',
   'room.setCoOwnerConfirm':
       'Jantenkeun {name} salaku Owner Kadua? Anjeunna bakal nampi hak administratif tambahan dina rombongan ieu.',
   'room.setCoOwnerSuccess': 'Owner Kadua Hasil Ditunjuk',

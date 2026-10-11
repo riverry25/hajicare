@@ -1094,6 +1094,8 @@ const Map<String, String> enTranslations = {
   'room.replaceCoOwnerBtn': 'Replace as Co-Owner',
   'room.removeCoOwnerBtn': 'Remove Co-Owner Status',
   'room.transferOwnershipBtn': 'Transfer Primary Ownership',
+  'room.transferAction': 'Transfer',
+  'room.revokeAction': 'Revoke',
   'room.setCoOwnerConfirm':
       'Make {name} a Co-Owner? They will receive additional administrative privileges for this room.',
   'room.setCoOwnerSuccess': 'Co-Owner Successfully Assigned',

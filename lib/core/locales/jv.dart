@@ -1110,6 +1110,8 @@ final Map<String, String> jvTranslations = {
   'room.replaceCoOwnerBtn': 'Ganti minangka Owner Kapindho',
   'room.removeCoOwnerBtn': 'Batalake Status Owner Kapindho',
   'room.transferOwnershipBtn': 'Pindhahake Kepemilikan Utama',
+  'room.transferAction': 'Wariské',
+  'room.revokeAction': 'Batalake',
   'room.setCoOwnerConfirm':
       'Dadekake {name} minangka Owner Kapindho? Dheweke bakal entuk hak administratif tambahan ing rombongan iki.',
   'room.setCoOwnerSuccess': 'Owner Kapindho Kasil Ditunjuk',

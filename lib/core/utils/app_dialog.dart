@@ -85,7 +85,8 @@ class AppDialog {
       case AppDialogType.confirm:
         accentColor = isDestructive
             ? AppColors.sosEmergency
-            : (isDark ? AppColors.goldLight : AppColors.goldPrimary);
+            : (okColor ??
+                  (isDark ? AppColors.goldLight : AppColors.goldPrimary));
         iconData =
             icon ??
             (isDestructive
@@ -192,82 +193,120 @@ class AppDialog {
                       ),
                       const SizedBox(height: AppSpacing.lg),
 
-                      // Buttons Row
-                      Row(
-                        children: [
-                          if (cancelText != null && cancelText.isNotEmpty) ...[
-                            Expanded(
-                              child: OutlinedButton(
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: bodyColor,
-                                  side: BorderSide(
-                                    color: isDark
-                                        ? AppColors.darkOutlineVariant
-                                        : AppColors.surfaceVariant,
+                      // Buttons Row / Adaptive Column for Accessibility Scaling
+                      Builder(
+                        builder: (context) {
+                          final textScaler = MediaQuery.textScalerOf(context);
+                          final isLargeScale = textScaler.scale(15) > 19;
+                          final okTextColor =
+                              effectiveOkColor.computeLuminance() > 0.5
+                              ? AppColors.espressoDark
+                              : Colors.white;
+
+                          final cancelButton =
+                              cancelText != null && cancelText.isNotEmpty
+                              ? OutlinedButton(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: bodyColor,
+                                    side: BorderSide(
+                                      color: isDark
+                                          ? AppColors.darkOutlineVariant
+                                          : AppColors.surfaceVariant,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.pill,
+                                      ),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                    minimumSize: const Size(0, 46),
                                   ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.pill,
+                                  onPressed: () {
+                                    if (Get.isDialogOpen ?? false) {
+                                      Get.back();
+                                    }
+                                    onCancel?.call();
+                                  },
+                                  child: Text(
+                                    cancelText,
+                                    textAlign: TextAlign.center,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14.5,
                                     ),
                                   ),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
+                                )
+                              : null;
+
+                          final okButton = ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: effectiveOkColor,
+                              foregroundColor: okTextColor,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.pill,
                                 ),
-                                onPressed: () {
-                                  // Close dialog first
-                                  if (Get.isDialogOpen ?? false) {
-                                    Get.back();
-                                  }
-                                  onCancel?.call();
-                                },
-                                child: Text(
-                                  cancelText,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 15,
-                                  ),
-                                ),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              minimumSize: const Size(0, 46),
+                              elevation: 0,
+                            ),
+                            onPressed: () {
+                              if (Get.isDialogOpen ?? false) {
+                                Get.back();
+                              }
+                              onOk?.call();
+                            },
+                            child: Text(
+                              okText,
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14.5,
+                                color: okTextColor,
                               ),
                             ),
-                            const SizedBox(width: 10),
-                          ],
-                          Expanded(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: effectiveOkColor,
-                                foregroundColor: isDestructive
-                                    ? Colors.white
-                                    : (type == AppDialogType.info && !isDark
-                                          ? Colors.white
-                                          : Colors.white),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.pill,
-                                  ),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                                elevation: 0,
-                              ),
-                              onPressed: () {
-                                // Close dialog safely first to avoid any double-navigation or context-death
-                                if (Get.isDialogOpen ?? false) {
-                                  Get.back();
-                                }
-                                onOk?.call();
-                              },
-                              child: Text(
-                                okText,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 15,
-                                ),
-                              ),
+                          );
+
+                          if (cancelButton == null) {
+                            return SizedBox(
+                              width: double.infinity,
+                              child: okButton,
+                            );
+                          }
+
+                          if (isLargeScale) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                okButton,
+                                const SizedBox(height: 10),
+                                cancelButton,
+                              ],
+                            );
+                          }
+
+                          return IntrinsicHeight(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(child: cancelButton),
+                                const SizedBox(width: 10),
+                                Expanded(child: okButton),
+                              ],
                             ),
-                          ),
-                        ],
+                          );
+                        },
                       ),
                     ],
                   ),

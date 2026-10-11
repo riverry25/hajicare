@@ -93,7 +93,7 @@ class AppAlert {
     );
   }
 
-  /// Menampilkan dialog konfirmasi (termasuk aksi destruktif).
+  /// Menampilkan dialog konfirmasi (termasuk aksi destruktif atau administratif).
   static void confirm(
     BuildContext? context, {
     required String title,
@@ -102,7 +102,10 @@ class AppAlert {
     VoidCallback? onCancel,
     String confirmText = 'Ya',
     String cancelText = 'Batal',
+    Color? confirmColor,
+    Color? cancelColor,
     bool isDestructive = false,
+    IconData? icon,
   }) {
     AppDialog.confirm(
       context: context,
@@ -112,7 +115,10 @@ class AppAlert {
       onCancel: onCancel,
       confirmText: confirmText,
       cancelText: cancelText,
+      confirmColor: confirmColor,
+      cancelColor: cancelColor,
       isDestructive: isDestructive,
+      icon: icon,
     );
   }
 

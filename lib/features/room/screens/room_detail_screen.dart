@@ -565,6 +565,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     if (_isProcessingAction || !mounted) return;
     HapticFeedback.lightImpact();
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+
     AppAlert.confirm(
       context,
       title: room.coOwnerId != null && room.coOwnerId!.isNotEmpty
@@ -573,6 +576,8 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
       message: context.tr('room.setCoOwnerConfirm', {'name': target.name}),
       confirmText: context.tr('common.confirm'),
       cancelText: context.tr('common.cancel'),
+      icon: Icons.verified_user_rounded,
+      confirmColor: primaryColor,
       onConfirm: () async {
         setState(() => _isProcessingAction = true);
         AppAlert.loading(
@@ -625,9 +630,10 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
       context,
       title: context.tr('room.removeCoOwnerBtn'),
       message: context.tr('room.removeCoOwnerConfirm', {'name': target.name}),
-      confirmText: context.tr('room.removeCoOwnerBtn'),
+      confirmText: context.tr('room.revokeAction'),
       cancelText: context.tr('common.cancel'),
       isDestructive: true,
+      icon: Icons.remove_moderator_rounded,
       onConfirm: () async {
         setState(() => _isProcessingAction = true);
         AppAlert.loading(
@@ -673,15 +679,20 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     if (_isProcessingAction || !mounted) return;
     HapticFeedback.mediumImpact();
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+
     AppAlert.confirm(
       context,
       title: context.tr('room.transferOwnershipBtn'),
       message: context.tr('room.transferOwnershipConfirm', {
         'name': target.name,
       }),
-      confirmText: context.tr('room.transferOwnershipBtn'),
+      confirmText: context.tr('room.transferAction'),
       cancelText: context.tr('common.cancel'),
-      isDestructive: true,
+      isDestructive: false,
+      icon: Icons.admin_panel_settings_rounded,
+      confirmColor: primaryColor,
       onConfirm: () async {
         setState(() => _isProcessingAction = true);
         AppAlert.loading(

@@ -1102,6 +1102,8 @@ const Map<String, String> idTranslations = {
   'room.replaceCoOwnerBtn': 'Ganti sebagai Owner Kedua',
   'room.removeCoOwnerBtn': 'Cabut Status Owner Kedua',
   'room.transferOwnershipBtn': 'Wariskan Kepemilikan Utama',
+  'room.transferAction': 'Wariskan',
+  'room.revokeAction': 'Cabut',
   'room.setCoOwnerConfirm':
       'Jadikan {name} sebagai Owner Kedua? Ia akan mendapatkan hak administratif tambahan pada rombongan ini.',
   'room.setCoOwnerSuccess': 'Owner Kedua Berhasil Ditunjuk',

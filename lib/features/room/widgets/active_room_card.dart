@@ -475,33 +475,39 @@ class ActiveRoomCard extends StatelessWidget {
                                 : AppColors.goldDark,
                           ),
                           child: Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  '$jamaahCount',
-                                  style: TextStyle(
-                                    color: headingColor,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: -0.5,
-                                    height: 1.1,
-                                  ),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Padding(
+                                padding: const EdgeInsets.all(8),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      '$jamaahCount',
+                                      style: TextStyle(
+                                        color: headingColor,
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: -0.5,
+                                        height: 1.1,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      isPendamping
+                                          ? context.tr('room.roleJamaah')
+                                          : context.tr('dashboard.members'),
+                                      style: TextStyle(
+                                        color: isDark
+                                            ? Colors.white60
+                                            : const Color(0xFF64748B),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  isPendamping
-                                      ? context.tr('room.roleJamaah')
-                                      : context.tr('dashboard.members'),
-                                  style: TextStyle(
-                                    color: isDark
-                                        ? Colors.white60
-                                        : const Color(0xFF64748B),
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ),
                         ),
@@ -621,134 +627,171 @@ class ActiveRoomCard extends StatelessWidget {
             const SizedBox(height: 18),
 
             // ── Action Buttons Footer ───────────────────────────────
-            if (isPendamping) ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _showMemberListSheet(
-                        context,
-                        state: state,
-                        roomId: roomId,
-                        roomName: roomName,
-                        roomCode: roomCode,
-                      ),
-                      icon: const Icon(Icons.people_alt_rounded, size: 16),
-                      label: Text(
-                        context.tr('dashboard.pilgrimList'),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        side: BorderSide(
-                          color: isDark
-                              ? AppColors.darkOutlineVariant
-                              : const Color(0xFFCBD5E1),
-                          width: 1.2,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                        ),
+            Builder(
+              builder: (context) {
+                final textScaler = MediaQuery.textScalerOf(context);
+                final isLargeScale = textScaler.scale(12) > 16.5;
+
+                final Widget leftBtn;
+                final Widget rightBtn;
+
+                if (isPendamping) {
+                  leftBtn = OutlinedButton.icon(
+                    onPressed: () => _showMemberListSheet(
+                      context,
+                      state: state,
+                      roomId: roomId,
+                      roomName: roomName,
+                      roomCode: roomCode,
+                    ),
+                    icon: const Icon(Icons.people_alt_rounded, size: 16),
+                    label: Text(
+                      context.tr('dashboard.pilgrimList'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => AddJamaahDialog.show(context, roomId),
-                      icon: const Icon(
-                        Icons.person_add_alt_1_rounded,
-                        size: 16,
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 10,
                       ),
-                      label: Text(
-                        context.tr('room.invitePilgrimNow'),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      minimumSize: const Size(0, 44),
+                      side: BorderSide(
+                        color: isDark
+                            ? AppColors.darkOutlineVariant
+                            : const Color(0xFFCBD5E1),
+                        width: 1.2,
                       ),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        backgroundColor: primaryColor,
-                        foregroundColor: isDark
-                            ? AppColors.espressoDark
-                            : Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                        ),
-                        elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ] else ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        HapticFeedback.lightImpact();
-                        if (roomCode.isNotEmpty) {
-                          _showQrModal(context, roomName, roomCode);
-                        }
-                      },
-                      icon: const Icon(Icons.qr_code_2_rounded, size: 16),
-                      label: Text(
-                        context.tr('dashboard.qrRoom'),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        side: BorderSide(
-                          color: isDark
-                              ? AppColors.darkOutlineVariant
-                              : const Color(0xFFCBD5E1),
-                          width: 1.2,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                        ),
+                  );
+
+                  rightBtn = ElevatedButton.icon(
+                    onPressed: () => AddJamaahDialog.show(context, roomId),
+                    icon: const Icon(Icons.person_add_alt_1_rounded, size: 16),
+                    label: Text(
+                      context.tr('dashboard.invitePilgrim'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        HapticFeedback.lightImpact();
-                        Get.toNamed(AppRoutes.roomDetail, arguments: room);
-                      },
-                      icon: const Icon(Icons.meeting_room_rounded, size: 16),
-                      label: Text(
-                        context.tr('room.roomDetailTitle'),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 10,
                       ),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        backgroundColor: isDark
-                            ? AppColors.darkPrimaryContainer
-                            : AppColors.espressoDark,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                        ),
-                        elevation: 0,
+                      minimumSize: const Size(0, 44),
+                      backgroundColor: primaryColor,
+                      foregroundColor: isDark
+                          ? AppColors.espressoDark
+                          : Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      elevation: 0,
+                    ),
+                  );
+                } else {
+                  leftBtn = OutlinedButton.icon(
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      if (roomCode.isNotEmpty) {
+                        _showQrModal(context, roomName, roomCode);
+                      }
+                    },
+                    icon: const Icon(Icons.qr_code_2_rounded, size: 16),
+                    label: Text(
+                      context.tr('dashboard.qrRoom'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 10,
+                      ),
+                      minimumSize: const Size(0, 44),
+                      side: BorderSide(
+                        color: isDark
+                            ? AppColors.darkOutlineVariant
+                            : const Color(0xFFCBD5E1),
+                        width: 1.2,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                    ),
+                  );
+
+                  rightBtn = ElevatedButton.icon(
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      Get.toNamed(AppRoutes.roomDetail, arguments: room);
+                    },
+                    icon: const Icon(Icons.meeting_room_rounded, size: 16),
+                    label: Text(
+                      context.tr('room.roomDetailTitle'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 10,
+                      ),
+                      minimumSize: const Size(0, 44),
+                      backgroundColor: isDark
+                          ? AppColors.darkPrimaryContainer
+                          : AppColors.espressoDark,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      elevation: 0,
+                    ),
+                  );
+                }
+
+                if (isLargeScale) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [leftBtn, const SizedBox(height: 8), rightBtn],
+                  );
+                }
+
+                return IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(child: leftBtn),
+                      const SizedBox(width: 8),
+                      Expanded(child: rightBtn),
+                    ],
                   ),
-                ],
-              ),
-            ],
+                );
+              },
+            ),
           ],
         ),
       );
@@ -1301,29 +1344,36 @@ class _RadarWaveStatisticWidgetState extends State<_RadarWaveStatisticWidget>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.radar_rounded,
-                  size: 17,
-                  color: isWarning
-                      ? const Color(0xFFEF4444)
-                      : (widget.isDark
-                            ? AppColors.darkPrimary
-                            : AppColors.primaryGold),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  context.tr('room.radarRadius'),
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: widget.headingColor,
-                    letterSpacing: -0.2,
+            Expanded(
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.radar_rounded,
+                    size: 17,
+                    color: isWarning
+                        ? const Color(0xFFEF4444)
+                        : (widget.isDark
+                              ? AppColors.darkPrimary
+                              : AppColors.primaryGold),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      context.tr('room.radarRadius'),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: widget.headingColor,
+                        letterSpacing: -0.2,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
@@ -1353,6 +1403,8 @@ class _RadarWaveStatisticWidgetState extends State<_RadarWaveStatisticWidget>
                       fontWeight: FontWeight.w700,
                       color: badgeTextColor,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
@@ -1392,6 +1444,7 @@ class _RadarWaveStatisticWidgetState extends State<_RadarWaveStatisticWidget>
                         isTapped: _tapCtrl.isAnimating,
                         displayDistance: displayDist,
                         isDark: widget.isDark,
+                        textScaler: MediaQuery.textScalerOf(context),
                       ),
                       size: Size.infinite,
                     );
@@ -1415,6 +1468,7 @@ class _RadarWavePainter extends CustomPainter {
   final bool isTapped;
   final double displayDistance;
   final bool isDark;
+  final TextScaler textScaler;
 
   const _RadarWavePainter({
     required this.waveColor,
@@ -1423,6 +1477,7 @@ class _RadarWavePainter extends CustomPainter {
     required this.isTapped,
     required this.displayDistance,
     required this.isDark,
+    required this.textScaler,
   });
 
   @override
@@ -1555,6 +1610,7 @@ class _RadarWavePainter extends CustomPainter {
         ],
       ),
       textDirection: TextDirection.ltr,
+      textScaler: textScaler,
     )..layout();
 
     final xPos = w - valuePainter.width - 8;
@@ -1569,7 +1625,8 @@ class _RadarWavePainter extends CustomPainter {
       old.tapPhase != tapPhase ||
       old.isTapped != isTapped ||
       old.waveColor != waveColor ||
-      old.isDark != isDark;
+      old.isDark != isDark ||
+      old.textScaler != textScaler;
 }
 
 /// Shimmering skeleton loading card displayed when room is connected

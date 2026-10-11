@@ -140,4 +140,26 @@ void main() {
 
     expect(find.byType(ActiveRoomSkeletonCard), findsNothing);
   });
+
+  testWidgets(
+    'DashboardJamaahScreen hides Status & Peringatan when jamaah has no room',
+    (tester) async {
+      Get.put(AppSettingsController(), permanent: true);
+      final hajiCtrl = Get.put(HajiCareController(), permanent: true);
+      DashboardBinding().dependencies();
+
+      await hajiCtrl.applyUserData(roleStr: 'jamaah', roomId: null);
+      hajiCtrl.activeRoom.value = null;
+
+      await tester.pumpWidget(buildApp(const DashboardJamaahScreen()));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Should NOT show "Status & Peringatan" section or false "Kondisi Terkoneksi & Aman"
+      expect(find.text('Status & Peringatan'), findsNothing);
+      expect(find.text('Kondisi Terkoneksi & Aman'), findsNothing);
+      // Should show unconnected room state
+      expect(find.text('Belum Terhubung ke Room'), findsWidgets);
+      expect(find.text('Gabung Room Monitoring'), findsOneWidget);
+    },
+  );
 }
