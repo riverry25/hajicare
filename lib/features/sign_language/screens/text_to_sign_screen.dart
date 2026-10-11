@@ -715,7 +715,11 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                     tooltip: context.tr('sign.searchSignVideo'),
                     onPressed: () {
                       controller.dismissSuggestions();
-                      controller.searchSign(controller.textController.text);
+                      controller.searchFocusNode.unfocus();
+                      controller.searchSign(
+                        controller.textController.text,
+                        force: true,
+                      );
                     },
                   ),
               ],
@@ -1116,8 +1120,14 @@ class _TextToSignScreenState extends State<TextToSignScreen>
                   ),
                 ),
                 onPressed: () {
+                  controller.dismissSuggestions();
+                  controller.searchFocusNode.unfocus();
                   controller.textController.text = text;
-                  controller.searchSign(text);
+                  controller.textController.selection =
+                      TextSelection.fromPosition(
+                        TextPosition(offset: text.length),
+                      );
+                  controller.searchSign(text, force: true);
                 },
               ),
             );

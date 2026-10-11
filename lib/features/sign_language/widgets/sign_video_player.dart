@@ -330,7 +330,12 @@ class SignVideoPlayerWidget extends StatelessWidget {
                   aspectRatio: player.value.aspectRatio > 0
                       ? player.value.aspectRatio
                       : 16 / 9,
-                  child: VideoPlayer(player),
+                  child: VideoPlayer(
+                    player,
+                    key: ValueKey(
+                      'sign_video_${entry.id}_${player.dataSource}',
+                    ),
+                  ),
                 ),
 
                 // Center Play/Pause button overlay (fades or visible when paused)

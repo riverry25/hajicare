@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 import 'package:hajicare/core/locales/app_localizations.dart';
 import 'package:hajicare/core/theme/app_theme.dart';
 import 'package:hajicare/features/dashboard/widgets/hajj_schedule_guide_sheet.dart';
+import 'package:hajicare/features/dashboard/services/hajj_guide_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -187,5 +189,31 @@ void main() {
 
       expect(find.byType(HajjScheduleGuideSheet), findsOneWidget);
     });
+
+    testWidgets(
+      'Preloaded SharedPreferences stages appear marked on the very first sheet open without needing reopen',
+      (tester) async {
+        // Mock saved preferences with 3 completed stages
+        SharedPreferences.setMockInitialValues({
+          'hajj_guide_completed_stages': ['tarwiyah', 'arafah', 'muzdalifah'],
+          'hajj_guide_completed_deeds': [
+            'tarwiyah:1',
+            'arafah:1',
+            'muzdalifah:1',
+          ],
+        });
+
+        // Initialize service (as done in main.dart / startup)
+        final service = Get.put(HajjGuideService(), permanent: true);
+        await service.loadPreferences(force: true);
+
+        // Open sheet the first time
+        await tester.pumpWidget(buildTestWidget());
+        await tester.pumpAndSettle();
+
+        // Must immediately reflect 3 of 6 stages completed
+        expect(find.text('3 dari 6 Tahap Selesai'), findsOneWidget);
+      },
+    );
   });
 }

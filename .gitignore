@@ -1,9 +1,127 @@
-# Miscellaneous
+# ==============================================================================
+# HajiCare â€” Root .gitignore (Best Practices: Flutter, Android, iOS, Firebase, AI)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. CRITICAL SECRETS & CREDENTIALS (NEVER COMMIT TO PUBLIC/REMOTE REPO)
+# ------------------------------------------------------------------------------
+# Environment variables
+.env
+.env.*
+*.env
+*.env.local
+
+# Android release signing keystores and passwords
+*.jks
+*.keystore
+**/*.jks
+**/*.keystore
+key.properties
+**/key.properties
+local.properties
+**/local.properties
+
+# iOS / Apple certificates and provisioning profiles
+*.p8
+*.p12
+*.pem
+*.key
+*.cer
+*.crt
+*.mobileprovision
+
+# Service Account credentials & private API keys
+service-account*.json
+tools/seed/service-account.json
+**/service-account*.json
+*credentials*.json
+!credentials.example.json
+*secret*.json
+!secret.example.json
+config.json
+auth_secrets.json
+
+# ------------------------------------------------------------------------------
+# 2. FLUTTER & DART BUILD ARTIFACTS
+# ------------------------------------------------------------------------------
+.dart_tool/
+**/.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+**/doc/api/
+build/
+**/build/
+coverage/
+**/coverage/
+
+# Symbolication & Obfuscation mappings
+app.*.symbols
+app.*.map.json
+
+# ------------------------------------------------------------------------------
+# 3. ANDROID BUILD & GRADLE ARTIFACTS
+# ------------------------------------------------------------------------------
+.gradle/
+**/.gradle/
+**/buildOutputCleanup/
+**/captures/
+**/.cxx/
+android/app/build/
+android/app/debug/
+android/app/profile/
+android/app/release/
+GeneratedPluginRegistrant.java
+gradle-wrapper.jar
+releaseRuntimeClasspath.txt
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# ------------------------------------------------------------------------------
+# 4. IOS & MACOS ARTIFACTS
+# ------------------------------------------------------------------------------
+**/ios/Flutter/.last_build_id
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/app.flx
+**/ios/Flutter/app.zip
+**/ios/Flutter/flutter_assets/
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/ServiceDefinitions.json
+**/ios/Pods/
+**/Pods/
+**/.symlinks/
+**/xcuserdata/
+**/*.moved-aside
+**/*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# ------------------------------------------------------------------------------
+# 5. NODE.JS / SEED TOOLS
+# ------------------------------------------------------------------------------
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ------------------------------------------------------------------------------
+# 6. IDE, EDITORS & OS JUNK
+# ------------------------------------------------------------------------------
+.DS_Store
+**/.DS_Store
+Thumbs.db
+ehthumbs.db
 *.class
 *.log
 *.pyc
 *.swp
-.DS_Store
+*.swo
+*~
 .atom/
 .build/
 .buildlog/
@@ -12,44 +130,29 @@
 .swiftpm/
 migrate_working_dir/
 
-# IntelliJ related
+# IntelliJ / Android Studio
 *.iml
 *.ipr
 *.iws
 .idea/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# Visual Studio Code workspace state (keep team configs launch.json & settings.json)
+.vscode/*.code-workspace
 
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-/coverage/
+# ------------------------------------------------------------------------------
+# 7. AI AGENTS, ASSISTANT SKILLS & TEMPORARY MARKDOWN
+# ------------------------------------------------------------------------------
+# Antigravity / AI Agent downloaded skill caches & sessions
+.agents/skills/
+skills-lock.json
+.agents/sessions/
+.agents/history/
+.gemini/
 
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
-
-# Firebase Service Account credentials — NEVER commit
-service-account.json
-tools/seed/node_modules/
-
-config.json
-
-android/app/build/
-**/.cxx/
-
+# Scratch & temporary developer markdown notes
+scratch/
+scratch/*.md
+*.tmp.md
+*.scratch.md
+notes.md
+TODO.md

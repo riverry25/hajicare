@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
 import '../../../core/locales/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
@@ -62,15 +63,22 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
   final ScrollController _scrollController = ScrollController();
   late final HajjGuideService _guideService;
   int _selectedStageIndex = 0;
+  Worker? _loadedWorker;
 
   @override
   void initState() {
     super.initState();
     _guideService = HajjGuideService.instance;
+    if (!_guideService.isLoaded.value) {
+      _loadedWorker = once(_guideService.isLoaded, (_) {
+        if (mounted) setState(() {});
+      });
+    }
   }
 
   @override
   void dispose() {
+    _loadedWorker?.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -326,184 +334,192 @@ class _HajjScheduleGuideSheetState extends State<HajjScheduleGuideSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.textHeading;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-    final stages = _getStages(context);
-    final completedCount = _guideService.completedStageIds.length;
-    final totalCount = stages.length;
-    final progressFraction = totalCount > 0 ? completedCount / totalCount : 0.0;
+    return Obx(() {
+      final isDark = AppColors.isDark(context);
+      final headingColor = isDark
+          ? AppColors.darkTextHeading
+          : AppColors.textHeading;
+      final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
+      final stages = _getStages(context);
+      final completedCount = _guideService.completedStageIds.length;
+      final totalCount = stages.length;
+      final progressFraction = totalCount > 0
+          ? completedCount / totalCount
+          : 0.0;
+      // Observe isLoaded state reactively
+      final _ = _guideService.isLoaded.value;
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.88,
-      ),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(AppRadius.sheet),
+      return Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.88,
         ),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // ── Top Drag Handle ──────────────────────────────────────────
-            const SizedBox(height: AppSpacing.sm),
-            Center(
-              child: Container(
-                width: 44,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkOutlineVariant
-                      : AppColors.outlineVariant,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadius.sheet),
+          ),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ── Top Drag Handle ──────────────────────────────────────────
+              const SizedBox(height: AppSpacing.sm),
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.darkOutlineVariant
+                        : AppColors.outlineVariant,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: AppSpacing.sm),
 
-            // ── Header Title & Close Button ──────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.screenEdgeGutter,
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(AppSpacing.xs + 3),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: isDark
-                            ? [
-                                AppColors.goldPrimary.withValues(alpha: 0.25),
-                                AppColors.tanMedium.withValues(alpha: 0.15),
-                              ]
-                            : [
-                                AppColors.tanMedium.withValues(alpha: 0.20),
-                                AppColors.canvasCream,
-                              ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: AppColors.goldPrimary.withValues(
-                          alpha: isDark ? 0.35 : 0.25,
+              // ── Header Title & Close Button ──────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.screenEdgeGutter,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(AppSpacing.xs + 3),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: isDark
+                              ? [
+                                  AppColors.goldPrimary.withValues(alpha: 0.25),
+                                  AppColors.tanMedium.withValues(alpha: 0.15),
+                                ]
+                              : [
+                                  AppColors.tanMedium.withValues(alpha: 0.20),
+                                  AppColors.canvasCream,
+                                ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.mosque_rounded,
-                      color: AppColors.espressoDark,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          context.tr('dashboard.hajjStagesTitle'),
-                          style: AppTypography.titleMedium.copyWith(
-                            color: headingColor,
-                            fontWeight: FontWeight.bold,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.goldPrimary.withValues(
+                            alpha: isDark ? 0.35 : 0.25,
                           ),
                         ),
-                        Text(
-                          context.tr('dashboard.hajjStagesSub'),
-                          style: AppTypography.captionSmall.copyWith(
-                            color: bodyColor.withValues(alpha: 0.8),
-                          ),
-                        ),
-                      ],
+                      ),
+                      child: const Icon(
+                        Icons.mosque_rounded,
+                        color: AppColors.espressoDark,
+                        size: 22,
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.close_rounded, color: bodyColor),
-                    onPressed: () => Navigator.of(context).pop(),
-                    tooltip: context.tr('common.close'),
-                  ),
-                ],
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            context.tr('dashboard.hajjStagesTitle'),
+                            style: AppTypography.titleMedium.copyWith(
+                              color: headingColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            context.tr('dashboard.hajjStagesSub'),
+                            style: AppTypography.captionSmall.copyWith(
+                              color: bodyColor.withValues(alpha: 0.8),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.close_rounded, color: bodyColor),
+                      onPressed: () => Navigator.of(context).pop(),
+                      tooltip: context.tr('common.close'),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: AppSpacing.sm),
 
-            // ── Gamified Journey Banner (Image 2 & 3 Concept) ─────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.screenEdgeGutter,
+              // ── Gamified Journey Banner (Image 2 & 3 Concept) ─────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.screenEdgeGutter,
+                ),
+                child: _buildJourneyProgressBanner(
+                  context: context,
+                  isDark: isDark,
+                  completedCount: completedCount,
+                  totalCount: totalCount,
+                  progressFraction: progressFraction,
+                  headingColor: headingColor,
+                  bodyColor: bodyColor,
+                ),
               ),
-              child: _buildJourneyProgressBanner(
+              const SizedBox(height: 14),
+
+              // ── Horizontal Day Capsule Selector (From Image 2) ────────────
+              _buildHorizontalDaySelector(
                 context: context,
+                stages: stages,
                 isDark: isDark,
-                completedCount: completedCount,
-                totalCount: totalCount,
-                progressFraction: progressFraction,
                 headingColor: headingColor,
                 bodyColor: bodyColor,
               ),
-            ),
-            const SizedBox(height: 14),
+              const SizedBox(height: 12),
 
-            // ── Horizontal Day Capsule Selector (From Image 2) ────────────
-            _buildHorizontalDaySelector(
-              context: context,
-              stages: stages,
-              isDark: isDark,
-              headingColor: headingColor,
-              bodyColor: bodyColor,
-            ),
-            const SizedBox(height: 12),
+              const Divider(height: 1, thickness: 0.6),
 
-            const Divider(height: 1, thickness: 0.6),
+              // ── Connected Vertical Stepper / Path Timeline (Image 2 & 3) ──
+              Expanded(
+                child: ListView.builder(
+                  controller: _scrollController,
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.screenEdgeGutter,
+                    16,
+                    AppSpacing.screenEdgeGutter,
+                    24,
+                  ),
+                  itemCount: stages.length,
+                  itemBuilder: (context, index) {
+                    final stage = stages[index];
+                    final isFirst = index == 0;
+                    final isLast = index == stages.length - 1;
+                    final isCompleted = _guideService.isStageCompleted(
+                      stage.id,
+                    );
+                    final isSelected = _selectedStageIndex == index;
+                    final isExpanded = _guideService.isStageExpanded(stage.id);
 
-            // ── Connected Vertical Stepper / Path Timeline (Image 2 & 3) ──
-            Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.screenEdgeGutter,
-                  16,
-                  AppSpacing.screenEdgeGutter,
-                  24,
+                    return _buildTimelineStageRow(
+                      context: context,
+                      stage: stage,
+                      index: index,
+                      isFirst: isFirst,
+                      isLast: isLast,
+                      isCompleted: isCompleted,
+                      isSelected: isSelected,
+                      isExpanded: isExpanded,
+                      isDark: isDark,
+                      headingColor: headingColor,
+                      bodyColor: bodyColor,
+                    );
+                  },
                 ),
-                itemCount: stages.length,
-                itemBuilder: (context, index) {
-                  final stage = stages[index];
-                  final isFirst = index == 0;
-                  final isLast = index == stages.length - 1;
-                  final isCompleted = _guideService.isStageCompleted(stage.id);
-                  final isSelected = _selectedStageIndex == index;
-                  final isExpanded = _guideService.isStageExpanded(stage.id);
-
-                  return _buildTimelineStageRow(
-                    context: context,
-                    stage: stage,
-                    index: index,
-                    isFirst: isFirst,
-                    isLast: isLast,
-                    isCompleted: isCompleted,
-                    isSelected: isSelected,
-                    isExpanded: isExpanded,
-                    isDark: isDark,
-                    headingColor: headingColor,
-                    bodyColor: bodyColor,
-                  );
-                },
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   /// Interactive Journey Progress Banner inspired by Image 2 & 3.

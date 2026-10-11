@@ -148,6 +148,10 @@ class TextToSignController extends GetxController {
   VideoPlayerController? _playerController;
   VideoPlayerController? get playerController => _playerController;
 
+  String? _activePlayingVideoId;
+  String? get activePlayingVideoId => _activePlayingVideoId;
+  int _playSessionId = 0;
+
   final RxBool isVideoInitialized = false.obs;
   final RxBool isVideoPlaying = false.obs;
   final Rx<Duration> videoPosition = Duration.zero.obs;
@@ -354,14 +358,18 @@ class TextToSignController extends GetxController {
 
   /// Memutar video berdasarkan status source (asset vs localCached vs remote).
   Future<void> playEntry(SignVideoEntry entry, {bool force = false}) async {
+    final currentSession = ++_playSessionId;
+
     // 1. Selesaikan status sumber aktual
     final resolved = await _repository.resolveVideoSource(entry);
+
+    if (currentSession != _playSessionId) return;
 
     // Jika video yang sama sudah diinisialisasi dan aktif, jangan dispose & reload
     if (!force &&
         _playerController != null &&
         isVideoInitialized.value &&
-        currentEntry.value?.id == resolved.id) {
+        _activePlayingVideoId == resolved.id) {
       if (!isVideoPlaying.value) {
         await _playerController?.play();
       }
@@ -394,12 +402,18 @@ class TextToSignController extends GetxController {
       }
 
       await controller.initialize();
+      if (currentSession != _playSessionId) {
+        controller.dispose();
+        return;
+      }
+
       controller.setLooping(true);
 
       // Listen posisi & status
       controller.addListener(_videoPlayerListener);
 
       _playerController = controller;
+      _activePlayingVideoId = resolved.id;
       isVideoInitialized.value = true;
       videoDuration.value = controller.value.duration;
 
@@ -410,9 +424,11 @@ class TextToSignController extends GetxController {
           ? 'Tersedia offline (Aset Bawaan)'
           : 'Tersedia offline (Tersimpan di HP)';
     } catch (e) {
-      debugPrint('[TextToSignCtrl] playEntry error: $e');
-      errorMessage.value = 'Gagal memutar video: $e';
-      _disposePlayer();
+      if (currentSession == _playSessionId) {
+        debugPrint('[TextToSignCtrl] playEntry error: $e');
+        errorMessage.value = 'Gagal memutar video: $e';
+        _disposePlayer();
+      }
     }
   }
 
@@ -459,6 +475,7 @@ class TextToSignController extends GetxController {
       _playerController!.dispose();
       _playerController = null;
     }
+    _activePlayingVideoId = null;
     isVideoInitialized.value = false;
     isVideoPlaying.value = false;
     videoPosition.value = Duration.zero;
@@ -736,6 +753,7 @@ class TextToSignController extends GetxController {
 
   /// Memilih item kosakata dari daftar: mengisi teks, menyiapkan hasil, dan memutar/meminta unduh
   Future<void> selectVocabularyItem(SignVideoEntry video) async {
+    _lastSearchedQuery = video.label;
     textController.text = video.label;
     currentQuery.value = video.label;
     currentEntry.value = video;

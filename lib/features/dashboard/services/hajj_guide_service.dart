@@ -22,27 +22,38 @@ class HajjGuideService extends GetxService {
   final RxSet<String> expandedStageIds = <String>{'tarwiyah'}.obs;
   final RxBool isLoaded = false.obs;
 
+  SharedPreferences? _prefs;
+  Future<void>? _loadFuture;
+
   @override
   void onInit() {
     super.onInit();
     loadPreferences();
   }
 
-  /// Memuat status penandaan dari SharedPreferences.
-  Future<void> loadPreferences() async {
+  /// Memuat status penandaan dari SharedPreferences secara cepat dan ter-cache.
+  Future<void> loadPreferences({bool force = false}) {
+    if (!force && _loadFuture != null) {
+      return _loadFuture!;
+    }
+    _loadFuture = _doLoadPreferences();
+    return _loadFuture!;
+  }
+
+  Future<void> _doLoadPreferences() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final stages = prefs.getStringList(_completedStagesKey);
+      _prefs ??= await SharedPreferences.getInstance();
+      final stages = _prefs!.getStringList(_completedStagesKey);
       if (stages != null) {
         completedStageIds.assignAll(stages);
       }
 
-      final deeds = prefs.getStringList(_completedDeedsKey);
+      final deeds = _prefs!.getStringList(_completedDeedsKey);
       if (deeds != null) {
         completedDeedKeys.assignAll(deeds);
       }
 
-      final expanded = prefs.getStringList(_expandedStagesKey);
+      final expanded = _prefs!.getStringList(_expandedStagesKey);
       if (expanded != null) {
         expandedStageIds.assignAll(expanded);
       }
@@ -145,8 +156,8 @@ class HajjGuideService extends GetxService {
 
   Future<void> _saveStages() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList(
+      _prefs ??= await SharedPreferences.getInstance();
+      await _prefs!.setStringList(
         _completedStagesKey,
         completedStageIds.toList(),
       );
@@ -157,8 +168,11 @@ class HajjGuideService extends GetxService {
 
   Future<void> _saveDeeds() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList(_completedDeedsKey, completedDeedKeys.toList());
+      _prefs ??= await SharedPreferences.getInstance();
+      await _prefs!.setStringList(
+        _completedDeedsKey,
+        completedDeedKeys.toList(),
+      );
     } catch (e) {
       debugPrint('[HajjGuideService] Gagal menyimpan deeds: $e');
     }
@@ -166,8 +180,11 @@ class HajjGuideService extends GetxService {
 
   Future<void> _saveExpanded() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList(_expandedStagesKey, expandedStageIds.toList());
+      _prefs ??= await SharedPreferences.getInstance();
+      await _prefs!.setStringList(
+        _expandedStagesKey,
+        expandedStageIds.toList(),
+      );
     } catch (e) {
       debugPrint('[HajjGuideService] Gagal menyimpan expanded: $e');
     }
