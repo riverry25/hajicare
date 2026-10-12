@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../theme/app_colors.dart';
+import '../theme/app_breakpoints.dart';
 import '../theme/app_radius.dart';
+import '../theme/app_sizes.dart';
 import '../theme/app_spacing.dart';
-import '../theme/app_typography.dart';
+import '../theme/haji_colors.dart';
+import '../theme/theme_context.dart';
 
 /// Semantic dialog types for AppDialog.
 enum AppDialogType { success, error, warning, info, confirm }
@@ -54,12 +56,8 @@ class AppDialog {
       return Future<T?>.value();
     }
 
-    final isDark = AppColors.isDark(ctx);
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
+    final hc = ctx.hc;
+    final textTheme = ctx.text;
 
     // Theme color and icon configuration based on dialog type
     final Color accentColor;
@@ -67,26 +65,25 @@ class AppDialog {
 
     switch (type) {
       case AppDialogType.success:
-        accentColor = AppColors.statusSafe;
+        accentColor = hc.success;
         iconData = icon ?? Icons.check_circle_rounded;
         break;
       case AppDialogType.error:
-        accentColor = AppColors.sosEmergency;
+        accentColor = hc.danger;
         iconData = icon ?? Icons.cancel_rounded;
         break;
       case AppDialogType.warning:
-        accentColor = AppColors.statusWarning;
+        accentColor = hc.warning;
         iconData = icon ?? Icons.warning_amber_rounded;
         break;
       case AppDialogType.info:
-        accentColor = isDark ? AppColors.goldLight : AppColors.goldPrimary;
+        accentColor = hc.accent;
         iconData = icon ?? Icons.info_rounded;
         break;
       case AppDialogType.confirm:
         accentColor = isDestructive
-            ? AppColors.sosEmergency
-            : (okColor ??
-                  (isDark ? AppColors.goldLight : AppColors.goldPrimary));
+            ? hc.danger
+            : (okColor ?? hc.accent);
         iconData =
             icon ??
             (isDestructive
@@ -114,21 +111,24 @@ class AppDialog {
         canPop: barrierDismissible,
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
+            constraints: const BoxConstraints(
+              maxWidth: AppBreakpoints.maxDialogWidth,
+            ),
             child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              margin: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s24,
+                vertical: AppSpacing.s24,
+              ),
               decoration: BoxDecoration(
-                color: cardBg,
+                color: hc.surface,
                 borderRadius: BorderRadius.circular(AppRadius.sheet),
                 border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.12)
-                      : AppColors.goldLight.withValues(alpha: 0.35),
-                  width: 1.2,
+                  color: hc.border,
+                  width: 1.0,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.14),
+                    color: hc.shadow,
                     blurRadius: 24,
                     offset: const Offset(0, 8),
                   ),
@@ -153,7 +153,7 @@ class AppDialog {
                           width: 64,
                           height: 64,
                           decoration: BoxDecoration(
-                            color: accentColor.withValues(alpha: 0.14),
+                            color: accentColor.withValues(alpha: 0.12),
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: accentColor.withValues(alpha: 0.28),
@@ -169,8 +169,8 @@ class AppDialog {
                       Text(
                         title,
                         textAlign: TextAlign.center,
-                        style: AppTypography.titleMedium.copyWith(
-                          color: headingColor,
+                        style: textTheme.titleMedium?.copyWith(
+                          color: hc.textPrimary,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -183,8 +183,8 @@ class AppDialog {
                           child: Text(
                             message,
                             textAlign: TextAlign.center,
-                            style: AppTypography.bodyMedium.copyWith(
-                              color: bodyColor,
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: hc.textSecondary,
                               height: 1.5,
                               fontSize: 15,
                             ),
@@ -200,48 +200,48 @@ class AppDialog {
                           final isLargeScale = textScaler.scale(15) > 19;
                           final okTextColor =
                               effectiveOkColor.computeLuminance() > 0.5
-                              ? AppColors.espressoDark
-                              : Colors.white;
+                                  ? hc.textPrimary
+                                  : hc.onPrimary;
 
                           final cancelButton =
                               cancelText != null && cancelText.isNotEmpty
-                              ? OutlinedButton(
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: bodyColor,
-                                    side: BorderSide(
-                                      color: isDark
-                                          ? AppColors.darkOutlineVariant
-                                          : AppColors.surfaceVariant,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        AppRadius.pill,
+                                  ? OutlinedButton(
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: hc.textSecondary,
+                                        side: BorderSide(
+                                          color: hc.borderStrong,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            AppRadius.pill,
+                                          ),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 12,
+                                        ),
+                                        minimumSize: const Size(
+                                          0,
+                                          AppSizes.buttonHeightSecondary,
+                                        ),
                                       ),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 12,
-                                    ),
-                                    minimumSize: const Size(0, 46),
-                                  ),
-                                  onPressed: () {
-                                    if (Get.isDialogOpen ?? false) {
-                                      Get.back();
-                                    }
-                                    onCancel?.call();
-                                  },
-                                  child: Text(
-                                    cancelText,
-                                    textAlign: TextAlign.center,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14.5,
-                                    ),
-                                  ),
-                                )
-                              : null;
+                                      onPressed: () {
+                                        if (Get.isDialogOpen ?? false) {
+                                          Get.back();
+                                        }
+                                        onCancel?.call();
+                                      },
+                                      child: Text(
+                                        cancelText,
+                                        textAlign: TextAlign.center,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: textTheme.labelLarge?.copyWith(
+                                          color: hc.textSecondary,
+                                        ),
+                                      ),
+                                    )
+                                  : null;
 
                           final okButton = ElevatedButton(
                             style: ElevatedButton.styleFrom(
@@ -256,7 +256,10 @@ class AppDialog {
                                 horizontal: 16,
                                 vertical: 12,
                               ),
-                              minimumSize: const Size(0, 46),
+                              minimumSize: const Size(
+                                0,
+                                AppSizes.buttonHeightSecondary,
+                              ),
                               elevation: 0,
                             ),
                             onPressed: () {
@@ -270,10 +273,9 @@ class AppDialog {
                               textAlign: TextAlign.center,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 14.5,
+                              style: textTheme.labelLarge?.copyWith(
                                 color: okTextColor,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           );
@@ -455,7 +457,7 @@ class AppDialog {
     String message = 'Mohon tunggu...',
   }) {
     final ctx = resolveSafeContext(context);
-    final isDark = ctx != null ? AppColors.isDark(ctx) : Get.isDarkMode;
+    final hc = ctx?.hc ?? (Get.isDarkMode ? HajiColors.dark : HajiColors.light);
 
     Get.dialog(
       PopScope(
@@ -464,16 +466,14 @@ class AppDialog {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+              color: hc.surface,
               borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.12)
-                    : AppColors.goldLight.withValues(alpha: 0.35),
+                color: hc.border,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.16),
+                  color: hc.shadow,
                   blurRadius: 20,
                   offset: const Offset(0, 4),
                 ),
@@ -482,12 +482,12 @@ class AppDialog {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(
+                SizedBox(
                   width: 24,
                   height: 24,
                   child: CircularProgressIndicator(
                     strokeWidth: 2.5,
-                    color: AppColors.goldPrimary,
+                    color: hc.accent,
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -495,12 +495,14 @@ class AppDialog {
                   color: Colors.transparent,
                   child: Text(
                     message,
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: isDark
-                          ? AppColors.darkTextHeading
-                          : AppColors.espressoDark,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: ctx?.text.bodyMedium?.copyWith(
+                          color: hc.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ) ??
+                        TextStyle(
+                          color: hc.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
                   ),
                 ),
               ],

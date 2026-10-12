@@ -7,10 +7,9 @@ import '../../features/translator/widgets/translator_sheet.dart';
 import '../locales/app_localizations.dart';
 import '../routes/app_routes.dart';
 import '../state/hajicare_controller.dart';
-import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
-import '../theme/app_typography.dart';
+import '../theme/theme_context.dart';
 
 class HajiCareBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -55,8 +54,8 @@ class HajiCareBottomNavBar extends StatelessWidget {
     final String dashboardRoute = hajicare?.role == UserRole.admin
         ? AppRoutes.adminDashboard
         : hajicare?.role == UserRole.jamaah
-        ? AppRoutes.dashboardJamaah
-        : AppRoutes.dashboardPendamping;
+            ? AppRoutes.dashboardJamaah
+            : AppRoutes.dashboardPendamping;
 
     try {
       if (index == 1) {
@@ -78,7 +77,7 @@ class HajiCareBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
+    final hc = context.hc;
 
     return Material(
       color: Colors.transparent,
@@ -86,10 +85,10 @@ class HajiCareBottomNavBar extends StatelessWidget {
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md,
+            AppSpacing.s16,
             0,
-            AppSpacing.md,
-            AppSpacing.sm,
+            AppSpacing.s16,
+            AppSpacing.s8,
           ),
           child: Stack(
             alignment: Alignment.topCenter,
@@ -100,15 +99,9 @@ class HajiCareBottomNavBar extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 16),
                 child: CustomPaint(
                   painter: _ScoopedNavBarPainter(
-                    backgroundColor: isDark
-                        ? AppColors.darkSurface
-                        : AppColors.surfaceWhite,
-                    borderColor: isDark
-                        ? Colors.white.withValues(alpha: 0.08)
-                        : AppColors.espressoDark.withValues(alpha: 0.06),
-                    shadowColor: Colors.black.withValues(
-                      alpha: isDark ? 0.35 : 0.08,
-                    ),
+                    backgroundColor: hc.surface,
+                    borderColor: hc.border,
+                    shadowColor: hc.shadow,
                     cornerRadius: 30.0,
                     buttonRadius: 30.0,
                     buttonCenterY: 10.0,
@@ -172,7 +165,7 @@ class HajiCareBottomNavBar extends StatelessWidget {
               // Elevated Center Mic / Voice Translator Button nestled in the Scoop
               Positioned(
                 top: -6,
-                child: _buildCenterMicButton(context, isDark),
+                child: _buildCenterMicButton(context),
               ),
             ],
           ),
@@ -181,11 +174,8 @@ class HajiCareBottomNavBar extends StatelessWidget {
     );
   }
 
-  Widget _buildCenterMicButton(BuildContext context, bool isDark) {
-    final surfaceColor = isDark
-        ? AppColors.darkSurfaceContainerHighest
-        : AppColors.surfaceWhite;
-    final iconColor = isDark ? AppColors.goldLight : AppColors.espressoDark;
+  Widget _buildCenterMicButton(BuildContext context) {
+    final hc = context.hc;
 
     return Semantics(
       button: true,
@@ -197,17 +187,14 @@ class HajiCareBottomNavBar extends StatelessWidget {
           height: 65,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: surfaceColor,
+            color: hc.surface,
             border: Border.all(
-              color: isDark
-                  ? AppColors.goldLight.withValues(alpha: 0.35)
-                  : AppColors.goldLight.withValues(alpha: 0.5),
+              color: hc.accent,
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: (isDark ? Colors.black : AppColors.espressoDark)
-                    .withValues(alpha: isDark ? 0.35 : 0.12),
+                color: hc.shadow,
                 blurRadius: 10,
                 spreadRadius: 0,
                 offset: const Offset(0, 3),
@@ -224,7 +211,7 @@ class HajiCareBottomNavBar extends StatelessWidget {
               },
               customBorder: const CircleBorder(),
               child: Center(
-                child: Icon(Icons.mic_rounded, size: 28, color: iconColor),
+                child: Icon(Icons.mic_rounded, size: 28, color: hc.primary),
               ),
             ),
           ),
@@ -239,16 +226,12 @@ class HajiCareBottomNavBar extends StatelessWidget {
     required IconData icon,
     required String label,
   }) {
+    final hc = context.hc;
+    final textTheme = context.text;
     final isSelected = currentIndex == index;
-    final isDark = AppColors.isDark(context);
 
-    final selectedColor = isDark
-        ? Theme.of(context).colorScheme.primary
-        : AppColors.espressoDark;
-
-    final unselectedColor = isDark
-        ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55)
-        : AppColors.textBody.withValues(alpha: 0.65);
+    final selectedColor = hc.primary;
+    final unselectedColor = hc.textTertiary;
 
     return Semantics(
       button: true,
@@ -278,9 +261,7 @@ class HajiCareBottomNavBar extends StatelessWidget {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? (isDark
-                                ? selectedColor.withValues(alpha: 0.16)
-                                : AppColors.canvasCream)
+                          ? hc.surfaceSand
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
@@ -304,7 +285,7 @@ class HajiCareBottomNavBar extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
-                      style: AppTypography.captionSmall.copyWith(
+                      style: textTheme.labelSmall?.copyWith(
                         fontSize: 10.5,
                         color: isSelected ? selectedColor : unselectedColor,
                         fontWeight: isSelected

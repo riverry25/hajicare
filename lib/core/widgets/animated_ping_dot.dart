@@ -1,28 +1,19 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
+import '../theme/theme_context.dart';
 
 /// An animated pulsing dot widget indicating live/active status.
 /// Used in map headers and dashboard status indicators.
-///
-/// Example usage:
-/// ```dart
-/// Row(children: [
-///   const AnimatedPingDot(),
-///   const SizedBox(width: 6),
-///   Text('Pelacakan Aktif'),
-/// ])
-/// ```
 class AnimatedPingDot extends StatefulWidget {
   /// The size of the dot (outer pulse ring is slightly larger).
   final double size;
 
-  /// The color of the dot and pulse ring.
-  final Color color;
+  /// The optional color override. Defaults to [context.hc.success].
+  final Color? color;
 
   const AnimatedPingDot({
     super.key,
     this.size = 10,
-    this.color = AppColors.statusPositive,
+    this.color,
   });
 
   @override
@@ -61,6 +52,8 @@ class _AnimatedPingDotState extends State<AnimatedPingDot>
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = widget.color ?? context.hc.success;
+
     return RepaintBoundary(
       child: SizedBox(
         width: widget.size,
@@ -85,7 +78,7 @@ class _AnimatedPingDotState extends State<AnimatedPingDot>
                 height: widget.size,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: widget.color,
+                  color: effectiveColor,
                 ),
               ),
             ),
@@ -94,7 +87,7 @@ class _AnimatedPingDotState extends State<AnimatedPingDot>
               height: widget.size,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: widget.color,
+                color: effectiveColor,
               ),
             ),
           ],
