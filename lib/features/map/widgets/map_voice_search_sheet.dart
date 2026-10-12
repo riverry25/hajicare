@@ -3,10 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import '../../../../core/locales/app_localizations.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/theme_context.dart';
 
 /// Google Maps-styled Voice Search Bottom Sheet.
 /// Allows pilgrims and officers to search locations by speaking or picking smart suggestions.
@@ -16,12 +16,11 @@ class MapVoiceSearchSheet extends StatefulWidget {
   /// Displays the voice search sheet and returns the recognized query string if any.
   static Future<String?> show(BuildContext context) {
     HapticFeedback.lightImpact();
-    final isDark = AppColors.isDark(context);
 
     return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+      backgroundColor: context.hc.surface,
       barrierColor: Colors.black54,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
@@ -212,12 +211,9 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+    final headingColor = context.hc.textPrimary;
+    final bodyColor = context.hc.textSecondary;
+    final primaryColor = context.hc.brand;
 
     return SafeArea(
       child: Padding(
@@ -237,7 +233,7 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
                 width: 44,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: bodyColor.withValues(alpha: 0.25),
+                  color: context.hc.border,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
               ),
@@ -333,17 +329,18 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
                         colors: _isListening
-                            ? [AppColors.sosEmergency, const Color(0xFFE53935)]
-                            : [primaryColor, AppColors.goldDark],
+                            ? [
+                                context.hc.danger,
+                                context.hc.danger.withValues(alpha: 0.85),
+                              ]
+                            : [primaryColor, context.hc.brandDark],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       boxShadow: [
                         BoxShadow(
                           color:
-                              (_isListening
-                                      ? AppColors.sosEmergency
-                                      : primaryColor)
+                              (_isListening ? context.hc.danger : primaryColor)
                                   .withValues(alpha: 0.38),
                           blurRadius: 16,
                           offset: const Offset(0, 4),
@@ -355,7 +352,7 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
                         _isListening
                             ? Icons.mic_rounded
                             : Icons.mic_none_rounded,
-                        color: Colors.white,
+                        color: context.hc.onPrimary,
                         size: 34,
                       ),
                     ),
@@ -371,16 +368,12 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               constraints: const BoxConstraints(minHeight: 52),
               decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.darkSurfaceContainer.withValues(alpha: 0.6)
-                    : AppColors.canvasCream.withValues(alpha: 0.6),
+                color: context.hc.surfaceSubtle,
                 borderRadius: BorderRadius.circular(AppRadius.md),
                 border: Border.all(
                   color: _recognizedWords.isNotEmpty
                       ? primaryColor.withValues(alpha: 0.4)
-                      : (isDark
-                            ? AppColors.darkCardBorder
-                            : AppColors.canvasCreamSubtle),
+                      : context.hc.border,
                 ),
               ),
               child: Row(
@@ -450,20 +443,12 @@ class _MapVoiceSearchSheetState extends State<MapVoiceSearchSheet>
                       vertical: 7,
                     ),
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkSurfaceContainer
-                          : AppColors.surfaceWhite,
+                      color: context.hc.surfaceSubtle,
                       borderRadius: BorderRadius.circular(AppRadius.pill),
-                      border: Border.all(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.1)
-                            : AppColors.canvasCreamSubtle,
-                      ),
+                      border: Border.all(color: context.hc.border),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(
-                            alpha: isDark ? 0.15 : 0.03,
-                          ),
+                          color: context.hc.shadow,
                           blurRadius: 4,
                           offset: const Offset(0, 1),
                         ),

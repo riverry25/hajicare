@@ -8,6 +8,7 @@ import 'package:hajicare/core/locales/app_localizations.dart';
 import 'package:hajicare/core/state/app_settings_controller.dart';
 import 'package:hajicare/core/state/hajicare_controller.dart';
 import 'package:hajicare/core/theme/app_theme.dart';
+import 'package:hajicare/core/theme/haji_colors.dart';
 import 'package:hajicare/core/widgets/bottom_nav_bar.dart';
 import 'package:hajicare/features/dashboard/controllers/dashboard_controller.dart';
 import 'package:hajicare/features/dashboard/models/assistance_request_model.dart';
@@ -151,7 +152,7 @@ void main() {
         expect(polylineLayer.polylines.first.strokeWidth, equals(8.0));
         expect(
           polylineLayer.polylines.first.color,
-          equals(const Color(0xFF1E60CC)),
+          equals(HajiColors.light.primary),
         );
       },
     );

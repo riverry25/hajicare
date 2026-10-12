@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/locales/app_localizations.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/theme_context.dart';
 import '../controllers/map_controller.dart';
 import '../models/map_poi.dart';
 import '../models/map_search_result.dart';
@@ -28,25 +28,18 @@ class MapSearchDropdown extends StatelessWidget {
         return const SizedBox.shrink();
       }
 
-      final isDark = AppColors.isDark(context);
+      final isDark = context.hc.isDark;
 
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
         constraints: const BoxConstraints(maxHeight: 300),
         decoration: BoxDecoration(
-          color: isDark
-              ? AppColors.darkSurface.withValues(alpha: 0.98)
-              : AppColors.surfaceWhite.withValues(alpha: 0.98),
+          color: context.hc.surface.withValues(alpha: 0.98),
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.12)
-                : AppColors.goldLight.withValues(alpha: 0.45),
-            width: 1.2,
-          ),
+          border: Border.all(color: context.hc.border, width: 1.2),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.40 : 0.12),
+              color: context.hc.shadow,
               blurRadius: 18,
               offset: const Offset(0, 6),
             ),
@@ -73,20 +66,22 @@ class MapSearchDropdown extends StatelessWidget {
         return _buildLoadingState(context, isDark);
       case MapSearchState.empty:
         return _buildMessageState(
+          context: context,
           isDark: isDark,
           icon: Icons.location_off_outlined,
           message: context.tr('maps.noLocationFound'),
-          iconColor: isDark ? Colors.white60 : AppColors.textMuted,
+          iconColor: context.hc.textTertiary,
         );
       case MapSearchState.error:
         final msg = mapCtrl.searchErrorMessage.value.isNotEmpty
             ? mapCtrl.searchErrorMessage.value
             : context.tr('maps.searchLocationFailed');
         return _buildMessageState(
+          context: context,
           isDark: isDark,
           icon: Icons.error_outline_rounded,
           message: msg,
-          iconColor: const Color(0xFFE53935),
+          iconColor: context.hc.danger,
         );
       case MapSearchState.results:
         return _buildResultsList(context, isDark);
@@ -102,21 +97,19 @@ class MapSearchDropdown extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         children: [
-          const SizedBox(
+          SizedBox(
             width: 18,
             height: 18,
             child: CircularProgressIndicator(
               strokeWidth: 2.2,
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.goldPrimary),
+              valueColor: AlwaysStoppedAnimation<Color>(context.hc.brand),
             ),
           ),
           const SizedBox(width: 12),
           Text(
             context.tr('maps.searchingLocation'),
             style: AppTypography.bodySmall.copyWith(
-              color: isDark
-                  ? AppColors.darkTextHeading
-                  : AppColors.espressoDark,
+              color: context.hc.textPrimary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -126,6 +119,7 @@ class MapSearchDropdown extends StatelessWidget {
   }
 
   Widget _buildMessageState({
+    required BuildContext context,
     required bool isDark,
     required IconData icon,
     required String message,
@@ -141,7 +135,7 @@ class MapSearchDropdown extends StatelessWidget {
             child: Text(
               message,
               style: AppTypography.bodySmall.copyWith(
-                color: isDark ? Colors.white70 : AppColors.espressoDark,
+                color: context.hc.textPrimary,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -155,10 +149,11 @@ class MapSearchDropdown extends StatelessWidget {
     final results = mapCtrl.searchResults;
     if (results.isEmpty) {
       return _buildMessageState(
+        context: context,
         isDark: isDark,
         icon: Icons.location_off_outlined,
         message: context.tr('maps.noLocationFound'),
-        iconColor: isDark ? Colors.white60 : AppColors.textMuted,
+        iconColor: context.hc.textTertiary,
       );
     }
 
@@ -169,13 +164,8 @@ class MapSearchDropdown extends StatelessWidget {
       shrinkWrap: true,
       physics: const BouncingScrollPhysics(),
       itemCount: results.length,
-      separatorBuilder: (context, index) => Divider(
-        height: 1,
-        thickness: 0.8,
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.08)
-            : AppColors.espressoDark.withValues(alpha: 0.06),
-      ),
+      separatorBuilder: (context, index) =>
+          Divider(height: 1, thickness: 0.8, color: context.hc.border),
       itemBuilder: (context, index) {
         final item = results[index];
 
@@ -223,9 +213,7 @@ class MapSearchDropdown extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.bodySmall.copyWith(
-                          color: isDark
-                              ? AppColors.darkTextHeading
-                              : AppColors.espressoDark,
+                          color: context.hc.textPrimary,
                           fontWeight: FontWeight.w700,
                           fontSize: 13,
                         ),
@@ -238,9 +226,7 @@ class MapSearchDropdown extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.captionSmall.copyWith(
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.6)
-                              : AppColors.textMuted,
+                          color: context.hc.textSecondary,
                           fontSize: 11,
                         ),
                       ),
@@ -256,9 +242,7 @@ class MapSearchDropdown extends StatelessWidget {
                       vertical: 3.5,
                     ),
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? itemColor.withValues(alpha: 0.16)
-                          : itemColor.withValues(alpha: 0.10),
+                      color: itemColor.withValues(alpha: isDark ? 0.18 : 0.10),
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                       border: Border.all(
                         color: itemColor.withValues(alpha: 0.3),
@@ -268,9 +252,7 @@ class MapSearchDropdown extends StatelessWidget {
                     child: Text(
                       distanceLabel,
                       style: TextStyle(
-                        color: isDark
-                            ? Color.lerp(itemColor, Colors.white, 0.2)
-                            : itemColor,
+                        color: itemColor,
                         fontSize: 10.5,
                         fontWeight: FontWeight.w700,
                       ),
@@ -280,9 +262,7 @@ class MapSearchDropdown extends StatelessWidget {
                   Icon(
                     Icons.north_west_rounded,
                     size: 16,
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.35)
-                        : AppColors.textMuted.withValues(alpha: 0.5),
+                    color: context.hc.textTertiary,
                   ),
               ],
             ),
@@ -331,17 +311,13 @@ class MapSearchDropdown extends StatelessWidget {
                       Icon(
                         Icons.history_rounded,
                         size: 16,
-                        color: isDark
-                            ? AppColors.goldPrimary
-                            : AppColors.espressoDark,
+                        color: context.hc.accent,
                       ),
                       const SizedBox(width: 6),
                       Text(
                         context.tr('maps.recentSearches'),
                         style: AppTypography.captionSmall.copyWith(
-                          color: isDark
-                              ? AppColors.darkTextHeading
-                              : AppColors.espressoDark,
+                          color: context.hc.textPrimary,
                           fontWeight: FontWeight.w700,
                           fontSize: 12,
                         ),
@@ -359,9 +335,7 @@ class MapSearchDropdown extends StatelessWidget {
                       child: Text(
                         context.tr('maps.clearAll'),
                         style: AppTypography.captionSmall.copyWith(
-                          color: isDark
-                              ? AppColors.goldLight
-                              : AppColors.goldPrimary,
+                          color: context.hc.accent,
                           fontWeight: FontWeight.w600,
                           fontSize: 11,
                         ),
@@ -371,13 +345,7 @@ class MapSearchDropdown extends StatelessWidget {
                 ],
               ),
             ),
-            Divider(
-              height: 1,
-              thickness: 0.8,
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : AppColors.espressoDark.withValues(alpha: 0.06),
-            ),
+            Divider(height: 1, thickness: 0.8, color: context.hc.border),
             ...history.take(4).map((item) {
               return InkWell(
                 onTap: () {
@@ -396,16 +364,12 @@ class MapSearchDropdown extends StatelessWidget {
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.08)
-                              : AppColors.canvasCream,
+                          color: context.hc.surfaceSubtle,
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           Icons.access_time_rounded,
-                          color: isDark
-                              ? Colors.white70
-                              : AppColors.espressoDark.withValues(alpha: 0.7),
+                          color: context.hc.textSecondary,
                           size: 16,
                         ),
                       ),
@@ -420,9 +384,7 @@ class MapSearchDropdown extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: AppTypography.bodySmall.copyWith(
-                                color: isDark
-                                    ? AppColors.darkTextHeading
-                                    : AppColors.espressoDark,
+                                color: context.hc.textPrimary,
                                 fontWeight: FontWeight.w600,
                                 fontSize: 13,
                               ),
@@ -434,9 +396,7 @@ class MapSearchDropdown extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: AppTypography.captionSmall.copyWith(
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.55)
-                                      : AppColors.textMuted,
+                                  color: context.hc.textSecondary,
                                   fontSize: 11,
                                 ),
                               ),
@@ -446,9 +406,7 @@ class MapSearchDropdown extends StatelessWidget {
                       ),
                       IconButton(
                         icon: const Icon(Icons.close_rounded, size: 16),
-                        color: isDark
-                            ? Colors.white38
-                            : AppColors.textMuted.withValues(alpha: 0.6),
+                        color: context.hc.textTertiary,
                         splashRadius: 16,
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(
@@ -469,13 +427,7 @@ class MapSearchDropdown extends StatelessWidget {
           // ── NEARBY PLACES / REKOMENDASI TERDEKAT (ATURAN 13) ──────────────
           if (topNearbyPois.isNotEmpty) ...[
             if (history.isNotEmpty)
-              Divider(
-                height: 1,
-                thickness: 0.8,
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : AppColors.espressoDark.withValues(alpha: 0.06),
-              ),
+              Divider(height: 1, thickness: 0.8, color: context.hc.border),
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 10, 10, 6),
               child: Row(
@@ -483,15 +435,13 @@ class MapSearchDropdown extends StatelessWidget {
                   Icon(
                     Icons.near_me_rounded,
                     size: 15,
-                    color: AppColors.goldPrimary,
+                    color: context.hc.accent,
                   ),
                   const SizedBox(width: 6),
                   Text(
                     context.tr('maps.nearbyPlaces'),
                     style: AppTypography.captionSmall.copyWith(
-                      color: isDark
-                          ? AppColors.darkTextHeading
-                          : AppColors.espressoDark,
+                      color: context.hc.textPrimary,
                       fontWeight: FontWeight.w700,
                       fontSize: 12,
                     ),
@@ -499,13 +449,7 @@ class MapSearchDropdown extends StatelessWidget {
                 ],
               ),
             ),
-            Divider(
-              height: 1,
-              thickness: 0.8,
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : AppColors.espressoDark.withValues(alpha: 0.06),
-            ),
+            Divider(height: 1, thickness: 0.8, color: context.hc.border),
             ...topNearbyPois.map((poi) {
               final distM = refLoc != null
                   ? mapCtrl.calculateDistanceMeters(refLoc, poi.coordinate)
@@ -559,9 +503,7 @@ class MapSearchDropdown extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: AppTypography.bodySmall.copyWith(
-                                color: isDark
-                                    ? AppColors.darkTextHeading
-                                    : AppColors.espressoDark,
+                                color: context.hc.textPrimary,
                                 fontWeight: FontWeight.w600,
                                 fontSize: 13,
                               ),
@@ -574,9 +516,7 @@ class MapSearchDropdown extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: AppTypography.captionSmall.copyWith(
-                                color: isDark
-                                    ? Colors.white.withValues(alpha: 0.55)
-                                    : AppColors.textMuted,
+                                color: context.hc.textSecondary,
                                 fontSize: 11,
                               ),
                             ),
@@ -602,9 +542,7 @@ class MapSearchDropdown extends StatelessWidget {
                           child: Text(
                             distLabel,
                             style: TextStyle(
-                              color: isDark
-                                  ? Color.lerp(poi.color, Colors.white, 0.2)
-                                  : poi.color,
+                              color: poi.color,
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                             ),

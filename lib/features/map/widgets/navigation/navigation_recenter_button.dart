@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/locales/app_localizations.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/theme_context.dart';
 import '../../controllers/map_controller.dart';
 
 /// Floating "Pusatkan Kembali" (Re-center) button.
@@ -40,19 +41,22 @@ class NavigationRecenterButton extends StatelessWidget {
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF22C55E), Color(0xFF15803D)],
+                      gradient: LinearGradient(
+                        colors: [
+                          context.hc.success,
+                          context.hc.success.withValues(alpha: 0.85),
+                        ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
+                        color: context.hc.onPrimary.withValues(alpha: 0.3),
                         width: 1.2,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF22C55E).withValues(alpha: 0.4),
+                          color: context.hc.success.withValues(alpha: 0.35),
                           blurRadius: 14,
                           offset: const Offset(0, 4),
                         ),
@@ -61,16 +65,16 @@ class NavigationRecenterButton extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.navigation_rounded,
-                          color: Colors.white,
+                          color: context.hc.onPrimary,
                           size: 18,
                         ),
                         const SizedBox(width: 8),
                         Text(
                           context.tr('maps.recenter'),
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: context.hc.onPrimary,
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                             letterSpacing: -0.2,

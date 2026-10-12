@@ -427,6 +427,7 @@ class HajiColors extends ThemeExtension<HajiColors> {
   Color get sandLight => isDark ? const Color(0xFF352A21) : const Color(0xFFF6F1EA);
   Color get sandDark => borderStrong;
   Color get surfaceVariant => surfaceSubtle;
+  Color get surfaceContainer => surfaceSubtle;
 
   /// Convenience aliases for brand and border ergonomics
   Color get brand => primary;
@@ -435,9 +436,12 @@ class HajiColors extends ThemeExtension<HajiColors> {
   Color get brandAccent => accent;
   Color get borderSubtle => border;
   Color get brandDark => isDark ? const Color(0xFF1F140D) : const Color(0xFF2A1D15);
+  Color get primaryDark => isDark ? const Color(0xFF1F140D) : const Color(0xFF2A1D15);
+  Color get textMuted => textTertiary;
   Color get shadowSubtle => shadow.withValues(alpha: isDark ? 0.4 : 0.08);
   Color get error => danger;
   Color get onError => onDanger;
+  Color get dangerDark => isDark ? const Color(0xFF7A2012) : const Color(0xFF8F2818);
 
   /// Brand gradients
   LinearGradient get heroGradient => LinearGradient(

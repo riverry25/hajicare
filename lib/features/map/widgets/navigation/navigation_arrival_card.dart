@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/locales/app_localizations.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/theme_context.dart';
 import '../../controllers/map_controller.dart';
 
 /// Celebratory arrival card displayed when user reaches the destination (< 20m).
@@ -12,7 +12,6 @@ class NavigationArrivalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
     final destTitle = mapCtrl.destinationTitle.value.isNotEmpty
         ? mapCtrl.destinationTitle.value
         : context.tr('maps.yourDestination');
@@ -22,15 +21,15 @@ class NavigationArrivalCard extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 24),
         padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.darkSurface : Colors.white,
+          color: context.hc.surface,
           borderRadius: BorderRadius.circular(28),
           border: Border.all(
-            color: const Color(0xFF22C55E).withValues(alpha: 0.5),
+            color: context.hc.success.withValues(alpha: 0.4),
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.5 : 0.2),
+              color: context.hc.shadow,
               blurRadius: 24,
               offset: const Offset(0, 8),
             ),
@@ -39,29 +38,32 @@ class NavigationArrivalCard extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Celebratory Green Checkmark Badge
+            // Celebratory Sage Checkmark Badge
             Container(
               width: 72,
               height: 72,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF22C55E), Color(0xFF16A34A)],
+                gradient: LinearGradient(
+                  colors: [
+                    context.hc.success,
+                    context.hc.success.withValues(alpha: 0.85),
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF22C55E).withValues(alpha: 0.4),
+                    color: context.hc.success.withValues(alpha: 0.35),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
                 ],
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.check_rounded,
                 size: 42,
-                color: Colors.white,
+                color: context.hc.onPrimary,
               ),
             ),
             const SizedBox(height: 18),
@@ -69,16 +71,18 @@ class NavigationArrivalCard extends StatelessWidget {
             // Title
             Text(
               context.tr('maps.alhamdulillah'),
-              style: const TextStyle(
-                fontSize: 22,
+              style: context.text.titleLarge.copyWith(
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF16A34A),
+                color: context.hc.success,
               ),
             ),
             const SizedBox(height: 6),
             Text(
               context.tr('maps.arrivedNotice'),
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              style: context.text.titleMedium.copyWith(
+                fontWeight: FontWeight.w700,
+                color: context.hc.textPrimary,
+              ),
             ),
             const SizedBox(height: 8),
 
@@ -86,28 +90,23 @@ class NavigationArrivalCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.darkSurfaceContainer
-                    : const Color(0xFFF1F5F9),
+                color: context.hc.surfaceSubtle,
                 borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(color: context.hc.border, width: 1.0),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
-                    Icons.place_rounded,
-                    size: 16,
-                    color: Color(0xFFE11D48),
-                  ),
+                  Icon(Icons.place_rounded, size: 16, color: context.hc.danger),
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
                       destTitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 13.5,
+                      style: context.text.bodyMedium.copyWith(
                         fontWeight: FontWeight.w600,
+                        color: context.hc.textPrimary,
                       ),
                     ),
                   ),
@@ -127,8 +126,8 @@ class NavigationArrivalCard extends StatelessWidget {
                     mapCtrl.clearRoute();
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF22C55E),
-                    foregroundColor: Colors.white,
+                    backgroundColor: context.hc.success,
+                    foregroundColor: context.hc.onPrimary,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 12,
@@ -142,9 +141,10 @@ class NavigationArrivalCard extends StatelessWidget {
                     fit: BoxFit.scaleDown,
                     child: Text(
                       context.tr('maps.finish'),
-                      style: const TextStyle(
+                      style: context.text.labelLarge.copyWith(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
+                        color: context.hc.onPrimary,
                       ),
                     ),
                   ),

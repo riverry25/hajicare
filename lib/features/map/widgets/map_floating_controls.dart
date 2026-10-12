@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../../core/locales/app_localizations.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_context.dart';
 
 class MapFloatingControls extends StatefulWidget {
   final VoidCallback? onCompassTap;
@@ -87,7 +87,7 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
   @override
   Widget build(BuildContext context) {
     final topOffset = MediaQuery.of(context).padding.top + 155;
-    final isDark = AppColors.isDark(context);
+    final hc = context.hc;
 
     return Positioned(
       top: topOffset,
@@ -123,21 +123,20 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                           height: 46,
                           decoration: BoxDecoration(
                             color: _isExpanded
-                                ? AppColors.espressoDark
-                                : (isDark
-                                      ? AppColors.darkSurface
-                                      : AppColors.surfaceWhite),
+                                ? hc.primary
+                                : hc.surface.withValues(alpha: 0.95),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: _isExpanded
-                                  ? AppColors.goldPrimary
-                                  : (isDark
-                                        ? Colors.white.withValues(alpha: 0.12)
-                                        : AppColors.goldLight.withValues(
-                                            alpha: 0.35,
-                                          )),
+                              color: _isExpanded ? hc.accent : hc.border,
                               width: 1.2,
                             ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: hc.shadow,
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
                           ),
                           child: Stack(
                             alignment: Alignment.center,
@@ -147,10 +146,8 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                                 progress: _expandAnimation,
                                 size: 22,
                                 color: _isExpanded
-                                    ? AppColors.goldPrimary
-                                    : (isDark
-                                          ? Colors.white
-                                          : AppColors.espressoDark),
+                                    ? hc.onPrimary
+                                    : hc.textPrimary,
                               ),
                               if (widget.isLiveTracking && !_isExpanded)
                                 Positioned(
@@ -159,8 +156,8 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                                   child: Container(
                                     width: 7,
                                     height: 7,
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.statusSafe,
+                                    decoration: BoxDecoration(
+                                      color: hc.success,
                                       shape: BoxShape.circle,
                                     ),
                                   ),
@@ -188,15 +185,15 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                           _buildControlButton(
                             context: context,
                             icon: Icons.explore_rounded,
-                            color: AppColors.goldPrimary,
+                            color: hc.accent,
                             tooltip: context.tr('maps.compassDirection'),
                             onTap: widget.onCompassTap,
                             child: Transform.rotate(
                               angle: -widget.compassRotation * (math.pi / 180),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.explore_rounded,
                                 size: 24,
-                                color: AppColors.goldPrimary,
+                                color: hc.accent,
                               ),
                             ),
                           ),
@@ -207,15 +204,13 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                             context: context,
                             icon: Icons.my_location_rounded,
                             color: widget.isLiveTracking
-                                ? AppColors.canvasCream
-                                : AppColors.espressoDark,
+                                ? hc.onPrimary
+                                : hc.textPrimary,
                             bgColor: widget.isLiveTracking
-                                ? AppColors.espressoDark
-                                : (isDark
-                                      ? AppColors.darkSurface
-                                      : AppColors.surfaceWhite),
+                                ? hc.primary
+                                : hc.surface.withValues(alpha: 0.95),
                             borderColor: widget.isLiveTracking
-                                ? AppColors.goldPrimary
+                                ? hc.accent
                                 : null,
                             tooltip: context.tr('maps.centerMyLocation'),
                             onTap: widget.onLocationTap,
@@ -226,8 +221,8 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2.2,
                                       color: widget.isLiveTracking
-                                          ? AppColors.goldPrimary
-                                          : AppColors.espressoDark,
+                                          ? hc.accent
+                                          : hc.primary,
                                     ),
                                   )
                                 : Stack(
@@ -239,10 +234,8 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                                             : Icons.location_searching_rounded,
                                         size: 22,
                                         color: widget.isLiveTracking
-                                            ? AppColors.canvasCream
-                                            : (isDark
-                                                  ? Colors.white
-                                                  : AppColors.espressoDark),
+                                            ? hc.onPrimary
+                                            : hc.textPrimary,
                                       ),
                                       if (widget.isLiveTracking)
                                         Positioned(
@@ -251,8 +244,8 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                                           child: Container(
                                             width: 7,
                                             height: 7,
-                                            decoration: const BoxDecoration(
-                                              color: AppColors.statusSafe,
+                                            decoration: BoxDecoration(
+                                              color: hc.success,
                                               shape: BoxShape.circle,
                                             ),
                                           ),
@@ -267,17 +260,19 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                               widget.onZoomOutTap != null) ...[
                             Container(
                               decoration: BoxDecoration(
-                                color: isDark
-                                    ? AppColors.darkSurface
-                                    : AppColors.surfaceWhite,
+                                color: hc.surface.withValues(alpha: 0.95),
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.12)
-                                      : AppColors.goldLight.withValues(
-                                          alpha: 0.35,
-                                        ),
+                                  color: hc.border,
+                                  width: 1.2,
                                 ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: hc.shadow,
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
                               ),
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
@@ -295,11 +290,7 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                                     Divider(
                                       height: 1,
                                       thickness: 1,
-                                      color: isDark
-                                          ? Colors.white.withValues(alpha: 0.08)
-                                          : AppColors.goldLight.withValues(
-                                              alpha: 0.25,
-                                            ),
+                                      color: hc.border,
                                     ),
                                   if (widget.onZoomOutTap != null)
                                     _buildMicroButton(
@@ -319,12 +310,8 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                           _buildControlButton(
                             context: context,
                             icon: Icons.groups_rounded,
-                            color: isDark
-                                ? Colors.white
-                                : AppColors.espressoDark,
-                            bgColor: isDark
-                                ? AppColors.darkSurface
-                                : AppColors.surfaceWhite,
+                            color: hc.textPrimary,
+                            bgColor: hc.surface.withValues(alpha: 0.95),
                             tooltip: context.tr('maps.focusAllMembers'),
                             onTap: widget.onFitAllTap,
                           ),
@@ -334,10 +321,8 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                           _buildControlButton(
                             context: context,
                             icon: Icons.layers_rounded,
-                            color: AppColors.tanMedium,
-                            bgColor: isDark
-                                ? AppColors.darkSurface
-                                : AppColors.surfaceWhite,
+                            color: hc.accent,
+                            bgColor: hc.surface.withValues(alpha: 0.95),
                             tooltip: context.tr('maps.switchMapLayer'),
                             onTap: widget.onLayersTap,
                           ),
@@ -347,13 +332,9 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
                           _buildControlButton(
                             context: context,
                             icon: Icons.ring_volume_rounded,
-                            color: AppColors.espressoDark,
-                            bgColor: AppColors.secondaryContainer.withValues(
-                              alpha: 0.85,
-                            ),
-                            borderColor: AppColors.goldPrimary.withValues(
-                              alpha: 0.5,
-                            ),
+                            color: hc.primary,
+                            bgColor: hc.primaryContainer.withValues(alpha: 0.9),
+                            borderColor: hc.accent.withValues(alpha: 0.5),
                             tooltip: context.tr('maps.ringSmartBand'),
                             onTap: widget.onBandTap,
                           ),
@@ -374,13 +355,13 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
     required BuildContext context,
     required IconData icon,
     required Color color,
-    Color bgColor = AppColors.surfaceWhite,
+    Color? bgColor,
     Color? borderColor,
     String? tooltip,
     VoidCallback? onTap,
     Widget? child,
   }) {
-    final isDark = AppColors.isDark(context);
+    final hc = context.hc;
     final button = Material(
       color: Colors.transparent,
       child: InkWell(
@@ -390,16 +371,16 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: bgColor,
+            color: bgColor ?? hc.surface.withValues(alpha: 0.95),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color:
-                  borderColor ??
-                  (isDark
-                      ? Colors.white.withValues(alpha: 0.12)
-                      : AppColors.goldLight.withValues(alpha: 0.35)),
-              width: 1.2,
-            ),
+            border: Border.all(color: borderColor ?? hc.border, width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: hc.shadow,
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
           child: Center(child: child ?? Icon(icon, size: 22, color: color)),
         ),
@@ -424,7 +405,7 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
     bool isTop = false,
     bool isBottom = false,
   }) {
-    final isDark = AppColors.isDark(context);
+    final hc = context.hc;
     return Semantics(
       button: true,
       label: tooltip,
@@ -441,13 +422,7 @@ class _MapFloatingControlsState extends State<MapFloatingControls>
             child: SizedBox(
               width: 48,
               height: 48,
-              child: Center(
-                child: Icon(
-                  icon,
-                  size: 20,
-                  color: isDark ? Colors.white : AppColors.espressoDark,
-                ),
-              ),
+              child: Center(child: Icon(icon, size: 20, color: hc.textPrimary)),
             ),
           ),
         ),

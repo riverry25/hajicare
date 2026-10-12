@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/locales/app_localizations.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_context.dart';
 import '../../../../core/utils/distance_formatter.dart';
 import '../../controllers/map_controller.dart';
 
@@ -16,7 +16,6 @@ class NavigationTopCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Positioned(
@@ -37,20 +36,18 @@ class NavigationTopCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: isDark
-                    ? [const Color(0xFF14241C), const Color(0xFF1C3227)]
-                    : [const Color(0xFF0F3E2E), const Color(0xFF19593E)],
+                colors: [context.hc.brandDark, context.hc.brand],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(22),
               border: Border.all(
-                color: const Color(0xFFD4AF37).withValues(alpha: 0.45),
+                color: context.hc.accent.withValues(alpha: 0.45),
                 width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.35),
+                  color: context.hc.shadow,
                   blurRadius: 18,
                   offset: const Offset(0, 6),
                 ),
@@ -63,14 +60,14 @@ class NavigationTopCard extends StatelessWidget {
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD4AF37).withValues(alpha: 0.22),
+                    color: context.hc.accent.withValues(alpha: 0.22),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: const Color(0xFFD4AF37).withValues(alpha: 0.6),
+                      color: context.hc.accent.withValues(alpha: 0.6),
                       width: 1.5,
                     ),
                   ),
-                  child: Icon(icon, size: 32, color: const Color(0xFFF6E05E)),
+                  child: Icon(icon, size: 32, color: context.hc.accent),
                 ),
                 const SizedBox(width: 14),
 
@@ -84,9 +81,8 @@ class NavigationTopCard extends StatelessWidget {
                       if (distanceMeters != null)
                         Text(
                           DistanceFormatter.format(distanceMeters),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
+                          style: context.text.headlineSmall.copyWith(
+                            color: context.hc.onPrimary,
                             fontWeight: FontWeight.w800,
                             letterSpacing: -0.4,
                           ),
@@ -96,9 +92,8 @@ class NavigationTopCard extends StatelessWidget {
                         instruction,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.95),
-                          fontSize: 15,
+                        style: context.text.bodyMedium.copyWith(
+                          color: context.hc.onPrimary.withValues(alpha: 0.95),
                           fontWeight: FontWeight.w700,
                           height: 1.2,
                         ),
@@ -108,10 +103,10 @@ class NavigationTopCard extends StatelessWidget {
                         const SizedBox(height: 3),
                         Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.location_on_rounded,
                               size: 13,
-                              color: Color(0xFFD4AF37),
+                              color: context.hc.accent,
                             ),
                             const SizedBox(width: 4),
                             Expanded(
@@ -119,9 +114,8 @@ class NavigationTopCard extends StatelessWidget {
                                 destName,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Color(0xFFD4AF37),
-                                  fontSize: 12,
+                                style: context.text.bodySmall.copyWith(
+                                  color: context.hc.accent,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -146,8 +140,8 @@ class NavigationTopCard extends StatelessWidget {
                         ? Icons.volume_up_rounded
                         : Icons.volume_off_rounded,
                     color: isVoiceEnabled
-                        ? const Color(0xFFD4AF37)
-                        : Colors.white.withValues(alpha: 0.5),
+                        ? context.hc.accent
+                        : context.hc.onPrimary.withValues(alpha: 0.5),
                     size: 24,
                   ),
                 ),

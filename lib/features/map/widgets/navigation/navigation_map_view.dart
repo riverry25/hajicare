@@ -10,7 +10,7 @@ import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart' as ll;
 import 'package:maplibre_gl/maplibre_gl.dart' as ml;
 import '../../../../core/constants/app_constants.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/theme_context.dart';
 import '../../controllers/map_controller.dart';
 
 /// Helper to determine if native MapLibre GL is supported on the current platform.
@@ -355,7 +355,7 @@ class _NavigationMapViewState extends State<NavigationMapView> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
+    final isDark = context.hc.isDark;
 
     if (isMapLibreSupported) {
       return _buildMapLibreView(isDark);

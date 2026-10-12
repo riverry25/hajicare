@@ -5,8 +5,8 @@ import 'package:get/get.dart';
 import '../../../../core/models/filter_chip_item.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/state/hajicare_controller.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/theme_context.dart';
 import '../../../../core/widgets/animated_ping_dot.dart';
 import 'map_voice_search_sheet.dart';
 
@@ -100,7 +100,7 @@ class _MapTopHeaderState extends State<MapTopHeader> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
+    final isDark = context.hc.isDark;
     final topSafeArea = MediaQuery.of(context).padding.top;
     final hasRoom =
         widget.roomName != null && widget.roomName!.trim().isNotEmpty;
@@ -117,7 +117,7 @@ class _MapTopHeaderState extends State<MapTopHeader> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                (isDark ? Colors.black : Colors.white).withValues(
+                (isDark ? Colors.black : context.hc.canvas).withValues(
                   alpha: isDark ? 0.35 : 0.20,
                 ),
                 Colors.transparent,
@@ -137,7 +137,7 @@ class _MapTopHeaderState extends State<MapTopHeader> {
                   child: Row(
                     children: [
                       // GPS Tracking Status Pill
-                      _buildGpsStatusPill(isDark),
+                      _buildGpsStatusPill(context, isDark),
 
                       const SizedBox(width: 8),
 
@@ -151,8 +151,8 @@ class _MapTopHeaderState extends State<MapTopHeader> {
 
                       // Emergency SOS Quick Button
                       Get.isRegistered<HajiCareController>()
-                          ? Obx(() => _buildSosButton())
-                          : _buildSosButton(),
+                          ? Obx(() => _buildSosButton(context))
+                          : _buildSosButton(context),
                     ],
                   ),
                 ),
@@ -181,21 +181,16 @@ class _MapTopHeaderState extends State<MapTopHeader> {
   // ROW 1 WIDGETS (FLOATING OVER MAP)
   // ===========================================================================
 
-  Widget _buildGpsStatusPill(bool isDark) {
+  Widget _buildGpsStatusPill(BuildContext context, bool isDark) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : Colors.white,
+        color: context.hc.surface,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.12)
-              : const Color(0xFFDADCE0),
-          width: 1,
-        ),
+        border: Border.all(color: context.hc.border, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.08),
+            color: context.hc.shadow,
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -204,14 +199,14 @@ class _MapTopHeaderState extends State<MapTopHeader> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const AnimatedPingDot(color: AppColors.statusPositive, size: 7),
+          AnimatedPingDot(color: context.hc.success, size: 7),
           const SizedBox(width: 6),
           Text(
             widget.gpsAccuracy > 0
                 ? 'GPS ±${widget.gpsAccuracy.round()}m'
                 : context.tr('maps.gpsActive'),
             style: TextStyle(
-              color: isDark ? Colors.white : const Color(0xFF3C4043),
+              color: context.hc.textPrimary,
               fontWeight: FontWeight.w700,
               fontSize: 10.5,
               letterSpacing: 0.1,
@@ -238,17 +233,15 @@ class _MapTopHeaderState extends State<MapTopHeader> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSurface : Colors.white,
+            color: context.hc.surface,
             borderRadius: BorderRadius.circular(AppRadius.pill),
             border: Border.all(
-              color: isDark
-                  ? AppColors.goldPrimary.withValues(alpha: 0.50)
-                  : AppColors.goldPrimary.withValues(alpha: 0.40),
+              color: context.hc.accent.withValues(alpha: 0.45),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.08),
+                color: context.hc.shadow,
                 blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
@@ -259,7 +252,7 @@ class _MapTopHeaderState extends State<MapTopHeader> {
               Icon(
                 Icons.meeting_room_rounded,
                 size: 13,
-                color: isDark ? AppColors.goldPrimary : AppColors.espressoDark,
+                color: context.hc.accent,
               ),
               const SizedBox(width: 5),
               Expanded(
@@ -269,9 +262,7 @@ class _MapTopHeaderState extends State<MapTopHeader> {
                       TextSpan(
                         text: widget.roomName!,
                         style: TextStyle(
-                          color: isDark
-                              ? AppColors.goldPrimary
-                              : AppColors.espressoDark,
+                          color: context.hc.textPrimary,
                           fontWeight: FontWeight.w800,
                           fontSize: 11,
                         ),
@@ -279,9 +270,7 @@ class _MapTopHeaderState extends State<MapTopHeader> {
                       TextSpan(
                         text: ' • $summaryText',
                         style: TextStyle(
-                          color: isDark
-                              ? Colors.white70
-                              : const Color(0xFF5F6368),
+                          color: context.hc.textSecondary,
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
                         ),
@@ -296,7 +285,7 @@ class _MapTopHeaderState extends State<MapTopHeader> {
               Icon(
                 Icons.keyboard_arrow_down_rounded,
                 size: 14,
-                color: isDark ? AppColors.goldPrimary : AppColors.espressoDark,
+                color: context.hc.accent,
               ),
             ],
           ),
@@ -305,7 +294,7 @@ class _MapTopHeaderState extends State<MapTopHeader> {
     );
   }
 
-  Widget _buildSosButton() {
+  Widget _buildSosButton(BuildContext context) {
     int activeCount = 0;
     bool anyActive = false;
     if (Get.isRegistered<HajiCareController>()) {
@@ -326,10 +315,10 @@ class _MapTopHeaderState extends State<MapTopHeader> {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: hasActiveSos
-                  ? const [Color(0xFFFF1744), Color(0xFFD50000)]
+                  ? [context.hc.danger, context.hc.dangerDark]
                   : [
-                      Colors.black.withValues(alpha: 0.60),
-                      Colors.black.withValues(alpha: 0.70),
+                      context.hc.brand.withValues(alpha: 0.85),
+                      context.hc.brandDark.withValues(alpha: 0.95),
                     ],
             ),
             borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -357,8 +346,8 @@ class _MapTopHeaderState extends State<MapTopHeader> {
                           ? 'SOS ($activeCount)'
                           : 'SOS ${context.tr("sosActiveBadge")}')
                     : 'SOS',
-                style: TextStyle(
-                  color: hasActiveSos ? Colors.white : Colors.white70,
+                style: const TextStyle(
+                  color: Colors.white,
                   fontWeight: FontWeight.w900,
                   fontSize: 11,
                   letterSpacing: 0.8,
@@ -392,17 +381,12 @@ class _MapTopHeaderState extends State<MapTopHeader> {
     return Container(
       height: 50,
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : Colors.white,
+        color: context.hc.surface,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.12)
-              : const Color(0xFFE8EAED),
-          width: 1.0,
-        ),
+        border: Border.all(color: context.hc.border, width: 1.0),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.12),
+            color: context.hc.shadow,
             blurRadius: 14,
             offset: const Offset(0, 3),
           ),
@@ -411,16 +395,16 @@ class _MapTopHeaderState extends State<MapTopHeader> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Multi-color Google Maps style Location Pin Icon
+          // Elegant Brand/Accent Location Pin Icon
           Container(
             margin: const EdgeInsets.only(left: 14, right: 10),
             child: ShaderMask(
-              shaderCallback: (bounds) => const LinearGradient(
+              shaderCallback: (bounds) => LinearGradient(
                 colors: [
-                  Color(0xFFEA4335), // Google Red
-                  Color(0xFFFBBC05), // Google Yellow
-                  Color(0xFF34A853), // Google Green
-                  Color(0xFF4285F4), // Google Blue
+                  context.hc.brand,
+                  context.hc.accent,
+                  context.hc.success,
+                  context.hc.info,
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -445,16 +429,14 @@ class _MapTopHeaderState extends State<MapTopHeader> {
               },
               onChanged: widget.onSearchChanged,
               style: TextStyle(
-                color: isDark ? Colors.white : const Color(0xFF202124),
+                color: context.hc.textPrimary,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
               decoration: InputDecoration(
                 hintText: context.tr('maps.searchPlaceholder'),
                 hintStyle: TextStyle(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.45)
-                      : const Color(0xFF5F6368),
+                  color: context.hc.textTertiary,
                   fontSize: 14,
                 ),
                 border: InputBorder.none,
@@ -473,7 +455,7 @@ class _MapTopHeaderState extends State<MapTopHeader> {
           if (_hasSearchText)
             IconButton(
               icon: const Icon(Icons.close_rounded, size: 18),
-              color: isDark ? Colors.white70 : const Color(0xFF5F6368),
+              color: context.hc.textSecondary,
               splashRadius: 18,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -485,13 +467,9 @@ class _MapTopHeaderState extends State<MapTopHeader> {
               },
             ),
 
-          // Google Maps Blue Voice Search Button
+          // Voice Search Button
           IconButton(
-            icon: const Icon(
-              Icons.mic_rounded,
-              size: 22,
-              color: Color(0xFF1A73E8), // Google Maps Blue
-            ),
+            icon: Icon(Icons.mic_rounded, size: 22, color: context.hc.brand),
             splashRadius: 18,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
@@ -505,7 +483,7 @@ class _MapTopHeaderState extends State<MapTopHeader> {
             },
           ),
 
-          // Google Maps User Profile Avatar
+          // User Profile Avatar
           GestureDetector(
             onTap: () => Get.toNamed(AppRoutes.profile),
             child: Container(
@@ -514,15 +492,18 @@ class _MapTopHeaderState extends State<MapTopHeader> {
               margin: const EdgeInsets.only(right: 10, left: 2),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFD4AF37), Color(0xFF8C6D23)],
+                gradient: LinearGradient(
+                  colors: [
+                    context.hc.accent,
+                    context.hc.accent.withValues(alpha: 0.8),
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                border: Border.all(color: Colors.white, width: 1.5),
+                border: Border.all(color: context.hc.border, width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
+                    color: context.hc.shadow,
                     blurRadius: 4,
                     offset: const Offset(0, 1),
                   ),
@@ -536,8 +517,8 @@ class _MapTopHeaderState extends State<MapTopHeader> {
                         errorBuilder: (_, _, _) => Center(
                           child: Text(
                             initialLetter,
-                            style: const TextStyle(
-                              color: Color(0xFF1E140A),
+                            style: TextStyle(
+                              color: context.hc.onPrimary,
                               fontWeight: FontWeight.w800,
                               fontSize: 13,
                             ),
@@ -547,8 +528,8 @@ class _MapTopHeaderState extends State<MapTopHeader> {
                     : Center(
                         child: Text(
                           initialLetter,
-                          style: const TextStyle(
-                            color: Color(0xFF1E140A),
+                          style: TextStyle(
+                            color: context.hc.onPrimary,
                             fontWeight: FontWeight.w800,
                             fontSize: 13,
                           ),
@@ -593,23 +574,11 @@ class _MapTopHeaderState extends State<MapTopHeader> {
                 ),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? (isDark
-                            ? const Color(0xFF1E3A5F)
-                            : const Color(
-                                0xFFE8F0FE,
-                              )) // Google Maps active soft blue pill
-                      : (isDark
-                            ? AppColors.darkSurface
-                            : Colors.white), // Floating pure white pill
+                      ? context.hc.brand.withValues(alpha: isDark ? 0.25 : 0.12)
+                      : context.hc.surface,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                   border: Border.all(
-                    color: isSelected
-                        ? (isDark
-                              ? const Color(0xFF8AB4F8)
-                              : const Color(0xFF1A73E8))
-                        : (isDark
-                              ? Colors.white.withValues(alpha: 0.12)
-                              : const Color(0xFFDADCE0)),
+                    color: isSelected ? context.hc.brand : context.hc.border,
                     width: isSelected ? 1.4 : 1.0,
                   ),
                 ),
@@ -621,10 +590,12 @@ class _MapTopHeaderState extends State<MapTopHeader> {
                         filter.icon,
                         size: 15,
                         color: isSelected
-                            ? (isDark
-                                  ? const Color(0xFF8AB4F8)
-                                  : const Color(0xFF1A73E8))
-                            : _getCategoryIconColor(filter.label, isDark),
+                            ? context.hc.brand
+                            : _getCategoryIconColor(
+                                context,
+                                filter.label,
+                                isDark,
+                              ),
                       ),
                       const SizedBox(width: 6),
                     ],
@@ -632,10 +603,8 @@ class _MapTopHeaderState extends State<MapTopHeader> {
                       filter.label,
                       style: TextStyle(
                         color: isSelected
-                            ? (isDark
-                                  ? const Color(0xFF8AB4F8)
-                                  : const Color(0xFF1A73E8))
-                            : (isDark ? Colors.white : const Color(0xFF3C4043)),
+                            ? context.hc.brand
+                            : context.hc.textPrimary,
                         fontWeight: isSelected
                             ? FontWeight.w700
                             : FontWeight.w500,
@@ -652,24 +621,24 @@ class _MapTopHeaderState extends State<MapTopHeader> {
     );
   }
 
-  Color _getCategoryIconColor(String label, bool isDark) {
+  Color _getCategoryIconColor(BuildContext context, String label, bool isDark) {
     switch (label.toLowerCase()) {
       case 'semua':
-        return const Color(0xFF1A73E8); // Google Blue
+        return context.hc.brand;
       case 'jamaah':
-        return const Color(0xFF1E8E3E); // Google Green
+        return context.hc.success;
       case 'pendamping':
-        return const Color(0xFFD4AF37); // Warm Gold
+        return context.hc.accent;
       case 'posko medis':
-        return const Color(0xFFD93025); // Google Red
+        return context.hc.danger;
       case 'toilet & wudhu':
-        return const Color(0xFF129990); // Cyan / Teal
+        return context.hc.info;
       case 'maktab':
-        return const Color(0xFFE37400); // Amber / Orange
+        return context.hc.warning;
       case 'pos pantau':
-        return const Color(0xFF9334E6); // Purple
+        return context.hc.accent;
       default:
-        return isDark ? Colors.white70 : const Color(0xFF5F6368);
+        return context.hc.textSecondary;
     }
   }
 }
