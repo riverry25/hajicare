@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../../core/locales/app_translations.dart';
 import '../../../../core/state/hajicare_state.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_context.dart';
 import '../presentation/dashboard_typography.dart';
 import '../../room/widgets/jamaah_detail_sheet.dart';
 
@@ -32,8 +32,7 @@ class PendampingJamaahSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final headingColor = AppColors.textHeadingColor(context);
+    final headingColor = context.hc.textPrimary;
 
     final jamaahList = state.jamaahList;
 
@@ -61,23 +60,17 @@ class PendampingJamaahSelector extends StatelessWidget {
                     vertical: 2.5,
                   ),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkPrimaryContainer
-                        : AppColors.goldLight.withValues(alpha: 0.18),
+                    color: context.hc.surfaceSand,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                     border: Border.all(
-                      color: isDark
-                          ? AppColors.goldPrimary.withValues(alpha: 0.3)
-                          : AppColors.goldPrimary.withValues(alpha: 0.25),
+                      color: context.hc.border,
                       width: 1,
                     ),
                   ),
                   child: Text(
                     '${jamaahList.length} ${context.tr('room.roleJamaah')}',
                     style: DashboardTypography.captionSmall.copyWith(
-                      color: isDark
-                          ? AppColors.goldLight
-                          : AppColors.espressoDark,
+                      color: context.hc.primary,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -87,13 +80,13 @@ class PendampingJamaahSelector extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.statusSafe.withValues(
-                  alpha: isDark ? 0.15 : 0.1,
+                color: context.hc.success.withValues(
+                  alpha: context.hc.isDark ? 0.15 : 0.1,
                 ),
                 borderRadius: BorderRadius.circular(AppRadius.pill),
                 border: Border.all(
-                  color: AppColors.statusSafe.withValues(
-                    alpha: isDark ? 0.35 : 0.25,
+                  color: context.hc.success.withValues(
+                    alpha: context.hc.isDark ? 0.35 : 0.25,
                   ),
                   width: 1,
                 ),
@@ -105,11 +98,11 @@ class PendampingJamaahSelector extends StatelessWidget {
                     width: 6,
                     height: 6,
                     decoration: BoxDecoration(
-                      color: AppColors.statusSafe,
+                      color: context.hc.success,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.statusSafe.withValues(alpha: 0.6),
+                          color: context.hc.success.withValues(alpha: 0.6),
                           blurRadius: 4,
                           spreadRadius: 1,
                         ),
@@ -120,9 +113,7 @@ class PendampingJamaahSelector extends StatelessWidget {
                   Text(
                     context.tr('dashboard.radarConnected'),
                     style: DashboardTypography.captionSmall.copyWith(
-                      color: isDark
-                          ? const Color(0xFF81C784)
-                          : const Color(0xFF2E7D32),
+                      color: context.hc.success,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.1,
                     ),
@@ -148,7 +139,7 @@ class PendampingJamaahSelector extends StatelessWidget {
                   context: context,
                   jamaah: entry.value,
                   isActive: selectedIndex == entry.key,
-                  isDark: isDark,
+                  isDark: context.hc.isDark,
                   onTap: () => onSelected?.call(entry.key),
                 ),
                 const SizedBox(width: AppSpacing.sm),
@@ -182,8 +173,8 @@ class PendampingJamaahSelector extends StatelessWidget {
     required bool isDark,
     required VoidCallback onTap,
   }) {
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
+    final headingColor = context.hc.textPrimary;
+    final bodyColor = context.hc.textSecondary;
     final initial = jamaah.name.trim().isNotEmpty
         ? jamaah.name.trim()[0].toUpperCase()
         : 'J';
@@ -202,27 +193,20 @@ class PendampingJamaahSelector extends StatelessWidget {
           right: AppSpacing.md,
         ),
         decoration: BoxDecoration(
-          color: isDark
-              ? (isActive
-                    ? AppColors.darkPrimaryContainer
-                    : AppColors.darkSurface)
-              : (isActive
-                    ? AppColors.surfaceWhite
-                    : AppColors.surfaceWhite.withValues(alpha: 0.9)),
+          color: isActive
+              ? context.hc.surface
+              : context.hc.surfaceSubtle,
           borderRadius: BorderRadius.circular(AppRadius.pill),
           border: Border.all(
             color: isActive
-                ? (isDark ? AppColors.goldPrimary : AppColors.primaryContainer)
-                : (isDark
-                      ? AppColors.darkCardBorder
-                      : AppColors.lightCardBorder),
+                ? context.hc.primary
+                : context.hc.border,
             width: isActive ? 1.8 : 1.0,
           ),
           boxShadow: isActive
               ? [
                   BoxShadow(
-                    color: (isDark ? Colors.black : AppColors.espressoDark)
-                        .withValues(alpha: 0.1),
+                    color: context.hc.shadow,
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -241,15 +225,10 @@ class PendampingJamaahSelector extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
-                      colors: isDark
-                          ? [
-                              AppColors.darkPrimaryContainer,
-                              AppColors.darkSurfaceContainerHighest,
-                            ]
-                          : [
-                              AppColors.espressoDark,
-                              AppColors.primaryContainer,
-                            ],
+                      colors: [
+                        context.hc.primary,
+                        context.hc.primaryContainer,
+                      ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -257,8 +236,8 @@ class PendampingJamaahSelector extends StatelessWidget {
                   alignment: Alignment.center,
                   child: Text(
                     initial,
-                    style: const TextStyle(
-                      color: AppColors.surfaceWhite,
+                    style: TextStyle(
+                      color: context.hc.onPrimary,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
@@ -272,13 +251,11 @@ class PendampingJamaahSelector extends StatelessWidget {
                     height: 12,
                     decoration: BoxDecoration(
                       color: jamaah.isGpsActive
-                          ? AppColors.statusSafe
-                          : AppColors.outline,
+                          ? context.hc.success
+                          : context.hc.neutral,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: isDark
-                            ? AppColors.darkSurface
-                            : AppColors.surfaceWhite,
+                        color: context.hc.surface,
                         width: 2,
                       ),
                     ),
@@ -312,7 +289,7 @@ class PendampingJamaahSelector extends StatelessWidget {
                           vertical: 1,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.sosEmergency,
+                          color: context.hc.danger,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: const Text(

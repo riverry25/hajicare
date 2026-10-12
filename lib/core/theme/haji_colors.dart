@@ -418,4 +418,42 @@ class HajiColors extends ThemeExtension<HajiColors> {
       currency: t < 0.5 ? currency : other.currency,
     );
   }
+
+  /// Convenience helper to detect whether this instance represents a dark palette.
+  bool get isDark => canvas.computeLuminance() < 0.2;
+
+  /// Semantic sand tokens (Desert Sand & Espresso palette)
+  Color get sand => surfaceSand;
+  Color get sandLight => isDark ? const Color(0xFF352A21) : const Color(0xFFF6F1EA);
+  Color get sandDark => borderStrong;
+  Color get surfaceVariant => surfaceSubtle;
+
+  /// Convenience aliases for brand and border ergonomics
+  Color get brand => primary;
+  Color get onBrand => onPrimary;
+  Color get brandAccent => accent;
+  Color get borderSubtle => border;
+  Color get brandDark => isDark ? const Color(0xFF1F140D) : const Color(0xFF2A1D15);
+  Color get shadowSubtle => shadow.withValues(alpha: isDark ? 0.4 : 0.08);
+
+  /// Brand gradients
+  LinearGradient get heroGradient => LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: isDark
+            ? const [Color(0xFF28201A), Color(0xFF15100C)]
+            : const [Color(0xFF3B2A1F), Color(0xFF2A1D15)],
+      );
+
+  LinearGradient get dangerGradient => LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [danger, dangerContainer],
+      );
+
+  LinearGradient get sandGradient => LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [surfaceSubtle, surfaceSand],
+      );
 }

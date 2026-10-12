@@ -7,9 +7,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/locales/app_translations.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/state/hajicare_state.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_context.dart';
 import '../presentation/dashboard_typography.dart';
 import '../../../../core/widgets/app_card.dart';
 import 'package:vibration/vibration.dart';
@@ -66,12 +66,12 @@ class PendampingSosBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.cardPadding),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFFE11D48), // Rose Crimson
-            Color(0xFFBE123C), // Deep Crimson
+            context.hc.danger,
+            context.hc.danger.withValues(alpha: 0.88),
           ],
         ),
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -81,7 +81,7 @@ class PendampingSosBanner extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFBE123C).withValues(alpha: 0.35),
+            color: context.hc.danger.withValues(alpha: 0.28),
             blurRadius: 18,
             offset: const Offset(0, 5),
           ),
@@ -199,7 +199,7 @@ class PendampingSosBanner extends StatelessWidget {
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFFBE123C),
+                      foregroundColor: context.hc.danger,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
@@ -264,15 +264,12 @@ class PendampingSosBanner extends StatelessWidget {
   }
 
   Widget _buildStandbySos(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
+    final headingColor = context.hc.textPrimary;
+    final bodyColor = context.hc.textSecondary;
 
     return AppCard(
       padding: const EdgeInsets.all(AppSpacing.cardPadding),
-      borderColor: isDark
-          ? AppColors.darkCardBorder
-          : AppColors.lightCardBorder,
+      borderColor: context.hc.border,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -280,14 +277,12 @@ class PendampingSosBanner extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.darkPrimaryContainer
-                  : AppColors.canvasCream,
+              color: context.hc.primaryContainer,
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.health_and_safety_rounded,
-              color: isDark ? AppColors.goldLight : AppColors.secondary,
+              color: context.hc.primary,
               size: 24,
             ),
           ),
@@ -317,19 +312,13 @@ class PendampingSosBanner extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? AppColors.darkPrimaryContainer
-                            : AppColors.secondaryContainer.withValues(
-                                alpha: 0.6,
-                              ),
+                        color: context.hc.surfaceSand,
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
                       child: Text(
                         context.tr('sosStandbyBadge'),
                         style: DashboardTypography.captionSmall.copyWith(
-                          color: isDark
-                              ? AppColors.goldLight
-                              : AppColors.onSecondaryContainer,
+                          color: context.hc.primary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -350,12 +339,8 @@ class PendampingSosBanner extends StatelessWidget {
                       child: _buildSmallBtn(
                         icon: Icons.volume_up_rounded,
                         label: context.tr('testAlarmSignal'),
-                        bg: isDark
-                            ? AppColors.darkSurfaceContainer
-                            : AppColors.canvasCream,
-                        fg: isDark
-                            ? AppColors.goldLight
-                            : AppColors.espressoDark,
+                        bg: context.hc.surfaceSubtle,
+                        fg: context.hc.textPrimary,
                         outline: false,
                         onTap: () => _handleTestAlarm(context),
                       ),
@@ -366,9 +351,9 @@ class PendampingSosBanner extends StatelessWidget {
                         icon: Icons.call_rounded,
                         label: context.tr('responseCenter'),
                         bg: Colors.transparent,
-                        fg: AppColors.sosEmergency,
+                        fg: context.hc.danger,
                         outline: true,
-                        borderColor: AppColors.sosEmergency.withValues(
+                        borderColor: context.hc.danger.withValues(
                           alpha: 0.4,
                         ),
                         onTap: () => _handleResponseCenter(context),
@@ -385,7 +370,7 @@ class PendampingSosBanner extends StatelessWidget {
   }
 
   Future<void> _handleTestAlarm(BuildContext context) async {
-    final isDark = AppColors.isDark(context);
+    final isDark = context.hc.isDark;
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -429,14 +414,14 @@ class PendampingSosBanner extends StatelessWidget {
 
   void _handleResponseCenter(BuildContext context) {
     HapticFeedback.selectionClick();
-    final isDark = AppColors.isDark(context);
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
+    final isDark = context.hc.isDark;
+    final headingColor = context.hc.textPrimary;
+    final bodyColor = context.hc.textSecondary;
 
     showModalBottomSheet(
       context: context,
       useRootNavigator: true,
-      backgroundColor: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+      backgroundColor: context.hc.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
@@ -459,9 +444,7 @@ class PendampingSosBanner extends StatelessWidget {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkOutline
-                          : AppColors.outlineVariant,
+                      color: context.hc.borderStrong,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -473,16 +456,16 @@ class PendampingSosBanner extends StatelessWidget {
                       width: 42,
                       height: 42,
                       decoration: BoxDecoration(
-                        color: AppColors.sosEmergency.withValues(alpha: 0.12),
+                        color: context.hc.danger.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: AppColors.sosEmergency.withValues(alpha: 0.3),
+                          color: context.hc.danger.withValues(alpha: 0.3),
                         ),
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Icon(
                           Icons.phone_in_talk_rounded,
-                          color: AppColors.sosEmergency,
+                          color: context.hc.danger,
                           size: 22,
                         ),
                       ),
@@ -573,12 +556,12 @@ class PendampingSosBanner extends StatelessWidget {
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.sosEmergency,
+                      backgroundColor: context.hc.danger,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
-                      elevation: 2,
+                      elevation: 0,
                     ),
                   ),
                 ),
@@ -608,14 +591,10 @@ class PendampingSosBanner extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: isDark
-                ? AppColors.darkSurfaceContainer
-                : AppColors.canvasCream,
+            color: context.hc.surfaceSubtle,
             borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(
-              color: isDark
-                  ? AppColors.darkOutlineVariant
-                  : const Color(0xFFE2E8F0),
+              color: context.hc.border,
             ),
           ),
           child: Row(
@@ -624,11 +603,11 @@ class PendampingSosBanner extends StatelessWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: AppColors.sosEmergency.withValues(alpha: 0.12),
+                  color: context.hc.danger.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
-                  child: Icon(icon, size: 20, color: AppColors.sosEmergency),
+                  child: Icon(icon, size: 20, color: context.hc.danger),
                 ),
               ),
               const SizedBox(width: 12),
@@ -661,8 +640,8 @@ class PendampingSosBanner extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       number,
-                      style: const TextStyle(
-                        color: AppColors.sosEmergency,
+                      style: TextStyle(
+                        color: context.hc.danger,
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.3,
@@ -674,9 +653,9 @@ class PendampingSosBanner extends StatelessWidget {
               // Call direct button
               IconButton(
                 tooltip: 'Panggil',
-                icon: const Icon(
+                icon: Icon(
                   Icons.phone_forwarded_rounded,
-                  color: AppColors.statusSafe,
+                  color: context.hc.success,
                   size: 21,
                 ),
                 onPressed: () => _makePhoneCall(context, number),
@@ -832,15 +811,12 @@ class _AlarmTestDialogState extends State<_AlarmTestDialog>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = widget.isDark;
     return Dialog(
-      backgroundColor: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+      backgroundColor: context.hc.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.lg),
         side: BorderSide(
-          color: isDark
-              ? AppColors.darkOutlineVariant
-              : const Color(0xFFE2E8F0),
+          color: context.hc.border,
         ),
       ),
       child: Padding(
@@ -856,17 +832,17 @@ class _AlarmTestDialogState extends State<_AlarmTestDialog>
                 width: 72,
                 height: 72,
                 decoration: BoxDecoration(
-                  color: AppColors.sosEmergency.withValues(alpha: 0.15),
+                  color: context.hc.danger.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: AppColors.sosEmergency.withValues(alpha: 0.6),
+                    color: context.hc.danger.withValues(alpha: 0.6),
                     width: 2.5,
                   ),
                 ),
-                child: const Center(
+                child: Center(
                   child: Icon(
                     Icons.volume_up_rounded,
-                    color: AppColors.sosEmergency,
+                    color: context.hc.danger,
                     size: 36,
                   ),
                 ),
@@ -877,9 +853,7 @@ class _AlarmTestDialogState extends State<_AlarmTestDialog>
               context.tr('dashboard.alarmTestRunning'),
               style: DashboardTypography.titleMedium.copyWith(
                 fontWeight: FontWeight.w800,
-                color: isDark
-                    ? AppColors.darkTextHeading
-                    : AppColors.espressoDark,
+                color: context.hc.textPrimary,
                 fontSize: 17,
               ),
               textAlign: TextAlign.center,
@@ -888,7 +862,7 @@ class _AlarmTestDialogState extends State<_AlarmTestDialog>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.sosEmergency.withValues(alpha: 0.1),
+                color: context.hc.danger.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
               child: Row(
@@ -897,16 +871,16 @@ class _AlarmTestDialogState extends State<_AlarmTestDialog>
                   Container(
                     width: 8,
                     height: 8,
-                    decoration: const BoxDecoration(
-                      color: AppColors.sosEmergency,
+                    decoration: BoxDecoration(
+                      color: context.hc.danger,
                       shape: BoxShape.circle,
                     ),
                   ),
                   const SizedBox(width: 6),
                   Text(
                     'Sirene & Getar Aktif (${_secondsElapsed.toString().padLeft(2, '0')}s)',
-                    style: const TextStyle(
-                      color: AppColors.sosEmergency,
+                    style: TextStyle(
+                      color: context.hc.danger,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
@@ -918,7 +892,7 @@ class _AlarmTestDialogState extends State<_AlarmTestDialog>
             Text(
               context.tr('dashboard.alarmTestDone'),
               style: DashboardTypography.bodySmall.copyWith(
-                color: isDark ? AppColors.darkTextBody : AppColors.textBody,
+                color: context.hc.textSecondary,
                 height: 1.45,
               ),
               textAlign: TextAlign.center,
@@ -937,13 +911,13 @@ class _AlarmTestDialogState extends State<_AlarmTestDialog>
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.espressoDark,
-                  foregroundColor: AppColors.surfaceWhite,
+                  backgroundColor: context.hc.primary,
+                  foregroundColor: context.hc.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
-                  elevation: 2,
+                  elevation: 0,
                 ),
               ),
             ),

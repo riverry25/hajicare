@@ -5,9 +5,9 @@ import '../../../../core/locales/app_translations.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/services/app_alert_service.dart';
 import '../../../../core/state/hajicare_state.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_context.dart';
 import '../presentation/dashboard_typography.dart';
 import 'package:vibration/vibration.dart';
 
@@ -70,9 +70,9 @@ class JamaahSosBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final bodyColor = AppColors.textBodyColor(context);
-    final headingColor = AppColors.textHeadingColor(context);
+    final isDark = context.hc.isDark;
+    final bodyColor = context.hc.textSecondary;
+    final headingColor = context.hc.textPrimary;
 
     final hasActiveRoom =
         state.activeRoomId.value != null &&
@@ -81,13 +81,11 @@ class JamaahSosBanner extends StatelessWidget {
     if (!hasActiveRoom) {
       return Container(
         decoration: BoxDecoration(
-          color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+          color: context.hc.surface,
           borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(
-            color: isDark
-                ? AppColors.darkCardBorder
-                : AppColors.goldLight.withValues(alpha: 0.5),
-            width: 1.5,
+            color: context.hc.border,
+            width: 1.2,
           ),
         ),
         padding: const EdgeInsets.all(AppSpacing.cardPadding),
@@ -100,14 +98,12 @@ class JamaahSosBanner extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkPrimaryContainer
-                        : AppColors.canvasCream,
+                    color: context.hc.primaryContainer,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.lock_outline_rounded,
-                    color: isDark ? AppColors.goldLight : AppColors.goldDark,
+                    color: context.hc.primary,
                     size: 26,
                   ),
                 ),
@@ -150,10 +146,8 @@ class JamaahSosBanner extends StatelessWidget {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isDark
-                      ? AppColors.darkPrimary
-                      : AppColors.primaryGold,
-                  foregroundColor: Colors.white,
+                  backgroundColor: context.hc.primary,
+                  foregroundColor: context.hc.onPrimary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
@@ -168,16 +162,16 @@ class JamaahSosBanner extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+        color: context.hc.surface,
         borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(
-          color: AppColors.sosEmergency.withValues(alpha: isDark ? 0.35 : 0.25),
+          color: context.hc.danger.withValues(alpha: isDark ? 0.35 : 0.25),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.sosEmergency.withValues(
-              alpha: isDark ? 0.08 : 0.08,
+            color: context.hc.danger.withValues(
+              alpha: isDark ? 0.08 : 0.06,
             ),
             blurRadius: 18,
             offset: const Offset(0, 4),
@@ -199,15 +193,18 @@ class JamaahSosBanner extends StatelessWidget {
                   vertical: AppSpacing.md,
                 ),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFE53935), Color(0xFFD32F2F)],
+                  gradient: LinearGradient(
+                    colors: [
+                      context.hc.danger,
+                      context.hc.danger.withValues(alpha: 0.88),
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.sosEmergency.withValues(alpha: 0.35),
+                      color: context.hc.danger.withValues(alpha: 0.28),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -271,7 +268,7 @@ class JamaahSosBanner extends StatelessWidget {
               Icon(
                 Icons.security_rounded,
                 size: 16,
-                color: isDark ? AppColors.goldLight : AppColors.secondary,
+                color: context.hc.accent,
               ),
               const SizedBox(width: 6),
               Flexible(

@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../../core/locales/app_translations.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/state/hajicare_controller.dart';
+import '../../../../core/theme/theme_context.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -67,9 +68,9 @@ class PendampingRadarCard extends StatelessWidget {
     final state = Get.isRegistered<HajiCareController>()
         ? Get.find<HajiCareController>()
         : null;
-    final isDark = AppColors.isDark(context);
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
+    final isDark = context.hc.isDark;
+    final headingColor = context.hc.textPrimary;
+    final bodyColor = context.hc.textSecondary;
 
     return Obx(() {
       final hasActiveRoom =
@@ -79,9 +80,7 @@ class PendampingRadarCard extends StatelessWidget {
       if (!hasActiveRoom) {
         return AppCard(
           padding: const EdgeInsets.all(AppSpacing.cardPadding),
-          borderColor: isDark
-              ? AppColors.darkCardBorder
-              : AppColors.goldLight.withValues(alpha: 0.5),
+          borderColor: context.hc.border,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -91,14 +90,12 @@ class PendampingRadarCard extends StatelessWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkPrimaryContainer
-                          : AppColors.canvasCream,
+                      color: context.hc.surfaceVariant,
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       Icons.lock_outline_rounded,
-                      color: isDark ? AppColors.goldLight : AppColors.goldDark,
+                      color: context.hc.primary,
                       size: 26,
                     ),
                   ),
@@ -141,12 +138,8 @@ class PendampingRadarCard extends StatelessWidget {
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isDark
-                        ? AppColors.darkPrimaryContainer
-                        : AppColors.espressoDark,
-                    foregroundColor: isDark
-                        ? AppColors.darkPrimary
-                        : Colors.white,
+                    backgroundColor: context.hc.primary,
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
@@ -177,22 +170,22 @@ class PendampingRadarCard extends StatelessWidget {
 
       return Container(
         decoration: BoxDecoration(
-          color: AppColors.cardBgColor(context),
+          color: context.hc.surface,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: isSos
-                ? AppColors.sosEmergency.withValues(alpha: 0.7)
-                : AppColors.cardBorderColor(context),
+                ? context.hc.danger.withValues(alpha: 0.7)
+                : context.hc.border,
             width: isSos ? 1.8 : 1.2,
           ),
           boxShadow: [
             BoxShadow(
               color: isSos
-                  ? AppColors.sosEmergency.withValues(
+                  ? context.hc.danger.withValues(
                       alpha: isDark ? 0.25 : 0.15,
                     )
-                  : (isDark ? Colors.black : AppColors.espressoDark).withValues(
-                      alpha: isDark ? 0.35 : 0.08,
+                  : Colors.black.withValues(
+                      alpha: isDark ? 0.35 : 0.06,
                     ),
               blurRadius: isSos ? 22 : 18,
               offset: const Offset(0, 6),
@@ -208,41 +201,26 @@ class PendampingRadarCard extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
                 gradient: isSos
-                    ? const LinearGradient(
-                        colors: [Color(0xFF5C1010), Color(0xFF380808)],
+                    ? LinearGradient(
+                        colors: [context.hc.danger, context.hc.dangerContainer],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       )
-                    : LinearGradient(
-                        colors: isDark
-                            ? [
-                                AppColors.darkSurfaceContainerHigh,
-                                AppColors.darkSurfaceContainerHighest,
-                              ]
-                            : [
-                                AppColors.espressoDark,
-                                AppColors.primaryContainer,
-                              ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
+                    : context.hc.heroGradient,
                 border: isSos
                     ? Border.all(
-                        color: AppColors.sosEmergency.withValues(alpha: 0.6),
+                        color: context.hc.danger.withValues(alpha: 0.6),
                         width: 1.5,
                       )
                     : null,
                 boxShadow: [
                   BoxShadow(
-                    color:
-                        (isSos
-                                ? AppColors.sosEmergency
-                                : (isDark
-                                      ? Colors.black
-                                      : AppColors.espressoDark))
-                            .withValues(
-                              alpha: isSos ? 0.35 : (isDark ? 0.35 : 0.22),
-                            ),
+                    color: (isSos
+                            ? context.hc.danger
+                            : Colors.black)
+                        .withValues(
+                          alpha: isSos ? 0.35 : (isDark ? 0.35 : 0.18),
+                        ),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -257,14 +235,14 @@ class PendampingRadarCard extends StatelessWidget {
                       child: CustomPaint(
                         painter: _RadarWavesPainter(
                           waveColor: isSos
-                              ? AppColors.sosEmergency
+                              ? context.hc.danger
                               : (hasSignal
                                     ? (jamaah.tier == DistanceTier.aman
-                                          ? AppColors.goldLight
+                                          ? context.hc.sandLight
                                           : (jamaah.tier == DistanceTier.waspada
-                                                ? AppColors.distanceWarning
-                                                : AppColors.sosEmergency))
-                                    : AppColors.tanLight),
+                                                ? context.hc.warning
+                                                : context.hc.danger))
+                                    : context.hc.sand),
                           centerFraction: const Offset(0.85, 0.28),
                         ),
                       ),

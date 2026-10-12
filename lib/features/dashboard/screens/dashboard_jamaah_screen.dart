@@ -6,6 +6,7 @@ import '../../../core/locales/app_translations.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/state/app_settings_controller.dart';
 import '../../../core/state/hajicare_controller.dart';
+import '../../../core/theme/theme_context.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -57,7 +58,7 @@ class DashboardJamaahScreen extends StatelessWidget {
     return Theme(
       data: DashboardTypography.applyTo(Theme.of(context)),
       child: Scaffold(
-        backgroundColor: AppColors.scaffoldColor(context),
+        backgroundColor: context.hc.canvas,
         extendBody: true,
         body: Obx(() {
           settings?.rxLocale.value;
@@ -102,29 +103,14 @@ class DashboardJamaahScreen extends StatelessWidget {
     DashboardController dashboardCtrl,
     PrayerTimesController prayerCtrl,
   ) {
-    final isDark = AppColors.isDark(context);
-    final headingColor = AppColors.textHeadingColor(context);
-
-    final heroGradient = LinearGradient(
-      colors: isDark
-          ? [
-              const Color(0xFF1B120B),
-              const Color(0xFF281A11),
-              const Color(0xFF332115),
-            ]
-          : [
-              const Color(0xFF26170E),
-              const Color(0xFF382317),
-              const Color(0xFF4A3020),
-            ],
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-    );
+    final isDark = context.hc.isDark;
+    final headingColor = context.hc.textPrimary;
+    final heroGradient = context.hc.heroGradient;
 
     return Scaffold(
       backgroundColor: isDark
-          ? const Color(0xFF1B120B)
-          : const Color(0xFF26170E),
+          ? const Color(0xFF1B1410)
+          : const Color(0xFF3B2A1F),
       body: Container(
         decoration: BoxDecoration(gradient: heroGradient),
         child: Obx(() {

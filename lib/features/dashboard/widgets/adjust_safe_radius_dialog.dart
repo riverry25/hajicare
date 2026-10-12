@@ -5,8 +5,7 @@ import 'package:get/get.dart';
 
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_context.dart';
 import '../../../core/widgets/ribbon_fold_painter.dart';
 
 /// Modal dialog for modifying pilgrim safe radius threshold.
@@ -114,14 +113,11 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkDialog = AppColors.isDark(context);
-    final dialogBg = isDarkDialog
-        ? AppColors.darkSurface
-        : AppColors.surfaceWhite;
-    final headingClr = isDarkDialog
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyClr = isDarkDialog ? AppColors.darkTextBody : AppColors.textBody;
+    final hc = context.hc;
+    final isDarkDialog = hc.isDark;
+    final dialogBg = hc.surface;
+    final headingClr = hc.textPrimary;
+    final bodyClr = hc.textSecondary;
 
     final currentVal = int.tryParse(_radiusCtrl.text.trim());
 
@@ -148,9 +144,7 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
                 color: dialogBg,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: isDarkDialog
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : AppColors.goldLight.withValues(alpha: 0.35),
+                  color: hc.borderSubtle,
                   width: 1,
                 ),
                 boxShadow: [
@@ -172,7 +166,7 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
                     // Title
                     Text(
                       context.tr('dashboard.safeRadiusTitle'),
-                      style: AppTypography.titleMedium.copyWith(
+                      style: context.text.titleMedium.copyWith(
                         color: headingClr,
                         fontWeight: FontWeight.w800,
                         fontSize: 17.5,
@@ -184,7 +178,7 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
                     // Description
                     Text(
                       context.tr('dashboard.safeRadiusDesc'),
-                      style: AppTypography.bodySmall.copyWith(
+                      style: context.text.bodySmall.copyWith(
                         color: bodyClr.withValues(alpha: 0.85),
                         height: 1.35,
                         fontSize: 12.5,
@@ -215,19 +209,13 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
                             counterText: '',
                             hintText: 'Misal: 200',
                             hintStyle: TextStyle(
-                              color: isDarkDialog
-                                  ? Colors.white38
-                                  : const Color(0xFF9E8E81),
+                              color: hc.textTertiary,
                               fontSize: 13.5,
                               fontWeight: FontWeight.w400,
                             ),
                             suffixText: context.tr('dashboard.meterUnit'),
                             suffixStyle: TextStyle(
-                              color: isDarkDialog
-                                  ? AppColors.goldLight
-                                  : AppColors.espressoDark.withValues(
-                                      alpha: 0.75,
-                                    ),
+                              color: hc.brand,
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
                             ),
@@ -240,37 +228,31 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
                             ),
                             border: UnderlineInputBorder(
                               borderSide: BorderSide(
-                                color: isDarkDialog
-                                    ? AppColors.darkOutlineVariant
-                                    : const Color(0xFFD4C7BC),
+                                color: hc.borderSubtle,
                                 width: 1.2,
                               ),
                             ),
                             enabledBorder: UnderlineInputBorder(
                               borderSide: BorderSide(
-                                color: isDarkDialog
-                                    ? AppColors.darkOutlineVariant
-                                    : const Color(0xFFD4C7BC),
+                                color: hc.borderSubtle,
                                 width: 1.2,
                               ),
                             ),
                             focusedBorder: UnderlineInputBorder(
                               borderSide: BorderSide(
-                                color: isDarkDialog
-                                    ? AppColors.goldLight
-                                    : AppColors.espressoDark,
+                                color: hc.brand,
                                 width: 1.8,
                               ),
                             ),
-                            errorBorder: const UnderlineInputBorder(
+                            errorBorder: UnderlineInputBorder(
                               borderSide: BorderSide(
-                                color: AppColors.sosEmergency,
+                                color: hc.danger,
                                 width: 1.4,
                               ),
                             ),
-                            focusedErrorBorder: const UnderlineInputBorder(
+                            focusedErrorBorder: UnderlineInputBorder(
                               borderSide: BorderSide(
-                                color: AppColors.sosEmergency,
+                                color: hc.danger,
                                 width: 1.8,
                               ),
                             ),
@@ -285,8 +267,8 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
                           const SizedBox(height: 4),
                           Text(
                             _inputError!,
-                            style: const TextStyle(
-                              color: AppColors.sosEmergency,
+                            style: TextStyle(
+                              color: hc.danger,
                               fontSize: 11.5,
                               fontWeight: FontWeight.w500,
                             ),
@@ -319,29 +301,13 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
                                 ),
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? (isDarkDialog
-                                            ? AppColors.goldLight.withValues(
-                                                alpha: 0.25,
-                                              )
-                                            : AppColors.espressoDark)
-                                      : (isDarkDialog
-                                            ? AppColors.goldLight.withValues(
-                                                alpha: 0.1,
-                                              )
-                                            : const Color(0xFFF7F2EB)),
+                                      ? hc.brand
+                                      : hc.sandLight,
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
                                     color: isSelected
-                                        ? (isDarkDialog
-                                              ? AppColors.goldLight
-                                              : AppColors.espressoDark)
-                                        : (isDarkDialog
-                                              ? AppColors.goldLight.withValues(
-                                                  alpha: 0.25,
-                                                )
-                                              : AppColors.goldLight.withValues(
-                                                  alpha: 0.45,
-                                                )),
+                                        ? hc.brand
+                                        : hc.borderSubtle,
                                     width: isSelected ? 1.2 : 0.8,
                                   ),
                                 ),
@@ -349,12 +315,8 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
                                   '$preset m',
                                   style: TextStyle(
                                     color: isSelected
-                                        ? (isDarkDialog
-                                              ? AppColors.goldLight
-                                              : Colors.white)
-                                        : (isDarkDialog
-                                              ? AppColors.goldLight
-                                              : AppColors.espressoDark),
+                                        ? hc.onBrand
+                                        : hc.textPrimary,
                                     fontSize: 11.5,
                                     fontWeight: isSelected
                                         ? FontWeight.w700
@@ -375,9 +337,7 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
                       children: [
                         TextButton(
                           style: TextButton.styleFrom(
-                            foregroundColor: isDarkDialog
-                                ? Colors.white60
-                                : const Color(0xFF8C7A6B),
+                            foregroundColor: hc.textSecondary,
                             padding: const EdgeInsets.symmetric(vertical: 4),
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -414,21 +374,15 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
               height: 86,
               child: Container(
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: isDarkDialog
-                        ? [const Color(0xFF38251A), const Color(0xFF1F140D)]
-                        : [AppColors.espressoDark, const Color(0xFF563B2A)],
-                  ),
+                  gradient: hc.heroGradient,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppColors.goldPrimary.withValues(alpha: 0.4),
+                    color: hc.borderSubtle,
                     width: 1.2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.espressoDark.withValues(alpha: 0.35),
+                      color: Colors.black.withValues(alpha: 0.25),
                       blurRadius: 16,
                       offset: const Offset(0, 6),
                     ),
@@ -445,7 +399,7 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
                         height: 70,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppColors.goldPrimary.withValues(alpha: 0.12),
+                          color: hc.onBrand.withValues(alpha: 0.12),
                         ),
                       ),
                     ),
@@ -457,7 +411,7 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
                         height: 65,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppColors.goldPrimary.withValues(alpha: 0.08),
+                          color: hc.onBrand.withValues(alpha: 0.08),
                         ),
                       ),
                     ),
@@ -472,34 +426,25 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
                             height: 40,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                colors: [
-                                  AppColors.goldPrimary.withValues(alpha: 0.25),
-                                  AppColors.goldPrimary.withValues(alpha: 0.08),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
+                              color: hc.onBrand.withValues(alpha: 0.2),
                               border: Border.all(
-                                color: AppColors.goldPrimary.withValues(
-                                  alpha: 0.5,
-                                ),
+                                color: hc.onBrand.withValues(alpha: 0.4),
                                 width: 1.5,
                               ),
                             ),
-                            child: const Center(
+                            child: Center(
                               child: Icon(
                                 Icons.track_changes_rounded,
-                                color: AppColors.accentGoldStar,
+                                color: hc.onBrand,
                                 size: 20,
                               ),
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
+                          Text(
                             'SAFE RADIUS',
                             style: TextStyle(
-                              color: AppColors.goldLight,
+                              color: hc.onBrand,
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 1.1,
@@ -527,9 +472,7 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
                     child: CustomPaint(
                       size: const Size(10, 10),
                       painter: RibbonFoldPainter(
-                        color: isDarkDialog
-                            ? const Color(0xFF140D08)
-                            : const Color(0xFF160D07),
+                        color: hc.sandDark,
                       ),
                     ),
                   ),
@@ -546,9 +489,7 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
                       ),
                       child: Ink(
                         decoration: BoxDecoration(
-                          color: isDarkDialog
-                              ? AppColors.darkPrimaryContainer
-                              : AppColors.espressoDark,
+                          color: hc.brand,
                           borderRadius: const BorderRadius.only(
                             topLeft: Radius.circular(24),
                             bottomLeft: Radius.circular(24),
@@ -560,18 +501,18 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
                           vertical: 13.5,
                         ),
                         child: _isSubmitting
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 18,
                                 height: 18,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: Colors.white,
+                                  color: hc.onBrand,
                                 ),
                               )
-                            : const Text(
+                            : Text(
                                 'SIMPAN RADIUS',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: hc.onBrand,
                                   fontWeight: FontWeight.w900,
                                   fontSize: 13,
                                   letterSpacing: 1.8,

@@ -3,10 +3,9 @@ import 'package:get/get.dart';
 import '../../../../core/locales/app_translations.dart';
 import '../../../../core/state/app_settings_controller.dart';
 import '../../../../core/state/hajicare_state.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../presentation/dashboard_typography.dart';
+import '../../../../core/theme/theme_context.dart';
 import '../../../../core/widgets/animated_ping_dot.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_status_badge.dart';
@@ -18,13 +17,12 @@ class JamaahProfileHeader extends StatelessWidget {
 
   void _showTextSizeSheet(BuildContext context) {
     final settings = Get.find<AppSettingsController>();
-    final isDark = AppColors.isDark(context);
-    final headingColor = AppColors.textHeadingColor(context);
+    final hc = context.hc;
 
     showModalBottomSheet(
       context: context,
       useRootNavigator: true,
-      backgroundColor: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+      backgroundColor: hc.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
@@ -45,9 +43,7 @@ class JamaahProfileHeader extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkOutline
-                        : AppColors.outlineVariant,
+                    color: hc.borderSubtle,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                 ),
@@ -55,8 +51,8 @@ class JamaahProfileHeader extends StatelessWidget {
               const SizedBox(height: AppSpacing.md),
               Text(
                 context.tr('selectTextSizeTitle'),
-                style: DashboardTypography.titleLarge.copyWith(
-                  color: headingColor,
+                style: context.text.titleLarge.copyWith(
+                  color: hc.textPrimary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -78,13 +74,9 @@ class JamaahProfileHeader extends StatelessWidget {
                       decoration: BoxDecoration(
                         border: Border(
                           bottom: BorderSide(
-                            color: isDark
-                                ? AppColors.darkOutlineVariant.withValues(
-                                    alpha: 0.3,
-                                  )
-                                : AppColors.outlineVariant.withValues(
-                                    alpha: 0.3,
-                                  ),
+                            color: hc.borderSubtle.withValues(
+                              alpha: 0.5,
+                            ),
                           ),
                         ),
                       ),
@@ -98,17 +90,15 @@ class JamaahProfileHeader extends StatelessWidget {
                                     ? Icons.radio_button_checked
                                     : Icons.radio_button_off,
                                 color: isSelected
-                                    ? (isDark
-                                          ? AppColors.accentGoldStar
-                                          : AppColors.espressoDark)
-                                    : AppColors.outline,
+                                    ? hc.brand
+                                    : hc.textTertiary,
                                 size: 20,
                               ),
                               const SizedBox(width: AppSpacing.md),
                               Text(
                                 scale.localizedLabel(context),
-                                style: DashboardTypography.bodyMedium.copyWith(
-                                  color: headingColor,
+                                style: context.text.bodyMedium.copyWith(
+                                  color: hc.textPrimary,
                                   fontWeight: isSelected
                                       ? FontWeight.bold
                                       : FontWeight.normal,
@@ -118,10 +108,8 @@ class JamaahProfileHeader extends StatelessWidget {
                           ),
                           Text(
                             '${(scale.factor * 100).toStringAsFixed(0)}%',
-                            style: DashboardTypography.captionSmall.copyWith(
-                              color: isDark
-                                  ? AppColors.darkTextBody
-                                  : AppColors.textBody,
+                            style: context.text.labelSmall.copyWith(
+                              color: hc.textSecondary,
                             ),
                           ),
                         ],
@@ -139,9 +127,7 @@ class JamaahProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
+    final hc = context.hc;
 
     return Obx(() {
       final jamaah = state.self;
@@ -181,18 +167,16 @@ class JamaahProfileHeader extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkPrimaryContainer
-                        : AppColors.surfaceContainerHigh,
+                    color: hc.sandLight,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: AppColors.tanMedium.withValues(alpha: 0.4),
+                      color: hc.sandDark.withValues(alpha: 0.3),
                       width: 2,
                     ),
                   ),
                   child: Icon(
                     Icons.account_circle,
-                    color: isDark ? AppColors.goldLight : AppColors.primary,
+                    color: hc.brand,
                     size: 36,
                   ),
                 ),
@@ -206,8 +190,8 @@ class JamaahProfileHeader extends StatelessWidget {
                           Flexible(
                             child: Text(
                               userName,
-                              style: DashboardTypography.titleLarge.copyWith(
-                                color: headingColor,
+                              style: context.text.titleLarge.copyWith(
+                                color: hc.textPrimary,
                                 fontWeight: FontWeight.bold,
                               ),
                               maxLines: 1,
@@ -215,9 +199,9 @@ class JamaahProfileHeader extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 4),
-                          const Icon(
+                          Icon(
                             Icons.verified,
-                            color: AppColors.statusPositive,
+                            color: hc.success,
                             size: 16,
                           ),
                         ],
@@ -226,8 +210,8 @@ class JamaahProfileHeader extends StatelessWidget {
                       if (kloterText.isNotEmpty && maktabText.isNotEmpty)
                         Text(
                           '$kloterText • $maktabText',
-                          style: DashboardTypography.caption.copyWith(
-                            color: bodyColor,
+                          style: context.text.bodySmall.copyWith(
+                            color: hc.textSecondary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -235,8 +219,8 @@ class JamaahProfileHeader extends StatelessWidget {
                       else if (kloterText.isNotEmpty || maktabText.isNotEmpty)
                         Text(
                           kloterText.isNotEmpty ? kloterText : maktabText,
-                          style: DashboardTypography.caption.copyWith(
-                            color: bodyColor,
+                          style: context.text.bodySmall.copyWith(
+                            color: hc.textSecondary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -245,8 +229,8 @@ class JamaahProfileHeader extends StatelessWidget {
                           state.activeRoom.value!.name.isNotEmpty)
                         Text(
                           state.activeRoom.value!.name,
-                          style: DashboardTypography.caption.copyWith(
-                            color: bodyColor,
+                          style: context.text.bodySmall.copyWith(
+                            color: hc.textSecondary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -255,7 +239,7 @@ class JamaahProfileHeader extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.format_size, color: headingColor),
+                  icon: Icon(Icons.format_size, color: hc.textPrimary),
                   onPressed: () => _showTextSizeSheet(context),
                   tooltip: context.tr('changeTextSize'),
                 ),
@@ -268,18 +252,16 @@ class JamaahProfileHeader extends StatelessWidget {
                 vertical: AppSpacing.sm,
               ),
               decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.darkSurfaceContainer
-                    : AppColors.surfaceContainerLow,
+                color: hc.surfaceVariant,
                 borderRadius: BorderRadius.circular(AppRadius.pill),
                 border: Border.all(
-                  color: AppColors.statusPositive.withValues(alpha: 0.3),
+                  color: hc.success.withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
                 children: [
-                  const AnimatedPingDot(
-                    color: AppColors.statusPositive,
+                  AnimatedPingDot(
+                    color: hc.success,
                     size: 10,
                   ),
                   const SizedBox(width: AppSpacing.sm),
@@ -287,16 +269,14 @@ class JamaahProfileHeader extends StatelessWidget {
                     child: RichText(
                       text: TextSpan(
                         text: context.tr('connectedWith'),
-                        style: DashboardTypography.caption.copyWith(
-                          color: headingColor,
+                        style: context.text.bodySmall.copyWith(
+                          color: hc.textPrimary,
                         ),
                         children: [
                           TextSpan(
                             text: state.pendampingName.value,
-                            style: DashboardTypography.captionSmall.copyWith(
-                              color: isDark
-                                  ? AppColors.accentGoldStar
-                                  : AppColors.primaryContainer,
+                            style: context.text.labelSmall.copyWith(
+                              color: hc.brand,
                               fontWeight: FontWeight.bold,
                             ),
                           ),

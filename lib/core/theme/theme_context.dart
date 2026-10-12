@@ -17,8 +17,8 @@ extension ThemeContextX on BuildContext {
   /// Convenience boolean to check if the current inherited theme is Dark.
   bool get isDarkTheme => Theme.of(this).brightness == Brightness.dark;
 
-  /// Convenience accessor for the inherited Material 3 [TextTheme].
-  TextTheme get text => Theme.of(this).textTheme;
+/// Convenience accessor for the inherited Material 3 [TextTheme] with guaranteed non-null styles.
+  HajiSafeTextTheme get text => HajiSafeTextTheme(Theme.of(this).textTheme, hc);
 
   /// Resolves the active [HajiTextStyles] extension for Quranic Arabic, hero metrics, etc.
   HajiTextStyles get textX {
@@ -28,4 +28,28 @@ extension ThemeContextX on BuildContext {
         ? HajiTextStyles.dark(hc)
         : HajiTextStyles.light(hc);
   }
+}
+
+/// Guaranteed non-null [TextTheme] proxy wrapper for ergonomic syntax without nullable checks.
+class HajiSafeTextTheme {
+  final TextTheme _t;
+  final HajiColors _c;
+
+  const HajiSafeTextTheme(this._t, this._c);
+
+  TextStyle get displayLarge => _t.displayLarge ?? TextStyle(color: _c.textPrimary);
+  TextStyle get displayMedium => _t.displayMedium ?? TextStyle(color: _c.textPrimary);
+  TextStyle get displaySmall => _t.displaySmall ?? TextStyle(color: _c.textPrimary);
+  TextStyle get headlineLarge => _t.headlineLarge ?? TextStyle(color: _c.textPrimary);
+  TextStyle get headlineMedium => _t.headlineMedium ?? TextStyle(color: _c.textPrimary);
+  TextStyle get headlineSmall => _t.headlineSmall ?? TextStyle(color: _c.textPrimary);
+  TextStyle get titleLarge => _t.titleLarge ?? TextStyle(color: _c.textPrimary);
+  TextStyle get titleMedium => _t.titleMedium ?? TextStyle(color: _c.textPrimary);
+  TextStyle get titleSmall => _t.titleSmall ?? TextStyle(color: _c.textPrimary);
+  TextStyle get bodyLarge => _t.bodyLarge ?? TextStyle(color: _c.textPrimary);
+  TextStyle get bodyMedium => _t.bodyMedium ?? TextStyle(color: _c.textPrimary);
+  TextStyle get bodySmall => _t.bodySmall ?? TextStyle(color: _c.textSecondary);
+  TextStyle get labelLarge => _t.labelLarge ?? TextStyle(color: _c.textPrimary);
+  TextStyle get labelMedium => _t.labelMedium ?? TextStyle(color: _c.textSecondary);
+  TextStyle get labelSmall => _t.labelSmall ?? TextStyle(color: _c.textTertiary);
 }

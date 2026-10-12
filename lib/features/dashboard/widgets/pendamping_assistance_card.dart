@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_context.dart';
 import '../../map/controllers/map_controller.dart';
 import '../controllers/dashboard_controller.dart';
 import '../models/assistance_request_model.dart';
@@ -35,19 +35,17 @@ class PendampingAssistanceCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 20),
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: isDark
-              ? AppColors.darkSurfaceContainer
-              : const Color(0xFFFFF7F2),
+          color: context.hc.surface,
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
-            color: const Color(0xFFE64A19).withValues(alpha: 0.5),
+            color: context.hc.border,
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(
-                0xFFE64A19,
-              ).withValues(alpha: isDark ? 0.25 : 0.08),
+              color: context.hc.warning.withValues(
+                alpha: context.hc.isDark ? 0.25 : 0.08,
+              ),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),
@@ -64,12 +62,12 @@ class PendampingAssistanceCard extends StatelessWidget {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE64A19).withValues(alpha: 0.15),
+                    color: context.hc.warning.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.notifications_active_rounded,
-                    color: Color(0xFFE64A19),
+                    color: context.hc.warning,
                     size: 22,
                   ),
                 ),
@@ -83,9 +81,7 @@ class PendampingAssistanceCard extends StatelessWidget {
                           Text(
                             'Bantuan dari ',
                             style: TextStyle(
-                              color: isDark
-                                  ? Colors.white70
-                                  : const Color(0xFF5D4037),
+                              color: context.hc.textSecondary,
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                             ),
@@ -94,9 +90,7 @@ class PendampingAssistanceCard extends StatelessWidget {
                             child: Text(
                               currentReq.jamaahName,
                               style: TextStyle(
-                                color: isDark
-                                    ? Colors.white
-                                    : const Color(0xFF2E1C12),
+                                color: context.hc.textPrimary,
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,
                               ),
@@ -109,8 +103,8 @@ class PendampingAssistanceCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         '${currentReq.type.title} · ${currentReq.timeFormatted}',
-                        style: const TextStyle(
-                          color: Color(0xFFE64A19),
+                        style: TextStyle(
+                          color: context.hc.warning,
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                         ),
@@ -125,16 +119,16 @@ class PendampingAssistanceCard extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: isOnTheWay
-                        ? const Color(0xFF2563EB).withValues(alpha: 0.15)
-                        : const Color(0xFFE64A19).withValues(alpha: 0.15),
+                        ? context.hc.info.withValues(alpha: 0.15)
+                        : context.hc.warning.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     isOnTheWay ? 'Menuju Lokasi' : 'Baru Masuk',
                     style: TextStyle(
                       color: isOnTheWay
-                          ? const Color(0xFF2563EB)
-                          : const Color(0xFFE64A19),
+                          ? context.hc.info
+                          : context.hc.warning,
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
                     ),
@@ -154,15 +148,13 @@ class PendampingAssistanceCard extends StatelessWidget {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.05)
-                      : Colors.white,
+                  color: context.hc.surfaceSubtle,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   '"${currentReq.message}"',
                   style: TextStyle(
-                    color: isDark ? Colors.white70 : const Color(0xFF5D4037),
+                    color: context.hc.textSecondary,
                     fontSize: 13,
                     fontStyle: FontStyle.italic,
                     height: 1.35,
@@ -177,23 +169,19 @@ class PendampingAssistanceCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.04)
-                    : Colors.white,
+                color: context.hc.surfaceSubtle,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: isDark
-                      ? AppColors.darkCardBorder
-                      : const Color(0xFFE0DDDA),
+                  color: context.hc.border,
                 ),
               ),
               child: Column(
                 children: [
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.location_on_rounded,
-                        color: Color(0xFF16A34A),
+                        color: context.hc.success,
                         size: 18,
                       ),
                       const SizedBox(width: 8),
@@ -201,9 +189,7 @@ class PendampingAssistanceCard extends StatelessWidget {
                         child: Text(
                           currentReq.humanLocation,
                           style: TextStyle(
-                            color: isDark
-                                ? Colors.white
-                                : const Color(0xFF2E1C12),
+                            color: context.hc.textPrimary,
                             fontSize: 13.5,
                             fontWeight: FontWeight.w700,
                           ),
@@ -215,9 +201,9 @@ class PendampingAssistanceCard extends StatelessWidget {
                     const Divider(height: 16),
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.hotel_rounded,
-                          color: Color(0xFFD97706),
+                          color: context.hc.accent,
                           size: 18,
                         ),
                         const SizedBox(width: 8),
@@ -225,9 +211,7 @@ class PendampingAssistanceCard extends StatelessWidget {
                           child: Text(
                             'Tujuan: ${currentReq.targetHotel}${currentReq.targetRoom != null && currentReq.targetRoom!.isNotEmpty ? ' (Kamar ${currentReq.targetRoom})' : ''}',
                             style: TextStyle(
-                              color: isDark
-                                  ? Colors.white70
-                                  : const Color(0xFF5D4037),
+                              color: context.hc.textSecondary,
                               fontSize: 12.5,
                               fontWeight: FontWeight.w600,
                             ),
@@ -260,9 +244,9 @@ class PendampingAssistanceCard extends StatelessWidget {
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFE64A19),
-                      side: const BorderSide(
-                        color: Color(0xFFE64A19),
+                      foregroundColor: context.hc.primary,
+                      side: BorderSide(
+                        color: context.hc.border,
                         width: 1.5,
                       ),
                       shape: RoundedRectangleBorder(
@@ -297,8 +281,8 @@ class PendampingAssistanceCard extends StatelessWidget {
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: isOnTheWay
-                          ? const Color(0xFF16A34A)
-                          : const Color(0xFFE64A19),
+                          ? context.hc.success
+                          : context.hc.primary,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),

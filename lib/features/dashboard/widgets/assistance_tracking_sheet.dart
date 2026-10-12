@@ -5,9 +5,9 @@ import 'package:get/get.dart';
 import '../../../core/locales/app_translations.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/theme_context.dart';
 import '../controllers/dashboard_controller.dart';
 import '../models/assistance_request_model.dart';
 import '../presentation/dashboard_typography.dart';
@@ -30,9 +30,10 @@ class AssistanceTrackingSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final service = AssistanceRequestService.instance;
-    final isDark = AppColors.isDark(context);
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
+    final hc = context.hc;
+    final isDark = hc.isDark;
+    final headingColor = hc.textPrimary;
+    final bodyColor = hc.textSecondary;
 
     return Obx(() {
       final current = service.activeRequest.value ?? request;
@@ -44,7 +45,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
           maxHeight: MediaQuery.sizeOf(context).height * 0.88,
         ),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+          color: hc.surface,
           borderRadius: const BorderRadius.vertical(
             top: Radius.circular(AppRadius.sheet),
           ),
@@ -133,9 +134,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
                           borderRadius: BorderRadius.circular(14),
                         ),
                         side: BorderSide(
-                          color: isDark
-                              ? AppColors.darkCardBorder
-                              : const Color(0xFFD7CCC8),
+                          color: hc.borderSubtle,
                         ),
                       ),
                       icon: const Icon(Icons.map_rounded, size: 20),
@@ -153,12 +152,12 @@ class AssistanceTrackingSheet extends StatelessWidget {
                         onPressed: () => _confirmCancel(context, service),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          foregroundColor: AppColors.sosEmergency,
+                          foregroundColor: hc.danger,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
                           side: BorderSide(
-                            color: AppColors.sosEmergency.withValues(
+                            color: hc.danger.withValues(
                               alpha: 0.4,
                             ),
                           ),
@@ -186,14 +185,15 @@ class AssistanceTrackingSheet extends StatelessWidget {
     Color headingColor,
     Color bodyColor,
   ) {
+    final hc = context.hc;
     final isDone = current.status == AssistanceStatus.completed;
     final isEnRoute = current.status == AssistanceStatus.onTheWay;
 
     final Color badgeColor = isDone
-        ? const Color(0xFF16A34A)
+        ? hc.success
         : isEnRoute
-        ? const Color(0xFF0284C7)
-        : const Color(0xFFE64A19);
+        ? hc.info
+        : hc.brand;
 
     final IconData badgeIcon = isDone
         ? Icons.check_circle_rounded
@@ -266,6 +266,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
     Color headingColor,
     Color bodyColor,
   ) {
+    final hc = context.hc;
     final status = current.status;
 
     final bool step1Active = true;
@@ -281,10 +282,10 @@ class AssistanceTrackingSheet extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurfaceContainer : AppColors.canvasCream,
+        color: hc.sandLight,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
+          color: hc.borderSubtle,
         ),
       ),
       child: Column(
@@ -292,10 +293,10 @@ class AssistanceTrackingSheet extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.timeline_rounded,
                 size: 20,
-                color: Color(0xFFE64A19),
+                color: hc.brand,
               ),
               const SizedBox(width: 8),
               Text(
@@ -317,8 +318,12 @@ class AssistanceTrackingSheet extends StatelessWidget {
             isCurrent: status == AssistanceStatus.sent,
             headingColor: headingColor,
             bodyColor: bodyColor,
+            stepColor: step1Active && status != AssistanceStatus.sent
+                ? hc.success
+                : (status == AssistanceStatus.sent ? hc.brand : bodyColor.withValues(alpha: 0.4)),
+            timeColor: status == AssistanceStatus.sent ? hc.brand : bodyColor.withValues(alpha: 0.7),
           ),
-          _timelineConnector(step2Active),
+          _timelineConnector(step2Active, hc.success, hc.borderSubtle),
           _timelineStep(
             title: context.tr('assistanceTimelineAccepted'),
             time: current.acknowledgedAt != null
@@ -330,8 +335,12 @@ class AssistanceTrackingSheet extends StatelessWidget {
             isCurrent: status == AssistanceStatus.acknowledged,
             headingColor: headingColor,
             bodyColor: bodyColor,
+            stepColor: step2Active && status != AssistanceStatus.acknowledged
+                ? hc.success
+                : (status == AssistanceStatus.acknowledged ? hc.brand : bodyColor.withValues(alpha: 0.4)),
+            timeColor: status == AssistanceStatus.acknowledged ? hc.brand : bodyColor.withValues(alpha: 0.7),
           ),
-          _timelineConnector(step3Active),
+          _timelineConnector(step3Active, hc.success, hc.borderSubtle),
           _timelineStep(
             title: context.tr('assistanceTimelineEnRoute'),
             time: current.onTheWayAt != null
@@ -343,8 +352,12 @@ class AssistanceTrackingSheet extends StatelessWidget {
             isCurrent: status == AssistanceStatus.onTheWay,
             headingColor: headingColor,
             bodyColor: bodyColor,
+            stepColor: step3Active && status != AssistanceStatus.onTheWay
+                ? hc.success
+                : (status == AssistanceStatus.onTheWay ? hc.brand : bodyColor.withValues(alpha: 0.4)),
+            timeColor: status == AssistanceStatus.onTheWay ? hc.brand : bodyColor.withValues(alpha: 0.7),
           ),
-          _timelineConnector(step4Active),
+          _timelineConnector(step4Active, hc.success, hc.borderSubtle),
           _timelineStep(
             title: context.tr('assistanceTimelineFinished'),
             time: current.completedAt != null
@@ -356,6 +369,8 @@ class AssistanceTrackingSheet extends StatelessWidget {
             isCurrent: status == AssistanceStatus.completed,
             headingColor: headingColor,
             bodyColor: bodyColor,
+            stepColor: step4Active ? hc.success : bodyColor.withValues(alpha: 0.4),
+            timeColor: status == AssistanceStatus.completed ? hc.brand : bodyColor.withValues(alpha: 0.7),
             isLast: true,
           ),
         ],
@@ -370,14 +385,10 @@ class AssistanceTrackingSheet extends StatelessWidget {
     required bool isCurrent,
     required Color headingColor,
     required Color bodyColor,
+    required Color stepColor,
+    required Color timeColor,
     bool isLast = false,
   }) {
-    final Color stepColor = isDone
-        ? const Color(0xFF16A34A)
-        : (isCurrent
-              ? const Color(0xFFE64A19)
-              : bodyColor.withValues(alpha: 0.4));
-
     return Row(
       children: [
         Container(
@@ -423,23 +434,21 @@ class AssistanceTrackingSheet extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: isCurrent
-                ? const Color(0xFFE64A19)
-                : bodyColor.withValues(alpha: 0.7),
+            color: timeColor,
           ),
         ),
       ],
     );
   }
 
-  Widget _timelineConnector(bool isActive) {
+  Widget _timelineConnector(bool isActive, Color activeColor, Color inactiveColor) {
     return Container(
       margin: const EdgeInsets.only(left: 12),
       width: 2,
       height: 14,
       color: isActive
-          ? const Color(0xFF16A34A)
-          : Colors.grey.withValues(alpha: 0.3),
+          ? activeColor
+          : inactiveColor,
     );
   }
 
@@ -450,14 +459,15 @@ class AssistanceTrackingSheet extends StatelessWidget {
     Color headingColor,
     Color bodyColor,
   ) {
+    final hc = context.hc;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite,
+        color: hc.sandLight,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
+          color: hc.borderSubtle,
         ),
       ),
       child: Column(
@@ -465,7 +475,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(current.type.icon, size: 22, color: const Color(0xFFE64A19)),
+              Icon(current.type.icon, size: 22, color: hc.brand),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -480,13 +490,13 @@ class AssistanceTrackingSheet extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Divider(height: 1, color: bodyColor.withValues(alpha: 0.15)),
+          Divider(height: 1, color: hc.borderSubtle),
           const SizedBox(height: 12),
           _infoRow(
             icon: Icons.place_rounded,
             label: context.tr('assistanceYourLocation'),
             value: current.humanReadableLocation,
-            iconColor: const Color(0xFFE64A19),
+            iconColor: hc.brand,
             headingColor: headingColor,
             bodyColor: bodyColor,
           ),
@@ -496,7 +506,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
             label: context.tr('assistanceYourDestination'),
             value:
                 '${current.targetHotel}${current.targetRoom != null ? " • ${current.targetRoom}" : ""}',
-            iconColor: const Color(0xFF8E24AA),
+            iconColor: hc.sandDark,
             headingColor: headingColor,
             bodyColor: bodyColor,
           ),
@@ -506,7 +516,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
               icon: Icons.chat_bubble_outline_rounded,
               label: context.tr('assistanceAdditionalMessage'),
               value: current.message,
-              iconColor: const Color(0xFF0284C7),
+              iconColor: hc.info,
               headingColor: headingColor,
               bodyColor: bodyColor,
             ),
@@ -519,7 +529,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
                 ? context.tr('assistanceAllGroupCompanions')
                 : (current.assignedPendampingName ??
                       context.tr('dashboard.officerFallback')),
-            iconColor: const Color(0xFF16A34A),
+            iconColor: hc.success,
             headingColor: headingColor,
             bodyColor: bodyColor,
           ),
@@ -575,14 +585,15 @@ class AssistanceTrackingSheet extends StatelessWidget {
     Color headingColor,
     Color bodyColor,
   ) {
+    final hc = context.hc;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF16A34A).withValues(alpha: isDark ? 0.16 : 0.08),
+        color: hc.successContainer,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: const Color(0xFF16A34A).withValues(alpha: 0.4),
+          color: hc.success.withValues(alpha: 0.4),
           width: 1.5,
         ),
       ),
@@ -620,7 +631,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF16A34A),
+                backgroundColor: hc.success,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -647,19 +658,20 @@ class AssistanceTrackingSheet extends StatelessWidget {
     bool isDark,
     Color headingColor,
   ) {
+    final hc = context.hc;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF16A34A).withValues(alpha: 0.12),
+        color: hc.successContainer,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFF16A34A), width: 1.5),
+        border: Border.all(color: hc.success, width: 1.5),
       ),
       child: Column(
         children: [
-          const Icon(
+          Icon(
             Icons.check_circle_rounded,
-            color: Color(0xFF16A34A),
+            color: hc.success,
             size: 40,
           ),
           const SizedBox(height: 8),

@@ -9,6 +9,7 @@ import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/theme_context.dart';
 import '../../../core/utils/user_feedback_message.dart';
 import '../../notification/services/notification_service.dart';
 import '../controllers/dashboard_controller.dart';
@@ -180,9 +181,10 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
+    final hc = context.hc;
+    final isDark = hc.isDark;
+    final headingColor = hc.textPrimary;
+    final bodyColor = hc.textSecondary;
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
     // Jika sedang ada request bantuan aktif, tampilkan layar tracking bantuan
@@ -204,7 +206,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
             maxHeight: MediaQuery.sizeOf(context).height * 0.80,
           ),
           decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+            color: hc.surface,
             borderRadius: const BorderRadius.vertical(
               top: Radius.circular(AppRadius.sheet),
             ),
@@ -227,7 +229,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                       width: 44,
                       height: 4.5,
                       decoration: BoxDecoration(
-                        color: bodyColor.withValues(alpha: 0.25),
+                        color: hc.borderSubtle,
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
@@ -314,22 +316,23 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
     Color headingColor,
     Color bodyColor,
   ) {
+    final hc = context.hc;
     return Row(
       children: [
         Container(
           width: 58,
           height: 58,
           decoration: BoxDecoration(
-            color: const Color(0xFFE64A19).withValues(alpha: 0.12),
+            color: hc.sandLight,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: const Color(0xFFE64A19).withValues(alpha: 0.28),
+              color: hc.sandDark.withValues(alpha: 0.3),
               width: 1.5,
             ),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.support_agent_rounded,
-            color: Color(0xFFE64A19),
+            color: hc.brand,
             size: 32,
           ),
         ),
@@ -437,25 +440,19 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             color: selected
-                ? const Color(
-                    0xFFE64A19,
-                  ).withValues(alpha: isDark ? 0.22 : 0.10)
-                : (isDark
-                      ? AppColors.darkSurfaceContainer
-                      : AppColors.canvasCream),
+                ? context.hc.sandLight
+                : (isDark ? context.hc.surface : context.hc.canvas),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: selected
-                  ? const Color(0xFFE64A19)
-                  : (isDark
-                        ? AppColors.darkCardBorder
-                        : AppColors.lightCardBorder),
+                  ? context.hc.brand
+                  : context.hc.borderSubtle,
               width: selected ? 2.2 : 1.2,
             ),
             boxShadow: selected
                 ? [
                     BoxShadow(
-                      color: const Color(0xFFE64A19).withValues(alpha: 0.16),
+                      color: context.hc.brand.withValues(alpha: 0.12),
                       blurRadius: 10,
                       offset: const Offset(0, 3),
                     ),
@@ -469,15 +466,13 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                 height: 48,
                 decoration: BoxDecoration(
                   color: selected
-                      ? const Color(0xFFE64A19)
-                      : (isDark
-                            ? Colors.white.withValues(alpha: 0.08)
-                            : const Color(0xFFE64A19).withValues(alpha: 0.12)),
+                      ? context.hc.brand
+                      : context.hc.sandLight,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   type.icon,
-                  color: selected ? Colors.white : const Color(0xFFE64A19),
+                  color: selected ? context.hc.onBrand : context.hc.brand,
                   size: 26,
                 ),
               ),
@@ -507,15 +502,13 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                               vertical: 2.5,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(
-                                0xFFE64A19,
-                              ).withValues(alpha: 0.15),
+                              color: context.hc.sandLight,
                               borderRadius: BorderRadius.circular(6),
                             ),
-                            child: const Text(
+                            child: Text(
                               'UTAMA',
                               style: TextStyle(
-                                color: Color(0xFFE64A19),
+                                color: context.hc.brand,
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: 0.5,
@@ -543,17 +536,21 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: selected
-                      ? const Color(0xFFE64A19)
+                      ? context.hc.brand
                       : Colors.transparent,
                   border: Border.all(
                     color: selected
-                        ? const Color(0xFFE64A19)
-                        : bodyColor.withValues(alpha: 0.35),
+                        ? context.hc.brand
+                        : context.hc.borderSubtle,
                     width: 2,
                   ),
                 ),
                 child: selected
-                    ? const Icon(Icons.check, size: 16, color: Colors.white)
+                    ? Icon(
+                        Icons.check,
+                        size: 16,
+                        color: context.hc.onBrand,
+                      )
                     : null,
               ),
             ],
@@ -588,17 +585,13 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: active
-                ? const Color(
-                    0xFF16A34A,
-                  ).withValues(alpha: isDark ? 0.16 : 0.08)
-                : (isDark
-                      ? AppColors.darkSurfaceContainer
-                      : AppColors.canvasCream),
+                ? context.hc.successContainer
+                : context.hc.sandLight,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: active
-                  ? const Color(0xFF16A34A).withValues(alpha: 0.6)
-                  : const Color(0xFFD97706).withValues(alpha: 0.4),
+                  ? context.hc.success.withValues(alpha: 0.6)
+                  : context.hc.warning.withValues(alpha: 0.4),
               width: 1.5,
             ),
           ),
@@ -612,8 +605,8 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                     height: 44,
                     decoration: BoxDecoration(
                       color: active
-                          ? const Color(0xFF16A34A).withValues(alpha: 0.15)
-                          : const Color(0xFFD97706).withValues(alpha: 0.15),
+                          ? context.hc.success.withValues(alpha: 0.15)
+                          : context.hc.warning.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -621,8 +614,8 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                           ? Icons.location_on_rounded
                           : Icons.location_off_rounded,
                       color: active
-                          ? const Color(0xFF16A34A)
-                          : const Color(0xFFD97706),
+                          ? context.hc.success
+                          : context.hc.warning,
                       size: 26,
                     ),
                   ),
@@ -637,8 +630,8 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                               : context.tr('assistanceLocationUnavailable'),
                           style: TextStyle(
                             color: active
-                                ? const Color(0xFF16A34A)
-                                : const Color(0xFFD97706),
+                                ? context.hc.success
+                                : context.hc.warning,
                             fontSize: 15.5,
                             fontWeight: FontWeight.w800,
                           ),
@@ -666,22 +659,18 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                     vertical: 10,
                   ),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.05)
-                        : Colors.white,
+                    color: context.hc.surface,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isDark
-                          ? AppColors.darkCardBorder
-                          : const Color(0xFFC8E6C9),
+                      color: context.hc.borderSubtle,
                     ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.near_me_rounded,
                         size: 18,
-                        color: Color(0xFF16A34A),
+                        color: context.hc.success,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -745,7 +734,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                                   : '$mins ${context.tr('minutesShort')}',
                             ),
                             selected: isSel,
-                            selectedColor: const Color(0xFF16A34A),
+                            selectedColor: context.hc.success,
                             labelStyle: TextStyle(
                               color: isSel ? Colors.white : headingColor,
                               fontWeight: FontWeight.w700,
@@ -771,7 +760,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                     key: const Key('companion_location_button'),
                     onPressed: _isFindingLocation ? null : _toggleLocation,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFD97706),
+                      backgroundColor: context.hc.warning,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
@@ -855,14 +844,10 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDark
-                ? AppColors.darkSurfaceContainer
-                : AppColors.canvasCream,
+            color: context.hc.sandLight,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: isDark
-                  ? AppColors.darkCardBorder
-                  : AppColors.lightCardBorder,
+              color: context.hc.borderSubtle,
             ),
           ),
           child: Row(
@@ -871,12 +856,12 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF8E24AA).withValues(alpha: 0.14),
+                  color: context.hc.sandDark.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.hotel_rounded,
-                  color: Color(0xFF8E24AA),
+                  color: context.hc.brand,
                   size: 26,
                 ),
               ),
@@ -1006,17 +991,13 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide(
-                color: isDark
-                    ? AppColors.darkCardBorder
-                    : AppColors.lightCardBorder,
+                color: context.hc.borderSubtle,
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide(
-                color: isDark
-                    ? AppColors.darkCardBorder
-                    : AppColors.lightCardBorder,
+                color: context.hc.borderSubtle,
               ),
             ),
           ),
@@ -1040,16 +1021,12 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
         ),
         const SizedBox(height: 8),
         Material(
-          color: isDark
-              ? AppColors.darkSurfaceContainer
-              : AppColors.canvasCream,
+          color: context.hc.sandLight,
           clipBehavior: Clip.antiAlias,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(
-              color: isDark
-                  ? AppColors.darkCardBorder
-                  : AppColors.lightCardBorder,
+              color: context.hc.borderSubtle,
             ),
           ),
           child: AbsorbPointer(
@@ -1080,7 +1057,7 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
                     secondary: const Icon(Icons.person_rounded),
                     controlAffinity: ListTileControlAffinity.trailing,
                   ),
-                  Divider(height: 1, color: bodyColor.withValues(alpha: 0.15)),
+                  Divider(height: 1, color: context.hc.borderSubtle),
                   RadioListTile<bool>(
                     key: const Key('recipient_all'),
                     value: true,
@@ -1110,23 +1087,24 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
             key: const Key('companion_recipient_dropdown'),
             initialValue: _selectedPendampingUid,
             isExpanded: true,
-            dropdownColor: isDark
-                ? AppColors.darkSurfaceContainer
-                : AppColors.surfaceWhite,
+            dropdownColor: context.hc.surface,
             style: TextStyle(color: headingColor, fontSize: 16),
             decoration: InputDecoration(
               labelText: context.tr('assistanceCompanionName'),
               prefixIcon: const Icon(Icons.support_agent_rounded),
               filled: true,
-              fillColor: isDark
-                  ? AppColors.darkSurfaceContainer
-                  : AppColors.surfaceWhite,
+              fillColor: context.hc.sandLight,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 14,
                 vertical: 14,
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: context.hc.borderSubtle),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: context.hc.borderSubtle),
               ),
             ),
             items: widget.pendampings
@@ -1162,11 +1140,9 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
         key: const Key('companion_send_button'),
         onPressed: _isSubmitting ? null : _submitAssistance,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFE64A19),
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: isDark
-              ? AppColors.darkSurfaceContainer
-              : const Color(0xFFE0DDDA),
+          backgroundColor: context.hc.brand,
+          foregroundColor: context.hc.onBrand,
+          disabledBackgroundColor: context.hc.sandLight,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
@@ -1178,12 +1154,12 @@ class _CompanionContactSheetState extends State<CompanionContactSheet> {
           ),
         ),
         icon: _isSubmitting
-            ? const SizedBox(
+            ? SizedBox(
                 width: 22,
                 height: 22,
                 child: CircularProgressIndicator(
                   strokeWidth: 2.5,
-                  color: Colors.white,
+                  color: context.hc.onBrand,
                 ),
               )
             : Icon(_selectedType.icon, size: 24),

@@ -69,11 +69,11 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(15),
                   border: Border.all(
-                    color: AppColors.goldLight.withValues(alpha: 0.6),
+                    color: context.hc.sandLight.withValues(alpha: 0.6),
                     width: 1.5,
                   ),
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFD4A857), Color(0xFFA67C52)],
+                  gradient: LinearGradient(
+                    colors: [context.hc.sand, context.hc.sandDark],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -88,8 +88,8 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                 child: Center(
                   child: Text(
                     initialLetter,
-                    style: const TextStyle(
-                      color: Color(0xFF2E1C12),
+                    style: TextStyle(
+                      color: context.hc.textPrimary,
                       fontWeight: FontWeight.w800,
                       fontSize: 19,
                     ),
@@ -129,8 +129,8 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                         'kloter': jamaah.kloter ?? '12',
                         'maktab': jamaah.maktab ?? '48',
                       }),
-                      style: const TextStyle(
-                        color: AppColors.goldLight,
+                      style: TextStyle(
+                        color: context.hc.sandLight,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
                       ),
@@ -365,10 +365,10 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                         child: Ink(
                           decoration: BoxDecoration(
                             gradient: hasSos
-                                ? const LinearGradient(
+                                ? LinearGradient(
                                     colors: [
-                                      Color(0xFFFF1744),
-                                      Color(0xFFD50000),
+                                      context.hc.danger,
+                                      context.hc.dangerContainer,
                                     ],
                                   )
                                 : null,
@@ -378,9 +378,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                             boxShadow: hasSos
                                 ? [
                                     BoxShadow(
-                                      color: const Color(
-                                        0xFFFF1744,
-                                      ).withValues(alpha: 0.5),
+                                      color: context.hc.danger.withValues(alpha: 0.4),
                                       blurRadius: 10,
                                       spreadRadius: 1,
                                     ),
@@ -490,17 +488,16 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
               height: 10,
               decoration: BoxDecoration(
                 color: hasSeparated
-                    ? AppColors.sosEmergency
-                    : const Color(0xFF00E5FF),
+                    ? context.hc.danger
+                    : context.hc.info,
                 shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFF2E1C12), width: 1.5),
+                border: Border.all(color: context.hc.primary, width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color:
-                        (hasSeparated
-                                ? AppColors.sosEmergency
-                                : const Color(0xFF00E5FF))
-                            .withValues(alpha: 0.6),
+                    color: (hasSeparated
+                            ? context.hc.danger
+                            : context.hc.info)
+                        .withValues(alpha: 0.5),
                     blurRadius: 6,
                     spreadRadius: 1,
                   ),
@@ -539,14 +536,14 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                   color: Colors.white.withValues(alpha: 0.14),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: AppColors.goldLight.withValues(alpha: 0.6),
+                    color: context.hc.sandLight.withValues(alpha: 0.6),
                     width: 1.0,
                   ),
                 ),
-                child: const Center(
+                child: Center(
                   child: Icon(
                     Icons.document_scanner_outlined,
-                    color: AppColors.goldLight,
+                    color: context.hc.sandLight,
                     size: 18,
                   ),
                 ),

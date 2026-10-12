@@ -28,6 +28,23 @@ class DashboardTypography {
   static TextStyle get headlineLarge => displayMedium;
 
   static ThemeData applyTo(ThemeData base) {
-    return base;
+    final textTheme = base.textTheme.copyWith(
+      displayLarge: displayLarge,
+      displayMedium: displayMedium,
+      displaySmall: displayMedium,
+      headlineLarge: displayMedium,
+      headlineMedium: titleLarge,
+      headlineSmall: titleLarge,
+      titleLarge: titleLarge,
+      titleMedium: titleMedium,
+      titleSmall: titleSmall,
+      bodyLarge: bodyLarge,
+      bodyMedium: bodyMedium,
+      bodySmall: bodySmall,
+      labelLarge: labelLarge,
+      labelMedium: caption,
+      labelSmall: captionSmall,
+    );
+    return base.copyWith(textTheme: textTheme, primaryTextTheme: textTheme);
   }
 }

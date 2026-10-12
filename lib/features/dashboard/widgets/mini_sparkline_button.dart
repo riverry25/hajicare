@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../../../core/locales/app_localizations.dart';
 import '../../../core/models/jamaah_data.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_context.dart';
 
 /// An enlarged, transparent mini sparkline wave chart button that blends
 /// seamlessly into the hero card background, featuring a glowing Mecca gold
@@ -89,33 +90,27 @@ class _MiniSparklineButtonState extends State<MiniSparklineButton>
     }
   }
 
-  Color get _effectiveColor {
+  Color _resolveEffectiveColor(BuildContext context) {
     final list = widget.jamaahList;
     if (list == null || list.isEmpty) {
       return widget.waveColor;
     }
-    // High priority: SOS active
-    if (list.any((j) => j.sosActive)) {
-      return const Color(0xFFFF4D4D);
-    }
-    // Any member in danger distance tier
-    if (list.any((j) => j.tier == DistanceTier.terlalujJauh)) {
-      return const Color(0xFFFF7A59);
+    // High priority: SOS active or in danger distance tier
+    if (list.any((j) => j.sosActive) ||
+        list.any((j) => j.tier == DistanceTier.terlalujJauh)) {
+      return context.hc.danger;
     }
     // Any member in warning tier
     if (list.any((j) => j.tier == DistanceTier.waspada)) {
-      return const Color(0xFFFFB84D);
+      return context.hc.warning;
     }
     // All members safe
-    if (widget.waveColor == AppColors.accentGoldStar) {
-      return const Color(0xFF6CDEA0);
-    }
-    return widget.waveColor;
+    return context.hc.success;
   }
 
   @override
   Widget build(BuildContext context) {
-    final activeColor = _effectiveColor;
+    final activeColor = _resolveEffectiveColor(context);
 
     final buttonContent = AnimatedScale(
       scale: _isSyncing ? 0.97 : 1.0,

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/locales/app_translations.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_context.dart';
 import '../models/assistance_request_model.dart';
 import 'companion_contact_sheet.dart';
 
@@ -26,19 +26,17 @@ class JamaahActiveAssistanceBanner extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 18),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.darkSurfaceContainer
-            : const Color(0xFFFFF8F2),
+        color: context.hc.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFFE64A19).withValues(alpha: 0.4),
+          color: context.hc.border,
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(
-              0xFFE64A19,
-            ).withValues(alpha: isDark ? 0.2 : 0.08),
+            color: context.hc.warning.withValues(
+              alpha: context.hc.isDark ? 0.2 : 0.08,
+            ),
             blurRadius: 14,
             offset: const Offset(0, 4),
           ),
@@ -53,12 +51,12 @@ class JamaahActiveAssistanceBanner extends StatelessWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE64A19).withValues(alpha: 0.15),
+                  color: context.hc.warning.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   request.type.icon,
-                  color: const Color(0xFFE64A19),
+                  color: context.hc.warning,
                   size: 20,
                 ),
               ),
@@ -70,7 +68,7 @@ class JamaahActiveAssistanceBanner extends StatelessWidget {
                     Text(
                       context.tr('dashboard.assistanceInProgress'),
                       style: TextStyle(
-                        color: isDark ? Colors.white : const Color(0xFF2E1C12),
+                        color: context.hc.textPrimary,
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
                       ),
@@ -79,9 +77,7 @@ class JamaahActiveAssistanceBanner extends StatelessWidget {
                     Text(
                       request.type.title,
                       style: TextStyle(
-                        color: isDark
-                            ? Colors.white70
-                            : const Color(0xFF5D4037),
+                        color: context.hc.textSecondary,
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
                       ),
@@ -128,24 +124,25 @@ class JamaahActiveAssistanceBanner extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.05)
-                  : Colors.white,
+              color: context.hc.surfaceSubtle,
               borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: context.hc.border,
+              ),
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.near_me_rounded,
                   size: 16,
-                  color: Color(0xFF16A34A),
+                  color: context.hc.success,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     request.humanLocation,
                     style: TextStyle(
-                      color: isDark ? Colors.white : const Color(0xFF2E1C12),
+                      color: context.hc.textPrimary,
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                     ),
@@ -182,8 +179,8 @@ class JamaahActiveAssistanceBanner extends StatelessWidget {
                 ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE64A19),
-                foregroundColor: Colors.white,
+                backgroundColor: context.hc.primary,
+                foregroundColor: context.hc.onPrimary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),

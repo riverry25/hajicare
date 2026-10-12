@@ -55,7 +55,7 @@ class AppStatusBadge extends StatelessWidget {
           ],
           Text(
             label,
-            style: context.text.labelSmall?.copyWith(
+            style: context.text.labelSmall.copyWith(
               color: textColor ?? text,
               fontWeight: FontWeight.bold,
             ),
