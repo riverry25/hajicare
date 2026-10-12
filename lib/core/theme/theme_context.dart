@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'app_typography.dart';
 import 'haji_colors.dart';
 
 /// Ergonomic syntax extensions on [BuildContext] to access centralized theme tokens
@@ -18,4 +19,13 @@ extension ThemeContextX on BuildContext {
 
   /// Convenience accessor for the inherited Material 3 [TextTheme].
   TextTheme get text => Theme.of(this).textTheme;
+
+  /// Resolves the active [HajiTextStyles] extension for Quranic Arabic, hero metrics, etc.
+  HajiTextStyles get textX {
+    final ext = Theme.of(this).extension<HajiTextStyles>();
+    if (ext != null) return ext;
+    return isDarkTheme
+        ? HajiTextStyles.dark(hc)
+        : HajiTextStyles.light(hc);
+  }
 }
