@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
+import '../../../core/theme/haji_colors.dart';
 import '../../../core/utils/user_feedback_message.dart';
 import '../../room/services/room_service.dart';
 import '../models/notification_model.dart';
@@ -172,7 +173,7 @@ class NotificationController extends GetxController {
             size: 30,
           ),
           colorText: Colors.white,
-          backgroundColor: const Color(0xFFD32F2F),
+          backgroundColor: HajiColors.light.danger,
           mainButton: TextButton(
             onPressed: () {
               if (Get.isSnackbarOpen) Get.back();
@@ -204,7 +205,7 @@ class NotificationController extends GetxController {
             size: 28,
           ),
           colorText: Colors.white,
-          backgroundColor: const Color(0xFFC62828),
+          backgroundColor: HajiColors.light.danger,
           mainButton: TextButton(
             onPressed: () {
               if (Get.isSnackbarOpen) Get.back();
@@ -235,7 +236,7 @@ class NotificationController extends GetxController {
             size: 28,
           ),
           colorText: Colors.white,
-          backgroundColor: const Color(0xFFE65100),
+          backgroundColor: HajiColors.light.warning,
           mainButton: TextButton(
             onPressed: () {
               if (Get.isSnackbarOpen) Get.back();
@@ -268,13 +269,13 @@ class NotificationController extends GetxController {
           color: Colors.white,
         ),
         colorText: Colors.white,
-        backgroundColor: const Color(0xFF3A2518),
+        backgroundColor: HajiColors.light.primary,
         mainButton: TextButton(
           onPressed: () => Get.toNamed(AppRoutes.notification),
-          child: const Text(
+          child: Text(
             'BUKA',
             style: TextStyle(
-              color: Color(0xFFFFD180),
+              color: HajiColors.light.accent,
               fontWeight: FontWeight.w800,
             ),
           ),

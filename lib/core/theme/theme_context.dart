@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'app_typography.dart';
 import 'haji_colors.dart';
 
+export 'app_typography.dart';
+export 'haji_colors.dart';
+
 /// Ergonomic syntax extensions on [BuildContext] to access centralized theme tokens
 /// safely, concisely, and with guaranteed fallbacks across both production and tests.
 extension ThemeContextX on BuildContext {
@@ -16,6 +19,7 @@ extension ThemeContextX on BuildContext {
 
   /// Convenience boolean to check if the current inherited theme is Dark.
   bool get isDarkTheme => Theme.of(this).brightness == Brightness.dark;
+  bool get isDark => isDarkTheme;
 
 /// Convenience accessor for the inherited Material 3 [TextTheme] with guaranteed non-null styles.
   HajiSafeTextTheme get text => HajiSafeTextTheme(Theme.of(this).textTheme, hc);

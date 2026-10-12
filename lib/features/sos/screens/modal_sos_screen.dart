@@ -6,10 +6,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_context.dart';
 import '../../notification/controllers/notification_controller.dart';
 
 class ModalSosScreen extends StatefulWidget {
@@ -286,7 +285,8 @@ class _ModalSosScreenState extends State<ModalSosScreen>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
+    final colors = context.hc;
+    final typography = context.text;
     final isOfficer =
         state.role == UserRole.pendamping || state.role == UserRole.admin;
 
@@ -294,17 +294,15 @@ class _ModalSosScreenState extends State<ModalSosScreen>
     if (isOfficer) {
       return Obx(() {
         final activeSosList = _resolveActiveSosList();
-        return _buildResponderView(context, activeSosList, isDark);
+        return _buildResponderView(context, activeSosList, colors.isDark);
       });
     }
 
     // ── Jamaah: Tampilan Emergency Trigger Panel ────────────────────────────
-    final scaffoldBg = isDark ? AppColors.darkScaffold : AppColors.canvasCream;
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
+    final scaffoldBg = colors.canvas;
+    final cardBg = colors.surface;
+    final headingColor = colors.textPrimary;
+    final bodyColor = colors.textSecondary;
 
     return Scaffold(
       backgroundColor: scaffoldBg,
@@ -321,8 +319,8 @@ class _ModalSosScreenState extends State<ModalSosScreen>
           children: [
             Container(
               padding: const EdgeInsets.all(6),
-              decoration: const BoxDecoration(
-                color: AppColors.sosEmergency,
+              decoration: BoxDecoration(
+                color: colors.danger,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -337,7 +335,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                 context.tr('sosCenterTitle'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.headlineMedium.copyWith(
+                style: typography.headlineMedium.copyWith(
                   color: headingColor,
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
@@ -349,7 +347,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
       ),
       body: _buildJamaahSenderView(
         context,
-        isDark,
+        colors.isDark,
         cardBg,
         headingColor,
         bodyColor,
@@ -366,13 +364,15 @@ class _ModalSosScreenState extends State<ModalSosScreen>
     List<Map<String, dynamic>> activeSosList,
     bool isDark,
   ) {
+    final colors = context.hc;
+    final typography = context.text;
     final activeCount = activeSosList.length;
     final hasActiveSos = activeCount > 0;
     final mq = MediaQuery.of(context);
     final topPadding = mq.padding.top;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkScaffold : AppColors.canvasCream,
+      backgroundColor: colors.canvas,
       body: Stack(
         children: [
           // ── 1. Top Hero Gradient Background (Merah Crimson & Kaaba Espresso)
@@ -392,11 +392,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                           Color(0xFF5B1111),
                           Color(0xFF2E1C12),
                         ]
-                      : const [
-                          Color(0xFFDC2626),
-                          Color(0xFFB91C1C),
-                          Color(0xFF38251A),
-                        ],
+                      : [colors.danger, colors.dangerDark, colors.primaryDark],
                 ),
               ),
               child: Stack(
@@ -476,7 +472,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                             children: [
                               Text(
                                 context.tr('sosCenterTitle'),
-                                style: AppTypography.titleLarge.copyWith(
+                                style: typography.titleLarge.copyWith(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: -0.3,
@@ -486,7 +482,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                               ),
                               Text(
                                 context.tr('sosCenterSubtitle'),
-                                style: AppTypography.captionSmall.copyWith(
+                                style: typography.labelSmall.copyWith(
                                   color: Colors.white70,
                                   fontWeight: FontWeight.w500,
                                   fontSize: 11.5,
@@ -523,17 +519,17 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                                   child: Container(
                                     width: 7,
                                     height: 7,
-                                    decoration: const BoxDecoration(
+                                    decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      color: AppColors.sosEmergency,
+                                      color: colors.danger,
                                     ),
                                   ),
                                 ),
                                 const SizedBox(width: 5),
                                 Text(
                                   '$activeCount ${context.tr('sosActiveBadge')}',
-                                  style: AppTypography.captionSmall.copyWith(
-                                    color: AppColors.sosEmergency,
+                                  style: typography.labelSmall.copyWith(
+                                    color: colors.danger,
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: 0.4,
                                   ),
@@ -563,9 +559,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                 SliverToBoxAdapter(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkSurface
-                          : AppColors.canvasCream,
+                      color: colors.canvas,
                       borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(30),
                       ),
@@ -589,11 +583,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                             width: 38,
                             height: 4,
                             decoration: BoxDecoration(
-                              color: isDark
-                                  ? AppColors.darkOutline.withValues(alpha: 0.6)
-                                  : AppColors.outlineVariant.withValues(
-                                      alpha: 0.6,
-                                    ),
+                              color: colors.border,
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
@@ -611,10 +601,8 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                                 }),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: AppTypography.titleMedium.copyWith(
-                                  color: isDark
-                                      ? AppColors.darkTextHeading
-                                      : AppColors.espressoDark,
+                                style: typography.titleMedium.copyWith(
+                                  color: colors.textPrimary,
                                   fontWeight: FontWeight.w800,
                                   fontSize: 16,
                                 ),
@@ -627,17 +615,15 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                                   vertical: 3,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.sosEmergency.withValues(
-                                    alpha: 0.12,
-                                  ),
+                                  color: colors.danger.withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(
                                     AppRadius.pill,
                                   ),
                                 ),
                                 child: Text(
                                   'Perlu Tindakan',
-                                  style: AppTypography.captionSmall.copyWith(
-                                    color: AppColors.sosEmergency,
+                                  style: typography.labelSmall.copyWith(
+                                    color: colors.danger,
                                     fontWeight: FontWeight.w700,
                                     fontSize: 10.5,
                                   ),
@@ -680,13 +666,11 @@ class _ModalSosScreenState extends State<ModalSosScreen>
     int activeCount,
     bool hasActiveSos,
   ) {
-    final cardBg = isDark
-        ? AppColors.darkSurfaceContainer
-        : AppColors.surfaceWhite;
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final subColor = isDark ? AppColors.darkTextBody : AppColors.textMuted;
+    final colors = context.hc;
+    final typography = context.text;
+    final cardBg = colors.surface;
+    final headingColor = colors.textPrimary;
+    final subColor = colors.textMuted;
 
     final roomName = state.activeRoom.value?.name ?? 'Rombongan Pantau';
     final kloter = state.pendampingKloter.value;
@@ -711,12 +695,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
             offset: const Offset(0, 6),
           ),
         ],
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : AppColors.espressoDark.withValues(alpha: 0.05),
-          width: 1,
-        ),
+        border: Border.all(color: colors.border, width: 1),
       ),
       child: Column(
         children: [
@@ -730,15 +709,15 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                 height: 16,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFF22C55E).withValues(alpha: 0.15),
+                  color: colors.success.withValues(alpha: 0.15),
                 ),
                 child: Center(
                   child: Container(
                     width: 8,
                     height: 8,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Color(0xFF22C55E),
+                      color: colors.success,
                     ),
                   ),
                 ),
@@ -750,7 +729,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                   children: [
                     Text(
                       'POSKO PENDAMPING',
-                      style: AppTypography.captionSmall.copyWith(
+                      style: typography.labelSmall.copyWith(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
                         color: subColor,
@@ -760,7 +739,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                     const SizedBox(height: 2),
                     Text(
                       'Siaga Respon Cepat Terhubung',
-                      style: AppTypography.titleSmall.copyWith(
+                      style: typography.titleSmall.copyWith(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                         color: headingColor,
@@ -769,7 +748,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                     if (officerSub.isNotEmpty)
                       Text(
                         officerSub,
-                        style: AppTypography.captionSmall.copyWith(
+                        style: typography.labelSmall.copyWith(
                           fontSize: 11,
                           color: subColor,
                         ),
@@ -785,13 +764,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
             padding: const EdgeInsets.only(left: 7.5, top: 2, bottom: 2),
             child: Row(
               children: [
-                Container(
-                  width: 1.5,
-                  height: 18,
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.15)
-                      : Colors.grey.withValues(alpha: 0.35),
-                ),
+                Container(width: 1.5, height: 18, color: colors.border),
               ],
             ),
           ),
@@ -806,11 +779,8 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                 height: 16,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color:
-                      (hasActiveSos
-                              ? AppColors.sosEmergency
-                              : const Color(0xFF22C55E))
-                          .withValues(alpha: 0.15),
+                  color: (hasActiveSos ? colors.danger : colors.success)
+                      .withValues(alpha: 0.15),
                 ),
                 child: Center(
                   child: ScaleTransition(
@@ -822,9 +792,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                       height: 8,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: hasActiveSos
-                            ? AppColors.sosEmergency
-                            : const Color(0xFF22C55E),
+                        color: hasActiveSos ? colors.danger : colors.success,
                       ),
                     ),
                   ),
@@ -837,7 +805,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                   children: [
                     Text(
                       'STATUS DARURAT JAMAAH',
-                      style: AppTypography.captionSmall.copyWith(
+                      style: typography.labelSmall.copyWith(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
                         color: subColor,
@@ -849,12 +817,10 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                       hasActiveSos
                           ? '$activeCount Jamaah Perlu Bantuan Segera'
                           : 'Kondisi Aman Terkendali',
-                      style: AppTypography.titleSmall.copyWith(
+                      style: typography.titleSmall.copyWith(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: hasActiveSos
-                            ? AppColors.sosEmergency
-                            : const Color(0xFF16A34A),
+                        color: hasActiveSos ? colors.danger : colors.success,
                       ),
                     ),
                   ],
@@ -874,6 +840,8 @@ class _ModalSosScreenState extends State<ModalSosScreen>
     Map<String, dynamic> sos,
     bool isDark,
   ) {
+    final colors = context.hc;
+    final typography = context.text;
     final userName = (sos['userName'] as String?)?.trim().isNotEmpty == true
         ? (sos['userName'] as String).trim()
         : 'Jamaah Tanpa Nama';
@@ -890,10 +858,8 @@ class _ModalSosScreenState extends State<ModalSosScreen>
     final waitTimeNum = _getWaitTimeNumber(timestamp);
     final waitTimeUnit = _getWaitTimeUnit(timestamp);
 
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
+    final cardBg = colors.surface;
+    final headingColor = colors.textPrimary;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -901,14 +867,12 @@ class _ModalSosScreenState extends State<ModalSosScreen>
         color: cardBg,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: AppColors.sosEmergency.withValues(alpha: isDark ? 0.35 : 0.20),
+          color: colors.danger.withValues(alpha: isDark ? 0.35 : 0.20),
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.sosEmergency.withValues(
-              alpha: isDark ? 0.18 : 0.07,
-            ),
+            color: colors.danger.withValues(alpha: isDark ? 0.18 : 0.07),
             blurRadius: 16,
             offset: const Offset(0, 5),
           ),
@@ -928,9 +892,9 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                     clipper: _RibbonClipper(),
                     child: Container(
                       padding: const EdgeInsets.fromLTRB(8, 6, 8, 10),
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                          colors: [colors.danger, colors.dangerDark],
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                         ),
@@ -949,12 +913,10 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                   const SizedBox(height: 4),
                   Text(
                     clockTime,
-                    style: AppTypography.captionSmall.copyWith(
+                    style: typography.labelSmall.copyWith(
                       fontWeight: FontWeight.w700,
                       fontSize: 11,
-                      color: isDark
-                          ? AppColors.darkTextBody
-                          : AppColors.textMuted,
+                      color: colors.textMuted,
                     ),
                   ),
                 ],
@@ -975,12 +937,10 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                         children: [
                           Text(
                             context.tr('sosWaitingTime'),
-                            style: AppTypography.captionSmall.copyWith(
+                            style: typography.labelSmall.copyWith(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
-                              color: isDark
-                                  ? AppColors.darkTextBody
-                                  : AppColors.textMuted,
+                              color: colors.textMuted,
                               letterSpacing: 0.4,
                             ),
                           ),
@@ -991,7 +951,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                             children: [
                               Text(
                                 waitTimeNum,
-                                style: AppTypography.heading(
+                                style: typography.headlineMedium.copyWith(
                                   fontSize: 28,
                                   fontWeight: FontWeight.w800,
                                   height: 1.1,
@@ -1001,10 +961,10 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                               const SizedBox(width: 3),
                               Text(
                                 waitTimeUnit,
-                                style: AppTypography.bodyText(
+                                style: typography.bodyMedium.copyWith(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 12,
-                                  color: AppColors.sosEmergency,
+                                  color: colors.danger,
                                 ),
                               ),
                               const SizedBox(width: 10),
@@ -1017,8 +977,8 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                                 decoration: BoxDecoration(
                                   color:
                                       (hasLocation
-                                              ? const Color(0xFF22C55E)
-                                              : AppColors.sosEmergency)
+                                              ? colors.success
+                                              : colors.danger)
                                           .withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
@@ -1031,8 +991,8 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                                           : Icons.gps_off_rounded,
                                       size: 11,
                                       color: hasLocation
-                                          ? const Color(0xFF16A34A)
-                                          : AppColors.sosEmergency,
+                                          ? colors.success
+                                          : colors.danger,
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
@@ -1041,8 +1001,8 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                                         fontSize: 10.5,
                                         fontWeight: FontWeight.w700,
                                         color: hasLocation
-                                            ? const Color(0xFF16A34A)
-                                            : AppColors.sosEmergency,
+                                            ? colors.success
+                                            : colors.danger,
                                       ),
                                     ),
                                   ],
@@ -1060,16 +1020,9 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                     margin: const EdgeInsets.only(top: 14, bottom: 16),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkSurfaceContainer
-                          : const Color(0xFFF9FAFB),
+                      color: colors.surfaceSubtle,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: isDark
-                            ? AppColors.darkOutline.withValues(alpha: 0.2)
-                            : const Color(0xFFE5E7EB),
-                        width: 1,
-                      ),
+                      border: Border.all(color: colors.border, width: 1),
                     ),
                     child: Row(
                       children: [
@@ -1081,11 +1034,9 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                               height: 12,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: const Color(
-                                  0xFF22C55E,
-                                ).withValues(alpha: 0.2),
+                                color: colors.success.withValues(alpha: 0.2),
                                 border: Border.all(
-                                  color: const Color(0xFF22C55E),
+                                  color: colors.success,
                                   width: 3,
                                 ),
                               ),
@@ -1094,20 +1045,16 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                               width: 1.5,
                               height: 22,
                               margin: const EdgeInsets.symmetric(vertical: 2),
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.15)
-                                  : Colors.grey.withValues(alpha: 0.35),
+                              color: colors.border,
                             ),
                             Container(
                               width: 12,
                               height: 12,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: const Color(
-                                  0xFF3B82F6,
-                                ).withValues(alpha: 0.2),
+                                color: colors.info.withValues(alpha: 0.2),
                                 border: Border.all(
-                                  color: const Color(0xFF3B82F6),
+                                  color: colors.info,
                                   width: 3,
                                 ),
                               ),
@@ -1122,51 +1069,39 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                             children: [
                               Text(
                                 userName,
-                                style: AppTypography.titleSmall.copyWith(
+                                style: typography.titleSmall.copyWith(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 14.5,
                                   color: headingColor,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
                               Text(
                                 roomName,
-                                style: AppTypography.captionSmall.copyWith(
+                                style: typography.labelSmall.copyWith(
                                   fontSize: 11,
-                                  color: isDark
-                                      ? AppColors.darkTextBody
-                                      : AppColors.textMuted,
+                                  color: colors.textMuted,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
                               const SizedBox(height: 7),
                               Text(
                                 hasLocation
                                     ? '📍 Lokasi GPS terdeteksi — tap Lihat Detail'
                                     : '📍 Lokasi belum tersedia',
-                                style: AppTypography.captionSmall.copyWith(
+                                style: typography.labelSmall.copyWith(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w600,
                                   color: hasLocation
-                                      ? const Color(0xFF16A34A)
-                                      : AppColors.textMuted,
+                                      ? colors.success
+                                      : colors.textMuted,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
                               Text(
                                 timeStr,
-                                style: AppTypography.captionSmall.copyWith(
+                                style: typography.labelSmall.copyWith(
                                   fontSize: 10.5,
-                                  color: isDark
-                                      ? AppColors.darkTextBody.withValues(
-                                          alpha: 0.7,
-                                        )
-                                      : AppColors.textMuted.withValues(
-                                          alpha: 0.8,
-                                        ),
+                                  color: colors.textMuted.withValues(
+                                    alpha: 0.8,
+                                  ),
                                 ),
                               ),
                             ],
@@ -1189,16 +1124,14 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                         constraints: const BoxConstraints(minHeight: 42),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(AppRadius.pill),
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                          gradient: LinearGradient(
+                            colors: [colors.danger, colors.dangerDark],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(
-                                0xFFEF4444,
-                              ).withValues(alpha: 0.38),
+                              color: colors.danger.withValues(alpha: 0.38),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -1221,7 +1154,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                           ),
                           label: Text(
                             context.tr('sosViewDetail'),
-                            style: AppTypography.labelLarge.copyWith(
+                            style: typography.labelLarge.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w700,
                             ),
@@ -1243,13 +1176,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                           style: OutlinedButton.styleFrom(
                             foregroundColor: headingColor,
                             side: BorderSide(
-                              color: isDark
-                                  ? AppColors.darkOutline.withValues(
-                                      alpha: 0.35,
-                                    )
-                                  : AppColors.outlineVariant.withValues(
-                                      alpha: 0.6,
-                                    ),
+                              color: colors.borderStrong,
                               width: 1.1,
                             ),
                             shape: const StadiumBorder(),
@@ -1260,7 +1187,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                           ),
                           child: Text(
                             context.tr('done'),
-                            style: AppTypography.labelLarge.copyWith(
+                            style: typography.labelLarge.copyWith(
                               fontWeight: FontWeight.bold,
                               fontSize: 12.5,
                             ),
@@ -1309,13 +1236,11 @@ class _ModalSosScreenState extends State<ModalSosScreen>
   // ── Safe Empty State ───────────────────────────────────────────────────────
 
   Widget _buildSafeEmptyState(BuildContext context, bool isDark) {
-    final cardBg = isDark
-        ? AppColors.darkSurfaceContainer
-        : AppColors.surfaceWhite;
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
+    final colors = context.hc;
+    final typography = context.text;
+    final cardBg = colors.surface;
+    final headingColor = colors.textPrimary;
+    final bodyColor = colors.textSecondary;
 
     return Container(
       width: double.infinity,
@@ -1324,7 +1249,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
         color: cardBg,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFF22C55E).withValues(alpha: 0.25),
+          color: colors.success.withValues(alpha: 0.25),
           width: 1,
         ),
       ),
@@ -1334,19 +1259,19 @@ class _ModalSosScreenState extends State<ModalSosScreen>
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: const Color(0xFF22C55E).withValues(alpha: 0.12),
+              color: colors.success.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.check_circle_outline_rounded,
-              color: Color(0xFF16A34A),
+              color: colors.success,
               size: 36,
             ),
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
             context.tr('sosSafeConditionTitle'),
-            style: AppTypography.titleMedium.copyWith(
+            style: typography.titleMedium.copyWith(
               color: headingColor,
               fontWeight: FontWeight.bold,
             ),
@@ -1355,7 +1280,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
           Text(
             context.tr('sosSafeConditionDesc'),
             textAlign: TextAlign.center,
-            style: AppTypography.bodySmall.copyWith(color: bodyColor),
+            style: typography.bodySmall.copyWith(color: bodyColor),
           ),
         ],
       ),
@@ -1365,37 +1290,30 @@ class _ModalSosScreenState extends State<ModalSosScreen>
   // ── Hotline Darurat Card ───────────────────────────────────────────────────
 
   Widget _buildHotlineCard(BuildContext context, bool isDark) {
-    final cardBg = isDark
-        ? AppColors.darkSurfaceContainer
-        : AppColors.canvasCreamSubtle.withValues(alpha: 0.6);
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
+    final colors = context.hc;
+    final typography = context.text;
+    final cardBg = colors.surfaceSubtle;
+    final headingColor = colors.textPrimary;
+    final bodyColor = colors.textSecondary;
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark
-              ? AppColors.darkOutline.withValues(alpha: 0.2)
-              : AppColors.outlineVariant.withValues(alpha: 0.35),
-          width: 1,
-        ),
+        border: Border.all(color: colors.border, width: 1),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.sosEmergency.withValues(alpha: 0.12),
+              color: colors.danger.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.phone_in_talk_rounded,
-              color: AppColors.sosEmergency,
+              color: colors.danger,
               size: 20,
             ),
           ),
@@ -1406,7 +1324,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
               children: [
                 Text(
                   'Hotline Darurat Haji Indonesia',
-                  style: AppTypography.titleSmall.copyWith(
+                  style: typography.titleSmall.copyWith(
                     color: headingColor,
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
@@ -1415,7 +1333,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                 const SizedBox(height: 2),
                 Text(
                   'Pusat Krisis Kemenag: 800-119-999 • Ambulans: 997',
-                  style: AppTypography.captionSmall.copyWith(
+                  style: typography.labelSmall.copyWith(
                     color: bodyColor,
                     fontSize: 11,
                   ),
@@ -1512,6 +1430,8 @@ class _ModalSosScreenState extends State<ModalSosScreen>
     Color headingColor,
     Color bodyColor,
   ) {
+    final colors = context.hc;
+    final typography = context.text;
     final self = state.self;
     final hasRoom =
         (state.activeRoomId.value?.trim().isNotEmpty ?? false) ||
@@ -1531,24 +1451,24 @@ class _ModalSosScreenState extends State<ModalSosScreen>
               height: 96,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.distanceWarning.withValues(alpha: 0.12),
+                color: colors.warning.withValues(alpha: 0.12),
                 border: Border.all(
-                  color: AppColors.distanceWarning.withValues(alpha: 0.35),
+                  color: colors.warning.withValues(alpha: 0.35),
                   width: 1.5,
                 ),
               ),
-              child: const Center(
+              child: Center(
                 child: Icon(
                   Icons.meeting_room_outlined,
                   size: 46,
-                  color: AppColors.distanceWarning,
+                  color: colors.warning,
                 ),
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(
               'Belum Terdaftar di Room Pantau',
-              style: AppTypography.titleLarge.copyWith(
+              style: typography.titleLarge.copyWith(
                 color: headingColor,
                 fontWeight: FontWeight.bold,
               ),
@@ -1558,7 +1478,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
             Text(
               'Tombol SOS darurat dinonaktifkan karena Anda belum masuk ke room pantau rombongan. Bergabunglah ke rombongan Anda agar pendamping dan petugas dapat memantau lokasi dan menerima sinyal darurat.',
               textAlign: TextAlign.center,
-              style: AppTypography.bodySmall.copyWith(
+              style: typography.bodySmall.copyWith(
                 color: bodyColor.withValues(alpha: 0.85),
                 height: 1.45,
               ),
@@ -1567,8 +1487,8 @@ class _ModalSosScreenState extends State<ModalSosScreen>
             ElevatedButton.icon(
               onPressed: () => Get.toNamed(AppRoutes.joinRoom),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
+                backgroundColor: colors.primary,
+                foregroundColor: colors.onPrimary,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
                   vertical: 14,
@@ -1581,7 +1501,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
               icon: const Icon(Icons.group_add_rounded, size: 20),
               label: Text(
                 context.tr('sosJoinMonitoringRoom'),
-                style: AppTypography.button.copyWith(
+                style: typography.labelLarge.copyWith(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
                 ),
@@ -1612,7 +1532,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                   height: 180,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.sosEmergency.withValues(alpha: 0.15),
+                    color: colors.danger.withValues(alpha: 0.15),
                   ),
                 ),
               ),
@@ -1621,7 +1541,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                 height: 140,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.sosEmergency.withValues(alpha: 0.3),
+                  color: colors.danger.withValues(alpha: 0.3),
                 ),
               ),
               GestureDetector(
@@ -1635,18 +1555,18 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                 child: Container(
                   width: 110,
                   height: 110,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
-                      colors: [Color(0xFFE53935), Color(0xFFB71C1C)],
+                      colors: [colors.danger, colors.dangerDark],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Color(0xFFE53935),
+                        color: colors.danger.withValues(alpha: 0.6),
                         blurRadius: 20,
-                        offset: Offset(0, 6),
+                        offset: const Offset(0, 6),
                       ),
                     ],
                   ),
@@ -1683,8 +1603,8 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                 : (_isCountingDown
                       ? context.tr('sosSendingSignal')
                       : context.tr('sosReadyToSend')),
-            style: AppTypography.titleLarge.copyWith(
-              color: isSosAlreadyActive ? AppColors.sosEmergency : headingColor,
+            style: typography.titleLarge.copyWith(
+              color: isSosAlreadyActive ? colors.danger : headingColor,
               fontWeight: FontWeight.bold,
             ),
             textAlign: TextAlign.center,
@@ -1697,7 +1617,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                       ? context.tr('sosTapToCancelCountdown')
                       : context.tr('sosUsagePrompt')),
             textAlign: TextAlign.center,
-            style: AppTypography.bodySmall.copyWith(
+            style: typography.bodySmall.copyWith(
               color: bodyColor.withValues(alpha: 0.85),
               height: 1.4,
             ),
@@ -1731,7 +1651,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
               height: 48,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1E60CC),
+                  backgroundColor: colors.info,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -1751,7 +1671,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
               height: 48,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.statusSafe,
+                  backgroundColor: colors.success,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -1799,7 +1719,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
               height: 48,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.sosEmergency,
+                  backgroundColor: colors.danger,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -1822,24 +1742,14 @@ class _ModalSosScreenState extends State<ModalSosScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.darkSurfaceContainer
-                  : AppColors.surfaceWhite,
+              color: colors.surface,
               borderRadius: BorderRadius.circular(AppRadius.pill),
-              border: Border.all(
-                color: isDark
-                    ? AppColors.darkCardBorder
-                    : AppColors.canvasCreamSubtle,
-              ),
+              border: Border.all(color: colors.border),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
-                  Icons.gps_fixed_rounded,
-                  size: 14,
-                  color: AppColors.statusSafe,
-                ),
+                Icon(Icons.gps_fixed_rounded, size: 14, color: colors.success),
                 const SizedBox(width: 6),
                 Text(
                   state.myCurrentPosition.value != null
@@ -1848,7 +1758,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                               .round(),
                         })
                       : context.tr('sosSearchingGps'),
-                  style: AppTypography.captionSmall.copyWith(
+                  style: typography.labelSmall.copyWith(
                     color: headingColor,
                     fontWeight: FontWeight.w600,
                   ),

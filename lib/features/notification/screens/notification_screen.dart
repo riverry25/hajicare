@@ -4,10 +4,9 @@ import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_context.dart';
 import '../models/notification_model.dart';
 import '../controllers/notification_controller.dart';
 import '../widgets/notification_composer_dialog.dart';
@@ -23,29 +22,29 @@ class NotificationScreen extends StatefulWidget {
 class _NotificationScreenState extends State<NotificationScreen> {
   @override
   Widget build(BuildContext context) {
-    final scaffoldBg = AppColors.scaffoldColor(context);
-    final headingColor = AppColors.textHeadingColor(context);
+    final colors = context.hc;
+    final text = context.text;
 
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: scaffoldBg,
+        backgroundColor: colors.canvas,
         appBar: AppBar(
-          backgroundColor: AppColors.cardBgColor(context),
+          backgroundColor: colors.surface,
           elevation: 0,
           scrolledUnderElevation: 1,
           leading: IconButton(
             icon: Icon(
               Icons.arrow_back_ios_new_rounded,
-              color: headingColor,
+              color: colors.textPrimary,
               size: 20,
             ),
             onPressed: () => Get.back(),
           ),
           title: Text(
             'Notifikasi & Bantuan',
-            style: AppTypography.headlineMd.copyWith(
-              color: headingColor,
+            style: text.titleLarge.copyWith(
+              color: colors.textPrimary,
               fontWeight: FontWeight.w700,
             ),
             maxLines: 1,
@@ -66,9 +65,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   // Tandai semua dibaca
                   if (unread > 0)
                     IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.done_all_rounded,
-                        color: AppColors.goldDark,
+                        color: colors.accentText,
                         size: 22,
                       ),
                       tooltip: 'Tandai Semua Dibaca',
@@ -77,9 +76,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   // Hapus semua notifikasi (soft-delete per user)
                   if (hasNotifs)
                     IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.delete_sweep_rounded,
-                        color: AppColors.goldDark,
+                        color: colors.accentText,
                         size: 22,
                       ),
                       tooltip: 'Hapus Semua Notifikasi',
@@ -92,10 +91,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 (Get.find<HajiCareController>().role == UserRole.admin ||
                     Get.find<HajiCareController>().role == UserRole.pendamping))
               IconButton(
-                icon: const Icon(
-                  Icons.campaign_rounded,
-                  color: AppColors.goldDark,
-                ),
+                icon: Icon(Icons.campaign_rounded, color: colors.accentText),
                 tooltip: 'Buat Notifikasi',
                 onPressed: () => NotificationComposerDialog.show(context),
               ),
@@ -109,15 +105,15 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 context,
               ).copyWith(textScaler: MediaQuery.textScalerOf(context)),
               child: TabBar(
-                indicatorColor: AppColors.goldPrimary,
+                indicatorColor: colors.accent,
                 indicatorWeight: 3,
                 indicatorSize: TabBarIndicatorSize.label,
-                labelColor: headingColor,
-                unselectedLabelColor: AppColors.textSecondaryColor(context),
-                labelStyle: AppTypography.titleSm.copyWith(
+                labelColor: colors.textPrimary,
+                unselectedLabelColor: colors.textSecondary,
+                labelStyle: text.titleSmall.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
-                unselectedLabelStyle: AppTypography.titleSm.copyWith(
+                unselectedLabelStyle: text.titleSmall.copyWith(
                   fontWeight: FontWeight.w500,
                 ),
                 tabs: [
@@ -150,7 +146,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.sosEmergency,
+                                color: colors.danger,
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Text(
@@ -194,14 +190,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
   /// Penghapusan bersifat soft-delete per-user: notifikasi hanya hilang dari
   /// daftar USER INI; pengguna lain yang belum menghapus tetap melihatnya.
   void _showClearAllDialog(BuildContext context, NotificationController ctrl) {
-    final isDark = AppColors.isDark(context);
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
+    final colors = context.hc;
+    final text = context.text;
 
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: cardBg,
+      backgroundColor: colors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -215,9 +209,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.darkCardBorder
-                    : AppColors.lightCardBorder,
+                color: colors.borderStrong,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -227,12 +219,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: AppColors.error.withValues(alpha: 0.1),
+                color: colors.dangerContainer,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.delete_sweep_rounded,
-                color: AppColors.error,
+                color: colors.danger,
                 size: 32,
               ),
             ),
@@ -240,8 +232,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
             // Judul
             Text(
               'Hapus Semua Notifikasi?',
-              style: AppTypography.headlineMd.copyWith(
-                color: headingColor,
+              style: text.headlineSmall.copyWith(
+                color: colors.textPrimary,
                 fontWeight: FontWeight.w700,
               ),
               textAlign: TextAlign.center,
@@ -251,8 +243,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
             Text(
               'Semua notifikasi akan dihapus dari daftar Anda.\n'
               'Pengguna lain yang menerima notifikasi yang sama tidak akan terpengaruh.',
-              style: AppTypography.bodySmall.copyWith(
-                color: bodyColor,
+              style: text.bodySmall.copyWith(
+                color: colors.textSecondary,
                 height: 1.5,
               ),
               textAlign: TextAlign.center,
@@ -264,12 +256,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 Expanded(
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: headingColor,
-                      side: BorderSide(
-                        color: isDark
-                            ? AppColors.darkCardBorder
-                            : AppColors.lightCardBorder,
-                      ),
+                      foregroundColor: colors.textPrimary,
+                      side: BorderSide(color: colors.border),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -283,8 +271,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 Expanded(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.error,
-                      foregroundColor: Colors.white,
+                      backgroundColor: colors.danger,
+                      foregroundColor: colors.onDanger,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -310,6 +298,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   Widget _buildNotificationTab(BuildContext context) {
     final controller = Get.find<NotificationController>();
+    final colors = context.hc;
 
     return Obx(() {
       final invitations = controller.pendingInvitations;
@@ -325,9 +314,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
       if (controller.isLoading.value &&
           realNotifs.isEmpty &&
           invitations.isEmpty) {
-        return const Center(
-          child: CircularProgressIndicator(color: AppColors.goldPrimary),
-        );
+        return Center(child: CircularProgressIndicator(color: colors.accent));
       }
 
       if (realNotifs.isEmpty && invitations.isEmpty) {
@@ -346,7 +333,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
               context,
               'UNDANGAN ROOM MASUK (${invitations.length})',
               Icons.mark_email_unread_rounded,
-              color: AppColors.goldDark,
+              color: colors.accentText,
             ),
             const SizedBox(height: AppSpacing.sm),
             ...invitations.map((inv) => _buildInvitationCard(context, inv)),
@@ -371,10 +358,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+    final colors = context.hc;
+    final text = context.text;
 
     return Center(
       child: SingleChildScrollView(
@@ -390,22 +375,22 @@ class _NotificationScreenState extends State<NotificationScreen> {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: primaryColor.withValues(alpha: 0.1),
+                color: colors.primaryContainer,
                 shape: BoxShape.circle,
               ),
               child: Center(
                 child: Icon(
                   Icons.notifications_none_rounded,
                   size: 40,
-                  color: primaryColor,
+                  color: colors.accent,
                 ),
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(
               context.tr('notification.emptyNotifications'),
-              style: AppTypography.titleMedium.copyWith(
-                color: headingColor,
+              style: text.titleMedium.copyWith(
+                color: colors.textPrimary,
                 fontWeight: FontWeight.bold,
               ),
               textAlign: TextAlign.center,
@@ -414,8 +399,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
             Text(
               'Semua pemberitahuan dan informasi penting rombongan akan muncul di sini.',
               textAlign: TextAlign.center,
-              style: AppTypography.bodySmall.copyWith(
-                color: bodyColor.withValues(alpha: 0.8),
+              style: text.bodySmall.copyWith(
+                color: colors.textSecondary,
                 height: 1.4,
               ),
             ),
@@ -427,25 +412,22 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   Widget _buildInvitationCard(BuildContext context, RoomInvitationModel inv) {
     final controller = Get.find<NotificationController>();
-    final isDark = AppColors.isDark(context);
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+    final colors = context.hc;
+    final text = context.text;
     final isProcessing = controller.processingInvitations.contains(inv.id);
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
       decoration: BoxDecoration(
-        color: cardBg,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
-          color: primaryColor.withValues(alpha: 0.6),
+          color: colors.accent.withValues(alpha: 0.6),
           width: 2.0,
         ),
         boxShadow: [
           BoxShadow(
-            color: primaryColor.withValues(alpha: 0.12),
+            color: colors.shadow.withValues(alpha: 0.08),
             blurRadius: 14,
             offset: const Offset(0, 4),
           ),
@@ -462,12 +444,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: primaryColor.withValues(alpha: 0.15),
+                    color: colors.primaryContainer,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.group_add_rounded,
-                    color: primaryColor,
+                    color: colors.accent,
                     size: 24,
                   ),
                 ),
@@ -482,13 +464,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: primaryColor.withValues(alpha: 0.1),
+                          color: colors.primaryContainer,
                           borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
                         child: Text(
                           'UNDANGAN ROOM BARU',
-                          style: AppTypography.captionSmall.copyWith(
-                            color: primaryColor,
+                          style: text.labelSmall.copyWith(
+                            color: colors.accentText,
                             fontWeight: FontWeight.bold,
                             fontSize: 10,
                           ),
@@ -497,8 +479,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                       const SizedBox(height: 4),
                       Text(
                         inv.roomName,
-                        style: AppTypography.titleMedium.copyWith(
-                          color: headingColor,
+                        style: text.titleMedium.copyWith(
+                          color: colors.textPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -510,8 +492,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
             const SizedBox(height: AppSpacing.sm),
             Text(
               'Pendamping "${inv.fromUserName}" mengundang Anda untuk bergabung ke dalam room pemantauan jamaah.',
-              style: AppTypography.bodySmall.copyWith(
-                color: bodyColor,
+              style: text.bodySmall.copyWith(
+                color: colors.textSecondary,
                 height: 1.4,
               ),
             ),
@@ -519,17 +501,15 @@ class _NotificationScreenState extends State<NotificationScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.darkSurfaceContainer
-                    : AppColors.canvasCream,
+                color: colors.surfaceSand,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: Text(
                 'Kode Room: ${inv.roomCode}',
-                style: AppTypography.captionSmall.copyWith(
+                style: text.labelSmall.copyWith(
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.0,
-                  color: headingColor,
+                  color: colors.textPrimary,
                 ),
               ),
             ),
@@ -541,9 +521,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 Expanded(
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.error,
+                      foregroundColor: colors.danger,
                       side: BorderSide(
-                        color: AppColors.error.withValues(alpha: 0.4),
+                        color: colors.danger.withValues(alpha: 0.4),
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -567,8 +547,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   flex: 2,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      foregroundColor: Colors.white,
+                      backgroundColor: colors.primary,
+                      foregroundColor: colors.onPrimary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
@@ -608,8 +588,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
     BuildContext context,
     AppNotificationModel notif,
   ) {
+    final colors = context.hc;
     IconData icon = Icons.notifications_rounded;
-    Color iconColor = AppColors.goldPrimary;
+    Color iconColor = colors.accent;
     String category = notif.type.replaceAll('_', ' ').toUpperCase();
     final latitude = (notif.metadata?['latitude'] as num?)?.toDouble();
     final longitude = (notif.metadata?['longitude'] as num?)?.toDouble();
@@ -617,46 +598,46 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
     if (notif.isRoomRemoved) {
       icon = Icons.person_remove_rounded;
-      iconColor = AppColors.error;
+      iconColor = colors.danger;
       category = 'DIKELUARKAN DARI ROOM';
     } else if (notif.isRoomDeleted) {
       icon = Icons.delete_forever_rounded;
-      iconColor = AppColors.error;
+      iconColor = colors.danger;
       category = 'ROMBONGAN DIHAPUS';
     } else if (notif.isMemberLeft) {
       icon = Icons.person_remove_outlined;
-      iconColor = AppColors.statusWarning;
+      iconColor = colors.warning;
       category = 'JAMAAH KELUAR';
     } else if (notif.isRoomJoined) {
       icon = Icons.check_circle_outline_rounded;
-      iconColor = AppColors.statusPositive;
+      iconColor = colors.success;
       category = 'UNDANGAN DITERIMA';
     } else if (notif.isPickupRequest) {
       icon = Icons.hail_rounded;
-      iconColor = AppColors.statusWarning;
+      iconColor = colors.warning;
       category = 'PERMINTAAN JEMPUT';
     } else if (notif.isCompanionInfo) {
       icon = Icons.campaign_rounded;
-      iconColor = AppColors.goldDark;
+      iconColor = colors.accent;
       category = 'INFORMASI JAMAAH';
     } else if (notif.isCompanionMessage) {
       icon = Icons.chat_bubble_rounded;
-      iconColor = AppColors.statusPositive;
+      iconColor = colors.success;
       category = 'PESAN JAMAAH';
     } else if (notif.isAnnouncement) {
       icon = Icons.campaign_rounded;
-      iconColor = AppColors.goldDark;
+      iconColor = colors.accent;
       final scopeStr = notif.scope?.trim().toUpperCase();
       category = scopeStr != null && scopeStr.isNotEmpty
           ? 'PENGUMUMAN $scopeStr'
           : 'PENGUMUMAN';
     } else if (notif.type == 'sos_alert') {
       icon = Icons.emergency_rounded;
-      iconColor = AppColors.error;
+      iconColor = colors.danger;
       category = 'SOS DARURAT';
     } else if (notif.type == 'room_invitation') {
       icon = Icons.mail_outline_rounded;
-      iconColor = AppColors.goldDark;
+      iconColor = colors.accent;
       category = 'UNDANGAN ROOM';
     }
 
@@ -668,7 +649,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
         padding: const EdgeInsets.only(right: 20),
         margin: const EdgeInsets.only(bottom: AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.error,
+          color: colors.danger,
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: const Icon(Icons.delete_outline_rounded, color: Colors.white),
@@ -729,14 +710,16 @@ class _NotificationScreenState extends State<NotificationScreen> {
     IconData icon, {
     Color? color,
   }) {
-    final effectiveColor = color ?? AppColors.textSecondaryColor(context);
+    final colors = context.hc;
+    final text = context.text;
+    final effectiveColor = color ?? colors.textSecondary;
     return Row(
       children: [
         Icon(icon, size: 14, color: effectiveColor),
         const SizedBox(width: 6),
         Text(
           title,
-          style: AppTypography.labelPill.copyWith(
+          style: text.labelSmall.copyWith(
             color: effectiveColor,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.2,
@@ -758,15 +741,14 @@ class _NotificationScreenState extends State<NotificationScreen> {
     VoidCallback? onTap,
     VoidCallback? onLocationTap,
   }) {
-    final isDark = AppColors.isDark(context);
-    final cardBg = AppColors.cardBgColor(context);
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
+    final colors = context.hc;
+    final text = context.text;
+    final isDark = context.isDark;
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Material(
-        color: cardBg,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         child: InkWell(
           onTap: onTap,
@@ -776,15 +758,15 @@ class _NotificationScreenState extends State<NotificationScreen> {
               borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(
                 color: isUnread
-                    ? AppColors.goldPrimary.withValues(alpha: 0.6)
-                    : AppColors.cardBorderColor(context),
+                    ? colors.accent.withValues(alpha: 0.6)
+                    : colors.border,
                 width: isUnread ? 1.5 : 1.0,
               ),
               boxShadow: [
                 BoxShadow(
                   color: isDark
-                      ? Colors.black26
-                      : Colors.black.withValues(alpha: 0.04),
+                      ? colors.shadow.withValues(alpha: 0.2)
+                      : colors.shadow.withValues(alpha: 0.04),
                   blurRadius: 10,
                   offset: const Offset(0, 3),
                 ),
@@ -799,9 +781,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     // Unread Accent Bar
                     Container(
                       width: 5,
-                      color: isUnread
-                          ? AppColors.goldPrimary
-                          : Colors.transparent,
+                      color: isUnread ? colors.accent : Colors.transparent,
                     ),
                     Expanded(
                       child: Padding(
@@ -852,13 +832,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                         ),
                                         child: Text(
                                           category,
-                                          style: AppTypography.captionSmall
-                                              .copyWith(
-                                                color: iconColor,
-                                                fontWeight: FontWeight.w700,
-                                                fontSize: 10,
-                                                letterSpacing: 0.5,
-                                              ),
+                                          style: text.labelSmall.copyWith(
+                                            color: iconColor,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 10,
+                                            letterSpacing: 0.5,
+                                          ),
                                         ),
                                       ),
                                       Row(
@@ -866,29 +845,23 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                           Icon(
                                             Icons.access_time_rounded,
                                             size: 12,
-                                            color: AppColors.textSecondaryColor(
-                                              context,
-                                            ),
+                                            color: colors.textSecondary,
                                           ),
                                           const SizedBox(width: 4),
                                           Text(
                                             time,
-                                            style: AppTypography.captionSmall
-                                                .copyWith(
-                                                  color:
-                                                      AppColors.textSecondaryColor(
-                                                        context,
-                                                      ),
-                                                  fontWeight: FontWeight.w500,
-                                                ),
+                                            style: text.labelSmall.copyWith(
+                                              color: colors.textSecondary,
+                                              fontWeight: FontWeight.w500,
+                                            ),
                                           ),
                                           if (isUnread) ...[
                                             const SizedBox(width: 6),
                                             Container(
                                               width: 7,
                                               height: 7,
-                                              decoration: const BoxDecoration(
-                                                color: AppColors.goldPrimary,
+                                              decoration: BoxDecoration(
+                                                color: colors.accent,
                                                 shape: BoxShape.circle,
                                               ),
                                             ),
@@ -902,8 +875,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                   // Title
                                   Text(
                                     title,
-                                    style: AppTypography.titleSm.copyWith(
-                                      color: headingColor,
+                                    style: text.titleSmall.copyWith(
+                                      color: colors.textPrimary,
                                       fontWeight: isUnread
                                           ? FontWeight.w800
                                           : FontWeight.w700,
@@ -915,8 +888,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                   // Message body
                                   Text(
                                     message,
-                                    style: AppTypography.bodySmall.copyWith(
-                                      color: bodyColor,
+                                    style: text.bodySmall.copyWith(
+                                      color: colors.textSecondary,
                                       height: 1.45,
                                     ),
                                   ),
@@ -942,9 +915,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                           ),
                                         ),
                                         style: OutlinedButton.styleFrom(
-                                          foregroundColor: AppColors.statusSafe,
-                                          side: const BorderSide(
-                                            color: AppColors.statusSafe,
+                                          foregroundColor: colors.success,
+                                          side: BorderSide(
+                                            color: colors.success,
                                             width: 1.5,
                                           ),
                                           shape: RoundedRectangleBorder(
@@ -974,8 +947,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   Widget _buildFaqList(BuildContext context) {
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
+    final colors = context.hc;
+    final text = context.text;
 
     return ListView(
       padding: const EdgeInsets.symmetric(
@@ -988,17 +961,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
           margin: const EdgeInsets.only(bottom: AppSpacing.lg),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                AppColors.goldPrimary.withValues(alpha: 0.12),
-                AppColors.cardBgColor(context),
-              ],
+              colors: [colors.primaryContainer, colors.surface],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(
-              color: AppColors.goldLight.withValues(alpha: 0.4),
-            ),
+            border: Border.all(color: colors.border),
           ),
           child: Row(
             children: [
@@ -1006,12 +974,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppColors.goldPrimary.withValues(alpha: 0.15),
+                  color: colors.primaryContainer,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.support_agent_rounded,
-                  color: AppColors.goldDark,
+                  color: colors.accent,
                   size: 26,
                 ),
               ),
@@ -1022,16 +990,16 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   children: [
                     Text(
                       'Pusat Panduan & Bantuan',
-                      style: AppTypography.titleSm.copyWith(
-                        color: headingColor,
+                      style: text.titleSmall.copyWith(
+                        color: colors.textPrimary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       'Ketuk salah satu pertanyaan di bawah untuk membaca panduan praktis dan jelas.',
-                      style: AppTypography.captionSmall.copyWith(
-                        color: bodyColor,
+                      style: text.labelSmall.copyWith(
+                        color: colors.textSecondary,
                         height: 1.4,
                       ),
                     ),
@@ -1093,23 +1061,23 @@ class _NotificationScreenState extends State<NotificationScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: AppColors.errorContainer.withValues(alpha: 0.5),
+              color: colors.dangerContainer.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(AppRadius.pill),
-              border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
+              border: Border.all(color: colors.danger.withValues(alpha: 0.2)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   Icons.phone_in_talk_rounded,
-                  color: AppColors.error,
+                  color: colors.danger,
                   size: 16,
                 ),
                 const SizedBox(width: 8),
                 Text(
                   'Hotline Maktab Indonesia: 800-119-999',
-                  style: AppTypography.captionSmall.copyWith(
-                    color: AppColors.error,
+                  style: text.labelSmall.copyWith(
+                    color: colors.danger,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -1128,23 +1096,23 @@ class _NotificationScreenState extends State<NotificationScreen> {
     required String question,
     required String answer,
   }) {
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
+    final colors = context.hc;
+    final text = context.text;
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Material(
-        color: AppColors.cardBgColor(context),
+        color: colors.surface,
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          side: BorderSide(color: AppColors.cardBorderColor(context)),
+          side: BorderSide(color: colors.border),
         ),
         child: Theme(
           data: Theme.of(context).copyWith(
             dividerColor: Colors.transparent,
-            splashColor: AppColors.goldPrimary.withValues(alpha: 0.1),
-            highlightColor: AppColors.goldPrimary.withValues(alpha: 0.05),
+            splashColor: colors.primaryContainer,
+            highlightColor: colors.surfaceSand,
           ),
           child: ExpansionTile(
             tilePadding: const EdgeInsets.symmetric(
@@ -1154,21 +1122,21 @@ class _NotificationScreenState extends State<NotificationScreen> {
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.goldPrimary.withValues(alpha: 0.1),
+                color: colors.primaryContainer,
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
-              child: Icon(icon, color: AppColors.goldDark, size: 20),
+              child: Icon(icon, color: colors.accent, size: 20),
             ),
             title: Text(
               question,
-              style: AppTypography.titleSm.copyWith(
-                color: headingColor,
+              style: text.titleSmall.copyWith(
+                color: colors.textPrimary,
                 fontWeight: FontWeight.w700,
                 fontSize: 15,
               ),
             ),
-            iconColor: AppColors.goldPrimary,
-            collapsedIconColor: AppColors.textSecondaryColor(context),
+            iconColor: colors.accent,
+            collapsedIconColor: colors.textSecondary,
             childrenPadding: const EdgeInsets.only(
               left: AppSpacing.md,
               right: AppSpacing.md,
@@ -1178,13 +1146,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
               Container(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
-                  color: AppColors.goldPrimary.withValues(alpha: 0.05),
+                  color: colors.surfaceSubtle,
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Text(
                   answer,
-                  style: AppTypography.bodySmall.copyWith(
-                    color: bodyColor,
+                  style: text.bodySmall.copyWith(
+                    color: colors.textSecondary,
                     fontSize: 14,
                     height: 1.5,
                   ),
