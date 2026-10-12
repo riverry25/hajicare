@@ -15,7 +15,7 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+      backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppRadius.sheet),
@@ -67,8 +67,8 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                 decoration: BoxDecoration(
                                   color:
                                       (hasActiveAlerts
-                                              ? AppColors.sosEmergency
-                                              : AppColors.statusSafe)
+                                              ? context.hc.danger
+                                              : context.hc.success)
                                           .withValues(
                                             alpha: isDark ? 0.2 : 0.12,
                                           ),
@@ -78,8 +78,8 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                   border: Border.all(
                                     color:
                                         (hasActiveAlerts
-                                                ? AppColors.sosEmergency
-                                                : AppColors.statusSafe)
+                                                ? context.hc.danger
+                                                : context.hc.success)
                                             .withValues(alpha: 0.25),
                                     width: 1,
                                   ),
@@ -90,8 +90,8 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                         ? Icons.crisis_alert_rounded
                                         : Icons.verified_user_rounded,
                                     color: hasActiveAlerts
-                                        ? AppColors.sosEmergency
-                                        : AppColors.statusSafe,
+                                        ? context.hc.danger
+                                        : context.hc.success,
                                     size: 22,
                                   ),
                                 ),
@@ -128,7 +128,7 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                               vertical: 2,
                                             ),
                                             decoration: BoxDecoration(
-                                              color: AppColors.sosEmergency,
+                                              color: context.hc.danger,
                                               borderRadius:
                                                   BorderRadius.circular(
                                                     AppRadius.pill,
@@ -207,19 +207,13 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                 horizontal: AppSpacing.lg,
                               ),
                               decoration: BoxDecoration(
-                                color: isDark
-                                    ? AppColors.darkSurface
-                                    : AppColors.canvasCreamSubtle.withValues(
-                                        alpha: 0.3,
-                                      ),
+                                color: context.hc.surfaceSand.withValues(
+                                  alpha: 0.3,
+                                ),
                                 borderRadius: BorderRadius.circular(
                                   AppRadius.card,
                                 ),
-                                border: Border.all(
-                                  color: isDark
-                                      ? AppColors.darkCardBorder
-                                      : AppColors.lightCardBorder,
-                                ),
+                                border: Border.all(color: context.hc.border),
                               ),
                               child: Column(
                                 children: [
@@ -227,16 +221,16 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                     width: 60,
                                     height: 60,
                                     decoration: BoxDecoration(
-                                      color: AppColors.statusSafe.withValues(
+                                      color: context.hc.success.withValues(
                                         alpha: 0.12,
                                       ),
                                       shape: BoxShape.circle,
                                     ),
-                                    child: const Center(
+                                    child: Center(
                                       child: Icon(
                                         Icons.check_circle_rounded,
                                         size: 34,
-                                        color: AppColors.statusSafe,
+                                        color: context.hc.success,
                                       ),
                                     ),
                                   ),
@@ -276,8 +270,8 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                 Container(
                                   width: 8,
                                   height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.sosEmergency,
+                                  decoration: BoxDecoration(
+                                    color: context.hc.danger,
                                     shape: BoxShape.circle,
                                   ),
                                 ),
@@ -286,7 +280,7 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                   context.tr('adminDashboard.highPriority'),
                                   style: DashboardTypography.captionSmall
                                       .copyWith(
-                                        color: AppColors.sosEmergency,
+                                        color: context.hc.danger,
                                         fontWeight: FontWeight.w800,
                                         letterSpacing: 0.7,
                                         fontSize: 12,
@@ -299,7 +293,7 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                     vertical: 1.5,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.sosEmergency.withValues(
+                                    color: context.hc.danger.withValues(
                                       alpha: 0.12,
                                     ),
                                     borderRadius: BorderRadius.circular(
@@ -308,8 +302,8 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                   ),
                                   child: Text(
                                     '${activeSosList.length}',
-                                    style: const TextStyle(
-                                      color: AppColors.sosEmergency,
+                                    style: TextStyle(
+                                      color: context.hc.danger,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 11,
                                     ),
@@ -353,14 +347,14 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                     AppRadius.card,
                                   ),
                                   border: Border.all(
-                                    color: AppColors.sosEmergency.withValues(
+                                    color: context.hc.danger.withValues(
                                       alpha: 0.45,
                                     ),
                                     width: 1.2,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.sosEmergency.withValues(
+                                      color: context.hc.danger.withValues(
                                         alpha: 0.08,
                                       ),
                                       blurRadius: 10,
@@ -385,27 +379,26 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                               vertical: 3.5,
                                             ),
                                             decoration: BoxDecoration(
-                                              color: AppColors.sosEmergency
+                                              color: context.hc.danger
                                                   .withValues(alpha: 0.15),
                                               borderRadius:
                                                   BorderRadius.circular(
                                                     AppRadius.pill,
                                                   ),
                                             ),
-                                            child: const Row(
+                                            child: Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 Icon(
                                                   Icons.emergency_rounded,
                                                   size: 13,
-                                                  color: AppColors.sosEmergency,
+                                                  color: context.hc.danger,
                                                 ),
                                                 SizedBox(width: 4),
                                                 Text(
                                                   'SOS',
                                                   style: TextStyle(
-                                                    color:
-                                                        AppColors.sosEmergency,
+                                                    color: context.hc.danger,
                                                     fontWeight: FontWeight.w800,
                                                     fontSize: 11,
                                                     letterSpacing: 0.5,
@@ -453,10 +446,10 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                             height: 42,
                                             decoration: BoxDecoration(
                                               shape: BoxShape.circle,
-                                              color: AppColors.sosEmergency
+                                              color: context.hc.danger
                                                   .withValues(alpha: 0.12),
                                               border: Border.all(
-                                                color: AppColors.sosEmergency
+                                                color: context.hc.danger
                                                     .withValues(alpha: 0.35),
                                                 width: 1.2,
                                               ),
@@ -464,8 +457,8 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                             child: Center(
                                               child: Text(
                                                 initial,
-                                                style: const TextStyle(
-                                                  color: AppColors.sosEmergency,
+                                                style: TextStyle(
+                                                  color: context.hc.danger,
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 16,
                                                 ),
@@ -533,8 +526,9 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
 
                                       // Map Action Button
                                       Material(
-                                        color: AppColors.sosEmergency
-                                            .withValues(alpha: 0.1),
+                                        color: context.hc.danger.withValues(
+                                          alpha: 0.1,
+                                        ),
                                         borderRadius: BorderRadius.circular(
                                           AppRadius.sm + 2,
                                         ),
@@ -572,10 +566,10 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                               mainAxisAlignment:
                                                   MainAxisAlignment.center,
                                               children: [
-                                                const Icon(
+                                                Icon(
                                                   Icons.near_me_rounded,
                                                   size: 15,
-                                                  color: AppColors.sosEmergency,
+                                                  color: context.hc.danger,
                                                 ),
                                                 const SizedBox(width: 6),
                                                 Text(
@@ -583,18 +577,18 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                                   style: DashboardTypography
                                                       .captionSmall
                                                       .copyWith(
-                                                        color: AppColors
-                                                            .sosEmergency,
+                                                        color:
+                                                            context.hc.danger,
                                                         fontWeight:
                                                             FontWeight.bold,
                                                         fontSize: 12.5,
                                                       ),
                                                 ),
                                                 const Spacer(),
-                                                const Icon(
+                                                Icon(
                                                   Icons.arrow_forward_rounded,
                                                   size: 14,
-                                                  color: AppColors.sosEmergency,
+                                                  color: context.hc.danger,
                                                 ),
                                               ],
                                             ),
@@ -616,8 +610,8 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                 Container(
                                   width: 8,
                                   height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.distanceWarning,
+                                  decoration: BoxDecoration(
+                                    color: context.hc.warning,
                                     shape: BoxShape.circle,
                                   ),
                                 ),
@@ -626,7 +620,7 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                   context.tr('adminDashboard.needsAttention'),
                                   style: DashboardTypography.captionSmall
                                       .copyWith(
-                                        color: AppColors.distanceWarning,
+                                        color: context.hc.warning,
                                         fontWeight: FontWeight.w800,
                                         letterSpacing: 0.7,
                                         fontSize: 12,
@@ -639,7 +633,7 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                     vertical: 1.5,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.distanceWarning.withValues(
+                                    color: context.hc.warning.withValues(
                                       alpha: 0.12,
                                     ),
                                     borderRadius: BorderRadius.circular(
@@ -648,8 +642,8 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                   ),
                                   child: Text(
                                     '${attentionList.length}',
-                                    style: const TextStyle(
-                                      color: AppColors.distanceWarning,
+                                    style: TextStyle(
+                                      color: context.hc.warning,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 11,
                                     ),
@@ -694,7 +688,7 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                     AppRadius.card,
                                   ),
                                   border: Border.all(
-                                    color: AppColors.distanceWarning.withValues(
+                                    color: context.hc.warning.withValues(
                                       alpha: 0.38,
                                     ),
                                     width: 1.0,
@@ -703,8 +697,9 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                     BoxShadow(
                                       color: isDark
                                           ? Colors.black.withValues(alpha: 0.15)
-                                          : AppColors.distanceWarning
-                                                .withValues(alpha: 0.04),
+                                          : context.hc.warning.withValues(
+                                              alpha: 0.04,
+                                            ),
                                       blurRadius: 8,
                                       offset: const Offset(0, 2),
                                     ),
@@ -753,8 +748,7 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                                       vertical: 3,
                                                     ),
                                                 decoration: BoxDecoration(
-                                                  color: AppColors
-                                                      .distanceWarning
+                                                  color: context.hc.warning
                                                       .withValues(alpha: 0.12),
                                                   borderRadius:
                                                       BorderRadius.circular(
@@ -765,21 +759,20 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                                   mainAxisSize:
                                                       MainAxisSize.min,
                                                   children: [
-                                                    const Icon(
+                                                    Icon(
                                                       Icons
                                                           .location_off_rounded,
                                                       size: 13,
-                                                      color: AppColors
-                                                          .distanceWarning,
+                                                      color: context.hc.warning,
                                                     ),
                                                     const SizedBox(width: 4),
                                                     Text(
                                                       context.tr(
                                                         'adminDashboard.locationNotUpdated',
                                                       ),
-                                                      style: const TextStyle(
-                                                        color: AppColors
-                                                            .distanceWarning,
+                                                      style: TextStyle(
+                                                        color:
+                                                            context.hc.warning,
                                                         fontWeight:
                                                             FontWeight.bold,
                                                         fontSize: 11,
@@ -827,12 +820,10 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                                 height: 40,
                                                 decoration: BoxDecoration(
                                                   shape: BoxShape.circle,
-                                                  color: AppColors
-                                                      .distanceWarning
+                                                  color: context.hc.warning
                                                       .withValues(alpha: 0.12),
                                                   border: Border.all(
-                                                    color: AppColors
-                                                        .distanceWarning
+                                                    color: context.hc.warning
                                                         .withValues(alpha: 0.3),
                                                     width: 1.2,
                                                   ),
@@ -840,9 +831,8 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                                 child: Center(
                                                   child: Text(
                                                     initial,
-                                                    style: const TextStyle(
-                                                      color: AppColors
-                                                          .distanceWarning,
+                                                    style: TextStyle(
+                                                      color: context.hc.warning,
                                                       fontWeight:
                                                           FontWeight.bold,
                                                       fontSize: 15,
@@ -978,11 +968,7 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                 borderRadius: BorderRadius.circular(
                                   AppRadius.card,
                                 ),
-                                border: Border.all(
-                                  color: isDark
-                                      ? AppColors.darkCardBorder
-                                      : AppColors.lightCardBorder,
-                                ),
+                                border: Border.all(color: context.hc.border),
                               ),
                               child: Column(
                                 children: [
@@ -995,9 +981,7 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                       Divider(
                                         height: 12,
                                         thickness: 0.7,
-                                        color: isDark
-                                            ? AppColors.darkCardBorder
-                                            : AppColors.lightCardBorder,
+                                        color: context.hc.border,
                                       ),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(
@@ -1008,14 +992,14 @@ extension _AdminDashboardAlertsSheet on _AdminDashboardHome {
                                           Container(
                                             padding: const EdgeInsets.all(3.5),
                                             decoration: BoxDecoration(
-                                              color: AppColors.statusSafe
+                                              color: context.hc.success
                                                   .withValues(alpha: 0.14),
                                               shape: BoxShape.circle,
                                             ),
-                                            child: const Icon(
+                                            child: Icon(
                                               Icons.check_rounded,
                                               size: 12,
-                                              color: AppColors.statusSafe,
+                                              color: context.hc.success,
                                             ),
                                           ),
                                           const SizedBox(width: 8),

@@ -18,7 +18,7 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+      backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppRadius.sheet),
@@ -131,11 +131,7 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                   vertical: AppSpacing.sm + 2,
                 ),
                 decoration: BoxDecoration(
-                  color:
-                      (isDark
-                              ? AppColors.darkCardBorder
-                              : AppColors.canvasCreamSubtle)
-                          .withValues(alpha: 0.4),
+                  color: ctx.hc.surfaceSand.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Row(
@@ -173,15 +169,9 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                 width: double.infinity,
                 padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkScaffold.withValues(alpha: 0.5)
-                      : AppColors.canvasCream.withValues(alpha: 0.35),
+                  color: ctx.hc.canvas.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.darkCardBorder
-                        : AppColors.canvasCreamSubtle,
-                  ),
+                  border: Border.all(color: ctx.hc.border),
                 ),
                 child: Text(
                   act.description.isNotEmpty
@@ -252,7 +242,7 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                                 style: DashboardTypography.captionSmall
                                     .copyWith(
                                       color: matchingRoom.isActive
-                                          ? AppColors.statusSafe
+                                          ? ctx.hc.success
                                           : bodyColor.withValues(alpha: 0.7),
                                       fontSize: 10.5,
                                     ),
@@ -264,9 +254,7 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                         ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: primaryColor,
-                            foregroundColor: isDark
-                                ? AppColors.darkOnPrimary
-                                : Colors.white,
+                            foregroundColor: ctx.hc.onPrimary,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,
                               vertical: 8,
@@ -310,11 +298,7 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                     vertical: AppSpacing.sm,
                   ),
                   decoration: BoxDecoration(
-                    color:
-                        (isDark
-                                ? AppColors.darkCardBorder
-                                : AppColors.canvasCreamSubtle)
-                            .withValues(alpha: 0.3),
+                    color: ctx.hc.surfaceSand.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: Row(
@@ -356,11 +340,7 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
                     foregroundColor: headingColor,
-                    side: BorderSide(
-                      color: isDark
-                          ? AppColors.darkCardBorder
-                          : AppColors.canvasCreamSubtle,
-                    ),
+                    side: BorderSide(color: ctx.hc.border),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
@@ -399,7 +379,7 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+      backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppRadius.sheet),
@@ -490,17 +470,9 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                       // Search Box
                       Container(
                         decoration: BoxDecoration(
-                          color:
-                              (isDark
-                                      ? AppColors.darkCardBorder
-                                      : AppColors.canvasCreamSubtle)
-                                  .withValues(alpha: 0.35),
+                          color: ctx.hc.surfaceSand.withValues(alpha: 0.35),
                           borderRadius: BorderRadius.circular(AppRadius.md),
-                          border: Border.all(
-                            color: isDark
-                                ? AppColors.darkCardBorder
-                                : AppColors.canvasCreamSubtle,
-                          ),
+                          border: Border.all(color: ctx.hc.border),
                         ),
                         child: TextField(
                           style: TextStyle(color: headingColor, fontSize: 13),
@@ -538,6 +510,7 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                         child: Row(
                           children: [
                             _buildModalFilterChip(
+                              context,
                               context.tr('adminDashboard.all'),
                               activeFilter == 'Semua',
                               primaryColor,
@@ -552,9 +525,10 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                             ),
                             const SizedBox(width: 8),
                             _buildModalFilterChip(
+                              context,
                               context.tr('adminDashboard.emergencyFilter'),
                               activeFilter == 'Darurat',
-                              AppColors.sosEmergency,
+                              ctx.hc.danger,
                               headingColor,
                               isDark,
                               () {
@@ -566,6 +540,7 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                             ),
                             const SizedBox(width: 8),
                             _buildModalFilterChip(
+                              context,
                               context.tr('adminDashboard.monitoringRooms'),
                               activeFilter == 'Kamar',
                               primaryColor,
@@ -580,9 +555,10 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                             ),
                             const SizedBox(width: 8),
                             _buildModalFilterChip(
+                              context,
                               context.tr('adminDashboard.members'),
                               activeFilter == 'Anggota',
-                              AppColors.statusSafe,
+                              ctx.hc.success,
                               headingColor,
                               isDark,
                               () {
@@ -707,9 +683,7 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
                                   thickness: 0.8,
                                   indent: 62,
                                   endIndent: AppSpacing.md,
-                                  color: isDark
-                                      ? AppColors.darkCardBorder
-                                      : AppColors.canvasCreamSubtle,
+                                  color: ctx.hc.border,
                                 ),
                               );
                             },
@@ -847,6 +821,7 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
   }
 
   Widget _buildModalFilterChip(
+    BuildContext context,
     String label,
     bool isSelected,
     Color activeColor,
@@ -862,17 +837,10 @@ extension _AdminDashboardActivitySheets on _AdminDashboardHome {
         decoration: BoxDecoration(
           color: isSelected
               ? activeColor.withValues(alpha: isDark ? 0.25 : 0.15)
-              : (isDark
-                        ? AppColors.darkCardBorder
-                        : AppColors.canvasCreamSubtle)
-                    .withValues(alpha: 0.3),
+              : context.hc.surfaceSand.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(AppRadius.pill),
           border: Border.all(
-            color: isSelected
-                ? activeColor
-                : (isDark
-                      ? AppColors.darkCardBorder
-                      : AppColors.canvasCreamSubtle),
+            color: isSelected ? activeColor : context.hc.border,
             width: isSelected ? 1.2 : 0.8,
           ),
         ),

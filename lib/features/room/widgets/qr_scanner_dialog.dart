@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_context.dart';
 
 /// Modal dialog with integrated camera barcode scanner to scan HajiCare Room QR Codes.
 class QrScannerDialog extends StatefulWidget {
@@ -82,9 +81,11 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+    final hc = context.hc;
+    final cardBg = hc.surface;
+    final primaryColor = hc.brand;
+    final headingColor = hc.textPrimary;
+    final bodyColor = hc.textSecondary;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -113,16 +114,8 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkSurfaceContainer
-                      : AppColors.canvasCream,
-                  border: Border(
-                    bottom: BorderSide(
-                      color: isDark
-                          ? AppColors.darkOutlineVariant
-                          : AppColors.surfaceVariant,
-                    ),
-                  ),
+                  color: hc.surfaceSand,
+                  border: Border(bottom: BorderSide(color: hc.borderSubtle)),
                 ),
                 child: Row(
                   children: [
@@ -145,15 +138,15 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
                         children: [
                           Text(
                             'Scan QR Code Room',
-                            style: AppTypography.titleSmall.copyWith(
+                            style: context.text.titleSmall.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: AppColors.textHeadingColor(context),
+                              color: headingColor,
                             ),
                           ),
                           Text(
                             'Arahkan kamera ke layar pendamping',
-                            style: AppTypography.captionSmall.copyWith(
-                              color: AppColors.textBodyColor(context),
+                            style: context.text.captionSmall.copyWith(
+                              color: bodyColor,
                             ),
                           ),
                         ],
@@ -161,7 +154,7 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
                     ),
                     IconButton(
                       icon: const Icon(Icons.close_rounded),
-                      color: AppColors.textBodyColor(context),
+                      color: bodyColor,
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                   ],
@@ -183,16 +176,16 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.videocam_off_rounded,
                                   size: 48,
-                                  color: AppColors.error,
+                                  color: hc.danger,
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
                                   'Kamera Tidak Tersedia',
-                                  style: AppTypography.titleSmall.copyWith(
-                                    color: AppColors.textHeadingColor(context),
+                                  style: context.text.titleSmall.copyWith(
+                                    color: headingColor,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -200,8 +193,8 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
                                 Text(
                                   'Pastikan izin kamera telah diberikan atau gunakan input kode manual.',
                                   textAlign: TextAlign.center,
-                                  style: AppTypography.captionSmall.copyWith(
-                                    color: AppColors.textBodyColor(context),
+                                  style: context.text.captionSmall.copyWith(
+                                    color: bodyColor,
                                   ),
                                 ),
                               ],
@@ -332,9 +325,7 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
                                 _isTorchOn
                                     ? Icons.flash_on_rounded
                                     : Icons.flash_off_rounded,
-                                color: _isTorchOn
-                                    ? AppColors.accentGoldStar
-                                    : Colors.white,
+                                color: _isTorchOn ? hc.accent : Colors.white,
                               ),
                               onPressed: () async {
                                 await _scannerController.toggleTorch();
@@ -363,11 +354,7 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
               // Footer Note
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkSurfaceContainer
-                      : AppColors.canvasCream,
-                ),
+                decoration: BoxDecoration(color: hc.surfaceSand),
                 child: Row(
                   children: [
                     Icon(
@@ -379,8 +366,8 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
                     Expanded(
                       child: Text(
                         'QR code terdapat pada menu Room Pemantauan di aplikasi Pendamping atau Admin.',
-                        style: AppTypography.captionSmall.copyWith(
-                          color: AppColors.textBodyColor(context),
+                        style: context.text.captionSmall.copyWith(
+                          color: bodyColor,
                         ),
                       ),
                     ),

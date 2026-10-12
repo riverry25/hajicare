@@ -12,9 +12,8 @@ import '../../../core/locales/app_localizations.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_context.dart';
 import '../../../core/utils/user_feedback_message.dart';
 import '../../dashboard/controllers/dashboard_controller.dart';
 import '../../map/controllers/map_controller.dart';
@@ -448,17 +447,11 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
   /// Opens the dedicated "Pilgrim Medical Data & History" bottom sheet
   /// matching reference Image 2.
   void _showFullMedicalBottomSheet(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-    final cardBg = isDark
-        ? AppColors.darkSurfaceContainer
-        : AppColors.canvasCream;
-    final dividerColor = isDark
-        ? AppColors.darkCardBorder
-        : AppColors.canvasCreamSubtle;
+    final hc = context.hc;
+    final headingColor = hc.textPrimary;
+    final bodyColor = hc.textSecondary;
+    final cardBg = hc.surfaceSand;
+    final dividerColor = hc.borderSubtle;
 
     showModalBottomSheet(
       context: context,
@@ -470,17 +463,14 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
             margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : Colors.white,
+              color: hc.surface,
               borderRadius: BorderRadius.circular(28),
-              border: Border.all(
-                color: isDark
-                    ? AppColors.darkCardBorder
-                    : AppColors.canvasCreamSubtle,
-                width: 1,
-              ),
+              border: Border.all(color: hc.borderSubtle, width: 1),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.12),
+                  color: Colors.black.withValues(
+                    alpha: hc.isDark ? 0.45 : 0.12,
+                  ),
                   blurRadius: 28,
                   offset: const Offset(0, 8),
                 ),
@@ -497,9 +487,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                       width: 44,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? AppColors.darkOutlineVariant
-                            : AppColors.outlineVariant,
+                        color: hc.borderSubtle,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -512,12 +500,12 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: AppColors.sosEmergency.withValues(alpha: 0.14),
+                          color: hc.danger.withValues(alpha: 0.14),
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.medical_services_rounded,
-                          color: AppColors.sosEmergency,
+                          color: hc.danger,
                           size: 26,
                         ),
                       ),
@@ -528,7 +516,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                           children: [
                             Text(
                               context.tr('medical.sheetTitle'),
-                              style: AppTypography.titleMedium.copyWith(
+                              style: context.text.titleMedium.copyWith(
                                 color: headingColor,
                                 fontWeight: FontWeight.w800,
                                 fontSize: 16,
@@ -537,7 +525,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                             const SizedBox(height: 2),
                             Text(
                               context.tr('medical.sheetSubtitle'),
-                              style: AppTypography.captionSmall.copyWith(
+                              style: context.text.captionSmall.copyWith(
                                 color: bodyColor.withValues(alpha: 0.8),
                               ),
                             ),
@@ -599,15 +587,13 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.sosEmergency.withValues(
-                                      alpha: 0.12,
-                                    ),
+                                    color: hc.danger.withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
                                     _resolvedBloodType!,
-                                    style: const TextStyle(
-                                      color: AppColors.sosEmergency,
+                                    style: TextStyle(
+                                      color: hc.danger,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 13,
                                     ),
@@ -689,11 +675,8 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                         Expanded(
                           child: OutlinedButton.icon(
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.goldPrimary,
-                              side: const BorderSide(
-                                color: AppColors.goldPrimary,
-                                width: 1.5,
-                              ),
+                              foregroundColor: hc.brand,
+                              side: BorderSide(color: hc.brand, width: 1.5),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(
                                   AppRadius.pill,
@@ -717,11 +700,8 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                         Expanded(
                           child: OutlinedButton.icon(
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.goldPrimary,
-                              side: const BorderSide(
-                                color: AppColors.goldPrimary,
-                                width: 1.5,
-                              ),
+                              foregroundColor: hc.brand,
+                              side: BorderSide(color: hc.brand, width: 1.5),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(
                                   AppRadius.pill,
@@ -755,7 +735,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                       Expanded(
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.espressoDark,
+                            backgroundColor: hc.brand,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(
@@ -804,7 +784,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
           flex: 5,
           child: Text(
             label,
-            style: AppTypography.bodySmall.copyWith(
+            style: context.text.bodySmall.copyWith(
               color: bodyColor.withValues(alpha: 0.85),
               fontSize: 13,
               fontWeight: FontWeight.w500,
@@ -824,10 +804,8 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                       value,
                       textAlign: TextAlign.end,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: highlight
-                            ? AppColors.distanceWarning
-                            : headingColor,
+                      style: context.text.bodyMedium.copyWith(
+                        color: highlight ? context.hc.warning : headingColor,
                         fontWeight: FontWeight.w700,
                         fontSize: 13,
                       ),
@@ -841,13 +819,13 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                   child: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: AppColors.emeraldIslamic.withValues(alpha: 0.12),
+                      color: context.hc.islamic.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.call_rounded,
                       size: 14,
-                      color: AppColors.emeraldIslamic,
+                      color: context.hc.islamic,
                     ),
                   ),
                 ),
@@ -890,7 +868,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
       children: [
         Text(
           label,
-          style: AppTypography.bodySmall.copyWith(
+          style: context.text.bodySmall.copyWith(
             color: bodyColor.withValues(alpha: 0.8),
             fontSize: 13,
             fontWeight: FontWeight.w500,
@@ -908,7 +886,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                       valueText ?? '-',
                       textAlign: TextAlign.end,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.bodyMedium.copyWith(
+                      style: context.text.bodyMedium.copyWith(
                         color: headingColor,
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
@@ -923,13 +901,13 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                   child: Container(
                     padding: const EdgeInsets.all(3.5),
                     decoration: BoxDecoration(
-                      color: AppColors.emeraldIslamic.withValues(alpha: 0.15),
+                      color: context.hc.islamic.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.phone_rounded,
                       size: 13,
-                      color: AppColors.emeraldIslamic,
+                      color: context.hc.islamic,
                     ),
                   ),
                 ),
@@ -986,7 +964,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
               Expanded(
                 child: Text(
                   title,
-                  style: AppTypography.labelLarge.copyWith(
+                  style: context.text.labelLarge.copyWith(
                     color: headingColor,
                     fontWeight: FontWeight.w700,
                     fontSize: 12.5,
@@ -1008,18 +986,12 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-    final cardBg = isDark ? AppColors.darkSurface : Colors.white;
-    final sectionBg = isDark
-        ? AppColors.darkSurfaceContainer
-        : AppColors.canvasCreamSubtle;
-    final dividerColor = isDark
-        ? AppColors.darkCardBorder
-        : AppColors.canvasCreamSubtle;
+    final hc = context.hc;
+    final headingColor = hc.textPrimary;
+    final bodyColor = hc.textSecondary;
+    final cardBg = hc.surface;
+    final sectionBg = hc.surfaceSand;
+    final dividerColor = hc.borderSubtle;
     final initial = _resolvedName.trim().isNotEmpty
         ? _resolvedName.trim()[0].toUpperCase()
         : '?';
@@ -1037,29 +1009,25 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
     // Role styling
     final roleText = _resolvedRole.toUpperCase();
     final roleBadgeBg = isSos
-        ? AppColors.sosEmergency.withValues(alpha: 0.18)
+        ? hc.danger.withValues(alpha: 0.18)
         : roleText == 'PENDAMPING'
-        ? AppColors.goldPrimary.withValues(alpha: 0.18)
+        ? hc.brand.withValues(alpha: 0.18)
         : roleText == 'ADMIN'
-        ? Colors.blue.withValues(alpha: 0.18)
-        : (isDark
-              ? AppColors.emeraldIslamic.withValues(alpha: 0.25)
-              : AppColors.statusSafe.withValues(alpha: 0.12));
+        ? hc.accent.withValues(alpha: 0.18)
+        : hc.success.withValues(alpha: 0.12);
 
     final roleBadgeTextColor = isSos
-        ? AppColors.sosEmergency
+        ? hc.danger
         : roleText == 'PENDAMPING'
-        ? AppColors.goldPrimary
+        ? hc.brand
         : roleText == 'ADMIN'
-        ? Colors.blue
-        : (isDark ? const Color(0xFF6EE7B7) : AppColors.statusSafe);
+        ? hc.accent
+        : hc.success;
 
     final distanceText = _getDistanceText();
 
-    final actionBtnBg = isDark
-        ? AppColors.darkPrimary
-        : AppColors.emeraldIslamic;
-    final actionBtnFg = isDark ? AppColors.darkOnPrimary : Colors.white;
+    final actionBtnBg = hc.brand;
+    final actionBtnFg = Colors.white;
 
     final hasEmergencyContact =
         _resolvedEmergencyContact != null &&
@@ -1085,7 +1053,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(
-                        alpha: isDark ? 0.35 : 0.08,
+                        alpha: hc.isDark ? 0.35 : 0.08,
                       ),
                       blurRadius: 24,
                       offset: const Offset(0, 8),
@@ -1110,28 +1078,23 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.sosEmergency.withValues(
-                              alpha: 0.14,
-                            ),
+                            color: hc.danger.withValues(alpha: 0.14),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: AppColors.sosEmergency,
-                              width: 1.2,
-                            ),
+                            border: Border.all(color: hc.danger, width: 1.2),
                           ),
                           child: Row(
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.warning_amber_rounded,
-                                color: AppColors.sosEmergency,
+                                color: hc.danger,
                                 size: 20,
                               ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   context.tr('room.sosActiveUrgentBanner'),
-                                  style: AppTypography.labelLarge.copyWith(
-                                    color: AppColors.sosEmergency,
+                                  style: context.text.labelLarge.copyWith(
+                                    color: hc.danger,
                                     fontWeight: FontWeight.w800,
                                     fontSize: 12.5,
                                   ),
@@ -1150,7 +1113,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                           textAlign: TextAlign.center,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: AppTypography.titleLarge.copyWith(
+                          style: context.text.titleLarge.copyWith(
                             color: headingColor,
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
@@ -1199,9 +1162,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                                 vertical: 3,
                               ),
                               decoration: BoxDecoration(
-                                color: isDark
-                                    ? AppColors.darkSurfaceContainerHighest
-                                    : AppColors.canvasCream,
+                                color: hc.surfaceSand,
                                 borderRadius: BorderRadius.circular(
                                   AppRadius.pill,
                                 ),
@@ -1213,10 +1174,10 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.mosque_rounded,
                                     size: 11,
-                                    color: AppColors.goldPrimary,
+                                    color: hc.brand,
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
@@ -1245,9 +1206,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                                 vertical: 3,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.sosEmergency.withValues(
-                                  alpha: 0.10,
-                                ),
+                                color: hc.danger.withValues(alpha: 0.10),
                                 borderRadius: BorderRadius.circular(
                                   AppRadius.pill,
                                 ),
@@ -1255,16 +1214,16 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.bloodtype_rounded,
                                     size: 12,
-                                    color: AppColors.sosEmergency,
+                                    color: hc.danger,
                                   ),
                                   const SizedBox(width: 3),
                                   Text(
                                     'Gol. $_resolvedBloodType',
-                                    style: const TextStyle(
-                                      color: AppColors.sosEmergency,
+                                    style: TextStyle(
+                                      color: hc.danger,
                                       fontWeight: FontWeight.w700,
                                       fontSize: 10.5,
                                     ),
@@ -1284,7 +1243,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                           context: context,
                           title: context.tr('room.statusAndLocationHeader'),
                           icon: Icons.navigation_rounded,
-                          iconColor: AppColors.emeraldIslamic,
+                          iconColor: hc.islamic,
                           cardBg: sectionBg,
                           borderColor: dividerColor,
                           headingColor: headingColor,
@@ -1301,7 +1260,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       color: hasLocation
-                                          ? AppColors.emeraldIslamic
+                                          ? hc.islamic
                                           : Colors.grey,
                                     ),
                                   ),
@@ -1366,7 +1325,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                           context: context,
                           title: context.tr('room.medicalEmergencyDataHeader'),
                           icon: Icons.medical_services_rounded,
-                          iconColor: AppColors.sosEmergency,
+                          iconColor: hc.danger,
                           cardBg: sectionBg,
                           borderColor: dividerColor,
                           headingColor: headingColor,
@@ -1384,16 +1343,16 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                                   Text(
                                     'Lembar Lengkap',
                                     style: TextStyle(
-                                      color: AppColors.goldPrimary,
+                                      color: hc.brand,
                                       fontWeight: FontWeight.w700,
                                       fontSize: 11,
                                     ),
                                   ),
                                   const SizedBox(width: 2),
-                                  const Icon(
+                                  Icon(
                                     Icons.arrow_forward_ios_rounded,
                                     size: 10,
-                                    color: AppColors.goldPrimary,
+                                    color: hc.brand,
                                   ),
                                 ],
                               ),
@@ -1416,7 +1375,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                               headingColor:
                                   (_resolvedConditions != null &&
                                       _resolvedConditions != '-')
-                                  ? AppColors.distanceWarning
+                                  ? hc.warning
                                   : headingColor,
                               bodyColor: bodyColor,
                             ),
@@ -1461,7 +1420,7 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                           context: context,
                           title: context.tr('room.officialDocsHeader'),
                           icon: Icons.badge_rounded,
-                          iconColor: AppColors.goldPrimary,
+                          iconColor: hc.brand,
                           cardBg: sectionBg,
                           borderColor: dividerColor,
                           headingColor: headingColor,
@@ -1576,25 +1535,25 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                                   onPressed: () => _makePhoneCall(
                                     _resolvedEmergencyContact!,
                                   ),
-                                  icon: const Icon(
+                                  icon: Icon(
                                     Icons.call_rounded,
                                     size: 17,
-                                    color: AppColors.emeraldIslamic,
+                                    color: hc.islamic,
                                   ),
                                   label: Text(
                                     context.tr('room.callEmergencyContact', {
                                       'contact': _resolvedEmergencyContact!,
                                     }),
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 13,
-                                      color: AppColors.emeraldIslamic,
+                                      color: hc.islamic,
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                   style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(
-                                      color: AppColors.emeraldIslamic,
+                                    side: BorderSide(
+                                      color: hc.islamic,
                                       width: 1.2,
                                     ),
                                     shape: RoundedRectangleBorder(
@@ -1618,14 +1577,14 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                                       ? null
                                       : _handleRemoveJamaah,
                                   icon: _isRemoving
-                                      ? const SizedBox(
+                                      ? SizedBox(
                                           width: 16,
                                           height: 16,
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2,
                                             valueColor:
                                                 AlwaysStoppedAnimation<Color>(
-                                                  AppColors.error,
+                                                  hc.danger,
                                                 ),
                                           ),
                                         )
@@ -1641,11 +1600,9 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                                     ),
                                   ),
                                   style: OutlinedButton.styleFrom(
-                                    foregroundColor: AppColors.error,
+                                    foregroundColor: hc.danger,
                                     side: BorderSide(
-                                      color: AppColors.error.withValues(
-                                        alpha: 0.35,
-                                      ),
+                                      color: hc.danger.withValues(alpha: 0.35),
                                       width: 1,
                                     ),
                                     shape: RoundedRectangleBorder(
@@ -1676,17 +1633,13 @@ class _JamaahDetailSheetState extends State<JamaahDetailSheet> {
                     height: 72,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: isSos
-                          ? AppColors.sosEmergency
-                          : AppColors.emeraldIslamic,
-                      border: Border.all(
-                        color: isDark ? AppColors.darkSurface : Colors.white,
-                        width: 4,
-                      ),
+                      color: isSos ? hc.danger : hc.islamic,
+                      border: Border.all(color: hc.surface, width: 4),
                       boxShadow: [
                         BoxShadow(
-                          color: (isSos ? AppColors.sosEmergency : Colors.black)
-                              .withValues(alpha: isDark ? 0.45 : 0.18),
+                          color: (isSos ? hc.danger : Colors.black).withValues(
+                            alpha: hc.isDark ? 0.45 : 0.18,
+                          ),
                           blurRadius: 14,
                           offset: const Offset(0, 4),
                         ),

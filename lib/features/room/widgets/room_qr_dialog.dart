@@ -3,10 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../../core/services/app_alert_service.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_context.dart';
 import '../../../core/widgets/ribbon_fold_painter.dart';
 import '../models/room_model.dart';
 
@@ -72,8 +71,8 @@ class RoomQrDialog extends StatelessWidget {
     required RoomModel room,
   }) {
     HapticFeedback.lightImpact();
-    final isDark = AppColors.isDark(context);
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
+    final hc = context.hc;
+    final cardBg = hc.surface;
 
     return showModalBottomSheet<void>(
       context: context,
@@ -124,13 +123,12 @@ class RoomQrDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+    final hc = context.hc;
+    final isDark = hc.isDark;
+    final cardBg = hc.surface;
+    final headingColor = hc.textPrimary;
+    final bodyColor = hc.textSecondary;
+    final primaryColor = hc.brand;
 
     // ── Bottom Sheet Mode ──────────────────────────────────────────────────
     if (isSheetMode) {
@@ -175,7 +173,7 @@ class RoomQrDialog extends StatelessWidget {
                   children: [
                     Text(
                       effectiveRoomName,
-                      style: AppTypography.titleMedium.copyWith(
+                      style: context.text.titleMedium.copyWith(
                         color: headingColor,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -191,8 +189,8 @@ class RoomQrDialog extends StatelessWidget {
                           height: 6,
                           decoration: BoxDecoration(
                             color: effectiveIsActive
-                                ? AppColors.statusSafe
-                                : AppColors.textSecondary,
+                                ? hc.success
+                                : hc.textSecondary,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -201,9 +199,9 @@ class RoomQrDialog extends StatelessWidget {
                           effectiveIsActive
                               ? context.tr('room.activeMonitored')
                               : context.tr('room.inactive'),
-                          style: AppTypography.captionSmall.copyWith(
+                          style: context.text.captionSmall.copyWith(
                             color: effectiveIsActive
-                                ? AppColors.statusSafe
+                                ? hc.success
                                 : bodyColor.withValues(alpha: 0.7),
                             fontWeight: FontWeight.w600,
                             fontSize: 11,
@@ -223,17 +221,12 @@ class RoomQrDialog extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          Divider(
-            height: 1,
-            color: isDark
-                ? AppColors.darkCardBorder
-                : AppColors.canvasCreamSubtle,
-          ),
+          Divider(height: 1, color: hc.borderSubtle),
           const SizedBox(height: AppSpacing.md),
           Text(
             context.tr('room.scanQrToJoinDesc'),
             textAlign: TextAlign.center,
-            style: AppTypography.bodySmall.copyWith(
+            style: context.text.bodySmall.copyWith(
               color: bodyColor.withValues(alpha: 0.85),
               height: 1.35,
             ),
@@ -244,12 +237,7 @@ class RoomQrDialog extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(
-                color: isDark
-                    ? AppColors.darkCardBorder
-                    : AppColors.canvasCreamSubtle,
-                width: 1.5,
-              ),
+              border: Border.all(color: hc.borderSubtle, width: 1.5),
             ),
             child: SizedBox(
               width: 190,
@@ -287,11 +275,9 @@ class RoomQrDialog extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.key_rounded, size: 18, color: primaryColor),
-                  const SizedBox(width: 8),
                   Text(
                     effectiveRoomCode,
-                    style: AppTypography.titleLarge.copyWith(
+                    style: context.text.titleLarge.copyWith(
                       color: primaryColor,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 4,
@@ -318,7 +304,7 @@ class RoomQrDialog extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             context.tr('room.tapCodeToCopy'),
-            style: AppTypography.captionSmall.copyWith(
+            style: context.text.captionSmall.copyWith(
               color: bodyColor.withValues(alpha: 0.65),
               fontSize: 11,
             ),
@@ -358,9 +344,7 @@ class RoomQrDialog extends StatelessWidget {
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryColor,
-                    foregroundColor: isDark
-                        ? AppColors.darkOnPrimary
-                        : Colors.white,
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
@@ -411,12 +395,7 @@ class RoomQrDialog extends StatelessWidget {
               decoration: BoxDecoration(
                 color: cardBg,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : AppColors.goldLight.withValues(alpha: 0.35),
-                  width: 1,
-                ),
+                border: Border.all(color: hc.borderSubtle, width: 1),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.09),
@@ -434,7 +413,7 @@ class RoomQrDialog extends StatelessWidget {
                     // Room Name (Left-aligned, matching reference design)
                     Text(
                       effectiveRoomName,
-                      style: AppTypography.titleMedium.copyWith(
+                      style: context.text.titleMedium.copyWith(
                         color: headingColor,
                         fontWeight: FontWeight.w800,
                         fontSize: 18,
@@ -447,10 +426,8 @@ class RoomQrDialog extends StatelessWidget {
                     // Room subtitle instruction (Left-aligned, matching reference design)
                     Text(
                       context.tr('room.scanQrOrShareDesc'),
-                      style: AppTypography.captionSmall.copyWith(
-                        color: isDark
-                            ? Colors.white60
-                            : const Color(0xFF7A6B5D),
+                      style: context.text.captionSmall.copyWith(
+                        color: bodyColor,
                         fontSize: 12,
                         height: 1.35,
                       ),
@@ -465,9 +442,7 @@ class RoomQrDialog extends StatelessWidget {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: isDark
-                                ? AppColors.darkCardBorder
-                                : AppColors.canvasCreamSubtle,
+                            color: hc.borderSubtle,
                             width: 1.5,
                           ),
                         ),
@@ -524,7 +499,7 @@ class RoomQrDialog extends StatelessWidget {
                               const SizedBox(width: 8),
                               Text(
                                 effectiveRoomCode,
-                                style: AppTypography.titleLarge.copyWith(
+                                style: context.text.titleLarge.copyWith(
                                   color: primaryColor,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: 3,
@@ -546,7 +521,7 @@ class RoomQrDialog extends StatelessWidget {
                     Center(
                       child: Text(
                         context.tr('room.tapCodeToCopy'),
-                        style: AppTypography.captionSmall.copyWith(
+                        style: context.text.captionSmall.copyWith(
                           color: bodyColor.withValues(alpha: 0.65),
                           fontSize: 10.5,
                         ),
@@ -560,9 +535,7 @@ class RoomQrDialog extends StatelessWidget {
                       children: [
                         TextButton(
                           style: TextButton.styleFrom(
-                            foregroundColor: isDark
-                                ? Colors.white60
-                                : const Color(0xFF8C7A6B),
+                            foregroundColor: bodyColor,
                             padding: const EdgeInsets.symmetric(vertical: 4),
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -593,21 +566,15 @@ class RoomQrDialog extends StatelessWidget {
               height: 86,
               child: Container(
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: isDark
-                        ? [const Color(0xFF38251A), const Color(0xFF1F140D)]
-                        : [AppColors.espressoDark, const Color(0xFF563B2A)],
-                  ),
+                  gradient: hc.heroGradient,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppColors.goldPrimary.withValues(alpha: 0.4),
+                    color: hc.accent.withValues(alpha: 0.4),
                     width: 1.2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.espressoDark.withValues(alpha: 0.35),
+                      color: hc.brandDark.withValues(alpha: 0.35),
                       blurRadius: 16,
                       offset: const Offset(0, 6),
                     ),
@@ -623,7 +590,7 @@ class RoomQrDialog extends StatelessWidget {
                         height: 70,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppColors.goldPrimary.withValues(alpha: 0.12),
+                          color: hc.accent.withValues(alpha: 0.12),
                         ),
                       ),
                     ),
@@ -635,7 +602,7 @@ class RoomQrDialog extends StatelessWidget {
                         height: 65,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppColors.goldPrimary.withValues(alpha: 0.08),
+                          color: hc.accent.withValues(alpha: 0.08),
                         ),
                       ),
                     ),
@@ -650,23 +617,21 @@ class RoomQrDialog extends StatelessWidget {
                               shape: BoxShape.circle,
                               gradient: LinearGradient(
                                 colors: [
-                                  AppColors.goldPrimary.withValues(alpha: 0.25),
-                                  AppColors.goldPrimary.withValues(alpha: 0.08),
+                                  hc.accent.withValues(alpha: 0.25),
+                                  hc.accent.withValues(alpha: 0.08),
                                 ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
                               border: Border.all(
-                                color: AppColors.goldPrimary.withValues(
-                                  alpha: 0.5,
-                                ),
+                                color: hc.accent.withValues(alpha: 0.5),
                                 width: 1.5,
                               ),
                             ),
-                            child: const Center(
+                            child: Center(
                               child: Icon(
                                 Icons.qr_code_2_rounded,
-                                color: AppColors.accentGoldStar,
+                                color: hc.accent,
                                 size: 20,
                               ),
                             ),
@@ -674,8 +639,8 @@ class RoomQrDialog extends StatelessWidget {
                           const SizedBox(height: 4),
                           Text(
                             context.tr('room.qrCodeGroupHeader'),
-                            style: const TextStyle(
-                              color: AppColors.goldLight,
+                            style: TextStyle(
+                              color: hc.accent,
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 1.1,
@@ -701,11 +666,7 @@ class RoomQrDialog extends StatelessWidget {
                     right: 0,
                     child: CustomPaint(
                       size: const Size(10, 10),
-                      painter: RibbonFoldPainter(
-                        color: isDark
-                            ? const Color(0xFF140D08)
-                            : const Color(0xFF160D07),
-                      ),
+                      painter: RibbonFoldPainter(color: hc.brandDark),
                     ),
                   ),
                   Material(
@@ -719,9 +680,7 @@ class RoomQrDialog extends StatelessWidget {
                       ),
                       child: Ink(
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? AppColors.darkPrimaryContainer
-                              : AppColors.espressoDark,
+                          color: hc.brand,
                           borderRadius: const BorderRadius.only(
                             topLeft: Radius.circular(24),
                             bottomLeft: Radius.circular(24),

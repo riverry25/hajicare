@@ -2,8 +2,7 @@ import '../../../core/locales/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_context.dart';
 import '../controllers/admin_room_controller.dart';
 
 /// Dialog for creating a new monitoring room.
@@ -73,14 +72,10 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkDialog = AppColors.isDark(context);
-    final dialogBg = isDarkDialog
-        ? AppColors.darkSurface
-        : AppColors.surfaceWhite;
-    final headingClr = isDarkDialog
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyClr = isDarkDialog ? AppColors.darkTextBody : AppColors.textBody;
+    final isDarkDialog = context.hc.isDark;
+    final dialogBg = context.hc.surface;
+    final headingClr = context.hc.textPrimary;
+    final bodyClr = context.hc.textSecondary;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -104,12 +99,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
               decoration: BoxDecoration(
                 color: dialogBg,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDarkDialog
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : AppColors.goldLight.withValues(alpha: 0.35),
-                  width: 1,
-                ),
+                border: Border.all(color: context.hc.borderSubtle, width: 1),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(
@@ -129,7 +119,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
                     // Title
                     Text(
                       'Buat Room Pantau Baru',
-                      style: AppTypography.titleMedium.copyWith(
+                      style: context.text.titleMedium.copyWith(
                         color: headingClr,
                         fontWeight: FontWeight.w800,
                         fontSize: 17.5,
@@ -141,7 +131,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
                     // Description
                     Text(
                       'Masukkan nama kelompok atau maktab. Kode unik 6-karakter akan dibuat otomatis untuk jamaah & pendamping.',
-                      style: AppTypography.bodySmall.copyWith(
+                      style: context.text.bodySmall.copyWith(
                         color: bodyClr.withValues(alpha: 0.85),
                         height: 1.35,
                         fontSize: 12.5,
@@ -172,7 +162,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
                             hintStyle: TextStyle(
                               color: isDarkDialog
                                   ? Colors.white38
-                                  : const Color(0xFF9E8E81),
+                                  : context.hc.textTertiary,
                               fontSize: 13.5,
                               fontWeight: FontWeight.w400,
                             ),
@@ -185,37 +175,31 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
                             ),
                             border: UnderlineInputBorder(
                               borderSide: BorderSide(
-                                color: isDarkDialog
-                                    ? AppColors.darkOutlineVariant
-                                    : const Color(0xFFD4C7BC),
+                                color: context.hc.border,
                                 width: 1.2,
                               ),
                             ),
                             enabledBorder: UnderlineInputBorder(
                               borderSide: BorderSide(
-                                color: isDarkDialog
-                                    ? AppColors.darkOutlineVariant
-                                    : const Color(0xFFD4C7BC),
+                                color: context.hc.border,
                                 width: 1.2,
                               ),
                             ),
                             focusedBorder: UnderlineInputBorder(
                               borderSide: BorderSide(
-                                color: isDarkDialog
-                                    ? AppColors.goldLight
-                                    : AppColors.espressoDark,
+                                color: context.hc.brand,
                                 width: 1.8,
                               ),
                             ),
-                            errorBorder: const UnderlineInputBorder(
+                            errorBorder: UnderlineInputBorder(
                               borderSide: BorderSide(
-                                color: AppColors.sosEmergency,
+                                color: context.hc.error,
                                 width: 1.4,
                               ),
                             ),
-                            focusedErrorBorder: const UnderlineInputBorder(
+                            focusedErrorBorder: UnderlineInputBorder(
                               borderSide: BorderSide(
-                                color: AppColors.sosEmergency,
+                                color: context.hc.error,
                                 width: 1.8,
                               ),
                             ),
@@ -234,8 +218,8 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
                           const SizedBox(height: 4),
                           Text(
                             _inputError!,
-                            style: const TextStyle(
-                              color: AppColors.sosEmergency,
+                            style: TextStyle(
+                              color: context.hc.error,
                               fontSize: 11.5,
                               fontWeight: FontWeight.w500,
                             ),
@@ -266,29 +250,17 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
                                   vertical: 3.5,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: isDarkDialog
-                                      ? AppColors.goldLight.withValues(
-                                          alpha: 0.1,
-                                        )
-                                      : const Color(0xFFF7F2EB),
+                                  color: context.hc.surfaceSand,
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                    color: isDarkDialog
-                                        ? AppColors.goldLight.withValues(
-                                            alpha: 0.25,
-                                          )
-                                        : AppColors.goldLight.withValues(
-                                            alpha: 0.4,
-                                          ),
+                                    color: context.hc.borderSubtle,
                                     width: 0.8,
                                   ),
                                 ),
                                 child: Text(
                                   preset,
                                   style: TextStyle(
-                                    color: isDarkDialog
-                                        ? AppColors.goldLight
-                                        : AppColors.espressoDark,
+                                    color: context.hc.brandDark,
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -307,9 +279,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
                       children: [
                         TextButton(
                           style: TextButton.styleFrom(
-                            foregroundColor: isDarkDialog
-                                ? Colors.white60
-                                : const Color(0xFF8C7A6B),
+                            foregroundColor: bodyClr,
                             padding: const EdgeInsets.symmetric(vertical: 4),
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -349,18 +319,16 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: isDarkDialog
-                        ? [const Color(0xFF38251A), const Color(0xFF1F140D)]
-                        : [AppColors.espressoDark, const Color(0xFF563B2A)],
+                    colors: [context.hc.brandDark, context.hc.brand],
                   ),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppColors.goldPrimary.withValues(alpha: 0.4),
+                    color: context.hc.brandAccent.withValues(alpha: 0.4),
                     width: 1.2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.espressoDark.withValues(alpha: 0.35),
+                      color: context.hc.shadowSubtle,
                       blurRadius: 16,
                       offset: const Offset(0, 6),
                     ),
@@ -377,7 +345,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
                         height: 70,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppColors.goldPrimary.withValues(alpha: 0.12),
+                          color: context.hc.brandAccent.withValues(alpha: 0.12),
                         ),
                       ),
                     ),
@@ -389,7 +357,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
                         height: 65,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppColors.goldPrimary.withValues(alpha: 0.08),
+                          color: context.hc.brandAccent.withValues(alpha: 0.08),
                         ),
                       ),
                     ),
@@ -406,32 +374,36 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
                               shape: BoxShape.circle,
                               gradient: LinearGradient(
                                 colors: [
-                                  AppColors.goldPrimary.withValues(alpha: 0.25),
-                                  AppColors.goldPrimary.withValues(alpha: 0.08),
+                                  context.hc.brandAccent.withValues(
+                                    alpha: 0.25,
+                                  ),
+                                  context.hc.brandAccent.withValues(
+                                    alpha: 0.08,
+                                  ),
                                 ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
                               border: Border.all(
-                                color: AppColors.goldPrimary.withValues(
+                                color: context.hc.brandAccent.withValues(
                                   alpha: 0.5,
                                 ),
                                 width: 1.5,
                               ),
                             ),
-                            child: const Center(
+                            child: Center(
                               child: Icon(
                                 Icons.meeting_room_rounded,
-                                color: AppColors.accentGoldStar,
+                                color: context.hc.brandAccent,
                                 size: 20,
                               ),
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
+                          Text(
                             'ROOM PEMANTAUAN',
                             style: TextStyle(
-                              color: AppColors.goldLight,
+                              color: context.hc.sand,
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 1.1,
@@ -481,8 +453,8 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
                         child: Ink(
                           decoration: BoxDecoration(
                             color: isDarkDialog
-                                ? AppColors.darkPrimaryContainer
-                                : AppColors.espressoDark,
+                                ? context.hc.primaryContainer
+                                : context.hc.brand,
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(24),
                               bottomLeft: Radius.circular(24),
@@ -494,18 +466,18 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
                             vertical: 13.5,
                           ),
                           child: submitting
-                              ? const SizedBox(
+                              ? SizedBox(
                                   width: 18,
                                   height: 18,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: Colors.white,
+                                    color: context.hc.onBrand,
                                   ),
                                 )
-                              : const Text(
+                              : Text(
                                   'BUAT ROOM',
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: context.hc.onBrand,
                                     fontWeight: FontWeight.w900,
                                     fontSize: 13,
                                     letterSpacing: 2.0,

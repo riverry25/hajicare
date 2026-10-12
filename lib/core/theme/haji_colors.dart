@@ -431,10 +431,13 @@ class HajiColors extends ThemeExtension<HajiColors> {
   /// Convenience aliases for brand and border ergonomics
   Color get brand => primary;
   Color get onBrand => onPrimary;
+  Color get brandSecondary => accent;
   Color get brandAccent => accent;
   Color get borderSubtle => border;
   Color get brandDark => isDark ? const Color(0xFF1F140D) : const Color(0xFF2A1D15);
   Color get shadowSubtle => shadow.withValues(alpha: isDark ? 0.4 : 0.08);
+  Color get error => danger;
+  Color get onError => onDanger;
 
   /// Brand gradients
   LinearGradient get heroGradient => LinearGradient(

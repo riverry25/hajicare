@@ -10,7 +10,7 @@ import 'package:latlong2/latlong.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_context.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
@@ -565,8 +565,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     if (_isProcessingAction || !mounted) return;
     HapticFeedback.lightImpact();
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+    final primaryColor = context.hc.brand;
 
     AppAlert.confirm(
       context,
@@ -679,8 +678,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     if (_isProcessingAction || !mounted) return;
     HapticFeedback.mediumImpact();
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+    final primaryColor = context.hc.brand;
 
     AppAlert.confirm(
       context,
@@ -738,15 +736,11 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     RoomModel room,
     List<RoomMemberModel> candidates,
   ) {
-    final isDark = AppColors.isDark(context);
-    final cardBg = isDark ? AppColors.darkSurface : Colors.white;
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-    final dividerColor = isDark
-        ? AppColors.darkCardBorder
-        : AppColors.canvasCreamSubtle;
+    final isDark = context.isDarkTheme;
+    final cardBg = context.hc.surface;
+    final headingColor = context.hc.textPrimary;
+    final bodyColor = context.hc.textSecondary;
+    final dividerColor = context.hc.border;
 
     showModalBottomSheet(
       context: context,
@@ -1079,14 +1073,12 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final scaffoldBg = isDark ? AppColors.darkScaffold : AppColors.canvasCream;
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+    final isDark = context.isDarkTheme;
+    final scaffoldBg = context.hc.canvas;
+    final cardBg = context.hc.surface;
+    final headingColor = context.hc.textPrimary;
+    final bodyColor = context.hc.textSecondary;
+    final primaryColor = context.hc.brand;
 
     // Loading State
     if (_isLoadingRoom && _room == null) {
@@ -1283,13 +1275,13 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       Icon(
                         Icons.delete_outline_rounded,
                         size: 18,
-                        color: AppColors.error,
+                        color: context.hc.danger,
                       ),
                       const SizedBox(width: 10),
                       Text(
                         context.tr('room.deleteRoom'),
                         style: TextStyle(
-                          color: AppColors.error,
+                          color: context.hc.danger,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -1326,12 +1318,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                   decoration: BoxDecoration(
                     color: cardBg,
                     borderRadius: BorderRadius.circular(22),
-                    border: Border.all(
-                      color: isDark
-                          ? AppColors.darkCardBorder
-                          : AppColors.lightCardBorder,
-                      width: 1.2,
-                    ),
+                    border: Border.all(color: context.hc.border, width: 1.2),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(
@@ -1361,16 +1348,12 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                 vertical: 11,
                               ),
                               decoration: BoxDecoration(
-                                color: isDark
-                                    ? AppColors.darkPrimaryContainer.withValues(
-                                        alpha: 0.35,
-                                      )
-                                    : AppColors.surfaceContainerLow,
+                                color: context.hc.surfaceSand.withValues(
+                                  alpha: 0.35,
+                                ),
                                 borderRadius: BorderRadius.circular(15),
                                 border: Border.all(
-                                  color: isDark
-                                      ? AppColors.darkCardBorder
-                                      : AppColors.canvasCreamSubtle,
+                                  color: context.hc.border,
                                   width: 1.0,
                                 ),
                               ),
@@ -1444,9 +1427,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                         color: cardBg,
                                         borderRadius: BorderRadius.circular(9),
                                         border: Border.all(
-                                          color: isDark
-                                              ? AppColors.darkOutlineVariant
-                                              : const Color(0xFFE2E8F0),
+                                          color: context.hc.border,
                                         ),
                                       ),
                                       child: Row(
@@ -1486,17 +1467,12 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                       vertical: 11,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: isDark
-                                          ? AppColors.darkSurfaceContainer
-                                          : AppColors.canvasCream.withValues(
-                                              alpha: 0.45,
-                                            ),
+                                      color: context.hc.surfaceSand.withValues(
+                                        alpha: 0.45,
+                                      ),
                                       borderRadius: BorderRadius.circular(14),
                                       border: Border.all(
-                                        color: isDark
-                                            ? AppColors.darkCardBorder
-                                            : AppColors.lightCardBorder
-                                                  .withValues(alpha: 0.6),
+                                        color: context.hc.border,
                                       ),
                                     ),
                                     child: Row(
@@ -1505,9 +1481,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                           width: 32,
                                           height: 32,
                                           decoration: BoxDecoration(
-                                            color: isDark
-                                                ? AppColors.darkPrimaryContainer
-                                                : AppColors.canvasCreamSubtle,
+                                            color: context.hc.surfaceSand,
                                             borderRadius: BorderRadius.circular(
                                               8,
                                             ),
@@ -1515,9 +1489,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                           child: Icon(
                                             Icons.hotel_rounded,
                                             size: 16,
-                                            color: isDark
-                                                ? AppColors.goldLight
-                                                : AppColors.espressoDark,
+                                            color: context.hc.brand,
                                           ),
                                         ),
                                         const SizedBox(width: 9),
@@ -1568,17 +1540,12 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                       vertical: 11,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: isDark
-                                          ? AppColors.darkSurfaceContainer
-                                          : AppColors.canvasCream.withValues(
-                                              alpha: 0.45,
-                                            ),
+                                      color: context.hc.surfaceSand.withValues(
+                                        alpha: 0.45,
+                                      ),
                                       borderRadius: BorderRadius.circular(14),
                                       border: Border.all(
-                                        color: isDark
-                                            ? AppColors.darkCardBorder
-                                            : AppColors.lightCardBorder
-                                                  .withValues(alpha: 0.6),
+                                        color: context.hc.border,
                                       ),
                                     ),
                                     child: Row(
@@ -1587,9 +1554,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                           width: 32,
                                           height: 32,
                                           decoration: BoxDecoration(
-                                            color: isDark
-                                                ? AppColors.darkPrimaryContainer
-                                                : AppColors.canvasCreamSubtle,
+                                            color: context.hc.surfaceSand,
                                             borderRadius: BorderRadius.circular(
                                               8,
                                             ),
@@ -1597,9 +1562,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                           child: Icon(
                                             Icons.flight_takeoff_rounded,
                                             size: 16,
-                                            color: isDark
-                                                ? AppColors.goldLight
-                                                : AppColors.espressoDark,
+                                            color: context.hc.brand,
                                           ),
                                         ),
                                         const SizedBox(width: 9),
@@ -1689,9 +1652,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                   child: ElevatedButton.icon(
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: primaryColor,
-                                      foregroundColor: isDark
-                                          ? AppColors.darkOnPrimary
-                                          : Colors.white,
+                                      foregroundColor: context.hc.onPrimary,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(
                                           AppRadius.pill,
@@ -1724,9 +1685,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                   height: 46,
                                   child: OutlinedButton.icon(
                                     style: OutlinedButton.styleFrom(
-                                      foregroundColor: AppColors.error,
+                                      foregroundColor: context.hc.danger,
                                       side: BorderSide(
-                                        color: AppColors.error.withValues(
+                                        color: context.hc.danger.withValues(
                                           alpha: isDark ? 0.6 : 0.45,
                                         ),
                                         width: 1.2,
@@ -1740,10 +1701,10 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                         horizontal: 10,
                                       ),
                                     ),
-                                    icon: const Icon(
+                                    icon: Icon(
                                       Icons.logout_rounded,
                                       size: 18,
-                                      color: AppColors.error,
+                                      color: context.hc.danger,
                                     ),
                                     label: Text(
                                       context.tr('room.leaveRoomBtn'),
@@ -1792,9 +1753,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                       style: OutlinedButton.styleFrom(
                                         foregroundColor: headingColor,
                                         side: BorderSide(
-                                          color: isDark
-                                              ? AppColors.darkOutlineVariant
-                                              : AppColors.lightCardBorder,
+                                          color: context.hc.border,
                                           width: 1.2,
                                         ),
                                         shape: RoundedRectangleBorder(
@@ -1830,9 +1789,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                   Expanded(
                                     child: OutlinedButton.icon(
                                       style: OutlinedButton.styleFrom(
-                                        foregroundColor: AppColors.error,
+                                        foregroundColor: context.hc.danger,
                                         side: BorderSide(
-                                          color: AppColors.error.withValues(
+                                          color: context.hc.danger.withValues(
                                             alpha: 0.45,
                                           ),
                                           width: 1.2,
@@ -1879,22 +1838,12 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                           vertical: 13,
                         ),
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? AppColors.darkSurfaceContainer.withValues(
-                                  alpha: 0.5,
-                                )
-                              : AppColors.canvasCream.withValues(alpha: 0.35),
+                          color: context.hc.surfaceSand.withValues(alpha: 0.35),
                           borderRadius: const BorderRadius.vertical(
                             bottom: Radius.circular(22),
                           ),
                           border: Border(
-                            top: BorderSide(
-                              color: isDark
-                                  ? AppColors.darkCardBorder
-                                  : AppColors.lightCardBorder.withValues(
-                                      alpha: 0.5,
-                                    ),
-                            ),
+                            top: BorderSide(color: context.hc.border),
                           ),
                         ),
                         child: Row(
@@ -1909,27 +1858,19 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                             Container(
                               height: 24,
                               width: 1,
-                              color: isDark
-                                  ? AppColors.darkCardBorder
-                                  : AppColors.lightCardBorder.withValues(
-                                      alpha: 0.6,
-                                    ),
+                              color: context.hc.border,
                             ),
                             Expanded(
                               child: _buildStatSummaryItem(
                                 label: context.tr('room.roleJamaah'),
                                 value: '$_jamaahCount',
-                                color: AppColors.emeraldIslamic,
+                                color: context.hc.islamic,
                               ),
                             ),
                             Container(
                               height: 24,
                               width: 1,
-                              color: isDark
-                                  ? AppColors.darkCardBorder
-                                  : AppColors.lightCardBorder.withValues(
-                                      alpha: 0.6,
-                                    ),
+                              color: context.hc.border,
                             ),
                             Expanded(
                               child: _buildStatSummaryItem(
@@ -1958,16 +1899,19 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                         end: Alignment.bottomRight,
                         colors: isDark
                             ? [const Color(0xFF38251A), const Color(0xFF1F140D)]
-                            : [AppColors.espressoDark, const Color(0xFF563B2A)],
+                            : [
+                                context.hc.brand,
+                                context.hc.brand.withValues(alpha: 0.85),
+                              ],
                       ),
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(
-                        color: AppColors.goldPrimary.withValues(alpha: 0.45),
+                        color: context.hc.accent.withValues(alpha: 0.45),
                         width: 1.2,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.espressoDark.withValues(alpha: 0.35),
+                          color: context.hc.shadow,
                           blurRadius: 18,
                           offset: const Offset(0, 8),
                         ),
@@ -1984,9 +1928,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                             height: 75,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: AppColors.goldPrimary.withValues(
-                                alpha: 0.12,
-                              ),
+                              color: context.hc.accent.withValues(alpha: 0.12),
                             ),
                           ),
                         ),
@@ -1998,9 +1940,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                             height: 70,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: AppColors.goldPrimary.withValues(
-                                alpha: 0.08,
-                              ),
+                              color: context.hc.accent.withValues(alpha: 0.08),
                             ),
                           ),
                         ),
@@ -2014,20 +1954,20 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                 width: 48,
                                 height: 48,
                                 decoration: BoxDecoration(
-                                  color: AppColors.goldPrimary.withValues(
+                                  color: context.hc.accent.withValues(
                                     alpha: 0.22,
                                   ),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                    color: AppColors.goldPrimary.withValues(
+                                    color: context.hc.accent.withValues(
                                       alpha: 0.55,
                                     ),
                                     width: 1.4,
                                   ),
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.meeting_room_rounded,
-                                  color: AppColors.goldAccent,
+                                  color: context.hc.accent,
                                   size: 25,
                                 ),
                               ),
@@ -2359,9 +2299,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     Color itemBg;
     if (isSelected) {
       if (isSos) {
-        itemBg = isDark ? const Color(0xFF5C1D1D) : AppColors.sosEmergency;
+        itemBg = context.hc.danger;
       } else {
-        itemBg = isDark ? const Color(0xFF2C1E16) : AppColors.espressoDark;
+        itemBg = context.hc.brand;
       }
     } else {
       itemBg = cardBg;
@@ -2369,31 +2309,27 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
     Color itemBorderColor;
     if (isSelected) {
-      itemBorderColor = isSos ? const Color(0xFFFF6B6B) : AppColors.goldPrimary;
+      itemBorderColor = isSos ? context.hc.danger : context.hc.accent;
     } else if (hasActiveSos) {
-      itemBorderColor = AppColors.sosEmergency.withValues(alpha: 0.55);
+      itemBorderColor = context.hc.danger.withValues(alpha: 0.55);
     } else {
-      itemBorderColor = isDark
-          ? AppColors.darkOutlineVariant
-          : const Color(0xFFE2E8F0);
+      itemBorderColor = context.hc.border;
     }
 
     Color iconColor;
     if (isSelected) {
-      iconColor = isSos ? Colors.white : AppColors.goldPrimary;
+      iconColor = isSos ? context.hc.onPrimary : context.hc.accent;
     } else if (isSos) {
-      iconColor = AppColors.sosEmergency;
+      iconColor = context.hc.danger;
     } else {
-      iconColor = isDark ? AppColors.darkTextBody : AppColors.espressoDark;
+      iconColor = isDark ? context.hc.textSecondary : context.hc.textPrimary;
     }
 
     Color textColor;
     if (isSelected) {
       textColor = Colors.white;
     } else if (isSos) {
-      textColor = hasActiveSos
-          ? (isDark ? const Color(0xFFFF8A8A) : AppColors.sosEmergency)
-          : headingColor;
+      textColor = hasActiveSos ? context.hc.danger : headingColor;
     } else {
       textColor = headingColor;
     }
@@ -2403,16 +2339,16 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     if (isSelected) {
       badgeBg = isSos
           ? Colors.white.withValues(alpha: 0.25)
-          : AppColors.goldPrimary;
-      badgeTextColor = isSos ? Colors.white : AppColors.espressoDark;
+          : context.hc.accent;
+      badgeTextColor = isSos ? context.hc.onPrimary : context.hc.brand;
     } else if (isSos && count > 0) {
-      badgeBg = AppColors.sosEmergency.withValues(alpha: isDark ? 0.25 : 0.14);
-      badgeTextColor = AppColors.sosEmergency;
+      badgeBg = context.hc.danger.withValues(alpha: isDark ? 0.25 : 0.14);
+      badgeTextColor = context.hc.danger;
     } else {
       badgeBg = isDark
           ? Colors.white.withValues(alpha: 0.08)
-          : AppColors.canvasCream;
-      badgeTextColor = isDark ? AppColors.darkTextBody : bodyColor;
+          : context.hc.surfaceSand;
+      badgeTextColor = isDark ? context.hc.textSecondary : bodyColor;
     }
 
     return Material(
@@ -2438,12 +2374,8 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                 ? [
                     BoxShadow(
                       color: isSos
-                          ? AppColors.sosEmergency.withValues(
-                              alpha: isDark ? 0.40 : 0.25,
-                            )
-                          : AppColors.espressoDark.withValues(
-                              alpha: isDark ? 0.35 : 0.16,
-                            ),
+                          ? context.hc.danger.withValues(alpha: 0.25)
+                          : context.hc.shadow,
                       blurRadius: 10,
                       offset: const Offset(0, 3),
                     ),
@@ -2465,18 +2397,16 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                 height: 28,
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppColors.surfaceWhite.withValues(alpha: 0.14)
+                      ? context.hc.onPrimary.withValues(alpha: 0.14)
                       : (isSos
-                            ? AppColors.sosEmergency.withValues(alpha: 0.12)
-                            : (isDark
-                                  ? Colors.white.withValues(alpha: 0.06)
-                                  : AppColors.canvasCream)),
+                            ? context.hc.danger.withValues(alpha: 0.12)
+                            : context.hc.surfaceSand),
                   borderRadius: BorderRadius.circular(8),
                   border: isSelected
                       ? Border.all(
                           color: isSos
                               ? Colors.white.withValues(alpha: 0.5)
-                              : AppColors.goldPrimary.withValues(alpha: 0.4),
+                              : context.hc.accent.withValues(alpha: 0.4),
                         )
                       : null,
                 ),
@@ -2502,10 +2432,8 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       ? null
                       : Border.all(
                           color: isSos && count > 0
-                              ? AppColors.sosEmergency.withValues(alpha: 0.4)
-                              : (isDark
-                                    ? AppColors.darkOutlineVariant
-                                    : const Color(0xFFE2E8F0)),
+                              ? context.hc.danger.withValues(alpha: 0.4)
+                              : context.hc.border,
                           width: 1,
                         ),
                 ),
@@ -2644,9 +2572,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
       if (_searchQuery.isNotEmpty || _selectedFilter != 'Semua') {
         return AppCard(
           backgroundColor: cardBg,
-          borderColor: isDark
-              ? AppColors.darkCardBorder
-              : AppColors.canvasCreamSubtle,
+          borderColor: context.hc.border,
           child: Padding(
             padding: const EdgeInsets.symmetric(
               vertical: AppSpacing.xl,
@@ -2706,9 +2632,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
       return AppCard(
         backgroundColor: cardBg,
-        borderColor: isDark
-            ? AppColors.darkCardBorder
-            : AppColors.canvasCreamSubtle,
+        borderColor: context.hc.border,
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.xl),
           child: Center(
@@ -2816,11 +2740,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(
-          color: isDark
-              ? AppColors.darkOutlineVariant
-              : const Color(0xFFE2E8F0),
-        ),
+        border: Border.all(color: context.hc.border),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -2964,16 +2884,12 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     bool canManage,
   ) {
     final effectiveMember = _resolveRealtimeMember(member);
-    final isDark = AppColors.isDark(context);
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
-    final cardBg = isDark ? AppColors.darkSurface : Colors.white;
-    final dividerColor = isDark
-        ? AppColors.darkCardBorder
-        : AppColors.canvasCreamSubtle;
+    final isDark = context.isDarkTheme;
+    final headingColor = context.hc.textPrimary;
+    final bodyColor = context.hc.textSecondary;
+    final primaryColor = context.hc.brand;
+    final cardBg = context.hc.surface;
+    final dividerColor = context.hc.border;
     final currentUid = _effectiveUid;
     final hajiCare = Get.isRegistered<HajiCareController>()
         ? Get.find<HajiCareController>()
@@ -2995,7 +2911,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     } else if (effectiveMember.isPendamping) {
       avatarBg = const Color(0xFF1D4ED8);
     } else if (effectiveMember.isJamaah) {
-      avatarBg = AppColors.emeraldIslamic;
+      avatarBg = context.hc.islamic;
     } else {
       avatarBg = primaryColor;
     }
@@ -3034,12 +2950,8 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
       roleBadgeLabel = context.tr('room.roleCompanion');
       roleBadgeIcon = Icons.health_and_safety_rounded;
     } else if (effectiveMember.isJamaah) {
-      roleBadgeBg = isDark
-          ? AppColors.emeraldIslamic.withValues(alpha: 0.25)
-          : AppColors.statusSafe.withValues(alpha: 0.12);
-      roleBadgeTextColor = isDark
-          ? const Color(0xFF6EE7B7)
-          : AppColors.statusSafe;
+      roleBadgeBg = context.hc.success.withValues(alpha: isDark ? 0.25 : 0.12);
+      roleBadgeTextColor = context.hc.success;
       roleBadgeLabel = context.tr('room.roleJamaah');
       roleBadgeIcon = Icons.person_rounded;
     } else {
@@ -3052,12 +2964,10 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     final distanceText = _getMemberDistance(effectiveMember);
 
     // Primary action button colors adaptive to theme (vibrant pill like Image 1)
-    final actionBtnBg = isDark
-        ? AppColors.darkPrimary
-        : (effectiveMember.isPendamping
-              ? const Color(0xFF1D4ED8)
-              : AppColors.emeraldIslamic);
-    final actionBtnFg = isDark ? AppColors.darkOnPrimary : Colors.white;
+    final actionBtnBg = effectiveMember.isPendamping
+        ? context.hc.accent
+        : context.hc.islamic;
+    final actionBtnFg = context.hc.onPrimary;
 
     showModalBottomSheet(
       context: context,
@@ -3155,15 +3065,17 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                 vertical: 3,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.error.withValues(alpha: 0.15),
+                                color: context.hc.danger.withValues(
+                                  alpha: 0.15,
+                                ),
                                 borderRadius: BorderRadius.circular(
                                   AppRadius.pill,
                                 ),
                               ),
                               child: Text(
                                 context.tr('room.sosActiveBadge'),
-                                style: const TextStyle(
-                                  color: AppColors.error,
+                                style: TextStyle(
+                                  color: context.hc.danger,
                                   fontWeight: FontWeight.w800,
                                   fontSize: 10,
                                   letterSpacing: 0.6,
@@ -3192,7 +3104,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       color: effectiveMember.hasLocation
-                                          ? AppColors.emeraldIslamic
+                                          ? context.hc.islamic
                                           : Colors.grey,
                                     ),
                                   ),
@@ -3390,9 +3302,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                     ),
                                   ),
                                   style: OutlinedButton.styleFrom(
-                                    foregroundColor: AppColors.error,
+                                    foregroundColor: context.hc.danger,
                                     side: BorderSide(
-                                      color: AppColors.error.withValues(
+                                      color: context.hc.danger.withValues(
                                         alpha: 0.35,
                                       ),
                                       width: 1,
@@ -3592,10 +3504,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: avatarBg,
-                        border: Border.all(
-                          color: isDark ? AppColors.darkSurface : Colors.white,
-                          width: 4,
-                        ),
+                        border: Border.all(color: context.hc.surface, width: 4),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(
@@ -3863,10 +3772,8 @@ class _MemberTile extends StatelessWidget {
       roleLabel = context.tr('room.roleCompanion');
       roleIcon = Icons.health_and_safety_rounded;
     } else if (member.isJamaah) {
-      badgeBg = isDark
-          ? AppColors.emeraldIslamic.withValues(alpha: 0.25)
-          : AppColors.statusSafe.withValues(alpha: 0.12);
-      badgeTextColor = isDark ? const Color(0xFF6EE7B7) : AppColors.statusSafe;
+      badgeBg = context.hc.success.withValues(alpha: isDark ? 0.25 : 0.12);
+      badgeTextColor = context.hc.success;
       roleLabel = context.tr('room.roleJamaah');
       roleIcon = Icons.person_rounded;
     } else {
@@ -3894,9 +3801,7 @@ class _MemberTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.card),
         child: AppCard(
           backgroundColor: cardBg,
-          borderColor: isDark
-              ? AppColors.darkCardBorder
-              : AppColors.canvasCreamSubtle,
+          borderColor: context.hc.border,
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.cardPadding,
             vertical: AppSpacing.sm + 2,
@@ -3910,21 +3815,21 @@ class _MemberTile extends StatelessWidget {
                     height: 42,
                     decoration: BoxDecoration(
                       color: hasSos
-                          ? AppColors.sosEmergency.withValues(alpha: 0.18)
+                          ? context.hc.danger.withValues(alpha: 0.18)
                           : badgeBg,
                       borderRadius: BorderRadius.circular(AppRadius.md),
                       border: Border.all(
                         color: hasSos
-                            ? AppColors.sosEmergency.withValues(alpha: 0.6)
+                            ? context.hc.danger.withValues(alpha: 0.6)
                             : badgeTextColor.withValues(alpha: 0.3),
                         width: hasSos ? 1.8 : 1.0,
                       ),
                     ),
                     child: Center(
                       child: hasSos
-                          ? const Icon(
+                          ? Icon(
                               Icons.sos_rounded,
-                              color: AppColors.sosEmergency,
+                              color: context.hc.danger,
                               size: 22,
                             )
                           : Text(
@@ -3946,7 +3851,7 @@ class _MemberTile extends StatelessWidget {
                         width: 11,
                         height: 11,
                         decoration: BoxDecoration(
-                          color: AppColors.sosEmergency,
+                          color: context.hc.danger,
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 1.5),
                         ),
@@ -3981,29 +3886,25 @@ class _MemberTile extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.sosEmergency.withValues(
-                                alpha: 0.14,
-                              ),
+                              color: context.hc.danger.withValues(alpha: 0.14),
                               borderRadius: BorderRadius.circular(4),
                               border: Border.all(
-                                color: AppColors.sosEmergency.withValues(
-                                  alpha: 0.4,
-                                ),
+                                color: context.hc.danger.withValues(alpha: 0.4),
                               ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.sos_rounded,
                                   size: 9,
-                                  color: AppColors.sosEmergency,
+                                  color: context.hc.danger,
                                 ),
                                 const SizedBox(width: 3),
                                 Text(
                                   context.tr('room.sosActiveBadge'),
-                                  style: const TextStyle(
-                                    color: AppColors.sosEmergency,
+                                  style: TextStyle(
+                                    color: context.hc.danger,
                                     fontSize: 9,
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: 0.3,
@@ -4017,8 +3918,8 @@ class _MemberTile extends StatelessWidget {
                           Container(
                             width: 6,
                             height: 6,
-                            decoration: const BoxDecoration(
-                              color: AppColors.statusPositive,
+                            decoration: BoxDecoration(
+                              color: context.hc.success,
                               shape: BoxShape.circle,
                             ),
                           ),

@@ -5,10 +5,10 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/haji_colors.dart';
+import '../../../core/theme/theme_context.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/utils/user_feedback_message.dart';
 import 'add_jamaah_dialog.dart';
@@ -24,13 +24,12 @@ class ActiveRoomCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = Get.find<HajiCareController>();
-    final isDark = AppColors.isDark(context);
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+    final hc = context.hc;
+    final isDark = hc.isDark;
+    final cardBg = hc.surface;
+    final headingColor = hc.textPrimary;
+    final bodyColor = hc.textSecondary;
+    final primaryColor = hc.brand;
 
     return Obx(() {
       final room = state.activeRoom.value;
@@ -64,12 +63,7 @@ class ActiveRoomCard extends StatelessWidget {
               bottomRight: Radius.circular(24),
               topRight: Radius.circular(48),
             ),
-            border: Border.all(
-              color: isDark
-                  ? AppColors.darkOutlineVariant
-                  : const Color(0xFFF1F5F9),
-              width: 1.2,
-            ),
+            border: Border.all(color: hc.border, width: 1.2),
             boxShadow: [
               BoxShadow(
                 color: isDark
@@ -92,12 +86,12 @@ class ActiveRoomCard extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: AppColors.statusWarning.withValues(alpha: 0.15),
+                      color: hc.warningContainer,
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.meeting_room_rounded,
-                      color: AppColors.statusWarning,
+                      color: hc.warning,
                       size: 22,
                     ),
                   ),
@@ -150,9 +144,7 @@ class ActiveRoomCard extends StatelessWidget {
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           foregroundColor: primaryColor,
-                          side: BorderSide(
-                            color: primaryColor.withValues(alpha: 0.5),
-                          ),
+                          side: BorderSide(color: hc.border),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(AppRadius.pill),
                           ),
@@ -174,9 +166,7 @@ class ActiveRoomCard extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           backgroundColor: primaryColor,
-                          foregroundColor: isDark
-                              ? AppColors.espressoDark
-                              : AppColors.surfaceWhite,
+                          foregroundColor: hc.onBrand,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(AppRadius.pill),
                           ),
@@ -202,9 +192,7 @@ class ActiveRoomCard extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       backgroundColor: primaryColor,
-                      foregroundColor: isDark
-                          ? AppColors.espressoDark
-                          : AppColors.surfaceWhite,
+                      foregroundColor: hc.onBrand,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
@@ -235,12 +223,7 @@ class ActiveRoomCard extends StatelessWidget {
               52,
             ), // Signature modern curved top-right corner
           ),
-          border: Border.all(
-            color: isDark
-                ? AppColors.darkOutlineVariant
-                : const Color(0xFFF1F5F9),
-            width: 1.2,
-          ),
+          border: Border.all(color: hc.border, width: 1.2),
           boxShadow: [
             BoxShadow(
               color: isDark
@@ -273,9 +256,7 @@ class ActiveRoomCard extends StatelessWidget {
                             width: 3.5,
                             height: 36,
                             decoration: BoxDecoration(
-                              color: isDark
-                                  ? AppColors.goldLight
-                                  : AppColors.primaryGold,
+                              color: hc.brand,
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
@@ -289,7 +270,7 @@ class ActiveRoomCard extends StatelessWidget {
                                   style: TextStyle(
                                     color: isDark
                                         ? Colors.white60
-                                        : const Color(0xFF64748B),
+                                        : hc.textSecondary,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -299,9 +280,7 @@ class ActiveRoomCard extends StatelessWidget {
                                   children: [
                                     Icon(
                                       Icons.meeting_room_rounded,
-                                      color: isDark
-                                          ? AppColors.goldLight
-                                          : AppColors.primaryGold,
+                                      color: hc.brand,
                                       size: 16,
                                     ),
                                     const SizedBox(width: 5),
@@ -325,21 +304,13 @@ class ActiveRoomCard extends StatelessWidget {
                                         vertical: 1.5,
                                       ),
                                       decoration: BoxDecoration(
-                                        color:
-                                            (isDark
-                                                    ? AppColors.goldLight
-                                                    : AppColors.primaryGold)
-                                                .withValues(
-                                                  alpha: isDark ? 0.25 : 0.14,
-                                                ),
+                                        color: hc.primaryContainer,
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                       child: Text(
                                         context.tr('room.active'),
                                         style: TextStyle(
-                                          color: isDark
-                                              ? AppColors.goldLight
-                                              : AppColors.goldDark,
+                                          color: hc.primary,
                                           fontSize: 10,
                                           fontWeight: FontWeight.w700,
                                         ),
@@ -363,9 +334,7 @@ class ActiveRoomCard extends StatelessWidget {
                             width: 3.5,
                             height: 36,
                             decoration: BoxDecoration(
-                              color: isDark
-                                  ? AppColors.darkSecondary
-                                  : AppColors.tanMedium,
+                              color: hc.sandDark,
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
@@ -379,7 +348,7 @@ class ActiveRoomCard extends StatelessWidget {
                                   style: TextStyle(
                                     color: isDark
                                         ? Colors.white60
-                                        : const Color(0xFF64748B),
+                                        : hc.textSecondary,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -389,9 +358,7 @@ class ActiveRoomCard extends StatelessWidget {
                                   children: [
                                     Icon(
                                       Icons.verified_user_rounded,
-                                      color: isDark
-                                          ? AppColors.darkSecondary
-                                          : AppColors.tanMedium,
+                                      color: hc.sandDark,
                                       size: 16,
                                     ),
                                     const SizedBox(width: 5),
@@ -419,15 +386,13 @@ class ActiveRoomCard extends StatelessWidget {
                                         vertical: 1.5,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: AppColors.statusSafe.withValues(
-                                          alpha: isDark ? 0.25 : 0.12,
-                                        ),
+                                        color: hc.successContainer,
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                       child: Text(
                                         context.tr('dashboard.standby'),
-                                        style: const TextStyle(
-                                          color: AppColors.statusSafe,
+                                        style: TextStyle(
+                                          color: hc.success,
                                           fontSize: 10,
                                           fontWeight: FontWeight.w700,
                                         ),
@@ -464,15 +429,9 @@ class ActiveRoomCard extends StatelessWidget {
                         child: CustomPaint(
                           painter: _RoomCapacityGaugePainter(
                             progress: (jamaahCount / 10.0).clamp(0.2, 1.0),
-                            trackColor: isDark
-                                ? AppColors.darkSurfaceContainerHighest
-                                : AppColors.canvasCreamSubtle,
-                            arcColor: isDark
-                                ? AppColors.goldLight
-                                : AppColors.goldPrimary,
-                            dotColor: isDark
-                                ? AppColors.accentGoldStar
-                                : AppColors.goldDark,
+                            trackColor: hc.surfaceSand,
+                            arcColor: hc.brand,
+                            dotColor: hc.brandAccent,
                           ),
                           child: Center(
                             child: FittedBox(
@@ -500,7 +459,7 @@ class ActiveRoomCard extends StatelessWidget {
                                       style: TextStyle(
                                         color: isDark
                                             ? Colors.white60
-                                            : const Color(0xFF64748B),
+                                            : hc.textSecondary,
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -520,14 +479,10 @@ class ActiveRoomCard extends StatelessWidget {
                           width: 32,
                           height: 32,
                           decoration: BoxDecoration(
-                            color: isDark
-                                ? AppColors.darkSurfaceContainer
-                                : AppColors.canvasCream,
+                            color: hc.surfaceSand,
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: isDark
-                                  ? AppColors.darkOutlineVariant
-                                  : AppColors.goldLight.withValues(alpha: 0.5),
+                              color: hc.borderSubtle,
                               width: 1,
                             ),
                           ),
@@ -541,9 +496,7 @@ class ActiveRoomCard extends StatelessWidget {
                         padding: EdgeInsets.zero,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadius.md),
-                          side: BorderSide(
-                            color: AppColors.cardBorderColor(context),
-                          ),
+                          side: BorderSide(color: hc.borderSubtle),
                         ),
                         color: cardBg,
                         elevation: 6,
@@ -580,16 +533,16 @@ class ActiveRoomCard extends StatelessWidget {
                             value: 'delete',
                             child: Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.delete_forever_rounded,
                                   size: 20,
-                                  color: AppColors.sosEmergency,
+                                  color: hc.danger,
                                 ),
                                 const SizedBox(width: 10),
                                 Text(
                                   context.tr('room.deleteRoom'),
-                                  style: const TextStyle(
-                                    color: AppColors.sosEmergency,
+                                  style: TextStyle(
+                                    color: hc.danger,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -607,12 +560,7 @@ class ActiveRoomCard extends StatelessWidget {
             const SizedBox(height: 18),
 
             // ── Horizontal Divider Line ─────────────────────────────
-            Divider(
-              height: 1,
-              color: isDark
-                  ? AppColors.darkCardBorder
-                  : const Color(0xFFE2E8F0),
-            ),
+            Divider(height: 1, color: hc.border),
 
             const SizedBox(height: 16),
 
@@ -661,12 +609,7 @@ class ActiveRoomCard extends StatelessWidget {
                         vertical: 10,
                       ),
                       minimumSize: const Size(0, 44),
-                      side: BorderSide(
-                        color: isDark
-                            ? AppColors.darkOutlineVariant
-                            : const Color(0xFFCBD5E1),
-                        width: 1.2,
-                      ),
+                      side: BorderSide(color: hc.border, width: 1.2),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
@@ -693,9 +636,7 @@ class ActiveRoomCard extends StatelessWidget {
                       ),
                       minimumSize: const Size(0, 44),
                       backgroundColor: primaryColor,
-                      foregroundColor: isDark
-                          ? AppColors.espressoDark
-                          : Colors.white,
+                      foregroundColor: hc.onBrand,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
@@ -727,12 +668,7 @@ class ActiveRoomCard extends StatelessWidget {
                         vertical: 10,
                       ),
                       minimumSize: const Size(0, 44),
-                      side: BorderSide(
-                        color: isDark
-                            ? AppColors.darkOutlineVariant
-                            : const Color(0xFFCBD5E1),
-                        width: 1.2,
-                      ),
+                      side: BorderSide(color: hc.border, width: 1.2),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
@@ -761,10 +697,8 @@ class ActiveRoomCard extends StatelessWidget {
                         vertical: 10,
                       ),
                       minimumSize: const Size(0, 44),
-                      backgroundColor: isDark
-                          ? AppColors.darkPrimaryContainer
-                          : AppColors.espressoDark,
-                      foregroundColor: Colors.white,
+                      backgroundColor: primaryColor,
+                      foregroundColor: hc.onBrand,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
@@ -815,12 +749,10 @@ class ActiveRoomCard extends StatelessWidget {
     required String roomName,
     required String roomCode,
   }) {
-    final isDark = AppColors.isDark(context);
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
+    final hc = context.hc;
+    final cardBg = hc.surface;
+    final headingColor = hc.textPrimary;
+    final bodyColor = hc.textSecondary;
 
     showModalBottomSheet(
       context: context,
@@ -853,9 +785,7 @@ class ActiveRoomCard extends StatelessWidget {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkOutlineVariant
-                          : AppColors.surfaceVariant,
+                      color: hc.borderSubtle,
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                   ),
@@ -869,7 +799,7 @@ class ActiveRoomCard extends StatelessWidget {
                       children: [
                         Text(
                           context.tr('dashboard.pilgrimsInRoom'),
-                          style: AppTypography.titleMedium.copyWith(
+                          style: context.text.titleMedium.copyWith(
                             color: headingColor,
                             fontWeight: FontWeight.bold,
                           ),
@@ -878,7 +808,7 @@ class ActiveRoomCard extends StatelessWidget {
                           context.tr('dashboard.pilgrimsRegisteredTapDetail', {
                             'count': '${jamaahList.length}',
                           }),
-                          style: AppTypography.captionSmall.copyWith(
+                          style: context.text.captionSmall.copyWith(
                             color: bodyColor,
                           ),
                         ),
@@ -891,7 +821,7 @@ class ActiveRoomCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const Divider(height: 16),
+                Divider(height: 16, color: hc.borderSubtle),
                 if (jamaahList.isEmpty)
                   Expanded(
                     child: Center(
@@ -906,7 +836,7 @@ class ActiveRoomCard extends StatelessWidget {
                           const SizedBox(height: 12),
                           Text(
                             context.tr('dashboard.noRegisteredPilgrims'),
-                            style: AppTypography.bodyMedium.copyWith(
+                            style: context.text.bodyMedium.copyWith(
                               color: bodyColor,
                             ),
                           ),
@@ -930,7 +860,8 @@ class ActiveRoomCard extends StatelessWidget {
                   Expanded(
                     child: ListView.separated(
                       itemCount: jamaahList.length,
-                      separatorBuilder: (_, _) => const Divider(height: 1),
+                      separatorBuilder: (_, _) =>
+                          Divider(height: 1, color: hc.borderSubtle),
                       itemBuilder: (context, index) {
                         final j = jamaahList[index];
                         final initial = j.name.trim().isNotEmpty
@@ -958,7 +889,7 @@ class ActiveRoomCard extends StatelessWidget {
                               Expanded(
                                 child: Text(
                                   j.name,
-                                  style: AppTypography.bodyMedium.copyWith(
+                                  style: context.text.bodyMedium.copyWith(
                                     color: headingColor,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -973,7 +904,7 @@ class ActiveRoomCard extends StatelessWidget {
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.sosEmergency,
+                                    color: hc.danger,
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: const Text(
@@ -1001,7 +932,7 @@ class ActiveRoomCard extends StatelessWidget {
                               const SizedBox(width: 6),
                               Text(
                                 '${j.tier.label} • ${j.distance.toInt()}m',
-                                style: AppTypography.captionSmall.copyWith(
+                                style: context.text.captionSmall.copyWith(
                                   color: bodyColor,
                                 ),
                               ),
@@ -1038,8 +969,9 @@ class ActiveRoomCard extends StatelessWidget {
     HajiCareController state,
     RoomModel room,
   ) {
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
+    final hc = context.hc;
+    final headingColor = hc.textPrimary;
+    final bodyColor = hc.textSecondary;
 
     bool isDeleting = false;
 
@@ -1049,22 +981,22 @@ class ActiveRoomCard extends StatelessWidget {
       builder: (dialogCtx) => StatefulBuilder(
         builder: (ctx, setDialogState) {
           return AlertDialog(
-            backgroundColor: AppColors.cardBgColor(context),
+            backgroundColor: hc.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.sheet),
-              side: BorderSide(color: AppColors.cardBorderColor(context)),
+              side: BorderSide(color: hc.borderSubtle),
             ),
             title: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.sosEmergency.withValues(alpha: 0.12),
+                    color: hc.danger.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.warning_amber_rounded,
-                    color: AppColors.sosEmergency,
+                    color: hc.danger,
                     size: 24,
                   ),
                 ),
@@ -1072,7 +1004,7 @@ class ActiveRoomCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     context.tr('room.deleteRoomTitle'),
-                    style: AppTypography.titleMedium.copyWith(
+                    style: context.text.titleMedium.copyWith(
                       color: headingColor,
                       fontWeight: FontWeight.bold,
                     ),
@@ -1088,7 +1020,7 @@ class ActiveRoomCard extends StatelessWidget {
                   context.tr('room.deleteRoomDesc', {
                     'name': '${room.name} (${room.code})',
                   }),
-                  style: AppTypography.bodySmall.copyWith(
+                  style: context.text.bodySmall.copyWith(
                     color: bodyColor,
                     height: 1.4,
                   ),
@@ -1110,7 +1042,7 @@ class ActiveRoomCard extends StatelessWidget {
               ),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.sosEmergency,
+                  backgroundColor: hc.danger,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -1302,35 +1234,28 @@ class _RadarWaveStatisticWidgetState extends State<_RadarWaveStatisticWidget>
     return dist > widget.radius;
   }
 
-  Color get _waveColor {
+  Color _waveColor(HajiColors hc) {
     if (_isOutOfRadius) {
-      return const Color(0xFFEF4444);
+      return hc.danger;
     }
-    return widget.isDark
-        ? const Color(0xFF34D399)
-        : const Color(0xFF059669); // Crisp emerald in light mode
+    return hc.success;
   }
 
   @override
   Widget build(BuildContext context) {
+    final hc = context.hc;
     final effectiveRadius = widget.radius > 0 ? widget.radius : 500.0;
     final isWarning = _isOutOfRadius;
-    final waveColor = _waveColor;
+    final waveColor = _waveColor(hc);
     final hasDist =
         widget.currentDistance != null && widget.currentDistance! > 0;
     final displayDist = hasDist ? widget.currentDistance! : effectiveRadius;
 
     final badgeBg = isWarning
-        ? (widget.isDark
-              ? const Color(0xFF7F1D1D).withValues(alpha: 0.45)
-              : const Color(0xFFFEE2E2))
-        : (widget.isDark
-              ? const Color(0xFF064E3B).withValues(alpha: 0.45)
-              : const Color(0xFFD1FAE5));
+        ? hc.danger.withValues(alpha: widget.isDark ? 0.25 : 0.12)
+        : hc.success.withValues(alpha: widget.isDark ? 0.25 : 0.12);
 
-    final badgeTextColor = isWarning
-        ? const Color(0xFFEF4444)
-        : (widget.isDark ? const Color(0xFF34D399) : const Color(0xFF059669));
+    final badgeTextColor = isWarning ? hc.danger : hc.success;
 
     final badgeText = isWarning
         ? context.tr('dashboard.outOfRadiusBadge')
@@ -1350,11 +1275,7 @@ class _RadarWaveStatisticWidgetState extends State<_RadarWaveStatisticWidget>
                   Icon(
                     Icons.radar_rounded,
                     size: 17,
-                    color: isWarning
-                        ? const Color(0xFFEF4444)
-                        : (widget.isDark
-                              ? AppColors.darkPrimary
-                              : AppColors.primaryGold),
+                    color: isWarning ? hc.danger : hc.brand,
                   ),
                   const SizedBox(width: 6),
                   Flexible(
@@ -1663,12 +1584,11 @@ class _ActiveRoomSkeletonCardState extends State<ActiveRoomSkeletonCard>
 
   @override
   Widget build(BuildContext context) {
-    final dark = widget.isDark ?? AppColors.isDark(context);
-    final cardBg = dark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final primaryColor = dark ? AppColors.darkPrimary : AppColors.primaryGold;
-    final headingColor = dark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
+    final hc = context.hc;
+    final dark = widget.isDark ?? hc.isDark;
+    final cardBg = hc.surface;
+    final primaryColor = hc.brand;
+    final headingColor = hc.textPrimary;
 
     return AnimatedBuilder(
       animation: _pulseAnim,
@@ -1687,12 +1607,7 @@ class _ActiveRoomSkeletonCardState extends State<ActiveRoomSkeletonCard>
               bottomRight: Radius.circular(24),
               topRight: Radius.circular(52),
             ),
-            border: Border.all(
-              color: dark
-                  ? AppColors.darkOutlineVariant
-                  : const Color(0xFFF1F5F9),
-              width: 1.2,
-            ),
+            border: Border.all(color: hc.borderSubtle, width: 1.2),
             boxShadow: [
               BoxShadow(
                 color: dark
@@ -1724,11 +1639,7 @@ class _ActiveRoomSkeletonCardState extends State<ActiveRoomSkeletonCard>
                               width: 3.5,
                               height: 36,
                               decoration: BoxDecoration(
-                                color:
-                                    (dark
-                                            ? AppColors.goldLight
-                                            : AppColors.primaryGold)
-                                        .withValues(alpha: shimmerAlpha),
+                                color: hc.brand.withValues(alpha: shimmerAlpha),
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             ),
@@ -1787,11 +1698,9 @@ class _ActiveRoomSkeletonCardState extends State<ActiveRoomSkeletonCard>
                               width: 3.5,
                               height: 36,
                               decoration: BoxDecoration(
-                                color:
-                                    (dark
-                                            ? AppColors.darkSecondary
-                                            : AppColors.tanMedium)
-                                        .withValues(alpha: shimmerAlpha),
+                                color: hc.brandSecondary.withValues(
+                                  alpha: shimmerAlpha,
+                                ),
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             ),
@@ -1826,10 +1735,9 @@ class _ActiveRoomSkeletonCardState extends State<ActiveRoomSkeletonCard>
                                         width: 46,
                                         height: 14,
                                         decoration: BoxDecoration(
-                                          color: AppColors.statusSafe
-                                              .withValues(
-                                                alpha: shimmerAlpha * 0.4,
-                                              ),
+                                          color: hc.success.withValues(
+                                            alpha: shimmerAlpha * 0.4,
+                                          ),
                                           borderRadius: BorderRadius.circular(
                                             4,
                                           ),
@@ -1884,12 +1792,7 @@ class _ActiveRoomSkeletonCardState extends State<ActiveRoomSkeletonCard>
                 ],
               ),
               const SizedBox(height: 16),
-              Divider(
-                height: 1,
-                color: dark
-                    ? AppColors.darkCardBorder
-                    : const Color(0xFFE2E8F0),
-              ),
+              Divider(height: 1, color: hc.borderSubtle),
               const SizedBox(height: 14),
               // Synchronizing message row
               Row(

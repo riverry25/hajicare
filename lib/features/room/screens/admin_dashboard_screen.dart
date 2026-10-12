@@ -6,9 +6,9 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/theme_context.dart';
 import '../../dashboard/presentation/dashboard_typography.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
@@ -51,7 +51,7 @@ class AdminDashboardScreen extends StatelessWidget {
       data: DashboardTypography.applyTo(Theme.of(context)),
       child: Obx(() {
         return Scaffold(
-          backgroundColor: AppColors.scaffoldColor(context),
+          backgroundColor: context.hc.canvas,
           extendBody: true,
           body: IndexedStack(
             index: dashboardCtrl.currentIndex.value,
@@ -96,14 +96,12 @@ class _AdminDashboardHome extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final scaffoldBg = AppColors.scaffoldColor(context);
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+    final isDark = context.isDarkTheme;
+    final scaffoldBg = context.hc.canvas;
+    final cardBg = context.hc.surface;
+    final headingColor = context.hc.textPrimary;
+    final bodyColor = context.hc.textSecondary;
+    final primaryColor = context.hc.brand;
 
     return Scaffold(
       backgroundColor: scaffoldBg,
@@ -121,12 +119,7 @@ class _AdminDashboardHome extends StatelessWidget {
               height: 40,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: isDark
-                      ? AppColors.darkCardBorder
-                      : AppColors.goldLight.withValues(alpha: 0.5),
-                  width: 1.5,
-                ),
+                border: Border.all(color: context.hc.border, width: 1.5),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.05),
@@ -140,9 +133,7 @@ class _AdminDashboardHome extends StatelessWidget {
                   'assets/icon.jpeg',
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => CircleAvatar(
-                    backgroundColor: isDark
-                        ? AppColors.darkSurface
-                        : AppColors.surfaceWhite,
+                    backgroundColor: context.hc.surfaceSand,
                     child: Icon(Icons.person, color: headingColor, size: 20),
                   ),
                 ),
@@ -228,7 +219,7 @@ class _AdminDashboardHome extends StatelessWidget {
                       width: 8,
                       height: 8,
                       decoration: BoxDecoration(
-                        color: AppColors.sosEmergency,
+                        color: context.hc.danger,
                         shape: BoxShape.circle,
                         border: Border.all(color: scaffoldBg, width: 1.5),
                       ),
@@ -248,9 +239,9 @@ class _AdminDashboardHome extends StatelessWidget {
             child: IconButton(
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
-              icon: const Icon(
+              icon: Icon(
                 Icons.logout_rounded,
-                color: AppColors.error,
+                color: context.hc.danger,
                 size: 20,
               ),
               tooltip: context.tr('adminDashboard.logout'),
@@ -365,71 +356,69 @@ class _AdminDashboardHome extends StatelessWidget {
     required Color headingColor,
     required Color bodyColor,
   }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Expanded(
-          child: Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkSurfaceContainerHigh
-                      : const Color(0xFFF0EBE1),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.darkCardBorder
-                        : AppColors.lightCardBorder.withValues(alpha: 0.6),
-                    width: 1.0,
+    return Builder(
+      builder: (context) {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Row(
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: context.hc.surfaceSand,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: context.hc.border, width: 1.0),
+                    ),
+                    child: Center(
+                      child: Icon(icon, size: 16.5, color: headingColor),
+                    ),
                   ),
-                ),
-                child: Center(
-                  child: Icon(icon, size: 16.5, color: headingColor),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm + 2),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      title,
-                      style: DashboardTypography.titleSmall.copyWith(
-                        color: headingColor,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14.5,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                  const SizedBox(width: AppSpacing.sm + 2),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          title,
+                          style: DashboardTypography.titleSmall.copyWith(
+                            color: headingColor,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14.5,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 1.5),
+                        Text(
+                          subtitle,
+                          style: DashboardTypography.captionSmall.copyWith(
+                            color:
+                                subtitleColor ??
+                                bodyColor.withValues(alpha: 0.72),
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 1.5),
-                    Text(
-                      subtitle,
-                      style: DashboardTypography.captionSmall.copyWith(
-                        color:
-                            subtitleColor ?? bodyColor.withValues(alpha: 0.72),
-                        fontWeight: FontWeight.w700,
-                        fontSize: 11,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+            ),
+            if (trailing != null) ...[
+              const SizedBox(width: AppSpacing.sm),
+              trailing,
             ],
-          ),
-        ),
-        if (trailing != null) ...[
-          const SizedBox(width: AppSpacing.sm),
-          trailing,
-        ],
-      ],
+          ],
+        );
+      },
     );
   }
 
@@ -441,47 +430,44 @@ class _AdminDashboardHome extends StatelessWidget {
     double iconSize = 18,
     String? tooltip,
   }) {
-    final button = Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-        child: Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: isDark
-                ? AppColors.darkSurfaceContainer
-                : AppColors.surfaceWhite,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: isDark
-                  ? AppColors.darkCardBorder
-                  : AppColors.lightCardBorder,
-              width: 1.2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.04),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
+    return Builder(
+      builder: (context) {
+        final button = Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              onTap();
+            },
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            child: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: context.hc.surface,
+                shape: BoxShape.circle,
+                border: Border.all(color: context.hc.border, width: 1.2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.04),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-            ],
+              child: Center(
+                child: Icon(icon, size: iconSize, color: headingColor),
+              ),
+            ),
           ),
-          child: Center(
-            child: Icon(icon, size: iconSize, color: headingColor),
-          ),
-        ),
-      ),
-    );
+        );
 
-    if (tooltip != null) {
-      return Tooltip(message: tooltip, child: button);
-    }
-    return button;
+        if (tooltip != null) {
+          return Tooltip(message: tooltip, child: button);
+        }
+        return button;
+      },
+    );
   }
 
   // 5. Room monitoring section

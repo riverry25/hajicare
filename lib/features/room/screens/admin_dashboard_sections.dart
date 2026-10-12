@@ -21,10 +21,10 @@ extension _AdminDashboardSections on _AdminDashboardHome {
                   'count': activeSos,
                 })
               : 'Akses cepat modul dan koordinasi darurat',
-          subtitleColor: activeSos > 0 ? AppColors.sosEmergency : null,
+          subtitleColor: activeSos > 0 ? context.hc.danger : null,
           isDark: isDark,
           headingColor: headingColor,
-          bodyColor: isDark ? AppColors.darkTextBody : AppColors.textBody,
+          bodyColor: context.hc.textSecondary,
         ),
         const SizedBox(height: AppSpacing.cardInnerGutter),
 
@@ -36,13 +36,9 @@ extension _AdminDashboardSections on _AdminDashboardHome {
                 label: context.tr('room.createRoomBtn'),
                 subtitle: context.tr('room.newGroupOrKloter'),
                 icon: Icons.add_business_rounded,
-                color: isDark ? AppColors.tanLight : AppColors.secondary,
-                cardBg: isDark
-                    ? AppColors.darkSurfaceContainer
-                    : AppColors.surfaceContainerLow,
-                headingColor: isDark
-                    ? AppColors.darkTextHeading
-                    : AppColors.primaryContainer,
+                color: context.hc.accent,
+                cardBg: context.hc.surfaceSand,
+                headingColor: context.hc.brand,
                 isDark: isDark,
                 onTap: () => _showCreateRoomSheet(context, controller),
               ),
@@ -53,7 +49,7 @@ extension _AdminDashboardSections on _AdminDashboardHome {
                 label: context.tr('room.managePilgrims'),
                 subtitle: context.tr('room.allRoomsList'),
                 icon: Icons.manage_accounts_rounded,
-                color: AppColors.statusSafe,
+                color: context.hc.success,
                 cardBg: cardBg,
                 headingColor: headingColor,
                 isDark: isDark,
@@ -71,7 +67,7 @@ extension _AdminDashboardSections on _AdminDashboardHome {
                 label: context.tr('room.monitorMap'),
                 subtitle: context.tr('room.locationAndPerimeter'),
                 icon: Icons.map_rounded,
-                color: AppColors.secondary,
+                color: context.hc.brand,
                 cardBg: cardBg,
                 headingColor: headingColor,
                 isDark: isDark,
@@ -88,17 +84,11 @@ extension _AdminDashboardSections on _AdminDashboardHome {
                       })
                     : context.tr('adminDashboard.notificationCenter'),
                 icon: Icons.notification_important_rounded,
-                color: activeSos > 0
-                    ? AppColors.sosEmergency
-                    : AppColors.statusSafe,
+                color: activeSos > 0 ? context.hc.danger : context.hc.success,
                 cardBg: activeSos > 0
-                    ? (isDark
-                          ? AppColors.darkSurface
-                          : AppColors.errorContainer)
+                    ? context.hc.danger.withValues(alpha: 0.1)
                     : cardBg,
-                headingColor: activeSos > 0
-                    ? AppColors.sosEmergency
-                    : headingColor,
+                headingColor: activeSos > 0 ? context.hc.danger : headingColor,
                 isDark: isDark,
                 onTap: () {
                   if (activeSos > 0) {
@@ -109,7 +99,7 @@ extension _AdminDashboardSections on _AdminDashboardHome {
                       isDark,
                       cardBg,
                       headingColor,
-                      isDark ? AppColors.darkTextBody : AppColors.textBody,
+                      context.hc.textSecondary,
                       primaryColor,
                     );
                   } else {
@@ -129,7 +119,7 @@ extension _AdminDashboardSections on _AdminDashboardHome {
                 label: context.tr('room.sendBroadcast'),
                 subtitle: context.tr('room.broadcastSub'),
                 icon: Icons.campaign_rounded,
-                color: AppColors.distanceWarning,
+                color: context.hc.warning,
                 cardBg: cardBg,
                 headingColor: headingColor,
                 isDark: isDark,
@@ -142,7 +132,7 @@ extension _AdminDashboardSections on _AdminDashboardHome {
                 label: context.tr('room.perimeterRadar'),
                 subtitle: context.tr('room.safeRadiusSub'),
                 icon: Icons.radar_rounded,
-                color: AppColors.emeraldIslamic,
+                color: context.hc.islamic,
                 cardBg: cardBg,
                 headingColor: headingColor,
                 isDark: isDark,
@@ -216,11 +206,7 @@ extension _AdminDashboardSections on _AdminDashboardHome {
                       width: 60,
                       height: 60,
                       decoration: BoxDecoration(
-                        color:
-                            (isDark
-                                    ? AppColors.darkPrimary
-                                    : AppColors.primaryGold)
-                                .withValues(alpha: 0.12),
+                        color: context.hc.brand.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -255,9 +241,7 @@ extension _AdminDashboardSections on _AdminDashboardHome {
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryColor,
-                        foregroundColor: isDark
-                            ? AppColors.darkOnPrimary
-                            : Colors.white,
+                        foregroundColor: context.hc.onPrimary,
                         minimumSize: const Size(160, 46),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -378,21 +362,21 @@ extension _AdminDashboardSections on _AdminDashboardHome {
                       height: 58,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppColors.statusSafe.withValues(
+                        color: context.hc.success.withValues(
                           alpha: isDark ? 0.18 : 0.10,
                         ),
                         border: Border.all(
-                          color: AppColors.statusSafe.withValues(
+                          color: context.hc.success.withValues(
                             alpha: isDark ? 0.35 : 0.25,
                           ),
                           width: 1.5,
                         ),
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Icon(
                           Icons.verified_user_rounded,
                           size: 30,
-                          color: AppColors.statusSafe,
+                          color: context.hc.success,
                         ),
                       ),
                     ),
@@ -421,20 +405,16 @@ extension _AdminDashboardSections on _AdminDashboardHome {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color:
-                            (isDark
-                                    ? AppColors.darkCardBorder
-                                    : AppColors.canvasCreamSubtle)
-                                .withValues(alpha: 0.5),
+                        color: context.hc.surfaceSand,
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.check_circle_outline_rounded,
                             size: 13,
-                            color: AppColors.statusSafe,
+                            color: context.hc.success,
                           ),
                           const SizedBox(width: 5),
                           Text(
@@ -469,9 +449,7 @@ extension _AdminDashboardSections on _AdminDashboardHome {
                         thickness: 0.8,
                         indent: 62,
                         endIndent: AppSpacing.md,
-                        color: isDark
-                            ? AppColors.darkCardBorder
-                            : AppColors.canvasCreamSubtle,
+                        color: context.hc.border,
                       ),
                     ),
                   _ActivityFeedTile(
@@ -491,13 +469,7 @@ extension _AdminDashboardSections on _AdminDashboardHome {
                   ),
                 ],
                 if (sortedActivities.length > previewActivities.length) ...[
-                  Divider(
-                    height: 1,
-                    thickness: 0.8,
-                    color: isDark
-                        ? AppColors.darkCardBorder
-                        : AppColors.canvasCreamSubtle,
-                  ),
+                  Divider(height: 1, thickness: 0.8, color: context.hc.border),
                   InkWell(
                     onTap: () => _showAllActivitiesSheet(
                       context,

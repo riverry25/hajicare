@@ -3,8 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../core/locales/app_translations.dart';
 import '../../../core/services/app_alert_service.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_context.dart';
 import '../../../core/utils/user_feedback_message.dart';
 import '../../../core/widgets/ribbon_fold_painter.dart';
 import '../services/room_service.dart';
@@ -90,12 +89,10 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final headingColor = isDark
-        ? AppColors.darkTextHeading
-        : AppColors.espressoDark;
-    final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
+    final isDark = context.hc.isDark;
+    final cardBg = context.hc.surface;
+    final headingColor = context.hc.textPrimary;
+    final bodyColor = context.hc.textSecondary;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -119,12 +116,7 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
               decoration: BoxDecoration(
                 color: cardBg,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : AppColors.goldLight.withValues(alpha: 0.35),
-                  width: 1,
-                ),
+                border: Border.all(color: context.hc.borderSubtle, width: 1),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.09),
@@ -143,7 +135,7 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
                     children: [
                       Text(
                         'Undang Jamaah',
-                        style: AppTypography.titleMedium.copyWith(
+                        style: context.text.titleMedium.copyWith(
                           color: headingColor,
                           fontWeight: FontWeight.w800,
                           fontSize: 17.5,
@@ -153,7 +145,7 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
                       const SizedBox(height: 4),
                       Text(
                         'Undangan akan dikirimkan langsung ke akun email Jamaah yang terdaftar di HajiCare.',
-                        style: AppTypography.bodySmall.copyWith(
+                        style: context.text.bodySmall.copyWith(
                           color: bodyColor.withValues(alpha: 0.85),
                           height: 1.35,
                           fontSize: 12.5,
@@ -185,7 +177,7 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
                           hintStyle: TextStyle(
                             color: isDark
                                 ? Colors.white38
-                                : const Color(0xFF9E8E81),
+                                : context.hc.textTertiary,
                             fontSize: 12.5,
                             fontWeight: FontWeight.w400,
                           ),
@@ -193,8 +185,8 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
                             Icons.mail_outline_rounded,
                             size: 17,
                             color: isDark
-                                ? AppColors.goldLight.withValues(alpha: 0.7)
-                                : AppColors.espressoDark.withValues(alpha: 0.6),
+                                ? context.hc.sand
+                                : context.hc.brandDark,
                           ),
                           prefixIconConstraints: const BoxConstraints(
                             minWidth: 26,
@@ -204,37 +196,31 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
                           contentPadding: const EdgeInsets.fromLTRB(0, 6, 0, 2),
                           border: UnderlineInputBorder(
                             borderSide: BorderSide(
-                              color: isDark
-                                  ? AppColors.darkOutlineVariant
-                                  : const Color(0xFFD4C7BC),
+                              color: context.hc.border,
                               width: 1.2,
                             ),
                           ),
                           enabledBorder: UnderlineInputBorder(
                             borderSide: BorderSide(
-                              color: isDark
-                                  ? AppColors.darkOutlineVariant
-                                  : const Color(0xFFD4C7BC),
+                              color: context.hc.border,
                               width: 1.2,
                             ),
                           ),
                           focusedBorder: UnderlineInputBorder(
                             borderSide: BorderSide(
-                              color: isDark
-                                  ? AppColors.goldLight
-                                  : AppColors.espressoDark,
+                              color: context.hc.brand,
                               width: 1.8,
                             ),
                           ),
-                          errorBorder: const UnderlineInputBorder(
+                          errorBorder: UnderlineInputBorder(
                             borderSide: BorderSide(
-                              color: AppColors.sosEmergency,
+                              color: context.hc.error,
                               width: 1.4,
                             ),
                           ),
-                          focusedErrorBorder: const UnderlineInputBorder(
+                          focusedErrorBorder: UnderlineInputBorder(
                             borderSide: BorderSide(
-                              color: AppColors.sosEmergency,
+                              color: context.hc.error,
                               width: 1.8,
                             ),
                           ),
@@ -257,9 +243,7 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
                         children: [
                           TextButton(
                             style: TextButton.styleFrom(
-                              foregroundColor: isDark
-                                  ? Colors.white60
-                                  : const Color(0xFF8C7A6B),
+                              foregroundColor: bodyColor,
                               padding: const EdgeInsets.symmetric(vertical: 4),
                               minimumSize: Size.zero,
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -298,18 +282,16 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: isDark
-                        ? [const Color(0xFF38251A), const Color(0xFF1F140D)]
-                        : [AppColors.espressoDark, const Color(0xFF563B2A)],
+                    colors: [context.hc.brandDark, context.hc.brand],
                   ),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppColors.goldPrimary.withValues(alpha: 0.4),
+                    color: context.hc.brandAccent.withValues(alpha: 0.4),
                     width: 1.2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.espressoDark.withValues(alpha: 0.35),
+                      color: context.hc.shadowSubtle,
                       blurRadius: 16,
                       offset: const Offset(0, 6),
                     ),
@@ -325,7 +307,7 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
                         height: 70,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppColors.goldPrimary.withValues(alpha: 0.12),
+                          color: context.hc.brandAccent.withValues(alpha: 0.12),
                         ),
                       ),
                     ),
@@ -337,7 +319,7 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
                         height: 65,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppColors.goldPrimary.withValues(alpha: 0.08),
+                          color: context.hc.brandAccent.withValues(alpha: 0.08),
                         ),
                       ),
                     ),
@@ -352,32 +334,36 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
                               shape: BoxShape.circle,
                               gradient: LinearGradient(
                                 colors: [
-                                  AppColors.goldPrimary.withValues(alpha: 0.25),
-                                  AppColors.goldPrimary.withValues(alpha: 0.08),
+                                  context.hc.brandAccent.withValues(
+                                    alpha: 0.25,
+                                  ),
+                                  context.hc.brandAccent.withValues(
+                                    alpha: 0.08,
+                                  ),
                                 ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
                               border: Border.all(
-                                color: AppColors.goldPrimary.withValues(
+                                color: context.hc.brandAccent.withValues(
                                   alpha: 0.5,
                                 ),
                                 width: 1.5,
                               ),
                             ),
-                            child: const Center(
+                            child: Center(
                               child: Icon(
                                 Icons.person_add_alt_1_rounded,
-                                color: AppColors.accentGoldStar,
+                                color: context.hc.brandAccent,
                                 size: 20,
                               ),
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
+                          Text(
                             'UNDANG JAMAAH',
                             style: TextStyle(
-                              color: AppColors.goldLight,
+                              color: context.hc.sand,
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 1.1,
@@ -422,8 +408,8 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
                       child: Ink(
                         decoration: BoxDecoration(
                           color: isDark
-                              ? AppColors.darkPrimaryContainer
-                              : AppColors.espressoDark,
+                              ? context.hc.primaryContainer
+                              : context.hc.brand,
                           borderRadius: const BorderRadius.only(
                             topLeft: Radius.circular(24),
                             bottomLeft: Radius.circular(24),
@@ -435,18 +421,18 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
                           vertical: 13.5,
                         ),
                         child: _isSubmitting
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 18,
                                 height: 18,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: Colors.white,
+                                  color: context.hc.onBrand,
                                 ),
                               )
-                            : const Text(
+                            : Text(
                                 'KIRIM',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: context.hc.onBrand,
                                   fontWeight: FontWeight.w900,
                                   fontSize: 13,
                                   letterSpacing: 2.2,

@@ -52,4 +52,8 @@ class HajiSafeTextTheme {
   TextStyle get labelLarge => _t.labelLarge ?? TextStyle(color: _c.textPrimary);
   TextStyle get labelMedium => _t.labelMedium ?? TextStyle(color: _c.textSecondary);
   TextStyle get labelSmall => _t.labelSmall ?? TextStyle(color: _c.textTertiary);
+
+  /// Ergonomic caption aliases
+  TextStyle get captionSmall => _t.labelSmall ?? _t.bodySmall?.copyWith(fontSize: 11) ?? TextStyle(color: _c.textTertiary, fontSize: 11);
+  TextStyle get captionMedium => _t.labelMedium ?? _t.bodySmall ?? TextStyle(color: _c.textSecondary, fontSize: 12);
 }

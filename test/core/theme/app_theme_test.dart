@@ -14,7 +14,7 @@ void main() {
     ) async {
       late HajiColors resolvedColors;
       late HajiTextStyles resolvedStyles;
-      late TextTheme resolvedText;
+      late HajiSafeTextTheme resolvedText;
 
       await tester.pumpWidget(
         MaterialApp(
@@ -44,7 +44,7 @@ void main() {
     ) async {
       late HajiColors resolvedColors;
       late HajiTextStyles resolvedStyles;
-      late TextTheme resolvedText;
+      late HajiSafeTextTheme resolvedText;
 
       await tester.pumpWidget(
         MaterialApp(

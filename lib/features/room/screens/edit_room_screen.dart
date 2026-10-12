@@ -5,9 +5,8 @@ import 'package:get/get.dart';
 
 import '../../../core/locales/app_translations.dart';
 import '../../../core/state/hajicare_controller.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_context.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/utils/user_feedback_message.dart';
 
@@ -114,27 +113,18 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
+    final headingColor = context.hc.textPrimary;
+    final bodyColor = context.hc.textSecondary;
     final room = _room;
 
     final underline = UnderlineInputBorder(
-      borderSide: BorderSide(
-        color: isDark
-            ? AppColors.darkOutlineVariant
-            : AppColors.lightCardBorder,
-        width: 1.4,
-      ),
+      borderSide: BorderSide(color: context.hc.border, width: 1.4),
     );
     final underlineFocus = UnderlineInputBorder(
-      borderSide: BorderSide(
-        color: isDark ? AppColors.goldLight : AppColors.espressoDark,
-        width: 2,
-      ),
+      borderSide: BorderSide(color: context.hc.brand, width: 2),
     );
-    const underlineErr = UnderlineInputBorder(
-      borderSide: BorderSide(color: AppColors.sosEmergency, width: 1.8),
+    final underlineErr = UnderlineInputBorder(
+      borderSide: BorderSide(color: context.hc.danger, width: 1.8),
     );
 
     InputDecoration dec({
@@ -144,25 +134,23 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
       Widget? prefix,
     }) => InputDecoration(
       labelText: label,
-      labelStyle: AppTypography.caption.copyWith(
-        color: bodyColor.withValues(alpha: 0.75),
+      labelStyle: context.text.labelSmall.copyWith(
+        color: bodyColor,
         fontSize: 13,
         fontWeight: FontWeight.w600,
       ),
       hintText: hint,
-      hintStyle: AppTypography.bodyMedium.copyWith(
-        color: bodyColor.withValues(alpha: 0.4),
+      hintStyle: context.text.bodyMedium.copyWith(
+        color: context.hc.textTertiary,
         fontSize: 14,
       ),
       suffixText: suffix,
-      suffixStyle: AppTypography.caption.copyWith(
-        color: bodyColor.withValues(alpha: 0.6),
+      suffixStyle: context.text.captionMedium.copyWith(
+        color: bodyColor,
         fontSize: 13,
       ),
       prefixIcon: prefix,
-      prefixIconColor: isDark
-          ? AppColors.goldLight.withValues(alpha: 0.7)
-          : AppColors.tanMedium,
+      prefixIconColor: context.hc.accent,
       filled: false,
       border: underline,
       enabledBorder: underline,
@@ -170,17 +158,17 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
       errorBorder: underlineErr,
       focusedErrorBorder: underlineErr,
       contentPadding: const EdgeInsets.only(bottom: 8, top: 4),
-      errorStyle: AppTypography.captionSmall.copyWith(
+      errorStyle: context.text.captionSmall.copyWith(
         fontSize: 11,
-        color: AppColors.sosEmergency,
+        color: context.hc.danger,
       ),
       isDense: true,
     );
 
     return Scaffold(
-      backgroundColor: AppColors.scaffoldColor(context),
+      backgroundColor: context.hc.canvas,
       appBar: AppBar(
-        backgroundColor: AppColors.scaffoldColor(context),
+        backgroundColor: context.hc.canvas,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
@@ -192,8 +180,8 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
           children: [
             Text(
               context.tr('room.editRoom').toUpperCase(),
-              style: AppTypography.caption.copyWith(
-                color: isDark ? AppColors.goldLight : AppColors.espressoDark,
+              style: context.text.captionSmall.copyWith(
+                color: context.hc.accent,
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 2,
@@ -201,7 +189,7 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
             ),
             Text(
               room?.name ?? context.tr('room.editRoom'),
-              style: AppTypography.titleMedium.copyWith(
+              style: context.text.titleMedium.copyWith(
                 color: headingColor,
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
@@ -218,22 +206,14 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkPrimaryContainer
-                      : AppColors.canvasCream,
+                  color: context.hc.surfaceSand,
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.goldLight.withValues(alpha: 0.3)
-                        : AppColors.goldLight.withValues(alpha: 0.6),
-                  ),
+                  border: Border.all(color: context.hc.border),
                 ),
                 child: Text(
                   room.code,
                   style: TextStyle(
-                    color: isDark
-                        ? AppColors.goldLight
-                        : AppColors.espressoDark,
+                    color: context.hc.brand,
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.2,
@@ -254,7 +234,7 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
               controller: _nameController,
               inputFormatters: [LengthLimitingTextInputFormatter(100)],
               enabled: !_isSaving,
-              style: AppTypography.bodyMedium.copyWith(
+              style: context.text.bodyMedium.copyWith(
                 color: headingColor,
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -281,7 +261,7 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
                     controller: _maktabController,
                     inputFormatters: [LengthLimitingTextInputFormatter(60)],
                     enabled: !_isSaving,
-                    style: AppTypography.bodyMedium.copyWith(
+                    style: context.text.bodyMedium.copyWith(
                       color: headingColor,
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -299,7 +279,7 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
                     controller: _kloterController,
                     inputFormatters: [LengthLimitingTextInputFormatter(60)],
                     enabled: !_isSaving,
-                    style: AppTypography.bodyMedium.copyWith(
+                    style: context.text.bodyMedium.copyWith(
                       color: headingColor,
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -328,7 +308,7 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
               ],
-              style: AppTypography.bodyMedium.copyWith(
+              style: context.text.bodyMedium.copyWith(
                 color: headingColor,
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -356,23 +336,23 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.sosEmergency.withValues(alpha: 0.08),
+                  color: context.hc.danger.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.error_outline_rounded,
                       size: 16,
-                      color: AppColors.sosEmergency,
+                      color: context.hc.danger,
                     ),
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
                         _errorMessage!,
-                        style: AppTypography.caption.copyWith(
+                        style: context.text.captionMedium.copyWith(
                           fontSize: 12,
-                          color: AppColors.sosEmergency,
+                          color: context.hc.danger,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -395,13 +375,9 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
                         _handleSave();
                       },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isDark
-                      ? AppColors.darkPrimaryContainer
-                      : AppColors.espressoDark,
-                  foregroundColor: isDark
-                      ? AppColors.goldLight
-                      : AppColors.surfaceWhite,
-                  disabledBackgroundColor: AppColors.espressoDark.withValues(
+                  backgroundColor: context.hc.brand,
+                  foregroundColor: context.hc.onPrimary,
+                  disabledBackgroundColor: context.hc.brand.withValues(
                     alpha: 0.4,
                   ),
                   shape: RoundedRectangleBorder(
@@ -415,17 +391,16 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2.5,
-                          color: isDark
-                              ? AppColors.goldLight
-                              : AppColors.surfaceWhite,
+                          color: context.hc.onPrimary,
                         ),
                       )
                     : Text(
                         context.tr('common.save'),
-                        style: AppTypography.button.copyWith(
+                        style: context.text.labelLarge.copyWith(
                           fontWeight: FontWeight.w800,
                           fontSize: 14,
                           letterSpacing: 1.5,
+                          color: context.hc.onPrimary,
                         ),
                       ),
               ),

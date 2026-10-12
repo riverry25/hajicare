@@ -191,10 +191,8 @@ void main() {
         Get.put(AppSettingsController(), permanent: true);
         final hajiCtrl = Get.put(HajiCareController(), permanent: true);
 
-        await hajiCtrl.applyUserData(
-          roleStr: 'pendamping',
-          roomId: 'room_resp_01',
-        );
+        hajiCtrl.setRole(UserRole.pendamping);
+        hajiCtrl.activeRoomId.value = 'room_resp_01';
         hajiCtrl.activeRoom.value = RoomModel(
           id: 'room_resp_01',
           name: 'Jihad Gang',
@@ -243,10 +241,8 @@ void main() {
         Get.put(AppSettingsController(), permanent: true);
         final hajiCtrl = Get.put(HajiCareController(), permanent: true);
 
-        await hajiCtrl.applyUserData(
-          roleStr: 'pendamping',
-          roomId: 'room_resp_02',
-        );
+        hajiCtrl.setRole(UserRole.pendamping);
+        hajiCtrl.activeRoomId.value = 'room_resp_02';
         hajiCtrl.activeRoom.value = RoomModel(
           id: 'room_resp_02',
           name: 'Jihad Gang',

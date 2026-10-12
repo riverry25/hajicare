@@ -23,10 +23,10 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
     );
 
     final borderColor = isDark
-        ? AppColors.darkCardBorder
-        : AppColors.primaryGold.withValues(alpha: 0.35);
-    final textColor = isDark ? AppColors.darkTextHeading : Colors.white;
-    final subtextColor = isDark ? AppColors.goldLight : const Color(0xFFF5D6B8);
+        ? context.hc.border
+        : context.hc.border.withValues(alpha: 0.5);
+    final textColor = isDark ? context.hc.textPrimary : Colors.white;
+    final subtextColor = isDark ? context.hc.accent : const Color(0xFFF5D6B8);
     final gaugeProgress = activeRooms > 0
         ? (activeRooms / math.max(activeRooms, 10)).clamp(0.15, 1.0)
         : 0.25;
@@ -71,10 +71,8 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                             : Icons.shield_rounded,
                         size: 14,
                         color: hasSos
-                            ? AppColors.sosEmergency
-                            : (isDark
-                                  ? AppColors.goldLight
-                                  : AppColors.primaryGold),
+                            ? context.hc.danger
+                            : (isDark ? context.hc.accent : context.hc.brand),
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -87,7 +85,7 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                           color: hasSos
                               ? const Color(0xFFFF8080)
                               : (isDark
-                                    ? AppColors.goldLight
+                                    ? context.hc.accent
                                     : const Color(0xFFFBF4ED)),
                           fontWeight: FontWeight.w800,
                           fontSize: 10.5,
@@ -102,8 +100,8 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                     Container(
                       width: 7,
                       height: 7,
-                      decoration: const BoxDecoration(
-                        color: AppColors.statusSafe,
+                      decoration: BoxDecoration(
+                        color: context.hc.success,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -179,10 +177,10 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                     context,
                     controller,
                     isDark,
-                    isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
-                    isDark ? AppColors.darkTextHeading : AppColors.espressoDark,
-                    isDark ? AppColors.darkTextBody : AppColors.textBody,
-                    isDark ? AppColors.darkPrimary : AppColors.primaryGold,
+                    context.hc.surface,
+                    context.hc.textPrimary,
+                    context.hc.textSecondary,
+                    context.hc.brand,
                   ),
                   borderRadius: BorderRadius.circular(50),
                   child: CustomPaint(
@@ -191,9 +189,9 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                       progress: gaugeProgress,
                       trackColor: Colors.white.withValues(alpha: 0.14),
                       progressColor: isDark
-                          ? AppColors.goldLight
-                          : AppColors.primaryGold,
-                      dotColor: isDark ? Colors.white : AppColors.goldLight,
+                          ? context.hc.accent
+                          : context.hc.brand,
+                      dotColor: isDark ? Colors.white : context.hc.accent,
                     ),
                     child: SizedBox(
                       width: 92,
@@ -250,12 +248,8 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
     final activeSos = controller.activeSosCount.value;
     final hasSos = activeSos > 0;
 
-    final cardBg = isDark
-        ? AppColors.darkSurfaceContainer
-        : AppColors.surfaceWhite;
-    final borderColor = isDark
-        ? AppColors.darkCardBorder
-        : AppColors.lightCardBorder;
+    final cardBg = context.hc.surface;
+    final borderColor = context.hc.border;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -267,7 +261,7 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
           subtitle: hasSos
               ? context.tr('adminDashboard.sosUrgent', {'count': activeSos})
               : context.tr('adminDashboard.allRoomsSafe'),
-          subtitleColor: hasSos ? AppColors.sosEmergency : null,
+          subtitleColor: hasSos ? context.hc.danger : null,
           trailing: _buildCircularHeaderButton(
             icon: Icons.add_rounded,
             iconSize: 20,
@@ -302,11 +296,9 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                     borderColor: borderColor,
                     headingColor: headingColor,
                     bodyColor: bodyColor,
-                    circleBg: isDark
-                        ? AppColors.emeraldIslamic.withValues(alpha: 0.22)
-                        : AppColors.emeraldLight,
-                    iconColor: AppColors.emeraldIslamic,
-                    accentColor: AppColors.emeraldIslamic,
+                    circleBg: context.hc.success.withValues(alpha: 0.15),
+                    iconColor: context.hc.success,
+                    accentColor: context.hc.success,
                     onTap: () => _showAllJamaahSheet(
                       context,
                       controller,
@@ -330,13 +322,9 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                     borderColor: borderColor,
                     headingColor: headingColor,
                     bodyColor: bodyColor,
-                    circleBg: isDark
-                        ? AppColors.darkSurfaceContainerHighest
-                        : AppColors.canvasCreamSubtle,
-                    iconColor: isDark
-                        ? AppColors.goldLight
-                        : AppColors.secondary,
-                    accentColor: AppColors.secondary,
+                    circleBg: context.hc.surfaceSand,
+                    iconColor: context.hc.brand,
+                    accentColor: context.hc.brand,
                     onTap: () => _showActiveRoomsSheet(
                       context,
                       controller,
@@ -368,13 +356,9 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                     borderColor: borderColor,
                     headingColor: headingColor,
                     bodyColor: bodyColor,
-                    circleBg: isDark
-                        ? AppColors.tanMedium.withValues(alpha: 0.22)
-                        : AppColors.secondaryContainer.withValues(alpha: 0.45),
-                    iconColor: isDark
-                        ? AppColors.tanLight
-                        : AppColors.espressoDark,
-                    accentColor: AppColors.tanMedium,
+                    circleBg: context.hc.accent.withValues(alpha: 0.15),
+                    iconColor: context.hc.brand,
+                    accentColor: context.hc.accent,
                     onTap: () => _showAllPendampingSheet(
                       context,
                       controller,
@@ -401,30 +385,20 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                     height: 162,
                     isDark: isDark,
                     cardBg: hasSos
-                        ? (isDark
-                              ? const Color(0xFF381418)
-                              : AppColors.errorContainer.withValues(
-                                  alpha: 0.35,
-                                ))
+                        ? context.hc.danger.withValues(alpha: 0.1)
                         : cardBg,
                     borderColor: hasSos
-                        ? AppColors.sosEmergency.withValues(alpha: 0.5)
+                        ? context.hc.danger.withValues(alpha: 0.5)
                         : borderColor,
-                    headingColor: hasSos
-                        ? AppColors.sosEmergency
-                        : headingColor,
-                    bodyColor: hasSos ? AppColors.sosEmergency : bodyColor,
+                    headingColor: hasSos ? context.hc.danger : headingColor,
+                    bodyColor: hasSos ? context.hc.danger : bodyColor,
                     circleBg: hasSos
-                        ? AppColors.sosEmergency.withValues(alpha: 0.2)
-                        : (isDark
-                              ? AppColors.statusSafe.withValues(alpha: 0.15)
-                              : AppColors.emeraldLight),
-                    iconColor: hasSos
-                        ? AppColors.sosEmergency
-                        : AppColors.statusSafe,
+                        ? context.hc.danger.withValues(alpha: 0.2)
+                        : context.hc.success.withValues(alpha: 0.15),
+                    iconColor: hasSos ? context.hc.danger : context.hc.success,
                     accentColor: hasSos
-                        ? AppColors.sosEmergency
-                        : AppColors.statusSafe,
+                        ? context.hc.danger
+                        : context.hc.success,
                     isAlert: hasSos,
                     onTap: () => _showAlertCenterSheet(
                       context,
@@ -477,8 +451,8 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
           BoxShadow(
             color:
                 (isAlert
-                        ? AppColors.sosEmergency
-                        : (isDark ? Colors.black : AppColors.espressoDark))
+                        ? context.hc.danger
+                        : (isDark ? Colors.black : context.hc.brand))
                     .withValues(alpha: isDark ? 0.28 : (isAlert ? 0.12 : 0.04)),
             blurRadius: isAlert ? 12 : 10,
             offset: const Offset(0, 4),
@@ -494,9 +468,10 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
             onTap();
           },
           borderRadius: BorderRadius.circular(24),
-          splashColor: (isAlert ? AppColors.sosEmergency : accentColor)
-              .withValues(alpha: 0.12),
-          highlightColor: (isAlert ? AppColors.sosEmergency : accentColor)
+          splashColor: (isAlert ? context.hc.danger : accentColor).withValues(
+            alpha: 0.12,
+          ),
+          highlightColor: (isAlert ? context.hc.danger : accentColor)
               .withValues(alpha: 0.06),
           child: Padding(
             padding: EdgeInsets.symmetric(
@@ -535,7 +510,7 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                   style: TextStyle(
                     fontSize: isTall ? 22 : 18,
                     fontWeight: FontWeight.w900,
-                    color: isAlert ? AppColors.sosEmergency : headingColor,
+                    color: isAlert ? context.hc.danger : headingColor,
                     letterSpacing: -0.5,
                     height: 1.1,
                   ),
@@ -549,7 +524,7 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                   style: DashboardTypography.captionSmall.copyWith(
-                    color: isAlert ? AppColors.sosEmergency : headingColor,
+                    color: isAlert ? context.hc.danger : headingColor,
                     fontWeight: FontWeight.w800,
                     fontSize: isTall ? 12.5 : 11.0,
                   ),
@@ -564,7 +539,7 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                       vertical: 2.5,
                     ),
                     decoration: BoxDecoration(
-                      color: (isAlert ? AppColors.sosEmergency : accentColor)
+                      color: (isAlert ? context.hc.danger : accentColor)
                           .withValues(alpha: isDark ? 0.18 : 0.08),
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
@@ -577,9 +552,7 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: DashboardTypography.captionSmall.copyWith(
-                              color: isAlert
-                                  ? AppColors.sosEmergency
-                                  : accentColor,
+                              color: isAlert ? context.hc.danger : accentColor,
                               fontWeight: FontWeight.w700,
                               fontSize: 9.5,
                             ),
@@ -589,7 +562,7 @@ extension _AdminDashboardMetrics on _AdminDashboardHome {
                         Icon(
                           Icons.arrow_forward_ios_rounded,
                           size: 7.5,
-                          color: isAlert ? AppColors.sosEmergency : accentColor,
+                          color: isAlert ? context.hc.danger : accentColor,
                         ),
                       ],
                     ),
