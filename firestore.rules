@@ -81,19 +81,25 @@ service cloud.firestore {
       // 2. Registrasi mandiri: pengguna dapat memilih mendaftar sebagai 'jamaah'
       // atau 'pendamping' (atau 'petugas'). Peran 'admin' TIDAK PERNAH bisa dibuat oleh client.
       allow create: if isSelf(uid) &&
-        request.resource.data.get('role', 'jamaah') in ['jamaah', 'pendamping', 'petugas'];
+        request.resource.data.get('role', 'jamaah') in ['jamaah', 'pendamping', 'petugas'] &&
+        request.resource.data.get('name', '').size() <= 100 &&
+        request.resource.data.get('nik', '').size() <= 30;
 
       // 3. Update profil: Pengguna memperbarui profil miliknya sendiri (nama, kontak darurat,
-      // GPS pribadi, status SOS, rekam medis). Dilarang keras menaikkan peran ke 'admin'.
+      // GPS pribadi, status SOS, rekam medis).
+      // PERINGATAN KEAMANAN: 'role' TIDAK DAPAT diubah melalui update guna mencegah eskalasi wewenang (privilege escalation).
       allow update: if isSelf(uid) &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'allergies', 'bloodType', 'conditions', 'currentLocation',
           'displayName', 'emergencyContact', 'isGpsActive',
           'locationUpdatedAt', 'name', 'nomorPorsi', 'porsi', 'photoUrl', 'updatedAt',
-          'email', 'normalizedEmail', 'role', 'activeRoomId', 'sosActive', 'sosTime',
+          'email', 'normalizedEmail', 'activeRoomId', 'sosActive', 'sosTime',
           'phone', 'phoneNumber', 'nik', 'maktab', 'kloter'
         ]) &&
-        request.resource.data.get('role', resource.data.get('role', 'jamaah')) != 'admin';
+        request.resource.data.get('displayName', '').size() <= 100 &&
+        request.resource.data.get('emergencyContact', '').size() <= 50 &&
+        request.resource.data.get('allergies', '').size() <= 500 &&
+        request.resource.data.get('conditions', '').size() <= 500;
 
       allow delete: if false;
     }
@@ -104,9 +110,9 @@ service cloud.firestore {
 
       // Update rombongan:
       // A. Admin atau Owner Utama dapat mengubah semua pengaturan termasuk createdBy dan coOwnerId.
-      // B. Owner Kedua / Pengelola rombongan dapat mengubah pengaturan operasional (nama, maktab, safeRadius),
+      // B. Owner Kedua / Pengelola rombongan dapat mengubah pengaturan operasional (nama, maktab, safeRadius, pendampingIds),
       //    namun DILARANG mengubah createdBy atau coOwnerId.
-      // C. Anggota bergabung via direct-join hanya dapat memperbarui memberCount, updatedAt, pendampingIds.
+      // C. Anggota bergabung via direct-join HANYA dapat memperbarui memberCount dan updatedAt (dilarang memanipulasi pendampingIds).
       allow update: if signedIn() && (
         isAdmin() ||
         resource.data.createdBy == request.auth.uid ||
@@ -116,7 +122,7 @@ service cloud.firestore {
           request.resource.data.get('coOwnerId', null) == resource.data.get('coOwnerId', null)
         ) ||
         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'memberCount', 'updatedAt', 'pendampingIds'
+          'memberCount', 'updatedAt'
         ])
       );
 
@@ -133,10 +139,14 @@ service cloud.firestore {
           get(/databases/$(database)/documents/rooms/$(roomId)).data.get('isActive', true) == true &&
           get(/databases/$(database)/documents/rooms/$(roomId)).data.get('status', 'active') != 'deleting';
 
-        // Pengguna memperbarui data anggota miliknya sendiri (lokasi GPS, status SOS, waktu aktif).
-        // Dilarang menaikkan peran ke admin.
+        // Pengguna memperbarui status runtime miliknya sendiri (lokasi GPS, status SOS, waktu aktif).
+        // Dilarang mengubah 'role' anggota untuk mencegah eskalasi peran di dalam rombongan.
         allow update: if isSelf(memberUid) &&
-          request.resource.data.get('role', resource.data.get('role', 'jamaah')) != 'admin';
+          request.resource.data.get('role', resource.data.get('role', 'jamaah')) == resource.data.get('role', 'jamaah') &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'currentLocation', 'locationUpdatedAt', 'isGpsActive', 'sosActive', 'sosTime',
+            'updatedAt', 'lastActiveAt', 'displayName', 'name'
+          ]);
 
         allow delete: if isSelf(memberUid) || isAdmin() || isRoomManager(roomId);
       }
@@ -212,6 +222,7 @@ service cloud.firestore {
         request.resource.data.userId == request.auth.uid &&
         request.resource.data.jamaahId == request.auth.uid &&
         request.resource.data.status == 'active' &&
+        request.resource.data.get('userName', '').size() <= 100 &&
         (
           request.resource.data.get('roomId', null) == null ||
           request.resource.data.roomId == '' ||

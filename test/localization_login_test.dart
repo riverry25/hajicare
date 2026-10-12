@@ -149,43 +149,38 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets(
-      'Register tab renders NIK field with localized label in ID',
-      (tester) async {
-        final locId = const Locale('id');
-        final settings = Get.put(AppSettingsController(), permanent: true);
-        await settings.setLocale(locId);
-        LoginBinding().dependencies();
+    testWidgets('Register tab renders NIK field with localized label in ID', (
+      tester,
+    ) async {
+      final locId = const Locale('id');
+      final settings = Get.put(AppSettingsController(), permanent: true);
+      await settings.setLocale(locId);
+      LoginBinding().dependencies();
 
-        await tester.pumpWidget(
-          _buildTestApp(locale: locId, child: const LoginScreen(initialTab: 1)),
-        );
-        await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        _buildTestApp(locale: locId, child: const LoginScreen(initialTab: 1)),
+      );
+      await tester.pumpAndSettle();
 
-        expect(find.text('NIK (Nomor Induk Kependudukan)'), findsOneWidget);
-        expect(find.text('Masukkan 16 digit NIK'), findsOneWidget);
-      },
-    );
+      expect(find.text('NIK (Nomor Induk Kependudukan)'), findsOneWidget);
+      expect(find.text('Masukkan 16 digit NIK'), findsOneWidget);
+    });
 
-    testWidgets(
-      'Register tab renders NIK field with localized label in EN',
-      (tester) async {
-        final locEn = const Locale('en');
-        final settings = Get.put(AppSettingsController(), permanent: true);
-        await settings.setLocale(locEn);
-        LoginBinding().dependencies();
+    testWidgets('Register tab renders NIK field with localized label in EN', (
+      tester,
+    ) async {
+      final locEn = const Locale('en');
+      final settings = Get.put(AppSettingsController(), permanent: true);
+      await settings.setLocale(locEn);
+      LoginBinding().dependencies();
 
-        await tester.pumpWidget(
-          _buildTestApp(locale: locEn, child: const LoginScreen(initialTab: 1)),
-        );
-        await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        _buildTestApp(locale: locEn, child: const LoginScreen(initialTab: 1)),
+      );
+      await tester.pumpAndSettle();
 
-        expect(find.text('National ID Number (NIK)'), findsOneWidget);
-        expect(
-          find.text('Enter your 16-digit ID number (NIK)'),
-          findsOneWidget,
-        );
-      },
-    );
+      expect(find.text('National ID Number (NIK)'), findsOneWidget);
+      expect(find.text('Enter your 16-digit ID number (NIK)'), findsOneWidget);
+    });
   });
 }

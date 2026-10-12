@@ -7,6 +7,7 @@ import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/app_startup_controller.dart';
 import '../../../core/state/hajicare_controller.dart';
+import '../../../core/utils/input_sanitizer.dart';
 import '../../../core/utils/user_feedback_message.dart';
 import '../services/room_service.dart';
 import '../widgets/room_qr_dialog.dart';
@@ -103,9 +104,18 @@ class JoinRoomController extends GetxController {
   /// Pendamping: Buat Room baru dengan auto-generated unique code
   Future<void> createRoom() async {
     if (isLoading.value || isClosed) return;
-    final name = createRoomNameController.text.trim();
-    final maktab = createMaktabController.text.trim();
-    final kloter = createKloterController.text.trim();
+    final name = InputSanitizer.sanitizeText(
+      createRoomNameController.text,
+      maxLength: 100,
+    );
+    final maktab = InputSanitizer.sanitizeText(
+      createMaktabController.text,
+      maxLength: 60,
+    );
+    final kloter = InputSanitizer.sanitizeText(
+      createKloterController.text,
+      maxLength: 60,
+    );
 
     if (name.isEmpty) {
       errorMessage.value = 'Isi nama rombongan terlebih dahulu.';
@@ -197,7 +207,7 @@ class JoinRoomController extends GetxController {
       _showErrorAlert(errorMessage.value!);
       return;
     }
-    if (!RegExp(r'^[A-Z0-9]{4,12}$').hasMatch(roomCode)) {
+    if (!InputSanitizer.isValidRoomCode(roomCode)) {
       errorMessage.value =
           'Format kode rombongan tidak valid (hanya huruf dan angka).';
       _showErrorAlert(errorMessage.value!);

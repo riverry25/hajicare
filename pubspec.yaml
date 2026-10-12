@@ -14,6 +14,7 @@ dependencies:
   vibration: ^3.2.1
   flutter_tts: ^4.2.2
   shared_preferences: ^2.5.5
+  flutter_secure_storage: ^11.2.0
   adhan: ^2.0.0+1
   flutter_compass: ^0.8.1
   geolocator: ^14.0.2
@@ -22,6 +23,7 @@ dependencies:
   timezone: ^0.11.1
   lat_lng_to_timezone: ^0.2.0
   firebase_core: ^4.14.0
+  firebase_app_check: ^0.4.8
   firebase_auth: ^6.6.1
   cloud_firestore: ^6.9.0
   get: ^4.7.3

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../routes/app_routes.dart';
+import '../services/secure_storage_service.dart';
 import '../utils/app_logger.dart';
 import 'hajicare_controller.dart';
 
@@ -78,25 +79,23 @@ class AppStartupController extends GetxController {
     }
   }
 
-  // ── Remember Me Persistence ─────────────────────────────────────────────────
+  // ── Remember Me Persistence (Secure Encrypted Storage) ──────────────────────
 
   /// Reads whether the user chose "Remember Me" on their last login.
-  /// Defaults to true.
+  /// Defaults to true, using encrypted storage (OWASP MASVS V1).
   Future<bool> isRememberMe() async {
     try {
-      final prefs = await _getPrefs();
-      return prefs.getBool(keyRememberMe) ?? true;
+      return await SecureStorageService.instance.isRememberMe();
     } catch (e) {
       debugPrint('[AppStartupController] Error reading rememberMe flag: $e');
       return true;
     }
   }
 
-  /// Saves the user's "Remember Me" preference.
+  /// Saves the user's "Remember Me" preference to hardware-backed secure storage.
   Future<void> setRememberMe(bool value) async {
     try {
-      final prefs = await _getPrefs();
-      await prefs.setBool(keyRememberMe, value);
+      await SecureStorageService.instance.setRememberMe(value);
     } catch (e) {
       debugPrint('[AppStartupController] Error saving rememberMe flag: $e');
     }
@@ -113,6 +112,7 @@ class AppStartupController extends GetxController {
   // ── Sign Out ────────────────────────────────────────────────────────────────
 
   /// Signs out the user from Firebase Auth and navigates to the Login page.
+  /// Purges encrypted session tokens & cached role from SecureStorageService.
   /// IMPORTANT: Does NOT clear `keyOnboardingDone` so onboarding is never shown again.
   Future<void> signOut() async {
     try {
@@ -126,6 +126,7 @@ class AppStartupController extends GetxController {
     }
 
     try {
+      await SecureStorageService.instance.clearAuthSession();
       final prefs = await _getPrefs();
       await prefs.remove(HajiCareController.keyActiveRoomId);
       await prefs.remove(HajiCareController.keyUserRole);
@@ -137,7 +138,7 @@ class AppStartupController extends GetxController {
       }
     } catch (e) {
       AppLogger.error(
-        'Error clearing prefs during signOut: $e',
+        'Error clearing secure session during signOut: $e',
         tag: 'AppStartupController',
       );
     } finally {

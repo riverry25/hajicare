@@ -7,6 +7,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../../../core/locales/app_localizations.dart';
 import '../../../core/locales/app_translations.dart';
 import '../../../core/utils/app_dialog.dart';
+import '../../../core/utils/input_sanitizer.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/services/trusted_backend_service.dart';
 import '../../../core/state/app_startup_controller.dart';
@@ -82,7 +83,10 @@ class LoginController extends GetxController {
     // Setelah ini jangan membaca TextEditingController lagi.
     // ============================================================
 
-    final email = emailController.text.trim();
+    final email = InputSanitizer.sanitizeText(
+      emailController.text,
+      maxLength: 254,
+    );
     final password = passwordController.text;
     final shouldRemember = rememberMe.value;
 

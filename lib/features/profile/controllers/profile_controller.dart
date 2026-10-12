@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../core/utils/input_sanitizer.dart';
 
 class ProfileController extends GetxController {
   int _lifecycleGeneration = 0;
@@ -116,7 +117,7 @@ class ProfileController extends GetxController {
   // ── Update display name ────────────────────────────────────────────────────
   Future<void> updateDisplayName(String newName) async {
     final generation = _lifecycleGeneration;
-    final trimmed = newName.trim();
+    final trimmed = InputSanitizer.sanitizeDisplayName(newName);
     if (trimmed.isEmpty) return;
 
     isSavingName.value = true;
@@ -165,13 +166,29 @@ class ProfileController extends GetxController {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('User not authenticated');
 
-      final trimmedBlood = bloodTypeVal.trim();
-      final trimmedAllergies = allergiesVal.trim();
-      final trimmedConditions = conditionsVal.trim();
-      final trimmedContact = emergencyContactVal.trim();
-      final trimmedPassport = passportNumberVal.trim();
-      final trimmedNik = nikVal.trim();
-      final trimmedPorsi = nomorPorsiVal.trim();
+      final trimmedBlood = InputSanitizer.sanitizeText(
+        bloodTypeVal,
+        maxLength: 5,
+      );
+      final trimmedAllergies = InputSanitizer.sanitizeMedicalNotes(
+        allergiesVal,
+      );
+      final trimmedConditions = InputSanitizer.sanitizeMedicalNotes(
+        conditionsVal,
+      );
+      final trimmedContact = InputSanitizer.sanitizeText(
+        emergencyContactVal,
+        maxLength: 50,
+      );
+      final trimmedPassport = InputSanitizer.sanitizeText(
+        passportNumberVal,
+        maxLength: 30,
+      );
+      final trimmedNik = InputSanitizer.sanitizeText(nikVal, maxLength: 30);
+      final trimmedPorsi = InputSanitizer.sanitizeText(
+        nomorPorsiVal,
+        maxLength: 30,
+      );
 
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
         'bloodType': trimmedBlood,

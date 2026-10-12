@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/jamaah_data.dart';
 import '../services/location_service.dart';
+import '../services/secure_storage_service.dart';
 import '../utils/app_logger.dart';
 import '../../features/room/models/room_model.dart';
 import '../../features/room/models/room_member_model.dart';
@@ -178,8 +179,7 @@ class HajiCareController extends GetxController {
 
   Future<void> _loadCachedUserData() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final savedRoomId = prefs.getString(keyActiveRoomId);
+      final savedRoomId = await SecureStorageService.instance.getActiveRoomId();
 
       if (savedRoomId != null && savedRoomId.trim().isNotEmpty) {
         _cachedRoomId = savedRoomId.trim();
@@ -199,7 +199,7 @@ class HajiCareController extends GetxController {
   }
 
   /// Immediately applies user role and active room to reactive state
-  /// and updates SharedPreferences cache.
+  /// and updates encrypted SecureStorageService cache.
   Future<void> applyUserData({
     required String roleStr,
     String? roomId,
@@ -226,18 +226,13 @@ class HajiCareController extends GetxController {
       pendampingName.value = name.trim();
     }
 
-    // Persist to SharedPreferences
+    // Persist to encrypted SecureStorageService
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(keyUserRole, normalizedRole);
-      if (trimmedRoomId != null) {
-        await prefs.setString(keyActiveRoomId, trimmedRoomId);
-      } else {
-        await prefs.remove(keyActiveRoomId);
-      }
+      await SecureStorageService.instance.setUserRole(normalizedRole);
+      await SecureStorageService.instance.setActiveRoomId(trimmedRoomId);
     } catch (e) {
       AppLogger.error(
-        'Error saving user data to cache: $e',
+        'Error saving user data to secure storage: $e',
         tag: 'HajiCareController',
       );
     }
@@ -1033,6 +1028,7 @@ class HajiCareController extends GetxController {
     activeRoom.value = null;
     _cachedRoomId = null;
     try {
+      await SecureStorageService.instance.setActiveRoomId(null);
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(keyActiveRoomId);
     } catch (e) {

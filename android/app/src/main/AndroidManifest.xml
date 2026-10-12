@@ -32,6 +32,11 @@
         android:icon="@mipmap/launcher_icon"
         android:enableOnBackInvokedCallback="true"
         android:extractNativeLibs="true"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:usesCleartextTraffic="false"
+        android:networkSecurityConfig="@xml/network_security_config"
         tools:replace="android:extractNativeLibs">
         <activity
             android:name=".MainActivity"

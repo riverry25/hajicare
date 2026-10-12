@@ -191,3 +191,17 @@
 -keepclassmembers class * extends android.app.Activity {
     public void *(android.view.View);
 }
+
+# ============================================================
+# Flutter Secure Storage & Keystore Security
+# ============================================================
+-keep class androidx.security.crypto.** { *; }
+-dontwarn androidx.security.crypto.**
+
+# ============================================================
+# Firebase App Check & Play Integrity
+# ============================================================
+-keep class com.google.firebase.appcheck.** { *; }
+-keep class com.google.android.play.core.integrity.** { *; }
+-dontwarn com.google.android.play.core.integrity.**
+

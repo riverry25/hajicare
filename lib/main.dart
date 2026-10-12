@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 
 import 'dart:async';
 import 'core/services/adhan_notification_service.dart';
+import 'core/services/app_check_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/locales/app_localizations.dart';
 import 'core/routes/app_routes.dart';
@@ -38,6 +39,9 @@ void main() async {
       debugPrint('[Main] AdhanNotificationService initialization error: $e');
     }),
   ]);
+
+  // Activate Firebase App Check (Play Integrity on Android release, debug provider in debug)
+  await AppCheckService.initialize();
 
   // Register global permanent controllers after Firebase is ready
   Get.put(AppStartupController(), permanent: true);
