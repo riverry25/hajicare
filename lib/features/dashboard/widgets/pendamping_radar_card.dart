@@ -235,18 +235,21 @@ class PendampingRadarCard extends StatelessWidget {
                   children: [
                     // Concentric 3D Radar Ripple Waves (Photo 2)
                     Positioned.fill(
-                      child: CustomPaint(
-                        painter: _RadarWavesPainter(
-                          waveColor: isSos
-                              ? context.hc.danger
-                              : (hasSignal
-                                    ? (jamaah.tier == DistanceTier.aman
-                                          ? context.hc.sandLight
-                                          : (jamaah.tier == DistanceTier.waspada
-                                                ? context.hc.warning
-                                                : context.hc.danger))
-                                    : context.hc.sand),
-                          centerFraction: const Offset(0.85, 0.28),
+                      child: RepaintBoundary(
+                        child: CustomPaint(
+                          painter: _RadarWavesPainter(
+                            waveColor: isSos
+                                ? context.hc.danger
+                                : (hasSignal
+                                      ? (jamaah.tier == DistanceTier.aman
+                                            ? context.hc.sandLight
+                                            : (jamaah.tier ==
+                                                      DistanceTier.waspada
+                                                  ? context.hc.warning
+                                                  : context.hc.danger))
+                                      : context.hc.sand),
+                            centerFraction: const Offset(0.85, 0.28),
+                          ),
                         ),
                       ),
                     ),

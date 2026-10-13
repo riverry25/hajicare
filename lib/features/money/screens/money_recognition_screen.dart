@@ -215,6 +215,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
         decodedImage.width.toDouble(),
         decodedImage.height.toDouble(),
       );
+      decodedImage.dispose();
 
       // 3. Run Smart Multi-Pass Pipeline
       final MultiPassDetectionResult result = await _multiPassDetector

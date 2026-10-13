@@ -1080,7 +1080,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
           ),
         );
       },
-    );
+    ).whenComplete(textCtrl.dispose);
   }
 
   // ── Room Actions Bottom Sheet ──────────────────────────────────────────────

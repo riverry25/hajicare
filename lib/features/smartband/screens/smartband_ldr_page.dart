@@ -427,14 +427,16 @@ class SmartbandLdrPage extends GetView<SmartbandLdrController> {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  CustomPaint(
-                    size: const Size(190, 145),
-                    painter: MetricArcGaugePainter(
-                      progress: arcPercent,
-                      primaryColor: arcColor,
-                      trackColor: isDark
-                          ? Colors.white.withValues(alpha: 0.08)
-                          : const Color(0xFFF1F5F9),
+                  RepaintBoundary(
+                    child: CustomPaint(
+                      size: const Size(190, 145),
+                      painter: MetricArcGaugePainter(
+                        progress: arcPercent,
+                        primaryColor: arcColor,
+                        trackColor: isDark
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : const Color(0xFFF1F5F9),
+                      ),
                     ),
                   ),
                   Positioned(

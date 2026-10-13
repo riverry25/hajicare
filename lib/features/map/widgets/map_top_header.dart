@@ -514,6 +514,8 @@ class _MapTopHeaderState extends State<MapTopHeader> {
                     ? Image.network(
                         photoUrl,
                         fit: BoxFit.cover,
+                        cacheWidth: 120,
+                        cacheHeight: 120,
                         errorBuilder: (_, _, _) => Center(
                           child: Text(
                             initialLetter,

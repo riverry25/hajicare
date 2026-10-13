@@ -106,29 +106,32 @@ class _DistanceSparklineWidgetState extends State<DistanceSparklineWidget>
           onTap: _isSyncing ? null : _handleTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
-            child: AnimatedBuilder(
-              animation: Listenable.merge([_pulseCtrl, _syncCtrl]),
-              builder: (context, _) {
-                final opacity = _isSyncing
-                    ? 0.55 +
-                          0.45 *
-                              (0.5 +
-                                  0.5 * math.sin(_syncCtrl.value * 2 * math.pi))
-                    : 1.0;
+            child: RepaintBoundary(
+              child: AnimatedBuilder(
+                animation: Listenable.merge([_pulseCtrl, _syncCtrl]),
+                builder: (context, _) {
+                  final opacity = _isSyncing
+                      ? 0.55 +
+                            0.45 *
+                                (0.5 +
+                                    0.5 *
+                                        math.sin(_syncCtrl.value * 2 * math.pi))
+                      : 1.0;
 
-                return Opacity(
-                  opacity: opacity,
-                  child: CustomPaint(
-                    painter: _DistanceWavePainter(
-                      distance: widget.distance,
-                      waveColor: waveColor,
-                      pulsePhase: _pulseCtrl.value,
-                      syncPhase: _isSyncing ? _syncCtrl.value : 0.0,
-                      isSyncing: _isSyncing,
+                  return Opacity(
+                    opacity: opacity,
+                    child: CustomPaint(
+                      painter: _DistanceWavePainter(
+                        distance: widget.distance,
+                        waveColor: waveColor,
+                        pulsePhase: _pulseCtrl.value,
+                        syncPhase: _isSyncing ? _syncCtrl.value : 0.0,
+                        isSyncing: _isSyncing,
+                      ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ),
         ),

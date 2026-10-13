@@ -74,9 +74,7 @@ class JamaahProfileHeader extends StatelessWidget {
                       decoration: BoxDecoration(
                         border: Border(
                           bottom: BorderSide(
-                            color: hc.borderSubtle.withValues(
-                              alpha: 0.5,
-                            ),
+                            color: hc.borderSubtle.withValues(alpha: 0.5),
                           ),
                         ),
                       ),
@@ -89,9 +87,7 @@ class JamaahProfileHeader extends StatelessWidget {
                                 isSelected
                                     ? Icons.radio_button_checked
                                     : Icons.radio_button_off,
-                                color: isSelected
-                                    ? hc.brand
-                                    : hc.textTertiary,
+                                color: isSelected ? hc.brand : hc.textTertiary,
                                 size: 20,
                               ),
                               const SizedBox(width: AppSpacing.md),
@@ -174,11 +170,7 @@ class JamaahProfileHeader extends StatelessWidget {
                       width: 2,
                     ),
                   ),
-                  child: Icon(
-                    Icons.account_circle,
-                    color: hc.brand,
-                    size: 36,
-                  ),
+                  child: Icon(Icons.account_circle, color: hc.brand, size: 36),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
@@ -199,11 +191,7 @@ class JamaahProfileHeader extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 4),
-                          Icon(
-                            Icons.verified,
-                            color: hc.success,
-                            size: 16,
-                          ),
+                          Icon(Icons.verified, color: hc.success, size: 16),
                         ],
                       ),
                       const SizedBox(height: 2),
@@ -254,16 +242,11 @@ class JamaahProfileHeader extends StatelessWidget {
               decoration: BoxDecoration(
                 color: hc.surfaceVariant,
                 borderRadius: BorderRadius.circular(AppRadius.pill),
-                border: Border.all(
-                  color: hc.success.withValues(alpha: 0.3),
-                ),
+                border: Border.all(color: hc.success.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
-                  AnimatedPingDot(
-                    color: hc.success,
-                    size: 10,
-                  ),
+                  AnimatedPingDot(color: hc.success, size: 10),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: RichText(

@@ -112,10 +112,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
 
   // ── REMOTE DOWNLOAD REQUIRED CARD ──────────────────────────────────────────
 
-  Widget _buildRemoteDownloadCard(
-    BuildContext context,
-    SignVideoEntry entry,
-  ) {
+  Widget _buildRemoteDownloadCard(BuildContext context, SignVideoEntry entry) {
     final colors = context.hc;
     final textTheme = context.text;
 
@@ -191,9 +188,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
                       value: progress > 0 ? progress : null,
                       minHeight: 8,
                       backgroundColor: colors.surfaceSand,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        colors.accent,
-                      ),
+                      valueColor: AlwaysStoppedAnimation<Color>(colors.accent),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
@@ -239,10 +234,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
 
   // ── LOADING CARD ───────────────────────────────────────────────────────────
 
-  Widget _buildLoadingCard(
-    BuildContext context,
-    SignVideoEntry entry,
-  ) {
+  Widget _buildLoadingCard(BuildContext context, SignVideoEntry entry) {
     final colors = context.hc;
     final textTheme = context.text;
 
@@ -262,9 +254,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             Text(
               context.tr('sign.preparingVideoPlayer'),
-              style: textTheme.bodySmall.copyWith(
-                color: colors.textSecondary,
-              ),
+              style: textTheme.bodySmall.copyWith(color: colors.textSecondary),
             ),
           ],
         ),
@@ -274,10 +264,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
 
   // ── ACTIVE PLAYER CARD ─────────────────────────────────────────────────────
 
-  Widget _buildActivePlayerCard(
-    BuildContext context,
-    SignVideoEntry entry,
-  ) {
+  Widget _buildActivePlayerCard(BuildContext context, SignVideoEntry entry) {
     final player = controller.playerController;
     if (player == null || !player.value.isInitialized) {
       return const SizedBox.shrink();

@@ -353,9 +353,7 @@ class PendampingSosBanner extends StatelessWidget {
                         bg: Colors.transparent,
                         fg: context.hc.danger,
                         outline: true,
-                        borderColor: context.hc.danger.withValues(
-                          alpha: 0.4,
-                        ),
+                        borderColor: context.hc.danger.withValues(alpha: 0.4),
                         onTap: () => _handleResponseCenter(context),
                       ),
                     ),
@@ -593,9 +591,7 @@ class PendampingSosBanner extends StatelessWidget {
           decoration: BoxDecoration(
             color: context.hc.surfaceSubtle,
             borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(
-              color: context.hc.border,
-            ),
+            border: Border.all(color: context.hc.border),
           ),
           child: Row(
             children: [
@@ -815,9 +811,7 @@ class _AlarmTestDialogState extends State<_AlarmTestDialog>
       backgroundColor: context.hc.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        side: BorderSide(
-          color: context.hc.border,
-        ),
+        side: BorderSide(color: context.hc.border),
       ),
       child: Padding(
         padding: const EdgeInsets.all(22),

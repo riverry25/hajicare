@@ -37,10 +37,7 @@ class PendampingAssistanceCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: context.hc.surface,
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: context.hc.border,
-            width: 1.5,
-          ),
+          border: Border.all(color: context.hc.border, width: 1.5),
           boxShadow: [
             BoxShadow(
               color: context.hc.warning.withValues(
@@ -126,9 +123,7 @@ class PendampingAssistanceCard extends StatelessWidget {
                   child: Text(
                     isOnTheWay ? 'Menuju Lokasi' : 'Baru Masuk',
                     style: TextStyle(
-                      color: isOnTheWay
-                          ? context.hc.info
-                          : context.hc.warning,
+                      color: isOnTheWay ? context.hc.info : context.hc.warning,
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
                     ),
@@ -171,9 +166,7 @@ class PendampingAssistanceCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: context.hc.surfaceSubtle,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: context.hc.border,
-                ),
+                border: Border.all(color: context.hc.border),
               ),
               child: Column(
                 children: [
@@ -245,10 +238,7 @@ class PendampingAssistanceCard extends StatelessWidget {
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: context.hc.primary,
-                      side: BorderSide(
-                        color: context.hc.border,
-                        width: 1.5,
-                      ),
+                      side: BorderSide(color: context.hc.border, width: 1.5),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),

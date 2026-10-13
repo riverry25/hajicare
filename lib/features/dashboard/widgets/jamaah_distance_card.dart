@@ -393,9 +393,7 @@ class JamaahDistanceCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: context.hc.surfaceSubtle,
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(
-                color: context.hc.border,
-              ),
+              border: Border.all(color: context.hc.border),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

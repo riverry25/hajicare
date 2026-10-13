@@ -91,9 +91,7 @@ class JamaahPrayerCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: context.hc.surfaceSubtle,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
-                    border: Border.all(
-                      color: context.hc.border,
-                    ),
+                    border: Border.all(color: context.hc.border),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -126,9 +124,7 @@ class JamaahPrayerCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: context.hc.surfaceSubtle,
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(
-                  color: context.hc.border,
-                ),
+                border: Border.all(color: context.hc.border),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -282,9 +278,7 @@ class JamaahPrayerCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: isActive
             ? Border.all(color: context.hc.accent, width: 1.5)
-            : Border.all(
-                color: context.hc.border,
-              ),
+            : Border.all(color: context.hc.border),
         boxShadow: isActive
             ? [
                 BoxShadow(

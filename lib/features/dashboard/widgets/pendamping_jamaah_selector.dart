@@ -35,6 +35,13 @@ class PendampingJamaahSelector extends StatelessWidget {
     final headingColor = context.hc.textPrimary;
 
     final jamaahList = state.jamaahList;
+    final sortedEntries = jamaahList.asMap().entries.toList()
+      ..sort((a, b) {
+        final aSos = a.value.sosActive;
+        final bSos = b.value.sosActive;
+        if (aSos != bSos) return aSos ? -1 : 1;
+        return b.value.distance.compareTo(a.value.distance);
+      });
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -62,10 +69,7 @@ class PendampingJamaahSelector extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: context.hc.surfaceSand,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
-                    border: Border.all(
-                      color: context.hc.border,
-                      width: 1,
-                    ),
+                    border: Border.all(color: context.hc.border, width: 1),
                   ),
                   child: Text(
                     '${jamaahList.length} ${context.tr('room.roleJamaah')}',
@@ -128,13 +132,7 @@ class PendampingJamaahSelector extends StatelessWidget {
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-              for (final entry
-                  in (jamaahList.asMap().entries.toList()..sort((a, b) {
-                    final aSos = a.value.sosActive;
-                    final bSos = b.value.sosActive;
-                    if (aSos != bSos) return aSos ? -1 : 1;
-                    return b.value.distance.compareTo(a.value.distance);
-                  }))) ...[
+              for (final entry in sortedEntries) ...[
                 _buildJamaahPill(
                   context: context,
                   jamaah: entry.value,
@@ -193,14 +191,10 @@ class PendampingJamaahSelector extends StatelessWidget {
           right: AppSpacing.md,
         ),
         decoration: BoxDecoration(
-          color: isActive
-              ? context.hc.surface
-              : context.hc.surfaceSubtle,
+          color: isActive ? context.hc.surface : context.hc.surfaceSubtle,
           borderRadius: BorderRadius.circular(AppRadius.pill),
           border: Border.all(
-            color: isActive
-                ? context.hc.primary
-                : context.hc.border,
+            color: isActive ? context.hc.primary : context.hc.border,
             width: isActive ? 1.8 : 1.0,
           ),
           boxShadow: isActive
@@ -225,10 +219,7 @@ class PendampingJamaahSelector extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
-                      colors: [
-                        context.hc.primary,
-                        context.hc.primaryContainer,
-                      ],
+                      colors: [context.hc.primary, context.hc.primaryContainer],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -254,10 +245,7 @@ class PendampingJamaahSelector extends StatelessWidget {
                           ? context.hc.success
                           : context.hc.neutral,
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: context.hc.surface,
-                        width: 2,
-                      ),
+                      border: Border.all(color: context.hc.surface, width: 2),
                     ),
                   ),
                 ),

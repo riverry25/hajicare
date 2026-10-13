@@ -755,18 +755,20 @@ class _SosCompanionScanningScreenState extends State<SosCompanionScanningScreen>
           alignment: Alignment.center,
           children: [
             // 1. Layered Organic Concentric Radar Disks
-            CustomPaint(
-              size: Size(size, size),
-              painter: _WinkyOrganicRadarPainter(
-                sweepProgress: _sweepController.value,
-                pulseProgress: _pulseController.value,
-                centerPulse: _centerPulseController.value,
-                lockOnProgress: _lockOnController.value,
-                state: _currentState,
-                colors: colors,
-                isDark: isDark,
-                selectedCompanion: activeCompanion,
-                maxRangeMeters: _effectiveMaxRange,
+            RepaintBoundary(
+              child: CustomPaint(
+                size: Size(size, size),
+                painter: _WinkyOrganicRadarPainter(
+                  sweepProgress: _sweepController.value,
+                  pulseProgress: _pulseController.value,
+                  centerPulse: _centerPulseController.value,
+                  lockOnProgress: _lockOnController.value,
+                  state: _currentState,
+                  colors: colors,
+                  isDark: isDark,
+                  selectedCompanion: activeCompanion,
+                  maxRangeMeters: _effectiveMaxRange,
+                ),
               ),
             ),
 
@@ -1343,6 +1345,8 @@ class _RadarCompanionAvatar extends StatelessWidget {
                     ? Image.network(
                         candidate.photoUrl!,
                         fit: BoxFit.cover,
+                        cacheWidth: 140,
+                        cacheHeight: 140,
                         errorBuilder: (_, _, _) => _buildFallbackInitial(),
                       )
                     : _buildFallbackInitial(),

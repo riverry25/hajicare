@@ -127,34 +127,38 @@ class _MiniSparklineButtonState extends State<MiniSparklineButton>
             onTap: _isSyncing ? null : _handleTap,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
-              child: AnimatedBuilder(
-                animation: Listenable.merge([_pulseCtrl, _syncCtrl]),
-                builder: (context, _) {
-                  final opacity = _isSyncing
-                      ? 0.60 +
-                            0.40 *
-                                (0.5 +
-                                    0.5 *
-                                        math.sin(_syncCtrl.value * 2 * math.pi))
-                      : 1.0;
+              child: RepaintBoundary(
+                child: AnimatedBuilder(
+                  animation: Listenable.merge([_pulseCtrl, _syncCtrl]),
+                  builder: (context, _) {
+                    final opacity = _isSyncing
+                        ? 0.60 +
+                              0.40 *
+                                  (0.5 +
+                                      0.5 *
+                                          math.sin(
+                                            _syncCtrl.value * 2 * math.pi,
+                                          ))
+                        : 1.0;
 
-                  return Opacity(
-                    opacity: opacity,
-                    child: CustomPaint(
-                      painter: _SparklineWavePainter(
-                        waveColor: widget.waveColor,
-                        effectiveColor: activeColor,
-                        jamaahList: widget.jamaahList,
-                        pulsePhase: _pulseCtrl.value,
-                        syncPhase: _isSyncing ? _syncCtrl.value : 0.0,
-                        isSyncing: _isSyncing,
-                        syncLabel: context.tr('dashboard.syncShort'),
-                        groupLabel: context.tr('dashboard.groupShort'),
-                        safeLabel: context.tr('dashboard.safe'),
+                    return Opacity(
+                      opacity: opacity,
+                      child: CustomPaint(
+                        painter: _SparklineWavePainter(
+                          waveColor: widget.waveColor,
+                          effectiveColor: activeColor,
+                          jamaahList: widget.jamaahList,
+                          pulsePhase: _pulseCtrl.value,
+                          syncPhase: _isSyncing ? _syncCtrl.value : 0.0,
+                          isSyncing: _isSyncing,
+                          syncLabel: context.tr('dashboard.syncShort'),
+                          groupLabel: context.tr('dashboard.groupShort'),
+                          safeLabel: context.tr('dashboard.safe'),
+                        ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
             ),
           ),

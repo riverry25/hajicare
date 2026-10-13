@@ -71,10 +71,7 @@ class PendampingGreetingHeader extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: context.hc.surfaceSand,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
-                    border: Border.all(
-                      color: context.hc.border,
-                      width: 0.8,
-                    ),
+                    border: Border.all(color: context.hc.border, width: 0.8),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -107,10 +104,7 @@ class PendampingGreetingHeader extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: context.hc.surfaceSubtle,
                       borderRadius: BorderRadius.circular(AppRadius.pill),
-                      border: Border.all(
-                        color: context.hc.border,
-                        width: 0.8,
-                      ),
+                      border: Border.all(color: context.hc.border, width: 0.8),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,

@@ -83,10 +83,7 @@ class JamaahSosBanner extends StatelessWidget {
         decoration: BoxDecoration(
           color: context.hc.surface,
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(
-            color: context.hc.border,
-            width: 1.2,
-          ),
+          border: Border.all(color: context.hc.border, width: 1.2),
         ),
         padding: const EdgeInsets.all(AppSpacing.cardPadding),
         child: Column(
@@ -170,9 +167,7 @@ class JamaahSosBanner extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: context.hc.danger.withValues(
-              alpha: isDark ? 0.08 : 0.06,
-            ),
+            color: context.hc.danger.withValues(alpha: isDark ? 0.08 : 0.06),
             blurRadius: 18,
             offset: const Offset(0, 4),
           ),
@@ -265,11 +260,7 @@ class JamaahSosBanner extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.security_rounded,
-                size: 16,
-                color: context.hc.accent,
-              ),
+              Icon(Icons.security_rounded, size: 16, color: context.hc.accent),
               const SizedBox(width: 6),
               Flexible(
                 child: Text(

@@ -425,45 +425,47 @@ class ActiveRoomCard extends StatelessWidget {
                       child: SizedBox(
                         width: 106,
                         height: 106,
-                        child: CustomPaint(
-                          painter: _RoomCapacityGaugePainter(
-                            progress: (jamaahCount / 10.0).clamp(0.2, 1.0),
-                            trackColor: hc.surfaceSand,
-                            arcColor: hc.brand,
-                            dotColor: hc.brandAccent,
-                          ),
-                          child: Center(
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Padding(
-                                padding: const EdgeInsets.all(8),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      '$jamaahCount',
-                                      style: TextStyle(
-                                        color: headingColor,
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: -0.5,
-                                        height: 1.1,
+                        child: RepaintBoundary(
+                          child: CustomPaint(
+                            painter: _RoomCapacityGaugePainter(
+                              progress: (jamaahCount / 10.0).clamp(0.2, 1.0),
+                              trackColor: hc.surfaceSand,
+                              arcColor: hc.brand,
+                              dotColor: hc.brandAccent,
+                            ),
+                            child: Center(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        '$jamaahCount',
+                                        style: TextStyle(
+                                          color: headingColor,
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: -0.5,
+                                          height: 1.1,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      isPendamping
-                                          ? context.tr('room.roleJamaah')
-                                          : context.tr('dashboard.members'),
-                                      style: TextStyle(
-                                        color: isDark
-                                            ? Colors.white60
-                                            : hc.textSecondary,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        isPendamping
+                                            ? context.tr('room.roleJamaah')
+                                            : context.tr('dashboard.members'),
+                                        style: TextStyle(
+                                          color: isDark
+                                              ? Colors.white60
+                                              : hc.textSecondary,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),

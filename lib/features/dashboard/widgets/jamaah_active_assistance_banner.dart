@@ -28,10 +28,7 @@ class JamaahActiveAssistanceBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.hc.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: context.hc.border,
-          width: 1.5,
-        ),
+        border: Border.all(color: context.hc.border, width: 1.5),
         boxShadow: [
           BoxShadow(
             color: context.hc.warning.withValues(
@@ -126,9 +123,7 @@ class JamaahActiveAssistanceBanner extends StatelessWidget {
             decoration: BoxDecoration(
               color: context.hc.surfaceSubtle,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: context.hc.border,
-              ),
+              border: Border.all(color: context.hc.border),
             ),
             child: Row(
               children: [

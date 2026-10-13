@@ -50,11 +50,7 @@ class JamaahServiceGrid extends StatelessWidget {
                     color: hc.successContainer,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    Icons.watch_rounded,
-                    color: hc.success,
-                    size: 28,
-                  ),
+                  child: Icon(Icons.watch_rounded, color: hc.success, size: 28),
                 ),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
@@ -144,10 +140,7 @@ class JamaahServiceGrid extends StatelessWidget {
                   Get.back();
                   Get.toNamed(AppRoutes.smartbandLdr);
                 },
-                icon: Icon(
-                  Icons.sensors_rounded,
-                  color: hc.brand,
-                ),
+                icon: Icon(Icons.sensors_rounded, color: hc.brand),
                 label: Text(
                   context.tr('dashboard.openSensorDetails'),
                   style: context.text.labelLarge.copyWith(
@@ -156,10 +149,7 @@ class JamaahServiceGrid extends StatelessWidget {
                   ),
                 ),
                 style: OutlinedButton.styleFrom(
-                  side: BorderSide(
-                    color: hc.borderSubtle,
-                    width: 1.2,
-                  ),
+                  side: BorderSide(color: hc.borderSubtle, width: 1.2),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
@@ -191,9 +181,7 @@ class JamaahServiceGrid extends StatelessWidget {
       decoration: BoxDecoration(
         color: hc.sandLight,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(
-          color: hc.borderSubtle,
-        ),
+        border: Border.all(color: hc.borderSubtle),
       ),
       child: Column(
         children: [
@@ -372,11 +360,7 @@ class JamaahServiceGrid extends StatelessWidget {
               color: hc.sandLight,
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
-            child: Icon(
-              icon,
-              color: hc.brand,
-              size: 24,
-            ),
+            child: Icon(icon, color: hc.brand, size: 24),
           ),
           const SizedBox(height: AppSpacing.xs),
           Column(

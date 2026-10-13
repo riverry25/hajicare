@@ -1884,7 +1884,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
         },
       ),
       isScrollControlled: true,
-    );
+    ).whenComplete(noteController.dispose);
   }
 
   // ── Modal Sheet: Pos Medis & Ambulans ─────────────────────────────────────

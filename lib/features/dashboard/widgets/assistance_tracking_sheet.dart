@@ -133,9 +133,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        side: BorderSide(
-                          color: hc.borderSubtle,
-                        ),
+                        side: BorderSide(color: hc.borderSubtle),
                       ),
                       icon: const Icon(Icons.map_rounded, size: 20),
                       label: Text(
@@ -157,9 +155,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
                             borderRadius: BorderRadius.circular(14),
                           ),
                           side: BorderSide(
-                            color: hc.danger.withValues(
-                              alpha: 0.4,
-                            ),
+                            color: hc.danger.withValues(alpha: 0.4),
                           ),
                         ),
                         icon: const Icon(Icons.close_rounded, size: 20),
@@ -284,20 +280,14 @@ class AssistanceTrackingSheet extends StatelessWidget {
       decoration: BoxDecoration(
         color: hc.sandLight,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: hc.borderSubtle,
-        ),
+        border: Border.all(color: hc.borderSubtle),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                Icons.timeline_rounded,
-                size: 20,
-                color: hc.brand,
-              ),
+              Icon(Icons.timeline_rounded, size: 20, color: hc.brand),
               const SizedBox(width: 8),
               Text(
                 context.tr('assistanceStatusRequestHeader'),
@@ -320,8 +310,12 @@ class AssistanceTrackingSheet extends StatelessWidget {
             bodyColor: bodyColor,
             stepColor: step1Active && status != AssistanceStatus.sent
                 ? hc.success
-                : (status == AssistanceStatus.sent ? hc.brand : bodyColor.withValues(alpha: 0.4)),
-            timeColor: status == AssistanceStatus.sent ? hc.brand : bodyColor.withValues(alpha: 0.7),
+                : (status == AssistanceStatus.sent
+                      ? hc.brand
+                      : bodyColor.withValues(alpha: 0.4)),
+            timeColor: status == AssistanceStatus.sent
+                ? hc.brand
+                : bodyColor.withValues(alpha: 0.7),
           ),
           _timelineConnector(step2Active, hc.success, hc.borderSubtle),
           _timelineStep(
@@ -337,8 +331,12 @@ class AssistanceTrackingSheet extends StatelessWidget {
             bodyColor: bodyColor,
             stepColor: step2Active && status != AssistanceStatus.acknowledged
                 ? hc.success
-                : (status == AssistanceStatus.acknowledged ? hc.brand : bodyColor.withValues(alpha: 0.4)),
-            timeColor: status == AssistanceStatus.acknowledged ? hc.brand : bodyColor.withValues(alpha: 0.7),
+                : (status == AssistanceStatus.acknowledged
+                      ? hc.brand
+                      : bodyColor.withValues(alpha: 0.4)),
+            timeColor: status == AssistanceStatus.acknowledged
+                ? hc.brand
+                : bodyColor.withValues(alpha: 0.7),
           ),
           _timelineConnector(step3Active, hc.success, hc.borderSubtle),
           _timelineStep(
@@ -354,8 +352,12 @@ class AssistanceTrackingSheet extends StatelessWidget {
             bodyColor: bodyColor,
             stepColor: step3Active && status != AssistanceStatus.onTheWay
                 ? hc.success
-                : (status == AssistanceStatus.onTheWay ? hc.brand : bodyColor.withValues(alpha: 0.4)),
-            timeColor: status == AssistanceStatus.onTheWay ? hc.brand : bodyColor.withValues(alpha: 0.7),
+                : (status == AssistanceStatus.onTheWay
+                      ? hc.brand
+                      : bodyColor.withValues(alpha: 0.4)),
+            timeColor: status == AssistanceStatus.onTheWay
+                ? hc.brand
+                : bodyColor.withValues(alpha: 0.7),
           ),
           _timelineConnector(step4Active, hc.success, hc.borderSubtle),
           _timelineStep(
@@ -369,8 +371,12 @@ class AssistanceTrackingSheet extends StatelessWidget {
             isCurrent: status == AssistanceStatus.completed,
             headingColor: headingColor,
             bodyColor: bodyColor,
-            stepColor: step4Active ? hc.success : bodyColor.withValues(alpha: 0.4),
-            timeColor: status == AssistanceStatus.completed ? hc.brand : bodyColor.withValues(alpha: 0.7),
+            stepColor: step4Active
+                ? hc.success
+                : bodyColor.withValues(alpha: 0.4),
+            timeColor: status == AssistanceStatus.completed
+                ? hc.brand
+                : bodyColor.withValues(alpha: 0.7),
             isLast: true,
           ),
         ],
@@ -441,14 +447,16 @@ class AssistanceTrackingSheet extends StatelessWidget {
     );
   }
 
-  Widget _timelineConnector(bool isActive, Color activeColor, Color inactiveColor) {
+  Widget _timelineConnector(
+    bool isActive,
+    Color activeColor,
+    Color inactiveColor,
+  ) {
     return Container(
       margin: const EdgeInsets.only(left: 12),
       width: 2,
       height: 14,
-      color: isActive
-          ? activeColor
-          : inactiveColor,
+      color: isActive ? activeColor : inactiveColor,
     );
   }
 
@@ -466,9 +474,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
       decoration: BoxDecoration(
         color: hc.sandLight,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: hc.borderSubtle,
-        ),
+        border: Border.all(color: hc.borderSubtle),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -669,11 +675,7 @@ class AssistanceTrackingSheet extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(
-            Icons.check_circle_rounded,
-            color: hc.success,
-            size: 40,
-          ),
+          Icon(Icons.check_circle_rounded, color: hc.success, size: 40),
           const SizedBox(height: 8),
           Text(
             context.tr('assistanceConfirmDoneTitle'),
