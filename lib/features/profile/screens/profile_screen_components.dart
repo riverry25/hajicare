@@ -20,7 +20,6 @@ class _ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.hc;
-    final porsiText = context.tr('profilePassportCountry');
     final roleLabel = state?.role == UserRole.pendamping
         ? context.tr('auth.rolePendamping')
         : context.tr('auth.roleJamaah');
@@ -48,10 +47,7 @@ class _ProfileHeader extends StatelessWidget {
             decoration: BoxDecoration(
               color: cardBg,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: colors.border,
-                width: 1.2,
-              ),
+              border: Border.all(color: colors.border, width: 1.2),
               boxShadow: [
                 BoxShadow(
                   color: isDark
@@ -110,45 +106,50 @@ class _ProfileHeader extends StatelessWidget {
 
                 const SizedBox(height: 14),
 
-                // Tag Chips Row
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  children: [
-                    _TagChip(
-                      icon: Icons.badge_rounded,
-                      label: porsiText,
-                      isDark: isDark,
-                      isPrimary: false,
-                    ),
-                    if (kloterStr != null &&
-                        kloterStr.isNotEmpty &&
-                        kloterStr != '-')
-                      _TagChip(
-                        icon: Icons.flight_takeoff_rounded,
-                        label: kloterStr.toLowerCase().startsWith('kloter')
-                            ? kloterStr
-                            : context.tr('profileKloter', {
-                                'kloter': kloterStr,
-                              }),
-                        isDark: isDark,
-                        isPrimary: false,
-                      ),
-                    if (maktabStr != null &&
-                        maktabStr.isNotEmpty &&
-                        maktabStr != '-')
-                      _TagChip(
-                        icon: Icons.hotel_rounded,
-                        label: maktabStr.toLowerCase().startsWith('maktab')
-                            ? maktabStr
-                            : context.tr('profileMaktab', {
-                                'maktab': maktabStr,
-                              }),
-                        isDark: isDark,
-                        isPrimary: false,
-                      ),
-                  ],
-                ),
+                // Tag Chips Row — only show chips when data exists
+                Obx(() {
+                  final passportNum = controller.passportNumber.value.trim();
+                  return Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [
+                      // Passport chip: only when passport number is filled
+                      if (passportNum.isNotEmpty)
+                        _TagChip(
+                          icon: Icons.badge_rounded,
+                          label: passportNum,
+                          isDark: isDark,
+                          isPrimary: false,
+                        ),
+                      if (kloterStr != null &&
+                          kloterStr.isNotEmpty &&
+                          kloterStr != '-')
+                        _TagChip(
+                          icon: Icons.flight_takeoff_rounded,
+                          label: kloterStr.toLowerCase().startsWith('kloter')
+                              ? kloterStr
+                              : context.tr('profileKloter', {
+                                  'kloter': kloterStr,
+                                }),
+                          isDark: isDark,
+                          isPrimary: false,
+                        ),
+                      if (maktabStr != null &&
+                          maktabStr.isNotEmpty &&
+                          maktabStr != '-')
+                        _TagChip(
+                          icon: Icons.hotel_rounded,
+                          label: maktabStr.toLowerCase().startsWith('maktab')
+                              ? maktabStr
+                              : context.tr('profileMaktab', {
+                                  'maktab': maktabStr,
+                                }),
+                          isDark: isDark,
+                          isPrimary: false,
+                        ),
+                    ],
+                  );
+                }),
 
                 const SizedBox(height: 18),
 
@@ -169,16 +170,14 @@ class _ProfileHeader extends StatelessWidget {
                           gradient: LinearGradient(
                             colors: isDark
                                 ? [colors.accent, colors.accentText]
-                                : [colors.primary, colors.primaryContainer],
+                                : [colors.primary, const Color(0xFF22160E)],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
                           borderRadius: BorderRadius.circular(14),
                           boxShadow: [
                             BoxShadow(
-                              color: (isDark
-                                      ? colors.accent
-                                      : colors.primary)
+                              color: (isDark ? colors.accent : colors.primary)
                                   .withValues(alpha: 0.28),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
@@ -230,18 +229,19 @@ class _ProfileHeader extends StatelessWidget {
                           colors.surfaceSubtle,
                           colors.surface,
                         ]
-                      : [
-                          colors.primary,
-                          colors.primaryContainer,
-                          colors.borderStrong,
+                      : const [
+                          Color(0xFF382518),
+                          Color(0xFF28190F),
+                          Color(0xFF1D1109),
                         ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: (isDark ? Colors.black : colors.primary)
-                        .withValues(alpha: 0.35),
+                    color: (isDark ? Colors.black : colors.primary).withValues(
+                      alpha: 0.35,
+                    ),
                     blurRadius: 18,
                     offset: const Offset(0, 8),
                   ),
@@ -364,13 +364,17 @@ class _ProfileHeader extends StatelessWidget {
                                   Icon(
                                     Icons.verified_rounded,
                                     size: 14,
-                                    color: colors.accent,
+                                    color: isDark
+                                        ? colors.accent
+                                        : const Color(0xFFE5C07B),
                                   ),
                                   const SizedBox(width: 5),
                                   Text(
                                     context.tr('profilePilgrimCard'),
                                     style: context.text.labelSmall.copyWith(
-                                      color: colors.accent,
+                                      color: isDark
+                                          ? colors.accent
+                                          : const Color(0xFFE5C07B),
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                       letterSpacing: 0.8,
@@ -452,10 +456,8 @@ class _ProfileHeader extends StatelessWidget {
       context: context,
       useRootNavigator: true,
       barrierDismissible: true,
-      builder: (dialogCtx) => _EditNameDialog(
-        controller: controller,
-        isDark: context.isDark,
-      ),
+      builder: (dialogCtx) =>
+          _EditNameDialog(controller: controller, isDark: context.isDark),
     );
   }
 }
@@ -532,9 +534,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
     final headingClr = colors.textPrimary;
     final bodyClr = colors.textSecondary;
 
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
+    return HajiTransparentDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 380),
@@ -717,9 +717,7 @@ class _EditNameDialogState extends State<_EditNameDialog> {
                             ),
                           ),
                         ),
-                        const SizedBox(
-                          width: 135,
-                        ),
+                        const SizedBox(width: 135),
                       ],
                     ),
                   ],
@@ -732,105 +730,9 @@ class _EditNameDialogState extends State<_EditNameDialog> {
               top: 0,
               left: 22,
               right: 22,
-              height: 86,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: isDarkDialog
-                        ? [colors.surfaceSand, colors.surface]
-                        : [colors.primary, colors.primaryContainer],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: colors.accent.withValues(alpha: 0.4),
-                    width: 1.2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colors.primary.withValues(alpha: 0.35),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Stack(
-                  children: [
-                    // Ambient Background Circular Glows
-                    Positioned(
-                      top: -15,
-                      right: -15,
-                      child: Container(
-                        width: 70,
-                        height: 70,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: colors.accent.withValues(alpha: 0.12),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: -20,
-                      left: -15,
-                      child: Container(
-                        width: 65,
-                        height: 65,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: colors.accent.withValues(alpha: 0.08),
-                        ),
-                      ),
-                    ),
-
-                    // Center Hero Graphic
-                    Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                colors: [
-                                  colors.accent.withValues(alpha: 0.25),
-                                  colors.accent.withValues(alpha: 0.08),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              border: Border.all(
-                                color: colors.accent.withValues(
-                                  alpha: 0.5,
-                                ),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Center(
-                              child: Icon(
-                                Icons.edit_rounded,
-                                color: colors.accent,
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            context.tr('profileUserIdentityBadge'),
-                            style: context.text.labelSmall.copyWith(
-                              color: colors.accent,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 1.1,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+              child: HajiDialogHeroHeader(
+                icon: Icons.edit_rounded,
+                title: context.tr('profileUserIdentityBadge'),
               ),
             ),
 
@@ -840,70 +742,10 @@ class _EditNameDialogState extends State<_EditNameDialog> {
               right: 0,
               child: Obx(() {
                 final saving = widget.controller.isSavingName.value;
-                return Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    // Ribbon fold triangle at the top-right corner
-                    Positioned(
-                      top: -10,
-                      right: 0,
-                      child: CustomPaint(
-                        size: const Size(10, 10),
-                        painter: _RibbonFoldPainter(
-                          color: isDarkDialog
-                              ? const Color(0xFF140D08)
-                              : const Color(0xFF160D07),
-                        ),
-                      ),
-                    ),
-
-                    // Main Pill Submit Button
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: saving ? null : _submit,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(24),
-                          bottomLeft: Radius.circular(24),
-                          bottomRight: Radius.circular(5),
-                        ),
-                        child: Ink(
-                          decoration: BoxDecoration(
-                            color: isDarkDialog
-                                ? colors.primary
-                                : colors.primary,
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(24),
-                              bottomLeft: Radius.circular(24),
-                              bottomRight: Radius.circular(5),
-                            ),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 28,
-                            vertical: 13.5,
-                          ),
-                          child: saving
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : Text(
-                                  context.tr('save').toUpperCase(),
-                                  style: context.text.labelLarge.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 13,
-                                    letterSpacing: 2.2,
-                                  ),
-                                ),
-                        ),
-                      ),
-                    ),
-                  ],
+                return HajiDialogRibbonButton(
+                  label: context.tr('save').toUpperCase(),
+                  isLoading: saving,
+                  onPressed: _submit,
                 );
               }),
             ),
@@ -912,34 +754,6 @@ class _EditNameDialogState extends State<_EditNameDialog> {
       ),
     );
   }
-}
-
-/// Painter for the 3D folded ribbon corner flap on the protruding submit button
-class _RibbonFoldPainter extends CustomPainter {
-  final Color color;
-  const _RibbonFoldPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    final path = Path()
-      ..moveTo(
-        0,
-        size.height,
-      )
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, 0)
-      ..close();
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _RibbonFoldPainter oldDelegate) =>
-      oldDelegate.color != color;
 }
 
 // ── Initials Avatar with Edit Badge ──────────────────────────────────────────
@@ -970,11 +784,8 @@ class _InitialsAvatar extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: LinearGradient(
                 colors: isDark
-                    ? [
-                        colors.surfaceSand,
-                        colors.surfaceSubtle,
-                      ]
-                    : [colors.primary, colors.primaryContainer],
+                    ? [colors.surfaceSand, colors.surfaceSubtle]
+                    : const [Color(0xFF452D1C), Color(0xFF24160D)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -1047,13 +858,9 @@ class _TagChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.hc;
     final bg = isPrimary
-        ? (isDark
-              ? colors.surfaceSand
-              : colors.primary)
+        ? (isDark ? colors.surfaceSand : colors.primary)
         : (isDark ? colors.surfaceSubtle : colors.surfaceSubtle);
-    final borderColor = isPrimary
-        ? colors.accent
-        : colors.border;
+    final borderColor = isPrimary ? colors.accent : colors.border;
     final textColor = isPrimary
         ? (isDark ? colors.accent : Colors.white)
         : colors.textPrimary;
@@ -1175,13 +982,9 @@ class _SettingsTile extends StatelessWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? colors.surfaceSand
-                      : colors.surfaceSubtle,
+                  color: isDark ? colors.surfaceSand : colors.surfaceSubtle,
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: colors.border,
-                  ),
+                  border: Border.all(color: colors.border),
                 ),
                 child: Icon(
                   icon,
@@ -1209,11 +1012,7 @@ class _SettingsTile extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSpacing.xs),
               ],
-              Icon(
-                Icons.chevron_right_rounded,
-                color: colors.accent,
-                size: 20,
-              ),
+              Icon(Icons.chevron_right_rounded, color: colors.accent, size: 20),
             ],
           ),
         ),
@@ -1227,11 +1026,7 @@ class _SettingsTile extends StatelessWidget {
 class _DividerThin extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Divider(
-      height: 1,
-      indent: 58,
-      color: context.hc.border,
-    );
+    return Divider(height: 1, indent: 58, color: context.hc.border);
   }
 }
 
@@ -1274,11 +1069,7 @@ class _LogoutButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.pill),
             ),
           ),
-          icon: Icon(
-            Icons.logout_rounded,
-            size: 18,
-            color: colors.danger,
-          ),
+          icon: Icon(Icons.logout_rounded, size: 18, color: colors.danger),
           label: Text(
             label,
             style: context.text.labelLarge.copyWith(
@@ -1374,10 +1165,7 @@ class _PickerOption extends StatelessWidget {
                   height: 22,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: colors.border,
-                      width: 1.8,
-                    ),
+                    border: Border.all(color: colors.border, width: 1.8),
                   ),
                 ),
             ],

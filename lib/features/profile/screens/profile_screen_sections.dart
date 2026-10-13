@@ -927,9 +927,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
     final cardBg = colors.surface;
     final headingColor = colors.textPrimary;
 
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
+    return HajiTransparentDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: ConstrainedBox(
         constraints: BoxConstraints(
@@ -1105,111 +1103,9 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
               top: 0,
               left: 22,
               right: 22,
-              height: 86,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: isDark
-                        ? [
-                            colors.primaryContainer,
-                            colors.primary,
-                            const Color(0xFF160E09),
-                          ]
-                        : [
-                            colors.primary,
-                            const Color(0xFF2E1C12),
-                            const Color(0xFF23160D),
-                          ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: colors.accent.withValues(alpha: 0.4),
-                    width: 1.2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colors.primary.withValues(alpha: 0.35),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Stack(
-                  children: [
-                    // Ambient Background Circular Glows
-                    Positioned(
-                      top: -15,
-                      right: -15,
-                      child: Container(
-                        width: 70,
-                        height: 70,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: colors.accent.withValues(alpha: 0.12),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: -20,
-                      left: -15,
-                      child: Container(
-                        width: 65,
-                        height: 65,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: colors.accent.withValues(alpha: 0.08),
-                        ),
-                      ),
-                    ),
-
-                    // Center Hero Graphic
-                    Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                colors: [
-                                  colors.accent.withValues(alpha: 0.25),
-                                  colors.accent.withValues(alpha: 0.08),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              border: Border.all(
-                                color: colors.accent.withValues(alpha: 0.5),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Center(
-                              child: Icon(
-                                Icons.medical_services_rounded,
-                                color: colors.accent,
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            context.tr('medicalBadgeHeader'),
-                            style: context.text.labelSmall.copyWith(
-                              color: colors.accent,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 1.1,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+              child: HajiDialogHeroHeader(
+                icon: Icons.medical_services_rounded,
+                title: context.tr('medicalBadgeHeader'),
               ),
             ),
 
@@ -1219,68 +1115,10 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
               right: 0,
               child: Obx(() {
                 final saving = widget.profileCtrl.isSavingMedical.value;
-                return Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    // Ribbon fold triangle at the top-right corner
-                    Positioned(
-                      top: -10,
-                      right: 0,
-                      child: CustomPaint(
-                        size: const Size(10, 10),
-                        painter: _RibbonFoldPainter(
-                          color: isDark
-                              ? const Color(0xFF140D08)
-                              : const Color(0xFF160D07),
-                        ),
-                      ),
-                    ),
-
-                    // Main Pill Submit Button
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: saving ? null : _submit,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(24),
-                          bottomLeft: Radius.circular(24),
-                          bottomRight: Radius.circular(5),
-                        ),
-                        child: Ink(
-                          decoration: BoxDecoration(
-                            color: isDark ? colors.primary : colors.primary,
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(24),
-                              bottomLeft: Radius.circular(24),
-                              bottomRight: Radius.circular(5),
-                            ),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 28,
-                            vertical: 13.5,
-                          ),
-                          child: saving
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : Text(
-                                  context.tr('save').toUpperCase(),
-                                  style: context.text.labelLarge.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 13,
-                                    letterSpacing: 2.2,
-                                  ),
-                                ),
-                        ),
-                      ),
-                    ),
-                  ],
+                return HajiDialogRibbonButton(
+                  label: context.tr('save').toUpperCase(),
+                  isLoading: saving,
+                  onPressed: _submit,
                 );
               }),
             ),

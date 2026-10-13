@@ -10,6 +10,8 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
     required bool isDark,
   }) {
     final topInset = MediaQuery.paddingOf(context).top;
+    final heroFg = context.hc.dashboardHeroOnSurface;
+    final heroAccent = context.hc.dashboardHeroAccent;
 
     // Formatting Firebase Data
     final displayName = jamaah.name.trim().isNotEmpty
@@ -60,25 +62,28 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
           // ── Header Bar: User Greeting & Notification / SOS ───────
           Row(
             children: [
-              // User Avatar
+              // User Avatar (Glassmorphic)
               Container(
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(15),
-                  border: Border.all(color: context.hc.border, width: 1.5),
-                  gradient: LinearGradient(
-                    colors: [context.hc.surfaceSand, context.hc.surfaceSubtle],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.18)
+                        : Colors.white.withValues(alpha: 0.85),
+                    width: 1.2,
                   ),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.10)
+                      : Colors.white.withValues(alpha: 0.65),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(
-                        alpha: isDark ? 0.3 : 0.08,
+                        alpha: isDark ? 0.35 : 0.05,
                       ),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
@@ -86,7 +91,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                   child: Text(
                     initialLetter,
                     style: TextStyle(
-                      color: isDark ? context.hc.accent : context.hc.primary,
+                      color: heroAccent,
                       fontWeight: FontWeight.w800,
                       fontSize: 19,
                     ),
@@ -103,7 +108,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                     Text(
                       context.tr('dashboard.greeting'),
                       style: TextStyle(
-                        color: context.hc.textSecondary,
+                        color: heroFg.withValues(alpha: 0.72),
                         fontSize: 12.5,
                         fontWeight: FontWeight.w500,
                       ),
@@ -112,7 +117,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                     Text(
                       displayName,
                       style: TextStyle(
-                        color: context.hc.textPrimary,
+                        color: heroFg,
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         letterSpacing: -0.2,
@@ -127,7 +132,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                         'maktab': jamaah.maktab ?? '48',
                       }),
                       style: TextStyle(
-                        color: context.hc.accentText,
+                        color: heroAccent,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
                       ),
@@ -154,7 +159,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                     Text(
                       distanceDisplay,
                       style: TextStyle(
-                        color: context.hc.textPrimary,
+                        color: heroFg,
                         fontSize: 32,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.5,
@@ -168,11 +173,12 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                         vertical: 3.5,
                       ),
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? context.hc.surfaceSand
-                            : Colors.white.withValues(alpha: 0.8),
+                        color: heroFg.withValues(alpha: isDark ? 0.10 : 0.16),
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: context.hc.border, width: 1),
+                        border: Border.all(
+                          color: heroFg.withValues(alpha: 0.20),
+                          width: 1,
+                        ),
                       ),
                       child: Text(
                         hasRoom
@@ -181,7 +187,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                                   : context.tr('dashboard.officerDistance'))
                             : context.tr('dashboard.notConnectedToRoom'),
                         style: TextStyle(
-                          color: context.hc.textPrimary,
+                          color: heroFg,
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),
@@ -220,7 +226,7 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
           const SizedBox(height: 18),
 
           // ── Subtle Dotted / Dashed Divider ───────────────────────
-          _buildDashedLine(context.hc.border.withValues(alpha: 0.7)),
+          _buildDashedLine(heroFg.withValues(alpha: 0.22)),
 
           const SizedBox(height: 16),
 
@@ -245,20 +251,25 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
 
           const SizedBox(height: 22),
 
-          // ── Segmented Dual-Action Pill Button ────────────────────
+          // ── Segmented Dual-Action Pill Button (Frosted Glassmorphism) ──
           Container(
             height: 52,
             decoration: BoxDecoration(
               color: isDark
-                  ? context.hc.surfaceSand.withValues(alpha: 0.85)
-                  : Colors.white.withValues(alpha: 0.9),
+                  ? Colors.white.withValues(alpha: 0.10)
+                  : Colors.white.withValues(alpha: 0.68),
               borderRadius: BorderRadius.circular(26),
-              border: Border.all(color: context.hc.border, width: 1.2),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.18)
+                    : Colors.white.withValues(alpha: 0.88),
+                width: 1.2,
+              ),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
@@ -313,14 +324,14 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                           children: [
                             Icon(
                               Icons.north_west_rounded,
-                              color: context.hc.textPrimary,
+                              color: heroFg,
                               size: 16,
                             ),
                             const SizedBox(width: 7),
                             Text(
                               context.tr('dashboard.trackOfficer'),
                               style: TextStyle(
-                                color: context.hc.textPrimary,
+                                color: heroFg,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -459,28 +470,37 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
           height: 44,
           decoration: BoxDecoration(
             color: isDark
-                ? context.hc.surfaceSand.withValues(alpha: 0.85)
-                : Colors.white.withValues(alpha: 0.9),
+                ? Colors.white.withValues(alpha: 0.10)
+                : Colors.white.withValues(alpha: 0.65),
             shape: BoxShape.circle,
-            border: Border.all(color: context.hc.border, width: 1.0),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.18)
+                  : Colors.white.withValues(alpha: 0.85),
+              width: 1.2,
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
+                color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
               ),
             ],
           ),
-          child: IconButton(
-            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-            padding: EdgeInsets.zero,
-            icon: Icon(
-              Icons.notifications_outlined,
-              color: context.hc.textPrimary,
-              size: 22,
+          child: Material(
+            color: Colors.transparent,
+            shape: const CircleBorder(),
+            child: IconButton(
+              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+              padding: EdgeInsets.zero,
+              icon: Icon(
+                Icons.notifications_outlined,
+                color: context.hc.dashboardHeroOnSurface,
+                size: 22,
+              ),
+              tooltip: context.tr('notificationTooltip'),
+              onPressed: () => Get.toNamed(AppRoutes.notification),
             ),
-            tooltip: context.tr('notificationTooltip'),
-            onPressed: () => Get.toNamed(AppRoutes.notification),
           ),
         ),
         Obx(() {
@@ -496,19 +516,22 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
           if (totalUnread <= 0 && !hasSeparated) return const SizedBox.shrink();
 
           return Positioned(
-            top: 4,
-            right: 4,
+            top: 2,
+            right: 2,
             child: Container(
-              width: 10,
-              height: 10,
+              width: 11,
+              height: 11,
               decoration: BoxDecoration(
                 color: hasSeparated ? context.hc.danger : context.hc.info,
                 shape: BoxShape.circle,
-                border: Border.all(color: context.hc.border, width: 1.5),
+                border: Border.all(
+                  color: isDark ? const Color(0xFF1E1510) : Colors.white,
+                  width: 2.0,
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: (hasSeparated ? context.hc.danger : context.hc.info)
-                        .withValues(alpha: 0.5),
+                        .withValues(alpha: 0.55),
                     blurRadius: 6,
                     spreadRadius: 1,
                   ),

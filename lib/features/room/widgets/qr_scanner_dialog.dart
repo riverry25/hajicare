@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/theme_context.dart';
+import '../../../core/widgets/haji_transparent_dialog.dart';
 
 /// Modal dialog with integrated camera barcode scanner to scan HajiCare Room QR Codes.
 class QrScannerDialog extends StatefulWidget {
@@ -87,8 +88,7 @@ class _QrScannerDialogState extends State<QrScannerDialog> {
     final headingColor = hc.textPrimary;
     final bodyColor = hc.textSecondary;
 
-    return Dialog(
-      backgroundColor: Colors.transparent,
+    return HajiTransparentDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420, maxHeight: 600),

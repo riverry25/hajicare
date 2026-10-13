@@ -34,6 +34,8 @@ import 'package:flutter_map/flutter_map.dart' as fmap;
 import 'package:latlong2/latlong.dart';
 import '../../../core/constants/app_constants.dart';
 import '../services/assistance_request_service.dart';
+import '../../../core/widgets/haji_transparent_dialog.dart';
+import '../../../core/widgets/haji_dialog_hero_header.dart';
 
 part 'dashboard_jamaah_header.dart';
 part 'dashboard_jamaah_sections.dart';
@@ -105,12 +107,12 @@ class DashboardJamaahScreen extends StatelessWidget {
   ) {
     final isDark = context.hc.isDark;
     final headingColor = context.hc.textPrimary;
-    final heroGradient = context.hc.heroGradient;
+    final dashGradient = context.hc.dashboardHeroGradient;
 
     return Scaffold(
       backgroundColor: context.hc.canvas,
       body: Container(
-        decoration: BoxDecoration(gradient: heroGradient),
+        decoration: BoxDecoration(gradient: dashGradient),
         child: Obx(() {
           final jamaah = state.self;
 

@@ -20,6 +20,7 @@ import '../../dashboard/models/assistance_request_model.dart';
 import '../../dashboard/services/assistance_request_service.dart';
 import '../controllers/map_controller.dart';
 import '../models/map_search_result.dart';
+import '../widgets/gps_user_puck.dart';
 import '../widgets/location_detail_sheet.dart';
 import '../widgets/map_bottom_sheet.dart';
 import '../widgets/map_floating_controls.dart';
@@ -145,7 +146,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
         children: [
           // 1. Core Map Layer (Normal 2D flutter_map OR 3D Perspective NavigationMapView)
           Obx(() {
-            if (mapCtrl.isNavigating) {
+            if (mapCtrl.isNavigatingRx.value) {
               return RepaintBoundary(
                 child: NavigationMapView(mapCtrl: mapCtrl),
               );
@@ -155,7 +156,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
 
           // 2. Normal Mode: Dynamic Contextual Bottom Sheets & Compact Member Pill
           Obx(() {
-            if (mapCtrl.isNavigating) return const SizedBox.shrink();
+            if (mapCtrl.isNavigatingRx.value) return const SizedBox.shrink();
 
             final bottomPadding = MediaQuery.of(context).padding.bottom;
             // When hosted inside dashboard Scaffold (with extendBody: true),
@@ -325,13 +326,13 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
 
           // 3. Normal Mode: POI Status Overlay
           Obx(() {
-            if (mapCtrl.isNavigating) return const SizedBox.shrink();
+            if (mapCtrl.isNavigatingRx.value) return const SizedBox.shrink();
             return _buildPoiStatusOverlay(context, mapCtrl);
           }),
 
           // 4. Normal Mode: Floating Quick Action Controls
           Obx(() {
-            if (mapCtrl.isNavigating) return const SizedBox.shrink();
+            if (mapCtrl.isNavigatingRx.value) return const SizedBox.shrink();
             final isSearchActive =
                 mapCtrl.searchState.value != MapSearchState.idle ||
                 _searchCtrl.text.trim().isNotEmpty;
@@ -354,7 +355,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
 
           // 5. Normal Mode: Top Header with live GPS tracking status
           Obx(() {
-            if (mapCtrl.isNavigating) return const SizedBox.shrink();
+            if (mapCtrl.isNavigatingRx.value) return const SizedBox.shrink();
             return MapTopHeader(
               filters: _getFilters(context),
               selectedFilter: mapCtrl.selectedFilter.value,
@@ -377,7 +378,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
 
           // 6. Navigation Mode HUD Overlays
           Obx(() {
-            if (!mapCtrl.isNavigating) return const SizedBox.shrink();
+            if (!mapCtrl.isNavigatingRx.value) return const SizedBox.shrink();
             return Stack(
               children: [
                 // Top Direction Card
@@ -402,7 +403,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
             left: 0,
             right: 0,
             child: Obx(() {
-              if (mapCtrl.isNavigating) return const SizedBox.shrink();
+              if (mapCtrl.isNavigatingRx.value) return const SizedBox.shrink();
               return MapSearchDropdown(
                 mapCtrl: mapCtrl,
                 onSelect: (result) {
@@ -415,7 +416,7 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
         ],
       ),
       bottomNavigationBar: Obx(() {
-        if (mapCtrl.isNavigating) return const SizedBox.shrink();
+        if (mapCtrl.isNavigatingRx.value) return const SizedBox.shrink();
         return widget.showBottomNav
             ? const HajiCareBottomNavBar(currentIndex: 1)
             : const SizedBox.shrink();
@@ -776,9 +777,9 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
               if (userLocation != null)
                 fmap.Marker(
                   point: userLocation,
-                  width: 130,
-                  height: 75,
-                  child: RepaintBoundary(child: _buildCompanionMarker()),
+                  width: 88,
+                  height: 104,
+                  child: RepaintBoundary(child: _buildCompanionMarker(mapCtrl)),
                 ),
 
               // Active Assistance Request Pin Marker (Prominent Jemputan / Bantuan Pin)
@@ -1016,83 +1017,62 @@ extension _InteractiveMapScreenExt on _InteractiveMapScreenState {
     );
   }
 
-  Widget _buildCompanionMarker() {
+  Widget _buildCompanionMarker(MapController mapCtrl) {
+    return SizedBox(
+      width: 88,
+      height: 104,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // 1. Google Maps Dynamic Rotating GPS User Puck with Directional Beam
+          GpsUserPuck(mapCtrl: mapCtrl, isNavigating: false),
+          // 2. Compact "Anda" identification pill floating right above the puck
+          Positioned(top: 2, child: _buildUserTagPill()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUserTagPill() {
     final hc = context.hc;
     final isDark = hc.isDark;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-          decoration: BoxDecoration(
-            color: isDark ? hc.surface : hc.primary,
-            borderRadius: BorderRadius.circular(AppRadius.pill),
-            border: Border.all(color: hc.accent, width: 1.5),
-            boxShadow: [
-              BoxShadow(
-                color: hc.shadow,
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+      decoration: BoxDecoration(
+        color: (isDark ? hc.surface : hc.primary).withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: hc.accent, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: hc.shadow,
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 7,
-                height: 7,
-                decoration: BoxDecoration(
-                  color: hc.success,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 5),
-              Text(
-                context.tr('youLabel'),
-                style: context.text.labelSmall.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: hc.success,
+              shape: BoxShape.circle,
+            ),
           ),
-        ),
-        const SizedBox(height: 3),
-        RepaintBoundary(
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: hc.accent.withValues(alpha: 0.22),
-                ),
-              ),
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: isDark ? hc.surfaceSubtle : hc.surface,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isDark ? hc.accent : hc.primary,
-                    width: 2.2,
-                  ),
-                  boxShadow: [BoxShadow(color: hc.shadow, blurRadius: 6)],
-                ),
-                child: Icon(
-                  Icons.navigation_rounded,
-                  color: hc.accent,
-                  size: 19,
-                ),
-              ),
-            ],
+          const SizedBox(width: 4),
+          Text(
+            context.tr('youLabel'),
+            style: context.text.labelSmall.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: 10,
+              letterSpacing: 0.2,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

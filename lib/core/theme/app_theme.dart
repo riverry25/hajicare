@@ -110,9 +110,10 @@ class AppTheme {
         backgroundColor: c.surface,
         elevation: 6,
         shadowColor: c.shadow,
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          side: BorderSide(color: c.border, width: 1.0),
+          side: BorderSide.none,
         ),
         titleTextStyle: textTheme.titleLarge?.copyWith(
           color: c.textPrimary,
@@ -144,21 +145,14 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          borderSide: BorderSide(
-            color: c.primary,
-            width: 1.8,
-          ),
+          borderSide: BorderSide(color: c.primary, width: 1.8),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
           borderSide: BorderSide(color: c.danger, width: 1.2),
         ),
-        labelStyle: textTheme.bodyMedium?.copyWith(
-          color: c.textSecondary,
-        ),
-        hintStyle: textTheme.bodyMedium?.copyWith(
-          color: c.textTertiary,
-        ),
+        labelStyle: textTheme.bodyMedium?.copyWith(color: c.textSecondary),
+        hintStyle: textTheme.bodyMedium?.copyWith(color: c.textTertiary),
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: c.canvas,
@@ -182,9 +176,7 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: c.primary,
-        contentTextStyle: textTheme.bodyMedium?.copyWith(
-          color: c.onPrimary,
-        ),
+        contentTextStyle: textTheme.bodyMedium?.copyWith(color: c.onPrimary),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),

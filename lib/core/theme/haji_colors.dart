@@ -446,6 +446,9 @@ class HajiColors extends ThemeExtension<HajiColors> {
       isDark ? const Color(0xFF7A2012) : const Color(0xFF8F2818);
 
   /// Brand gradients
+
+  /// Subtle tonal canvas gradient — for screen backgrounds behind cards.
+  /// Very low contrast by design; intended as a neutral surface tint, NOT for text-over backgrounds.
   LinearGradient get heroGradient => LinearGradient(
     begin: Alignment.topRight,
     end: Alignment.bottomCenter,
@@ -455,12 +458,39 @@ class HajiColors extends ThemeExtension<HajiColors> {
             Color(0xFF1E1510),
             Color.fromARGB(255, 36, 26, 19),
           ]
+        : const [Color(0xFFF5EBE0), Color(0xFFFAF5EE), Color(0xFFFBF9F6)],
+  );
+
+  /// Rich espresso dashboard hero gradient — dedicated for full-bleed top hero sections
+  /// on DashboardJamaah and DashboardPendamping. Smooth, organic, and elegant in light mode;
+  /// rich deep espresso in dark mode.
+  /// Text/icons on this surface should use [dashboardHeroOnSurface] and [dashboardHeroAccent].
+  LinearGradient get dashboardHeroGradient => LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    stops: isDark ? const [0.0, 0.45, 1.0] : const [0.0, 0.48, 1.0],
+    colors: isDark
+        // Dark mode: rich deep espresso → dark mocha → slightly lighter canvas
+        ? const [
+            Color(0xFF3E2716), // Deep espresso top-left
+            Color(0xFF2A1A0F), // Mocha mid
+            Color(0xFF1A120A), // Near-black canvas bottom-right
+          ]
+        // Light mode: elegant desert sand cashmere → gentle alabaster cream → canvas
         : const [
-            Color.fromARGB(255, 255, 233, 208),
-            Color(0xFFEFE2D1),
-            Color(0xFFFBF9F6),
+            Color(0xFFEADBCA), // Refined warm desert cashmere sand
+            Color(0xFFF3ECE0), // Soft alabaster warm cream
+            Color(0xFFFBF9F6), // Pure warm white canvas
           ],
   );
+
+  /// High-contrast foreground color for text/icons overlaid on [dashboardHeroGradient].
+  Color get dashboardHeroOnSurface =>
+      isDark ? const Color(0xFFF3E9DC) : const Color(0xFF2B1D15);
+
+  /// Warm gold accent for secondary labels and highlights on [dashboardHeroGradient].
+  Color get dashboardHeroAccent =>
+      isDark ? const Color(0xFFE5C28A) : const Color(0xFF86572A);
 
   LinearGradient get dangerGradient => LinearGradient(
     begin: Alignment.topLeft,
@@ -473,4 +503,21 @@ class HajiColors extends ThemeExtension<HajiColors> {
     end: Alignment.bottomRight,
     colors: [surfaceSubtle, surfaceSand],
   );
+
+  /// Dedicated gradient for modal floating hero headers (distinct from screen heroGradient).
+  LinearGradient get dialogHeroGradient => LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: isDark
+        ? const [Color(0xFF2E1F17), Color(0xFF1F140E), Color(0xFF160E09)]
+        : const [Color(0xFF3B2A1F), Color(0xFF2C1E16), Color(0xFF21150E)],
+  );
+
+  /// High-contrast text & icon foreground color for modal floating hero headers.
+  Color get dialogHeroForeground =>
+      isDark ? const Color(0xFFF3E6D6) : const Color(0xFFFAF5EE);
+
+  /// Radiant gold accent for modal floating hero header badges, icons, and borders.
+  Color get dialogHeroAccent =>
+      isDark ? const Color(0xFFE2C499) : const Color(0xFFD4B896);
 }

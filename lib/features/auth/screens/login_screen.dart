@@ -22,11 +22,19 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   late int _activeTabIndex;
+  late final ScrollController _scrollController;
 
   @override
   void initState() {
     super.initState();
     _activeTabIndex = widget.initialTab.clamp(0, 1);
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void _switchTab(int index) {
@@ -34,6 +42,13 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() {
         _activeTabIndex = index;
       });
+      if (_scrollController.hasClients && _scrollController.offset > 0) {
+        _scrollController.animateTo(
+          0.0,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+        );
+      }
     }
   }
 
@@ -49,125 +64,130 @@ class _LoginScreenState extends State<LoginScreen> {
         top: false,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final hasKeyboard = MediaQuery.viewInsetsOf(context).bottom > 0;
-            final canScroll =
-                _activeTabIndex == 1 ||
-                hasKeyboard ||
-                constraints.maxHeight < 680;
+            final bottomPadding = MediaQuery.paddingOf(context).bottom;
+            const topHeaderHeight = 215.0; // Header arch height
+            const welcomeSectionHeight = 105.0; // Padding, titles, and spacing
+            const topSpacing = 30.0;
+            const totalTopHeight =
+                topHeaderHeight + welcomeSectionHeight + topSpacing;
+            final minSheetHeight = (constraints.maxHeight - totalTopHeight)
+                .clamp(0.0, double.infinity);
 
             return SingleChildScrollView(
-              physics: canScroll
-                  ? const ClampingScrollPhysics()
-                  : const NeverScrollableScrollPhysics(),
+              controller: _scrollController,
+              physics: const ClampingScrollPhysics(),
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: IntrinsicHeight(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // TOP HEADER: CURVED ARCH WITH HAJI PHOTO
-                      _CurvedArchHeader(colors: colors),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // TOP HEADER: CURVED ARCH WITH HAJI PHOTO
+                    _CurvedArchHeader(colors: colors),
 
-                      // WELCOME HEADLINE & SUBTITLE
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.screenEdgeGutter,
-                        ),
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 20),
-                            Text(
-                              context.tr('auth.welcomeTitleClean'),
+                    // WELCOME HEADLINE & SUBTITLE
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.screenEdgeGutter,
+                      ),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 20),
+                          Text(
+                            context.tr('auth.welcomeTitleClean'),
+                            textAlign: TextAlign.center,
+                            style: context.text.displayLarge.copyWith(
+                              color: colors.textPrimary,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 250),
+                            child: Text(
+                              _activeTabIndex == 0
+                                  ? context.tr('auth.welcomeSubtitleClean')
+                                  : context.tr('auth.registerSubtitleClean'),
+                              key: ValueKey<int>(_activeTabIndex),
                               textAlign: TextAlign.center,
-                              style: context.text.displayLarge.copyWith(
-                                color: colors.textPrimary,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.5,
+                              style: context.text.bodySmall.copyWith(
+                                color: colors.textSecondary,
+                                height: 1.45,
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 250),
-                              child: Text(
-                                _activeTabIndex == 0
-                                    ? context.tr('auth.welcomeSubtitleClean')
-                                    : context.tr('auth.registerSubtitleClean'),
-                                key: ValueKey<int>(_activeTabIndex),
-                                textAlign: TextAlign.center,
-                                style: context.text.bodySmall.copyWith(
-                                  color: colors.textSecondary,
-                                  height: 1.45,
-                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    // SHEET-STYLE FORM CONTAINER
+                    // Uses minHeight to gracefully touch the bottom on short content
+                    // while expanding unconstrained when content is taller, preventing RenderFlex overflow.
+                    ConstrainedBox(
+                      constraints: BoxConstraints(minHeight: minSheetHeight),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: colors.surface,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(36),
+                          ),
+                          border: Border(
+                            top: BorderSide(color: colors.border, width: 1.5),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: colors.shadow,
+                              blurRadius: 24,
+                              offset: const Offset(0, -6),
+                            ),
+                          ],
+                        ),
+                        padding: EdgeInsets.fromLTRB(
+                          24,
+                          26,
+                          24,
+                          bottomPadding + 28,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Tab Pill Switcher (Sign In vs Sign Up)
+                            _TabPillSwitcher(
+                              selectedIndex: _activeTabIndex,
+                              onTabChanged: _switchTab,
+                              colors: colors,
+                            ),
+
+                            const SizedBox(height: 24),
+
+                            // Tab Form Views (Animated)
+                            AnimatedCrossFade(
+                              firstChild: _SignInForm(
+                                controller: loginController,
+                                onSwitchToRegister: () => _switchTab(1),
+                                colors: colors,
                               ),
+                              secondChild: _SignUpForm(
+                                controller: registerController,
+                                loginController: loginController,
+                                onSwitchToLogin: () => _switchTab(0),
+                                colors: colors,
+                              ),
+                              crossFadeState: _activeTabIndex == 0
+                                  ? CrossFadeState.showFirst
+                                  : CrossFadeState.showSecond,
+                              duration: const Duration(milliseconds: 250),
+                              sizeCurve: Curves.easeInOut,
                             ),
                           ],
                         ),
                       ),
-
-                      const SizedBox(height: 30),
-
-                      // SHEET-STYLE FORM CONTAINER
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: colors.surface,
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(36),
-                            ),
-                            border: Border(
-                              top: BorderSide(color: colors.border, width: 1.5),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: colors.shadow,
-                                blurRadius: 24,
-                                offset: const Offset(0, -6),
-                              ),
-                            ],
-                          ),
-                          padding: EdgeInsets.fromLTRB(
-                            24,
-                            26,
-                            24,
-                            MediaQuery.paddingOf(context).bottom + 28,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              // Tab Pill Switcher (Sign In vs Sign Up)
-                              _TabPillSwitcher(
-                                selectedIndex: _activeTabIndex,
-                                onTabChanged: _switchTab,
-                                colors: colors,
-                              ),
-
-                              const SizedBox(height: 24),
-
-                              // Tab Form Views (Animated)
-                              AnimatedCrossFade(
-                                firstChild: _SignInForm(
-                                  controller: loginController,
-                                  onSwitchToRegister: () => _switchTab(1),
-                                  colors: colors,
-                                ),
-                                secondChild: _SignUpForm(
-                                  controller: registerController,
-                                  loginController: loginController,
-                                  onSwitchToLogin: () => _switchTab(0),
-                                  colors: colors,
-                                ),
-                                crossFadeState: _activeTabIndex == 0
-                                    ? CrossFadeState.showFirst
-                                    : CrossFadeState.showSecond,
-                                duration: const Duration(milliseconds: 250),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -457,9 +477,7 @@ class _SignInForm extends StatelessWidget {
         // Email
         Text(
           context.tr('auth.email'),
-          style: context.text.labelLarge.copyWith(
-            color: colors.textPrimary,
-          ),
+          style: context.text.labelLarge.copyWith(color: colors.textPrimary),
         ),
         const SizedBox(height: 8),
 
@@ -479,9 +497,7 @@ class _SignInForm extends StatelessWidget {
         // Password
         Text(
           context.tr('auth.password'),
-          style: context.text.labelLarge.copyWith(
-            color: colors.textPrimary,
-          ),
+          style: context.text.labelLarge.copyWith(color: colors.textPrimary),
         ),
         const SizedBox(height: 8),
 
@@ -526,10 +542,7 @@ class _SignInForm extends StatelessWidget {
                   onChanged: (val) => controller.setRememberMe(val ?? true),
                   activeColor: colors.primary,
                   checkColor: colors.onPrimary,
-                  side: BorderSide(
-                    color: colors.borderStrong,
-                    width: 1.5,
-                  ),
+                  side: BorderSide(color: colors.borderStrong, width: 1.5),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(4),
                   ),
@@ -658,9 +671,7 @@ class _SignUpForm extends StatelessWidget {
         // Role Selector (Compact)
         Text(
           context.tr('auth.registerAs'),
-          style: context.text.labelLarge.copyWith(
-            color: colors.textPrimary,
-          ),
+          style: context.text.labelLarge.copyWith(color: colors.textPrimary),
         ),
         const SizedBox(height: 8),
 
@@ -697,9 +708,7 @@ class _SignUpForm extends StatelessWidget {
         // Full Name
         Text(
           context.tr('fullNameLabel'),
-          style: context.text.labelLarge.copyWith(
-            color: colors.textPrimary,
-          ),
+          style: context.text.labelLarge.copyWith(color: colors.textPrimary),
         ),
         const SizedBox(height: 8),
 
@@ -765,9 +774,7 @@ class _SignUpForm extends StatelessWidget {
         // Active Email
         Text(
           context.tr('auth.activeEmail'),
-          style: context.text.labelLarge.copyWith(
-            color: colors.textPrimary,
-          ),
+          style: context.text.labelLarge.copyWith(color: colors.textPrimary),
         ),
         const SizedBox(height: 8),
 
@@ -787,9 +794,7 @@ class _SignUpForm extends StatelessWidget {
         // Password
         Text(
           context.tr('auth.password'),
-          style: context.text.labelLarge.copyWith(
-            color: colors.textPrimary,
-          ),
+          style: context.text.labelLarge.copyWith(color: colors.textPrimary),
         ),
         const SizedBox(height: 8),
 
@@ -824,9 +829,7 @@ class _SignUpForm extends StatelessWidget {
 
         Text(
           context.tr('auth.passwordMin6Desc'),
-          style: context.text.labelSmall.copyWith(
-            color: colors.textSecondary,
-          ),
+          style: context.text.labelSmall.copyWith(color: colors.textSecondary),
         ),
 
         const SizedBox(height: 22),
@@ -975,11 +978,7 @@ class _RoleChoiceCard extends StatelessWidget {
               ),
             ),
             if (isSelected)
-              Icon(
-                Icons.check_circle_rounded,
-                size: 16,
-                color: colors.primary,
-              ),
+              Icon(Icons.check_circle_rounded, size: 16, color: colors.primary),
           ],
         ),
       ),

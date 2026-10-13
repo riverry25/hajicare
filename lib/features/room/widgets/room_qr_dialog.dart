@@ -6,6 +6,8 @@ import '../../../core/services/app_alert_service.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/theme_context.dart';
+import '../../../core/widgets/haji_dialog_hero_header.dart';
+import '../../../core/widgets/haji_transparent_dialog.dart';
 import '../../../core/widgets/ribbon_fold_painter.dart';
 import '../models/room_model.dart';
 
@@ -373,9 +375,7 @@ class RoomQrDialog extends StatelessWidget {
     }
 
     // ── Dialog Mode (Adaptive Floating Design matching Reference Image) ────
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
+    return HajiTransparentDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 390, maxHeight: 630),
@@ -563,98 +563,13 @@ class RoomQrDialog extends StatelessWidget {
               top: 0,
               left: 22,
               right: 22,
-              height: 86,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: hc.heroGradient,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: hc.accent.withValues(alpha: 0.4),
-                    width: 1.2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: hc.brandDark.withValues(alpha: 0.35),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Stack(
-                  children: [
-                    Positioned(
-                      top: -15,
-                      right: -15,
-                      child: Container(
-                        width: 70,
-                        height: 70,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: hc.accent.withValues(alpha: 0.12),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: -20,
-                      left: -15,
-                      child: Container(
-                        width: 65,
-                        height: 65,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: hc.accent.withValues(alpha: 0.08),
-                        ),
-                      ),
-                    ),
-                    Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                colors: [
-                                  hc.accent.withValues(alpha: 0.25),
-                                  hc.accent.withValues(alpha: 0.08),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              border: Border.all(
-                                color: hc.accent.withValues(alpha: 0.5),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Center(
-                              child: Icon(
-                                Icons.qr_code_2_rounded,
-                                color: hc.accent,
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            context.tr('room.qrCodeGroupHeader'),
-                            style: TextStyle(
-                              color: hc.accent,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 1.1,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+              child: HajiDialogHeroHeader(
+                icon: Icons.qr_code_2_rounded,
+                title: context.tr('room.qrCodeGroupHeader'),
               ),
             ),
 
-            // ── 3. Protruding Ribbon Action Button (No shadow) ──
+            // ── 3. Protruding Ribbon Action Button ──
             Positioned(
               bottom: 0,
               right: 0,
@@ -666,7 +581,11 @@ class RoomQrDialog extends StatelessWidget {
                     right: 0,
                     child: CustomPaint(
                       size: const Size(10, 10),
-                      painter: RibbonFoldPainter(color: hc.brandDark),
+                      painter: RibbonFoldPainter(
+                        color: isDark
+                            ? const Color(0xFF140D08)
+                            : const Color(0xFF1B110B),
+                      ),
                     ),
                   ),
                   Material(
@@ -680,7 +599,7 @@ class RoomQrDialog extends StatelessWidget {
                       ),
                       child: Ink(
                         decoration: BoxDecoration(
-                          color: hc.brand,
+                          color: isDark ? hc.accent : hc.primary,
                           borderRadius: const BorderRadius.only(
                             topLeft: Radius.circular(24),
                             bottomLeft: Radius.circular(24),
@@ -694,16 +613,16 @@ class RoomQrDialog extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.share_rounded,
                               size: 16,
-                              color: Colors.white,
+                              color: isDark ? hc.onPrimary : Colors.white,
                             ),
                             const SizedBox(width: 8),
                             Text(
                               context.tr('room.shareText').toUpperCase(),
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: isDark ? hc.onPrimary : Colors.white,
                                 fontWeight: FontWeight.w900,
                                 fontSize: 13,
                                 letterSpacing: 2,

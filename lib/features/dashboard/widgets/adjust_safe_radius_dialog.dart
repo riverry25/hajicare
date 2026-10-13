@@ -6,7 +6,9 @@ import 'package:get/get.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/theme_context.dart';
-import '../../../core/widgets/ribbon_fold_painter.dart';
+import '../../../core/widgets/haji_dialog_hero_header.dart';
+import '../../../core/widgets/haji_dialog_ribbon_button.dart';
+import '../../../core/widgets/haji_transparent_dialog.dart';
 
 /// Modal dialog for modifying pilgrim safe radius threshold.
 /// Designed to precisely match the visual language of [CreateRoomDialog],
@@ -121,9 +123,7 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
 
     final currentVal = int.tryParse(_radiusCtrl.text.trim());
 
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
+    return HajiTransparentDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 380),
@@ -143,10 +143,7 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
               decoration: BoxDecoration(
                 color: dialogBg,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: hc.borderSubtle,
-                  width: 1,
-                ),
+                border: Border.all(color: hc.borderSubtle, width: 1),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(
@@ -215,7 +212,7 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
                             ),
                             suffixText: context.tr('dashboard.meterUnit'),
                             suffixStyle: TextStyle(
-                              color: hc.brand,
+                              color: isDarkDialog ? hc.accent : hc.primary,
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
                             ),
@@ -240,7 +237,7 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
                             ),
                             focusedBorder: UnderlineInputBorder(
                               borderSide: BorderSide(
-                                color: hc.brand,
+                                color: isDarkDialog ? hc.accent : hc.primary,
                                 width: 1.8,
                               ),
                             ),
@@ -278,7 +275,7 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
                     ),
                     const SizedBox(height: 12),
 
-                    // Quick suggestion chips (Presets)
+                    // Quick suggestion chips (Presets) with high WCAG contrast in Light and Dark mode
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
@@ -301,12 +298,16 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
                                 ),
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? hc.brand
-                                      : hc.sandLight,
+                                      ? (isDarkDialog ? hc.accent : hc.primary)
+                                      : (isDarkDialog
+                                            ? hc.surfaceSand
+                                            : hc.surfaceSubtle),
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
                                     color: isSelected
-                                        ? hc.brand
+                                        ? (isDarkDialog
+                                              ? hc.accent
+                                              : hc.primary)
                                         : hc.borderSubtle,
                                     width: isSelected ? 1.2 : 0.8,
                                   ),
@@ -315,7 +316,9 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
                                   '$preset m',
                                   style: TextStyle(
                                     color: isSelected
-                                        ? hc.onBrand
+                                        ? (isDarkDialog
+                                              ? hc.onPrimary
+                                              : Colors.white)
                                         : hc.textPrimary,
                                     fontSize: 11.5,
                                     fontWeight: isSelected
@@ -367,94 +370,13 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
             ),
 
             // ── 2. Floating Hero Card (Compact header) ───────────────────
-            Positioned(
+            const Positioned(
               top: 0,
               left: 22,
               right: 22,
-              height: 86,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: hc.heroGradient,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: hc.borderSubtle,
-                    width: 1.2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.25),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Stack(
-                  children: [
-                    // Ambient Background Circular Glows
-                    Positioned(
-                      top: -15,
-                      right: -15,
-                      child: Container(
-                        width: 70,
-                        height: 70,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: hc.onBrand.withValues(alpha: 0.12),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: -20,
-                      left: -15,
-                      child: Container(
-                        width: 65,
-                        height: 65,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: hc.onBrand.withValues(alpha: 0.08),
-                        ),
-                      ),
-                    ),
-
-                    // Center Hero Graphic
-                    Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: hc.onBrand.withValues(alpha: 0.2),
-                              border: Border.all(
-                                color: hc.onBrand.withValues(alpha: 0.4),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Center(
-                              child: Icon(
-                                Icons.track_changes_rounded,
-                                color: hc.onBrand,
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'SAFE RADIUS',
-                            style: TextStyle(
-                              color: hc.onBrand,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 1.1,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+              child: HajiDialogHeroHeader(
+                icon: Icons.track_changes_rounded,
+                title: 'SAFE RADIUS',
               ),
             ),
 
@@ -462,66 +384,10 @@ class _AdjustSafeRadiusDialogState extends State<AdjustSafeRadiusDialog> {
             Positioned(
               bottom: 0,
               right: 0,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  // Ribbon fold triangle at the top-right corner
-                  Positioned(
-                    top: -10,
-                    right: 0,
-                    child: CustomPaint(
-                      size: const Size(10, 10),
-                      painter: RibbonFoldPainter(
-                        color: hc.sandDark,
-                      ),
-                    ),
-                  ),
-
-                  // Main Pill Submit Button
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: _isSubmitting ? null : _submit,
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(24),
-                        bottomLeft: Radius.circular(24),
-                        bottomRight: Radius.circular(5),
-                      ),
-                      child: Ink(
-                        decoration: BoxDecoration(
-                          color: hc.brand,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(24),
-                            bottomLeft: Radius.circular(24),
-                            bottomRight: Radius.circular(5),
-                          ),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 26,
-                          vertical: 13.5,
-                        ),
-                        child: _isSubmitting
-                            ? SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: hc.onBrand,
-                                ),
-                              )
-                            : Text(
-                                'SIMPAN RADIUS',
-                                style: TextStyle(
-                                  color: hc.onBrand,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 13,
-                                  letterSpacing: 1.8,
-                                ),
-                              ),
-                      ),
-                    ),
-                  ),
-                ],
+              child: HajiDialogRibbonButton(
+                label: 'SIMPAN RADIUS',
+                isLoading: _isSubmitting,
+                onPressed: _submit,
               ),
             ),
           ],

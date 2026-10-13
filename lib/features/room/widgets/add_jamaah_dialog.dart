@@ -5,7 +5,9 @@ import '../../../core/locales/app_translations.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/theme/theme_context.dart';
 import '../../../core/utils/user_feedback_message.dart';
-import '../../../core/widgets/ribbon_fold_painter.dart';
+import '../../../core/widgets/haji_dialog_hero_header.dart';
+import '../../../core/widgets/haji_dialog_ribbon_button.dart';
+import '../../../core/widgets/haji_transparent_dialog.dart';
 import '../services/room_service.dart';
 
 /// Modern centered modal dialog for Pendamping to add a Jamaah by registered email.
@@ -94,9 +96,7 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
     final headingColor = context.hc.textPrimary;
     final bodyColor = context.hc.textSecondary;
 
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
+    return HajiTransparentDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 390, maxHeight: 560),
@@ -185,7 +185,7 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
                             Icons.mail_outline_rounded,
                             size: 17,
                             color: isDark
-                                ? context.hc.sand
+                                ? context.hc.accent
                                 : context.hc.brandDark,
                           ),
                           prefixIconConstraints: const BoxConstraints(
@@ -272,176 +272,24 @@ class _AddJamaahDialogState extends State<AddJamaahDialog> {
             ),
 
             // ── 2. Floating Hero Card ──
-            Positioned(
+            const Positioned(
               top: 0,
               left: 22,
               right: 22,
-              height: 86,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [context.hc.brandDark, context.hc.brand],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: context.hc.brandAccent.withValues(alpha: 0.4),
-                    width: 1.2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: context.hc.shadowSubtle,
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Stack(
-                  children: [
-                    Positioned(
-                      top: -15,
-                      right: -15,
-                      child: Container(
-                        width: 70,
-                        height: 70,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: context.hc.brandAccent.withValues(alpha: 0.12),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: -20,
-                      left: -15,
-                      child: Container(
-                        width: 65,
-                        height: 65,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: context.hc.brandAccent.withValues(alpha: 0.08),
-                        ),
-                      ),
-                    ),
-                    Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                colors: [
-                                  context.hc.brandAccent.withValues(
-                                    alpha: 0.25,
-                                  ),
-                                  context.hc.brandAccent.withValues(
-                                    alpha: 0.08,
-                                  ),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              border: Border.all(
-                                color: context.hc.brandAccent.withValues(
-                                  alpha: 0.5,
-                                ),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Center(
-                              child: Icon(
-                                Icons.person_add_alt_1_rounded,
-                                color: context.hc.brandAccent,
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'UNDANG JAMAAH',
-                            style: TextStyle(
-                              color: context.hc.sand,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 1.1,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+              child: HajiDialogHeroHeader(
+                icon: Icons.person_add_alt_1_rounded,
+                title: 'UNDANG JAMAAH',
               ),
             ),
 
-            // ── 3. Protruding Ribbon Submit Button (No shadow) ──
+            // ── 3. Protruding Ribbon Submit Button ──
             Positioned(
               bottom: 0,
               right: 0,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Positioned(
-                    top: -10,
-                    right: 0,
-                    child: CustomPaint(
-                      size: const Size(10, 10),
-                      painter: RibbonFoldPainter(
-                        color: isDark
-                            ? const Color(0xFF140D08)
-                            : const Color(0xFF160D07),
-                      ),
-                    ),
-                  ),
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: _isSubmitting ? null : _handleSubmit,
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(24),
-                        bottomLeft: Radius.circular(24),
-                        bottomRight: Radius.circular(5),
-                      ),
-                      child: Ink(
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? context.hc.primaryContainer
-                              : context.hc.brand,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(24),
-                            bottomLeft: Radius.circular(24),
-                            bottomRight: Radius.circular(5),
-                          ),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 28,
-                          vertical: 13.5,
-                        ),
-                        child: _isSubmitting
-                            ? SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: context.hc.onBrand,
-                                ),
-                              )
-                            : Text(
-                                'KIRIM',
-                                style: TextStyle(
-                                  color: context.hc.onBrand,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 13,
-                                  letterSpacing: 2.2,
-                                ),
-                              ),
-                      ),
-                    ),
-                  ),
-                ],
+              child: HajiDialogRibbonButton(
+                label: 'KIRIM',
+                isLoading: _isSubmitting,
+                onPressed: _handleSubmit,
               ),
             ),
           ],

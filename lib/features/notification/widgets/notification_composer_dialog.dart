@@ -9,6 +9,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/theme_context.dart';
 import '../../../core/utils/user_feedback_message.dart';
+import '../../../core/widgets/haji_transparent_dialog.dart';
 import '../services/notification_service.dart';
 
 /// Interactive modal dialog for Admin and Pendamping to compose and send notifications
@@ -277,10 +278,8 @@ class _NotificationComposerDialogState
 
     return PopScope(
       canPop: !_isSending,
-      child: Dialog(
+      child: HajiTransparentDialog(
         key: const Key('notification_composer_dialog'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
         insetPadding: EdgeInsets.symmetric(
           horizontal: horizontalInset,
           vertical: 12,
@@ -483,15 +482,11 @@ class _NotificationComposerDialogState
     final colors = context.hc;
     return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [const Color(0xFF3B281C), const Color(0xFF21160F)]
-              : [colors.primary, const Color(0xFF5B3C28)],
-        ),
+        gradient: colors.dialogHeroGradient,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: colors.accent.withValues(alpha: 0.48)),
+        border: Border.all(
+          color: colors.dialogHeroAccent.withValues(alpha: 0.35),
+        ),
         boxShadow: [
           BoxShadow(
             color: colors.shadow.withValues(alpha: 0.35),
@@ -519,14 +514,14 @@ class _NotificationComposerDialogState
                     height: 42,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: primaryColor.withValues(alpha: 0.16),
+                      color: colors.dialogHeroAccent.withValues(alpha: 0.16),
                       border: Border.all(
-                        color: colors.accent.withValues(alpha: 0.55),
+                        color: colors.dialogHeroAccent.withValues(alpha: 0.55),
                       ),
                     ),
                     child: Icon(
                       Icons.campaign_rounded,
-                      color: colors.accent,
+                      color: colors.dialogHeroAccent,
                       size: 23,
                     ),
                   ),
@@ -534,7 +529,7 @@ class _NotificationComposerDialogState
                   Text(
                     'PESAN UNTUK JAMAAH',
                     style: TextStyle(
-                      color: colors.accent,
+                      color: colors.dialogHeroAccent,
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 1.25,

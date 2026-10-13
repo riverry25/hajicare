@@ -208,10 +208,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
               decoration: BoxDecoration(
                 color: bgColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: context.hc.border,
-                  width: 1.0,
-                ),
+                border: Border.all(color: context.hc.border, width: 1.0),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
@@ -425,9 +422,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
         decoration: BoxDecoration(
           color: context.hc.success.withValues(alpha: isDark ? 0.25 : 0.12),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: context.hc.success.withValues(alpha: 0.45),
-          ),
+          border: Border.all(color: context.hc.success.withValues(alpha: 0.45)),
         ),
         child: Text(
           '≤ ${safeRadius.toInt()} m',
@@ -607,9 +602,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
           trailing: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: context.hc.warning.withValues(
-                alpha: isDark ? 0.25 : 0.12,
-              ),
+              color: context.hc.warning.withValues(alpha: isDark ? 0.25 : 0.12),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: context.hc.warning.withValues(alpha: 0.45),
@@ -989,10 +982,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: context.hc.border,
-          width: 1.2,
-        ),
+        border: Border.all(color: context.hc.border, width: 1.2),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
@@ -2050,9 +2040,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
 
     showDialog(
       context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+      builder: (ctx) => HajiTransparentDialog(
         insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         child: ConstrainedBox(
           constraints: BoxConstraints(
@@ -2075,10 +2063,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                 decoration: BoxDecoration(
                   color: context.hc.surface,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: context.hc.border,
-                    width: 1,
-                  ),
+                  border: Border.all(color: context.hc.border, width: 1),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(
@@ -2171,9 +2156,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                             ? context.hc.primary.withValues(
                                                 alpha: 0.18,
                                               )
-                                            : context.hc.textTertiary.withValues(
-                                                alpha: 0.15,
-                                              )),
+                                            : context.hc.textTertiary
+                                                  .withValues(alpha: 0.15)),
                                 ),
                                 child: Icon(
                                   isConnected
@@ -2300,7 +2284,9 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                 height: 38,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: context.hc.danger.withValues(alpha: 0.12),
+                                  color: context.hc.danger.withValues(
+                                    alpha: 0.12,
+                                  ),
                                 ),
                                 child: Icon(
                                   Icons.favorite_rounded,
@@ -2341,7 +2327,8 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                                       style: TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
-                                        color: isConnected && hr != null && hr > 0
+                                        color:
+                                            isConnected && hr != null && hr > 0
                                             ? (hr >= 100
                                                   ? context.hc.warning
                                                   : context.hc.success)
@@ -2881,61 +2868,10 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
                 top: 0,
                 left: 22,
                 right: 22,
-                height: 86,
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: context.hc.heroGradient,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: context.hc.border,
-                      width: 1.2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.25),
-                        blurRadius: 16,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.12),
-                            border: Border.all(
-                              color: context.hc.sandLight.withValues(
-                                alpha: 0.5,
-                              ),
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Center(
-                            child: Icon(
-                              Icons.watch_rounded,
-                              color: context.hc.sandLight,
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'HAJICARE SMARTBAND',
-                          style: TextStyle(
-                            color: context.hc.sandLight,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.1,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                child: HajiDialogHeroHeader(
+                  icon: Icons.watch_rounded,
+                  title: 'HAJICARE SMARTBAND',
+                  onClose: () => Navigator.of(ctx).pop(),
                 ),
               ),
             ],

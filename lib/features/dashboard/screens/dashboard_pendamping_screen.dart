@@ -114,12 +114,12 @@ class DashboardPendampingScreen extends StatelessWidget {
   ) {
     final isDark = context.hc.isDark;
     final prayerCtrl = Get.find<PrayerTimesController>();
-    final heroGradient = context.hc.heroGradient;
+    final dashGradient = context.hc.dashboardHeroGradient;
 
     return Scaffold(
       backgroundColor: context.hc.canvas,
       body: Container(
-        decoration: BoxDecoration(gradient: heroGradient),
+        decoration: BoxDecoration(gradient: dashGradient),
         child: Obx(
           () => SingleChildScrollView(
             physics: const ClampingScrollPhysics(),
@@ -146,6 +146,8 @@ class DashboardPendampingScreen extends StatelessWidget {
     bool isDark,
   ) {
     final topInset = MediaQuery.paddingOf(context).top;
+    final heroFg = context.hc.dashboardHeroOnSurface;
+    final heroAccent = context.hc.dashboardHeroAccent;
 
     final displayName = state.pendampingName.value.isNotEmpty
         ? state.pendampingName.value
@@ -182,26 +184,28 @@ class DashboardPendampingScreen extends StatelessWidget {
           // ── Header row ───────────────────────────────────────────
           Row(
             children: [
-              // Avatar
+              // Avatar (Glassmorphic)
               Container(
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: context.hc.border.withValues(alpha: 0.8),
-                    width: 1.5,
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.18)
+                        : Colors.white.withValues(alpha: 0.85),
+                    width: 1.2,
                   ),
                   color: isDark
-                      ? context.hc.surfaceSand
-                      : Colors.white.withValues(alpha: 0.85),
+                      ? Colors.white.withValues(alpha: 0.10)
+                      : Colors.white.withValues(alpha: 0.65),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(
-                        alpha: isDark ? 0.3 : 0.06,
+                        alpha: isDark ? 0.35 : 0.05,
                       ),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
@@ -209,7 +213,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                   child: Text(
                     initialLetter,
                     style: TextStyle(
-                      color: isDark ? context.hc.accent : context.hc.primary,
+                      color: heroAccent,
                       fontWeight: FontWeight.w800,
                       fontSize: 19,
                     ),
@@ -225,7 +229,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                     Text(
                       "Assalamu'alaikum,",
                       style: TextStyle(
-                        color: context.hc.textSecondary,
+                        color: heroFg.withValues(alpha: 0.72),
                         fontSize: 12.5,
                         fontWeight: FontWeight.w500,
                       ),
@@ -234,7 +238,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                     Text(
                       displayName,
                       style: TextStyle(
-                        color: context.hc.textPrimary,
+                        color: heroFg,
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         letterSpacing: -0.2,
@@ -246,7 +250,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                     Text(
                       '${kloterStr.toLowerCase().startsWith('kloter') ? kloterStr : 'Kloter $kloterStr'} · ${maktabStr.toLowerCase().startsWith('maktab') ? maktabStr : 'Maktab $maktabStr'}',
                       style: TextStyle(
-                        color: context.hc.accentText,
+                        color: heroAccent,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
                       ),
@@ -276,7 +280,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                         Text(
                           '$jamaahCount',
                           style: TextStyle(
-                            color: context.hc.textPrimary,
+                            color: heroFg,
                             fontSize: 42,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 0.5,
@@ -289,7 +293,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                           child: Text(
                             context.tr('room.roleJamaah').toLowerCase(),
                             style: TextStyle(
-                              color: context.hc.textSecondary,
+                              color: heroFg.withValues(alpha: 0.72),
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                             ),
@@ -304,12 +308,10 @@ class DashboardPendampingScreen extends StatelessWidget {
                         vertical: 3.5,
                       ),
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? context.hc.surfaceSand
-                            : Colors.white.withValues(alpha: 0.85),
+                        color: heroFg.withValues(alpha: isDark ? 0.10 : 0.16),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: context.hc.border,
+                          color: heroFg.withValues(alpha: 0.20),
                           width: 1.0,
                         ),
                       ),
@@ -328,7 +330,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                           Text(
                             context.tr('dashboard.monitoredPilgrims'),
                             style: TextStyle(
-                              color: context.hc.textPrimary,
+                              color: heroFg,
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                             ),
@@ -369,7 +371,7 @@ class DashboardPendampingScreen extends StatelessWidget {
           ),
 
           const SizedBox(height: 18),
-          _dashedLine(context.hc.border.withValues(alpha: 0.70)),
+          _dashedLine(heroFg.withValues(alpha: 0.22)),
           const SizedBox(height: 16),
 
           // ── 3 mini metrics ────────────────────────────────────────
@@ -393,20 +395,25 @@ class DashboardPendampingScreen extends StatelessWidget {
 
           const SizedBox(height: 22),
 
-          // ── Dual-action pill ──────────────────────────────────────
+          // ── Dual-action pill (Frosted Glassmorphism) ───────────────
           Container(
             height: 52,
             decoration: BoxDecoration(
               color: isDark
-                  ? context.hc.surfaceSand
-                  : Colors.white.withValues(alpha: 0.85),
+                  ? Colors.white.withValues(alpha: 0.10)
+                  : Colors.white.withValues(alpha: 0.68),
               borderRadius: BorderRadius.circular(26),
-              border: Border.all(color: context.hc.border, width: 1.2),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.18)
+                    : Colors.white.withValues(alpha: 0.88),
+                width: 1.2,
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                  color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
@@ -445,7 +452,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                           children: [
                             Icon(
                               Icons.north_west_rounded,
-                              color: context.hc.textPrimary,
+                              color: context.hc.dashboardHeroOnSurface,
                               size: 16,
                             ),
                             const SizedBox(width: 7),
@@ -456,7 +463,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  color: context.hc.textPrimary,
+                                  color: context.hc.dashboardHeroOnSurface,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -468,7 +475,13 @@ class DashboardPendampingScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                Container(width: 1, height: 24, color: context.hc.border),
+                Container(
+                  width: 1,
+                  height: 24,
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.18)
+                      : context.hc.borderStrong.withValues(alpha: 0.5),
+                ),
                 Expanded(
                   child: Material(
                     color: Colors.transparent,
@@ -804,28 +817,37 @@ class DashboardPendampingScreen extends StatelessWidget {
           height: 44,
           decoration: BoxDecoration(
             color: isDark
-                ? context.hc.surfaceSand
-                : Colors.white.withValues(alpha: 0.85),
+                ? Colors.white.withValues(alpha: 0.10)
+                : Colors.white.withValues(alpha: 0.65),
             shape: BoxShape.circle,
-            border: Border.all(color: context.hc.border, width: 1.0),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.18)
+                  : Colors.white.withValues(alpha: 0.85),
+              width: 1.2,
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
+                color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
               ),
             ],
           ),
-          child: IconButton(
-            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-            padding: EdgeInsets.zero,
-            icon: Icon(
-              Icons.notifications_outlined,
-              color: context.hc.textPrimary,
-              size: 22,
+          child: Material(
+            color: Colors.transparent,
+            shape: const CircleBorder(),
+            child: IconButton(
+              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+              padding: EdgeInsets.zero,
+              icon: Icon(
+                Icons.notifications_outlined,
+                color: context.hc.dashboardHeroOnSurface,
+                size: 22,
+              ),
+              tooltip: context.tr('notificationTooltip'),
+              onPressed: () => Get.toNamed(AppRoutes.notification),
             ),
-            tooltip: context.tr('notificationTooltip'),
-            onPressed: () => Get.toNamed(AppRoutes.notification),
           ),
         ),
         Obx(() {
@@ -839,19 +861,22 @@ class DashboardPendampingScreen extends StatelessWidget {
           final hasSos = state.anySosActive;
           if (unread <= 0 && !hasSos) return const SizedBox.shrink();
           return Positioned(
-            top: 4,
-            right: 4,
+            top: 2,
+            right: 2,
             child: Container(
-              width: 10,
-              height: 10,
+              width: 11,
+              height: 11,
               decoration: BoxDecoration(
                 color: hasSos ? context.hc.danger : context.hc.info,
                 shape: BoxShape.circle,
-                border: Border.all(color: context.hc.primary, width: 1.5),
+                border: Border.all(
+                  color: isDark ? const Color(0xFF1E1510) : Colors.white,
+                  width: 2.0,
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: (hasSos ? context.hc.danger : context.hc.info)
-                        .withValues(alpha: 0.5),
+                        .withValues(alpha: 0.55),
                     blurRadius: 6,
                     spreadRadius: 1,
                   ),
@@ -874,35 +899,44 @@ class DashboardPendampingScreen extends StatelessWidget {
       height: 44,
       decoration: BoxDecoration(
         color: isDark
-            ? context.hc.surfaceSand
-            : Colors.white.withValues(alpha: 0.85),
+            ? Colors.white.withValues(alpha: 0.10)
+            : Colors.white.withValues(alpha: 0.65),
         shape: BoxShape.circle,
-        border: Border.all(color: context.hc.border, width: 1.0),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.18)
+              : Colors.white.withValues(alpha: 0.85),
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
-      child: IconButton(
-        constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-        padding: EdgeInsets.zero,
-        icon: Icon(
-          Icons.campaign_rounded,
-          color: context.hc.textPrimary,
-          size: 22,
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        child: IconButton(
+          constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+          padding: EdgeInsets.zero,
+          icon: Icon(
+            Icons.campaign_rounded,
+            color: context.hc.dashboardHeroOnSurface,
+            size: 22,
+          ),
+          tooltip: context.tr('dashboard.broadcastNotification'),
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            NotificationComposerDialog.show(
+              context,
+              initialRoomId: state.activeRoomId.value,
+              initialRoomName: state.activeRoom.value?.name,
+            );
+          },
         ),
-        tooltip: context.tr('dashboard.broadcastNotification'),
-        onPressed: () {
-          HapticFeedback.lightImpact();
-          NotificationComposerDialog.show(
-            context,
-            initialRoomId: state.activeRoomId.value,
-            initialRoomName: state.activeRoom.value?.name,
-          );
-        },
       ),
     );
   }
@@ -924,22 +958,27 @@ class DashboardPendampingScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
-              height: 29,
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4.5),
+              height: 30,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 4.5,
+              ),
               decoration: BoxDecoration(
                 color: isDark
-                    ? context.hc.surfaceSand
-                    : Colors.white.withValues(alpha: 0.85),
-                borderRadius: BorderRadius.circular(10),
+                    ? Colors.white.withValues(alpha: 0.10)
+                    : Colors.white.withValues(alpha: 0.70),
+                borderRadius: BorderRadius.circular(11),
                 border: Border.all(
-                  color: context.hc.accent.withValues(alpha: 0.50),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.20)
+                      : Colors.white.withValues(alpha: 0.90),
                   width: 1.2,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
+                    color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
@@ -968,14 +1007,14 @@ class DashboardPendampingScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 4),
             Text(
               context.tr('dashboard.signLanguage'),
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: context.hc.textSecondary,
+                color: context.hc.dashboardHeroAccent,
                 fontSize: 11,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -1001,7 +1040,7 @@ class DashboardPendampingScreen extends StatelessWidget {
             value,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: context.hc.textPrimary,
+              color: context.hc.dashboardHeroOnSurface,
               fontSize: 15,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.2,
@@ -1009,14 +1048,14 @@ class DashboardPendampingScreen extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 4),
           Text(
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: context.hc.textSecondary,
+              color: context.hc.dashboardHeroAccent,
               fontSize: 11,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -1704,8 +1743,8 @@ class _PillItem extends StatelessWidget {
     final isSelected = dashboardCtrl.selectedJamaahIndex.value == originalIndex;
 
     final Color pill = hasSos
-        ? AppColors.sosEmergency
-        : (isSep ? AppColors.statusWarning : AppColors.statusSafe);
+        ? context.hc.danger
+        : (isSep ? context.hc.warning : context.hc.success);
 
     final name = j.shortLabel as String? ?? '';
     final fullName = j.name as String? ?? '';
@@ -1729,32 +1768,23 @@ class _PillItem extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? (hasSos
-                    ? (isDark
-                          ? const Color(0xFF4A1010)
-                          : const Color(0xFFFFEBEE))
+                    ? context.hc.dangerContainer
                     : (isDark
-                          ? AppColors.darkPrimaryContainer
-                          : AppColors.canvasCreamSubtle))
-              : pill.withValues(alpha: isDark ? 0.15 : 0.08),
+                          ? context.hc.primaryContainer
+                          : const Color(0xFFF6F0E6)))
+              : (isDark ? context.hc.surfaceSubtle : const Color(0xFFFAF7F2)),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected
-                ? (hasSos
-                      ? AppColors.sosEmergency
-                      : (isDark ? AppColors.goldLight : AppColors.espressoDark))
-                : pill.withValues(alpha: isDark ? 0.38 : 0.28),
-            width: isSelected ? 1.8 : 1.2,
+                ? (hasSos ? context.hc.danger : context.hc.accent)
+                : context.hc.border,
+            width: isSelected ? 1.4 : 1.0,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color:
-                        (hasSos
-                                ? AppColors.sosEmergency
-                                : (isDark
-                                      ? Colors.black
-                                      : AppColors.espressoDark))
-                            .withValues(alpha: hasSos ? 0.4 : 0.16),
+                    color: (hasSos ? context.hc.danger : context.hc.accent)
+                        .withValues(alpha: isDark ? 0.35 : 0.18),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -1787,29 +1817,39 @@ class _PillItem extends StatelessWidget {
               style: TextStyle(
                 color: isSelected
                     ? (hasSos
-                          ? AppColors.sosEmergency
+                          ? context.hc.danger
                           : (isDark
-                                ? AppColors.goldLight
-                                : AppColors.espressoDark))
+                                ? context.hc.accent
+                                : context.hc.textPrimary))
                     : (isDark
-                          ? AppColors.darkTextHeading
-                          : AppColors.espressoDark),
+                          ? context.hc.textPrimary
+                          : context.hc.textSecondary),
                 fontSize: 12.5,
-                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
               ),
             ),
-            const SizedBox(width: 5),
+            const SizedBox(width: 6),
             // Distance badge
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: pill.withValues(alpha: isDark ? 0.22 : 0.14),
+                color: isSelected
+                    ? (hasSos
+                          ? context.hc.danger.withValues(alpha: 0.15)
+                          : context.hc.accent.withValues(alpha: 0.15))
+                    : (isDark
+                          ? context.hc.surfaceSand
+                          : context.hc.surfaceSubtle),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
                 distText,
                 style: TextStyle(
-                  color: pill,
+                  color: isSelected
+                      ? (hasSos ? context.hc.danger : context.hc.accentText)
+                      : (isDark
+                            ? context.hc.textSecondary
+                            : context.hc.textTertiary),
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.1,
@@ -1818,11 +1858,7 @@ class _PillItem extends StatelessWidget {
             ),
             if (hasSos) ...[
               const SizedBox(width: 4),
-              const Icon(
-                Icons.emergency_rounded,
-                color: AppColors.sosEmergency,
-                size: 13,
-              ),
+              Icon(Icons.emergency_rounded, color: context.hc.danger, size: 13),
             ],
           ],
         ),

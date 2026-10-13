@@ -13,6 +13,9 @@ import '../../../core/state/app_startup_controller.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/locales/app_localizations.dart';
 import '../../../core/services/app_alert_service.dart';
+import '../../../core/widgets/haji_transparent_dialog.dart';
+import '../../../core/widgets/haji_dialog_hero_header.dart';
+import '../../../core/widgets/haji_dialog_ribbon_button.dart';
 
 part 'profile_screen_sections.dart';
 part 'profile_screen_components.dart';

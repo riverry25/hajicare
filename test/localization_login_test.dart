@@ -182,5 +182,37 @@ void main() {
       expect(find.text('National ID Number (NIK)'), findsOneWidget);
       expect(find.text('Enter your 16-digit ID number (NIK)'), findsOneWidget);
     });
+
+    testWidgets(
+      'Switching from Register tab to Login tab does not throw RenderFlex overflow',
+      (tester) async {
+        final loc = const Locale('id');
+        final settings = Get.put(AppSettingsController(), permanent: true);
+        await settings.setLocale(loc);
+        LoginBinding().dependencies();
+
+        // Start on Register tab
+        await tester.pumpWidget(
+          _buildTestApp(locale: loc, child: const LoginScreen(initialTab: 1)),
+        );
+        await tester.pumpAndSettle();
+
+        // Find "Masuk" (Sign In) tab pill or text button and tap it
+        final signInTabFinder = find.text('Masuk');
+        expect(signInTabFinder, findsWidgets);
+        await tester.tap(signInTabFinder.first);
+
+        // Pump frame by frame through the crossfade animation
+        await tester.pump(const Duration(milliseconds: 50));
+        expect(tester.takeException(), isNull);
+
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(tester.takeException(), isNull);
+
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+      },
+    );
   });
 }
+
