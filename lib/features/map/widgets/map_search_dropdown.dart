@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import '../../../../core/locales/app_localizations.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/theme_context.dart';
 import '../controllers/map_controller.dart';
 import '../models/map_poi.dart';

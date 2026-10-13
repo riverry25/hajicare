@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hajicare/core/theme/haji_colors.dart';
 import 'package:hajicare/core/theme/theme_context.dart';
 
 /// WCAG 2.x relative contrast ratio between two opaque colors.

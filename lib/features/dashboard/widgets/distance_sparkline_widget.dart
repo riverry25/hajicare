@@ -84,7 +84,7 @@ class _DistanceSparklineWidgetState extends State<DistanceSparklineWidget>
 
   Color _resolveWaveColor(BuildContext context) {
     final d = widget.distance;
-    if (d <= 0) return context.hc.sandLight.withValues(alpha: 0.7);
+    if (d <= 0) return context.hc.textSecondary.withValues(alpha: 0.7);
     if (d < 50) return context.hc.success;
     if (d < 300) return context.hc.accent;
     if (d < 1000) return context.hc.warning;

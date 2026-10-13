@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../core/theme/app_colors.dart';
+import '../../../core/locales/app_localizations.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_sizes.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
-import '../../../core/locales/app_localizations.dart';
+import '../../../core/theme/theme_context.dart';
 import '../controllers/onboarding_controller.dart';
 import '../widgets/onboarding_slide_accessibility.dart';
 import '../widgets/onboarding_slide_language.dart';
@@ -20,10 +19,10 @@ class OnboardingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ctrl = Get.find<OnboardingController>();
-    final isDark = AppColors.isDark(context);
+    final colors = context.hc;
 
     return Scaffold(
-      backgroundColor: AppColors.scaffoldColor(context),
+      backgroundColor: colors.canvas,
       body: SafeArea(
         child: Column(
           children: [
@@ -41,21 +40,15 @@ class OnboardingScreen extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkSurfaceContainer
-                          : AppColors.espressoDark,
+                      color: colors.surface,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: AppColors.goldPrimary.withValues(
-                          alpha: isDark ? 0.7 : 0.5,
-                        ),
+                        color: colors.accent.withValues(alpha: 0.5),
                         width: 1.5,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: isDark
-                              ? Colors.black.withValues(alpha: 0.3)
-                              : AppColors.espressoDark.withValues(alpha: 0.15),
+                          color: colors.shadow,
                           blurRadius: 10,
                           offset: const Offset(0, 3),
                         ),
@@ -67,9 +60,7 @@ class OnboardingScreen extends StatelessWidget {
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => Icon(
                           Icons.mosque_rounded,
-                          color: isDark
-                              ? AppColors.darkPrimary
-                              : AppColors.canvasCream,
+                          color: colors.accent,
                           size: 22,
                         ),
                       ),
@@ -84,8 +75,8 @@ class OnboardingScreen extends StatelessWidget {
                           'HajiCare',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: AppTypography.titleLarge.copyWith(
-                            color: AppColors.textHeadingColor(context),
+                          style: context.text.titleLarge.copyWith(
+                            color: colors.textPrimary,
                             fontWeight: FontWeight.w800,
                             height: 1.1,
                           ),
@@ -95,10 +86,8 @@ class OnboardingScreen extends StatelessWidget {
                           context.tr('appTagline'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: AppTypography.caption.copyWith(
-                            color: isDark
-                                ? AppColors.darkTextBody
-                                : AppColors.tanMedium,
+                          style: context.text.bodySmall.copyWith(
+                            color: colors.textSecondary,
                           ),
                         ),
                       ],
@@ -109,10 +98,8 @@ class OnboardingScreen extends StatelessWidget {
                   TextButton(
                     onPressed: () => ctrl.completeOnboarding(),
                     style: TextButton.styleFrom(
-                      foregroundColor: AppColors.textBodyColor(context),
-                      backgroundColor: isDark
-                          ? AppColors.darkSurfaceContainerHigh
-                          : AppColors.surfaceWhite,
+                      foregroundColor: colors.textSecondary,
+                      backgroundColor: colors.surface,
                       minimumSize: const Size(0, 38),
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppSpacing.md,
@@ -120,15 +107,15 @@ class OnboardingScreen extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                         side: BorderSide(
-                          color: AppColors.cardBorderColor(context),
+                          color: colors.border,
                           width: 1.0,
                         ),
                       ),
                     ),
                     child: Text(
                       context.tr('onboarding.skip'),
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textBodyColor(context),
+                      style: context.text.bodySmall.copyWith(
+                        color: colors.textSecondary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -161,7 +148,7 @@ class OnboardingScreen extends StatelessWidget {
             Obx(
               () => Container(
                 width: double.infinity,
-                color: AppColors.scaffoldColor(context),
+                color: colors.canvas,
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.screenEdgeGutter,
                   AppSpacing.sm,
@@ -185,14 +172,8 @@ class OnboardingScreen extends StatelessWidget {
                           height: 8,
                           decoration: BoxDecoration(
                             color: isActive
-                                ? (isDark
-                                      ? AppColors.accentGoldStar
-                                      : AppColors.espressoDark)
-                                : (isDark
-                                      ? AppColors.darkOutlineVariant
-                                      : AppColors.goldMuted.withValues(
-                                          alpha: 0.5,
-                                        )),
+                                ? colors.primary
+                                : colors.borderStrong,
                             borderRadius: BorderRadius.circular(AppRadius.pill),
                           ),
                         );
@@ -208,12 +189,8 @@ class OnboardingScreen extends StatelessWidget {
                       child: ElevatedButton(
                         onPressed: () => ctrl.nextPage(_totalPages),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: isDark
-                              ? AppColors.darkPrimary
-                              : AppColors.primaryContainer,
-                          foregroundColor: isDark
-                              ? AppColors.darkOnPrimary
-                              : AppColors.surfaceWhite,
+                          backgroundColor: colors.primary,
+                          foregroundColor: colors.onPrimary,
                           elevation: 2,
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.lg,
@@ -235,10 +212,8 @@ class OnboardingScreen extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 textAlign: TextAlign.center,
-                                style: AppTypography.labelLarge.copyWith(
-                                  color: isDark
-                                      ? AppColors.darkOnPrimary
-                                      : AppColors.surfaceWhite,
+                                style: context.text.labelLarge.copyWith(
+                                  color: colors.onPrimary,
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),
@@ -248,19 +223,13 @@ class OnboardingScreen extends StatelessWidget {
                               width: 32,
                               height: 32,
                               decoration: BoxDecoration(
-                                color: isDark
-                                    ? AppColors.darkOnPrimary.withValues(
-                                        alpha: 0.15,
-                                      )
-                                    : Colors.white.withValues(alpha: 0.18),
+                                color: colors.onPrimary.withValues(alpha: 0.18),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
                                 Icons.arrow_forward_rounded,
                                 size: 18,
-                                color: isDark
-                                    ? AppColors.darkOnPrimary
-                                    : Colors.white,
+                                color: colors.onPrimary,
                               ),
                             ),
                           ],
@@ -277,9 +246,7 @@ class OnboardingScreen extends StatelessWidget {
                         Icon(
                           Icons.verified_user_rounded,
                           size: 15,
-                          color: isDark
-                              ? AppColors.accentGoldStar
-                              : AppColors.goldPrimary,
+                          color: colors.accent,
                         ),
                         const SizedBox(width: 6),
                         Flexible(
@@ -291,8 +258,8 @@ class OnboardingScreen extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             textAlign: TextAlign.center,
-                            style: AppTypography.caption.copyWith(
-                              color: AppColors.textBodyColor(context),
+                            style: context.text.bodySmall.copyWith(
+                              color: colors.textSecondary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),

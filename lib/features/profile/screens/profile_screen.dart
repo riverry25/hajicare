@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/profile_controller.dart';
 import '../../../core/routes/app_routes.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_sizes.dart';
+import '../../../core/theme/theme_context.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
 import '../../../core/state/app_settings_controller.dart';
@@ -34,11 +33,12 @@ class ProfileScreen extends StatelessWidget {
       settings.currentTextScale;
       settings.currentLocale;
       {
-        final isDark = AppColors.isDark(context);
-        final scaffoldBg = AppColors.scaffoldColor(context);
-        final cardBg = AppColors.cardBgColor(context);
-        final headingColor = AppColors.textHeadingColor(context);
-        final bodyColor = AppColors.textBodyColor(context);
+        final colors = context.hc;
+        final isDark = context.isDark;
+        final scaffoldBg = colors.canvas;
+        final cardBg = colors.surface;
+        final headingColor = colors.textPrimary;
+        final bodyColor = colors.textSecondary;
 
         return Scaffold(
           backgroundColor: scaffoldBg,
@@ -75,7 +75,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 child: _SettingsGroup(
                   title: context.tr('profile.groupAccountData'),
-                  titleColor: AppColors.tanMedium,
+                  titleColor: colors.textSecondary,
                   cardBg: cardBg,
                   children: [
                     _SettingsTile(
@@ -110,7 +110,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 child: _SettingsGroup(
                   title: context.tr('profile.accessibility'),
-                  titleColor: AppColors.tanMedium,
+                  titleColor: colors.textSecondary,
                   cardBg: cardBg,
                   children: [
                     _SettingsTile(
@@ -135,7 +135,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 child: _SettingsGroup(
                   title: context.tr('profile.preferencesAndDisplay'),
-                  titleColor: AppColors.tanMedium,
+                  titleColor: colors.textSecondary,
                   cardBg: cardBg,
                   children: [
                     _SettingsTile(
@@ -168,7 +168,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 child: _SettingsGroup(
                   title: context.tr('profile.helpAndInfo'),
-                  titleColor: AppColors.tanMedium,
+                  titleColor: colors.textSecondary,
                   cardBg: cardBg,
                   children: [
                     _SettingsTile(

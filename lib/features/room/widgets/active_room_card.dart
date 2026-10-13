@@ -7,7 +7,6 @@ import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/haji_colors.dart';
 import '../../../core/theme/theme_context.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/utils/user_feedback_message.dart';

@@ -13,7 +13,6 @@ import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/theme_context.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/user_feedback_message.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../dashboard/controllers/dashboard_controller.dart';

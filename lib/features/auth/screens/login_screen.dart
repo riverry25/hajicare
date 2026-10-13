@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/locales/app_localizations.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_context.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/pill_button.dart';
 import '../controllers/login_controller.dart';
@@ -42,23 +41,15 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final loginController = Get.find<LoginController>();
     final registerController = Get.find<RegisterController>();
-    final isDark = AppColors.isDark(context);
-
-    // Dominant clean palette in light mode (canvas cream backdrop), elegant warm charcoal in dark mode
-    final scaffoldBg = isDark ? AppColors.darkScaffold : AppColors.canvasCream;
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-    final cardBorder = isDark
-        ? AppColors.darkCardBorder
-        : AppColors.espressoDark.withValues(alpha: 0.10);
+    final colors = context.hc;
 
     return Scaffold(
-      backgroundColor: scaffoldBg,
+      backgroundColor: colors.canvas,
       body: SafeArea(
         top: false,
         child: LayoutBuilder(
           builder: (context, constraints) {
             final hasKeyboard = MediaQuery.viewInsetsOf(context).bottom > 0;
-            // Prevent scrolling on login tab when screen space is adequate and keyboard is closed
             final canScroll =
                 _activeTabIndex == 1 ||
                 hasKeyboard ||
@@ -75,14 +66,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // ============================================================
-                      // TOP HEADER: CURVED ARCH WITH HAJI PHOTO (assets/images/haji.webp)
-                      // ============================================================
-                      _CurvedArchHeader(isDark: isDark),
+                      // TOP HEADER: CURVED ARCH WITH HAJI PHOTO
+                      _CurvedArchHeader(colors: colors),
 
-                      // ============================================================
-                      // WELCOME HEADLINE & SUBTITLE (CLEAN & SPACIOUS)
-                      // ============================================================
+                      // WELCOME HEADLINE & SUBTITLE
                       Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppSpacing.screenEdgeGutter,
@@ -93,8 +80,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             Text(
                               context.tr('auth.welcomeTitleClean'),
                               textAlign: TextAlign.center,
-                              style: AppTypography.displayLarge.copyWith(
-                                color: AppColors.textHeadingColor(context),
+                              style: context.text.displayLarge.copyWith(
+                                color: colors.textPrimary,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: -0.5,
                               ),
@@ -108,8 +95,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                     : context.tr('auth.registerSubtitleClean'),
                                 key: ValueKey<int>(_activeTabIndex),
                                 textAlign: TextAlign.center,
-                                style: AppTypography.bodySmall.copyWith(
-                                  color: AppColors.textSecondaryColor(context),
+                                style: context.text.bodySmall.copyWith(
+                                  color: colors.textSecondary,
                                   height: 1.45,
                                 ),
                               ),
@@ -120,24 +107,20 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 30),
 
-                      // ============================================================
-                      // SHEET-STYLE FORM CONTAINER (Photo 3 reference: Top Curve & Top Border)
-                      // ============================================================
+                      // SHEET-STYLE FORM CONTAINER
                       Expanded(
                         child: Container(
                           decoration: BoxDecoration(
-                            color: cardBg,
+                            color: colors.surface,
                             borderRadius: const BorderRadius.vertical(
                               top: Radius.circular(36),
                             ),
                             border: Border(
-                              top: BorderSide(color: cardBorder, width: 1.5),
+                              top: BorderSide(color: colors.border, width: 1.5),
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.espressoDark.withValues(
-                                  alpha: isDark ? 0.35 : 0.07,
-                                ),
+                                color: colors.shadow,
                                 blurRadius: 24,
                                 offset: const Offset(0, -6),
                               ),
@@ -152,27 +135,27 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              // ── Tab Pill Switcher (Sign In vs Sign Up) ─────────
+                              // Tab Pill Switcher (Sign In vs Sign Up)
                               _TabPillSwitcher(
                                 selectedIndex: _activeTabIndex,
                                 onTabChanged: _switchTab,
-                                isDark: isDark,
+                                colors: colors,
                               ),
 
                               const SizedBox(height: 24),
 
-                              // ── Tab Form Views (Animated) ──────────────────────
+                              // Tab Form Views (Animated)
                               AnimatedCrossFade(
                                 firstChild: _SignInForm(
                                   controller: loginController,
                                   onSwitchToRegister: () => _switchTab(1),
-                                  isDark: isDark,
+                                  colors: colors,
                                 ),
                                 secondChild: _SignUpForm(
                                   controller: registerController,
                                   loginController: loginController,
                                   onSwitchToLogin: () => _switchTab(0),
-                                  isDark: isDark,
+                                  colors: colors,
                                 ),
                                 crossFadeState: _activeTabIndex == 0
                                     ? CrossFadeState.showFirst
@@ -199,9 +182,9 @@ class _LoginScreenState extends State<LoginScreen> {
 // HEADER: SEMICIRCLE / CURVED ARCH CONTAINER WITH REAL HAJI PHOTO
 // =============================================================================
 class _CurvedArchHeader extends StatelessWidget {
-  final bool isDark;
+  final HajiColors colors;
 
-  const _CurvedArchHeader({required this.isDark});
+  const _CurvedArchHeader({required this.colors});
 
   @override
   Widget build(BuildContext context) {
@@ -215,13 +198,10 @@ class _CurvedArchHeader extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.topCenter,
         children: [
-          // ── Curved drop shadow underneath image (replaces border) ──
           CustomPaint(
             size: Size(screenWidth, headerHeight),
-            painter: _CurvedArchShadowPainter(isDark: isDark),
+            painter: _CurvedArchShadowPainter(colors: colors),
           ),
-
-          // ── Semicircle curved photo backdrop (no border) ──
           ClipPath(
             clipper: const _CurvedArchClipper(),
             child: SizedBox(
@@ -230,35 +210,28 @@ class _CurvedArchHeader extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Ka'bah & Pilgrims image blending with header curve
                   Image.asset(
                     'assets/images/haji.webp',
                     fit: BoxFit.cover,
                     alignment: const Alignment(0, -0.2),
                     errorBuilder: (context, error, stackTrace) => Container(
-                      color: isDark
-                          ? AppColors.espressoDark
-                          : AppColors.canvasCream,
-                      child: const Center(
+                      color: colors.canvas,
+                      child: Center(
                         child: Icon(
                           Icons.mosque_rounded,
-                          color: AppColors.goldPrimary,
+                          color: colors.primary,
                           size: 50,
                         ),
                       ),
                     ),
                   ),
-
-                  // Atmospheric gradient overlay for contrast & elegance
                   DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
                           Colors.black.withValues(alpha: 0.35),
                           Colors.black.withValues(alpha: 0.05),
-                          isDark
-                              ? AppColors.darkScaffold.withValues(alpha: 0.55)
-                              : Colors.black.withValues(alpha: 0.30),
+                          colors.canvas.withValues(alpha: 0.50),
                         ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
@@ -269,8 +242,6 @@ class _CurvedArchHeader extends StatelessWidget {
               ),
             ),
           ),
-
-          // Top-left floating HajiCare circular icon (brand mark only)
           Positioned(
             top: MediaQuery.paddingOf(context).top > 0
                 ? MediaQuery.paddingOf(context).top + 8
@@ -281,16 +252,14 @@ class _CurvedArchHeader extends StatelessWidget {
               height: 40,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isDark
-                    ? AppColors.darkSurface.withValues(alpha: 0.88)
-                    : Colors.white.withValues(alpha: 0.95),
+                color: colors.surface.withValues(alpha: 0.92),
                 border: Border.all(
-                  color: AppColors.goldPrimary.withValues(alpha: 0.5),
+                  color: colors.accent.withValues(alpha: 0.5),
                   width: 1.2,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.18),
+                    color: colors.shadow,
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
@@ -301,10 +270,10 @@ class _CurvedArchHeader extends StatelessWidget {
                 child: Image.asset(
                   'assets/icon.jpeg',
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => const Icon(
+                  errorBuilder: (context, error, stackTrace) => Icon(
                     Icons.mosque_rounded,
                     size: 20,
-                    color: AppColors.goldPrimary,
+                    color: colors.accent,
                   ),
                 ),
               ),
@@ -341,37 +310,30 @@ class _CurvedArchClipper extends CustomClipper<Path> {
 }
 
 class _CurvedArchShadowPainter extends CustomPainter {
-  final bool isDark;
+  final HajiColors colors;
 
-  const _CurvedArchShadowPainter({required this.isDark});
+  const _CurvedArchShadowPainter({required this.colors});
 
   @override
   void paint(Canvas canvas, Size size) {
     final path = _CurvedArchClipper.getArchPath(size);
+    final shadowColor = colors.shadow;
 
-    final shadowColor = isDark
-        ? Colors.black.withValues(alpha: 0.55)
-        : AppColors.espressoDark.withValues(alpha: 0.16);
-
-    // Multi-layered shadow for rich natural depth underneath the curve
-    // Layer 1: Ambient soft blur spreading underneath
     final ambientPaint = Paint()
       ..color = shadowColor
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16);
 
     canvas.drawPath(path.shift(const Offset(0, 6)), ambientPaint);
 
-    // Layer 2: Deeper contact shadow right at the curve edge
     final contactPaint = Paint()
-      ..color = shadowColor.withValues(alpha: isDark ? 0.35 : 0.10)
+      ..color = shadowColor.withValues(alpha: 0.12)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
 
     canvas.drawPath(path.shift(const Offset(0, 2)), contactPaint);
   }
 
   @override
-  bool shouldRepaint(covariant _CurvedArchShadowPainter oldDelegate) =>
-      oldDelegate.isDark != isDark;
+  bool shouldRepaint(covariant _CurvedArchShadowPainter oldDelegate) => false;
 }
 
 // =============================================================================
@@ -380,31 +342,23 @@ class _CurvedArchShadowPainter extends CustomPainter {
 class _TabPillSwitcher extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onTabChanged;
-  final bool isDark;
+  final HajiColors colors;
 
   const _TabPillSwitcher({
     required this.selectedIndex,
     required this.onTabChanged,
-    required this.isDark,
+    required this.colors,
   });
 
   @override
   Widget build(BuildContext context) {
-    final pillBg = isDark
-        ? AppColors.darkSurfaceContainerHighest
-        : const Color(0xFFF4EFEA);
-
     return Container(
       height: 48,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: pillBg,
+        color: colors.surfaceSand,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(
-          color: isDark
-              ? AppColors.darkCardBorder
-              : AppColors.canvasCreamSubtle,
-        ),
+        border: Border.all(color: colors.border),
       ),
       child: Row(
         children: [
@@ -413,7 +367,7 @@ class _TabPillSwitcher extends StatelessWidget {
               title: context.tr('auth.tabSignIn'),
               isSelected: selectedIndex == 0,
               onTap: () => onTabChanged(0),
-              isDark: isDark,
+              colors: colors,
             ),
           ),
           const SizedBox(width: 4),
@@ -422,7 +376,7 @@ class _TabPillSwitcher extends StatelessWidget {
               title: context.tr('auth.tabSignUp'),
               isSelected: selectedIndex == 1,
               onTap: () => onTabChanged(1),
-              isDark: isDark,
+              colors: colors,
             ),
           ),
         ],
@@ -435,22 +389,20 @@ class _TabButton extends StatelessWidget {
   final String title;
   final bool isSelected;
   final VoidCallback onTap;
-  final bool isDark;
+  final HajiColors colors;
 
   const _TabButton({
     required this.title,
     required this.isSelected,
     required this.onTap,
-    required this.isDark,
+    required this.colors,
   });
 
   @override
   Widget build(BuildContext context) {
-    final activeBg = isDark ? AppColors.goldPrimary : AppColors.espressoDark;
-    final activeText = isDark ? AppColors.espressoDark : Colors.white;
-    final inactiveText = isDark
-        ? AppColors.darkTextBody.withValues(alpha: 0.7)
-        : AppColors.textMuted;
+    final activeBg = colors.primary;
+    final activeText = colors.onPrimary;
+    final inactiveText = colors.textSecondary;
 
     return GestureDetector(
       onTap: onTap,
@@ -464,9 +416,7 @@ class _TabButton extends StatelessWidget {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppColors.espressoDark.withValues(
-                      alpha: isDark ? 0.2 : 0.1,
-                    ),
+                    color: colors.shadow,
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -475,7 +425,7 @@ class _TabButton extends StatelessWidget {
         ),
         child: Text(
           title,
-          style: AppTypography.bodySmall.copyWith(
+          style: context.text.bodySmall.copyWith(
             color: isSelected ? activeText : inactiveText,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
           ),
@@ -491,12 +441,12 @@ class _TabButton extends StatelessWidget {
 class _SignInForm extends StatelessWidget {
   final LoginController controller;
   final VoidCallback onSwitchToRegister;
-  final bool isDark;
+  final HajiColors colors;
 
   const _SignInForm({
     required this.controller,
     required this.onSwitchToRegister,
-    required this.isDark,
+    required this.colors,
   });
 
   @override
@@ -507,8 +457,8 @@ class _SignInForm extends StatelessWidget {
         // Email
         Text(
           context.tr('auth.email'),
-          style: AppTypography.labelLarge.copyWith(
-            color: AppColors.textHeadingColor(context),
+          style: context.text.labelLarge.copyWith(
+            color: colors.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -517,9 +467,9 @@ class _SignInForm extends StatelessWidget {
           controller: controller.emailController,
           hintText: context.tr('auth.emailHint'),
           keyboardType: TextInputType.emailAddress,
-          prefixIcon: const Icon(
+          prefixIcon: Icon(
             Icons.mail_outline_rounded,
-            color: AppColors.tanMedium,
+            color: colors.accent,
             size: 20,
           ),
         ),
@@ -529,8 +479,8 @@ class _SignInForm extends StatelessWidget {
         // Password
         Text(
           context.tr('auth.password'),
-          style: AppTypography.labelLarge.copyWith(
-            color: AppColors.textHeadingColor(context),
+          style: context.text.labelLarge.copyWith(
+            color: colors.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -540,9 +490,9 @@ class _SignInForm extends StatelessWidget {
             controller: controller.passwordController,
             hintText: context.tr('auth.passwordHint'),
             obscureText: controller.obscurePassword.value,
-            prefixIcon: const Icon(
+            prefixIcon: Icon(
               Icons.lock_outline_rounded,
-              color: AppColors.tanMedium,
+              color: colors.accent,
               size: 20,
             ),
             suffixIcon: IconButton(
@@ -554,7 +504,7 @@ class _SignInForm extends StatelessWidget {
                 controller.obscurePassword.value
                     ? Icons.visibility_outlined
                     : Icons.visibility_off_outlined,
-                color: AppColors.textBody,
+                color: colors.textSecondary,
                 size: 20,
               ),
               onPressed: controller.togglePasswordVisibility,
@@ -574,12 +524,10 @@ class _SignInForm extends StatelessWidget {
                 child: Checkbox(
                   value: controller.rememberMe.value,
                   onChanged: (val) => controller.setRememberMe(val ?? true),
-                  activeColor: isDark
-                      ? AppColors.goldPrimary
-                      : AppColors.espressoDark,
-                  checkColor: isDark ? AppColors.espressoDark : Colors.white,
+                  activeColor: colors.primary,
+                  checkColor: colors.onPrimary,
                   side: BorderSide(
-                    color: isDark ? AppColors.goldLight : AppColors.tanMedium,
+                    color: colors.borderStrong,
                     width: 1.5,
                   ),
                   shape: RoundedRectangleBorder(
@@ -597,8 +545,8 @@ class _SignInForm extends StatelessWidget {
                   context.tr('auth.rememberMe'),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.caption.copyWith(
-                    color: AppColors.textSecondaryColor(context),
+                  style: context.text.labelSmall.copyWith(
+                    color: colors.textSecondary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -611,8 +559,8 @@ class _SignInForm extends StatelessWidget {
               ),
               child: Text(
                 context.tr('auth.forgotPassword'),
-                style: AppTypography.captionSmall.copyWith(
-                  color: isDark ? AppColors.goldAccent : AppColors.espressoDark,
+                style: context.text.labelSmall.copyWith(
+                  color: colors.accentText,
                   fontWeight: FontWeight.w700,
                   decoration: TextDecoration.underline,
                 ),
@@ -632,25 +580,22 @@ class _SignInForm extends StatelessWidget {
                   ? context.tr('auth.loginLoading')
                   : context.tr('auth.loginBtn'),
               icon: Icons.arrow_forward_rounded,
-              color: isDark ? AppColors.goldPrimary : AppColors.espressoDark,
-              textColor: isDark
-                  ? AppColors.espressoDark
-                  : AppColors.surfaceWhite,
+              color: colors.primary,
+              textColor: colors.onPrimary,
               onPressed: controller.isLoading.value ? null : controller.login,
             ),
           ),
         ),
 
-        // Centered Spacing between Login Button and Google Sign-In
         const SizedBox(height: 14),
 
         // Centered Divider
-        _DividerWithText(text: context.tr('auth.orDivider'), isDark: isDark),
+        _DividerWithText(text: context.tr('auth.orDivider'), colors: colors),
 
         const SizedBox(height: 14),
 
         // Google Sign-In Button
-        _GoogleSignInButton(controller: controller, isDark: isDark),
+        _GoogleSignInButton(controller: controller, colors: colors),
 
         const SizedBox(height: 16),
 
@@ -664,21 +609,17 @@ class _SignInForm extends StatelessWidget {
                 textAlign: TextAlign.center,
                 text: TextSpan(
                   text: '${context.tr('auth.noAccount')} ',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textSecondaryColor(context),
+                  style: context.text.bodySmall.copyWith(
+                    color: colors.textSecondary,
                   ),
                   children: [
                     TextSpan(
                       text: context.tr('auth.registerNow'),
-                      style: AppTypography.bodySmall.copyWith(
-                        color: isDark
-                            ? AppColors.goldAccent
-                            : AppColors.espressoDark,
+                      style: context.text.bodySmall.copyWith(
+                        color: colors.accentText,
                         fontWeight: FontWeight.w800,
                         decoration: TextDecoration.underline,
-                        decorationColor: isDark
-                            ? AppColors.goldAccent
-                            : AppColors.goldPrimary,
+                        decorationColor: colors.accent,
                         decorationThickness: 1.5,
                       ),
                     ),
@@ -700,13 +641,13 @@ class _SignUpForm extends StatelessWidget {
   final RegisterController controller;
   final LoginController loginController;
   final VoidCallback onSwitchToLogin;
-  final bool isDark;
+  final HajiColors colors;
 
   const _SignUpForm({
     required this.controller,
     required this.loginController,
     required this.onSwitchToLogin,
-    required this.isDark,
+    required this.colors,
   });
 
   @override
@@ -717,8 +658,8 @@ class _SignUpForm extends StatelessWidget {
         // Role Selector (Compact)
         Text(
           context.tr('auth.registerAs'),
-          style: AppTypography.labelLarge.copyWith(
-            color: AppColors.textHeadingColor(context),
+          style: context.text.labelLarge.copyWith(
+            color: colors.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -733,7 +674,7 @@ class _SignUpForm extends StatelessWidget {
                   icon: Icons.person_outline_rounded,
                   isSelected: controller.selectedRole.value == 'jamaah',
                   onTap: () => controller.setRole('jamaah'),
-                  isDark: isDark,
+                  colors: colors,
                 ),
               ),
               const SizedBox(width: 10),
@@ -744,7 +685,7 @@ class _SignUpForm extends StatelessWidget {
                   icon: Icons.health_and_safety_outlined,
                   isSelected: controller.selectedRole.value == 'pendamping',
                   onTap: () => controller.setRole('pendamping'),
-                  isDark: isDark,
+                  colors: colors,
                 ),
               ),
             ],
@@ -756,8 +697,8 @@ class _SignUpForm extends StatelessWidget {
         // Full Name
         Text(
           context.tr('fullNameLabel'),
-          style: AppTypography.labelLarge.copyWith(
-            color: AppColors.textHeadingColor(context),
+          style: context.text.labelLarge.copyWith(
+            color: colors.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -765,9 +706,9 @@ class _SignUpForm extends StatelessWidget {
         AppTextField(
           controller: controller.fullNameController,
           hintText: context.tr('auth.fullNameHint'),
-          prefixIcon: const Icon(
+          prefixIcon: Icon(
             Icons.person_outline_rounded,
-            color: AppColors.tanMedium,
+            color: colors.accent,
             size: 20,
           ),
         ),
@@ -783,8 +724,8 @@ class _SignUpForm extends StatelessWidget {
                 context.tr('auth.nikLabel'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.labelLarge.copyWith(
-                  color: AppColors.textHeadingColor(context),
+                style: context.text.labelLarge.copyWith(
+                  color: colors.textPrimary,
                 ),
               ),
             ),
@@ -792,15 +733,13 @@ class _SignUpForm extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.darkSurfaceContainerHighest
-                    : AppColors.canvasCream,
+                color: colors.surfaceSand,
                 borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
               child: Text(
                 context.tr('common.optional'),
-                style: AppTypography.captionSmall.copyWith(
-                  color: AppColors.tanMedium,
+                style: context.text.labelSmall.copyWith(
+                  color: colors.textSecondary,
                   fontWeight: FontWeight.w700,
                   fontSize: 10,
                 ),
@@ -814,9 +753,9 @@ class _SignUpForm extends StatelessWidget {
           controller: controller.nikController,
           hintText: context.tr('auth.nikHint'),
           keyboardType: TextInputType.number,
-          prefixIcon: const Icon(
+          prefixIcon: Icon(
             Icons.badge_outlined,
-            color: AppColors.tanMedium,
+            color: colors.accent,
             size: 20,
           ),
         ),
@@ -826,8 +765,8 @@ class _SignUpForm extends StatelessWidget {
         // Active Email
         Text(
           context.tr('auth.activeEmail'),
-          style: AppTypography.labelLarge.copyWith(
-            color: AppColors.textHeadingColor(context),
+          style: context.text.labelLarge.copyWith(
+            color: colors.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -836,9 +775,9 @@ class _SignUpForm extends StatelessWidget {
           controller: controller.emailController,
           hintText: context.tr('auth.emailHint'),
           keyboardType: TextInputType.emailAddress,
-          prefixIcon: const Icon(
+          prefixIcon: Icon(
             Icons.mail_outline_rounded,
-            color: AppColors.tanMedium,
+            color: colors.accent,
             size: 20,
           ),
         ),
@@ -848,8 +787,8 @@ class _SignUpForm extends StatelessWidget {
         // Password
         Text(
           context.tr('auth.password'),
-          style: AppTypography.labelLarge.copyWith(
-            color: AppColors.textHeadingColor(context),
+          style: context.text.labelLarge.copyWith(
+            color: colors.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -859,9 +798,9 @@ class _SignUpForm extends StatelessWidget {
             controller: controller.passwordController,
             hintText: context.tr('auth.passwordMin6Hint'),
             obscureText: controller.obscurePassword.value,
-            prefixIcon: const Icon(
+            prefixIcon: Icon(
               Icons.lock_outline_rounded,
-              color: AppColors.tanMedium,
+              color: colors.accent,
               size: 20,
             ),
             suffixIcon: IconButton(
@@ -873,7 +812,7 @@ class _SignUpForm extends StatelessWidget {
                 controller.obscurePassword.value
                     ? Icons.visibility_outlined
                     : Icons.visibility_off_outlined,
-                color: AppColors.textBody,
+                color: colors.textSecondary,
                 size: 20,
               ),
               onPressed: controller.togglePasswordVisibility,
@@ -885,8 +824,8 @@ class _SignUpForm extends StatelessWidget {
 
         Text(
           context.tr('auth.passwordMin6Desc'),
-          style: AppTypography.captionSmall.copyWith(
-            color: AppColors.textSecondaryColor(context),
+          style: context.text.labelSmall.copyWith(
+            color: colors.textSecondary,
           ),
         ),
 
@@ -901,10 +840,8 @@ class _SignUpForm extends StatelessWidget {
                   ? context.tr('auth.registering')
                   : context.tr('auth.createAccountNow'),
               icon: Icons.check_circle_outline_rounded,
-              color: isDark ? AppColors.goldPrimary : AppColors.espressoDark,
-              textColor: isDark
-                  ? AppColors.espressoDark
-                  : AppColors.surfaceWhite,
+              color: colors.primary,
+              textColor: colors.onPrimary,
               onPressed: controller.isLoading.value
                   ? null
                   : controller.register,
@@ -912,16 +849,15 @@ class _SignUpForm extends StatelessWidget {
           ),
         ),
 
-        // Centered Spacing between Register Button and Google Sign-In
         const SizedBox(height: 20),
 
         // Centered Divider
-        _DividerWithText(text: context.tr('auth.orDivider'), isDark: isDark),
+        _DividerWithText(text: context.tr('auth.orDivider'), colors: colors),
 
         const SizedBox(height: 20),
 
         // Google Sign-In Button
-        _GoogleSignInButton(controller: loginController, isDark: isDark),
+        _GoogleSignInButton(controller: loginController, colors: colors),
 
         const SizedBox(height: 22),
 
@@ -935,21 +871,17 @@ class _SignUpForm extends StatelessWidget {
                 textAlign: TextAlign.center,
                 text: TextSpan(
                   text: context.tr('auth.alreadyHaveAccount'),
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textSecondaryColor(context),
+                  style: context.text.bodySmall.copyWith(
+                    color: colors.textSecondary,
                   ),
                   children: [
                     TextSpan(
                       text: context.tr('auth.loginNow'),
-                      style: AppTypography.bodySmall.copyWith(
-                        color: isDark
-                            ? AppColors.goldAccent
-                            : AppColors.espressoDark,
+                      style: context.text.bodySmall.copyWith(
+                        color: colors.accentText,
                         fontWeight: FontWeight.w800,
                         decoration: TextDecoration.underline,
-                        decorationColor: isDark
-                            ? AppColors.goldAccent
-                            : AppColors.goldPrimary,
+                        decorationColor: colors.accent,
                         decorationThickness: 1.5,
                       ),
                     ),
@@ -973,7 +905,7 @@ class _RoleChoiceCard extends StatelessWidget {
   final IconData icon;
   final bool isSelected;
   final VoidCallback onTap;
-  final bool isDark;
+  final HajiColors colors;
 
   const _RoleChoiceCard({
     required this.title,
@@ -981,21 +913,15 @@ class _RoleChoiceCard extends StatelessWidget {
     required this.icon,
     required this.isSelected,
     required this.onTap,
-    required this.isDark,
+    required this.colors,
   });
 
   @override
   Widget build(BuildContext context) {
-    final activeBorderColor = isDark
-        ? AppColors.goldPrimary
-        : AppColors.espressoDark;
-    final inactiveBorderColor = isDark
-        ? AppColors.darkCardBorder
-        : AppColors.canvasCreamSubtle;
-    final activeBg = isDark
-        ? AppColors.darkSurfaceContainerHighest
-        : AppColors.canvasCream;
-    final inactiveBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
+    final activeBorderColor = colors.primary;
+    final inactiveBorderColor = colors.border;
+    final activeBg = colors.primaryContainer.withValues(alpha: 0.35);
+    final inactiveBg = colors.surface;
 
     return GestureDetector(
       onTap: onTap,
@@ -1016,9 +942,7 @@ class _RoleChoiceCard extends StatelessWidget {
             Icon(
               icon,
               size: 20,
-              color: isSelected
-                  ? (isDark ? AppColors.goldPrimary : AppColors.espressoDark)
-                  : AppColors.tanMedium,
+              color: isSelected ? colors.primary : colors.accent,
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -1030,8 +954,8 @@ class _RoleChoiceCard extends StatelessWidget {
                     title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.captionSmall.copyWith(
-                      color: AppColors.textHeadingColor(context),
+                    style: context.text.labelSmall.copyWith(
+                      color: colors.textPrimary,
                       fontWeight: isSelected
                           ? FontWeight.w800
                           : FontWeight.w600,
@@ -1042,9 +966,9 @@ class _RoleChoiceCard extends StatelessWidget {
                     subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.captionSmall.copyWith(
+                    style: context.text.labelSmall.copyWith(
                       fontSize: 10,
-                      color: AppColors.textSecondaryColor(context),
+                      color: colors.textSecondary,
                     ),
                   ),
                 ],
@@ -1054,7 +978,7 @@ class _RoleChoiceCard extends StatelessWidget {
               Icon(
                 Icons.check_circle_rounded,
                 size: 16,
-                color: isDark ? AppColors.goldPrimary : AppColors.espressoDark,
+                color: colors.primary,
               ),
           ],
         ),
@@ -1068,22 +992,18 @@ class _RoleChoiceCard extends StatelessWidget {
 // =============================================================================
 class _DividerWithText extends StatelessWidget {
   final String text;
-  final bool isDark;
+  final HajiColors colors;
 
-  const _DividerWithText({required this.text, required this.isDark});
+  const _DividerWithText({required this.text, required this.colors});
 
   @override
   Widget build(BuildContext context) {
-    final dividerColor = isDark
-        ? AppColors.darkCardBorder
-        : AppColors.canvasCreamSubtle;
-
     return Center(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Expanded(child: Divider(color: dividerColor, height: 1)),
+          Expanded(child: Divider(color: colors.border, height: 1)),
           Flexible(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -1092,14 +1012,14 @@ class _DividerWithText extends StatelessWidget {
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.captionSmall.copyWith(
-                  color: AppColors.textSecondaryColor(context),
+                style: context.text.labelSmall.copyWith(
+                  color: colors.textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
           ),
-          Expanded(child: Divider(color: dividerColor, height: 1)),
+          Expanded(child: Divider(color: colors.border, height: 1)),
         ],
       ),
     );
@@ -1111,9 +1031,9 @@ class _DividerWithText extends StatelessWidget {
 // =============================================================================
 class _GoogleSignInButton extends StatelessWidget {
   final LoginController controller;
-  final bool isDark;
+  final HajiColors colors;
 
-  const _GoogleSignInButton({required this.controller, required this.isDark});
+  const _GoogleSignInButton({required this.controller, required this.colors});
 
   @override
   Widget build(BuildContext context) {
@@ -1126,25 +1046,19 @@ class _GoogleSignInButton extends StatelessWidget {
               ? null
               : controller.loginWithGoogle,
           style: OutlinedButton.styleFrom(
-            backgroundColor: isDark
-                ? AppColors.darkSurfaceContainerHighest
-                : AppColors.surfaceWhite,
-            side: BorderSide(
-              color: isDark
-                  ? AppColors.darkCardBorder
-                  : AppColors.canvasCreamSubtle,
-            ),
+            backgroundColor: colors.surface,
+            side: BorderSide(color: colors.border),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.pill),
             ),
           ),
           child: controller.isGoogleLoading.value
-              ? const SizedBox(
+              ? SizedBox(
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2.0,
-                    color: AppColors.goldPrimary,
+                    color: colors.primary,
                   ),
                 )
               : Row(
@@ -1158,8 +1072,8 @@ class _GoogleSignInButton extends StatelessWidget {
                         context.tr('auth.googleSignIn'),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.textHeadingColor(context),
+                        style: context.text.bodySmall.copyWith(
+                          color: colors.textPrimary,
                           fontWeight: FontWeight.w700,
                         ),
                       ),

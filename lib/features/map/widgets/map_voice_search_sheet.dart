@@ -5,7 +5,6 @@ import 'package:speech_to_text/speech_to_text.dart';
 import '../../../../core/locales/app_localizations.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/theme_context.dart';
 
 /// Google Maps-styled Voice Search Bottom Sheet.

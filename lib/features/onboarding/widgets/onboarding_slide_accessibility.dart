@@ -1,9 +1,8 @@
-import '../../../../core/locales/app_localizations.dart';
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/locales/app_localizations.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/theme_context.dart';
 import 'onboarding_hero_banner.dart';
 
 class OnboardingSlideAccessibility extends StatelessWidget {
@@ -13,7 +12,7 @@ class OnboardingSlideAccessibility extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
+    final colors = context.hc;
 
     return Container(
       margin: const EdgeInsets.symmetric(
@@ -22,13 +21,9 @@ class OnboardingSlideAccessibility extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.cardBgColor(context),
+        color: colors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: isDark
-              ? AppColors.darkCardBorder
-              : AppColors.goldLight.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: colors.border),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -47,9 +42,7 @@ class OnboardingSlideAccessibility extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.darkSurfaceContainer
-                    : AppColors.canvasCream.withValues(alpha: .35),
+                color: colors.surfaceSand,
                 borderRadius: BorderRadius.circular(18),
               ),
               child: _buildStepper(
@@ -65,8 +58,8 @@ class OnboardingSlideAccessibility extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             Text(
               context.tr('onboarding.accessIntro'),
-              style: AppTypography.bodySmall.copyWith(
-                color: AppColors.textBodyColor(context),
+              style: context.text.bodySmall.copyWith(
+                color: colors.textSecondary,
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -95,23 +88,17 @@ class OnboardingSlideAccessibility extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.statusPositive.withValues(alpha: .15)
-                    : AppColors.statusPositive.withValues(alpha: .08),
+                color: colors.successContainer.withValues(alpha: .35),
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
-                  color: isDark
-                      ? AppColors.statusPositive.withValues(alpha: .3)
-                      : AppColors.statusPositive.withValues(alpha: .15),
+                  color: colors.success.withValues(alpha: .25),
                 ),
               ),
               child: Row(
                 children: [
                   Icon(
                     Icons.record_voice_over_rounded,
-                    color: isDark
-                        ? AppColors.statusSafe
-                        : AppColors.statusPositive,
+                    color: colors.success,
                   ),
 
                   const SizedBox(width: 12),
@@ -119,8 +106,8 @@ class OnboardingSlideAccessibility extends StatelessWidget {
                   Expanded(
                     child: Text(
                       context.tr('onboarding.ttsReady'),
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textBodyColor(context),
+                      style: context.text.bodySmall.copyWith(
+                        color: colors.textSecondary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -139,7 +126,7 @@ class OnboardingSlideAccessibility extends StatelessWidget {
     required int activeIndex,
     required String label,
   }) {
-    final isDark = AppColors.isDark(context);
+    final colors = context.hc;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm2),
@@ -157,12 +144,8 @@ class OnboardingSlideAccessibility extends StatelessWidget {
                   height: 10,
                   decoration: BoxDecoration(
                     color: isActive
-                        ? (isDark
-                              ? AppColors.accentGoldStar
-                              : AppColors.espressoDark)
-                        : (isDark
-                              ? AppColors.darkOutlineVariant
-                              : AppColors.outlineVariant),
+                        ? colors.primary
+                        : colors.borderStrong,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                 ),
@@ -174,8 +157,8 @@ class OnboardingSlideAccessibility extends StatelessWidget {
             child: Text(
               label,
               textAlign: TextAlign.end,
-              style: AppTypography.captionSmall.copyWith(
-                color: isDark ? AppColors.darkTextBody : AppColors.tanMedium,
+              style: context.text.labelSmall.copyWith(
+                color: colors.textSecondary,
               ),
             ),
           ),
@@ -185,14 +168,12 @@ class OnboardingSlideAccessibility extends StatelessWidget {
   }
 
   Widget _buildAccessibilityHeader(BuildContext context) {
-    final isDark = AppColors.isDark(context);
+    final colors = context.hc;
 
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.darkSurfaceContainer
-            : AppColors.canvasCream.withValues(alpha: .35),
+        color: colors.surfaceSand,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -201,17 +182,13 @@ class OnboardingSlideAccessibility extends StatelessWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.darkSurfaceContainerHighest
-                  : AppColors.surfaceWhite,
+              color: colors.surface,
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.accessibility_new,
               size: 28,
-              color: isDark
-                  ? AppColors.darkPrimary
-                  : AppColors.primaryContainer,
+              color: colors.primary,
             ),
           ),
 
@@ -223,9 +200,9 @@ class OnboardingSlideAccessibility extends StatelessWidget {
               children: [
                 Text(
                   context.tr('onboarding.accessFeaturesHeader'),
-                  style: AppTypography.titleLarge.copyWith(
+                  style: context.text.titleLarge.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textHeadingColor(context),
+                    color: colors.textPrimary,
                   ),
                 ),
 
@@ -233,8 +210,8 @@ class OnboardingSlideAccessibility extends StatelessWidget {
 
                 Text(
                   context.tr('onboarding.accessFeaturesSub'),
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textSecondaryColor(context),
+                  style: context.text.bodySmall.copyWith(
+                    color: colors.textSecondary,
                   ),
                 ),
               ],
@@ -252,23 +229,17 @@ class OnboardingSlideAccessibility extends StatelessWidget {
     required String description,
     String? badgeText,
   }) {
-    final isDark = AppColors.isDark(context);
+    final colors = context.hc;
 
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurfaceContainer : AppColors.surfaceWhite,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: isDark
-              ? AppColors.darkCardBorder
-              : AppColors.goldLight.withValues(alpha: .25),
-        ),
+        border: Border.all(color: colors.border),
         boxShadow: [
           BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: .25)
-                : Colors.black.withValues(alpha: .04),
+            color: colors.shadow,
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -281,17 +252,13 @@ class OnboardingSlideAccessibility extends StatelessWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.darkSurfaceContainerHighest
-                  : AppColors.canvasCream,
+              color: colors.surfaceSand,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(
               icon,
               size: 28,
-              color: isDark
-                  ? AppColors.darkPrimary
-                  : AppColors.primaryContainer,
+              color: colors.primary,
             ),
           ),
 
@@ -308,17 +275,13 @@ class OnboardingSlideAccessibility extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkSurfaceContainerHighest
-                          : AppColors.canvasCream,
+                      color: colors.surfaceSand,
                       borderRadius: BorderRadius.circular(50),
                     ),
                     child: Text(
                       badgeText,
-                      style: AppTypography.captionSmall.copyWith(
-                        color: isDark
-                            ? AppColors.accentGoldStar
-                            : AppColors.textBody,
+                      style: context.text.labelSmall.copyWith(
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
@@ -327,9 +290,9 @@ class OnboardingSlideAccessibility extends StatelessWidget {
 
                 Text(
                   title,
-                  style: AppTypography.titleMedium.copyWith(
+                  style: context.text.titleMedium.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textHeadingColor(context),
+                    color: colors.textPrimary,
                   ),
                 ),
 
@@ -337,8 +300,8 @@ class OnboardingSlideAccessibility extends StatelessWidget {
 
                 Text(
                   description,
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textSecondaryColor(context),
+                  style: context.text.bodySmall.copyWith(
+                    color: colors.textSecondary,
                   ),
                 ),
               ],

@@ -5,12 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/locales/app_localizations.dart';
 import '../../../core/models/jamaah_data.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/theme_context.dart';
 
 /// An enlarged, transparent mini sparkline wave chart button that blends
-/// seamlessly into the hero card background, featuring a glowing Mecca gold
-/// wave with gradient fill matching AppColors.
+/// seamlessly into the hero card background, featuring a glowing desert gold
+/// wave with gradient fill matching White Sand theme.
 ///
 /// Synchronizes visually with the room's live jamaah data (distance & status)
 /// and triggers full location & room synchronization on tap.
@@ -29,7 +28,7 @@ class MiniSparklineButton extends StatefulWidget {
     this.tooltip,
     this.width = 175,
     this.height = 84,
-    this.waveColor = AppColors.accentGoldStar,
+    this.waveColor = const Color(0xFFB08A57),
     this.jamaahList,
     this.animate = true,
   });

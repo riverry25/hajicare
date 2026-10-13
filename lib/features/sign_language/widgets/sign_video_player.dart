@@ -3,10 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
 import '../../../core/locales/app_localizations.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_context.dart';
 import '../controllers/text_to_sign_controller.dart';
 import '../models/sign_video_entry.dart';
 
@@ -18,19 +17,17 @@ class SignVideoPlayerWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-
     return Obx(() {
       final entry = controller.currentEntry.value;
 
       // ── 1. KONDISI BELUM ADA VIDEO DIPILIH ─────────────────────────────────
       if (entry == null) {
-        return _buildEmptyPlaceholder(context, isDark);
+        return _buildEmptyPlaceholder(context);
       }
 
       // ── 2. KONDISI VIDEO REMOTE PERLU DIUNDUH ──────────────────────────────
       if (entry.source == SignVideoSource.remote) {
-        return _buildRemoteDownloadCard(context, entry, isDark);
+        return _buildRemoteDownloadCard(context, entry);
       }
 
       // ── 2.1 JIKA LOCAL CACHED TAPI FILE TIDAK ADA DI DISK (MISAL DIHAPUS DARI CACHE) ──
@@ -46,26 +43,25 @@ class SignVideoPlayerWidget extends StatelessWidget {
               source: SignVideoSource.remote,
               cachedFilePath: null,
             ),
-            isDark,
           );
         }
       }
 
       // ── 3. KONDISI VIDEO SEDANG MEMUAT / INITIALIZING ──────────────────────
       if (!controller.isVideoInitialized.value) {
-        return _buildLoadingCard(context, entry, isDark);
+        return _buildLoadingCard(context, entry);
       }
 
       // ── 4. KONDISI PEMUTAR AKTIF (ASSET / LOCAL CACHED) ────────────────────
-      return _buildActivePlayerCard(context, entry, isDark);
+      return _buildActivePlayerCard(context, entry);
     });
   }
 
   // ── EMPTY STATE ────────────────────────────────────────────────────────────
 
-  Widget _buildEmptyPlaceholder(BuildContext context, bool isDark) {
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
+  Widget _buildEmptyPlaceholder(BuildContext context) {
+    final colors = context.hc;
+    final textTheme = context.text;
 
     return Container(
       width: double.infinity,
@@ -74,11 +70,9 @@ class SignVideoPlayerWidget extends StatelessWidget {
         vertical: AppSpacing.xxl,
       ),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
-        ),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -87,22 +81,20 @@ class SignVideoPlayerWidget extends StatelessWidget {
             width: 72,
             height: 72,
             decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.darkPrimaryContainer
-                  : AppColors.canvasCream,
+              color: colors.surfaceSand,
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.sign_language_rounded,
               size: 36,
-              color: isDark ? AppColors.goldLight : AppColors.goldPrimary,
+              color: colors.accent,
             ),
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
             context.tr('sign.emptyPlayerTitle'),
-            style: AppTypography.titleMedium.copyWith(
-              color: headingColor,
+            style: textTheme.titleMedium.copyWith(
+              color: colors.textPrimary,
               fontWeight: FontWeight.bold,
             ),
             textAlign: TextAlign.center,
@@ -110,7 +102,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             context.tr('sign.emptyPlayerSub'),
-            style: AppTypography.bodySmall.copyWith(color: bodyColor),
+            style: textTheme.bodySmall.copyWith(color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
         ],
@@ -123,19 +115,17 @@ class SignVideoPlayerWidget extends StatelessWidget {
   Widget _buildRemoteDownloadCard(
     BuildContext context,
     SignVideoEntry entry,
-    bool isDark,
   ) {
-    final headingColor = AppColors.textHeadingColor(context);
+    final colors = context.hc;
+    final textTheme = context.text;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.cardPadding),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
-        ),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         children: [
@@ -145,12 +135,12 @@ class SignVideoPlayerWidget extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.goldPrimary.withValues(alpha: 0.15),
+                  color: colors.accent.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.cloud_download_rounded,
-                  color: AppColors.goldPrimary,
+                  color: colors.accent,
                   size: 28,
                 ),
               ),
@@ -161,8 +151,8 @@ class SignVideoPlayerWidget extends StatelessWidget {
                   children: [
                     Text(
                       entry.label,
-                      style: AppTypography.titleLarge.copyWith(
-                        color: headingColor,
+                      style: textTheme.titleLarge.copyWith(
+                        color: colors.textPrimary,
                         fontWeight: FontWeight.bold,
                       ),
                       maxLines: 2,
@@ -173,8 +163,8 @@ class SignVideoPlayerWidget extends StatelessWidget {
                       context.tr('sign.videoInCloud', {
                         'category': entry.category.toUpperCase(),
                       }),
-                      style: AppTypography.captionSmall.copyWith(
-                        color: AppColors.textMuted,
+                      style: textTheme.labelSmall.copyWith(
+                        color: colors.textMuted,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -200,11 +190,9 @@ class SignVideoPlayerWidget extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: progress > 0 ? progress : null,
                       minHeight: 8,
-                      backgroundColor: isDark
-                          ? AppColors.darkSurfaceContainer
-                          : AppColors.canvasCream,
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppColors.goldPrimary,
+                      backgroundColor: colors.surfaceSand,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        colors.accent,
                       ),
                     ),
                   ),
@@ -213,8 +201,8 @@ class SignVideoPlayerWidget extends StatelessWidget {
                     context.tr('sign.downloadingProgress', {
                       'percent': '${(progress * 100).toInt()}',
                     }),
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.goldPrimary,
+                    style: textTheme.bodySmall.copyWith(
+                      color: colors.accent,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -234,8 +222,8 @@ class SignVideoPlayerWidget extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryContainer,
-                  foregroundColor: Colors.white,
+                  backgroundColor: colors.primary,
+                  foregroundColor: colors.onPrimary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
@@ -254,28 +242,28 @@ class SignVideoPlayerWidget extends StatelessWidget {
   Widget _buildLoadingCard(
     BuildContext context,
     SignVideoEntry entry,
-    bool isDark,
   ) {
+    final colors = context.hc;
+    final textTheme = context.text;
+
     return Container(
       width: double.infinity,
       height: 240,
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
-        ),
+        border: Border.all(color: colors.border),
       ),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const CircularProgressIndicator(color: AppColors.goldPrimary),
+            CircularProgressIndicator(color: colors.accent),
             const SizedBox(height: AppSpacing.md),
             Text(
               context.tr('sign.preparingVideoPlayer'),
-              style: AppTypography.bodySmall.copyWith(
-                color: AppColors.textSecondaryColor(context),
+              style: textTheme.bodySmall.copyWith(
+                color: colors.textSecondary,
               ),
             ),
           ],
@@ -289,25 +277,23 @@ class SignVideoPlayerWidget extends StatelessWidget {
   Widget _buildActivePlayerCard(
     BuildContext context,
     SignVideoEntry entry,
-    bool isDark,
   ) {
     final player = controller.playerController;
     if (player == null || !player.value.isInitialized) {
       return const SizedBox.shrink();
     }
 
-    final headingColor = AppColors.textHeadingColor(context);
+    final colors = context.hc;
+    final textTheme = context.text;
     final isPlaying = controller.isVideoPlaying.value;
     final position = controller.videoPosition.value;
     final duration = controller.videoDuration.value;
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.surfaceWhite,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: isDark ? AppColors.darkCardBorder : AppColors.lightCardBorder,
-        ),
+        border: Border.all(color: colors.border),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
@@ -375,11 +361,9 @@ class SignVideoPlayerWidget extends StatelessWidget {
                     overlayShape: const RoundSliderOverlayShape(
                       overlayRadius: 12,
                     ),
-                    activeTrackColor: AppColors.goldPrimary,
-                    inactiveTrackColor: isDark
-                        ? AppColors.darkOutlineVariant
-                        : AppColors.outlineVariant,
-                    thumbColor: AppColors.goldPrimary,
+                    activeTrackColor: colors.accent,
+                    inactiveTrackColor: colors.border,
+                    thumbColor: colors.accent,
                   ),
                   child: Slider(
                     value: position.inMilliseconds
@@ -403,7 +387,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
                         isPlaying
                             ? Icons.pause_rounded
                             : Icons.play_arrow_rounded,
-                        color: headingColor,
+                        color: colors.textPrimary,
                         size: 28,
                       ),
                       onPressed: controller.togglePlayPause,
@@ -414,7 +398,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
                     IconButton(
                       icon: Icon(
                         Icons.replay_rounded,
-                        color: headingColor,
+                        color: colors.textPrimary,
                         size: 22,
                       ),
                       onPressed: controller.replay,
@@ -425,8 +409,8 @@ class SignVideoPlayerWidget extends StatelessWidget {
                     // Duration display (e.g. 00:02 / 00:05)
                     Text(
                       '${_formatDuration(position)} / ${_formatDuration(duration)}',
-                      style: AppTypography.captionSmall.copyWith(
-                        color: AppColors.textMuted,
+                      style: textTheme.labelSmall.copyWith(
+                        color: colors.textMuted,
                         fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),
@@ -436,7 +420,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
             ),
           ),
 
-          const Divider(height: 1),
+          Divider(height: 1, color: colors.border),
 
           // ── Video Meta & Offline Status Footer ─────────────────────────────
           Padding(
@@ -449,8 +433,8 @@ class SignVideoPlayerWidget extends StatelessWidget {
                     children: [
                       Text(
                         entry.label,
-                        style: AppTypography.titleMedium.copyWith(
-                          color: headingColor,
+                        style: textTheme.titleMedium.copyWith(
+                          color: colors.textPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                         maxLines: 2,
@@ -462,8 +446,8 @@ class SignVideoPlayerWidget extends StatelessWidget {
                           'lang': entry.language.toUpperCase(),
                           'category': entry.category.toUpperCase(),
                         }),
-                        style: AppTypography.captionSmall.copyWith(
-                          color: AppColors.textMuted,
+                        style: textTheme.labelSmall.copyWith(
+                          color: colors.textMuted,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -483,24 +467,26 @@ class SignVideoPlayerWidget extends StatelessWidget {
   // ── BADGE STATUS ───────────────────────────────────────────────────────────
 
   Widget _buildSourceBadge(BuildContext context, SignVideoSource source) {
+    final colors = context.hc;
+    final textTheme = context.text;
     Color bg;
     Color fg;
     IconData icon;
 
     switch (source) {
       case SignVideoSource.asset:
-        bg = AppColors.statusSafe.withValues(alpha: 0.15);
-        fg = AppColors.statusSafe;
+        bg = colors.success.withValues(alpha: 0.15);
+        fg = colors.success;
         icon = Icons.offline_pin_rounded;
         break;
       case SignVideoSource.localCached:
-        bg = AppColors.statusSafe.withValues(alpha: 0.15);
-        fg = AppColors.statusSafe;
+        bg = colors.success.withValues(alpha: 0.15);
+        fg = colors.success;
         icon = Icons.check_circle_outline_rounded;
         break;
       case SignVideoSource.remote:
-        bg = AppColors.goldPrimary.withValues(alpha: 0.15);
-        fg = AppColors.goldPrimary;
+        bg = colors.accent.withValues(alpha: 0.15);
+        fg = colors.accent;
         icon = Icons.cloud_download_rounded;
         break;
     }
@@ -519,7 +505,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
           Flexible(
             child: Text(
               _localizedSource(context, source),
-              style: AppTypography.captionSmall.copyWith(
+              style: textTheme.labelSmall.copyWith(
                 color: fg,
                 fontWeight: FontWeight.bold,
                 fontSize: 10,

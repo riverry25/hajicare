@@ -3,8 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:hajicare/core/theme/app_breakpoints.dart';
 import 'package:hajicare/core/theme/app_theme.dart';
-import 'package:hajicare/core/theme/haji_colors.dart';
-import 'package:hajicare/core/theme/theme_context.dart';
 import 'package:hajicare/core/utils/app_dialog.dart';
 
 void main() {
@@ -47,10 +45,7 @@ void main() {
             w.constraints.maxWidth == AppBreakpoints.maxDialogWidth,
       ),
     );
-    expect(
-      dialogContainer.constraints.maxWidth,
-      AppBreakpoints.maxDialogWidth,
-    );
+    expect(dialogContainer.constraints.maxWidth, AppBreakpoints.maxDialogWidth);
   });
 
   testWidgets('AppDialog renders in dark theme without crash or overflow', (

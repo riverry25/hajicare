@@ -362,13 +362,11 @@ class HajiColors extends ThemeExtension<HajiColors> {
       surface: Color.lerp(surface, other.surface, t) ?? surface,
       surfaceSubtle:
           Color.lerp(surfaceSubtle, other.surfaceSubtle, t) ?? surfaceSubtle,
-      surfaceSand:
-          Color.lerp(surfaceSand, other.surfaceSand, t) ?? surfaceSand,
+      surfaceSand: Color.lerp(surfaceSand, other.surfaceSand, t) ?? surfaceSand,
       border: Color.lerp(border, other.border, t) ?? border,
       borderStrong:
           Color.lerp(borderStrong, other.borderStrong, t) ?? borderStrong,
-      textPrimary:
-          Color.lerp(textPrimary, other.textPrimary, t) ?? textPrimary,
+      textPrimary: Color.lerp(textPrimary, other.textPrimary, t) ?? textPrimary,
       textSecondary:
           Color.lerp(textSecondary, other.textSecondary, t) ?? textSecondary,
       textTertiary:
@@ -424,7 +422,8 @@ class HajiColors extends ThemeExtension<HajiColors> {
 
   /// Semantic sand tokens (Desert Sand & Espresso palette)
   Color get sand => surfaceSand;
-  Color get sandLight => isDark ? const Color(0xFF352A21) : const Color(0xFFF6F1EA);
+  Color get sandLight =>
+      isDark ? const Color(0xFFE0D2C3) : const Color(0xFFF6F1EA);
   Color get sandDark => borderStrong;
   Color get surfaceVariant => surfaceSubtle;
   Color get surfaceContainer => surfaceSubtle;
@@ -435,32 +434,43 @@ class HajiColors extends ThemeExtension<HajiColors> {
   Color get brandSecondary => accent;
   Color get brandAccent => accent;
   Color get borderSubtle => border;
-  Color get brandDark => isDark ? const Color(0xFF1F140D) : const Color(0xFF2A1D15);
-  Color get primaryDark => isDark ? const Color(0xFF1F140D) : const Color(0xFF2A1D15);
+  Color get brandDark =>
+      isDark ? const Color(0xFF1F140D) : const Color(0xFF2A1D15);
+  Color get primaryDark =>
+      isDark ? const Color(0xFF1F140D) : const Color(0xFF2A1D15);
   Color get textMuted => textTertiary;
   Color get shadowSubtle => shadow.withValues(alpha: isDark ? 0.4 : 0.08);
   Color get error => danger;
   Color get onError => onDanger;
-  Color get dangerDark => isDark ? const Color(0xFF7A2012) : const Color(0xFF8F2818);
+  Color get dangerDark =>
+      isDark ? const Color(0xFF7A2012) : const Color(0xFF8F2818);
 
   /// Brand gradients
   LinearGradient get heroGradient => LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: isDark
-            ? const [Color(0xFF28201A), Color(0xFF15100C)]
-            : const [Color(0xFF3B2A1F), Color(0xFF2A1D15)],
-      );
+    begin: Alignment.topRight,
+    end: Alignment.bottomCenter,
+    colors: isDark
+        ? const [
+            Color(0xFF2C1E16),
+            Color(0xFF1E1510),
+            Color.fromARGB(255, 36, 26, 19),
+          ]
+        : const [
+            Color.fromARGB(255, 255, 233, 208),
+            Color(0xFFEFE2D1),
+            Color(0xFFFBF9F6),
+          ],
+  );
 
   LinearGradient get dangerGradient => LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [danger, dangerContainer],
-      );
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [danger, dangerContainer],
+  );
 
   LinearGradient get sandGradient => LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [surfaceSubtle, surfaceSand],
-      );
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [surfaceSubtle, surfaceSand],
+  );
 }

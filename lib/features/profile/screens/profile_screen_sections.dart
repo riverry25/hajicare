@@ -2,11 +2,12 @@ part of 'profile_screen.dart';
 
 extension _ProfileScreenSections on ProfileScreen {
   void _showMedicalDataSheet(BuildContext context, HajiCareController? state) {
-    final isDark = AppColors.isDark(context);
-    final cardBg = AppColors.cardBgColor(context);
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+    final colors = context.hc;
+    final isDark = context.isDark;
+    final cardBg = colors.surface;
+    final headingColor = colors.textPrimary;
+    final bodyColor = colors.textSecondary;
+    final primaryColor = colors.primary;
     final profileCtrl = Get.find<ProfileController>();
 
     showModalBottomSheet(
@@ -32,7 +33,7 @@ extension _ProfileScreenSections on ProfileScreen {
                     height: 5,
                     margin: const EdgeInsets.only(bottom: 16),
                     decoration: BoxDecoration(
-                      color: AppColors.cardBorderColor(context),
+                      color: colors.border,
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                   ),
@@ -43,12 +44,12 @@ extension _ProfileScreenSections on ProfileScreen {
                       width: 42,
                       height: 42,
                       decoration: BoxDecoration(
-                        color: AppColors.sosEmergency.withValues(alpha: 0.12),
+                        color: colors.danger.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.medical_information_rounded,
-                        color: AppColors.sosEmergency,
+                        color: colors.danger,
                         size: 22,
                       ),
                     ),
@@ -59,7 +60,7 @@ extension _ProfileScreenSections on ProfileScreen {
                         children: [
                           Text(
                             context.tr('medical.sheetTitle'),
-                            style: AppTypography.titleMedium.copyWith(
+                            style: context.text.titleMedium.copyWith(
                               color: headingColor,
                               fontWeight: FontWeight.w800,
                             ),
@@ -67,10 +68,8 @@ extension _ProfileScreenSections on ProfileScreen {
                           const SizedBox(height: 2),
                           Text(
                             context.tr('medical.sheetSubtitle'),
-                            style: AppTypography.captionSmall.copyWith(
-                              color: isDark
-                                  ? AppColors.darkTextBody
-                                  : AppColors.textMuted,
+                            style: context.text.labelSmall.copyWith(
+                              color: colors.textSecondary,
                             ),
                           ),
                         ],
@@ -85,12 +84,10 @@ extension _ProfileScreenSections on ProfileScreen {
                     padding: const EdgeInsets.all(AppSpacing.lg),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? AppColors.darkSurfaceContainer
-                          : AppColors.canvasCream,
+                          ? colors.surfaceSubtle
+                          : colors.surfaceSubtle,
                       borderRadius: BorderRadius.circular(AppRadius.lg),
-                      border: Border.all(
-                        color: AppColors.cardBorderColor(context),
-                      ),
+                      border: Border.all(color: colors.border),
                     ),
                     child: Column(
                       children: [
@@ -102,7 +99,7 @@ extension _ProfileScreenSections on ProfileScreen {
                         const SizedBox(height: 10),
                         Text(
                           context.tr('medical.emptyTitle'),
-                          style: AppTypography.titleSmall.copyWith(
+                          style: context.text.titleSmall.copyWith(
                             color: headingColor,
                             fontWeight: FontWeight.bold,
                           ),
@@ -111,7 +108,7 @@ extension _ProfileScreenSections on ProfileScreen {
                         Text(
                           context.tr('medical.emptyDesc'),
                           textAlign: TextAlign.center,
-                          style: AppTypography.captionSmall.copyWith(
+                          style: context.text.labelSmall.copyWith(
                             color: bodyColor,
                             height: 1.4,
                           ),
@@ -126,7 +123,7 @@ extension _ProfileScreenSections on ProfileScreen {
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryColor,
-                        foregroundColor: Colors.white,
+                        foregroundColor: colors.onPrimary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
@@ -138,7 +135,10 @@ extension _ProfileScreenSections on ProfileScreen {
                       icon: const Icon(Icons.edit_note_rounded, size: 20),
                       label: Text(
                         context.tr('medicalFillDataNow'),
-                        style: AppTypography.button,
+                        style: context.text.labelLarge.copyWith(
+                          color: colors.onPrimary,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ),
@@ -147,12 +147,10 @@ extension _ProfileScreenSections on ProfileScreen {
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? AppColors.darkSurfaceContainer
-                          : AppColors.canvasCream,
+                          ? colors.surfaceSubtle
+                          : colors.surfaceSubtle,
                       borderRadius: BorderRadius.circular(AppRadius.lg),
-                      border: Border.all(
-                        color: AppColors.cardBorderColor(context),
-                      ),
+                      border: Border.all(color: colors.border),
                     ),
                     child: Column(
                       children: [
@@ -235,7 +233,10 @@ extension _ProfileScreenSections on ProfileScreen {
                           icon: const Icon(Icons.edit_rounded, size: 18),
                           label: Text(
                             context.tr('profile.editData'),
-                            style: AppTypography.button,
+                            style: context.text.labelLarge.copyWith(
+                              color: primaryColor,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ),
@@ -244,10 +245,10 @@ extension _ProfileScreenSections on ProfileScreen {
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: isDark
-                                ? AppColors.darkPrimaryContainer
-                                : AppColors.espressoDark,
+                                ? colors.surfaceSand
+                                : colors.primary,
                             foregroundColor: isDark
-                                ? AppColors.goldLight
+                                ? colors.accent
                                 : Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(
@@ -259,7 +260,10 @@ extension _ProfileScreenSections on ProfileScreen {
                           onPressed: () => Navigator.of(context).pop(),
                           child: Text(
                             context.tr('close'),
-                            style: AppTypography.button,
+                            style: context.text.labelLarge.copyWith(
+                              color: isDark ? colors.accent : Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ),
@@ -282,23 +286,21 @@ extension _ProfileScreenSections on ProfileScreen {
       context: context,
       useRootNavigator: true,
       barrierDismissible: true,
-      builder: (dialogCtx) => _EditMedicalDialog(
-        profileCtrl: profileCtrl,
-        isDark: AppColors.isDark(context),
-      ),
+      builder: (dialogCtx) =>
+          _EditMedicalDialog(profileCtrl: profileCtrl, isDark: context.isDark),
     );
   }
 
   Widget _buildMedRow(BuildContext context, String label, String value) {
-    final isDark = AppColors.isDark(context);
+    final colors = context.hc;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Expanded(
           child: Text(
             label,
-            style: AppTypography.bodySmall.copyWith(
-              color: isDark ? AppColors.darkTextBody : AppColors.textMuted,
+            style: context.text.bodySmall.copyWith(
+              color: colors.textSecondary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -307,10 +309,8 @@ extension _ProfileScreenSections on ProfileScreen {
         Flexible(
           child: Text(
             value,
-            style: AppTypography.bodySmall.copyWith(
-              color: isDark
-                  ? AppColors.darkTextHeading
-                  : AppColors.espressoDark,
+            style: context.text.bodySmall.copyWith(
+              color: colors.textPrimary,
               fontWeight: FontWeight.w800,
             ),
             textAlign: TextAlign.end,
@@ -324,11 +324,12 @@ extension _ProfileScreenSections on ProfileScreen {
     BuildContext context,
     HajiCareController? state,
   ) {
-    final isDark = AppColors.isDark(context);
-    final cardBg = AppColors.cardBgColor(context);
-    final headingColor = AppColors.textHeadingColor(context);
-    final bodyColor = AppColors.textBodyColor(context);
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primaryGold;
+    final colors = context.hc;
+    final isDark = context.isDark;
+    final cardBg = colors.surface;
+    final headingColor = colors.textPrimary;
+    final bodyColor = colors.textSecondary;
+    final primaryColor = colors.primary;
 
     final hasRoom =
         state?.activeRoomId.value != null &&
@@ -363,7 +364,7 @@ extension _ProfileScreenSections on ProfileScreen {
                   height: 5,
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: AppColors.cardBorderColor(context),
+                    color: colors.border,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                 ),
@@ -374,12 +375,12 @@ extension _ProfileScreenSections on ProfileScreen {
                     width: 42,
                     height: 42,
                     decoration: BoxDecoration(
-                      color: AppColors.goldPrimary.withValues(alpha: 0.15),
+                      color: colors.accent.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.groups_rounded,
-                      color: AppColors.goldPrimary,
+                      color: colors.accent,
                       size: 22,
                     ),
                   ),
@@ -390,7 +391,7 @@ extension _ProfileScreenSections on ProfileScreen {
                       children: [
                         Text(
                           context.tr('profileCompanionSheetTitle'),
-                          style: AppTypography.titleMedium.copyWith(
+                          style: context.text.titleMedium.copyWith(
                             color: headingColor,
                             fontWeight: FontWeight.w800,
                           ),
@@ -400,10 +401,8 @@ extension _ProfileScreenSections on ProfileScreen {
                           hasRoom
                               ? context.tr('profileConnectedToGroup')
                               : context.tr('profileNotConnectedToGroup'),
-                          style: AppTypography.captionSmall.copyWith(
-                            color: isDark
-                                ? AppColors.darkTextBody
-                                : AppColors.textMuted,
+                          style: context.text.labelSmall.copyWith(
+                            color: colors.textSecondary,
                           ),
                         ),
                       ],
@@ -417,13 +416,9 @@ extension _ProfileScreenSections on ProfileScreen {
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.lg),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkSurfaceContainer
-                        : AppColors.canvasCream,
+                    color: isDark ? colors.surfaceSubtle : colors.surfaceSubtle,
                     borderRadius: BorderRadius.circular(AppRadius.lg),
-                    border: Border.all(
-                      color: AppColors.cardBorderColor(context),
-                    ),
+                    border: Border.all(color: colors.border),
                   ),
                   child: Column(
                     children: [
@@ -435,7 +430,7 @@ extension _ProfileScreenSections on ProfileScreen {
                       const SizedBox(height: 12),
                       Text(
                         context.tr('profileNoRoomConnectedTitle'),
-                        style: AppTypography.titleSmall.copyWith(
+                        style: context.text.titleSmall.copyWith(
                           color: headingColor,
                           fontWeight: FontWeight.bold,
                         ),
@@ -444,7 +439,7 @@ extension _ProfileScreenSections on ProfileScreen {
                       Text(
                         context.tr('profileNoRoomConnectedDesc'),
                         textAlign: TextAlign.center,
-                        style: AppTypography.captionSmall.copyWith(
+                        style: context.text.labelSmall.copyWith(
                           color: bodyColor,
                           height: 1.4,
                         ),
@@ -459,9 +454,7 @@ extension _ProfileScreenSections on ProfileScreen {
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
-                      foregroundColor: isDark
-                          ? AppColors.espressoDark
-                          : Colors.white,
+                      foregroundColor: isDark ? colors.onPrimary : Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
@@ -474,7 +467,10 @@ extension _ProfileScreenSections on ProfileScreen {
                     icon: const Icon(Icons.login_rounded, size: 18),
                     label: Text(
                       context.tr('profileJoinRoomNow'),
-                      style: AppTypography.button,
+                      style: context.text.labelLarge.copyWith(
+                        color: isDark ? colors.onPrimary : Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
@@ -482,13 +478,9 @@ extension _ProfileScreenSections on ProfileScreen {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkSurfaceContainer
-                        : AppColors.canvasCream,
+                    color: isDark ? colors.surfaceSubtle : colors.surfaceSubtle,
                     borderRadius: BorderRadius.circular(AppRadius.lg),
-                    border: Border.all(
-                      color: AppColors.cardBorderColor(context),
-                    ),
+                    border: Border.all(color: colors.border),
                   ),
                   child: Column(
                     children: [
@@ -525,11 +517,9 @@ extension _ProfileScreenSections on ProfileScreen {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: isDark
-                          ? AppColors.darkPrimaryContainer
-                          : AppColors.espressoDark,
-                      foregroundColor: isDark
-                          ? AppColors.goldLight
-                          : Colors.white,
+                          ? colors.surfaceSand
+                          : colors.primary,
+                      foregroundColor: isDark ? colors.accent : Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
@@ -537,7 +527,10 @@ extension _ProfileScreenSections on ProfileScreen {
                     onPressed: () => Navigator.of(context).pop(),
                     child: Text(
                       context.tr('done'),
-                      style: AppTypography.button,
+                      style: context.text.labelLarge.copyWith(
+                        color: isDark ? colors.accent : Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
@@ -652,10 +645,11 @@ extension _ProfileScreenSections on ProfileScreen {
     required String title,
     required List<Widget> children,
   }) {
+    final colors = context.hc;
     showModalBottomSheet(
       context: context,
       useRootNavigator: true,
-      backgroundColor: AppColors.cardBgColor(context),
+      backgroundColor: colors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -676,7 +670,7 @@ extension _ProfileScreenSections on ProfileScreen {
                   width: 44,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: AppColors.cardBorderColor(context),
+                    color: colors.border,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                 ),
@@ -684,8 +678,8 @@ extension _ProfileScreenSections on ProfileScreen {
               const SizedBox(height: AppSpacing.lg),
               Text(
                 title,
-                style: AppTypography.titleLarge.copyWith(
-                  color: AppColors.textHeadingColor(context),
+                style: context.text.titleLarge.copyWith(
+                  color: colors.textPrimary,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -704,7 +698,7 @@ extension _ProfileScreenSections on ProfileScreen {
     Color headingColor,
     bool isDark,
   ) {
-    final bodyColor = AppColors.textBodyColor(context);
+    final bodyColor = context.hc.textSecondary;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
       child: Column(
@@ -714,7 +708,7 @@ extension _ProfileScreenSections on ProfileScreen {
             context.tr('profileTitle').isEmpty
                 ? 'Profil & Pengaturan'
                 : context.tr('profileTitle'),
-            style: AppTypography.headlineMd.copyWith(
+            style: context.text.headlineSmall.copyWith(
               color: headingColor,
               fontWeight: FontWeight.w800,
               fontSize: 18,
@@ -725,7 +719,7 @@ extension _ProfileScreenSections on ProfileScreen {
           const SizedBox(height: 4),
           Text(
             context.tr('profileSubtitle'),
-            style: AppTypography.bodySmall.copyWith(
+            style: context.text.bodySmall.copyWith(
               color: bodyColor,
               fontSize: 12.5,
               height: 1.4,
@@ -862,15 +856,16 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
     TextInputType keyboardType = TextInputType.text,
     IconData? icon,
   }) {
+    final colors = context.hc;
     final isDark = widget.isDark;
-    final headingColor = AppColors.textHeadingColor(context);
+    final headingColor = colors.textPrimary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: AppTypography.heading(
+          style: context.text.labelMedium.copyWith(
             color: headingColor,
             fontSize: 12.5,
             fontWeight: FontWeight.w700,
@@ -880,15 +875,15 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
         TextField(
           controller: ctrl,
           keyboardType: keyboardType,
-          style: AppTypography.bodyText(
+          style: context.text.bodyMedium.copyWith(
             color: headingColor,
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: AppTypography.bodyText(
-              color: isDark ? Colors.white38 : const Color(0xFF9E8E81),
+            hintStyle: context.text.bodySmall.copyWith(
+              color: isDark ? Colors.white38 : colors.textTertiary,
               fontSize: 12.5,
               fontWeight: FontWeight.w400,
             ),
@@ -897,8 +892,8 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                     icon,
                     size: 17,
                     color: isDark
-                        ? AppColors.goldLight.withValues(alpha: 0.7)
-                        : AppColors.espressoDark.withValues(alpha: 0.6),
+                        ? colors.accent.withValues(alpha: 0.7)
+                        : colors.primary.withValues(alpha: 0.6),
                   )
                 : null,
             prefixIconConstraints: const BoxConstraints(
@@ -908,24 +903,14 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
             filled: false,
             contentPadding: const EdgeInsets.fromLTRB(0, 6, 0, 2),
             border: UnderlineInputBorder(
-              borderSide: BorderSide(
-                color: isDark
-                    ? AppColors.darkOutlineVariant
-                    : const Color(0xFFD4C7BC),
-                width: 1.2,
-              ),
+              borderSide: BorderSide(color: colors.border, width: 1.2),
             ),
             enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(
-                color: isDark
-                    ? AppColors.darkOutlineVariant
-                    : const Color(0xFFD4C7BC),
-                width: 1.2,
-              ),
+              borderSide: BorderSide(color: colors.border, width: 1.2),
             ),
             focusedBorder: UnderlineInputBorder(
               borderSide: BorderSide(
-                color: isDark ? AppColors.goldLight : AppColors.espressoDark,
+                color: isDark ? colors.accent : colors.primary,
                 width: 1.8,
               ),
             ),
@@ -937,9 +922,10 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.hc;
     final isDark = widget.isDark;
-    final cardBg = AppColors.cardBgColor(context);
-    final headingColor = AppColors.textHeadingColor(context);
+    final cardBg = colors.surface;
+    final headingColor = colors.textPrimary;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -969,7 +955,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                 border: Border.all(
                   color: isDark
                       ? Colors.white.withValues(alpha: 0.1)
-                      : AppColors.goldLight.withValues(alpha: 0.35),
+                      : colors.border,
                   width: 1,
                 ),
                 boxShadow: [
@@ -989,7 +975,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                     // Title
                     Text(
                       context.tr('medicalManageTitle'),
-                      style: AppTypography.titleMedium.copyWith(
+                      style: context.text.titleMedium.copyWith(
                         color: headingColor,
                         fontWeight: FontWeight.w800,
                         fontSize: 17.5,
@@ -1001,10 +987,8 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                     // Subtitle
                     Text(
                       context.tr('medicalManageSubtitle'),
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textBodyColor(
-                          context,
-                        ).withValues(alpha: 0.85),
+                      style: context.text.bodySmall.copyWith(
+                        color: colors.textSecondary.withValues(alpha: 0.85),
                         height: 1.35,
                         fontSize: 12.5,
                       ),
@@ -1092,7 +1076,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                           style: TextButton.styleFrom(
                             foregroundColor: isDark
                                 ? Colors.white60
-                                : const Color(0xFF8C7A6B),
+                                : colors.textSecondary,
                             padding: const EdgeInsets.symmetric(vertical: 4),
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -1102,15 +1086,13 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                             context.tr('cancel').isEmpty
                                 ? 'Batal'
                                 : context.tr('cancel'),
-                            style: AppTypography.button.copyWith(
+                            style: context.text.labelLarge.copyWith(
                               fontSize: 13,
                               letterSpacing: 0.5,
                             ),
                           ),
                         ),
-                        const SizedBox(
-                          width: 135,
-                        ), // Spacer for protruding button
+                        const SizedBox(width: 135),
                       ],
                     ),
                   ],
@@ -1118,7 +1100,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
               ),
             ),
 
-            // ── 2. Floating Hero Card (Compact header) ───────────────────
+            // ── 2. Floating Hero Card ────────────────────────────────────
             Positioned(
               top: 0,
               left: 22,
@@ -1127,20 +1109,28 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
               child: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
+                    colors: isDark
+                        ? [
+                            colors.primaryContainer,
+                            colors.primary,
+                            const Color(0xFF160E09),
+                          ]
+                        : [
+                            colors.primary,
+                            const Color(0xFF2E1C12),
+                            const Color(0xFF23160D),
+                          ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: isDark
-                        ? [const Color(0xFF38251A), const Color(0xFF1F140D)]
-                        : [AppColors.espressoDark, const Color(0xFF563B2A)],
                   ),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppColors.goldPrimary.withValues(alpha: 0.4),
+                    color: colors.accent.withValues(alpha: 0.4),
                     width: 1.2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.espressoDark.withValues(alpha: 0.35),
+                      color: colors.primary.withValues(alpha: 0.35),
                       blurRadius: 16,
                       offset: const Offset(0, 6),
                     ),
@@ -1157,7 +1147,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                         height: 70,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppColors.goldPrimary.withValues(alpha: 0.12),
+                          color: colors.accent.withValues(alpha: 0.12),
                         ),
                       ),
                     ),
@@ -1169,7 +1159,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                         height: 65,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppColors.goldPrimary.withValues(alpha: 0.08),
+                          color: colors.accent.withValues(alpha: 0.08),
                         ),
                       ),
                     ),
@@ -1186,23 +1176,21 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                               shape: BoxShape.circle,
                               gradient: LinearGradient(
                                 colors: [
-                                  AppColors.goldPrimary.withValues(alpha: 0.25),
-                                  AppColors.goldPrimary.withValues(alpha: 0.08),
+                                  colors.accent.withValues(alpha: 0.25),
+                                  colors.accent.withValues(alpha: 0.08),
                                 ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
                               border: Border.all(
-                                color: AppColors.goldPrimary.withValues(
-                                  alpha: 0.5,
-                                ),
+                                color: colors.accent.withValues(alpha: 0.5),
                                 width: 1.5,
                               ),
                             ),
-                            child: const Center(
+                            child: Center(
                               child: Icon(
                                 Icons.medical_services_rounded,
-                                color: AppColors.accentGoldStar,
+                                color: colors.accent,
                                 size: 20,
                               ),
                             ),
@@ -1210,8 +1198,8 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                           const SizedBox(height: 4),
                           Text(
                             context.tr('medicalBadgeHeader'),
-                            style: AppTypography.heading(
-                              color: AppColors.goldLight,
+                            style: context.text.labelSmall.copyWith(
+                              color: colors.accent,
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 1.1,
@@ -1225,7 +1213,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
               ),
             ),
 
-            // ── 3. Protruding Ribbon Submit Button (No shadow) ───────────
+            // ── 3. Protruding Ribbon Submit Button ───────────────────────
             Positioned(
               bottom: 0,
               right: 0,
@@ -1248,7 +1236,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                       ),
                     ),
 
-                    // Main Pill Submit Button without box shadow
+                    // Main Pill Submit Button
                     Material(
                       color: Colors.transparent,
                       child: InkWell(
@@ -1260,9 +1248,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                         ),
                         child: Ink(
                           decoration: BoxDecoration(
-                            color: isDark
-                                ? AppColors.darkPrimaryContainer
-                                : AppColors.espressoDark,
+                            color: isDark ? colors.primary : colors.primary,
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(24),
                               bottomLeft: Radius.circular(24),
@@ -1284,7 +1270,7 @@ class _EditMedicalDialogState extends State<_EditMedicalDialog> {
                                 )
                               : Text(
                                   context.tr('save').toUpperCase(),
-                                  style: AppTypography.heading(
+                                  style: context.text.labelLarge.copyWith(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w900,
                                     fontSize: 13,

@@ -154,11 +154,7 @@ class HajiCareHeader extends StatelessWidget implements PreferredSizeWidget {
                     color: hc.primaryContainer,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    icon,
-                    color: hc.accent,
-                    size: 19,
-                  ),
+                  child: Icon(icon, color: hc.accent, size: 19),
                 ),
                 const SizedBox(width: AppSpacing.s8),
               ],
@@ -171,7 +167,7 @@ class HajiCareHeader extends StatelessWidget implements PreferredSizeWidget {
                       title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: textTheme.titleLarge?.copyWith(
+                      style: textTheme.titleLarge.copyWith(
                         color: hc.textPrimary,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.2,
@@ -183,7 +179,7 @@ class HajiCareHeader extends StatelessWidget implements PreferredSizeWidget {
                         subtitle!,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: textTheme.labelSmall?.copyWith(
+                        style: textTheme.labelSmall.copyWith(
                           color: hc.textSecondary,
                           fontWeight: FontWeight.w500,
                         ),

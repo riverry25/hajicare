@@ -108,9 +108,7 @@ class DashboardJamaahScreen extends StatelessWidget {
     final heroGradient = context.hc.heroGradient;
 
     return Scaffold(
-      backgroundColor: isDark
-          ? const Color(0xFF1B1410)
-          : const Color(0xFF3B2A1F),
+      backgroundColor: context.hc.canvas,
       body: Container(
         decoration: BoxDecoration(gradient: heroGradient),
         child: Obx(() {

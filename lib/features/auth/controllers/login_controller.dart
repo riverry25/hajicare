@@ -8,9 +8,9 @@ import '../../../core/locales/app_localizations.dart';
 import '../../../core/locales/app_translations.dart';
 import '../../../core/utils/app_dialog.dart';
 import '../../../core/utils/input_sanitizer.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/services/trusted_backend_service.dart';
 import '../../../core/state/app_startup_controller.dart';
+import '../../../core/theme/theme_context.dart';
 import '../../../core/state/hajicare_controller.dart';
 
 class LoginController extends GetxController {
@@ -588,15 +588,12 @@ class LoginController extends GetxController {
       enableDrag: false,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
-        final isDark = AppColors.isDark(ctx);
-        final cardBg = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
-        final headingColor = isDark
-            ? AppColors.darkTextHeading
-            : AppColors.espressoDark;
-        final bodyColor = isDark ? AppColors.darkTextBody : AppColors.textBody;
-        final primaryColor = isDark
-            ? AppColors.goldLight
-            : AppColors.goldPrimary;
+        final colors = ctx.hc;
+        final cardBg = colors.surface;
+        final headingColor = colors.textPrimary;
+        final bodyColor = colors.textSecondary;
+        final primaryColor = colors.primary;
+        final safeColor = colors.success;
 
         return Container(
           padding: const EdgeInsets.all(24),
@@ -613,7 +610,7 @@ class LoginController extends GetxController {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey.withValues(alpha: 0.3),
+                    color: colors.borderStrong,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -622,8 +619,7 @@ class LoginController extends GetxController {
               Text(
                 'Pilih Peran Anda',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 20,
+                style: ctx.text.headlineSmall.copyWith(
                   fontWeight: FontWeight.w800,
                   color: headingColor,
                 ),
@@ -632,7 +628,10 @@ class LoginController extends GetxController {
               Text(
                 'Peran ini akan disimpan permanen ke akun Anda dan tidak dapat diubah.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: bodyColor, height: 1.4),
+                style: ctx.text.bodyMedium.copyWith(
+                  color: bodyColor,
+                  height: 1.4,
+                ),
               ),
               const SizedBox(height: 20),
               // Role Option: Jamaah
@@ -647,7 +646,7 @@ class LoginController extends GetxController {
                       width: 1.5,
                     ),
                     borderRadius: BorderRadius.circular(16),
-                    color: primaryColor.withValues(alpha: 0.08),
+                    color: colors.primaryContainer.withValues(alpha: 0.35),
                   ),
                   child: Row(
                     children: [
@@ -670,8 +669,7 @@ class LoginController extends GetxController {
                           children: [
                             Text(
                               'Jamaah Haji / Umrah',
-                              style: TextStyle(
-                                fontSize: 16,
+                              style: ctx.text.titleMedium.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: headingColor,
                               ),
@@ -679,7 +677,7 @@ class LoginController extends GetxController {
                             const SizedBox(height: 2),
                             Text(
                               'Akses panduan ibadah, peta, jadwal sholat & monitoring pendamping',
-                              style: TextStyle(fontSize: 12, color: bodyColor),
+                              style: ctx.text.bodySmall.copyWith(color: bodyColor),
                             ),
                           ],
                         ),
@@ -702,23 +700,23 @@ class LoginController extends GetxController {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color: AppColors.statusSafe.withValues(alpha: 0.5),
+                      color: safeColor.withValues(alpha: 0.5),
                       width: 1.5,
                     ),
                     borderRadius: BorderRadius.circular(16),
-                    color: AppColors.statusSafe.withValues(alpha: 0.08),
+                    color: colors.successContainer.withValues(alpha: 0.35),
                   ),
                   child: Row(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppColors.statusSafe.withValues(alpha: 0.15),
+                          color: safeColor.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.health_and_safety_rounded,
-                          color: AppColors.statusSafe,
+                          color: safeColor,
                           size: 24,
                         ),
                       ),
@@ -729,8 +727,7 @@ class LoginController extends GetxController {
                           children: [
                             Text(
                               'Pendamping / Muthawif',
-                              style: TextStyle(
-                                fontSize: 16,
+                              style: ctx.text.titleMedium.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: headingColor,
                               ),
@@ -738,15 +735,15 @@ class LoginController extends GetxController {
                             const SizedBox(height: 2),
                             Text(
                               'Kelola room, undang jamaah & pantau pergerakan radar realtime',
-                              style: TextStyle(fontSize: 12, color: bodyColor),
+                              style: ctx.text.bodySmall.copyWith(color: bodyColor),
                             ),
                           ],
                         ),
                       ),
-                      const Icon(
+                      Icon(
                         Icons.arrow_forward_ios_rounded,
                         size: 16,
-                        color: AppColors.statusSafe,
+                        color: safeColor,
                       ),
                     ],
                   ),

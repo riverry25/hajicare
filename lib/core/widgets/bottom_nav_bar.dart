@@ -54,8 +54,8 @@ class HajiCareBottomNavBar extends StatelessWidget {
     final String dashboardRoute = hajicare?.role == UserRole.admin
         ? AppRoutes.adminDashboard
         : hajicare?.role == UserRole.jamaah
-            ? AppRoutes.dashboardJamaah
-            : AppRoutes.dashboardPendamping;
+        ? AppRoutes.dashboardJamaah
+        : AppRoutes.dashboardPendamping;
 
     try {
       if (index == 1) {
@@ -163,10 +163,7 @@ class HajiCareBottomNavBar extends StatelessWidget {
               ),
 
               // Elevated Center Mic / Voice Translator Button nestled in the Scoop
-              Positioned(
-                top: -6,
-                child: _buildCenterMicButton(context),
-              ),
+              Positioned(top: -6, child: _buildCenterMicButton(context)),
             ],
           ),
         ),
@@ -188,10 +185,7 @@ class HajiCareBottomNavBar extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: hc.surface,
-            border: Border.all(
-              color: hc.accent,
-              width: 1.5,
-            ),
+            border: Border.all(color: hc.accent, width: 1.5),
             boxShadow: [
               BoxShadow(
                 color: hc.shadow,
@@ -260,9 +254,7 @@ class HajiCareBottomNavBar extends StatelessWidget {
                     height: 30,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: isSelected
-                          ? hc.surfaceSand
-                          : Colors.transparent,
+                      color: isSelected ? hc.surfaceSand : Colors.transparent,
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: AnimatedScale(
@@ -285,7 +277,7 @@ class HajiCareBottomNavBar extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
-                      style: textTheme.labelSmall?.copyWith(
+                      style: textTheme.labelSmall.copyWith(
                         fontSize: 10.5,
                         color: isSelected ? selectedColor : unselectedColor,
                         fontWeight: isSelected

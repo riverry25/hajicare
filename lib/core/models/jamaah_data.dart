@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../theme/app_colors.dart';
+import '../theme/haji_colors.dart';
 import '../utils/distance_formatter.dart';
 
 enum UserRole { admin, pendamping, jamaah }
@@ -9,16 +9,22 @@ enum UserRole { admin, pendamping, jamaah }
 enum DistanceTier { aman, waspada, terlalujJauh }
 
 extension DistanceTierColor on DistanceTier {
-  Color get color {
+  StatusTone get tone {
     switch (this) {
       case DistanceTier.aman:
-        return AppColors.statusSafe;
+        return StatusTone.success;
       case DistanceTier.waspada:
-        return AppColors.statusWarning;
+        return StatusTone.warning;
       case DistanceTier.terlalujJauh:
-        return AppColors.statusDanger;
+        return StatusTone.danger;
     }
   }
+
+  /// Dynamic color resolution based on active theme
+  Color resolveColor(HajiColors colors) => colors.tone(tone);
+
+  /// Default light palette color for contexts without BuildContext
+  Color get color => HajiColors.light.tone(tone);
 
   String get label {
     switch (this) {

@@ -2,10 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_context.dart';
 import '../../sign_language/models/bisindo_prediction.dart';
 import '../../sign_language/services/bisindo_camera_landmark_service.dart';
 import '../../sign_language/services/bisindo_inference_service.dart';
@@ -165,10 +164,10 @@ class _BisindoCardState extends State<BisindoCard> {
     });
 
     try {
-      final prediction = await _inferenceService.runSelfTest();
+      final result = await _inferenceService.runSelfTest();
       if (mounted) {
         setState(() {
-          _latestPrediction = prediction;
+          _latestPrediction = result;
           _isTesting = false;
         });
       }
@@ -176,7 +175,7 @@ class _BisindoCardState extends State<BisindoCard> {
       if (mounted) {
         setState(() {
           _isTesting = false;
-          _errorMessage = 'Uji coba gagal: $e';
+          _errorMessage = 'Self-test gagal: $e';
         });
       }
     }
@@ -184,7 +183,8 @@ class _BisindoCardState extends State<BisindoCard> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
+    final colors = context.hc;
+    final isDark = context.isDark;
     final isCameraActive = _cameraService.isCameraActive;
     final isRecognitionConfirmed = _latestPrediction?.isRecognized == true;
 
@@ -192,17 +192,17 @@ class _BisindoCardState extends State<BisindoCard> {
       margin: const EdgeInsets.only(bottom: AppSpacing.lg),
       padding: const EdgeInsets.all(AppSpacing.cardPadding),
       decoration: BoxDecoration(
-        color: AppColors.cardBgColor(context),
+        color: colors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: isCameraActive
-              ? Colors.green.withValues(alpha: 0.5)
-              : AppColors.goldPrimary.withValues(alpha: 0.35),
+              ? colors.success.withValues(alpha: 0.5)
+              : colors.accent.withValues(alpha: 0.35),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.espressoDark.withValues(alpha: 0.04),
+            color: colors.primary.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -219,18 +219,18 @@ class _BisindoCardState extends State<BisindoCard> {
                 height: 38,
                 decoration: BoxDecoration(
                   color: isCameraActive
-                      ? Colors.green.withValues(alpha: 0.1)
-                      : AppColors.canvasCream,
+                      ? colors.success.withValues(alpha: 0.1)
+                      : colors.surfaceSubtle,
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: isCameraActive
-                        ? Colors.green
-                        : AppColors.goldPrimary.withValues(alpha: 0.4),
+                        ? colors.success
+                        : colors.accent.withValues(alpha: 0.4),
                   ),
                 ),
                 child: Icon(
                   Icons.sign_language_rounded,
-                  color: isCameraActive ? Colors.green : AppColors.goldPrimary,
+                  color: isCameraActive ? colors.success : colors.accent,
                   size: 20,
                 ),
               ),
@@ -241,22 +241,22 @@ class _BisindoCardState extends State<BisindoCard> {
                   children: [
                     Text(
                       'BISINDO AI Recognizer',
-                      style: AppTypography.titleMedium.copyWith(
-                        color: AppColors.textHeadingColor(context),
+                      style: context.text.titleMedium.copyWith(
+                        color: colors.textPrimary,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       'MediaPipe Hands • TFLite On-Device',
-                      style: AppTypography.captionSmall.copyWith(
-                        color: AppColors.textMuted,
+                      style: context.text.labelSmall.copyWith(
+                        color: colors.textSecondary,
                       ),
                     ),
                   ],
                 ),
               ),
-              _buildStatusBadge(),
+              _buildStatusBadge(colors),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
@@ -266,8 +266,8 @@ class _BisindoCardState extends State<BisindoCard> {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
               color: isDark
-                  ? AppColors.darkSurfaceContainer
-                  : AppColors.canvasCream,
+                  ? colors.surfaceSand
+                  : colors.surfaceSubtle,
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Row(
@@ -277,7 +277,7 @@ class _BisindoCardState extends State<BisindoCard> {
                       ? Icons.videocam_rounded
                       : Icons.sensors_rounded,
                   size: 16,
-                  color: isCameraActive ? Colors.green : AppColors.textMuted,
+                  color: isCameraActive ? colors.success : colors.textSecondary,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -285,10 +285,10 @@ class _BisindoCardState extends State<BisindoCard> {
                     isCameraActive
                         ? 'Kamera Aktif: Menganalisis gerakan isyarat (Buffer: ${_streamBuffer.bufferLength}/100)...'
                         : 'Kamera Siap: MediaPipe Hands → TFLite',
-                    style: AppTypography.captionSmall.copyWith(
+                    style: context.text.labelSmall.copyWith(
                       color: isCameraActive
-                          ? Colors.green.shade800
-                          : AppColors.textMuted,
+                          ? colors.success
+                          : colors.textSecondary,
                       fontWeight: isCameraActive
                           ? FontWeight.w700
                           : FontWeight.w500,
@@ -306,25 +306,25 @@ class _BisindoCardState extends State<BisindoCard> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.errorContainer.withValues(alpha: 0.3),
+                color: colors.dangerContainer.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(AppRadius.sm),
                 border: Border.all(
-                  color: AppColors.sosEmergency.withValues(alpha: 0.4),
+                  color: colors.danger.withValues(alpha: 0.4),
                 ),
               ),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.error_outline_rounded,
-                    color: AppColors.sosEmergency,
+                    color: colors.danger,
                     size: 18,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       _errorMessage!,
-                      style: AppTypography.captionSmall.copyWith(
-                        color: AppColors.sosEmergency,
+                      style: context.text.labelSmall.copyWith(
+                        color: colors.danger,
                       ),
                     ),
                   ),
@@ -339,10 +339,10 @@ class _BisindoCardState extends State<BisindoCard> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: AppColors.goldPrimary.withValues(alpha: 0.08),
+                color: colors.accent.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(AppRadius.md),
                 border: Border.all(
-                  color: AppColors.goldPrimary.withValues(alpha: 0.3),
+                  color: colors.accent.withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
@@ -355,8 +355,8 @@ class _BisindoCardState extends State<BisindoCard> {
                           isRecognitionConfirmed
                               ? 'HASIL DETEKSI ISYARAT'
                               : 'GERAKAN BELUM DIKENALI',
-                          style: AppTypography.captionSmall.copyWith(
-                            color: AppColors.goldPrimary,
+                          style: context.text.labelSmall.copyWith(
+                            color: colors.accent,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.5,
                             fontSize: 10,
@@ -367,8 +367,8 @@ class _BisindoCardState extends State<BisindoCard> {
                           isRecognitionConfirmed
                               ? _latestPrediction!.label
                               : 'Silakan ulangi perlahan',
-                          style: AppTypography.displayMedium.copyWith(
-                            color: AppColors.textHeadingColor(context),
+                          style: context.text.displaySmall.copyWith(
+                            color: colors.textPrimary,
                             fontWeight: FontWeight.w900,
                             fontSize: 24,
                           ),
@@ -383,12 +383,12 @@ class _BisindoCardState extends State<BisindoCard> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.goldPrimary,
+                        color: colors.accent,
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
                       child: Text(
                         'Stabil',
-                        style: AppTypography.titleMedium.copyWith(
+                        style: context.text.titleMedium.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
                           fontSize: 16,
@@ -403,8 +403,8 @@ class _BisindoCardState extends State<BisindoCard> {
             Text(
               _latestPrediction!.guidance ??
                   'Pastikan bahu dan tangan terlihat di dalam kamera.',
-              style: AppTypography.captionSmall.copyWith(
-                color: AppColors.textMuted,
+              style: context.text.labelSmall.copyWith(
+                color: colors.textSecondary,
               ),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -419,8 +419,8 @@ class _BisindoCardState extends State<BisindoCard> {
                   : _toggleCamera,
               style: ElevatedButton.styleFrom(
                 backgroundColor: isCameraActive
-                    ? AppColors.sosEmergency
-                    : AppColors.espressoDark,
+                    ? colors.danger
+                    : colors.primary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 11),
                 shape: RoundedRectangleBorder(
@@ -449,7 +449,7 @@ class _BisindoCardState extends State<BisindoCard> {
                     : (isCameraActive
                           ? 'Hentikan Kamera Deteksi'
                           : 'Mulai Deteksi Kamera Realtime'),
-                style: AppTypography.bodySmall.copyWith(
+                style: context.text.bodySmall.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
                 ),
@@ -466,22 +466,22 @@ class _BisindoCardState extends State<BisindoCard> {
                   ? null
                   : _runSelfTest,
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.espressoDark,
+                foregroundColor: colors.primary,
                 padding: const EdgeInsets.symmetric(vertical: 9),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 side: BorderSide(
-                  color: AppColors.goldPrimary.withValues(alpha: 0.4),
+                  color: colors.accent.withValues(alpha: 0.4),
                 ),
               ),
               icon: _isTesting
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 14,
                       height: 14,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.goldPrimary,
+                        color: colors.accent,
                       ),
                     )
                   : const Icon(Icons.play_circle_outline_rounded, size: 16),
@@ -489,7 +489,7 @@ class _BisindoCardState extends State<BisindoCard> {
                 _isTesting
                     ? 'Menjalankan Self-Test...'
                     : 'Uji Prediksi Mandiri (Synthetic Sequence)',
-                style: AppTypography.captionSmall.copyWith(
+                style: context.text.labelSmall.copyWith(
                   fontWeight: FontWeight.w600,
                   fontSize: 11,
                 ),
@@ -501,30 +501,30 @@ class _BisindoCardState extends State<BisindoCard> {
     );
   }
 
-  Widget _buildStatusBadge() {
+  Widget _buildStatusBadge(HajiColors colors) {
     if (_isLoading) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: AppColors.tanMedium.withValues(alpha: 0.15),
+          color: colors.surfaceSand.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(AppRadius.pill),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(
+            SizedBox(
               width: 10,
               height: 10,
               child: CircularProgressIndicator(
                 strokeWidth: 1.5,
-                color: AppColors.tanMedium,
+                color: colors.textSecondary,
               ),
             ),
             const SizedBox(width: 6),
             Text(
               'Memuat Model',
-              style: AppTypography.captionSmall.copyWith(
-                color: AppColors.tanMedium,
+              style: context.text.labelSmall.copyWith(
+                color: colors.textSecondary,
                 fontWeight: FontWeight.w600,
                 fontSize: 10,
               ),
@@ -538,13 +538,13 @@ class _BisindoCardState extends State<BisindoCard> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: AppColors.sosEmergency.withValues(alpha: 0.15),
+          color: colors.danger.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(AppRadius.pill),
         ),
         child: Text(
           'Error',
-          style: AppTypography.captionSmall.copyWith(
-            color: AppColors.sosEmergency,
+          style: context.text.labelSmall.copyWith(
+            color: colors.danger,
             fontWeight: FontWeight.w700,
             fontSize: 10,
           ),
@@ -556,7 +556,7 @@ class _BisindoCardState extends State<BisindoCard> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: (isCameraActive ? Colors.green : AppColors.goldPrimary)
+        color: (isCameraActive ? colors.success : colors.accent)
             .withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
@@ -567,17 +567,17 @@ class _BisindoCardState extends State<BisindoCard> {
             width: 6,
             height: 6,
             decoration: BoxDecoration(
-              color: isCameraActive ? Colors.green : AppColors.goldPrimary,
+              color: isCameraActive ? colors.success : colors.accent,
               shape: BoxShape.circle,
             ),
           ),
           const SizedBox(width: 5),
           Text(
             isCameraActive ? 'Live Kamera' : 'Model Siap',
-            style: AppTypography.captionSmall.copyWith(
+            style: context.text.labelSmall.copyWith(
               color: isCameraActive
-                  ? Colors.green.shade800
-                  : AppColors.goldPrimary,
+                  ? colors.success
+                  : colors.accent,
               fontWeight: FontWeight.w700,
               fontSize: 10,
             ),

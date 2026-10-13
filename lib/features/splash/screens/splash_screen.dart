@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_context.dart';
 import '../../../core/state/app_startup_controller.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -53,8 +52,10 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.hc;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colors.canvas,
       body: Stack(
         children: [
           // Main Content
@@ -63,8 +64,6 @@ class _SplashScreenState extends State<SplashScreen>
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
               child: Column(
                 children: [
-                  // Top Brand Pill Badge
-
                   // Center Logo & Identity
                   Expanded(
                     child: Center(
@@ -82,7 +81,7 @@ class _SplashScreenState extends State<SplashScreen>
                                   child: child,
                                 );
                               },
-                              child: _buildLogo(),
+                              child: _buildLogo(colors),
                             ),
 
                             const SizedBox(height: 24),
@@ -94,7 +93,7 @@ class _SplashScreenState extends State<SplashScreen>
                               style: AppTypography.arabicText(
                                 fontSize: 23,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.emeraldIslamic,
+                                color: colors.islamic,
                                 height: 1.2,
                               ),
                             ),
@@ -108,8 +107,8 @@ class _SplashScreenState extends State<SplashScreen>
                                 children: [
                                   TextSpan(
                                     text: 'Haji',
-                                    style: AppTypography.displayLarge.copyWith(
-                                      color: AppColors.textHeading,
+                                    style: context.text.displayLarge.copyWith(
+                                      color: colors.textPrimary,
                                       fontWeight: FontWeight.w900,
                                       fontSize: 34,
                                       letterSpacing: -0.8,
@@ -117,8 +116,8 @@ class _SplashScreenState extends State<SplashScreen>
                                   ),
                                   TextSpan(
                                     text: 'Care',
-                                    style: AppTypography.displayLarge.copyWith(
-                                      color: AppColors.goldPrimary,
+                                    style: context.text.displayLarge.copyWith(
+                                      color: colors.accent,
                                       fontWeight: FontWeight.w900,
                                       fontSize: 34,
                                       letterSpacing: -0.8,
@@ -134,8 +133,8 @@ class _SplashScreenState extends State<SplashScreen>
                             Text(
                               'Sahabat Setia & Amanah Ibadah Anda',
                               textAlign: TextAlign.center,
-                              style: AppTypography.titleSmall.copyWith(
-                                color: AppColors.textBody,
+                              style: context.text.titleSmall.copyWith(
+                                color: colors.textPrimary,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 0.2,
                               ),
@@ -147,8 +146,8 @@ class _SplashScreenState extends State<SplashScreen>
                             Text(
                               'Pendampingan Pintar • Radar Jarak Jauh • Bantuan Lansia',
                               textAlign: TextAlign.center,
-                              style: AppTypography.captionSmall.copyWith(
-                                color: AppColors.textMuted,
+                              style: context.text.labelSmall.copyWith(
+                                color: colors.textSecondary,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -177,8 +176,8 @@ class _SplashScreenState extends State<SplashScreen>
                                 children: [
                                   Text(
                                     'Memuat data...',
-                                    style: AppTypography.captionSmall.copyWith(
-                                      color: AppColors.textBody,
+                                    style: context.text.labelSmall.copyWith(
+                                      color: colors.textSecondary,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -190,9 +189,9 @@ class _SplashScreenState extends State<SplashScreen>
                                           ((_controller.value * 75).round());
                                       return Text(
                                         '$pct%',
-                                        style: AppTypography.captionSmall
+                                        style: context.text.labelSmall
                                             .copyWith(
-                                              color: AppColors.emeraldIslamic,
+                                              color: colors.islamic,
                                               fontWeight: FontWeight.w800,
                                             ),
                                       );
@@ -204,7 +203,7 @@ class _SplashScreenState extends State<SplashScreen>
                               Container(
                                 height: 4,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFE5E5E5),
+                                  color: colors.surfaceSand,
                                   borderRadius: BorderRadius.circular(
                                     AppRadius.pill,
                                   ),
@@ -221,8 +220,8 @@ class _SplashScreenState extends State<SplashScreen>
                                         widthFactor:
                                             0.25 + (_controller.value * 0.75),
                                         child: Container(
-                                          decoration: const BoxDecoration(
-                                            color: AppColors.goldPrimary,
+                                          decoration: BoxDecoration(
+                                            color: colors.accent,
                                           ),
                                         ),
                                       );
@@ -237,16 +236,16 @@ class _SplashScreenState extends State<SplashScreen>
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.verified_user_rounded,
                               size: 14,
-                              color: AppColors.emeraldIslamic,
+                              color: colors.islamic,
                             ),
                             const SizedBox(width: 6),
                             Text(
                               'Melayani Jamaah dengan Amanah & Ikhlas',
-                              style: AppTypography.captionSmall.copyWith(
-                                color: AppColors.textMuted,
+                              style: context.text.labelSmall.copyWith(
+                                color: colors.textTertiary,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -264,7 +263,7 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
-  Widget _buildLogo() {
+  Widget _buildLogo(HajiColors colors) {
     return SizedBox(
       width: 140,
       height: 140,
@@ -272,10 +271,10 @@ class _SplashScreenState extends State<SplashScreen>
         'assets/icon.jpeg',
         fit: BoxFit.contain,
         errorBuilder: (context, error, stackTrace) {
-          return const Icon(
+          return Icon(
             Icons.mosque_rounded,
             size: 54,
-            color: AppColors.goldPrimary,
+            color: colors.accent,
           );
         },
       ),

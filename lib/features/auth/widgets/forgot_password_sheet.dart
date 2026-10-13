@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/locales/app_localizations.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_context.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/pill_button.dart';
 import '../controllers/login_controller.dart';
@@ -55,7 +54,7 @@ class _ForgotPasswordSheetState extends State<ForgotPasswordSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
+    final colors = context.hc;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Container(
@@ -66,13 +65,13 @@ class _ForgotPasswordSheetState extends State<ForgotPasswordSheet> {
         AppSpacing.xl + bottomInset,
       ),
       decoration: BoxDecoration(
-        color: AppColors.cardBgColor(context),
+        color: colors.surface,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppRadius.xxl),
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.espressoDark.withValues(alpha: 0.12),
+            color: colors.shadow,
             blurRadius: 30,
             offset: const Offset(0, -6),
           ),
@@ -88,7 +87,7 @@ class _ForgotPasswordSheetState extends State<ForgotPasswordSheet> {
               width: 44,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.outlineColor(context).withValues(alpha: 0.4),
+                color: colors.borderStrong,
                 borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
             ),
@@ -101,19 +100,17 @@ class _ForgotPasswordSheetState extends State<ForgotPasswordSheet> {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.darkSurfaceContainerHighest
-                    : AppColors.canvasCream,
+                color: colors.primaryContainer,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AppColors.goldPrimary.withValues(alpha: 0.35),
+                  color: colors.accent.withValues(alpha: 0.35),
                   width: 1.5,
                 ),
               ),
               child: Icon(
                 Icons.lock_reset_rounded,
                 size: 28,
-                color: isDark ? AppColors.goldLight : AppColors.espressoDark,
+                color: colors.primary,
               ),
             ),
           ),
@@ -123,8 +120,8 @@ class _ForgotPasswordSheetState extends State<ForgotPasswordSheet> {
           Text(
             context.tr('auth.forgotPasswordTitle'),
             textAlign: TextAlign.center,
-            style: AppTypography.titleLarge.copyWith(
-              color: AppColors.textHeadingColor(context),
+            style: context.text.titleLarge.copyWith(
+              color: colors.textPrimary,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -136,8 +133,8 @@ class _ForgotPasswordSheetState extends State<ForgotPasswordSheet> {
             child: Text(
               context.tr('auth.forgotPasswordSubtitle'),
               textAlign: TextAlign.center,
-              style: AppTypography.bodySmall.copyWith(
-                color: AppColors.textSecondaryColor(context),
+              style: context.text.bodySmall.copyWith(
+                color: colors.textSecondary,
                 height: 1.45,
               ),
             ),
@@ -147,8 +144,8 @@ class _ForgotPasswordSheetState extends State<ForgotPasswordSheet> {
           // Email input
           Text(
             context.tr('auth.email'),
-            style: AppTypography.labelLarge.copyWith(
-              color: AppColors.textHeadingColor(context),
+            style: context.text.labelLarge.copyWith(
+              color: colors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
@@ -157,9 +154,9 @@ class _ForgotPasswordSheetState extends State<ForgotPasswordSheet> {
             controller: _emailController,
             hintText: context.tr('auth.emailHint'),
             keyboardType: TextInputType.emailAddress,
-            prefixIcon: const Icon(
+            prefixIcon: Icon(
               Icons.mail_outline_rounded,
-              color: AppColors.tanMedium,
+              color: colors.accent,
               size: 20,
             ),
           ),
@@ -174,10 +171,8 @@ class _ForgotPasswordSheetState extends State<ForgotPasswordSheet> {
                     ? context.tr('auth.loginLoading')
                     : context.tr('auth.sendResetLink'),
                 icon: Icons.send_rounded,
-                color: isDark ? AppColors.goldPrimary : AppColors.espressoDark,
-                textColor: isDark
-                    ? AppColors.espressoDark
-                    : AppColors.surfaceWhite,
+                color: colors.primary,
+                textColor: colors.onPrimary,
                 onPressed: _loginController.isResetPasswordLoading.value
                     ? null
                     : _handleSubmit,
@@ -191,8 +186,8 @@ class _ForgotPasswordSheetState extends State<ForgotPasswordSheet> {
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
               context.tr('common.cancel'),
-              style: AppTypography.bodySmall.copyWith(
-                color: AppColors.textSecondaryColor(context),
+              style: context.text.bodySmall.copyWith(
+                color: colors.textSecondary,
                 fontWeight: FontWeight.w600,
               ),
             ),

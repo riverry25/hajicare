@@ -44,7 +44,7 @@ class AppTextField extends StatelessWidget {
         if (label != null) ...[
           Text(
             label!,
-            style: textTheme.labelLarge?.copyWith(
+            style: textTheme.labelLarge.copyWith(
               color: hc.textPrimary,
               fontWeight: FontWeight.w700,
             ),
@@ -57,15 +57,13 @@ class AppTextField extends StatelessWidget {
           keyboardType: isPhone ? TextInputType.phone : keyboardType,
           validator: validator,
           onChanged: onChanged,
-          style: textTheme.bodyMedium?.copyWith(
+          style: textTheme.bodyMedium.copyWith(
             color: hc.textPrimary,
             fontWeight: FontWeight.w600,
           ),
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: textTheme.bodyMedium?.copyWith(
-              color: hc.textTertiary,
-            ),
+            hintStyle: textTheme.bodyMedium.copyWith(color: hc.textTertiary),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.s16,
               vertical: AppSpacing.s12,
@@ -84,10 +82,7 @@ class AppTextField extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              borderSide: BorderSide(
-                color: hc.primary,
-                width: 1.5,
-              ),
+              borderSide: BorderSide(color: hc.primary, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -119,7 +114,7 @@ class AppTextField extends StatelessWidget {
           const SizedBox(width: AppSpacing.s4),
           Text(
             phonePrefix,
-            style: textTheme.bodyMedium?.copyWith(
+            style: textTheme.bodyMedium.copyWith(
               color: hc.textPrimary,
               fontWeight: FontWeight.bold,
             ),

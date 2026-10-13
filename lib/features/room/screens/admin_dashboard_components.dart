@@ -729,6 +729,7 @@ class _ActivityFeedTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSos = activity.type == ActivityType.sosActive;
+    final activityColor = activity.resolveColor(context.hc);
 
     return Material(
       color: isSos
@@ -736,8 +737,8 @@ class _ActivityFeedTile extends StatelessWidget {
           : Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        splashColor: activity.color.withValues(alpha: 0.12),
-        highlightColor: activity.color.withValues(alpha: 0.06),
+        splashColor: activityColor.withValues(alpha: 0.12),
+        highlightColor: activityColor.withValues(alpha: 0.06),
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.md,
@@ -751,10 +752,10 @@ class _ActivityFeedTile extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: activity.color.withValues(alpha: isDark ? 0.20 : 0.12),
+                  color: activityColor.withValues(alpha: isDark ? 0.20 : 0.12),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: activity.color.withValues(
+                    color: activityColor.withValues(
                       alpha: isDark ? 0.40 : 0.25,
                     ),
                     width: 1.2,
@@ -769,7 +770,7 @@ class _ActivityFeedTile extends StatelessWidget {
                         ]
                       : null,
                 ),
-                child: Icon(activity.icon, color: activity.color, size: 19),
+                child: Icon(activity.icon, color: activityColor, size: 19),
               ),
               const SizedBox(width: AppSpacing.cardInnerGutter),
 

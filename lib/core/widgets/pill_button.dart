@@ -29,8 +29,8 @@ class PillButton extends StatelessWidget {
     final hc = context.hc;
     final textTheme = context.text;
 
-    final effectiveTextColor = textColor ??
-        (isOutline ? (color ?? hc.textPrimary) : hc.onPrimary);
+    final effectiveTextColor =
+        textColor ?? (isOutline ? (color ?? hc.textPrimary) : hc.onPrimary);
 
     Widget buttonChild = Row(
       mainAxisSize: isFullWidth ? MainAxisSize.max : MainAxisSize.min,
@@ -45,7 +45,7 @@ class PillButton extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: textTheme.labelLarge?.copyWith(
+            style: textTheme.labelLarge.copyWith(
               color: effectiveTextColor,
               fontWeight: FontWeight.w700,
             ),

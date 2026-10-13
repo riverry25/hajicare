@@ -117,9 +117,7 @@ class DashboardPendampingScreen extends StatelessWidget {
     final heroGradient = context.hc.heroGradient;
 
     return Scaffold(
-      backgroundColor: isDark
-          ? const Color(0xFF1B1410)
-          : const Color(0xFF3B2A1F),
+      backgroundColor: context.hc.canvas,
       body: Container(
         decoration: BoxDecoration(gradient: heroGradient),
         child: Obx(
@@ -191,17 +189,17 @@ class DashboardPendampingScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(15),
                   border: Border.all(
-                    color: context.hc.sandLight.withValues(alpha: 0.6),
+                    color: context.hc.border.withValues(alpha: 0.8),
                     width: 1.5,
                   ),
-                  gradient: LinearGradient(
-                    colors: [context.hc.sand, context.hc.sandDark],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: isDark
+                      ? context.hc.surfaceSand
+                      : Colors.white.withValues(alpha: 0.85),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
+                      color: Colors.black.withValues(
+                        alpha: isDark ? 0.3 : 0.06,
+                      ),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -211,7 +209,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                   child: Text(
                     initialLetter,
                     style: TextStyle(
-                      color: context.hc.textPrimary,
+                      color: isDark ? context.hc.accent : context.hc.primary,
                       fontWeight: FontWeight.w800,
                       fontSize: 19,
                     ),
@@ -227,7 +225,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                     Text(
                       "Assalamu'alaikum,",
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.72),
+                        color: context.hc.textSecondary,
                         fontSize: 12.5,
                         fontWeight: FontWeight.w500,
                       ),
@@ -235,8 +233,8 @@ class DashboardPendampingScreen extends StatelessWidget {
                     const SizedBox(height: 1),
                     Text(
                       displayName,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: context.hc.textPrimary,
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         letterSpacing: -0.2,
@@ -248,7 +246,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                     Text(
                       '${kloterStr.toLowerCase().startsWith('kloter') ? kloterStr : 'Kloter $kloterStr'} · ${maktabStr.toLowerCase().startsWith('maktab') ? maktabStr : 'Maktab $maktabStr'}',
                       style: TextStyle(
-                        color: context.hc.sandLight,
+                        color: context.hc.accentText,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
                       ),
@@ -277,8 +275,8 @@ class DashboardPendampingScreen extends StatelessWidget {
                       children: [
                         Text(
                           '$jamaahCount',
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: context.hc.textPrimary,
                             fontSize: 42,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 0.5,
@@ -291,7 +289,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                           child: Text(
                             context.tr('room.roleJamaah').toLowerCase(),
                             style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.6),
+                              color: context.hc.textSecondary,
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                             ),
@@ -306,8 +304,14 @@ class DashboardPendampingScreen extends StatelessWidget {
                         vertical: 3.5,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.16),
+                        color: isDark
+                            ? context.hc.surfaceSand
+                            : Colors.white.withValues(alpha: 0.85),
                         borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: context.hc.border,
+                          width: 1.0,
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -323,8 +327,8 @@ class DashboardPendampingScreen extends StatelessWidget {
                           const SizedBox(width: 5),
                           Text(
                             context.tr('dashboard.monitoredPilgrims'),
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: context.hc.textPrimary,
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                             ),
@@ -340,7 +344,7 @@ class DashboardPendampingScreen extends StatelessWidget {
               MiniSparklineButton(
                 width: 175,
                 height: 84,
-                waveColor: context.hc.sandLight,
+                waveColor: context.hc.accent,
                 jamaahList: state.jamaahList,
                 tooltip: context.tr('dashboard.syncGroupTooltip'),
                 onSync: () async {
@@ -365,7 +369,7 @@ class DashboardPendampingScreen extends StatelessWidget {
           ),
 
           const SizedBox(height: 18),
-          _dashedLine(Colors.white.withValues(alpha: 0.20)),
+          _dashedLine(context.hc.border.withValues(alpha: 0.70)),
           const SizedBox(height: 16),
 
           // ── 3 mini metrics ────────────────────────────────────────
@@ -375,10 +379,12 @@ class DashboardPendampingScreen extends StatelessWidget {
             children: [
               _textToSignChip(context),
               _metricCol(
+                context,
                 value: '$prayerName $cleanTime',
                 label: context.tr('dashboard.prayerSchedule'),
               ),
               _metricCol(
+                context,
                 value: gpsDisplay,
                 label: context.tr('dashboard.locationStatus'),
               ),
@@ -391,12 +397,18 @@ class DashboardPendampingScreen extends StatelessWidget {
           Container(
             height: 52,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.12),
+              color: isDark
+                  ? context.hc.surfaceSand
+                  : Colors.white.withValues(alpha: 0.85),
               borderRadius: BorderRadius.circular(26),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.22),
-                width: 1.2,
-              ),
+              border: Border.all(color: context.hc.border, width: 1.2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Row(
               children: [
@@ -431,9 +443,9 @@ class DashboardPendampingScreen extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.north_west_rounded,
-                              color: Colors.white,
+                              color: context.hc.textPrimary,
                               size: 16,
                             ),
                             const SizedBox(width: 7),
@@ -443,8 +455,8 @@ class DashboardPendampingScreen extends StatelessWidget {
                                 textAlign: TextAlign.center,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                style: TextStyle(
+                                  color: context.hc.textPrimary,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -456,11 +468,7 @@ class DashboardPendampingScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                Container(
-                  width: 1,
-                  height: 24,
-                  color: Colors.white.withValues(alpha: 0.25),
-                ),
+                Container(width: 1, height: 24, color: context.hc.border),
                 Expanded(
                   child: Material(
                     color: Colors.transparent,
@@ -488,17 +496,17 @@ class DashboardPendampingScreen extends StatelessWidget {
                                 textAlign: TextAlign.center,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                style: TextStyle(
+                                  color: context.hc.accentText,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ),
                             const SizedBox(width: 7),
-                            const Icon(
+                            Icon(
                               Icons.north_east_rounded,
-                              color: Colors.white,
+                              color: context.hc.accentText,
                               size: 16,
                             ),
                           ],
@@ -786,6 +794,7 @@ class DashboardPendampingScreen extends StatelessWidget {
   // ═══════════════════════════════════════════════════════════════════════════
 
   Widget _notifButton(BuildContext context, HajiCareController state) {
+    final isDark = context.hc.isDark;
     return Stack(
       alignment: Alignment.center,
       clipBehavior: Clip.none,
@@ -794,19 +803,25 @@ class DashboardPendampingScreen extends StatelessWidget {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.12),
+            color: isDark
+                ? context.hc.surfaceSand
+                : Colors.white.withValues(alpha: 0.85),
             shape: BoxShape.circle,
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.20),
-              width: 1.0,
-            ),
+            border: Border.all(color: context.hc.border, width: 1.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: IconButton(
             constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
             padding: EdgeInsets.zero,
-            icon: const Icon(
+            icon: Icon(
               Icons.notifications_outlined,
-              color: Colors.white,
+              color: context.hc.textPrimary,
               size: 22,
             ),
             tooltip: context.tr('notificationTooltip'),
@@ -830,16 +845,12 @@ class DashboardPendampingScreen extends StatelessWidget {
               width: 10,
               height: 10,
               decoration: BoxDecoration(
-                color: hasSos
-                    ? context.hc.danger
-                    : context.hc.info,
+                color: hasSos ? context.hc.danger : context.hc.info,
                 shape: BoxShape.circle,
                 border: Border.all(color: context.hc.primary, width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: (hasSos
-                            ? context.hc.danger
-                            : context.hc.info)
+                    color: (hasSos ? context.hc.danger : context.hc.info)
                         .withValues(alpha: 0.5),
                     blurRadius: 6,
                     spreadRadius: 1,
@@ -857,23 +868,30 @@ class DashboardPendampingScreen extends StatelessWidget {
     BuildContext context,
     HajiCareController state,
   ) {
+    final isDark = context.hc.isDark;
     return Container(
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.14),
+        color: isDark
+            ? context.hc.surfaceSand
+            : Colors.white.withValues(alpha: 0.85),
         shape: BoxShape.circle,
-        border: Border.all(
-          color: context.hc.sandLight.withValues(alpha: 0.40),
-          width: 1.0,
-        ),
+        border: Border.all(color: context.hc.border, width: 1.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: IconButton(
         constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
         padding: EdgeInsets.zero,
         icon: Icon(
           Icons.campaign_rounded,
-          color: context.hc.sandLight,
+          color: context.hc.textPrimary,
           size: 22,
         ),
         tooltip: context.tr('dashboard.broadcastNotification'),
@@ -890,6 +908,7 @@ class DashboardPendampingScreen extends StatelessWidget {
   }
 
   Widget _textToSignChip(BuildContext context) {
+    final isDark = context.hc.isDark;
     return Expanded(
       child: InkWell(
         onTap: () {
@@ -897,8 +916,8 @@ class DashboardPendampingScreen extends StatelessWidget {
           Get.toNamed(AppRoutes.textToSign);
         },
         borderRadius: BorderRadius.circular(12),
-        splashColor: Colors.white.withValues(alpha: 0.12),
-        highlightColor: Colors.white.withValues(alpha: 0.06),
+        splashColor: context.hc.accent.withValues(alpha: 0.12),
+        highlightColor: context.hc.accent.withValues(alpha: 0.06),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -908,23 +927,18 @@ class DashboardPendampingScreen extends StatelessWidget {
               height: 29,
               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4.5),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.goldLight.withValues(alpha: 0.28),
-                    AppColors.goldPrimary.withValues(alpha: 0.16),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: isDark
+                    ? context.hc.surfaceSand
+                    : Colors.white.withValues(alpha: 0.85),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: AppColors.goldLight.withValues(alpha: 0.70),
+                  color: context.hc.accent.withValues(alpha: 0.50),
                   width: 1.2,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.goldPrimary.withValues(alpha: 0.18),
-                    blurRadius: 6,
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                    blurRadius: 4,
                     offset: const Offset(0, 1),
                   ),
                 ],
@@ -932,17 +946,17 @@ class DashboardPendampingScreen extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.sign_language_rounded,
-                    color: AppColors.goldLight,
+                    color: context.hc.accentText,
                     size: 14,
                   ),
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
                       'Text to Sign',
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: context.hc.accentText,
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.1,
@@ -959,7 +973,7 @@ class DashboardPendampingScreen extends StatelessWidget {
               context.tr('dashboard.signLanguage'),
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.65),
+                color: context.hc.textSecondary,
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
               ),
@@ -972,7 +986,11 @@ class DashboardPendampingScreen extends StatelessWidget {
     );
   }
 
-  Widget _metricCol({required String value, required String label}) {
+  Widget _metricCol(
+    BuildContext context, {
+    required String value,
+    required String label,
+  }) {
     return Expanded(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -982,8 +1000,8 @@ class DashboardPendampingScreen extends StatelessWidget {
           Text(
             value,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: context.hc.textPrimary,
               fontSize: 15,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.2,
@@ -996,7 +1014,7 @@ class DashboardPendampingScreen extends StatelessWidget {
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.65),
+              color: context.hc.textSecondary,
               fontSize: 11,
               fontWeight: FontWeight.w500,
             ),
@@ -1038,8 +1056,7 @@ class DashboardPendampingScreen extends StatelessWidget {
     required VoidCallback onTap,
     Color? iconColor,
   }) {
-    final effectiveColor =
-        iconColor ?? context.hc.primary;
+    final effectiveColor = iconColor ?? context.hc.primary;
     final bg = context.hc.surfaceVariant;
     final textColor = context.hc.textPrimary;
 
@@ -1060,15 +1077,10 @@ class DashboardPendampingScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: bg,
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: context.hc.border,
-                  width: 1.0,
-                ),
+                border: Border.all(color: context.hc.border, width: 1.0),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(
-                      alpha: isDark ? 0.25 : 0.04,
-                    ),
+                    color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),
