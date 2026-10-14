@@ -70,8 +70,7 @@ class AdminDashboardScreen extends StatelessWidget {
         bottomNavigationBar: Obx(() {
           if (Get.isRegistered<MapController>()) {
             final mapCtrl = Get.find<MapController>();
-            if (dashboardCtrl.currentIndex.value == 1 &&
-                mapCtrl.isNavigating) {
+            if (dashboardCtrl.currentIndex.value == 1 && mapCtrl.isNavigating) {
               return const SizedBox.shrink();
             }
           }
@@ -313,7 +312,7 @@ class _AdminDashboardHome extends StatelessWidget {
                   bodyColor,
                   primaryColor,
                 ),
-                const SizedBox(height: AppSpacing.xxxl),
+                const SizedBox(height: AppSpacing.xl),
 
                 // 6. Aktivitas Terbaru
                 _buildRecentActivitiesSection(

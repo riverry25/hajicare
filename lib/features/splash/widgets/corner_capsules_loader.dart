@@ -42,7 +42,7 @@ class CornerCapsulesLoader extends StatelessWidget {
           painter: _CornerCapsulesPainter(
             isTopLeft: position == CornerPosition.topLeft,
             // Brand palette combination taken from the theme.
-            colors: [hc.islamic, hc.accent, hc.primary, hc.info],
+            colors: [hc.primary, hc.accent, hc.primary, hc.accent],
             entrance: entranceAnim,
             sweep: shimmerAnim,
           ),

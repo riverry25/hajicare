@@ -269,7 +269,7 @@ extension _AdminDashboardSections on _AdminDashboardHome {
               final sCount = controller.getRoomSosCount(room.id);
 
               return Container(
-                margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                margin: const EdgeInsets.only(bottom: AppSpacing.xl),
                 child: _RoomPantauCard(
                   room: room,
                   jamaahCount: jCount,

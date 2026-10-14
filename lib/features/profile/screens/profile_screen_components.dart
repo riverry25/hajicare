@@ -20,9 +20,11 @@ class _ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.hc;
-    final roleLabel = state?.role == UserRole.pendamping
-        ? context.tr('auth.rolePendamping')
-        : context.tr('auth.roleJamaah');
+    final roleLabel = switch (state?.role) {
+      UserRole.admin => context.tr('auth.roleAdmin'),
+      UserRole.pendamping => context.tr('auth.rolePendamping'),
+      UserRole.jamaah || null => context.tr('auth.roleJamaah'),
+    };
     final kloterStr = state?.effectiveKloter;
     final maktabStr = state?.effectiveMaktab;
 

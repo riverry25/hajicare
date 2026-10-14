@@ -2339,7 +2339,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
     Color iconColor;
     if (isSelected) {
-      iconColor = isSos ? context.hc.onPrimary : context.hc.accent;
+      iconColor = isSos ? context.hc.onPrimary : context.hc.onPrimaryContainer;
     } else if (isSos) {
       iconColor = context.hc.danger;
     } else {
