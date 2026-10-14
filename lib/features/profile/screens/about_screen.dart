@@ -156,6 +156,8 @@ class _AppIdentitySection extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.xl - 2),
               child: Image.asset(
                 'assets/icon.jpeg',
+                cacheWidth: 192,
+                cacheHeight: 192,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) => Container(
                   color: colors.primary,
@@ -450,6 +452,8 @@ class _LegalSection extends StatelessWidget {
               'assets/icon.jpeg',
               width: 52,
               height: 52,
+              cacheWidth: 104,
+              cacheHeight: 104,
               errorBuilder: (_, _, _) =>
                   Icon(Icons.mosque_rounded, size: 48, color: colors.accent),
             ),

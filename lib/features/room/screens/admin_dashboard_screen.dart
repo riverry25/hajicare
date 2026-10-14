@@ -50,11 +50,11 @@ class AdminDashboardScreen extends StatelessWidget {
 
     return Theme(
       data: DashboardTypography.applyTo(Theme.of(context)),
-      child: Obx(() {
-        return Scaffold(
-          backgroundColor: context.hc.canvas,
-          extendBody: true,
-          body: IndexedStack(
+      child: Scaffold(
+        backgroundColor: context.hc.canvas,
+        extendBody: true,
+        body: Obx(
+          () => IndexedStack(
             index: dashboardCtrl.currentIndex.value,
             children: [
               _AdminDashboardHome(
@@ -66,21 +66,21 @@ class AdminDashboardScreen extends StatelessWidget {
               const ProfileScreen(showBottomNav: false),
             ],
           ),
-          bottomNavigationBar: Obx(() {
-            if (Get.isRegistered<MapController>()) {
-              final mapCtrl = Get.find<MapController>();
-              if (dashboardCtrl.currentIndex.value == 1 &&
-                  mapCtrl.isNavigating) {
-                return const SizedBox.shrink();
-              }
+        ),
+        bottomNavigationBar: Obx(() {
+          if (Get.isRegistered<MapController>()) {
+            final mapCtrl = Get.find<MapController>();
+            if (dashboardCtrl.currentIndex.value == 1 &&
+                mapCtrl.isNavigating) {
+              return const SizedBox.shrink();
             }
-            return HajiCareBottomNavBar(
-              currentIndex: dashboardCtrl.currentIndex.value,
-              onTap: dashboardCtrl.changeTab,
-            );
-          }),
-        );
-      }),
+          }
+          return HajiCareBottomNavBar(
+            currentIndex: dashboardCtrl.currentIndex.value,
+            onTap: dashboardCtrl.changeTab,
+          );
+        }),
+      ),
     );
   }
 }
@@ -132,6 +132,8 @@ class _AdminDashboardHome extends StatelessWidget {
               child: ClipOval(
                 child: Image.asset(
                   'assets/icon.jpeg',
+                  cacheWidth: 80,
+                  cacheHeight: 80,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => CircleAvatar(
                     backgroundColor: context.hc.surfaceSand,

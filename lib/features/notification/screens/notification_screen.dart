@@ -340,37 +340,66 @@ class _NotificationScreenState extends State<NotificationScreen> {
         return _buildEmptyState(context);
       }
 
-      return ListView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.lg,
+      return CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
         ),
-        children: [
-          // 1. Pending Room Invitations Section
-          if (invitations.isNotEmpty) ...[
-            _buildSectionHeader(
-              context,
-              'UNDANGAN ROOM MASUK (${invitations.length})',
-              Icons.mark_email_unread_rounded,
-              color: colors.accentText,
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.lg,
             ),
-            const SizedBox(height: AppSpacing.sm),
-            ...invitations.map((inv) => _buildInvitationCard(context, inv)),
-            const SizedBox(height: AppSpacing.lg),
-          ],
+            sliver: SliverMainAxisGroup(
+              slivers: [
+                // 1. Pending Room Invitations Section
+                if (invitations.isNotEmpty) ...[
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                      child: _buildSectionHeader(
+                        context,
+                        'UNDANGAN ROOM MASUK (${invitations.length})',
+                        Icons.mark_email_unread_rounded,
+                        color: colors.accentText,
+                      ),
+                    ),
+                  ),
+                  SliverList.builder(
+                    itemCount: invitations.length,
+                    itemBuilder: (context, i) =>
+                        _buildInvitationCard(context, invitations[i]),
+                  ),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: AppSpacing.md),
+                  ),
+                ],
 
-          // 2. Real Firestore Notifications Section
-          if (realNotifs.isNotEmpty) ...[
-            _buildSectionHeader(
-              context,
-              'NOTIFIKASI TERKINI',
-              Icons.notifications_active_rounded,
+                // 2. Real Firestore Notifications Section
+                if (realNotifs.isNotEmpty) ...[
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                      child: _buildSectionHeader(
+                        context,
+                        'NOTIFIKASI TERKINI',
+                        Icons.notifications_active_rounded,
+                      ),
+                    ),
+                  ),
+                  SliverList.builder(
+                    itemCount: realNotifs.length,
+                    itemBuilder: (context, i) => RepaintBoundary(
+                      child: _buildFirestoreNotificationCard(
+                        context,
+                        realNotifs[i],
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
-            const SizedBox(height: AppSpacing.sm),
-            ...realNotifs.map(
-              (n) => _buildFirestoreNotificationCard(context, n),
-            ),
-          ],
+          ),
         ],
       );
     });
@@ -793,170 +822,169 @@ class _NotificationScreenState extends State<NotificationScreen> {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              child: IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Unread Accent Bar
-                    Container(
-                      width: 5,
-                      color: isUnread ? colors.accent : Colors.transparent,
+              child: Stack(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.md + 5,
+                      AppSpacing.md,
+                      AppSpacing.md,
+                      AppSpacing.md,
                     ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(AppSpacing.md),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Circular Icon Avatar
-                            Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: iconColor.withValues(alpha: 0.12),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: iconColor.withValues(alpha: 0.25),
-                                  width: 1.5,
-                                ),
-                              ),
-                              child: Center(
-                                child: Icon(icon, color: iconColor, size: 22),
-                              ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Circular Icon Avatar
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: iconColor.withValues(alpha: 0.12),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: iconColor.withValues(alpha: 0.25),
+                              width: 1.5,
                             ),
-                            const SizedBox(width: AppSpacing.md),
+                          ),
+                          child: Center(
+                            child: Icon(icon, color: iconColor, size: 22),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
 
-                            // Content
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                        // Content
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Header Row: Category Badge + Time Badge
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  // Header Row: Category Badge + Time Badge
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: iconColor.withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.pill,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      category,
+                                      style: text.labelSmall.copyWith(
+                                        color: iconColor,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 10,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ),
                                   Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 3,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: iconColor.withValues(
-                                            alpha: 0.08,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            AppRadius.pill,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          category,
-                                          style: text.labelSmall.copyWith(
-                                            color: iconColor,
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 10,
-                                            letterSpacing: 0.5,
-                                          ),
+                                      Icon(
+                                        Icons.access_time_rounded,
+                                        size: 12,
+                                        color: colors.textSecondary,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        time,
+                                        style: text.labelSmall.copyWith(
+                                          color: colors.textSecondary,
+                                          fontWeight: FontWeight.w500,
                                         ),
                                       ),
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            Icons.access_time_rounded,
-                                            size: 12,
-                                            color: colors.textSecondary,
+                                      if (isUnread) ...[
+                                        const SizedBox(width: 6),
+                                        Container(
+                                          width: 7,
+                                          height: 7,
+                                          decoration: BoxDecoration(
+                                            color: colors.accent,
+                                            shape: BoxShape.circle,
                                           ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            time,
-                                            style: text.labelSmall.copyWith(
-                                              color: colors.textSecondary,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                          if (isUnread) ...[
-                                            const SizedBox(width: 6),
-                                            Container(
-                                              width: 7,
-                                              height: 7,
-                                              decoration: BoxDecoration(
-                                                color: colors.accent,
-                                                shape: BoxShape.circle,
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
+                                        ),
+                                      ],
                                     ],
                                   ),
-                                  const SizedBox(height: 8),
-
-                                  // Title
-                                  Text(
-                                    title,
-                                    style: text.titleSmall.copyWith(
-                                      color: colors.textPrimary,
-                                      fontWeight: isUnread
-                                          ? FontWeight.w800
-                                          : FontWeight.w700,
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-
-                                  // Message body
-                                  Text(
-                                    message,
-                                    style: text.bodySmall.copyWith(
-                                      color: colors.textSecondary,
-                                      height: 1.45,
-                                    ),
-                                  ),
-                                  if (onLocationTap != null) ...[
-                                    const SizedBox(height: 12),
-                                    SizedBox(
-                                      width: double.infinity,
-                                      height: 46,
-                                      child: OutlinedButton.icon(
-                                        key: const Key(
-                                          'notification_open_location_button',
-                                        ),
-                                        onPressed: onLocationTap,
-                                        icon: const Icon(
-                                          Icons.location_on_rounded,
-                                          size: 21,
-                                        ),
-                                        label: const Text(
-                                          'Buka Lokasi Jamaah',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                        style: OutlinedButton.styleFrom(
-                                          foregroundColor: colors.success,
-                                          side: BorderSide(
-                                            color: colors.success,
-                                            width: 1.5,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              13,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
                                 ],
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 8),
+
+                              // Title
+                              Text(
+                                title,
+                                style: text.titleSmall.copyWith(
+                                  color: colors.textPrimary,
+                                  fontWeight: isUnread
+                                      ? FontWeight.w800
+                                      : FontWeight.w700,
+                                  fontSize: 15,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+
+                              // Message body
+                              Text(
+                                message,
+                                style: text.bodySmall.copyWith(
+                                  color: colors.textSecondary,
+                                  height: 1.45,
+                                ),
+                              ),
+                              if (onLocationTap != null) ...[
+                                const SizedBox(height: 12),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 46,
+                                  child: OutlinedButton.icon(
+                                    key: const Key(
+                                      'notification_open_location_button',
+                                    ),
+                                    onPressed: onLocationTap,
+                                    icon: const Icon(
+                                      Icons.location_on_rounded,
+                                      size: 21,
+                                    ),
+                                    label: const Text(
+                                      'Buka Lokasi Jamaah',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: colors.success,
+                                      side: BorderSide(
+                                        color: colors.success,
+                                        width: 1.5,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(13),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  if (isUnread)
+                    Positioned(
+                      top: 0,
+                      bottom: 0,
+                      left: 0,
+                      width: 5,
+                      child: ColoredBox(color: colors.accent),
+                    ),
+                ],
               ),
             ),
           ),

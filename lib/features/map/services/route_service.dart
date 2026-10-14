@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:isolate';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
@@ -94,80 +95,7 @@ class RouteService {
         );
       }
 
-      final data = jsonDecode(response.body);
-      final features = data['features'] as List<dynamic>?;
-
-      if (features == null || features.isEmpty) {
-        throw const RouteException(
-          'Rute berjalan tidak ditemukan untuk koordinat ini',
-        );
-      }
-
-      debugPrint('[ROUTE] ORS alternatives returned = ${features.length}');
-
-      // Find the fastest route by duration
-      Map<String, dynamic>? fastestFeature;
-      double minDuration = double.infinity;
-      int fastestIndex = -1;
-
-      for (int i = 0; i < features.length; i++) {
-        final feature = features[i];
-        final props = feature['properties'] as Map<String, dynamic>?;
-        if (props != null) {
-          final summary = props['summary'] as Map<String, dynamic>?;
-          if (summary != null) {
-            final dist = (summary['distance'] as num?)?.toDouble() ?? 0.0;
-            final dur =
-                (summary['duration'] as num?)?.toDouble() ?? double.infinity;
-            debugPrint('[ROUTE] option ${i + 1} distance = ${dist.toInt()} m');
-            debugPrint('[ROUTE] option ${i + 1} duration = ${dur.toInt()} sec');
-            if (dur < minDuration) {
-              minDuration = dur;
-              fastestIndex = i;
-              fastestFeature = feature as Map<String, dynamic>;
-            }
-          }
-        }
-      }
-
-      debugPrint('[ROUTE] selected fastest = option ${fastestIndex + 1}');
-      debugPrint('[ROUTE] selected duration = ${minDuration.toInt()} sec');
-
-      if (fastestFeature == null) {
-        throw const RouteException(
-          'Perkiraan waktu rute belum tersedia. Silakan coba lagi.',
-        );
-      }
-
-      final geometry = fastestFeature['geometry'] as Map<String, dynamic>?;
-      if (geometry == null || geometry['type'] != 'LineString') {
-        throw const RouteException('Rute ini belum dapat ditampilkan.');
-      }
-
-      final coordinates = geometry['coordinates'] as List<dynamic>?;
-      if (coordinates == null || coordinates.isEmpty) {
-        throw const RouteException('Rute belum ditemukan.');
-      }
-
-      final points = _decodeGeoJsonCoords(coordinates);
-      debugPrint('[ROUTE] route points = ${points.length}');
-
-      if (points.isEmpty) {
-        throw const RouteException('Rute belum ditemukan.');
-      }
-
-      final summary =
-          fastestFeature['properties']['summary'] as Map<String, dynamic>;
-      final distance = (summary['distance'] as num).toDouble();
-      final duration = (summary['duration'] as num).toInt();
-
-      debugPrint('[ROUTE] selected distance = ${distance.toInt()} m');
-
-      return RouteResult(
-        points: points,
-        distanceMeters: distance,
-        durationSeconds: duration,
-      );
+      return await Isolate.run(() => _parseOrsResponse(response.body));
     } on RouteException {
       rethrow;
     } catch (e) {
@@ -211,35 +139,7 @@ class RouteService {
         );
       }
 
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final routes = data['routes'] as List<dynamic>?;
-
-      if (routes == null || routes.isEmpty) {
-        throw const RouteException('Rute berjalan tidak ditemukan');
-      }
-
-      final primaryRoute = routes.first as Map<String, dynamic>;
-      final geometry = primaryRoute['geometry'] as Map<String, dynamic>?;
-      if (geometry == null || geometry['type'] != 'LineString') {
-        throw const RouteException('Rute ini belum dapat ditampilkan.');
-      }
-
-      final coordinates = geometry['coordinates'] as List<dynamic>?;
-      if (coordinates == null || coordinates.isEmpty) {
-        throw const RouteException('Rute belum ditemukan.');
-      }
-
-      final points = _decodeGeoJsonCoords(coordinates);
-      debugPrint('[ROUTE] route points = ${points.length}');
-
-      final distance = (primaryRoute['distance'] as num).toDouble();
-      final duration = (primaryRoute['duration'] as num).toInt();
-
-      return RouteResult(
-        points: points,
-        distanceMeters: distance,
-        durationSeconds: duration,
-      );
+      return await Isolate.run(() => _parseOsrmResponse(response.body));
     } on RouteException {
       rethrow;
     } catch (e) {
@@ -250,7 +150,103 @@ class RouteService {
     }
   }
 
-  List<LatLng> _decodeGeoJsonCoords(List<dynamic> coords) {
+  static RouteResult _parseOrsResponse(String responseBody) {
+    final data = jsonDecode(responseBody);
+    final features = data['features'] as List<dynamic>?;
+
+    if (features == null || features.isEmpty) {
+      throw const RouteException(
+        'Rute berjalan tidak ditemukan untuk koordinat ini',
+      );
+    }
+
+    Map<String, dynamic>? fastestFeature;
+    double minDuration = double.infinity;
+
+    for (int i = 0; i < features.length; i++) {
+      final feature = features[i];
+      final props = feature['properties'] as Map<String, dynamic>?;
+      if (props != null) {
+        final summary = props['summary'] as Map<String, dynamic>?;
+        if (summary != null) {
+          final dur =
+              (summary['duration'] as num?)?.toDouble() ?? double.infinity;
+          if (dur < minDuration) {
+            minDuration = dur;
+            fastestFeature = feature as Map<String, dynamic>;
+          }
+        }
+      }
+    }
+
+    if (fastestFeature == null) {
+      throw const RouteException(
+        'Perkiraan waktu rute belum tersedia. Silakan coba lagi.',
+      );
+    }
+
+    final geometry = fastestFeature['geometry'] as Map<String, dynamic>?;
+    if (geometry == null || geometry['type'] != 'LineString') {
+      throw const RouteException('Rute ini belum dapat ditampilkan.');
+    }
+
+    final coordinates = geometry['coordinates'] as List<dynamic>?;
+    if (coordinates == null || coordinates.isEmpty) {
+      throw const RouteException('Rute belum ditemukan.');
+    }
+
+    final points = _decodeGeoJsonCoords(coordinates);
+    if (points.isEmpty) {
+      throw const RouteException('Rute belum ditemukan.');
+    }
+
+    final summary =
+        fastestFeature['properties']['summary'] as Map<String, dynamic>;
+    final distance = (summary['distance'] as num).toDouble();
+    final duration = (summary['duration'] as num).toInt();
+
+    return RouteResult(
+      points: points,
+      distanceMeters: distance,
+      durationSeconds: duration,
+    );
+  }
+
+  static RouteResult _parseOsrmResponse(String responseBody) {
+    final data = jsonDecode(responseBody) as Map<String, dynamic>;
+    final routes = data['routes'] as List<dynamic>?;
+
+    if (routes == null || routes.isEmpty) {
+      throw const RouteException('Rute berjalan tidak ditemukan');
+    }
+
+    final primaryRoute = routes.first as Map<String, dynamic>;
+    final geometry = primaryRoute['geometry'] as Map<String, dynamic>?;
+    if (geometry == null || geometry['type'] != 'LineString') {
+      throw const RouteException('Rute ini belum dapat ditampilkan.');
+    }
+
+    final coordinates = geometry['coordinates'] as List<dynamic>?;
+    if (coordinates == null || coordinates.isEmpty) {
+      throw const RouteException('Rute belum ditemukan.');
+    }
+
+    final points = _decodeGeoJsonCoords(coordinates);
+    if (points.isEmpty) {
+      throw const RouteException('Rute belum ditemukan.');
+    }
+
+    final distance = (primaryRoute['distance'] as num).toDouble();
+    final duration = (primaryRoute['duration'] as num).toInt();
+
+    return RouteResult(
+      points: points,
+      distanceMeters: distance,
+      durationSeconds: duration,
+    );
+  }
+
+  static List<LatLng> _decodeGeoJsonCoords(List<dynamic> coords) {
     return coords.map((c) {
       final lon = (c[0] as num).toDouble();
       final lat = (c[1] as num).toDouble();

@@ -238,6 +238,7 @@ class _CurvedArchHeader extends StatelessWidget {
                       Image.asset(
                         'assets/images/haji.webp',
                         fit: BoxFit.cover,
+                        cacheWidth: 800,
                         alignment: const Alignment(0, -0.2),
                         errorBuilder: (context, error, stackTrace) => Container(
                           color: colors.canvas,
@@ -294,6 +295,8 @@ class _CurvedArchHeader extends StatelessWidget {
                   child: ClipOval(
                     child: Image.asset(
                       'assets/icon.jpeg',
+                      cacheWidth: 80,
+                      cacheHeight: 80,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) => Icon(
                         Icons.mosque_rounded,

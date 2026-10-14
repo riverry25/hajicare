@@ -2504,7 +2504,7 @@ class _MoneyRecognitionScreenState extends State<MoneyRecognitionScreen> {
           },
         );
       },
-    );
+    ).whenComplete(rateController.dispose);
   }
 }
 

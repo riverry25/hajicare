@@ -134,6 +134,8 @@ class HajiCareHeader extends StatelessWidget implements PreferredSizeWidget {
                       imageAsset ?? 'assets/icon.jpeg',
                       width: 36,
                       height: 36,
+                      cacheWidth: 72,
+                      cacheHeight: 72,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return Icon(

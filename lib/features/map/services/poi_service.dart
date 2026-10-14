@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:isolate';
 
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
@@ -82,26 +83,13 @@ class PoiService {
           continue;
         }
 
-        final json = jsonDecode(response.body);
-        if (json is! Map<String, dynamic> || json['elements'] is! List) {
-          throw const FormatException('Format respons Overpass tidak valid');
-        }
-
-        final unique = <String, MapPoi>{};
-        for (final raw in json['elements'] as List) {
-          if (raw is! Map) continue;
-          final poi = mapOsmElementToPoi(Map<String, dynamic>.from(raw));
-          if (poi != null) unique[poi.id] = poi;
-        }
-
-        final result = unique.values.toList()
-          ..sort(
-            (a, b) => _distance(
-              center,
-              a.coordinate,
-            ).compareTo(_distance(center, b.coordinate)),
+        final limited = await Isolate.run(() {
+          return _parseAndSortPois(
+            responseBody: response.body,
+            center: center,
+            safeLimit: safeLimit,
           );
-        final limited = List<MapPoi>.unmodifiable(result.take(safeLimit));
+        });
         _cache[cacheKey] = _PoiCacheEntry(DateTime.now(), limited);
         return limited;
       } catch (_) {}
@@ -130,13 +118,46 @@ class PoiService {
         .toList(growable: false);
   }
 
-  MapPoi? mapOsmElementToHotel(Map<String, dynamic> element) {
-    final tags = _stringTags(element['tags']);
-    if (tags['tourism'] == null) tags['tourism'] = 'hotel';
-    return mapOsmElementToPoi({...element, 'tags': tags});
+  static List<MapPoi> _parseAndSortPois({
+    required String responseBody,
+    required LatLng center,
+    required int safeLimit,
+  }) {
+    final json = jsonDecode(responseBody);
+    if (json is! Map<String, dynamic> || json['elements'] is! List) {
+      throw const FormatException('Format respons Overpass tidak valid');
+    }
+
+    final unique = <String, MapPoi>{};
+    for (final raw in json['elements'] as List) {
+      if (raw is! Map) continue;
+      final poi = _mapOsmElementToPoi(Map<String, dynamic>.from(raw));
+      if (poi != null) unique[poi.id] = poi;
+    }
+
+    final result = unique.values.toList()
+      ..sort(
+        (a, b) => _distance(
+          center,
+          a.coordinate,
+        ).compareTo(_distance(center, b.coordinate)),
+      );
+    return List<MapPoi>.unmodifiable(result.take(safeLimit));
   }
 
-  MapPoi? mapOsmElementToPoi(Map<String, dynamic> element) {
+  MapPoi? mapOsmElementToHotel(Map<String, dynamic> element) =>
+      _mapOsmElementToHotel(element);
+
+  MapPoi? mapOsmElementToPoi(Map<String, dynamic> element) =>
+      _mapOsmElementToPoi(element);
+
+  static MapPoi? _mapOsmElementToHotel(Map<String, dynamic> element) {
+    final tags = _stringTags(element['tags']);
+    if (tags['tourism'] == null) tags['tourism'] = 'hotel';
+    return _mapOsmElementToPoi({...element, 'tags': tags});
+  }
+
+  static MapPoi? _mapOsmElementToPoi(Map<String, dynamic> element) {
     final coordinate = _coordinateOf(element);
     final type = element['type']?.toString();
     final rawId = element['id'];

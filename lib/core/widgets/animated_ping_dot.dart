@@ -60,23 +60,21 @@ class _AnimatedPingDotState extends State<AnimatedPingDot>
           children: [
             AnimatedBuilder(
               animation: _controller,
-              builder: (context, child) {
-                return Opacity(
-                  opacity: _opacityAnimation.value,
-                  child: Transform.scale(
-                    scale: _scaleAnimation.value,
-                    child: child,
+              builder: (context, _) {
+                return Transform.scale(
+                  scale: _scaleAnimation.value,
+                  child: Container(
+                    width: widget.size,
+                    height: widget.size,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: effectiveColor.withValues(
+                        alpha: effectiveColor.a * _opacityAnimation.value,
+                      ),
+                    ),
                   ),
                 );
               },
-              child: Container(
-                width: widget.size,
-                height: widget.size,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: effectiveColor,
-                ),
-              ),
             ),
             Container(
               width: widget.size,

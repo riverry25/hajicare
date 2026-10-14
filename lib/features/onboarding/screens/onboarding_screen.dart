@@ -57,6 +57,8 @@ class OnboardingScreen extends StatelessWidget {
                     child: ClipOval(
                       child: Image.asset(
                         'assets/icon.jpeg',
+                        cacheWidth: 88,
+                        cacheHeight: 88,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => Icon(
                           Icons.mosque_rounded,

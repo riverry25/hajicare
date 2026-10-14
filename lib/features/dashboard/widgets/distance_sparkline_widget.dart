@@ -118,16 +118,13 @@ class _DistanceSparklineWidgetState extends State<DistanceSparklineWidget>
                                         math.sin(_syncCtrl.value * 2 * math.pi))
                       : 1.0;
 
-                  return Opacity(
-                    opacity: opacity,
-                    child: CustomPaint(
-                      painter: _DistanceWavePainter(
-                        distance: widget.distance,
-                        waveColor: waveColor,
-                        pulsePhase: _pulseCtrl.value,
-                        syncPhase: _isSyncing ? _syncCtrl.value : 0.0,
-                        isSyncing: _isSyncing,
-                      ),
+                  return CustomPaint(
+                    painter: _DistanceWavePainter(
+                      distance: widget.distance,
+                      waveColor: waveColor.withValues(alpha: waveColor.a * opacity),
+                      pulsePhase: _pulseCtrl.value,
+                      syncPhase: _isSyncing ? _syncCtrl.value : 0.0,
+                      isSyncing: _isSyncing,
                     ),
                   );
                 },

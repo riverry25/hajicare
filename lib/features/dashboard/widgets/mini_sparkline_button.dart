@@ -141,20 +141,21 @@ class _MiniSparklineButtonState extends State<MiniSparklineButton>
                                           ))
                         : 1.0;
 
-                    return Opacity(
-                      opacity: opacity,
-                      child: CustomPaint(
-                        painter: _SparklineWavePainter(
-                          waveColor: widget.waveColor,
-                          effectiveColor: activeColor,
-                          jamaahList: widget.jamaahList,
-                          pulsePhase: _pulseCtrl.value,
-                          syncPhase: _isSyncing ? _syncCtrl.value : 0.0,
-                          isSyncing: _isSyncing,
-                          syncLabel: context.tr('dashboard.syncShort'),
-                          groupLabel: context.tr('dashboard.groupShort'),
-                          safeLabel: context.tr('dashboard.safe'),
+                    return CustomPaint(
+                      painter: _SparklineWavePainter(
+                        waveColor: widget.waveColor.withValues(
+                          alpha: widget.waveColor.a * opacity,
                         ),
+                        effectiveColor: activeColor.withValues(
+                          alpha: activeColor.a * opacity,
+                        ),
+                        jamaahList: widget.jamaahList,
+                        pulsePhase: _pulseCtrl.value,
+                        syncPhase: _isSyncing ? _syncCtrl.value : 0.0,
+                        isSyncing: _isSyncing,
+                        syncLabel: context.tr('dashboard.syncShort'),
+                        groupLabel: context.tr('dashboard.groupShort'),
+                        safeLabel: context.tr('dashboard.safe'),
                       ),
                     );
                   },
