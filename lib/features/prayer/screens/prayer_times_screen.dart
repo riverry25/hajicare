@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -7,12 +6,15 @@ import '../../../core/locales/app_localizations.dart';
 import '../../../core/locales/app_translations.dart';
 import '../../../core/state/app_settings_controller.dart';
 import '../../../core/theme/app_breakpoints.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/theme_context.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
 import '../controllers/prayer_times_controller.dart';
+import '../widgets/next_prayer_luxury_hero.dart';
+import '../widgets/qibla_astrolabe_compass.dart';
 
 class PrayerTimesScreen extends StatelessWidget {
   final bool showBottomNav;
@@ -136,7 +138,9 @@ class PrayerTimesScreen extends StatelessWidget {
                                 Text(
                                   'Syaikh Mishary Rashid Al-Afasy',
                                   style: context.text.bodySmall.copyWith(
-                                    color: colors.surfaceSand,
+                                    color: isDark
+                                        ? AppColors.darkTextBody
+                                        : colors.surfaceSand,
                                   ),
                                 ),
                               ],
@@ -204,541 +208,12 @@ class PrayerTimesScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.md),
 
-                  // ── Realtime Next Prayer Hero (Islamic Luxury) ──────────────────
-                  Obx(
-                    () => Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(AppSpacing.cardPadding),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: isDark
-                              ? const [
-                                  Color(0xFF26180E),
-                                  Color(0xFF1C1109),
-                                  Color(0xFF120A05),
-                                ]
-                              : [
-                                  colors.primary,
-                                  const Color(0xFF2E1C12),
-                                  const Color(0xFF1E140E),
-                                ],
-                        ),
-                        borderRadius: BorderRadius.circular(AppRadius.xl),
-                        border: Border.all(
-                          color: isDark
-                              ? const Color(0xFFD4AF37).withValues(alpha: 0.45)
-                              : colors.accent.withValues(alpha: 0.4),
-                          width: 1.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: isDark
-                                ? Colors.black.withValues(alpha: 0.45)
-                                : colors.primary.withValues(alpha: 0.25),
-                            blurRadius: 22,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          // Badge Header
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? const Color(
-                                      0xFFD4AF37,
-                                    ).withValues(alpha: 0.12)
-                                  : Colors.white.withValues(alpha: 0.10),
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
-                              ),
-                              border: Border.all(
-                                color: isDark
-                                    ? const Color(
-                                        0xFFD4AF37,
-                                      ).withValues(alpha: 0.5)
-                                    : colors.accent.withValues(alpha: 0.35),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.auto_awesome_rounded,
-                                  color: isDark
-                                      ? const Color(0xFFE5C07B)
-                                      : colors.accent,
-                                  size: 14,
-                                ),
-                                const SizedBox(width: 6),
-                                Flexible(
-                                  child: Text(
-                                    context.tr('prayerNextLabel').isEmpty
-                                        ? 'WAKTU SHOLAT BERIKUTNYA'
-                                        : context.tr('prayerNextLabel'),
-                                    style: context.text.labelSmall.copyWith(
-                                      color: isDark
-                                          ? const Color(0xFFE5C07B)
-                                          : colors.accent,
-                                      letterSpacing: 1.2,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-
-                          // Prayer Name
-                          Text(
-                            context.localizedPrayerName(
-                              controller.nextPrayerName.value,
-                            ),
-                            style: context.text.displayLarge.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              height: 1.1,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-
-                          // Arabic Calligraphy
-                          Text(
-                            controller.nextPrayerArabic.value,
-                            style: AppTypography.arabicMedium.copyWith(
-                              color: isDark
-                                  ? const Color(0xFFE5C07B)
-                                  : colors.accent,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-
-                          // Next Prayer Time
-                          Text(
-                            controller.nextPrayerTime.value,
-                            style: context.text.headlineLarge.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-
-                          // Countdown Badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.08)
-                                  : Colors.white.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
-                              ),
-                              border: Border.all(
-                                color: isDark
-                                    ? const Color(
-                                        0xFFD4AF37,
-                                      ).withValues(alpha: 0.45)
-                                    : colors.accent.withValues(alpha: 0.4),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.timer_outlined,
-                                  color: isDark
-                                      ? const Color(0xFFE5C07B)
-                                      : colors.accent,
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 6),
-                                Flexible(
-                                  child: Text(
-                                    '${context.tr('prayerTimeRemaining')}: ${controller.formatCountdown(context)}',
-                                    style: context.text.bodySmall.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  // ── Realtime Next Prayer Hero (Modern Islamic Luxury) ───────────
+                  NextPrayerLuxuryHero(controller: controller),
                   const SizedBox(height: AppSpacing.md),
 
-                  // ── Dynamic Qibla Compass ──────────────────────────────────────
-                  Obx(() {
-                    final isAligned = controller.isQiblaAligned.value;
-                    final qiblaBearingVal = controller.qiblaBearing.value;
-                    final safeQiblaBearing =
-                        qiblaBearingVal.isFinite && !qiblaBearingVal.isNaN
-                        ? qiblaBearingVal
-                        : 0.0;
-                    final qiblaDeg = safeQiblaBearing.toStringAsFixed(0);
-
-                    final offsetVal = controller.qiblaOffset.value;
-                    final safeOffset = offsetVal.isFinite && !offsetVal.isNaN
-                        ? offsetVal
-                        : 0.0;
-                    final rawAngle = (safeOffset * math.pi / 180.0);
-                    final safeAngle = rawAngle.isFinite && !rawAngle.isNaN
-                        ? rawAngle
-                        : 0.0;
-
-                    return AppCard(
-                      padding: const EdgeInsets.all(AppSpacing.cardPadding),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 36,
-                                      height: 36,
-                                      decoration: BoxDecoration(
-                                        color: isAligned
-                                            ? colors.success.withValues(
-                                                alpha: 0.15,
-                                              )
-                                            : colors.surfaceSubtle,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(
-                                        Icons.explore_rounded,
-                                        color: isAligned
-                                            ? colors.success
-                                            : (isDark
-                                                  ? colors.accent
-                                                  : colors.primary),
-                                        size: 20,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Flexible(
-                                      child: Text(
-                                        context.tr('qiblaDirection').isEmpty
-                                            ? 'Arah Kiblat'
-                                            : context.tr('qiblaDirection'),
-                                        style: context.text.titleMedium
-                                            .copyWith(
-                                              color: colors.textPrimary,
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 5,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isAligned
-                                      ? colors.success.withValues(alpha: 0.15)
-                                      : colors.surfaceSubtle,
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.pill,
-                                  ),
-                                  border: Border.all(
-                                    color: isAligned
-                                        ? colors.success
-                                        : colors.border,
-                                  ),
-                                ),
-                                child: Text(
-                                  '$qiblaDeg° ${context.tr('qiblaKabah')}',
-                                  style: context.text.labelSmall.copyWith(
-                                    color: isAligned
-                                        ? colors.success
-                                        : colors.textPrimary,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: AppSpacing.lg),
-
-                          if (!controller.hasCompassSensor.value)
-                            Container(
-                              padding: const EdgeInsets.all(AppSpacing.lg),
-                              margin: const EdgeInsets.symmetric(
-                                vertical: AppSpacing.md,
-                              ),
-                              decoration: BoxDecoration(
-                                color: colors.surfaceSubtle,
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.md,
-                                ),
-                              ),
-                              child: Text(
-                                context.tr('kompasNoSensor'),
-                                style: context.text.bodyMedium.copyWith(
-                                  color: colors.textSecondary,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            )
-                          else ...[
-                            // Rotating Compass Dial
-                            Center(
-                              child: Container(
-                                width: 200,
-                                height: 200,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: isAligned
-                                        ? colors.success
-                                        : (isDark
-                                              ? colors.borderStrong
-                                              : colors.accent),
-                                    width: isAligned ? 5 : 3,
-                                  ),
-                                  color: colors.surfaceSubtle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: isAligned
-                                          ? colors.success.withValues(
-                                              alpha: 0.35,
-                                            )
-                                          : (isDark
-                                                ? Colors.black.withValues(
-                                                    alpha: 0.3,
-                                                  )
-                                                : colors.primary.withValues(
-                                                    alpha: 0.08,
-                                                  )),
-                                      blurRadius: isAligned ? 22 : 12,
-                                      spreadRadius: isAligned ? 4 : 1,
-                                    ),
-                                  ],
-                                ),
-                                child: Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    // Dial markings (U, S, B, T)
-                                    Positioned(
-                                      top: 8,
-                                      child: Text(
-                                        context.tr('compassNorth'),
-                                        style: context.text.labelLarge.copyWith(
-                                          fontWeight: FontWeight.w800,
-                                          color: colors.danger,
-                                        ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      bottom: 8,
-                                      child: Text(
-                                        context.tr('compassSouth'),
-                                        style: context.text.labelLarge.copyWith(
-                                          fontWeight: FontWeight.w800,
-                                          color: colors.textSecondary,
-                                        ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      left: 10,
-                                      child: Text(
-                                        context.tr('compassWest'),
-                                        style: context.text.labelLarge.copyWith(
-                                          fontWeight: FontWeight.w800,
-                                          color: colors.textSecondary,
-                                        ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      right: 10,
-                                      child: Text(
-                                        context.tr('compassEast'),
-                                        style: context.text.labelLarge.copyWith(
-                                          fontWeight: FontWeight.w800,
-                                          color: colors.textSecondary,
-                                        ),
-                                      ),
-                                    ),
-
-                                    // Concentric inner circle
-                                    Container(
-                                      width: 130,
-                                      height: 130,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: colors.surfaceSand.withValues(
-                                            alpha: isDark ? 0.3 : 0.25,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-
-                                    // Dynamic Rotating Qibla Needle
-                                    Transform.rotate(
-                                      angle: safeAngle,
-                                      child: SizedBox(
-                                        width: 150,
-                                        height: 150,
-                                        child: Stack(
-                                          alignment: Alignment.center,
-                                          children: [
-                                            // North/Kaaba pointer
-                                            Positioned(
-                                              top: 4,
-                                              child: Column(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Icon(
-                                                    Icons.mosque_rounded,
-                                                    size: 26,
-                                                    color: isAligned
-                                                        ? colors.success
-                                                        : colors.accent,
-                                                  ),
-                                                  Container(
-                                                    width: 4,
-                                                    height: 40,
-                                                    decoration: BoxDecoration(
-                                                      color: isAligned
-                                                          ? colors.success
-                                                          : colors.accent,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            2,
-                                                          ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            // Tail pointer
-                                            Positioned(
-                                              bottom: 12,
-                                              child: Container(
-                                                width: 3,
-                                                height: 32,
-                                                decoration: BoxDecoration(
-                                                  color: colors.surfaceSand
-                                                      .withValues(
-                                                        alpha: isDark
-                                                            ? 0.5
-                                                            : 0.45,
-                                                      ),
-                                                  borderRadius:
-                                                      BorderRadius.circular(2),
-                                                ),
-                                              ),
-                                            ),
-                                            // Center pivot
-                                            Container(
-                                              width: 14,
-                                              height: 14,
-                                              decoration: BoxDecoration(
-                                                color: isAligned
-                                                    ? colors.success
-                                                    : (isDark
-                                                          ? colors.accent
-                                                          : colors.primary),
-                                                shape: BoxShape.circle,
-                                                border: Border.all(
-                                                  color: colors.surface,
-                                                  width: 2,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.md),
-
-                            // Direction Feedback Badge
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isAligned
-                                    ? colors.success.withValues(alpha: 0.15)
-                                    : colors.surfaceSubtle,
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.pill,
-                                ),
-                                border: Border.all(
-                                  color: isAligned
-                                      ? colors.success.withValues(alpha: 0.4)
-                                      : colors.border,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    isAligned
-                                        ? Icons.check_circle_rounded
-                                        : Icons.navigation_rounded,
-                                    size: 16,
-                                    color: isAligned
-                                        ? colors.success
-                                        : colors.textSecondary,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Flexible(
-                                    child: Text(
-                                      isAligned
-                                          ? context.tr('qiblaAligned')
-                                          : '${context.tr('qiblaRotate')}: ${safeOffset.toStringAsFixed(0)}° ${context.tr('qiblaRotateToKabah')}',
-                                      style: context.text.labelSmall.copyWith(
-                                        color: isAligned
-                                            ? colors.success
-                                            : colors.textPrimary,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    );
-                  }),
+                  // ── Dynamic Qibla Compass (Modern Astrolabe Instrument) ─────────
+                  QiblaAstrolabeCompass(controller: controller),
                   const SizedBox(height: AppSpacing.md),
 
                   // ── Full Day Dynamic Schedule ──────────────────────────────────
@@ -829,7 +304,9 @@ class PrayerTimesScreen extends StatelessWidget {
                                               : Icons.volume_off_rounded,
                                           color: nowOn
                                               ? colors.accent
-                                              : colors.surfaceSand,
+                                              : (isDark
+                                                    ? colors.textSecondary
+                                                    : colors.surfaceSand),
                                         ),
                                         margin: const EdgeInsets.all(
                                           AppSpacing.md,
@@ -1049,7 +526,7 @@ class PrayerTimesScreen extends StatelessWidget {
             color: isFallback
                 ? colors.danger.withValues(alpha: isDark ? 0.5 : 0.35)
                 : (isDark
-                      ? const Color(0xFFD4AF37).withValues(alpha: 0.45)
+                      ? AppColors.darkSecondary.withValues(alpha: 0.45)
                       : colors.accent.withValues(alpha: 0.25)),
             width: 1.2,
           ),
@@ -1191,7 +668,7 @@ class PrayerTimesScreen extends StatelessWidget {
                                 color: isFallback
                                     ? colors.danger
                                     : (isDark
-                                          ? const Color(0xFFD4AF37)
+                                          ? AppColors.darkSecondary
                                           : colors.accent),
                                 width: 2.2,
                               ),
@@ -1201,7 +678,7 @@ class PrayerTimesScreen extends StatelessWidget {
                                       (isFallback
                                               ? colors.danger
                                               : (isDark
-                                                    ? const Color(0xFFD4AF37)
+                                                    ? AppColors.darkSecondary
                                                     : colors.accent))
                                           .withValues(alpha: 0.25),
                                   blurRadius: 10,
@@ -1216,9 +693,9 @@ class PrayerTimesScreen extends StatelessWidget {
                                   : Icons.location_on_rounded,
                               size: 24,
                               color: isFallback
-                                  ? colors.surfaceSand
+                                  ? colors.danger
                                   : (isDark
-                                        ? const Color(0xFFE5C07B)
+                                        ? AppColors.darkSecondary
                                         : colors.accent),
                             ),
                           ),
@@ -1232,13 +709,13 @@ class PrayerTimesScreen extends StatelessWidget {
                                 color: isFallback
                                     ? colors.danger
                                     : (isDark
-                                          ? const Color(0xFFD4AF37)
+                                          ? AppColors.darkSecondary
                                           : colors.accent),
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                   color: isDark
-                                      ? const Color(0xFF20130A)
-                                      : const Color(0xFF23160D),
+                                      ? AppColors.darkSurface
+                                      : AppColors.espressoDark,
                                   width: 1.8,
                                 ),
                               ),
@@ -1282,9 +759,9 @@ class PrayerTimesScreen extends StatelessWidget {
                                       : Icons.verified_rounded,
                                   size: 14,
                                   color: isFallback
-                                      ? colors.surfaceSand
+                                      ? colors.danger
                                       : (isDark
-                                            ? const Color(0xFFE5C07B)
+                                            ? AppColors.darkSecondary
                                             : colors.accent),
                                 ),
                                 const SizedBox(width: 5),
@@ -1299,9 +776,9 @@ class PrayerTimesScreen extends StatelessWidget {
                                               : context.tr('prayerLocation')),
                                     style: context.text.labelSmall.copyWith(
                                       color: isFallback
-                                          ? colors.surfaceSand
+                                          ? colors.danger
                                           : (isDark
-                                                ? const Color(0xFFE5C07B)
+                                                ? AppColors.darkSecondary
                                                 : colors.accent),
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
@@ -1345,9 +822,9 @@ class PrayerTimesScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: isDark
-                                  ? const Color(
-                                      0xFFD4AF37,
-                                    ).withValues(alpha: 0.45)
+                                  ? AppColors.darkSecondary.withValues(
+                                      alpha: 0.45,
+                                    )
                                   : Colors.white.withValues(alpha: 0.22),
                               width: 1.1,
                             ),
@@ -1462,7 +939,9 @@ class PrayerTimesScreen extends StatelessWidget {
                                 : Icons.volume_off_rounded,
                             color: willBeOn
                                 ? colors.accent
-                                : colors.surfaceSand,
+                                : (isDark
+                                      ? colors.textSecondary
+                                      : colors.surfaceSand),
                           ),
                           margin: const EdgeInsets.all(AppSpacing.md),
                           borderRadius: AppRadius.md,
@@ -1904,7 +1383,10 @@ class PrayerTimesScreen extends StatelessWidget {
                             shape: BoxShape.circle,
                             gradient: LinearGradient(
                               colors: isDark
-                                  ? const [Color(0xFFE5C07B), Color(0xFF8B6528)]
+                                  ? const [
+                                      AppColors.darkSecondary,
+                                      AppColors.secondary,
+                                    ]
                                   : [colors.accent, colors.primary],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
@@ -1943,7 +1425,7 @@ class PrayerTimesScreen extends StatelessWidget {
                                     Icons.verified_rounded,
                                     size: 13,
                                     color: isDark
-                                        ? const Color(0xFFE5C07B)
+                                        ? AppColors.darkSecondary
                                         : colors.accent,
                                   ),
                                   const SizedBox(width: 4),
@@ -1952,7 +1434,7 @@ class PrayerTimesScreen extends StatelessWidget {
                                       'PENGINGAT OTOMATIS',
                                       style: context.text.labelSmall.copyWith(
                                         color: isDark
-                                            ? const Color(0xFFE5C07B)
+                                            ? AppColors.darkSecondary
                                             : colors.accent,
                                         fontSize: 10.5,
                                         fontWeight: FontWeight.w700,

@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'adhan_native_bridge.dart';
+import 'adhan_notification_service.dart';
 import 'prayer_calculation_service.dart';
 
 /// Top-level callback executed by Android AlarmManager when a scheduled prayer alarm fires,
@@ -10,6 +12,21 @@ import 'prayer_calculation_service.dart';
 void prayerAlarmCallback(int id, Map<String, dynamic> params) async {
   final prayerName =
       params['prayerName'] as String? ?? _resolvePrayerNameFromId(id);
+
+  final scheduledTimestampMs = params['scheduledTimeMs'] as int?;
+  if (scheduledTimestampMs != null) {
+    final scheduledTime = DateTime.fromMillisecondsSinceEpoch(
+      scheduledTimestampMs,
+    );
+    final now = DateTime.now();
+    // Drop if alarm fired more than 2 minutes late (stale alarm triggered on device boot or app startup)
+    if (now.difference(scheduledTime).inSeconds.abs() > 120) {
+      debugPrint(
+        '🕌 [PRAYER-ALARM] Skipping stale alarm. Scheduled: $scheduledTime, Now: $now',
+      );
+      return;
+    }
+  }
 
   debugPrint(
     '🕌 [PRAYER-ALARM-TRIGGERED] ========================================\n'
@@ -20,41 +37,88 @@ void prayerAlarmCallback(int id, Map<String, dynamic> params) async {
   );
 
   try {
-    final notificationsPlugin = FlutterLocalNotificationsPlugin();
-    const androidSettings = AndroidInitializationSettings(
-      '@mipmap/launcher_icon',
-    );
-    const initSettings = InitializationSettings(android: androidSettings);
-    await notificationsPlugin.initialize(settings: initSettings);
+    final isSubuh =
+        prayerName.trim().toLowerCase() == 'subuh' ||
+        prayerName.trim().toLowerCase() == 'fajr';
 
-    const androidDetails = AndroidNotificationDetails(
-      'prayer_alarm_poc_channel',
-      'Jadwal Waktu Salat',
-      channelDescription:
-          'Notifikasi pengingat waktu salat via AndroidAlarmManager alarmClock',
-      importance: Importance.max,
-      priority: Priority.high,
-      playSound: true,
-      enableVibration: true,
-    );
+    // 1. Start Native Adhan Foreground Service for reliable audio and persistent notification with "Matikan Adzan"
+    bool nativeStarted = false;
+    try {
+      nativeStarted = await AdhanNativeBridge.startAdhanService(
+        prayerName: prayerName,
+        isSubuh: isSubuh,
+      );
+    } catch (e) {
+      debugPrint('AdhanNativeBridge start error in background callback: $e');
+    }
 
-    const notifDetails = NotificationDetails(android: androidDetails);
+    // 2. If native service did not start, post actionable fallback notification with "Matikan Adzan"
+    if (!nativeStarted) {
+      final notificationsPlugin = FlutterLocalNotificationsPlugin();
+      const androidSettings = AndroidInitializationSettings(
+        '@mipmap/launcher_icon',
+      );
+      const initSettings = InitializationSettings(android: androidSettings);
+      await notificationsPlugin.initialize(
+        settings: initSettings,
+        onDidReceiveBackgroundNotificationResponse:
+            adhanBackgroundNotificationResponse,
+      );
 
-    final now = DateTime.now();
-    final timeStr =
-        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
+      final soundRes = isSubuh
+          ? AdhanNotificationService.soundAdzanSubuh
+          : AdhanNotificationService.soundAdzanRegular;
+      final channelId = isSubuh
+          ? AdhanNotificationService.channelIdSubuh
+          : AdhanNotificationService.channelIdRegular;
+      final channelName = isSubuh
+          ? AdhanNotificationService.channelNameSubuh
+          : AdhanNotificationService.channelNameRegular;
+      final channelDesc = isSubuh
+          ? AdhanNotificationService.channelDescSubuh
+          : AdhanNotificationService.channelDescRegular;
 
-    await notificationsPlugin.show(
-      id: id,
-      title: 'Waktu Salat $prayerName Telah Tiba',
-      body:
-          'Waktu salat $prayerName telah tiba (Pukul $timeStr). Mari tunaikan salat.',
-      notificationDetails: notifDetails,
-    );
+      final androidDetails = AndroidNotificationDetails(
+        channelId,
+        channelName,
+        channelDescription: channelDesc,
+        importance: Importance.max,
+        priority: Priority.high,
+        playSound: true,
+        sound: RawResourceAndroidNotificationSound(soundRes),
+        audioAttributesUsage: AudioAttributesUsage.alarm,
+        category: AndroidNotificationCategory.alarm,
+        fullScreenIntent: true,
+        enableVibration: true,
+        visibility: NotificationVisibility.public,
+        actions: const <AndroidNotificationAction>[
+          AndroidNotificationAction(
+            AdhanNotificationService.actionStopAdhan,
+            'Matikan Adzan',
+            showsUserInterface: true,
+            cancelNotification: true,
+          ),
+        ],
+      );
 
-    debugPrint(
-      '🕌 [PRAYER-ALARM-NOTIFICATION-POSTED] Notification shown for $prayerName (ID: $id) at $timeStr',
-    );
+      final notifDetails = NotificationDetails(android: androidDetails);
+
+      final now = DateTime.now();
+      final timeStr =
+          '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+
+      await notificationsPlugin.show(
+        id: id,
+        title: 'Waktu Salat $prayerName Telah Tiba',
+        body:
+            'Waktu salat $prayerName telah tiba (Pukul $timeStr). Mari tunaikan salat.',
+        notificationDetails: notifDetails,
+      );
+
+      debugPrint(
+        '🕌 [PRAYER-ALARM-NOTIFICATION-POSTED] Notification shown for $prayerName (ID: $id) at $timeStr',
+      );
+    }
   } catch (e, st) {
     debugPrint(
       '❌ [PRAYER-ALARM-NOTIFICATION-ERROR] Failed to show notification: $e\n$st',
@@ -114,7 +178,10 @@ class PrayerAlarmManagerService {
         exact: true,
         wakeup: true,
         rescheduleOnReboot: true,
-        params: {'prayerName': prayerName},
+        params: {
+          'prayerName': prayerName,
+          'scheduledTimeMs': targetTime.millisecondsSinceEpoch,
+        },
       );
 
       debugPrint(
@@ -175,8 +242,13 @@ class PrayerAlarmManagerService {
               exact: true,
               wakeup: true,
               rescheduleOnReboot: true,
-              params: {'prayerName': item.name},
+              params: {
+                'prayerName': item.name,
+                'scheduledTimeMs': item.time.millisecondsSinceEpoch,
+              },
             );
+          } else {
+            await AndroidAlarmManager.cancel(alarmId);
           }
         }
       } catch (e) {

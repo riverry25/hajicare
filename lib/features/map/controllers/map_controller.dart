@@ -604,13 +604,14 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     isLocationLoading.value = true;
     locationError.value = null;
 
-    // Fast-path: Check if HajiCareController is already providing a valid GPS location
+    // 1. Immediately subscribe to HajiCareController if registered so updates are never missed
+    HajiCareController? state;
     if (Get.isRegistered<HajiCareController>()) {
-      final state = Get.find<HajiCareController>();
+      state = Get.find<HajiCareController>();
+      _subscribeToStatePosition(state);
       if (state.myCurrentPosition.value != null) {
         _applyPosition(state.myCurrentPosition.value!, publishToRoom: false);
         isLocationLoading.value = false;
-        _subscribeToStatePosition(state);
         return;
       }
     }
@@ -634,6 +635,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       var permission = await Geolocator.checkPermission();
       if (isClosed || generation != _lifecycleGeneration) return;
       if (permission == LocationPermission.denied) {
+        // Direct System Permission: ask OS directly without in-app pre-dialog
         permission = await Geolocator.requestPermission();
         if (isClosed || generation != _lifecycleGeneration) return;
         if (permission == LocationPermission.denied) {
@@ -665,13 +667,19 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
         return;
       }
 
-      Position? firstPosition;
-      if (Get.isRegistered<HajiCareController>()) {
-        final state = Get.find<HajiCareController>();
-        firstPosition = state.myCurrentPosition.value;
+      // 2. If HajiCareController is registered, trigger its GPS tracking
+      if (state != null) {
+        await state.refreshLocation();
+        if (isClosed || generation != _lifecycleGeneration) return;
+        if (state.myCurrentPosition.value != null) {
+          _applyPosition(state.myCurrentPosition.value!, publishToRoom: false);
+          isLocationLoading.value = false;
+          return;
+        }
       }
 
-      firstPosition ??= await Geolocator.getCurrentPosition(
+      // 3. Direct position fetch if state not registered or still pending
+      final firstPosition = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
           timeLimit: Duration(seconds: 10),
@@ -679,14 +687,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       );
       if (isClosed || generation != _lifecycleGeneration) return;
 
-      if (Get.isRegistered<HajiCareController>()) {
-        final state = Get.find<HajiCareController>();
-        _applyPosition(firstPosition, publishToRoom: false);
-        isLocationLoading.value = false;
-        _subscribeToStatePosition(state);
-      } else {
-        _applyPosition(firstPosition, publishToRoom: true);
-        isLocationLoading.value = false;
+      _applyPosition(firstPosition, publishToRoom: state == null);
+      isLocationLoading.value = false;
+      if (state == null) {
         _startPositionStream();
       }
     } catch (e) {
@@ -697,8 +700,6 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
             'Lokasi belum dapat ditemukan. Periksa pengaturan lokasi ponsel, lalu coba lagi.',
       );
       isLocationLoading.value = false;
-      // Do NOT set currentUserLocation to defaultMinaBase on failure:
-      // real GPS location must remain null until an actual device fix is acquired.
     }
   }
 
@@ -708,6 +709,8 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
     _statePositionSub = state.myCurrentPosition.listen((pos) {
       if (pos != null) {
         _applyPosition(pos, publishToRoom: false);
+        isLocationLoading.value = false;
+        locationError.value = null;
       }
     });
     isLiveTracking.value = true;
@@ -723,7 +726,11 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
             distanceFilter: 2,
           ),
         ).listen(
-          (pos) => _applyPosition(pos, publishToRoom: true),
+          (pos) {
+            _applyPosition(pos, publishToRoom: true);
+            isLocationLoading.value = false;
+            locationError.value = null;
+          },
           onError: (e) {
             debugPrint('[MapController] Stream error: $e');
             isLiveTracking.value = false;

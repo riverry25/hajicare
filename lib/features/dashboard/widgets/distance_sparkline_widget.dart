@@ -121,7 +121,9 @@ class _DistanceSparklineWidgetState extends State<DistanceSparklineWidget>
                   return CustomPaint(
                     painter: _DistanceWavePainter(
                       distance: widget.distance,
-                      waveColor: waveColor.withValues(alpha: waveColor.a * opacity),
+                      waveColor: waveColor.withValues(
+                        alpha: waveColor.a * opacity,
+                      ),
                       pulsePhase: _pulseCtrl.value,
                       syncPhase: _isSyncing ? _syncCtrl.value : 0.0,
                       isSyncing: _isSyncing,

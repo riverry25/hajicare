@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'adhan_native_bridge.dart';
 import 'adhan_notification_service.dart';
@@ -8,7 +9,7 @@ import 'adhan_notification_service.dart';
 /// Service to handle playing and stopping Adhan audio.
 /// Uses high quality, authentic human recordings of Syaikh Mishary Rashid Al-Afasy.
 /// Integrates with system notifications so users can stop the Adhan from their phone notification.
-class AdhanAudioService extends GetxService {
+class AdhanAudioService extends GetxService with WidgetsBindingObserver {
   AudioPlayer? _player;
   final AdhanNotificationService _notificationService;
 
@@ -16,7 +17,10 @@ class AdhanAudioService extends GetxService {
     AudioPlayer? player,
     AdhanNotificationService? notificationService,
   }) : _player = player,
-       _notificationService = notificationService ?? AdhanNotificationService();
+       _notificationService =
+           notificationService ?? AdhanNotificationService() {
+    instance = this;
+  }
 
   AdhanNotificationService get notificationService => _notificationService;
 
@@ -29,8 +33,36 @@ class AdhanAudioService extends GetxService {
   void onInit() {
     super.onInit();
     instance = this;
+    WidgetsBinding.instance.addObserver(this);
     AdhanNotificationService.globalStopAdhanCallback = stopAdhan;
     _notificationService.initialize(onStopAdhan: stopAdhan);
+    unawaited(syncWithNativeState());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(syncWithNativeState());
+    }
+  }
+
+  /// Synchronizes reactive playing state with the underlying Android Foreground Service / native audio player
+  Future<void> syncWithNativeState() async {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      try {
+        final isNativeRunning = await AdhanNativeBridge.isServiceRunning();
+        if (isNativeRunning) {
+          if (!isPlaying.value) {
+            isPlaying.value = true;
+            if (currentPrayerName.value.isEmpty) {
+              currentPrayerName.value = 'Waktu Salat';
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('[AdhanAudioService] syncWithNativeState error: $e');
+      }
+    }
   }
 
   @protected
@@ -110,20 +142,21 @@ class AdhanAudioService extends GetxService {
 
   /// Immediately stops the adhan playback and cancels active notification.
   Future<void> stopAdhan() async {
+    isPlaying.value = false;
+    currentPrayerName.value = '';
     try {
       await _player?.stop();
       await AdhanNativeBridge.stopAdhanService();
     } catch (e) {
       debugPrint('[AdhanAudioService] Stop error: $e');
     } finally {
-      isPlaying.value = false;
-      currentPrayerName.value = '';
       await _notificationService.cancelAdhanNotification();
     }
   }
 
   @override
   void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
     if (identical(instance, this)) {
       instance = null;
     }

@@ -26,6 +26,7 @@ import '../widgets/pendamping_radar_card.dart';
 import '../widgets/pendamping_sos_banner.dart';
 import '../widgets/mini_sparkline_button.dart';
 import '../widgets/pendamping_assistance_card.dart';
+import '../widgets/active_adhan_dashboard_banner.dart';
 import '../services/assistance_request_service.dart';
 
 class DashboardPendampingScreen extends StatelessWidget {
@@ -578,6 +579,7 @@ class DashboardPendampingScreen extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const ActiveAdhanDashboardBanner(),
             // 4 Quick icons
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),

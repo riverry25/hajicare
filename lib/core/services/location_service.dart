@@ -57,13 +57,76 @@ class LocationService {
     }
   }
 
+  Future<LocationResult>? _inFlightLocationRequest;
+  LocationResult? _lastSuccessfulResult;
+  DateTime? _lastResultTime;
+
+  /// Check permission and request directly from OS if denied.
+  Future<LocationPermissionState> checkAndRequestPermission() async {
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return LocationPermissionState.serviceDisabled;
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return LocationPermissionState.denied;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return LocationPermissionState.deniedForever;
+    }
+
+    return LocationPermissionState.granted;
+  }
+
   /// Safely obtain location:
-  /// 1. Verifies service and permissions
-  /// 2. Attempts fresh high-accuracy GPS (timeout 12s)
-  /// 3. If fresh GPS fails/times out, smoothly falls back to OS last-known position
+  /// 1. Uses in-flight guard to deduplicate concurrent calls
+  /// 2. Returns recently cached position (within 4 seconds) if available
+  /// 3. Verifies service and permissions directly
+  /// 4. Attempts fresh high-accuracy GPS (timeout 12s)
+  /// 5. If fresh GPS fails/times out, smoothly falls back to OS last-known position
   Future<LocationResult> getCurrentPosition({
     Duration timeout = const Duration(seconds: 12),
     LocationAccuracy accuracy = LocationAccuracy.high,
+  }) async {
+    // 1. Fast cache check (within 4 seconds)
+    final now = DateTime.now();
+    if (_lastSuccessfulResult != null && _lastResultTime != null) {
+      if (now.difference(_lastResultTime!).inSeconds < 4 &&
+          _lastSuccessfulResult!.isSuccess) {
+        return _lastSuccessfulResult!;
+      }
+    }
+
+    // 2. In-flight request guard: deduplicate concurrent callers
+    if (_inFlightLocationRequest != null) {
+      return await _inFlightLocationRequest!;
+    }
+
+    final future = _executeGetCurrentPosition(
+      timeout: timeout,
+      accuracy: accuracy,
+    );
+    _inFlightLocationRequest = future;
+    try {
+      final res = await future;
+      if (res.isSuccess) {
+        _lastSuccessfulResult = res;
+        _lastResultTime = DateTime.now();
+      }
+      return res;
+    } finally {
+      _inFlightLocationRequest = null;
+    }
+  }
+
+  Future<LocationResult> _executeGetCurrentPosition({
+    required Duration timeout,
+    required LocationAccuracy accuracy,
   }) async {
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -161,6 +224,14 @@ class LocationService {
       }
     } catch (e) {
       debugPrint('[LocationService] Location retrieval failed: $e');
+      final lastKnown = await getLastKnownPosition();
+      if (lastKnown != null) {
+        return LocationResult(
+          position: lastKnown,
+          source: LocationSource.lastKnown,
+          state: LocationPermissionState.granted,
+        );
+      }
       return LocationResult(
         source: LocationSource.unavailable,
         state: LocationPermissionState.denied,

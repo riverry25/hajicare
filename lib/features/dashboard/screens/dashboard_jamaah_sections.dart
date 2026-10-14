@@ -26,6 +26,7 @@ extension _DashboardJamaahSections on DashboardJamaahScreen {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const ActiveAdhanDashboardBanner(),
           // ── Quick Service Categories (Row of 4 Horizontal Items) ─
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),

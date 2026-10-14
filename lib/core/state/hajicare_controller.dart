@@ -101,7 +101,6 @@ class HajiCareController extends GetxController {
   final safeRadiusMeters = 200.0.obs;
   StreamSubscription<Position>? _gpsStreamSub;
   int _sessionGeneration = 0;
-  String? _locationTrackingRoomId;
   DateTime? _lastLocationBroadcastTime;
   Position? _lastBroadcastPosition;
 
@@ -327,7 +326,6 @@ class HajiCareController extends GetxController {
     _sessionGeneration++;
     _gpsStreamSub?.cancel();
     _gpsStreamSub = null;
-    _locationTrackingRoomId = null;
     _userDocSub?.cancel();
     _roomDocSub?.cancel();
     _roomMembersSub?.cancel();
@@ -1296,16 +1294,11 @@ class HajiCareController extends GetxController {
   }
 
   void _syncLocationRequirement(String uid, String? roomId) {
-    if (roomId == null || roomId.isEmpty) {
-      _gpsStreamSub?.cancel();
-      _gpsStreamSub = null;
-      _locationTrackingRoomId = null;
-      isMyGpsActive.value = false;
-      return;
+    // Always maintain real GPS stream so Map, Dashboard, and Prayer Times
+    // remain immediately synchronized with live device GPS.
+    if (_gpsStreamSub == null) {
+      startLocationTracking(uid);
     }
-    if (_locationTrackingRoomId == roomId && _gpsStreamSub != null) return;
-    _locationTrackingRoomId = roomId;
-    startLocationTracking(uid);
   }
 
   /// Resolves an active SOS event in Firestore.

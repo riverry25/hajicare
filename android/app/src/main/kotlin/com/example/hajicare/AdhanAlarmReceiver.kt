@@ -29,6 +29,14 @@ class AdhanAlarmReceiver : BroadcastReceiver() {
 
         if (action == ACTION_STOP_ADHAN) {
             AdhanAudioPlayer.stop()
+            try {
+                val stopServiceIntent = Intent(context, AdhanPlaybackService::class.java).apply {
+                    this.action = AdhanPlaybackService.ACTION_STOP
+                }
+                context.startService(stopServiceIntent)
+            } catch (e: Exception) {
+                Log.w(TAG, "Error stopping AdhanPlaybackService: ${e.message}")
+            }
             val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
             nm?.cancel(NOTIFICATION_ID)
             val notifIdExtra = intent.getIntExtra(EXTRA_NOTIFICATION_ID, 0)
@@ -43,14 +51,33 @@ class AdhanAlarmReceiver : BroadcastReceiver() {
 
         createNotificationChannel(context)
 
-        // 1. Play authentic adhan audio via AdhanAudioPlayer (USAGE_ALARM + PARTIAL_WAKE_LOCK)
-        AdhanAudioPlayer.play(context, isSubuh) {
-            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-            nm?.cancel(NOTIFICATION_ID)
+        // 1. Try starting AdhanPlaybackService as Foreground Service
+        var serviceStarted = false
+        try {
+            val serviceIntent = Intent(context, AdhanPlaybackService::class.java).apply {
+                this.action = AdhanPlaybackService.ACTION_START
+                putExtra(AdhanPlaybackService.EXTRA_PRAYER_NAME, prayerName)
+                putExtra(AdhanPlaybackService.EXTRA_IS_SUBUH, isSubuh)
+                putExtra(AdhanPlaybackService.EXTRA_NOTIFICATION_ID, NOTIFICATION_ID)
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(serviceIntent)
+            } else {
+                context.startService(serviceIntent)
+            }
+            serviceStarted = true
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to start AdhanPlaybackService as foreground service: ${e.message}")
         }
 
-        // 2. Post high-priority notification with "Matikan Adzan" action
-        showAdhanNotification(context, prayerName)
+        // 2. Fallback to standalone AdhanAudioPlayer if foreground service cannot start
+        if (!serviceStarted) {
+            AdhanAudioPlayer.play(context, isSubuh) {
+                val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                nm?.cancel(NOTIFICATION_ID)
+            }
+            showAdhanNotification(context, prayerName)
+        }
     }
 
     private fun showAdhanNotification(context: Context, prayerName: String) {
@@ -78,6 +105,11 @@ class AdhanAlarmReceiver : BroadcastReceiver() {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle("Waktu Salat $prayerName Telah Tiba")
             .setContentText("Mari tunaikan salat $prayerName. Suara adzan sedang berkumandang.")
+            .setStyle(
+                NotificationCompat.BigTextStyle()
+                    .setBigContentTitle("Waktu Salat $prayerName Telah Tiba")
+                    .bigText("Mari tunaikan salat $prayerName. Suara adzan sedang berkumandang. Ketuk 'Matikan Adzan' untuk mematikan suara.")
+            )
             .setSmallIcon(R.mipmap.launcher_icon)
             .setOngoing(true)
             .setAutoCancel(false)

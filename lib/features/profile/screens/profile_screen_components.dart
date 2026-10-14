@@ -429,13 +429,19 @@ class _ProfileHeader extends StatelessWidget {
                                 width: 6,
                                 height: 6,
                                 decoration: BoxDecoration(
-                                  color: colors.success,
+                                  color: switch (state?.role) {
+                                    UserRole.admin => colors.warning,
+                                    UserRole.pendamping => colors.accent,
+                                    UserRole.jamaah || null => colors.success,
+                                  },
                                   shape: BoxShape.circle,
                                 ),
                               ),
                               const SizedBox(width: 5),
                               ConstrainedBox(
-                                constraints: const BoxConstraints(maxWidth: 90),
+                                constraints: const BoxConstraints(
+                                  maxWidth: 110,
+                                ),
                                 child: Text(
                                   roleLabel,
                                   style: context.text.labelSmall.copyWith(
