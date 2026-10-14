@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/theme/theme_context.dart';
+import '../../../core/theme/app_breakpoints.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/hajicare_header.dart';
@@ -150,146 +151,151 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
           controller.subscribeToAllStreams();
           await Future.delayed(const Duration(milliseconds: 600));
         },
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(
-            parent: BouncingScrollPhysics(),
-          ),
-          slivers: [
-            // ── 1. KPI Overview Summary Card ─────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
+        child: ResponsiveCenter(
+          maxWidth: AppBreakpoints.maxTabletContentWidth,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            slivers: [
+              // ── 1. KPI Overview Summary Card ─────────────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.screenEdgeGutter,
+                    14,
+                    AppSpacing.screenEdgeGutter,
+                    14,
+                  ),
+                  child: _buildOverviewHeader(
+                    context,
+                    isDark,
+                    cardBg,
+                    headingColor,
+                    bodyColor,
+                    primaryColor,
+                  ),
+                ),
+              ),
+
+              // ── 2. Search, Filter Chips & Sort Controls ──────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.screenEdgeGutter,
+                  ),
+                  child: Column(
+                    children: [
+                      _buildSearchBar(
+                        context,
+                        isDark,
+                        cardBg,
+                        headingColor,
+                        bodyColor,
+                        primaryColor,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildFilterAndSortRow(
+                        context,
+                        isDark,
+                        cardBg,
+                        headingColor,
+                        bodyColor,
+                        primaryColor,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+              ),
+
+              // ── 3. Room List or Dedicated Empty State ────────────────────────
+              SliverPadding(
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.screenEdgeGutter,
-                  14,
+                  0,
                   AppSpacing.screenEdgeGutter,
-                  14,
+                  100, // Space for FAB
                 ),
-                child: _buildOverviewHeader(
-                  context,
-                  isDark,
-                  cardBg,
-                  headingColor,
-                  bodyColor,
-                  primaryColor,
-                ),
-              ),
-            ),
-
-            // ── 2. Search, Filter Chips & Sort Controls ──────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.screenEdgeGutter,
-                ),
-                child: Column(
-                  children: [
-                    _buildSearchBar(
-                      context,
-                      isDark,
-                      cardBg,
-                      headingColor,
-                      bodyColor,
-                      primaryColor,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildFilterAndSortRow(
-                      context,
-                      isDark,
-                      cardBg,
-                      headingColor,
-                      bodyColor,
-                      primaryColor,
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                ),
-              ),
-            ),
-
-            // ── 3. Room List or Dedicated Empty State ────────────────────────
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.screenEdgeGutter,
-                0,
-                AppSpacing.screenEdgeGutter,
-                100, // Space for FAB
-              ),
-              sliver: Obx(() {
-                if (controller.isLoading.value && controller.rooms.isEmpty) {
-                  return SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CircularProgressIndicator(color: primaryColor),
-                          const SizedBox(height: AppSpacing.md),
-                          Text(
-                            'Memuat data room pantau...',
-                            style: AppTypography.bodySmall.copyWith(
-                              color: bodyColor,
-                              fontWeight: FontWeight.w500,
+                sliver: Obx(() {
+                  if (controller.isLoading.value && controller.rooms.isEmpty) {
+                    return SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(color: primaryColor),
+                            const SizedBox(height: AppSpacing.md),
+                            Text(
+                              'Memuat data room pantau...',
+                              style: AppTypography.bodySmall.copyWith(
+                                color: bodyColor,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                }
-
-                final displayedRooms = _getProcessedRooms();
-
-                if (displayedRooms.isEmpty) {
-                  final isSearching =
-                      _searchController.text.isNotEmpty ||
-                      _statusFilter != 'all';
-                  return SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: _buildEmptyState(
-                      context,
-                      isSearching,
-                      isDark,
-                      cardBg,
-                      headingColor,
-                      bodyColor,
-                      primaryColor,
-                    ),
-                  );
-                }
-
-                return SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final room = displayedRooms[index];
-                    final jamaahCount = controller.getRoomJamaahCount(room.id);
-                    final pendampingCount = controller.getRoomPendampingCount(
-                      room.id,
                     );
-                    final sosCount = controller.getRoomSosCount(room.id);
+                  }
 
-                    return _RoomManagementCard(
-                      room: room,
-                      jamaahCount: jamaahCount,
-                      pendampingCount: pendampingCount,
-                      sosCount: sosCount,
-                      cardBg: cardBg,
-                      headingColor: headingColor,
-                      bodyColor: bodyColor,
-                      primaryColor: primaryColor,
-                      isDark: isDark,
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        controller.selectedRoom.value = room;
-                        controller.subscribeToRoomMembers(room.id);
-                        Get.toNamed(AppRoutes.roomDetail, arguments: room);
-                      },
-                      onOpenActions: () =>
-                          _showRoomActionSheet(context, controller, room),
+                  final displayedRooms = _getProcessedRooms();
+
+                  if (displayedRooms.isEmpty) {
+                    final isSearching =
+                        _searchController.text.isNotEmpty ||
+                        _statusFilter != 'all';
+                    return SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: _buildEmptyState(
+                        context,
+                        isSearching,
+                        isDark,
+                        cardBg,
+                        headingColor,
+                        bodyColor,
+                        primaryColor,
+                      ),
                     );
-                  }, childCount: displayedRooms.length),
-                );
-              }),
-            ),
-          ],
+                  }
+
+                  return SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final room = displayedRooms[index];
+                      final jamaahCount = controller.getRoomJamaahCount(
+                        room.id,
+                      );
+                      final pendampingCount = controller.getRoomPendampingCount(
+                        room.id,
+                      );
+                      final sosCount = controller.getRoomSosCount(room.id);
+
+                      return _RoomManagementCard(
+                        room: room,
+                        jamaahCount: jamaahCount,
+                        pendampingCount: pendampingCount,
+                        sosCount: sosCount,
+                        cardBg: cardBg,
+                        headingColor: headingColor,
+                        bodyColor: bodyColor,
+                        primaryColor: primaryColor,
+                        isDark: isDark,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          controller.selectedRoom.value = room;
+                          controller.subscribeToRoomMembers(room.id);
+                          Get.toNamed(AppRoutes.roomDetail, arguments: room);
+                        },
+                        onOpenActions: () =>
+                            _showRoomActionSheet(context, controller, room),
+                      );
+                    }, childCount: displayedRooms.length),
+                  );
+                }),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -729,6 +735,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      constraints: const BoxConstraints(maxWidth: AppBreakpoints.maxSheetWidth),
       backgroundColor: cardBg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
@@ -985,6 +992,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      constraints: const BoxConstraints(maxWidth: AppBreakpoints.maxSheetWidth),
       backgroundColor: cardBg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
@@ -1099,6 +1107,7 @@ class _AdminRoomManagementScreenState extends State<AdminRoomManagementScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      constraints: const BoxConstraints(maxWidth: AppBreakpoints.maxSheetWidth),
       backgroundColor: cardBg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(

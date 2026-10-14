@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
+import '../../../core/theme/app_breakpoints.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/theme_context.dart';
@@ -277,61 +278,64 @@ class _AdminDashboardHome extends StatelessWidget {
             controller.subscribeToAllStreams();
             await Future.delayed(const Duration(milliseconds: 600));
           },
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.screenEdgeGutter,
-              AppSpacing.sm,
-              AppSpacing.screenEdgeGutter,
-              100, // Inset for floating HajiCareBottomNavBar
+          child: ResponsiveCenter(
+            maxWidth: AppBreakpoints.maxTabletContentWidth,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.screenEdgeGutter,
+                AppSpacing.sm,
+                AppSpacing.screenEdgeGutter,
+                100, // Inset for floating HajiCareBottomNavBar
+              ),
+              children: [
+                // 1. Hero Featured Progress Bento Card (Pastel Sky-Cyan)
+                _buildHeroProgressCard(context, isDark),
+                const SizedBox(height: AppSpacing.xxl),
+
+                // 3. Operational Status & 4-Metric Breakdown (Pastel Sage-Mint Green)
+                _buildStatusBreakdownCard(
+                  context,
+                  isDark,
+                  headingColor,
+                  bodyColor,
+                  primaryColor,
+                ),
+                const SizedBox(height: AppSpacing.xxxl),
+
+                // 5. Room Pantau Section
+                _buildRoomPantauSection(
+                  context,
+                  isDark,
+                  cardBg,
+                  headingColor,
+                  bodyColor,
+                  primaryColor,
+                ),
+                const SizedBox(height: AppSpacing.xxxl),
+
+                // 6. Aktivitas Terbaru
+                _buildRecentActivitiesSection(
+                  context,
+                  isDark,
+                  cardBg,
+                  headingColor,
+                  bodyColor,
+                  primaryColor,
+                ),
+                const SizedBox(height: AppSpacing.xxxl),
+
+                // 7. Bottom Action Pill Button (Reference: Calorie count >>>)
+                // 7. Aksi Cepat - PALING BAWAH
+                _buildQuickActions(
+                  context,
+                  isDark,
+                  cardBg,
+                  headingColor,
+                  primaryColor,
+                ),
+                const SizedBox(height: AppSpacing.xl),
+              ],
             ),
-            children: [
-              // 1. Hero Featured Progress Bento Card (Pastel Sky-Cyan)
-              _buildHeroProgressCard(context, isDark),
-              const SizedBox(height: AppSpacing.xxl),
-
-              // 3. Operational Status & 4-Metric Breakdown (Pastel Sage-Mint Green)
-              _buildStatusBreakdownCard(
-                context,
-                isDark,
-                headingColor,
-                bodyColor,
-                primaryColor,
-              ),
-              const SizedBox(height: AppSpacing.xxxl),
-
-              // 5. Room Pantau Section
-              _buildRoomPantauSection(
-                context,
-                isDark,
-                cardBg,
-                headingColor,
-                bodyColor,
-                primaryColor,
-              ),
-              const SizedBox(height: AppSpacing.xxxl),
-
-              // 6. Aktivitas Terbaru
-              _buildRecentActivitiesSection(
-                context,
-                isDark,
-                cardBg,
-                headingColor,
-                bodyColor,
-                primaryColor,
-              ),
-              const SizedBox(height: AppSpacing.xxxl),
-
-              // 7. Bottom Action Pill Button (Reference: Calorie count >>>)
-              // 7. Aksi Cepat - PALING BAWAH
-              _buildQuickActions(
-                context,
-                isDark,
-                cardBg,
-                headingColor,
-                primaryColor,
-              ),
-              const SizedBox(height: AppSpacing.xl),
-            ],
           ),
         );
       }),

@@ -41,7 +41,7 @@ class NotificationComposerDialog extends StatefulWidget {
   }) {
     return showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       barrierColor: Colors.black.withValues(alpha: 0.58),
       useSafeArea: true,
       builder: (ctx) => NotificationComposerDialog(

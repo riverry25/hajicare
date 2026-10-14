@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../../core/models/filter_chip_item.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/state/hajicare_controller.dart';
+import '../../../../core/theme/app_breakpoints.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/theme_context.dart';
 import '../../../../core/widgets/animated_ping_dot.dart';
@@ -125,52 +126,55 @@ class _MapTopHeaderState extends State<MapTopHeader> {
               stops: const [0.0, 1.0],
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // ── ROW 1: FLOATING STATUS & HUB (GPS BADGE, ROOM INFO, SOS) ──
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: SizedBox(
-                  height: 32,
-                  child: Row(
-                    children: [
-                      // GPS Tracking Status Pill
-                      _buildGpsStatusPill(context, isDark),
+          child: ResponsiveCenter(
+            maxWidth: AppBreakpoints.maxTabletContentWidth,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // ── ROW 1: FLOATING STATUS & HUB (GPS BADGE, ROOM INFO, SOS) ──
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: SizedBox(
+                    height: 32,
+                    child: Row(
+                      children: [
+                        // GPS Tracking Status Pill
+                        _buildGpsStatusPill(context, isDark),
 
-                      const SizedBox(width: 8),
+                        const SizedBox(width: 8),
 
-                      // Contextual Active Room Pill (if in a room)
-                      if (hasRoom)
-                        Expanded(child: _buildRoomHubPill(context, isDark))
-                      else
-                        const Spacer(),
+                        // Contextual Active Room Pill (if in a room)
+                        if (hasRoom)
+                          Expanded(child: _buildRoomHubPill(context, isDark))
+                        else
+                          const Spacer(),
 
-                      const SizedBox(width: 8),
+                        const SizedBox(width: 8),
 
-                      // Emergency SOS Quick Button
-                      Get.isRegistered<HajiCareController>()
-                          ? Obx(() => _buildSosButton(context))
-                          : _buildSosButton(context),
-                    ],
+                        // Emergency SOS Quick Button
+                        Get.isRegistered<HajiCareController>()
+                            ? Obx(() => _buildSosButton(context))
+                            : _buildSosButton(context),
+                      ],
+                    ),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 8),
+                const SizedBox(height: 8),
 
-              // ── ROW 2: GOOGLE MAPS STYLE FLOATING SEARCH BAR ──
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _buildSearchBar(context, isDark),
-              ),
+                // ── ROW 2: GOOGLE MAPS STYLE FLOATING SEARCH BAR ──
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _buildSearchBar(context, isDark),
+                ),
 
-              const SizedBox(height: 9),
+                const SizedBox(height: 9),
 
-              // ── ROW 3: FLOATING CATEGORY & ROLE FILTER CHIPS ──
-              _buildFilterChips(context, isDark),
-            ],
+                // ── ROW 3: FLOATING CATEGORY & ROLE FILTER CHIPS ──
+                _buildFilterChips(context, isDark),
+              ],
+            ),
           ),
         ),
       ),

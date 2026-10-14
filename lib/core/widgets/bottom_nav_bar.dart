@@ -7,6 +7,7 @@ import '../../features/translator/widgets/translator_sheet.dart';
 import '../locales/app_localizations.dart';
 import '../routes/app_routes.dart';
 import '../state/hajicare_controller.dart';
+import '../theme/app_breakpoints.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/theme_context.dart';
@@ -79,92 +80,98 @@ class HajiCareBottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final hc = context.hc;
 
-    return Material(
-      color: Colors.transparent,
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.s16,
-            0,
-            AppSpacing.s16,
-            AppSpacing.s8,
-          ),
-          child: Stack(
-            alignment: Alignment.topCenter,
-            clipBehavior: Clip.none,
-            children: [
-              // Main Navigation Dock Card with Scooped Notched Cradle
-              Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: CustomPaint(
-                  painter: _ScoopedNavBarPainter(
-                    backgroundColor: hc.surface,
-                    borderColor: hc.border,
-                    shadowColor: hc.shadow,
-                    cornerRadius: 30.0,
-                    buttonRadius: 30.0,
-                    buttonCenterY: 10.0,
-                    notchMargin: 10.0,
-                    shoulderWidth: 20.0,
-                  ),
-                  child: Container(
-                    constraints: const BoxConstraints(minHeight: 64),
-                    padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        // Tab 0: Beranda (Home)
-                        Expanded(
-                          child: _buildNavItem(
-                            context: context,
-                            index: 0,
-                            icon: Icons.home_rounded,
-                            label: context.tr('navHome'),
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.s16,
+          0,
+          AppSpacing.s16,
+          AppSpacing.s8,
+        ),
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          heightFactor: 1.0,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: AppBreakpoints.maxNavDockWidth,
+            ),
+            child: Stack(
+              alignment: Alignment.topCenter,
+              clipBehavior: Clip.none,
+              children: [
+                // Main Navigation Dock Card with Scooped Notched Cradle
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: CustomPaint(
+                    painter: _ScoopedNavBarPainter(
+                      backgroundColor: hc.surface,
+                      borderColor: hc.border,
+                      shadowColor: hc.shadow,
+                      cornerRadius: 30.0,
+                      buttonRadius: 30.0,
+                      buttonCenterY: 10.0,
+                      notchMargin: 10.0,
+                      shoulderWidth: 20.0,
+                    ),
+                    child: Container(
+                      constraints: const BoxConstraints(minHeight: 64),
+                      padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          // Tab 0: Beranda (Home)
+                          Expanded(
+                            child: _buildNavItem(
+                              context: context,
+                              index: 0,
+                              icon: Icons.home_rounded,
+                              label: context.tr('navHome'),
+                            ),
                           ),
-                        ),
 
-                        // Tab 1: Peta (Map)
-                        Expanded(
-                          child: _buildNavItem(
-                            context: context,
-                            index: 1,
-                            icon: Icons.near_me_rounded,
-                            label: context.tr('navMap'),
+                          // Tab 1: Peta (Map)
+                          Expanded(
+                            child: _buildNavItem(
+                              context: context,
+                              index: 1,
+                              icon: Icons.near_me_rounded,
+                              label: context.tr('navMap'),
+                            ),
                           ),
-                        ),
 
-                        // Center Slot: Reserved generous gap for wide scooped cradle and mic button
-                        const SizedBox(width: 96),
+                          // Center Slot: Reserved generous gap for wide scooped cradle and mic button
+                          const SizedBox(width: 96),
 
-                        // Tab 2: Jadwal Salat (Prayer)
-                        Expanded(
-                          child: _buildNavItem(
-                            context: context,
-                            index: 2,
-                            icon: Icons.schedule_rounded,
-                            label: context.tr('navPrayer'),
+                          // Tab 2: Jadwal Salat (Prayer)
+                          Expanded(
+                            child: _buildNavItem(
+                              context: context,
+                              index: 2,
+                              icon: Icons.schedule_rounded,
+                              label: context.tr('navPrayer'),
+                            ),
                           ),
-                        ),
 
-                        // Tab 3: Profil (Profile)
-                        Expanded(
-                          child: _buildNavItem(
-                            context: context,
-                            index: 3,
-                            icon: Icons.person_rounded,
-                            label: context.tr('navProfile'),
+                          // Tab 3: Profil (Profile)
+                          Expanded(
+                            child: _buildNavItem(
+                              context: context,
+                              index: 3,
+                              icon: Icons.person_rounded,
+                              label: context.tr('navProfile'),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
 
-              // Elevated Center Mic / Voice Translator Button nestled in the Scoop
-              Positioned(top: -6, child: _buildCenterMicButton(context)),
-            ],
+                // Elevated Center Mic / Voice Translator Button nestled in the Scoop
+                Positioned(top: -6, child: _buildCenterMicButton(context)),
+              ],
+            ),
           ),
         ),
       ),

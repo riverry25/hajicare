@@ -151,10 +151,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.volume_up_rounded,
-                    color: colors.success,
-                  ),
+                  Icon(Icons.volume_up_rounded, color: colors.success),
 
                   const SizedBox(width: 12),
 
@@ -199,9 +196,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
                   width: isActive ? 32 : 10,
                   height: 10,
                   decoration: BoxDecoration(
-                    color: isActive
-                        ? colors.primary
-                        : colors.borderStrong,
+                    color: isActive ? colors.primary : colors.borderStrong,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                 ),
@@ -241,11 +236,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
               color: colors.surface,
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.translate,
-              size: 26,
-              color: colors.primary,
-            ),
+            child: Icon(Icons.translate, size: 26, color: colors.primary),
           ),
 
           const SizedBox(width: 16),
@@ -300,9 +291,7 @@ class OnboardingSlideLanguage extends StatelessWidget {
           color: colors.surface,
           borderRadius: BorderRadius.circular(AppRadius.card),
           border: Border.all(
-            color: isSelected
-                ? colors.primary
-                : colors.border,
+            color: isSelected ? colors.primary : colors.border,
             width: isSelected ? 2.0 : 1.0,
           ),
           boxShadow: [

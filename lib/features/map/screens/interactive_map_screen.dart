@@ -12,6 +12,7 @@ import '../../../core/models/filter_chip_item.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
+import '../../../core/theme/app_breakpoints.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/theme_context.dart';
@@ -404,12 +405,15 @@ class _InteractiveMapScreenState extends State<InteractiveMapScreen>
             right: 0,
             child: Obx(() {
               if (mapCtrl.isNavigatingRx.value) return const SizedBox.shrink();
-              return MapSearchDropdown(
-                mapCtrl: mapCtrl,
-                onSelect: (result) {
-                  _searchCtrl.text = result.name;
-                  mapCtrl.selectSearchResult(result);
-                },
+              return ResponsiveCenter(
+                maxWidth: AppBreakpoints.maxTabletContentWidth,
+                child: MapSearchDropdown(
+                  mapCtrl: mapCtrl,
+                  onSelect: (result) {
+                    _searchCtrl.text = result.name;
+                    mapCtrl.selectSearchResult(result);
+                  },
+                ),
               );
             }),
           ),

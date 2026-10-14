@@ -10,15 +10,21 @@ void main() {
       expect(AppBreakpoints.of(599), WindowSize.compact);
     });
 
-    test('classifies width 600..839 as medium (foldable / portrait tablet)', () {
-      expect(AppBreakpoints.of(600), WindowSize.medium);
-      expect(AppBreakpoints.of(839), WindowSize.medium);
-    });
+    test(
+      'classifies width 600..839 as medium (foldable / portrait tablet)',
+      () {
+        expect(AppBreakpoints.of(600), WindowSize.medium);
+        expect(AppBreakpoints.of(839), WindowSize.medium);
+      },
+    );
 
-    test('classifies width >= 840 as expanded (landscape tablet / desktop)', () {
-      expect(AppBreakpoints.of(840), WindowSize.expanded);
-      expect(AppBreakpoints.of(1200), WindowSize.expanded);
-    });
+    test(
+      'classifies width >= 840 as expanded (landscape tablet / desktop)',
+      () {
+        expect(AppBreakpoints.of(840), WindowSize.expanded);
+        expect(AppBreakpoints.of(1200), WindowSize.expanded);
+      },
+    );
   });
 
   group('ResponsiveCenter layout constraints', () {
@@ -33,7 +39,11 @@ void main() {
         const MaterialApp(
           home: Scaffold(
             body: ResponsiveCenter(
-              child: SizedBox(key: Key('content'), width: double.infinity, height: 100),
+              child: SizedBox(
+                key: Key('content'),
+                width: double.infinity,
+                height: 100,
+              ),
             ),
           ),
         ),

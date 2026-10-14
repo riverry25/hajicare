@@ -98,11 +98,7 @@ class OnboardingHeroBanner extends StatelessWidget {
                     color: Colors.white.withValues(alpha: .20),
                   ),
                 ),
-                child: Icon(
-                  icon,
-                  color: colors.accent,
-                  size: 34,
-                ),
+                child: Icon(icon, color: colors.accent, size: 34),
               ),
             ),
 

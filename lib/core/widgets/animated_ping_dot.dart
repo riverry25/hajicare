@@ -10,11 +10,7 @@ class AnimatedPingDot extends StatefulWidget {
   /// The optional color override. Defaults to [context.hc.success].
   final Color? color;
 
-  const AnimatedPingDot({
-    super.key,
-    this.size = 10,
-    this.color,
-  });
+  const AnimatedPingDot({super.key, this.size = 10, this.color});
 
   @override
   State<AnimatedPingDot> createState() => _AnimatedPingDotState();

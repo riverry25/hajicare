@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import '../../../core/locales/app_translations.dart';
 import '../../../core/state/hajicare_controller.dart';
+import '../../../core/theme/app_breakpoints.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/theme_context.dart';
 import '../../../core/services/app_alert_service.dart';
@@ -226,186 +227,189 @@ class _EditRoomScreenState extends State<EditRoomScreen> {
       ),
       body: Form(
         key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-          children: [
-            // Nama Room
-            TextFormField(
-              controller: _nameController,
-              inputFormatters: [LengthLimitingTextInputFormatter(100)],
-              enabled: !_isSaving,
-              style: context.text.bodyMedium.copyWith(
-                color: headingColor,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
-              decoration: dec(
-                label: context.tr('room.roomNameField'),
-                hint: context.tr('room.sampleRoomName'),
-                prefix: const Icon(Icons.meeting_room_outlined, size: 20),
-              ),
-              validator: (v) => (v == null || v.trim().isEmpty)
-                  ? context.tr('room.emptyRoomName')
-                  : v.trim().length > 100
-                  ? context.tr('room.nameMax100')
-                  : null,
-            ),
-            const SizedBox(height: 24),
-
-            // Maktab & Kloter
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _maktabController,
-                    inputFormatters: [LengthLimitingTextInputFormatter(60)],
-                    enabled: !_isSaving,
-                    style: context.text.bodyMedium.copyWith(
-                      color: headingColor,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    decoration: dec(
-                      label: context.tr('room.maktab'),
-                      hint: '48',
-                      prefix: const Icon(Icons.apartment_rounded, size: 19),
-                    ),
-                  ),
+        child: ResponsiveCenter(
+          maxWidth: AppBreakpoints.maxFormWidth,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+            children: [
+              // Nama Room
+              TextFormField(
+                controller: _nameController,
+                inputFormatters: [LengthLimitingTextInputFormatter(100)],
+                enabled: !_isSaving,
+                style: context.text.bodyMedium.copyWith(
+                  color: headingColor,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
                 ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: TextFormField(
-                    controller: _kloterController,
-                    inputFormatters: [LengthLimitingTextInputFormatter(60)],
-                    enabled: !_isSaving,
-                    style: context.text.bodyMedium.copyWith(
-                      color: headingColor,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    decoration: dec(
-                      label: context.tr('room.kloter'),
-                      hint: '14 JKS',
-                      prefix: const Icon(
-                        Icons.flight_takeoff_rounded,
-                        size: 19,
+                decoration: dec(
+                  label: context.tr('room.roomNameField'),
+                  hint: context.tr('room.sampleRoomName'),
+                  prefix: const Icon(Icons.meeting_room_outlined, size: 20),
+                ),
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? context.tr('room.emptyRoomName')
+                    : v.trim().length > 100
+                    ? context.tr('room.nameMax100')
+                    : null,
+              ),
+              const SizedBox(height: 24),
+
+              // Maktab & Kloter
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _maktabController,
+                      inputFormatters: [LengthLimitingTextInputFormatter(60)],
+                      enabled: !_isSaving,
+                      style: context.text.bodyMedium.copyWith(
+                        color: headingColor,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      decoration: dec(
+                        label: context.tr('room.maktab'),
+                        hint: '48',
+                        prefix: const Icon(Icons.apartment_rounded, size: 19),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // Radius Aman
-            TextFormField(
-              controller: _radiusController,
-              enabled: !_isSaving,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
-              ],
-              style: context.text.bodyMedium.copyWith(
-                color: headingColor,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
-              decoration: dec(
-                label: context.tr('room.safeRadiusLimit'),
-                hint: '200',
-                suffix: 'meter',
-                prefix: const Icon(Icons.radar_rounded, size: 20),
-              ),
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) {
-                  return context.tr('room.safeRadiusRequired');
-                }
-                final n = double.tryParse(v.trim());
-                if (n == null || n <= 0 || n > 10000) {
-                  return context.tr('room.safeRadiusInvalidRange');
-                }
-                return null;
-              },
-            ),
-
-            if (_errorMessage != null) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: context.hc.danger.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.error_outline_rounded,
-                      size: 16,
-                      color: context.hc.danger,
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        _errorMessage!,
-                        style: context.text.captionMedium.copyWith(
-                          fontSize: 12,
-                          color: context.hc.danger,
-                          fontWeight: FontWeight.w500,
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _kloterController,
+                      inputFormatters: [LengthLimitingTextInputFormatter(60)],
+                      enabled: !_isSaving,
+                      style: context.text.bodyMedium.copyWith(
+                        color: headingColor,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      decoration: dec(
+                        label: context.tr('room.kloter'),
+                        hint: '14 JKS',
+                        prefix: const Icon(
+                          Icons.flight_takeoff_rounded,
+                          size: 19,
                         ),
                       ),
                     ),
-                  ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Radius Aman
+              TextFormField(
+                controller: _radiusController,
+                enabled: !_isSaving,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                ],
+                style: context.text.bodyMedium.copyWith(
+                  color: headingColor,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+                decoration: dec(
+                  label: context.tr('room.safeRadiusLimit'),
+                  hint: '200',
+                  suffix: 'meter',
+                  prefix: const Icon(Icons.radar_rounded, size: 20),
+                ),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) {
+                    return context.tr('room.safeRadiusRequired');
+                  }
+                  final n = double.tryParse(v.trim());
+                  if (n == null || n <= 0 || n > 10000) {
+                    return context.tr('room.safeRadiusInvalidRange');
+                  }
+                  return null;
+                },
+              ),
+
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: context.hc.danger.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.error_outline_rounded,
+                        size: 16,
+                        color: context.hc.danger,
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          _errorMessage!,
+                          style: context.text.captionMedium.copyWith(
+                            fontSize: 12,
+                            color: context.hc.danger,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 40),
+
+              // Tombol Simpan
+              SizedBox(
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: _isSaving
+                      ? null
+                      : () {
+                          HapticFeedback.lightImpact();
+                          _handleSave();
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: context.hc.brand,
+                    foregroundColor: context.hc.onPrimary,
+                    disabledBackgroundColor: context.hc.brand.withValues(
+                      alpha: 0.4,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    elevation: 2,
+                  ),
+                  child: _isSaving
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: context.hc.onPrimary,
+                          ),
+                        )
+                      : Text(
+                          context.tr('common.save'),
+                          style: context.text.labelLarge.copyWith(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                            letterSpacing: 1.5,
+                            color: context.hc.onPrimary,
+                          ),
+                        ),
                 ),
               ),
             ],
-
-            const SizedBox(height: 40),
-
-            // Tombol Simpan
-            SizedBox(
-              height: 52,
-              child: ElevatedButton(
-                onPressed: _isSaving
-                    ? null
-                    : () {
-                        HapticFeedback.lightImpact();
-                        _handleSave();
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: context.hc.brand,
-                  foregroundColor: context.hc.onPrimary,
-                  disabledBackgroundColor: context.hc.brand.withValues(
-                    alpha: 0.4,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                  elevation: 2,
-                ),
-                child: _isSaving
-                    ? SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          color: context.hc.onPrimary,
-                        ),
-                      )
-                    : Text(
-                        context.tr('common.save'),
-                        style: context.text.labelLarge.copyWith(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14,
-                          letterSpacing: 1.5,
-                          color: context.hc.onPrimary,
-                        ),
-                      ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

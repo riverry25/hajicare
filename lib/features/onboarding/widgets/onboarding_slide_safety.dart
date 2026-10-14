@@ -120,10 +120,7 @@ class OnboardingSlideSafety extends StatelessWidget {
               color: colors.surface,
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.shield_moon_outlined,
-              color: colors.primary,
-            ),
+            child: Icon(Icons.shield_moon_outlined, color: colors.primary),
           ),
 
           const SizedBox(width: AppSpacing.md),
@@ -178,9 +175,7 @@ class OnboardingSlideSafety extends StatelessWidget {
                   width: isActive ? 32 : 10,
                   height: 10,
                   decoration: BoxDecoration(
-                    color: isActive
-                        ? colors.primary
-                        : colors.borderStrong,
+                    color: isActive ? colors.primary : colors.borderStrong,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                 ),
@@ -303,17 +298,11 @@ class OnboardingSlideSafety extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.successContainer.withValues(alpha: .35),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: colors.success.withValues(alpha: .25),
-        ),
+        border: Border.all(color: colors.success.withValues(alpha: .25)),
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.verified_user,
-            color: colors.success,
-            size: 22,
-          ),
+          Icon(Icons.verified_user, color: colors.success, size: 22),
 
           const SizedBox(width: 12),
 

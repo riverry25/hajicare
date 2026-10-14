@@ -92,7 +92,9 @@ class AuthRoleCard extends StatelessWidget {
                       child: Center(
                         child: Icon(
                           icon,
-                          color: isSelected ? colors.primary : colors.textPrimary,
+                          color: isSelected
+                              ? colors.primary
+                              : colors.textPrimary,
                           size: 24,
                         ),
                       ),

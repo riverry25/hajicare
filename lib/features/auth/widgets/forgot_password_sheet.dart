@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/locales/app_localizations.dart';
+import '../../../core/theme/app_breakpoints.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/theme_context.dart';
@@ -19,6 +20,7 @@ class ForgotPasswordSheet extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      constraints: const BoxConstraints(maxWidth: AppBreakpoints.maxSheetWidth),
       builder: (_) => ForgotPasswordSheet(initialEmail: initialEmail),
     );
   }
@@ -144,9 +146,7 @@ class _ForgotPasswordSheetState extends State<ForgotPasswordSheet> {
           // Email input
           Text(
             context.tr('auth.email'),
-            style: context.text.labelLarge.copyWith(
-              color: colors.textPrimary,
-            ),
+            style: context.text.labelLarge.copyWith(color: colors.textPrimary),
           ),
           const SizedBox(height: 8),
 

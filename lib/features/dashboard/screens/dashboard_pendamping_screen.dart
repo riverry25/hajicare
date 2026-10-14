@@ -8,6 +8,7 @@ import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/app_settings_controller.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/theme_context.dart';
+import '../../../core/theme/app_breakpoints.dart';
 import '../../../core/theme/app_colors.dart';
 import '../presentation/dashboard_typography.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
@@ -123,11 +124,14 @@ class DashboardPendampingScreen extends StatelessWidget {
         child: Obx(
           () => SingleChildScrollView(
             physics: const ClampingScrollPhysics(),
-            child: Column(
-              children: [
-                _hero(context, state, dashboardCtrl, prayerCtrl, isDark),
-                _body(context, state, dashboardCtrl, isDark),
-              ],
+            child: ResponsiveCenter(
+              maxWidth: AppBreakpoints.maxTabletContentWidth,
+              child: Column(
+                children: [
+                  _hero(context, state, dashboardCtrl, prayerCtrl, isDark),
+                  _body(context, state, dashboardCtrl, isDark),
+                ],
+              ),
             ),
           ),
         ),

@@ -22,7 +22,10 @@ class AboutScreen extends StatelessWidget {
         backgroundColor: colors.canvas,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: colors.textPrimary),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: colors.textPrimary,
+          ),
           onPressed: () => Get.back(),
           tooltip: context.tr('back'),
         ),
@@ -182,7 +185,9 @@ class _AppIdentitySection extends StatelessWidget {
           // Tagline
           Text(
             context.tr('aboutSubtitle'),
-            style: context.text.bodyMedium.copyWith(color: colors.textSecondary),
+            style: context.text.bodyMedium.copyWith(
+              color: colors.textSecondary,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -252,7 +257,9 @@ class _ContentSection extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: context.text.titleLarge.copyWith(color: colors.textPrimary),
+                  style: context.text.titleLarge.copyWith(
+                    color: colors.textPrimary,
+                  ),
                 ),
               ),
             ],
@@ -289,12 +296,7 @@ class _FeaturesSection extends StatelessWidget {
         'featureCompanionDesc',
         colors.primary,
       ),
-      (
-        Icons.schedule_rounded,
-        'featureInfo',
-        'featureInfoDesc',
-        colors.accent,
-      ),
+      (Icons.schedule_rounded, 'featureInfo', 'featureInfoDesc', colors.accent),
       (
         Icons.accessibility_new_rounded,
         'featureAccessibility',
@@ -349,7 +351,9 @@ class _FeaturesSection extends StatelessWidget {
               const SizedBox(width: AppSpacing.md),
               Text(
                 context.tr('featuresTitle'),
-                style: context.text.titleLarge.copyWith(color: colors.textPrimary),
+                style: context.text.titleLarge.copyWith(
+                  color: colors.textPrimary,
+                ),
               ),
             ],
           ),
@@ -489,7 +493,9 @@ class _LegalSection extends StatelessWidget {
                 const SizedBox(width: AppSpacing.md),
                 Text(
                   context.tr('legalSectionTitle'),
-                  style: context.text.titleLarge.copyWith(color: colors.textPrimary),
+                  style: context.text.titleLarge.copyWith(
+                    color: colors.textPrimary,
+                  ),
                 ),
               ],
             ),
@@ -499,11 +505,7 @@ class _LegalSection extends StatelessWidget {
             final item = entry.value;
             return Column(
               children: [
-                Divider(
-                  height: 1,
-                  indent: AppSpacing.xl,
-                  color: colors.border,
-                ),
+                Divider(height: 1, indent: AppSpacing.xl, color: colors.border),
                 Semantics(
                   button: true,
                   label: item.$1,
@@ -581,9 +583,7 @@ class _FooterSection extends StatelessWidget {
         const SizedBox(height: AppSpacing.xs),
         Text(
           '© ${DateTime.now().year} HajiCare',
-          style: context.text.bodySmall.copyWith(
-            color: colors.textTertiary,
-          ),
+          style: context.text.bodySmall.copyWith(color: colors.textTertiary),
           textAlign: TextAlign.center,
         ),
       ],

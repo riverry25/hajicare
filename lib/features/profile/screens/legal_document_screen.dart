@@ -44,7 +44,10 @@ class LegalDocumentScreen extends StatelessWidget {
         leading: IconButton(
           tooltip: context.tr('back'),
           onPressed: Get.back,
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: colors.textPrimary),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: colors.textPrimary,
+          ),
         ),
         title: Text(
           title,
@@ -79,7 +82,9 @@ class LegalDocumentScreen extends StatelessWidget {
                         height: 64,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: colors.primaryContainer.withValues(alpha: 0.35),
+                          color: colors.primaryContainer.withValues(
+                            alpha: 0.35,
+                          ),
                         ),
                         child: Icon(
                           isPrivacy

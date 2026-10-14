@@ -96,10 +96,7 @@ class OnboardingSlideAccessibility extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.record_voice_over_rounded,
-                    color: colors.success,
-                  ),
+                  Icon(Icons.record_voice_over_rounded, color: colors.success),
 
                   const SizedBox(width: 12),
 
@@ -143,9 +140,7 @@ class OnboardingSlideAccessibility extends StatelessWidget {
                   width: isActive ? 32 : 10,
                   height: 10,
                   decoration: BoxDecoration(
-                    color: isActive
-                        ? colors.primary
-                        : colors.borderStrong,
+                    color: isActive ? colors.primary : colors.borderStrong,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                 ),
@@ -255,11 +250,7 @@ class OnboardingSlideAccessibility extends StatelessWidget {
               color: colors.surfaceSand,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(
-              icon,
-              size: 28,
-              color: colors.primary,
-            ),
+            child: Icon(icon, size: 28, color: colors.primary),
           ),
 
           const SizedBox(width: 16),

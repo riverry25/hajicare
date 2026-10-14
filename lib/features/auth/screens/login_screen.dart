@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/locales/app_localizations.dart';
+import '../../../core/theme/app_breakpoints.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/theme_context.dart';
@@ -62,11 +63,12 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: colors.canvas,
       body: SafeArea(
         top: false,
+        bottom: false,
         child: LayoutBuilder(
           builder: (context, constraints) {
             final bottomPadding = MediaQuery.paddingOf(context).bottom;
             const topHeaderHeight = 215.0; // Header arch height
-            const welcomeSectionHeight = 105.0; // Padding, titles, and spacing
+            const welcomeSectionHeight = 85.0; // Padding, titles, and spacing
             const topSpacing = 30.0;
             const totalTopHeight =
                 topHeaderHeight + welcomeSectionHeight + topSpacing;
@@ -77,8 +79,8 @@ class _LoginScreenState extends State<LoginScreen> {
               controller: _scrollController,
               physics: const ClampingScrollPhysics(),
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: ResponsiveCenter(
+                maxWidth: AppBreakpoints.maxFormWidth,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -124,8 +126,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 30),
 
                     // SHEET-STYLE FORM CONTAINER
-                    // Uses minHeight to gracefully touch the bottom on short content
-                    // while expanding unconstrained when content is taller, preventing RenderFlex overflow.
+                    // Sizes dynamically to its active tab content (compact on Sign In,
+                    // expanding on Register), while minSheetHeight ensures it touches
+                    // the bottom of the screen gracefully on resting viewports.
                     ConstrainedBox(
                       constraints: BoxConstraints(minHeight: minSheetHeight),
                       child: Container(
@@ -208,99 +211,103 @@ class _CurvedArchHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
     const headerHeight = 215.0;
 
-    return SizedBox(
-      height: headerHeight,
-      width: screenWidth,
-      child: Stack(
-        clipBehavior: Clip.none,
-        alignment: Alignment.topCenter,
-        children: [
-          CustomPaint(
-            size: Size(screenWidth, headerHeight),
-            painter: _CurvedArchShadowPainter(colors: colors),
-          ),
-          ClipPath(
-            clipper: const _CurvedArchClipper(),
-            child: SizedBox(
-              height: headerHeight,
-              width: screenWidth,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.asset(
-                    'assets/images/haji.webp',
-                    fit: BoxFit.cover,
-                    alignment: const Alignment(0, -0.2),
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: colors.canvas,
-                      child: Center(
-                        child: Icon(
-                          Icons.mosque_rounded,
-                          color: colors.primary,
-                          size: 50,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = constraints.maxWidth;
+        return SizedBox(
+          height: headerHeight,
+          width: screenWidth,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.topCenter,
+            children: [
+              CustomPaint(
+                size: Size(screenWidth, headerHeight),
+                painter: _CurvedArchShadowPainter(colors: colors),
+              ),
+              ClipPath(
+                clipper: const _CurvedArchClipper(),
+                child: SizedBox(
+                  height: headerHeight,
+                  width: screenWidth,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.asset(
+                        'assets/images/haji.webp',
+                        fit: BoxFit.cover,
+                        alignment: const Alignment(0, -0.2),
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: colors.canvas,
+                          child: Center(
+                            child: Icon(
+                              Icons.mosque_rounded,
+                              color: colors.primary,
+                              size: 50,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.black.withValues(alpha: 0.35),
+                              Colors.black.withValues(alpha: 0.05),
+                              colors.canvas.withValues(alpha: 0.50),
+                            ],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.black.withValues(alpha: 0.35),
-                          Colors.black.withValues(alpha: 0.05),
-                          colors.canvas.withValues(alpha: 0.50),
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
+                ),
+              ),
+              Positioned(
+                top: MediaQuery.paddingOf(context).top > 0
+                    ? MediaQuery.paddingOf(context).top + 8
+                    : 44,
+                left: AppSpacing.screenEdgeGutter,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: colors.surface.withValues(alpha: 0.92),
+                    border: Border.all(
+                      color: colors.accent.withValues(alpha: 0.5),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colors.shadow,
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(2.5),
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/icon.jpeg',
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Icon(
+                        Icons.mosque_rounded,
+                        size: 20,
+                        color: colors.accent,
                       ),
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
-          Positioned(
-            top: MediaQuery.paddingOf(context).top > 0
-                ? MediaQuery.paddingOf(context).top + 8
-                : 44,
-            left: AppSpacing.screenEdgeGutter,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: colors.surface.withValues(alpha: 0.92),
-                border: Border.all(
-                  color: colors.accent.withValues(alpha: 0.5),
-                  width: 1.2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: colors.shadow,
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.all(2.5),
-              child: ClipOval(
-                child: Image.asset(
-                  'assets/icon.jpeg',
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Icon(
-                    Icons.mosque_rounded,
-                    size: 20,
-                    color: colors.accent,
-                  ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

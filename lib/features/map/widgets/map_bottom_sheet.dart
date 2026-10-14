@@ -2,6 +2,7 @@ import '../../../core/locales/app_localizations.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../../core/state/hajicare_state.dart';
+import '../../../../core/theme/app_breakpoints.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_context.dart';
@@ -225,147 +226,156 @@ class _MapBottomSheetState extends State<MapBottomSheet>
       left: AppSpacing.md,
       right: AppSpacing.md,
       bottom: bottomOffset,
-      child: RepaintBoundary(
-        child: Opacity(
-          opacity: opacity,
-          child: Transform.translate(
-            offset: Offset(0, _dragOffset),
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onVerticalDragUpdate: _onVerticalDragUpdate,
-              onVerticalDragEnd: _onVerticalDragEnd,
-              onVerticalDragCancel: _onVerticalDragCancel,
-              child: effectiveMember != null
-                  ? Stack(
-                      clipBehavior: Clip.none,
-                      alignment: Alignment.topCenter,
-                      children: [
-                        // Card container with top margin for overlapping avatar
-                        Container(
-                          margin: const EdgeInsets.only(top: 26),
-                          decoration: BoxDecoration(
-                            color: context.hc.surface,
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(
-                              color: context.hc.border,
-                              width: 1,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: context.hc.shadow,
-                                blurRadius: 20,
-                                spreadRadius: 0,
-                                offset: const Offset(0, 6),
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: AppBreakpoints.maxSheetWidth,
+          ),
+          child: RepaintBoundary(
+            child: Opacity(
+              opacity: opacity,
+              child: Transform.translate(
+                offset: Offset(0, _dragOffset),
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onVerticalDragUpdate: _onVerticalDragUpdate,
+                  onVerticalDragEnd: _onVerticalDragEnd,
+                  onVerticalDragCancel: _onVerticalDragCancel,
+                  child: effectiveMember != null
+                      ? Stack(
+                          clipBehavior: Clip.none,
+                          alignment: Alignment.topCenter,
+                          children: [
+                            // Card container with top margin for overlapping avatar
+                            Container(
+                              margin: const EdgeInsets.only(top: 26),
+                              decoration: BoxDecoration(
+                                color: context.hc.surface,
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                  color: context.hc.border,
+                                  width: 1,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: context.hc.shadow,
+                                    blurRadius: 20,
+                                    spreadRadius: 0,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(24),
-                            child: _buildSelectedMemberDetail(
-                              context,
-                              effectiveMember,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(24),
+                                child: _buildSelectedMemberDetail(
+                                  context,
+                                  effectiveMember,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
 
-                        // Corner Utility: Back to List
-                        if (onBackToList != null)
-                          Positioned(
-                            top: 36,
-                            left: 14,
-                            child: _buildSmallCircularButton(
-                              context: context,
-                              icon: Icons.arrow_back_rounded,
-                              tooltip: 'Kembali ke Daftar',
-                              onTap: onBackToList!,
-                            ),
-                          ),
+                            // Corner Utility: Back to List
+                            if (onBackToList != null)
+                              Positioned(
+                                top: 36,
+                                left: 14,
+                                child: _buildSmallCircularButton(
+                                  context: context,
+                                  icon: Icons.arrow_back_rounded,
+                                  tooltip: 'Kembali ke Daftar',
+                                  onTap: onBackToList!,
+                                ),
+                              ),
 
-                        // Corner Utility: Center on Map
-                        if (onCenterOnMember != null)
-                          Positioned(
-                            top: 36,
-                            right: 14,
-                            child: _buildSmallCircularButton(
-                              context: context,
-                              icon: Icons.my_location_rounded,
-                              tooltip: 'Fokus ke Peta',
-                              onTap: onCenterOnMember!,
-                            ),
-                          ),
+                            // Corner Utility: Center on Map
+                            if (onCenterOnMember != null)
+                              Positioned(
+                                top: 36,
+                                right: 14,
+                                child: _buildSmallCircularButton(
+                                  context: context,
+                                  icon: Icons.my_location_rounded,
+                                  tooltip: 'Fokus ke Peta',
+                                  onTap: onCenterOnMember!,
+                                ),
+                              ),
 
-                        // Overlapping circular avatar popping out at top center
-                        Positioned(
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          child: Center(
-                            child: _buildOverlappingAvatar(
-                              context,
-                              effectiveMember,
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                  : ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.xl),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: context.hc.surface,
-                          borderRadius: BorderRadius.circular(AppRadius.xl),
-                          border: Border.all(
-                            color: context.hc.border,
-                            width: 1,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: context.hc.shadow,
-                              blurRadius: 20,
-                              spreadRadius: 0,
-                              offset: const Offset(0, 6),
+                            // Overlapping circular avatar popping out at top center
+                            Positioned(
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              child: Center(
+                                child: _buildOverlappingAvatar(
+                                  context,
+                                  effectiveMember,
+                                ),
+                              ),
                             ),
                           ],
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Interactive Drag Handle
-                            GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: () => _dismissWithAnimation(),
-                              onVerticalDragUpdate: _onVerticalDragUpdate,
-                              onVerticalDragEnd: _onVerticalDragEnd,
-                              onVerticalDragCancel: _onVerticalDragCancel,
-                              child: Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 8,
+                        )
+                      : ClipRRect(
+                          borderRadius: BorderRadius.circular(AppRadius.xl),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: context.hc.surface,
+                              borderRadius: BorderRadius.circular(AppRadius.xl),
+                              border: Border.all(
+                                color: context.hc.border,
+                                width: 1,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: context.hc.shadow,
+                                  blurRadius: 20,
+                                  spreadRadius: 0,
+                                  offset: const Offset(0, 6),
                                 ),
-                                color: Colors.transparent,
-                                child: Center(
+                              ],
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Interactive Drag Handle
+                                GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () => _dismissWithAnimation(),
+                                  onVerticalDragUpdate: _onVerticalDragUpdate,
+                                  onVerticalDragEnd: _onVerticalDragEnd,
+                                  onVerticalDragCancel: _onVerticalDragCancel,
                                   child: Container(
-                                    width: 38,
-                                    height: 4,
-                                    decoration: BoxDecoration(
-                                      color: context.hc.borderStrong,
-                                      borderRadius: BorderRadius.circular(
-                                        AppRadius.pill,
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 8,
+                                    ),
+                                    color: Colors.transparent,
+                                    child: Center(
+                                      child: Container(
+                                        width: 38,
+                                        height: 4,
+                                        decoration: BoxDecoration(
+                                          color: context.hc.borderStrong,
+                                          borderRadius: BorderRadius.circular(
+                                            AppRadius.pill,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ),
 
-                            if (roomMembers != null && roomMembers!.isNotEmpty)
-                              _buildRoomMembersList(context, roomMembers!)
-                            else
-                              _buildLegacyJamaahCard(context),
-                          ],
+                                if (roomMembers != null &&
+                                    roomMembers!.isNotEmpty)
+                                  _buildRoomMembersList(context, roomMembers!)
+                                else
+                                  _buildLegacyJamaahCard(context),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
+                ),
+              ),
             ),
           ),
         ),

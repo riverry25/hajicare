@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/locales/app_localizations.dart';
+import '../../../core/theme/app_breakpoints.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/theme_context.dart';
@@ -23,10 +24,7 @@ class CommunicationScreen extends StatelessWidget {
         backgroundColor: colors.surface,
         elevation: 0.5,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_rounded,
-            color: colors.primary,
-          ),
+          icon: Icon(Icons.arrow_back_rounded, color: colors.primary),
           onPressed: () => Get.back(),
         ),
         title: Text(
@@ -39,132 +37,128 @@ class CommunicationScreen extends StatelessWidget {
           ),
         ),
         centerTitle: true,
-        shape: Border(
-          bottom: BorderSide(
-            color: colors.border,
-            width: 1,
-          ),
-        ),
+        shape: Border(bottom: BorderSide(color: colors.border, width: 1)),
       ),
-      body: ListView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.screenEdgeGutter,
-          vertical: AppSpacing.md,
-        ),
-        children: [
-          // Tip & Guidance Banner
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: colors.surface,
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(
-                color: colors.accent.withValues(alpha: 0.3),
+      body: ResponsiveCenter(
+        maxWidth: AppBreakpoints.maxTabletContentWidth,
+        child: ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.screenEdgeGutter,
+            vertical: AppSpacing.md,
+          ),
+          children: [
+            // Tip & Guidance Banner
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: colors.surface,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                border: Border.all(color: colors.accent.withValues(alpha: 0.3)),
+                boxShadow: [
+                  BoxShadow(
+                    color: colors.primary.withValues(alpha: 0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: colors.primary.withValues(alpha: 0.03),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: colors.surfaceSubtle,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: colors.accent.withValues(alpha: 0.3),
+              child: Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: colors.surfaceSubtle,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: colors.accent.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.record_voice_over_rounded,
+                      color: colors.accent,
+                      size: 20,
                     ),
                   ),
-                  child: Icon(
-                    Icons.record_voice_over_rounded,
-                    color: colors.accent,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        context.tr('quickComm.showLocals').isNotEmpty
-                            ? context.tr('quickComm.showLocals')
-                            : 'Tunjukkan Layar atau Putar Suara',
-                        style: context.text.labelSmall.copyWith(
-                          color: colors.textPrimary,
-                          fontWeight: FontWeight.w800,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          context.tr('quickComm.showLocals').isNotEmpty
+                              ? context.tr('quickComm.showLocals')
+                              : 'Tunjukkan Layar atau Putar Suara',
+                          style: context.text.labelSmall.copyWith(
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        context.tr('quickComm.tipBanner').isNotEmpty
-                            ? context.tr('quickComm.tipBanner')
-                            : 'Tekan tombol pengeras suara untuk melafalkan ke warga lokal atau petugas.',
-                        style: context.text.labelSmall.copyWith(
-                          color: colors.textSecondary,
-                          height: 1.3,
+                        const SizedBox(height: 2),
+                        Text(
+                          context.tr('quickComm.tipBanner').isNotEmpty
+                              ? context.tr('quickComm.tipBanner')
+                              : 'Tekan tombol pengeras suara untuk melafalkan ke warga lokal atau petugas.',
+                          style: context.text.labelSmall.copyWith(
+                            color: colors.textSecondary,
+                            height: 1.3,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.lg),
 
-          // BISINDO Neural Network Gesture Recognizer
-          const BisindoCard(),
+            // BISINDO Neural Network Gesture Recognizer
+            const BisindoCard(),
 
-          // 1. Darurat & Kesehatan
-          _buildCategoryHeader(
-            context,
-            title: context.tr('comm.emergencyAndHealth'),
-            icon: Icons.health_and_safety_rounded,
-            badgeColor: colors.danger,
-          ),
-          const SizedBox(height: 8),
-          ...controller.phrases
-              .where((p) => p.category == 'Darurat & Kesehatan')
-              .map((p) => _buildPhraseCard(context, controller, p)),
+            // 1. Darurat & Kesehatan
+            _buildCategoryHeader(
+              context,
+              title: context.tr('comm.emergencyAndHealth'),
+              icon: Icons.health_and_safety_rounded,
+              badgeColor: colors.danger,
+            ),
+            const SizedBox(height: 8),
+            ...controller.phrases
+                .where((p) => p.category == 'Darurat & Kesehatan')
+                .map((p) => _buildPhraseCard(context, controller, p)),
 
-          const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.lg),
 
-          // 2. Arah & Lokasi
-          _buildCategoryHeader(
-            context,
-            title: context.tr('comm.directionAndLocation'),
-            icon: Icons.near_me_rounded,
-            badgeColor: colors.accent,
-          ),
-          const SizedBox(height: 8),
-          ...controller.phrases
-              .where((p) => p.category == 'Arah & Lokasi')
-              .map((p) => _buildPhraseCard(context, controller, p)),
+            // 2. Arah & Lokasi
+            _buildCategoryHeader(
+              context,
+              title: context.tr('comm.directionAndLocation'),
+              icon: Icons.near_me_rounded,
+              badgeColor: colors.accent,
+            ),
+            const SizedBox(height: 8),
+            ...controller.phrases
+                .where((p) => p.category == 'Arah & Lokasi')
+                .map((p) => _buildPhraseCard(context, controller, p)),
 
-          const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.lg),
 
-          // 3. Umum
-          _buildCategoryHeader(
-            context,
-            title: context.tr('comm.generalConversation'),
-            icon: Icons.chat_bubble_outline_rounded,
-            badgeColor: colors.accentText,
-          ),
-          const SizedBox(height: 8),
-          ...controller.phrases
-              .where((p) => p.category == 'Umum')
-              .map((p) => _buildPhraseCard(context, controller, p)),
+            // 3. Umum
+            _buildCategoryHeader(
+              context,
+              title: context.tr('comm.generalConversation'),
+              icon: Icons.chat_bubble_outline_rounded,
+              badgeColor: colors.accentText,
+            ),
+            const SizedBox(height: 8),
+            ...controller.phrases
+                .where((p) => p.category == 'Umum')
+                .map((p) => _buildPhraseCard(context, controller, p)),
 
-          const SizedBox(height: AppConstants.space3xl),
-        ],
+            const SizedBox(height: AppConstants.space3xl),
+          ],
+        ),
       ),
     );
   }
@@ -329,17 +323,13 @@ class CommunicationScreen extends StatelessWidget {
                               : colors.surfaceSubtle),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: isCurrentlyPlaying
-                          ? colors.accent
-                          : colors.border,
+                      color: isCurrentlyPlaying ? colors.accent : colors.border,
                       width: 1.5,
                     ),
                     boxShadow: [
                       BoxShadow(
                         color:
-                            (phrase.isUrgent
-                                    ? colors.danger
-                                    : colors.primary)
+                            (phrase.isUrgent ? colors.danger : colors.primary)
                                 .withValues(alpha: 0.2),
                         blurRadius: 8,
                         offset: const Offset(0, 3),

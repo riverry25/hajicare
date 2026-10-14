@@ -440,8 +440,7 @@ class HajiTextStyles extends ThemeExtension<HajiTextStyles> {
 
   static HajiTextStyles light(HajiColors c) =>
       forBrightness(c, Brightness.light);
-  static HajiTextStyles dark(HajiColors c) =>
-      forBrightness(c, Brightness.dark);
+  static HajiTextStyles dark(HajiColors c) => forBrightness(c, Brightness.dark);
 
   @override
   HajiTextStyles copyWith({
@@ -472,8 +471,7 @@ class HajiTextStyles extends ThemeExtension<HajiTextStyles> {
   HajiTextStyles lerp(ThemeExtension<HajiTextStyles>? other, double t) {
     if (other is! HajiTextStyles) return this;
     return HajiTextStyles(
-      heroNumber:
-          TextStyle.lerp(heroNumber, other.heroNumber, t) ?? heroNumber,
+      heroNumber: TextStyle.lerp(heroNumber, other.heroNumber, t) ?? heroNumber,
       arabicLarge:
           TextStyle.lerp(arabicLarge, other.arabicLarge, t) ?? arabicLarge,
       arabic: TextStyle.lerp(arabic, other.arabic, t) ?? arabic,

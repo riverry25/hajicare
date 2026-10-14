@@ -9,7 +9,9 @@ class AppColors {
 
   // ── Primary Palette (Espresso & Kaaba Cloth tones) ─────────────────────────
   static const Color primary = Color(0xFF3B2A1F); // Deep rich espresso
-  static const Color primaryContainer = Color(0xFFF3EADF); // Warm sand container
+  static const Color primaryContainer = Color(
+    0xFFF3EADF,
+  ); // Warm sand container
   static const Color espressoDark = Color(0xFF2A1D15); // Signature espresso
   static const Color espressoMedium = Color(0xFF4A3829);
 
@@ -65,8 +67,12 @@ class AppColors {
 
   // ── Status, SOS, & Alerts (Earthy, non-neon, WCAG AA/AAA compliant) ─────────
   static const Color sosEmergency = Color(0xFFB3412F); // Calibrated brick red
-  static const Color distanceWarning = Color(0xFF8B541C); // Calibrated warm ochre
-  static const Color statusPositive = Color(0xFF2E6B44); // Calibrated sage green
+  static const Color distanceWarning = Color(
+    0xFF8B541C,
+  ); // Calibrated warm ochre
+  static const Color statusPositive = Color(
+    0xFF2E6B44,
+  ); // Calibrated sage green
   static const Color statusWarning = distanceWarning;
   static const Color statusCaution = distanceWarning;
   static const Color statusDanger = sosEmergency;
@@ -126,4 +132,3 @@ class AppColors {
 
   static Color outlineColor(BuildContext context) => context.hc.border;
 }
-

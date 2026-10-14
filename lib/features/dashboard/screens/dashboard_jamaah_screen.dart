@@ -7,6 +7,7 @@ import '../../../core/routes/app_routes.dart';
 import '../../../core/state/app_settings_controller.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/theme_context.dart';
+import '../../../core/theme/app_breakpoints.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -118,28 +119,31 @@ class DashboardJamaahScreen extends StatelessWidget {
 
           return SingleChildScrollView(
             physics: const ClampingScrollPhysics(),
-            child: Column(
-              children: [
-                // ── Top Hero Card (Seamless Gradient Canvas) ─────────────
-                _buildHeroSection(
-                  context: context,
-                  jamaah: jamaah,
-                  state: state,
-                  dashboardCtrl: dashboardCtrl,
-                  prayerCtrl: prayerCtrl,
-                  isDark: isDark,
-                ),
+            child: ResponsiveCenter(
+              maxWidth: AppBreakpoints.maxTabletContentWidth,
+              child: Column(
+                children: [
+                  // ── Top Hero Card (Seamless Gradient Canvas) ─────────────
+                  _buildHeroSection(
+                    context: context,
+                    jamaah: jamaah,
+                    state: state,
+                    dashboardCtrl: dashboardCtrl,
+                    prayerCtrl: prayerCtrl,
+                    isDark: isDark,
+                  ),
 
-                // ── Curved White/Cream Canvas Sheet ──────────────────────
-                _buildCurvedBody(
-                  context: context,
-                  jamaah: jamaah,
-                  state: state,
-                  dashboardCtrl: dashboardCtrl,
-                  isDark: isDark,
-                  headingColor: headingColor,
-                ),
-              ],
+                  // ── Curved White/Cream Canvas Sheet ──────────────────────
+                  _buildCurvedBody(
+                    context: context,
+                    jamaah: jamaah,
+                    state: state,
+                    dashboardCtrl: dashboardCtrl,
+                    isDark: isDark,
+                    headingColor: headingColor,
+                  ),
+                ],
+              ),
             ),
           );
         }),

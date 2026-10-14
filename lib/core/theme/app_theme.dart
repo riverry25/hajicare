@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'app_breakpoints.dart';
 import 'app_radius.dart';
 import 'app_sizes.dart';
 import 'app_spacing.dart';
@@ -168,6 +169,9 @@ class AppTheme {
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: c.surface,
         modalBackgroundColor: c.surface,
+        constraints: const BoxConstraints(
+          maxWidth: AppBreakpoints.maxSheetWidth,
+        ),
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(AppRadius.sheet),

@@ -369,15 +369,19 @@ class _ProfileHeader extends StatelessWidget {
                                         : const Color(0xFFE5C07B),
                                   ),
                                   const SizedBox(width: 5),
-                                  Text(
-                                    context.tr('profilePilgrimCard'),
-                                    style: context.text.labelSmall.copyWith(
-                                      color: isDark
-                                          ? colors.accent
-                                          : const Color(0xFFE5C07B),
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.8,
+                                  Flexible(
+                                    child: Text(
+                                      context.tr('profilePilgrimCard'),
+                                      style: context.text.labelSmall.copyWith(
+                                        color: isDark
+                                            ? colors.accent
+                                            : const Color(0xFFE5C07B),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.8,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ],
@@ -428,12 +432,17 @@ class _ProfileHeader extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(width: 5),
-                              Text(
-                                roleLabel,
-                                style: context.text.labelSmall.copyWith(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 90),
+                                child: Text(
+                                  roleLabel,
+                                  style: context.text.labelSmall.copyWith(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
@@ -1003,11 +1012,16 @@ class _SettingsTile extends StatelessWidget {
                 ),
               ),
               if (trailingLabel != null) ...[
-                Text(
-                  trailingLabel!,
-                  style: context.text.labelSmall.copyWith(
-                    color: isDark ? colors.accent : colors.accent,
-                    fontWeight: FontWeight.w700,
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 120),
+                  child: Text(
+                    trailingLabel!,
+                    style: context.text.labelSmall.copyWith(
+                      color: isDark ? colors.accent : colors.accent,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xs),

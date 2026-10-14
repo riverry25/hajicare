@@ -27,19 +27,10 @@ class IconCircle extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: backgroundColor ?? hc.surfaceSand,
-        border: hasBorder
-            ? Border.all(
-                color: hc.accent,
-                width: 1.5,
-              )
-            : null,
+        border: hasBorder ? Border.all(color: hc.accent, width: 1.5) : null,
       ),
       child: Center(
-        child: Icon(
-          icon,
-          size: size * 0.5,
-          color: iconColor ?? hc.primary,
-        ),
+        child: Icon(icon, size: size * 0.5, color: iconColor ?? hc.primary),
       ),
     );
   }

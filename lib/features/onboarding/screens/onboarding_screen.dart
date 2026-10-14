@@ -106,10 +106,7 @@ class OnboardingScreen extends StatelessWidget {
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
-                        side: BorderSide(
-                          color: colors.border,
-                          width: 1.0,
-                        ),
+                        side: BorderSide(color: colors.border, width: 1.0),
                       ),
                     ),
                     child: Text(

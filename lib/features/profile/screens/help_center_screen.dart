@@ -29,13 +29,18 @@ class HelpCenterScreen extends StatelessWidget {
         backgroundColor: colors.canvas,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: colors.textPrimary),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: colors.textPrimary,
+          ),
           onPressed: () => Get.back(),
           tooltip: context.tr('back'),
         ),
         title: Text(
           context.tr('helpCenterTitle'),
-          style: context.text.headlineMedium.copyWith(color: colors.textPrimary),
+          style: context.text.headlineMedium.copyWith(
+            color: colors.textPrimary,
+          ),
         ),
         centerTitle: true,
       ),
@@ -58,7 +63,9 @@ class HelpCenterScreen extends StatelessWidget {
                 children: [
                   Text(
                     context.tr('helpCenterSubtitle'),
-                    style: context.text.bodyMedium.copyWith(color: colors.textSecondary),
+                    style: context.text.bodyMedium.copyWith(
+                      color: colors.textSecondary,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   // Search field
@@ -134,10 +141,7 @@ class HelpCenterScreen extends StatelessWidget {
                     }),
 
                     // FAQ section
-                    _FaqSection(
-                      controller: controller,
-                      colors: colors,
-                    ),
+                    _FaqSection(controller: controller, colors: colors),
 
                     const SizedBox(height: AppSpacing.gapSection),
 
@@ -170,10 +174,7 @@ class _CategoriesSection extends StatelessWidget {
   final HelpCenterController controller;
   final HajiColors colors;
 
-  const _CategoriesSection({
-    required this.controller,
-    required this.colors,
-  });
+  const _CategoriesSection({required this.controller, required this.colors});
 
   @override
   Widget build(BuildContext context) {
@@ -368,10 +369,7 @@ class _FaqSection extends StatelessWidget {
   final HelpCenterController controller;
   final HajiColors colors;
 
-  const _FaqSection({
-    required this.controller,
-    required this.colors,
-  });
+  const _FaqSection({required this.controller, required this.colors});
 
   @override
   Widget build(BuildContext context) {
@@ -409,11 +407,17 @@ class _FaqSection extends StatelessWidget {
           child: Center(
             child: Column(
               children: [
-                Icon(Icons.search_off_rounded, size: 48, color: colors.textSecondary),
+                Icon(
+                  Icons.search_off_rounded,
+                  size: 48,
+                  color: colors.textSecondary,
+                ),
                 const SizedBox(height: AppSpacing.md),
                 Text(
                   'Belum ada jawaban yang sesuai',
-                  style: context.text.bodyMedium.copyWith(color: colors.textSecondary),
+                  style: context.text.bodyMedium.copyWith(
+                    color: colors.textSecondary,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSpacing.sm),
@@ -617,7 +621,9 @@ class _ContactSupportSection extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             context.tr('contactSupportSubtitle'),
-            style: context.text.bodyMedium.copyWith(color: colors.textSecondary),
+            style: context.text.bodyMedium.copyWith(
+              color: colors.textSecondary,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.xl),
@@ -649,7 +655,9 @@ class _ContactSupportSection extends StatelessWidget {
                 return Text(
                   'Untuk bantuan langsung, hubungi pendamping rombongan Anda.',
                   textAlign: TextAlign.center,
-                  style: context.text.bodyMedium.copyWith(color: colors.textSecondary),
+                  style: context.text.bodyMedium.copyWith(
+                    color: colors.textSecondary,
+                  ),
                 );
               }
               if (stackActions || buttons.length == 1) {
@@ -755,12 +763,8 @@ class _ContactButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = isPrimary
-        ? colors.primary
-        : colors.surfaceSand;
-    final fgColor = isPrimary
-        ? colors.onPrimary
-        : colors.primary;
+    final bgColor = isPrimary ? colors.primary : colors.surfaceSand;
+    final fgColor = isPrimary ? colors.onPrimary : colors.primary;
 
     return Semantics(
       button: true,

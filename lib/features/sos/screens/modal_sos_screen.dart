@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
+import '../../../core/theme/app_breakpoints.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/theme_context.dart';
@@ -345,12 +346,15 @@ class _ModalSosScreenState extends State<ModalSosScreen>
           ],
         ),
       ),
-      body: _buildJamaahSenderView(
-        context,
-        colors.isDark,
-        cardBg,
-        headingColor,
-        bodyColor,
+      body: ResponsiveCenter(
+        maxWidth: AppBreakpoints.maxTabletContentWidth,
+        child: _buildJamaahSenderView(
+          context,
+          colors.isDark,
+          cardBg,
+          headingColor,
+          bodyColor,
+        ),
       ),
     );
   }
@@ -430,227 +434,232 @@ class _ModalSosScreenState extends State<ModalSosScreen>
           // ── 2. Scrollable Content Layer ──────────────────────────────────
           SafeArea(
             bottom: false,
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                // Top Custom Navigation Bar (Frosted back & title)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                    child: Row(
-                      children: [
-                        // Frosted circular back button
-                        Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () => Get.back(),
-                            borderRadius: BorderRadius.circular(22),
-                            child: Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white.withValues(alpha: 0.18),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.28),
-                                  width: 1,
+            child: ResponsiveCenter(
+              maxWidth: AppBreakpoints.maxTabletContentWidth,
+              child: CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  // Top Custom Navigation Bar (Frosted back & title)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                      child: Row(
+                        children: [
+                          // Frosted circular back button
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () => Get.back(),
+                              borderRadius: BorderRadius.circular(22),
+                              child: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white.withValues(alpha: 0.18),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.28),
+                                    width: 1,
+                                  ),
                                 ),
-                              ),
-                              child: const Icon(
-                                Icons.arrow_back_rounded,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        // Title & Subtitle
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                context.tr('sosCenterTitle'),
-                                style: typography.titleLarge.copyWith(
+                                child: const Icon(
+                                  Icons.arrow_back_rounded,
                                   color: Colors.white,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: -0.3,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                context.tr('sosCenterSubtitle'),
-                                style: typography.labelSmall.copyWith(
-                                  color: Colors.white70,
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 11.5,
+                                  size: 20,
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                        // Active Badge Pill
-                        if (hasActiveSos)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
                             ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.15),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
+                          ),
+                          const SizedBox(width: 12),
+                          // Title & Subtitle
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  context.tr('sosCenterTitle'),
+                                  style: typography.titleLarge.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.3,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  context.tr('sosCenterSubtitle'),
+                                  style: typography.labelSmall.copyWith(
+                                    color: Colors.white70,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 11.5,
+                                  ),
                                 ),
                               ],
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                ScaleTransition(
-                                  scale: _pulseAnimation,
-                                  child: Container(
-                                    width: 7,
-                                    height: 7,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
+                          ),
+                          // Active Badge Pill
+                          if (hasActiveSos)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.pill,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.15),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ScaleTransition(
+                                    scale: _pulseAnimation,
+                                    child: Container(
+                                      width: 7,
+                                      height: 7,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: colors.danger,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    '$activeCount ${context.tr('sosActiveBadge')}',
+                                    style: typography.labelSmall.copyWith(
                                       color: colors.danger,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 0.4,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Top Command Card (Meniru Floating Box pada Gambar 2)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),
+                      child: _buildTopCommandCard(
+                        context,
+                        isDark,
+                        activeCount,
+                        hasActiveSos,
+                      ),
+                    ),
+                  ),
+
+                  // The Curved Bottom Sheet (White/Cream Island)
+                  SliverToBoxAdapter(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: colors.canvas,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(30),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(
+                              alpha: isDark ? 0.35 : 0.08,
+                            ),
+                            blurRadius: 18,
+                            offset: const Offset(0, -6),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Drag handle
+                          Center(
+                            child: Container(
+                              width: 38,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: colors.border,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Section Header: Incoming Calls List
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  context.tr('sosIncomingCallsList', {
+                                    'count': activeCount,
+                                  }),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: typography.titleMedium.copyWith(
+                                    color: colors.textPrimary,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                              if (hasActiveSos)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: colors.danger.withValues(
+                                      alpha: 0.12,
+                                    ),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.pill,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Perlu Tindakan',
+                                    style: typography.labelSmall.copyWith(
+                                      color: colors.danger,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 10.5,
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  '$activeCount ${context.tr('sosActiveBadge')}',
-                                  style: typography.labelSmall.copyWith(
-                                    color: colors.danger,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 0.4,
-                                  ),
-                                ),
-                              ],
-                            ),
+                            ],
                           ),
-                      ],
-                    ),
-                  ),
-                ),
+                          const SizedBox(height: 14),
 
-                // Top Command Card (Meniru Floating Box pada Gambar 2)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),
-                    child: _buildTopCommandCard(
-                      context,
-                      isDark,
-                      activeCount,
-                      hasActiveSos,
-                    ),
-                  ),
-                ),
+                          // Active SOS Cards or Safe Empty State
+                          if (!hasActiveSos)
+                            _buildSafeEmptyState(context, isDark)
+                          else
+                            ...activeSosList.map(
+                              (sos) =>
+                                  _buildReferenceSosCard(context, sos, isDark),
+                            ),
 
-                // The Curved Bottom Sheet (White/Cream Island)
-                SliverToBoxAdapter(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: colors.canvas,
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(30),
+                          const SizedBox(height: 16),
+
+                          // Emergency Hotline Card
+                          _buildHotlineCard(context, isDark),
+                        ],
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(
-                            alpha: isDark ? 0.35 : 0.08,
-                          ),
-                          blurRadius: 18,
-                          offset: const Offset(0, -6),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Drag handle
-                        Center(
-                          child: Container(
-                            width: 38,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: colors.border,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Section Header: Incoming Calls List
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                context.tr('sosIncomingCallsList', {
-                                  'count': activeCount,
-                                }),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: typography.titleMedium.copyWith(
-                                  color: colors.textPrimary,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
-                            if (hasActiveSos)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: colors.danger.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.pill,
-                                  ),
-                                ),
-                                child: Text(
-                                  'Perlu Tindakan',
-                                  style: typography.labelSmall.copyWith(
-                                    color: colors.danger,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 10.5,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-
-                        // Active SOS Cards or Safe Empty State
-                        if (!hasActiveSos)
-                          _buildSafeEmptyState(context, isDark)
-                        else
-                          ...activeSosList.map(
-                            (sos) =>
-                                _buildReferenceSosCard(context, sos, isDark),
-                          ),
-
-                        const SizedBox(height: 16),
-
-                        // Emergency Hotline Card
-                        _buildHotlineCard(context, isDark),
-                      ],
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],

@@ -265,9 +265,7 @@ class _BisindoCardState extends State<BisindoCard> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
-              color: isDark
-                  ? colors.surfaceSand
-                  : colors.surfaceSubtle,
+              color: isDark ? colors.surfaceSand : colors.surfaceSubtle,
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Row(
@@ -308,9 +306,7 @@ class _BisindoCardState extends State<BisindoCard> {
               decoration: BoxDecoration(
                 color: colors.dangerContainer.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(
-                  color: colors.danger.withValues(alpha: 0.4),
-                ),
+                border: Border.all(color: colors.danger.withValues(alpha: 0.4)),
               ),
               child: Row(
                 children: [
@@ -341,9 +337,7 @@ class _BisindoCardState extends State<BisindoCard> {
               decoration: BoxDecoration(
                 color: colors.accent.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(
-                  color: colors.accent.withValues(alpha: 0.3),
-                ),
+                border: Border.all(color: colors.accent.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -471,9 +465,7 @@ class _BisindoCardState extends State<BisindoCard> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
-                side: BorderSide(
-                  color: colors.accent.withValues(alpha: 0.4),
-                ),
+                side: BorderSide(color: colors.accent.withValues(alpha: 0.4)),
               ),
               icon: _isTesting
                   ? SizedBox(
@@ -556,8 +548,9 @@ class _BisindoCardState extends State<BisindoCard> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: (isCameraActive ? colors.success : colors.accent)
-            .withValues(alpha: 0.15),
+        color: (isCameraActive ? colors.success : colors.accent).withValues(
+          alpha: 0.15,
+        ),
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Row(
@@ -575,9 +568,7 @@ class _BisindoCardState extends State<BisindoCard> {
           Text(
             isCameraActive ? 'Live Kamera' : 'Model Siap',
             style: context.text.labelSmall.copyWith(
-              color: isCameraActive
-                  ? colors.success
-                  : colors.accent,
+              color: isCameraActive ? colors.success : colors.accent,
               fontWeight: FontWeight.w700,
               fontSize: 10,
             ),

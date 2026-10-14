@@ -859,10 +859,7 @@ class _CommunicationGestureDialogState
                     hintText: context.tr('quickComm.searchHint').isNotEmpty
                         ? context.tr('quickComm.searchHint')
                         : 'Cari percakapan (dokter, arah, sakit...)',
-                    hintStyle: TextStyle(
-                      fontSize: 12,
-                      color: colors.textMuted,
-                    ),
+                    hintStyle: TextStyle(fontSize: 12, color: colors.textMuted),
                     prefixIcon: Icon(
                       Icons.search_rounded,
                       size: 20,
@@ -1094,11 +1091,7 @@ class _CommunicationGestureDialogState
         decoration: BoxDecoration(
           color: isSelected ? colors.primary : colors.surfaceSand,
           borderRadius: BorderRadius.circular(AppRadius.pill),
-          border: Border.all(
-            color: isSelected
-                ? colors.accent
-                : colors.border,
-          ),
+          border: Border.all(color: isSelected ? colors.accent : colors.border),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -1108,9 +1101,7 @@ class _CommunicationGestureDialogState
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected
-                    ? colors.onPrimary
-                    : colors.textSecondary,
+                color: isSelected ? colors.onPrimary : colors.textSecondary,
               ),
             ),
             const SizedBox(width: 6),
@@ -1127,9 +1118,7 @@ class _CommunicationGestureDialogState
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
-                  color: isSelected
-                      ? colors.onPrimary
-                      : colors.textMuted,
+                  color: isSelected ? colors.onPrimary : colors.textMuted,
                 ),
               ),
             ),

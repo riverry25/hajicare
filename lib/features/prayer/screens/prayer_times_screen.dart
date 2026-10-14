@@ -6,6 +6,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/locales/app_localizations.dart';
 import '../../../core/locales/app_translations.dart';
 import '../../../core/state/app_settings_controller.dart';
+import '../../../core/theme/app_breakpoints.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/theme_context.dart';
@@ -38,405 +39,657 @@ class PrayerTimesScreen extends StatelessWidget {
           onRefresh: () => controller.refreshLocation(),
           color: colors.accent,
           backgroundColor: colors.surface,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.screenEdgeGutter,
-              MediaQuery.paddingOf(context).top,
-              AppSpacing.screenEdgeGutter,
-              100,
-            ),
-            child: Column(
-              children: [
-                // ── Custom Page Header (replaces AppBar) ──────────────────────
-                _buildPageHeader(context, headingColor, isDark),
+          child: ResponsiveCenter(
+            maxWidth: AppBreakpoints.maxTabletContentWidth,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.screenEdgeGutter,
+                MediaQuery.paddingOf(context).top,
+                AppSpacing.screenEdgeGutter,
+                100,
+              ),
+              child: Column(
+                children: [
+                  // ── Custom Page Header (replaces AppBar) ──────────────────────
+                  _buildPageHeader(context, headingColor, isDark),
 
-                // ── Active Adhan Playing Banner ──────────────────────────────────
-                Obx(() {
-                  if (!controller.isAdhanPlaying.value) {
-                    return const SizedBox.shrink();
-                  }
-                  final playingName = controller.playingPrayerName.value;
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: AppSpacing.md),
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: isDark
-                            ? const [Color(0xFF2E1C12), Color(0xFF1B1009)]
-                            : [colors.primary, colors.primaryContainer],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
-                      border: Border.all(color: colors.accent, width: 1.5),
-                      boxShadow: [
-                        BoxShadow(
-                          color: colors.accent.withValues(alpha: 0.25),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
+                  // ── Active Adhan Playing Banner ──────────────────────────────────
+                  Obx(() {
+                    if (!controller.isAdhanPlaying.value) {
+                      return const SizedBox.shrink();
+                    }
+                    final playingName = controller.playingPrayerName.value;
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: isDark
+                              ? const [Color(0xFF2E1C12), Color(0xFF1B1009)]
+                              : [colors.primary, colors.primaryContainer],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: colors.accent.withValues(alpha: 0.15),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: colors.accent.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        border: Border.all(color: colors.accent, width: 1.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: colors.accent.withValues(alpha: 0.25),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: colors.accent.withValues(alpha: 0.15),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: colors.accent.withValues(alpha: 0.6),
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.volume_up_rounded,
+                              color: colors.accent,
+                              size: 24,
                             ),
                           ),
-                          child: Icon(
-                            Icons.volume_up_rounded,
-                            color: colors.accent,
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: BoxDecoration(
-                                      color: colors.success,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Flexible(
-                                    child: Text(
-                                      context.tr('prayerAdhanResonating', {
-                                        'name': context.localizedPrayerName(
-                                          playingName,
-                                        ),
-                                      }),
-                                      style: context.text.titleSmall.copyWith(
-                                        color: colors.accent,
-                                        fontWeight: FontWeight.w800,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        color: colors.success,
+                                        shape: BoxShape.circle,
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Syaikh Mishary Rashid Al-Afasy',
-                                style: context.text.bodySmall.copyWith(
-                                  color: colors.surfaceSand,
+                                    const SizedBox(width: 6),
+                                    Flexible(
+                                      child: Text(
+                                        context.tr('prayerAdhanResonating', {
+                                          'name': context.localizedPrayerName(
+                                            playingName,
+                                          ),
+                                        }),
+                                        style: context.text.titleSmall.copyWith(
+                                          color: colors.accent,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Syaikh Mishary Rashid Al-Afasy',
+                                  style: context.text.bodySmall.copyWith(
+                                    color: colors.surfaceSand,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () => controller.stopAdhan(),
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                            child: Ink(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
+                          const SizedBox(width: 8),
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () => controller.stopAdhan(),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
                               ),
-                              decoration: BoxDecoration(
-                                color: colors.danger,
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.pill,
+                              child: Ink(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
                                 ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: colors.danger.withValues(
-                                      alpha: 0.35,
+                                decoration: BoxDecoration(
+                                  color: colors.danger,
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.pill,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: colors.danger.withValues(
+                                        alpha: 0.35,
+                                      ),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
                                     ),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.volume_off_rounded,
-                                    size: 16,
-                                    color: colors.onPrimary,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    context.tr('prayerStopAdhan'),
-                                    style: context.text.labelSmall.copyWith(
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.volume_off_rounded,
+                                      size: 16,
                                       color: colors.onPrimary,
-                                      fontWeight: FontWeight.bold,
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      context.tr('prayerStopAdhan'),
+                                      style: context.text.labelSmall.copyWith(
+                                        color: colors.onPrimary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
+                        ],
+                      ),
+                    );
+                  }),
+
+                  // ── Dynamic Location & Hijri Date Card (Pilgrim Card Design) ───
+                  _buildLocationPilgrimCard(
+                    context: context,
+                    controller: controller,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  // ── Realtime Next Prayer Hero (Islamic Luxury) ──────────────────
+                  Obx(
+                    () => Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(AppSpacing.cardPadding),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: isDark
+                              ? const [
+                                  Color(0xFF26180E),
+                                  Color(0xFF1C1109),
+                                  Color(0xFF120A05),
+                                ]
+                              : [
+                                  colors.primary,
+                                  const Color(0xFF2E1C12),
+                                  const Color(0xFF1E140E),
+                                ],
                         ),
-                      ],
-                    ),
-                  );
-                }),
-
-                // ── Dynamic Location & Hijri Date Card (Pilgrim Card Design) ───
-                _buildLocationPilgrimCard(
-                  context: context,
-                  controller: controller,
-                  isDark: isDark,
-                ),
-                const SizedBox(height: AppSpacing.md),
-
-                // ── Realtime Next Prayer Hero (Islamic Luxury) ──────────────────
-                Obx(
-                  () => Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(AppSpacing.cardPadding),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: isDark
-                            ? const [
-                                Color(0xFF26180E),
-                                Color(0xFF1C1109),
-                                Color(0xFF120A05),
-                              ]
-                            : [
-                                colors.primary,
-                                const Color(0xFF2E1C12),
-                                const Color(0xFF1E140E),
-                              ],
-                      ),
-                      borderRadius: BorderRadius.circular(AppRadius.xl),
-                      border: Border.all(
-                        color: isDark
-                            ? const Color(0xFFD4AF37).withValues(alpha: 0.45)
-                            : colors.accent.withValues(alpha: 0.4),
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
+                        border: Border.all(
                           color: isDark
-                              ? Colors.black.withValues(alpha: 0.45)
-                              : colors.primary.withValues(alpha: 0.25),
-                          blurRadius: 22,
-                          offset: const Offset(0, 8),
+                              ? const Color(0xFFD4AF37).withValues(alpha: 0.45)
+                              : colors.accent.withValues(alpha: 0.4),
+                          width: 1.5,
                         ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        // Badge Header
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
                             color: isDark
-                                ? const Color(
-                                    0xFFD4AF37,
-                                  ).withValues(alpha: 0.12)
-                                : Colors.white.withValues(alpha: 0.10),
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                            border: Border.all(
+                                ? Colors.black.withValues(alpha: 0.45)
+                                : colors.primary.withValues(alpha: 0.25),
+                            blurRadius: 22,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          // Badge Header
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
                               color: isDark
                                   ? const Color(
                                       0xFFD4AF37,
-                                    ).withValues(alpha: 0.5)
-                                  : colors.accent.withValues(alpha: 0.35),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.auto_awesome_rounded,
-                                color: isDark
-                                    ? const Color(0xFFE5C07B)
-                                    : colors.accent,
-                                size: 14,
+                                    ).withValues(alpha: 0.12)
+                                  : Colors.white.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
                               ),
-                              const SizedBox(width: 6),
-                              Text(
-                                context.tr('prayerNextLabel').isEmpty
-                                    ? 'WAKTU SHOLAT BERIKUTNYA'
-                                    : context.tr('prayerNextLabel'),
-                                style: context.text.labelSmall.copyWith(
+                              border: Border.all(
+                                color: isDark
+                                    ? const Color(
+                                        0xFFD4AF37,
+                                      ).withValues(alpha: 0.5)
+                                    : colors.accent.withValues(alpha: 0.35),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.auto_awesome_rounded,
                                   color: isDark
                                       ? const Color(0xFFE5C07B)
                                       : colors.accent,
-                                  letterSpacing: 1.2,
-                                  fontWeight: FontWeight.w800,
+                                  size: 14,
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-
-                        // Prayer Name
-                        Text(
-                          context.localizedPrayerName(
-                            controller.nextPrayerName.value,
-                          ),
-                          style: context.text.displayLarge.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                            height: 1.1,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-
-                        // Arabic Calligraphy
-                        Text(
-                          controller.nextPrayerArabic.value,
-                          style: AppTypography.arabicMedium.copyWith(
-                            color: isDark
-                                ? const Color(0xFFE5C07B)
-                                : colors.accent,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-
-                        // Next Prayer Time
-                        Text(
-                          controller.nextPrayerTime.value,
-                          style: context.text.headlineLarge.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-
-                        // Countdown Badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.08)
-                                : Colors.white.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                            border: Border.all(
-                              color: isDark
-                                  ? const Color(
-                                      0xFFD4AF37,
-                                    ).withValues(alpha: 0.45)
-                                  : colors.accent.withValues(alpha: 0.4),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.timer_outlined,
-                                color: isDark
-                                    ? const Color(0xFFE5C07B)
-                                    : colors.accent,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 6),
-                              Flexible(
-                                child: Text(
-                                  '${context.tr('prayerTimeRemaining')}: ${controller.formatCountdown(context)}',
-                                  style: context.text.bodySmall.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-
-                // ── Dynamic Qibla Compass ──────────────────────────────────────
-                Obx(() {
-                  final isAligned = controller.isQiblaAligned.value;
-                  final qiblaBearingVal = controller.qiblaBearing.value;
-                  final safeQiblaBearing =
-                      qiblaBearingVal.isFinite && !qiblaBearingVal.isNaN
-                      ? qiblaBearingVal
-                      : 0.0;
-                  final qiblaDeg = safeQiblaBearing.toStringAsFixed(0);
-
-                  final offsetVal = controller.qiblaOffset.value;
-                  final safeOffset = offsetVal.isFinite && !offsetVal.isNaN
-                      ? offsetVal
-                      : 0.0;
-                  final rawAngle = (safeOffset * math.pi / 180.0);
-                  final safeAngle = rawAngle.isFinite && !rawAngle.isNaN
-                      ? rawAngle
-                      : 0.0;
-
-                  return AppCard(
-                    padding: const EdgeInsets.all(AppSpacing.cardPadding),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  width: 36,
-                                  height: 36,
-                                  decoration: BoxDecoration(
-                                    color: isAligned
-                                        ? colors.success.withValues(alpha: 0.15)
-                                        : colors.surfaceSubtle,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    Icons.explore_rounded,
-                                    color: isAligned
-                                        ? colors.success
-                                        : (isDark
-                                              ? colors.accent
-                                              : colors.primary),
-                                    size: 20,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  context.tr('qiblaDirection').isEmpty
-                                      ? 'Arah Kiblat'
-                                      : context.tr('qiblaDirection'),
-                                  style: context.text.titleMedium.copyWith(
-                                    color: colors.textPrimary,
-                                    fontWeight: FontWeight.w800,
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    context.tr('prayerNextLabel').isEmpty
+                                        ? 'WAKTU SHOLAT BERIKUTNYA'
+                                        : context.tr('prayerNextLabel'),
+                                    style: context.text.labelSmall.copyWith(
+                                      color: isDark
+                                          ? const Color(0xFFE5C07B)
+                                          : colors.accent,
+                                      letterSpacing: 1.2,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],
                             ),
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Prayer Name
+                          Text(
+                            context.localizedPrayerName(
+                              controller.nextPrayerName.value,
+                            ),
+                            style: context.text.displayLarge.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              height: 1.1,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+
+                          // Arabic Calligraphy
+                          Text(
+                            controller.nextPrayerArabic.value,
+                            style: AppTypography.arabicMedium.copyWith(
+                              color: isDark
+                                  ? const Color(0xFFE5C07B)
+                                  : colors.accent,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+
+                          // Next Prayer Time
+                          Text(
+                            controller.nextPrayerTime.value,
+                            style: context.text.headlineLarge.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Countdown Badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.08)
+                                  : Colors.white.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
+                              border: Border.all(
+                                color: isDark
+                                    ? const Color(
+                                        0xFFD4AF37,
+                                      ).withValues(alpha: 0.45)
+                                    : colors.accent.withValues(alpha: 0.4),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.timer_outlined,
+                                  color: isDark
+                                      ? const Color(0xFFE5C07B)
+                                      : colors.accent,
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    '${context.tr('prayerTimeRemaining')}: ${controller.formatCountdown(context)}',
+                                    style: context.text.bodySmall.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  // ── Dynamic Qibla Compass ──────────────────────────────────────
+                  Obx(() {
+                    final isAligned = controller.isQiblaAligned.value;
+                    final qiblaBearingVal = controller.qiblaBearing.value;
+                    final safeQiblaBearing =
+                        qiblaBearingVal.isFinite && !qiblaBearingVal.isNaN
+                        ? qiblaBearingVal
+                        : 0.0;
+                    final qiblaDeg = safeQiblaBearing.toStringAsFixed(0);
+
+                    final offsetVal = controller.qiblaOffset.value;
+                    final safeOffset = offsetVal.isFinite && !offsetVal.isNaN
+                        ? offsetVal
+                        : 0.0;
+                    final rawAngle = (safeOffset * math.pi / 180.0);
+                    final safeAngle = rawAngle.isFinite && !rawAngle.isNaN
+                        ? rawAngle
+                        : 0.0;
+
+                    return AppCard(
+                      padding: const EdgeInsets.all(AppSpacing.cardPadding),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 36,
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        color: isAligned
+                                            ? colors.success.withValues(
+                                                alpha: 0.15,
+                                              )
+                                            : colors.surfaceSubtle,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.explore_rounded,
+                                        color: isAligned
+                                            ? colors.success
+                                            : (isDark
+                                                  ? colors.accent
+                                                  : colors.primary),
+                                        size: 20,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Flexible(
+                                      child: Text(
+                                        context.tr('qiblaDirection').isEmpty
+                                            ? 'Arah Kiblat'
+                                            : context.tr('qiblaDirection'),
+                                        style: context.text.titleMedium
+                                            .copyWith(
+                                              color: colors.textPrimary,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isAligned
+                                      ? colors.success.withValues(alpha: 0.15)
+                                      : colors.surfaceSubtle,
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.pill,
+                                  ),
+                                  border: Border.all(
+                                    color: isAligned
+                                        ? colors.success
+                                        : colors.border,
+                                  ),
+                                ),
+                                child: Text(
+                                  '$qiblaDeg° ${context.tr('qiblaKabah')}',
+                                  style: context.text.labelSmall.copyWith(
+                                    color: isAligned
+                                        ? colors.success
+                                        : colors.textPrimary,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+
+                          if (!controller.hasCompassSensor.value)
+                            Container(
+                              padding: const EdgeInsets.all(AppSpacing.lg),
+                              margin: const EdgeInsets.symmetric(
+                                vertical: AppSpacing.md,
+                              ),
+                              decoration: BoxDecoration(
+                                color: colors.surfaceSubtle,
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
+                              ),
+                              child: Text(
+                                context.tr('kompasNoSensor'),
+                                style: context.text.bodyMedium.copyWith(
+                                  color: colors.textSecondary,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            )
+                          else ...[
+                            // Rotating Compass Dial
+                            Center(
+                              child: Container(
+                                width: 200,
+                                height: 200,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: isAligned
+                                        ? colors.success
+                                        : (isDark
+                                              ? colors.borderStrong
+                                              : colors.accent),
+                                    width: isAligned ? 5 : 3,
+                                  ),
+                                  color: colors.surfaceSubtle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: isAligned
+                                          ? colors.success.withValues(
+                                              alpha: 0.35,
+                                            )
+                                          : (isDark
+                                                ? Colors.black.withValues(
+                                                    alpha: 0.3,
+                                                  )
+                                                : colors.primary.withValues(
+                                                    alpha: 0.08,
+                                                  )),
+                                      blurRadius: isAligned ? 22 : 12,
+                                      spreadRadius: isAligned ? 4 : 1,
+                                    ),
+                                  ],
+                                ),
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    // Dial markings (U, S, B, T)
+                                    Positioned(
+                                      top: 8,
+                                      child: Text(
+                                        context.tr('compassNorth'),
+                                        style: context.text.labelLarge.copyWith(
+                                          fontWeight: FontWeight.w800,
+                                          color: colors.danger,
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      bottom: 8,
+                                      child: Text(
+                                        context.tr('compassSouth'),
+                                        style: context.text.labelLarge.copyWith(
+                                          fontWeight: FontWeight.w800,
+                                          color: colors.textSecondary,
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      left: 10,
+                                      child: Text(
+                                        context.tr('compassWest'),
+                                        style: context.text.labelLarge.copyWith(
+                                          fontWeight: FontWeight.w800,
+                                          color: colors.textSecondary,
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      right: 10,
+                                      child: Text(
+                                        context.tr('compassEast'),
+                                        style: context.text.labelLarge.copyWith(
+                                          fontWeight: FontWeight.w800,
+                                          color: colors.textSecondary,
+                                        ),
+                                      ),
+                                    ),
+
+                                    // Concentric inner circle
+                                    Container(
+                                      width: 130,
+                                      height: 130,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: colors.surfaceSand.withValues(
+                                            alpha: isDark ? 0.3 : 0.25,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+
+                                    // Dynamic Rotating Qibla Needle
+                                    Transform.rotate(
+                                      angle: safeAngle,
+                                      child: SizedBox(
+                                        width: 150,
+                                        height: 150,
+                                        child: Stack(
+                                          alignment: Alignment.center,
+                                          children: [
+                                            // North/Kaaba pointer
+                                            Positioned(
+                                              top: 4,
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(
+                                                    Icons.mosque_rounded,
+                                                    size: 26,
+                                                    color: isAligned
+                                                        ? colors.success
+                                                        : colors.accent,
+                                                  ),
+                                                  Container(
+                                                    width: 4,
+                                                    height: 40,
+                                                    decoration: BoxDecoration(
+                                                      color: isAligned
+                                                          ? colors.success
+                                                          : colors.accent,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            2,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            // Tail pointer
+                                            Positioned(
+                                              bottom: 12,
+                                              child: Container(
+                                                width: 3,
+                                                height: 32,
+                                                decoration: BoxDecoration(
+                                                  color: colors.surfaceSand
+                                                      .withValues(
+                                                        alpha: isDark
+                                                            ? 0.5
+                                                            : 0.45,
+                                                      ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(2),
+                                                ),
+                                              ),
+                                            ),
+                                            // Center pivot
+                                            Container(
+                                              width: 14,
+                                              height: 14,
+                                              decoration: BoxDecoration(
+                                                color: isAligned
+                                                    ? colors.success
+                                                    : (isDark
+                                                          ? colors.accent
+                                                          : colors.primary),
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                  color: colors.surface,
+                                                  width: 2,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+
+                            // Direction Feedback Badge
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 5,
+                                horizontal: 14,
+                                vertical: 8,
                               ),
                               decoration: BoxDecoration(
                                 color: isAligned
@@ -447,460 +700,243 @@ class PrayerTimesScreen extends StatelessWidget {
                                 ),
                                 border: Border.all(
                                   color: isAligned
-                                      ? colors.success
+                                      ? colors.success.withValues(alpha: 0.4)
                                       : colors.border,
                                 ),
                               ),
-                              child: Text(
-                                '$qiblaDeg° ${context.tr('qiblaKabah')}',
-                                style: context.text.labelSmall.copyWith(
-                                  color: isAligned
-                                      ? colors.success
-                                      : colors.textPrimary,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-
-                        if (!controller.hasCompassSensor.value)
-                          Container(
-                            padding: const EdgeInsets.all(AppSpacing.lg),
-                            margin: const EdgeInsets.symmetric(
-                              vertical: AppSpacing.md,
-                            ),
-                            decoration: BoxDecoration(
-                              color: colors.surfaceSubtle,
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                            ),
-                            child: Text(
-                              context.tr('kompasNoSensor'),
-                              style: context.text.bodyMedium.copyWith(
-                                color: colors.textSecondary,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          )
-                        else ...[
-                          // Rotating Compass Dial
-                          Center(
-                            child: Container(
-                              width: 200,
-                              height: 200,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: isAligned
-                                      ? colors.success
-                                      : (isDark
-                                            ? colors.borderStrong
-                                            : colors.accent),
-                                  width: isAligned ? 5 : 3,
-                                ),
-                                color: colors.surfaceSubtle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: isAligned
-                                        ? colors.success.withValues(alpha: 0.35)
-                                        : (isDark
-                                              ? Colors.black.withValues(
-                                                  alpha: 0.3,
-                                                )
-                                              : colors.primary.withValues(
-                                                  alpha: 0.08,
-                                                )),
-                                    blurRadius: isAligned ? 22 : 12,
-                                    spreadRadius: isAligned ? 4 : 1,
-                                  ),
-                                ],
-                              ),
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  // Dial markings (U, S, B, T)
-                                  Positioned(
-                                    top: 8,
-                                    child: Text(
-                                      context.tr('compassNorth'),
-                                      style: context.text.labelLarge.copyWith(
-                                        fontWeight: FontWeight.w800,
-                                        color: colors.danger,
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    bottom: 8,
-                                    child: Text(
-                                      context.tr('compassSouth'),
-                                      style: context.text.labelLarge.copyWith(
-                                        fontWeight: FontWeight.w800,
-                                        color: colors.textSecondary,
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    left: 10,
-                                    child: Text(
-                                      context.tr('compassWest'),
-                                      style: context.text.labelLarge.copyWith(
-                                        fontWeight: FontWeight.w800,
-                                        color: colors.textSecondary,
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    right: 10,
-                                    child: Text(
-                                      context.tr('compassEast'),
-                                      style: context.text.labelLarge.copyWith(
-                                        fontWeight: FontWeight.w800,
-                                        color: colors.textSecondary,
-                                      ),
-                                    ),
-                                  ),
-
-                                  // Concentric inner circle
-                                  Container(
-                                    width: 130,
-                                    height: 130,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: colors.surfaceSand.withValues(
-                                          alpha: isDark ? 0.3 : 0.25,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-
-                                  // Dynamic Rotating Qibla Needle
-                                  Transform.rotate(
-                                    angle: safeAngle,
-                                    child: SizedBox(
-                                      width: 150,
-                                      height: 150,
-                                      child: Stack(
-                                        alignment: Alignment.center,
-                                        children: [
-                                          // North/Kaaba pointer
-                                          Positioned(
-                                            top: 4,
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Icon(
-                                                  Icons.mosque_rounded,
-                                                  size: 26,
-                                                  color: isAligned
-                                                      ? colors.success
-                                                      : colors.accent,
-                                                ),
-                                                Container(
-                                                  width: 4,
-                                                  height: 40,
-                                                  decoration: BoxDecoration(
-                                                    color: isAligned
-                                                        ? colors.success
-                                                        : colors.accent,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          2,
-                                                        ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          // Tail pointer
-                                          Positioned(
-                                            bottom: 12,
-                                            child: Container(
-                                              width: 3,
-                                              height: 32,
-                                              decoration: BoxDecoration(
-                                                color: colors.surfaceSand
-                                                    .withValues(
-                                                      alpha: isDark
-                                                          ? 0.5
-                                                          : 0.45,
-                                                    ),
-                                                borderRadius:
-                                                    BorderRadius.circular(2),
-                                              ),
-                                            ),
-                                          ),
-                                          // Center pivot
-                                          Container(
-                                            width: 14,
-                                            height: 14,
-                                            decoration: BoxDecoration(
-                                              color: isAligned
-                                                  ? colors.success
-                                                  : (isDark
-                                                        ? colors.accent
-                                                        : colors.primary),
-                                              shape: BoxShape.circle,
-                                              border: Border.all(
-                                                color: colors.surface,
-                                                width: 2,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-
-                          // Direction Feedback Badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isAligned
-                                  ? colors.success.withValues(alpha: 0.15)
-                                  : colors.surfaceSubtle,
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.pill,
-                              ),
-                              border: Border.all(
-                                color: isAligned
-                                    ? colors.success.withValues(alpha: 0.4)
-                                    : colors.border,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  isAligned
-                                      ? Icons.check_circle_rounded
-                                      : Icons.navigation_rounded,
-                                  size: 16,
-                                  color: isAligned
-                                      ? colors.success
-                                      : colors.textSecondary,
-                                ),
-                                const SizedBox(width: 6),
-                                Flexible(
-                                  child: Text(
-                                    isAligned
-                                        ? context.tr('qiblaAligned')
-                                        : '${context.tr('qiblaRotate')}: ${safeOffset.toStringAsFixed(0)}° ${context.tr('qiblaRotateToKabah')}',
-                                    style: context.text.labelSmall.copyWith(
-                                      color: isAligned
-                                          ? colors.success
-                                          : colors.textPrimary,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  );
-                }),
-                const SizedBox(height: AppSpacing.md),
-
-                // ── Full Day Dynamic Schedule ──────────────────────────────────
-                AppCard(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(AppSpacing.cardPadding),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
                               child: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Container(
-                                    width: 32,
-                                    height: 32,
-                                    decoration: BoxDecoration(
-                                      color: colors.surfaceSubtle,
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Icon(
-                                      Icons.calendar_month_rounded,
-                                      color: isDark
-                                          ? colors.accent
-                                          : colors.primary,
-                                      size: 18,
-                                    ),
+                                  Icon(
+                                    isAligned
+                                        ? Icons.check_circle_rounded
+                                        : Icons.navigation_rounded,
+                                    size: 16,
+                                    color: isAligned
+                                        ? colors.success
+                                        : colors.textSecondary,
                                   ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
+                                  const SizedBox(width: 6),
+                                  Flexible(
                                     child: Text(
-                                      context
-                                              .tr('prayerScheduleSectionTitle')
-                                              .isEmpty
-                                          ? 'Jadwal 5 Waktu Sholat'
-                                          : context.tr(
-                                              'prayerScheduleSectionTitle',
-                                            ),
-                                      style: context.text.titleMedium.copyWith(
-                                        color: colors.textPrimary,
+                                      isAligned
+                                          ? context.tr('qiblaAligned')
+                                          : '${context.tr('qiblaRotate')}: ${safeOffset.toStringAsFixed(0)}° ${context.tr('qiblaRotateToKabah')}',
+                                      style: context.text.labelSmall.copyWith(
+                                        color: isAligned
+                                            ? colors.success
+                                            : colors.textPrimary,
                                         fontWeight: FontWeight.w800,
                                       ),
-                                      maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Obx(() {
-                              final isAnyOn = controller.isAnySoundOn;
-                              return Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: () {
-                                    controller.toggleAllPrayerSounds();
-                                    final nowOn = !isAnyOn;
-                                    Get.closeAllSnackbars();
-                                    Get.snackbar(
-                                      nowOn
-                                          ? context.tr('prayerSoundAllActive')
-                                          : context.tr('prayerSoundAllMuted'),
-                                      nowOn
-                                          ? context.tr(
-                                              'prayerSoundAllActiveDesc',
-                                            )
-                                          : context.tr(
-                                              'prayerSoundAllMutedDesc',
-                                            ),
-                                      snackPosition: SnackPosition.BOTTOM,
-                                      backgroundColor: isDark
-                                          ? colors.surfaceSubtle
-                                          : colors.primary,
-                                      colorText: nowOn
-                                          ? (isDark
-                                                ? colors.accent
-                                                : colors.onPrimary)
-                                          : colors.onPrimary,
-                                      icon: Icon(
-                                        nowOn
-                                            ? Icons.volume_up_rounded
-                                            : Icons.volume_off_rounded,
-                                        color: nowOn
+                          ],
+                        ],
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: AppSpacing.md),
+
+                  // ── Full Day Dynamic Schedule ──────────────────────────────────
+                  AppCard(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(AppSpacing.cardPadding),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 32,
+                                      height: 32,
+                                      decoration: BoxDecoration(
+                                        color: colors.surfaceSubtle,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Icon(
+                                        Icons.calendar_month_rounded,
+                                        color: isDark
                                             ? colors.accent
-                                            : colors.surfaceSand,
+                                            : colors.primary,
+                                        size: 18,
                                       ),
-                                      margin: const EdgeInsets.all(
-                                        AppSpacing.md,
-                                      ),
-                                      borderRadius: AppRadius.md,
-                                      duration: const Duration(seconds: 2),
-                                    );
-                                  },
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.pill,
-                                  ),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 6,
                                     ),
-                                    decoration: BoxDecoration(
-                                      color: isAnyOn
-                                          ? (isDark
-                                                ? colors.accent.withValues(
-                                                    alpha: 0.15,
-                                                  )
-                                                : colors.surfaceSand.withValues(
-                                                    alpha: 0.5,
-                                                  ))
-                                          : colors.surfaceSubtle,
-                                      borderRadius: BorderRadius.circular(
-                                        AppRadius.pill,
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        context
+                                                .tr(
+                                                  'prayerScheduleSectionTitle',
+                                                )
+                                                .isEmpty
+                                            ? 'Jadwal 5 Waktu Sholat'
+                                            : context.tr(
+                                                'prayerScheduleSectionTitle',
+                                              ),
+                                        style: context.text.titleMedium
+                                            .copyWith(
+                                              color: colors.textPrimary,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                      border: Border.all(
-                                        color: isAnyOn
-                                            ? colors.accent.withValues(
-                                                alpha: 0.6,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Obx(() {
+                                final isAnyOn = controller.isAnySoundOn;
+                                return Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () {
+                                      controller.toggleAllPrayerSounds();
+                                      final nowOn = !isAnyOn;
+                                      Get.closeAllSnackbars();
+                                      Get.snackbar(
+                                        nowOn
+                                            ? context.tr('prayerSoundAllActive')
+                                            : context.tr('prayerSoundAllMuted'),
+                                        nowOn
+                                            ? context.tr(
+                                                'prayerSoundAllActiveDesc',
                                               )
-                                            : colors.border,
-                                        width: 1,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          isAnyOn
+                                            : context.tr(
+                                                'prayerSoundAllMutedDesc',
+                                              ),
+                                        snackPosition: SnackPosition.BOTTOM,
+                                        backgroundColor: isDark
+                                            ? colors.surfaceSubtle
+                                            : colors.primary,
+                                        colorText: nowOn
+                                            ? (isDark
+                                                  ? colors.accent
+                                                  : colors.onPrimary)
+                                            : colors.onPrimary,
+                                        icon: Icon(
+                                          nowOn
                                               ? Icons.volume_up_rounded
                                               : Icons.volume_off_rounded,
-                                          size: 15,
-                                          color: isAnyOn
+                                          color: nowOn
                                               ? colors.accent
-                                              : colors.textSecondary,
+                                              : colors.surfaceSand,
                                         ),
-                                        const SizedBox(width: 5),
-                                        Text(
-                                          isAnyOn
-                                              ? context.tr('prayerAdhanActive')
-                                              : context.tr('prayerAdhanSilent'),
-                                          style: context.text.labelSmall
-                                              .copyWith(
-                                                color: isAnyOn
-                                                    ? (isDark
-                                                          ? colors.accent
-                                                          : colors.primary)
-                                                    : colors.textSecondary,
-                                                fontWeight: FontWeight.w700,
-                                                fontSize: 11,
-                                              ),
+                                        margin: const EdgeInsets.all(
+                                          AppSpacing.md,
                                         ),
-                                      ],
+                                        borderRadius: AppRadius.md,
+                                        duration: const Duration(seconds: 2),
+                                      );
+                                    },
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.pill,
+                                    ),
+                                    child: AnimatedContainer(
+                                      duration: const Duration(
+                                        milliseconds: 200,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isAnyOn
+                                            ? (isDark
+                                                  ? colors.accent.withValues(
+                                                      alpha: 0.15,
+                                                    )
+                                                  : colors.surfaceSand
+                                                        .withValues(alpha: 0.5))
+                                            : colors.surfaceSubtle,
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadius.pill,
+                                        ),
+                                        border: Border.all(
+                                          color: isAnyOn
+                                              ? colors.accent.withValues(
+                                                  alpha: 0.6,
+                                                )
+                                              : colors.border,
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            isAnyOn
+                                                ? Icons.volume_up_rounded
+                                                : Icons.volume_off_rounded,
+                                            size: 15,
+                                            color: isAnyOn
+                                                ? colors.accent
+                                                : colors.textSecondary,
+                                          ),
+                                          const SizedBox(width: 5),
+                                          Text(
+                                            isAnyOn
+                                                ? context.tr(
+                                                    'prayerAdhanActive',
+                                                  )
+                                                : context.tr(
+                                                    'prayerAdhanSilent',
+                                                  ),
+                                            style: context.text.labelSmall
+                                                .copyWith(
+                                                  color: isAnyOn
+                                                      ? (isDark
+                                                            ? colors.accent
+                                                            : colors.primary)
+                                                      : colors.textSecondary,
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 11,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
+                                );
+                              }),
+                            ],
+                          ),
+                        ),
+                        Divider(height: 1, color: colors.border),
+                        Obx(
+                          () => Column(
+                            children: controller.prayers.map((p) {
+                              return _buildPrayerRow(
+                                context: context,
+                                controller: controller,
+                                name: p.name,
+                                arabicName: p.arabicName,
+                                time: p.formattedTime,
+                                isNext: p.isNext,
                               );
-                            }),
-                          ],
+                            }).toList(),
+                          ),
                         ),
-                      ),
-                      Divider(height: 1, color: colors.border),
-                      Obx(
-                        () => Column(
-                          children: controller.prayers.map((p) {
-                            return _buildPrayerRow(
-                              context: context,
-                              controller: controller,
-                              name: p.name,
-                              arabicName: p.arabicName,
-                              time: p.formattedTime,
-                              isNext: p.isNext,
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                _buildAdhanBackgroundCard(
-                  context: context,
-                  controller: controller,
-                ),
-                const SizedBox(height: AppConstants.space3xl),
-              ],
+                  const SizedBox(height: AppSpacing.lg),
+                  _buildAdhanBackgroundCard(
+                    context: context,
+                    controller: controller,
+                  ),
+                  const SizedBox(height: AppConstants.space3xl),
+                ],
+              ),
             ),
           ),
         ),

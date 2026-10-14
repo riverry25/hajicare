@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
+import '../../../core/theme/app_breakpoints.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/theme_context.dart';
@@ -101,9 +102,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(kToolbarHeight - 8),
             child: MediaQuery(
-              data: MediaQuery.of(
-                context,
-              ).copyWith(textScaler: MediaQuery.textScalerOf(context)),
+              data: MediaQuery.of(context).copyWith(
+                textScaler: MediaQuery.textScalerOf(
+                  context,
+                ).clamp(maxScaleFactor: 1.15),
+              ),
               child: TabBar(
                 indicatorColor: colors.accent,
                 indicatorWeight: 3,
@@ -126,7 +129,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           size: 18,
                         ),
                         const SizedBox(width: 8),
-                        const Text('Notifikasi'),
+                        const Flexible(
+                          child: Text(
+                            'Notifikasi',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                         Obx(() {
                           if (!Get.isRegistered<NotificationController>()) {
                             return const SizedBox.shrink();
@@ -170,7 +179,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                       children: [
                         Icon(Icons.help_outline_rounded, size: 18),
                         SizedBox(width: 8),
-                        Text('FAQ & Bantuan'),
+                        Flexible(
+                          child: Text(
+                            'FAQ & Bantuan',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -179,8 +194,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
             ),
           ),
         ),
-        body: TabBarView(
-          children: [_buildNotificationTab(context), _buildFaqList(context)],
+        body: ResponsiveCenter(
+          maxWidth: AppBreakpoints.maxTabletContentWidth,
+          child: TabBarView(
+            children: [_buildNotificationTab(context), _buildFaqList(context)],
+          ),
         ),
       ),
     );
@@ -196,6 +214,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: colors.surface,
+      constraints: const BoxConstraints(maxWidth: AppBreakpoints.maxSheetWidth),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),

@@ -11,6 +11,7 @@ import '../../../core/routes/app_routes.dart';
 import '../../../core/services/app_alert_service.dart';
 import '../../../core/state/hajicare_controller.dart';
 import '../../../core/theme/theme_context.dart';
+import '../../../core/theme/app_breakpoints.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/user_feedback_message.dart';
@@ -745,6 +746,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      constraints: const BoxConstraints(maxWidth: AppBreakpoints.maxSheetWidth),
       builder: (sheetCtx) {
         return SafeArea(
           child: Padding(
@@ -1300,150 +1302,308 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
           _subscribeToMembers(room.id);
           await Future.delayed(const Duration(milliseconds: 500));
         },
-        child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.screenEdgeGutter),
-          physics: const AlwaysScrollableScrollPhysics(
-            parent: BouncingScrollPhysics(),
-          ),
-          children: [
-            // ── 1. Hero Room Information Card (Tailwind Floating Card style matching Image 2) ──
-            Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.topCenter,
-              children: [
-                // Main Card Body (Below floating hero)
-                Container(
-                  margin: const EdgeInsets.only(top: 28),
-                  decoration: BoxDecoration(
-                    color: cardBg,
-                    borderRadius: BorderRadius.circular(22),
-                    border: Border.all(color: context.hc.border, width: 1.2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(
-                          alpha: isDark ? 0.28 : 0.05,
+        child: ResponsiveCenter(
+          maxWidth: AppBreakpoints.maxTabletContentWidth,
+          child: ListView(
+            padding: const EdgeInsets.all(AppSpacing.screenEdgeGutter),
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            children: [
+              // ── 1. Hero Room Information Card (Tailwind Floating Card style matching Image 2) ──
+              Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.topCenter,
+                children: [
+                  // Main Card Body (Below floating hero)
+                  Container(
+                    margin: const EdgeInsets.only(top: 28),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(color: context.hc.border, width: 1.2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(
+                            alpha: isDark ? 0.28 : 0.05,
+                          ),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
                         ),
-                        blurRadius: 18,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Top Spacing to clear floating hero container
-                      const SizedBox(height: 82),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Top Spacing to clear floating hero container
+                        const SizedBox(height: 82),
 
-                      // ── Main Body Information (Room Data & Privileged Actions) ──
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
-                        child: Column(
-                          children: [
-                            // Kode Room Banner Tile
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 11,
-                              ),
-                              decoration: BoxDecoration(
-                                color: context.hc.surfaceSand.withValues(
-                                  alpha: 0.35,
+                        // ── Main Body Information (Room Data & Privileged Actions) ──
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+                          child: Column(
+                            children: [
+                              // Kode Room Banner Tile
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 11,
                                 ),
-                                borderRadius: BorderRadius.circular(15),
-                                border: Border.all(
-                                  color: context.hc.border,
-                                  width: 1.0,
+                                decoration: BoxDecoration(
+                                  color: context.hc.surfaceSand.withValues(
+                                    alpha: 0.35,
+                                  ),
+                                  borderRadius: BorderRadius.circular(15),
+                                  border: Border.all(
+                                    color: context.hc.border,
+                                    width: 1.0,
+                                  ),
                                 ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(7),
-                                    decoration: BoxDecoration(
-                                      color: primaryColor.withValues(
-                                        alpha: isDark ? 0.20 : 0.12,
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(7),
+                                      decoration: BoxDecoration(
+                                        color: primaryColor.withValues(
+                                          alpha: isDark ? 0.20 : 0.12,
+                                        ),
+                                        borderRadius: BorderRadius.circular(9),
                                       ),
-                                      borderRadius: BorderRadius.circular(9),
+                                      child: Icon(
+                                        Icons.key_rounded,
+                                        size: 17,
+                                        color: primaryColor,
+                                      ),
                                     ),
-                                    child: Icon(
-                                      Icons.key_rounded,
-                                      size: 17,
-                                      color: primaryColor,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          context.tr('room.roomCode'),
-                                          style: TextStyle(
-                                            color: bodyColor.withValues(
-                                              alpha: 0.7,
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            context.tr('room.roomCode'),
+                                            style: TextStyle(
+                                              color: bodyColor.withValues(
+                                                alpha: 0.7,
+                                              ),
+                                              fontSize: 10.5,
+                                              fontWeight: FontWeight.w500,
                                             ),
-                                            fontSize: 10.5,
-                                            fontWeight: FontWeight.w500,
                                           ),
-                                        ),
-                                        const SizedBox(height: 1),
-                                        Text(
-                                          room.code,
-                                          style: TextStyle(
-                                            color: headingColor,
-                                            fontWeight: FontWeight.w900,
-                                            letterSpacing: 2.8,
-                                            fontSize: 15.5,
+                                          const SizedBox(height: 1),
+                                          Text(
+                                            room.code,
+                                            style: TextStyle(
+                                              color: headingColor,
+                                              fontWeight: FontWeight.w900,
+                                              letterSpacing: 2.8,
+                                              fontSize: 15.5,
+                                            ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                  InkWell(
-                                    onTap: () {
-                                      HapticFeedback.lightImpact();
-                                      Clipboard.setData(
-                                        ClipboardData(text: room.code),
-                                      );
-                                      AppAlert.success(
-                                        context,
-                                        title: context.tr('room.codeCopied'),
-                                        message: context.tr(
-                                          'room.codeCopiedMsg',
-                                          {'code': room.code},
+                                    InkWell(
+                                      onTap: () {
+                                        HapticFeedback.lightImpact();
+                                        Clipboard.setData(
+                                          ClipboardData(text: room.code),
+                                        );
+                                        AppAlert.success(
+                                          context,
+                                          title: context.tr('room.codeCopied'),
+                                          message: context.tr(
+                                            'room.codeCopiedMsg',
+                                            {'code': room.code},
+                                          ),
+                                        );
+                                      },
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 11,
+                                          vertical: 6,
                                         ),
-                                      );
-                                    },
-                                    borderRadius: BorderRadius.circular(10),
+                                        decoration: BoxDecoration(
+                                          color: cardBg,
+                                          borderRadius: BorderRadius.circular(
+                                            9,
+                                          ),
+                                          border: Border.all(
+                                            color: context.hc.border,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.copy_rounded,
+                                              size: 13,
+                                              color: primaryColor,
+                                            ),
+                                            const SizedBox(width: 5),
+                                            Text(
+                                              context.tr('common.copy'),
+                                              style: TextStyle(
+                                                color: primaryColor,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(height: 12),
+
+                              // Maktab & Kloter Grid (Spacious 2-column cards)
+                              Row(
+                                children: [
+                                  Expanded(
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
-                                        horizontal: 11,
-                                        vertical: 6,
+                                        horizontal: 13,
+                                        vertical: 11,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: cardBg,
-                                        borderRadius: BorderRadius.circular(9),
+                                        color: context.hc.surfaceSand
+                                            .withValues(alpha: 0.45),
+                                        borderRadius: BorderRadius.circular(14),
                                         border: Border.all(
                                           color: context.hc.border,
                                         ),
                                       ),
                                       child: Row(
-                                        mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Icon(
-                                            Icons.copy_rounded,
-                                            size: 13,
-                                            color: primaryColor,
+                                          Container(
+                                            width: 32,
+                                            height: 32,
+                                            decoration: BoxDecoration(
+                                              color: context.hc.surfaceSand,
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: Icon(
+                                              Icons.hotel_rounded,
+                                              size: 16,
+                                              color: context.hc.brand,
+                                            ),
                                           ),
-                                          const SizedBox(width: 5),
-                                          Text(
-                                            context.tr('common.copy'),
-                                            style: TextStyle(
-                                              color: primaryColor,
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w700,
+                                          const SizedBox(width: 9),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  context.tr('room.maktab'),
+                                                  style: TextStyle(
+                                                    color: bodyColor.withValues(
+                                                      alpha: 0.7,
+                                                    ),
+                                                    fontSize: 10.5,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                                const SizedBox(height: 1),
+                                                Text(
+                                                  room.maktab?.isNotEmpty ==
+                                                          true
+                                                      ? _capitalizeWords(
+                                                          room.maktab!,
+                                                        )
+                                                      : '-',
+                                                  style: TextStyle(
+                                                    color: headingColor,
+                                                    fontWeight: FontWeight.w700,
+                                                    fontSize: 13,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 13,
+                                        vertical: 11,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: context.hc.surfaceSand
+                                            .withValues(alpha: 0.45),
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(
+                                          color: context.hc.border,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 32,
+                                            height: 32,
+                                            decoration: BoxDecoration(
+                                              color: context.hc.surfaceSand,
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: Icon(
+                                              Icons.flight_takeoff_rounded,
+                                              size: 16,
+                                              color: context.hc.brand,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 9),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  context.tr('room.kloter'),
+                                                  style: TextStyle(
+                                                    color: bodyColor.withValues(
+                                                      alpha: 0.7,
+                                                    ),
+                                                    fontSize: 10.5,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                                const SizedBox(height: 1),
+                                                Text(
+                                                  room.kloter?.isNotEmpty ==
+                                                          true
+                                                      ? room.kloter!
+                                                      : '-',
+                                                  style: TextStyle(
+                                                    color: headingColor,
+                                                    fontWeight: FontWeight.w700,
+                                                    fontSize: 13,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ],
                                             ),
                                           ),
                                         ],
@@ -1452,346 +1612,92 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                   ),
                                 ],
                               ),
-                            ),
 
-                            const SizedBox(height: 12),
-
-                            // Maktab & Kloter Grid (Spacious 2-column cards)
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 13,
-                                      vertical: 11,
+                              if (room.createdAt != null) ...[
+                                const SizedBox(height: 12),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.event_note_rounded,
+                                      size: 13,
+                                      color: bodyColor.withValues(alpha: 0.5),
                                     ),
-                                    decoration: BoxDecoration(
-                                      color: context.hc.surfaceSand.withValues(
-                                        alpha: 0.45,
-                                      ),
-                                      borderRadius: BorderRadius.circular(14),
-                                      border: Border.all(
-                                        color: context.hc.border,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: 32,
-                                          height: 32,
-                                          decoration: BoxDecoration(
-                                            color: context.hc.surfaceSand,
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
+                                    const SizedBox(width: 5),
+                                    Flexible(
+                                      child: Text(
+                                        context.tr('room.createdAtDate', {
+                                          'date': _formatDate(
+                                            room.createdAt,
+                                            context,
                                           ),
-                                          child: Icon(
-                                            Icons.hotel_rounded,
-                                            size: 16,
-                                            color: context.hc.brand,
+                                        }),
+                                        style: TextStyle(
+                                          color: bodyColor.withValues(
+                                            alpha: 0.65,
                                           ),
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w500,
                                         ),
-                                        const SizedBox(width: 9),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                context.tr('room.maktab'),
-                                                style: TextStyle(
-                                                  color: bodyColor.withValues(
-                                                    alpha: 0.7,
-                                                  ),
-                                                  fontSize: 10.5,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              const SizedBox(height: 1),
-                                              Text(
-                                                room.maktab?.isNotEmpty == true
-                                                    ? _capitalizeWords(
-                                                        room.maktab!,
-                                                      )
-                                                    : '-',
-                                                style: TextStyle(
-                                                  color: headingColor,
-                                                  fontWeight: FontWeight.w700,
-                                                  fontSize: 13,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 13,
-                                      vertical: 11,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: context.hc.surfaceSand.withValues(
-                                        alpha: 0.45,
-                                      ),
-                                      borderRadius: BorderRadius.circular(14),
-                                      border: Border.all(
-                                        color: context.hc.border,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: 32,
-                                          height: 32,
-                                          decoration: BoxDecoration(
-                                            color: context.hc.surfaceSand,
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                          ),
-                                          child: Icon(
-                                            Icons.flight_takeoff_rounded,
-                                            size: 16,
-                                            color: context.hc.brand,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 9),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                context.tr('room.kloter'),
-                                                style: TextStyle(
-                                                  color: bodyColor.withValues(
-                                                    alpha: 0.7,
-                                                  ),
-                                                  fontSize: 10.5,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              const SizedBox(height: 1),
-                                              Text(
-                                                room.kloter?.isNotEmpty == true
-                                                    ? room.kloter!
-                                                    : '-',
-                                                style: TextStyle(
-                                                  color: headingColor,
-                                                  fontWeight: FontWeight.w700,
-                                                  fontSize: 13,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                                  ],
                                 ),
                               ],
-                            ),
 
-                            if (room.createdAt != null) ...[
-                              const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.event_note_rounded,
-                                    size: 13,
-                                    color: bodyColor.withValues(alpha: 0.5),
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Flexible(
-                                    child: Text(
-                                      context.tr('room.createdAtDate', {
-                                        'date': _formatDate(
-                                          room.createdAt,
-                                          context,
-                                        ),
-                                      }),
-                                      style: TextStyle(
-                                        color: bodyColor.withValues(
-                                          alpha: 0.65,
-                                        ),
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                              const SizedBox(height: 16),
 
-                            const SizedBox(height: 16),
+                              // ── Aksi Room: Tombol QR Code & Keluar Room (Berdampingan secara responsif) ──
+                              LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final isNarrow = constraints.maxWidth < 360;
 
-                            // ── Aksi Room: Tombol QR Code & Keluar Room (Berdampingan secara responsif) ──
-                            LayoutBuilder(
-                              builder: (context, constraints) {
-                                final isNarrow = constraints.maxWidth < 360;
-
-                                final qrButton = SizedBox(
-                                  height: 46,
-                                  child: ElevatedButton.icon(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: primaryColor,
-                                      foregroundColor: context.hc.onPrimary,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          AppRadius.pill,
-                                        ),
-                                      ),
-                                      elevation: 0,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                      ),
-                                    ),
-                                    icon: const Icon(
-                                      Icons.qr_code_2_rounded,
-                                      size: 18,
-                                    ),
-                                    label: Text(
-                                      context.tr('room.viewShareQrBtn'),
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12.5,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    onPressed: () =>
-                                        RoomQrDialog.show(context, room: room),
-                                  ),
-                                );
-
-                                final leaveButton = SizedBox(
-                                  height: 46,
-                                  child: OutlinedButton.icon(
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: context.hc.danger,
-                                      side: BorderSide(
-                                        color: context.hc.danger.withValues(
-                                          alpha: isDark ? 0.6 : 0.45,
-                                        ),
-                                        width: 1.2,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          AppRadius.pill,
-                                        ),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                      ),
-                                    ),
-                                    icon: Icon(
-                                      Icons.logout_rounded,
-                                      size: 18,
-                                      color: context.hc.danger,
-                                    ),
-                                    label: Text(
-                                      context.tr('room.leaveRoomBtn'),
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12.5,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    onPressed: _isProcessingAction
-                                        ? null
-                                        : () => _handleLeaveRoom(context, room),
-                                  ),
-                                );
-
-                                if (isNarrow) {
-                                  return Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      qrButton,
-                                      const SizedBox(height: 10),
-                                      leaveButton,
-                                    ],
-                                  );
-                                }
-
-                                return Row(
-                                  children: [
-                                    Expanded(child: qrButton),
-                                    const SizedBox(width: 10),
-                                    Expanded(child: leaveButton),
-                                  ],
-                                );
-                              },
-                            ),
-
-                            // ── Role Privileges: Tombol Edit & Hapus (Admin & Creator Pendamping ONLY) ──
-                            if (_canEditOrDeleteRoom()) ...[
-                              const SizedBox(height: 10),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: OutlinedButton.icon(
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: headingColor,
-                                        side: BorderSide(
-                                          color: context.hc.border,
-                                          width: 1.2,
-                                        ),
+                                  final qrButton = SizedBox(
+                                    height: 46,
+                                    child: ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: primaryColor,
+                                        foregroundColor: context.hc.onPrimary,
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(
                                             AppRadius.pill,
                                           ),
                                         ),
+                                        elevation: 0,
                                         padding: const EdgeInsets.symmetric(
-                                          vertical: 10,
+                                          horizontal: 10,
                                         ),
                                       ),
-                                      icon: Icon(
-                                        Icons.edit_outlined,
-                                        size: 15,
-                                        color: primaryColor,
+                                      icon: const Icon(
+                                        Icons.qr_code_2_rounded,
+                                        size: 18,
                                       ),
-                                      label: Flexible(
-                                        child: Text(
-                                          context.tr('room.editRoom'),
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 12.5,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                                      label: Text(
+                                        context.tr('room.viewShareQrBtn'),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12.5,
                                         ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                      onPressed: () =>
-                                          _showEditRoomSheet(context, room),
+                                      onPressed: () => RoomQrDialog.show(
+                                        context,
+                                        room: room,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
+                                  );
+
+                                  final leaveButton = SizedBox(
+                                    height: 46,
                                     child: OutlinedButton.icon(
                                       style: OutlinedButton.styleFrom(
                                         foregroundColor: context.hc.danger,
                                         side: BorderSide(
                                           color: context.hc.danger.withValues(
-                                            alpha: 0.45,
+                                            alpha: isDark ? 0.6 : 0.45,
                                           ),
                                           width: 1.2,
                                         ),
@@ -1801,255 +1707,188 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                           ),
                                         ),
                                         padding: const EdgeInsets.symmetric(
-                                          vertical: 10,
+                                          horizontal: 10,
                                         ),
                                       ),
-                                      icon: const Icon(
-                                        Icons.delete_outline_rounded,
-                                        size: 15,
+                                      icon: Icon(
+                                        Icons.logout_rounded,
+                                        size: 18,
+                                        color: context.hc.danger,
                                       ),
-                                      label: Flexible(
-                                        child: Text(
-                                          context.tr('room.deleteRoom'),
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 12.5,
+                                      label: Text(
+                                        context.tr('room.leaveRoomBtn'),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12.5,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      onPressed: _isProcessingAction
+                                          ? null
+                                          : () =>
+                                                _handleLeaveRoom(context, room),
+                                    ),
+                                  );
+
+                                  if (isNarrow) {
+                                    return Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        qrButton,
+                                        const SizedBox(height: 10),
+                                        leaveButton,
+                                      ],
+                                    );
+                                  }
+
+                                  return Row(
+                                    children: [
+                                      Expanded(child: qrButton),
+                                      const SizedBox(width: 10),
+                                      Expanded(child: leaveButton),
+                                    ],
+                                  );
+                                },
+                              ),
+
+                              // ── Role Privileges: Tombol Edit & Hapus (Admin & Creator Pendamping ONLY) ──
+                              if (_canEditOrDeleteRoom()) ...[
+                                const SizedBox(height: 10),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: OutlinedButton.icon(
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: headingColor,
+                                          side: BorderSide(
+                                            color: context.hc.border,
+                                            width: 1.2,
                                           ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              AppRadius.pill,
+                                            ),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 10,
+                                          ),
                                         ),
+                                        icon: Icon(
+                                          Icons.edit_outlined,
+                                          size: 15,
+                                          color: primaryColor,
+                                        ),
+                                        label: Flexible(
+                                          child: Text(
+                                            context.tr('room.editRoom'),
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 12.5,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        onPressed: () =>
+                                            _showEditRoomSheet(context, room),
                                       ),
-                                      onPressed: () =>
-                                          _handleDeleteRoom(context, room),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-
-                      // ── Member Breakdown Strip ──────────────────────────────────
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 13,
-                        ),
-                        decoration: BoxDecoration(
-                          color: context.hc.surfaceSand.withValues(alpha: 0.35),
-                          borderRadius: const BorderRadius.vertical(
-                            bottom: Radius.circular(22),
-                          ),
-                          border: Border(
-                            top: BorderSide(color: context.hc.border),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: _buildStatSummaryItem(
-                                label: context.tr('room.totalMembers'),
-                                value: '$_totalCount',
-                                color: headingColor,
-                              ),
-                            ),
-                            Container(
-                              height: 24,
-                              width: 1,
-                              color: context.hc.border,
-                            ),
-                            Expanded(
-                              child: _buildStatSummaryItem(
-                                label: context.tr('room.roleJamaah'),
-                                value: '$_jamaahCount',
-                                color: context.hc.islamic,
-                              ),
-                            ),
-                            Container(
-                              height: 24,
-                              width: 1,
-                              color: context.hc.border,
-                            ),
-                            Expanded(
-                              child: _buildStatSummaryItem(
-                                label: context.tr('room.roleCompanion'),
-                                value: '$_pendampingCount',
-                                color: const Color(0xFF1D4ED8),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Floating Hero Header (Protruding at top, like Image 2)
-                Positioned(
-                  top: 0,
-                  left: 14,
-                  right: 14,
-                  height: 96,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: isDark
-                            ? [const Color(0xFF38251A), const Color(0xFF1F140D)]
-                            : [
-                                context.hc.brand,
-                                context.hc.brand.withValues(alpha: 0.85),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: OutlinedButton.icon(
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: context.hc.danger,
+                                          side: BorderSide(
+                                            color: context.hc.danger.withValues(
+                                              alpha: 0.45,
+                                            ),
+                                            width: 1.2,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              AppRadius.pill,
+                                            ),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 10,
+                                          ),
+                                        ),
+                                        icon: const Icon(
+                                          Icons.delete_outline_rounded,
+                                          size: 15,
+                                        ),
+                                        label: Flexible(
+                                          child: Text(
+                                            context.tr('room.deleteRoom'),
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 12.5,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        onPressed: () =>
+                                            _handleDeleteRoom(context, room),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ],
-                      ),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: context.hc.accent.withValues(alpha: 0.45),
-                        width: 1.2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: context.hc.shadow,
-                          blurRadius: 18,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Stack(
-                      children: [
-                        // Ambient Glow Circles
-                        Positioned(
-                          top: -15,
-                          right: -15,
-                          child: Container(
-                            width: 75,
-                            height: 75,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: context.hc.accent.withValues(alpha: 0.12),
-                            ),
+                            ],
                           ),
                         ),
-                        Positioned(
-                          bottom: -20,
-                          left: -20,
-                          child: Container(
-                            width: 70,
-                            height: 70,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: context.hc.accent.withValues(alpha: 0.08),
+
+                        // ── Member Breakdown Strip ──────────────────────────────────
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 13,
+                          ),
+                          decoration: BoxDecoration(
+                            color: context.hc.surfaceSand.withValues(
+                              alpha: 0.35,
+                            ),
+                            borderRadius: const BorderRadius.vertical(
+                              bottom: Radius.circular(22),
+                            ),
+                            border: Border(
+                              top: BorderSide(color: context.hc.border),
                             ),
                           ),
-                        ),
-                        // Inner Content
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Container(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color: context.hc.accent.withValues(
-                                    alpha: 0.22,
-                                  ),
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(
-                                    color: context.hc.accent.withValues(
-                                      alpha: 0.55,
-                                    ),
-                                    width: 1.4,
-                                  ),
-                                ),
-                                child: Icon(
-                                  Icons.meeting_room_rounded,
-                                  color: context.hc.accent,
-                                  size: 25,
-                                ),
-                              ),
-                              const SizedBox(width: 14),
                               Expanded(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      room.capitalizedName,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 17,
-                                        letterSpacing: -0.2,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 3),
-                                    Text(
-                                      context.tr('room.maktabGroupSub'),
-                                      style: TextStyle(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.72,
-                                        ),
-                                        fontSize: 11.5,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
+                                child: _buildStatSummaryItem(
+                                  label: context.tr('room.totalMembers'),
+                                  value: '$_totalCount',
+                                  color: headingColor,
                                 ),
                               ),
-                              const SizedBox(width: 8),
                               Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4.5,
+                                height: 24,
+                                width: 1,
+                                color: context.hc.border,
+                              ),
+                              Expanded(
+                                child: _buildStatSummaryItem(
+                                  label: context.tr('room.roleJamaah'),
+                                  value: '$_jamaahCount',
+                                  color: context.hc.islamic,
                                 ),
-                                decoration: BoxDecoration(
-                                  color:
-                                      (room.isActive
-                                              ? const Color(0xFF1B633E)
-                                              : Colors.black45)
-                                          .withValues(alpha: 0.75),
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.pill,
-                                  ),
-                                  border: Border.all(
-                                    color: room.isActive
-                                        ? const Color(0xFF4ADE80)
-                                        : Colors.white30,
-                                    width: 1.0,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      width: 6,
-                                      height: 6,
-                                      decoration: BoxDecoration(
-                                        color: room.isActive
-                                            ? const Color(0xFF4ADE80)
-                                            : Colors.white70,
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      room.isActive
-                                          ? context.tr('room.active')
-                                          : context.tr('room.inactive'),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                  ],
+                              ),
+                              Container(
+                                height: 24,
+                                width: 1,
+                                color: context.hc.border,
+                              ),
+                              Expanded(
+                                child: _buildStatSummaryItem(
+                                  label: context.tr('room.roleCompanion'),
+                                  value: '$_pendampingCount',
+                                  color: const Color(0xFF1D4ED8),
                                 ),
                               ),
                             ],
@@ -2058,49 +1897,196 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       ],
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.lg),
 
-            // ── 2. Search Bar & Filter Chips ──────────────────────────────────
-            _buildSearchAndFilters(
-              context,
-              cardBg,
-              headingColor,
-              bodyColor,
-              primaryColor,
-              isDark,
-            ),
+                  // Floating Hero Header (Protruding at top, like Image 2)
+                  Positioned(
+                    top: 0,
+                    left: 14,
+                    right: 14,
+                    height: 96,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: isDark
+                              ? [
+                                  const Color(0xFF38251A),
+                                  const Color(0xFF1F140D),
+                                ]
+                              : [
+                                  context.hc.brand,
+                                  context.hc.brand.withValues(alpha: 0.85),
+                                ],
+                        ),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: context.hc.accent.withValues(alpha: 0.45),
+                          width: 1.2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: context.hc.shadow,
+                            blurRadius: 18,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Stack(
+                        children: [
+                          // Ambient Glow Circles
+                          Positioned(
+                            top: -15,
+                            right: -15,
+                            child: Container(
+                              width: 75,
+                              height: 75,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: context.hc.accent.withValues(
+                                  alpha: 0.12,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: -20,
+                            left: -20,
+                            child: Container(
+                              width: 70,
+                              height: 70,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: context.hc.accent.withValues(
+                                  alpha: 0.08,
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Inner Content
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: context.hc.accent.withValues(
+                                      alpha: 0.22,
+                                    ),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: context.hc.accent.withValues(
+                                        alpha: 0.55,
+                                      ),
+                                      width: 1.4,
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    Icons.meeting_room_rounded,
+                                    color: context.hc.accent,
+                                    size: 25,
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        room.capitalizedName,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 17,
+                                          letterSpacing: -0.2,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        context.tr('room.maktabGroupSub'),
+                                        style: TextStyle(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.72,
+                                          ),
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4.5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        (room.isActive
+                                                ? const Color(0xFF1B633E)
+                                                : Colors.black45)
+                                            .withValues(alpha: 0.75),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.pill,
+                                    ),
+                                    border: Border.all(
+                                      color: room.isActive
+                                          ? const Color(0xFF4ADE80)
+                                          : Colors.white30,
+                                      width: 1.0,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        width: 6,
+                                        height: 6,
+                                        decoration: BoxDecoration(
+                                          color: room.isActive
+                                              ? const Color(0xFF4ADE80)
+                                              : Colors.white70,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Text(
+                                        room.isActive
+                                            ? context.tr('room.active')
+                                            : context.tr('room.inactive'),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.lg),
 
-            const SizedBox(height: AppSpacing.md),
-
-            // ── 3. Pagination Summary & Limit Selector ────────────────────────
-            _buildPaginationHeader(
-              headingColor,
-              bodyColor,
-              primaryColor,
-              isDark,
-            ),
-
-            const SizedBox(height: AppSpacing.sm),
-
-            // ── 4. Members List (Paginated) ───────────────────────────────────
-            _buildMembersList(
-              context,
-              room,
-              cardBg,
-              headingColor,
-              bodyColor,
-              primaryColor,
-              isDark,
-            ),
-
-            const SizedBox(height: AppSpacing.md),
-
-            // ── 5. Pagination Footer Navigation ───────────────────────────────
-            if (_filteredMembers.isNotEmpty)
-              _buildPaginationFooter(
+              // ── 2. Search Bar & Filter Chips ──────────────────────────────────
+              _buildSearchAndFilters(
+                context,
                 cardBg,
                 headingColor,
                 bodyColor,
@@ -2108,8 +2094,44 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                 isDark,
               ),
 
-            const SizedBox(height: 36),
-          ],
+              const SizedBox(height: AppSpacing.md),
+
+              // ── 3. Pagination Summary & Limit Selector ────────────────────────
+              _buildPaginationHeader(
+                headingColor,
+                bodyColor,
+                primaryColor,
+                isDark,
+              ),
+
+              const SizedBox(height: AppSpacing.sm),
+
+              // ── 4. Members List (Paginated) ───────────────────────────────────
+              _buildMembersList(
+                context,
+                room,
+                cardBg,
+                headingColor,
+                bodyColor,
+                primaryColor,
+                isDark,
+              ),
+
+              const SizedBox(height: AppSpacing.md),
+
+              // ── 5. Pagination Footer Navigation ───────────────────────────────
+              if (_filteredMembers.isNotEmpty)
+                _buildPaginationFooter(
+                  cardBg,
+                  headingColor,
+                  bodyColor,
+                  primaryColor,
+                  isDark,
+                ),
+
+              const SizedBox(height: 36),
+            ],
+          ),
         ),
       ),
     );
@@ -2972,6 +2994,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      constraints: const BoxConstraints(maxWidth: AppBreakpoints.maxSheetWidth),
       builder: (ctx) {
         return SafeArea(
           child: Padding(

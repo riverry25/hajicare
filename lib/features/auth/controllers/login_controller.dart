@@ -677,7 +677,9 @@ class LoginController extends GetxController {
                             const SizedBox(height: 2),
                             Text(
                               'Akses panduan ibadah, peta, jadwal sholat & monitoring pendamping',
-                              style: ctx.text.bodySmall.copyWith(color: bodyColor),
+                              style: ctx.text.bodySmall.copyWith(
+                                color: bodyColor,
+                              ),
                             ),
                           ],
                         ),
@@ -735,7 +737,9 @@ class LoginController extends GetxController {
                             const SizedBox(height: 2),
                             Text(
                               'Kelola room, undang jamaah & pantau pergerakan radar realtime',
-                              style: ctx.text.bodySmall.copyWith(color: bodyColor),
+                              style: ctx.text.bodySmall.copyWith(
+                                color: bodyColor,
+                              ),
                             ),
                           ],
                         ),
