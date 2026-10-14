@@ -223,14 +223,9 @@ service cloud.firestore {
         request.resource.data.jamaahId == request.auth.uid &&
         request.resource.data.status == 'active' &&
         request.resource.data.get('userName', '').size() <= 100 &&
-        (
-          request.resource.data.get('roomId', null) == null ||
-          request.resource.data.roomId == '' ||
-          (
-            request.resource.data.roomId is string &&
-            isRoomMember(request.resource.data.roomId)
-          )
-        );
+        request.resource.data.roomId is string &&
+        request.resource.data.roomId.size() > 0 &&
+        isRoomMember(request.resource.data.roomId);
 
       allow update: if signedIn() && (
         // Kasus 1: Jamaah korban memperbarui lokasi GPS live pada event SOS aktif miliknya
@@ -250,7 +245,8 @@ service cloud.firestore {
           ) &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly([
             'respondedAt', 'respondedBy', 'respondedByName',
-            'resolvedAt', 'resolvedBy', 'cancelledAt', 'cancelledBy', 'status'
+            'resolvedAt', 'resolvedBy', 'cancelledAt', 'cancelledBy', 'status',
+            'cancelledReason', 'resolvedReason'
           ]) &&
           request.resource.data.status in ['direspons', 'selesai', 'cancelled'] && (
             (
@@ -259,10 +255,18 @@ service cloud.firestore {
               request.resource.data.respondedByName is string
             ) || (
               request.resource.data.status == 'selesai' &&
-              request.resource.data.resolvedBy == request.auth.uid
+              (
+                request.resource.data.resolvedBy == request.auth.uid ||
+                isAdmin() ||
+                (resource.data.get('roomId', null) != null && isRoomManager(resource.data.roomId))
+              )
             ) || (
               request.resource.data.status == 'cancelled' &&
-              request.resource.data.cancelledBy == request.auth.uid
+              (
+                request.resource.data.cancelledBy == request.auth.uid ||
+                isAdmin() ||
+                (resource.data.get('roomId', null) != null && isRoomManager(resource.data.roomId))
+              )
             )
           )
         )

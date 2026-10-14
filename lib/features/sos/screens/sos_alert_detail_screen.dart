@@ -856,6 +856,7 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                 label: Text(
                   context.tr('sosCreateRoute'),
                   style: typography.labelLarge.copyWith(
+                    color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -912,6 +913,7 @@ class _SosAlertDetailScreenState extends State<SosAlertDetailScreen> {
                   label: Text(
                     context.tr('sosResolveAlert'),
                     style: typography.labelLarge.copyWith(
+                      color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 12.5,
                     ),

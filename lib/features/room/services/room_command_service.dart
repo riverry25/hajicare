@@ -394,7 +394,34 @@ class RoomCommandService {
       await batch.commit();
     }
 
-    // 4. Delete roomCode and room document
+    // 4. Cancel all active SOS events belonging to this deleted room
+    try {
+      final roomSosSnap = await _firestore
+          .collection('sos_events')
+          .where('roomId', isEqualTo: roomId)
+          .where('status', whereIn: const ['active', 'baru', 'direspons'])
+          .get();
+      if (roomSosSnap.docs.isNotEmpty) {
+        final sosBatch = _firestore.batch();
+        for (final doc in roomSosSnap.docs) {
+          sosBatch.set(doc.reference, {
+            'status': 'cancelled',
+            'cancelledReason': 'room_deleted',
+            'resolvedAt': FieldValue.serverTimestamp(),
+            'resolvedBy': user?.uid ?? 'admin',
+            'cancelledAt': FieldValue.serverTimestamp(),
+            'cancelledBy': user?.uid ?? 'admin',
+          }, SetOptions(merge: true));
+        }
+        await sosBatch.commit();
+      }
+    } catch (e) {
+      debugPrint(
+        '[RoomCommandService] Error cleaning room SOS on deleteRoom: $e',
+      );
+    }
+
+    // 5. Delete roomCode and room document
     final finalBatch = _firestore.batch();
     if (roomCode != null && roomCode.isNotEmpty) {
       finalBatch.delete(_firestore.collection('roomCodes').doc(roomCode));
@@ -658,6 +685,29 @@ class RoomCommandService {
       'sosActive': false,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+
+    // Cancel any active SOS events for this user so they don't linger / get orphaned
+    try {
+      final userSosSnap = await _firestore
+          .collection('sos_events')
+          .where('userId', isEqualTo: user.uid)
+          .where('status', whereIn: const ['active', 'baru', 'direspons'])
+          .get();
+      for (final doc in userSosSnap.docs) {
+        batch.set(doc.reference, {
+          'status': 'cancelled',
+          'cancelledReason': 'member_left_room',
+          'resolvedAt': FieldValue.serverTimestamp(),
+          'resolvedBy': user.uid,
+          'cancelledAt': FieldValue.serverTimestamp(),
+          'cancelledBy': user.uid,
+        }, SetOptions(merge: true));
+      }
+    } catch (e) {
+      debugPrint(
+        '[RoomCommandService] Error preparing SOS cleanup on leaveRoom: $e',
+      );
+    }
 
     final activityRef = _firestore.collection('activities').doc();
     final uName = user.displayName ?? 'Anggota';
@@ -940,8 +990,32 @@ class RoomCommandService {
     });
     batch.set(_firestore.collection('users').doc(jamaahUid), {
       'activeRoomId': null,
+      'sosActive': false,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+
+    // Cancel any active SOS events for the removed jamaah
+    try {
+      final jamaahSosSnap = await _firestore
+          .collection('sos_events')
+          .where('userId', isEqualTo: jamaahUid)
+          .where('status', whereIn: const ['active', 'baru', 'direspons'])
+          .get();
+      for (final doc in jamaahSosSnap.docs) {
+        batch.set(doc.reference, {
+          'status': 'cancelled',
+          'cancelledReason': 'member_removed_from_room',
+          'resolvedAt': FieldValue.serverTimestamp(),
+          'resolvedBy': senderUid,
+          'cancelledAt': FieldValue.serverTimestamp(),
+          'cancelledBy': senderUid,
+        }, SetOptions(merge: true));
+      }
+    } catch (e) {
+      debugPrint(
+        '[RoomCommandService] Error preparing SOS cleanup on removeJamaah: $e',
+      );
+    }
 
     // 1. Log activity for room history / admin
     final activityRef = _firestore.collection('activities').doc();

@@ -168,5 +168,51 @@ void main() {
         expect(tester.takeException(), isNull);
       },
     );
+
+    testWidgets(
+      'Navigates between slides via PageController on OnboardingScreen',
+      (tester) async {
+        Get.put(AppSettingsController(), permanent: true);
+        final ctrl = Get.put(OnboardingController(), permanent: true);
+
+        await tester.pumpWidget(buildTestWidget(themeMode: ThemeMode.light));
+        await tester.pumpAndSettle();
+
+        expect(ctrl.currentPage.value, 0);
+
+        // Advance to slide 2 (Safety)
+        ctrl.nextPage(3);
+        await tester.pumpAndSettle();
+        expect(ctrl.currentPage.value, 1);
+        expect(find.byType(OnboardingSlideSafety), findsOneWidget);
+
+        // Advance to slide 3 (Accessibility)
+        ctrl.nextPage(3);
+        await tester.pumpAndSettle();
+        expect(ctrl.currentPage.value, 2);
+        expect(find.byType(OnboardingSlideAccessibility), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Renders all onboarding slides on compact screen (320x568) without overflow',
+      (tester) async {
+        Get.put(AppSettingsController(), permanent: true);
+        Get.put(OnboardingController(), permanent: true);
+
+        tester.view.physicalSize = const Size(320, 568);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
+
+        await tester.pumpWidget(buildTestWidget(themeMode: ThemeMode.dark));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(OnboardingScreen), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
   });
 }

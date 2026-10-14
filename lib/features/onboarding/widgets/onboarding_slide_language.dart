@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import '../../../../core/locales/app_localizations.dart';
 import '../../../../core/state/app_settings_controller.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -7,6 +8,9 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_context.dart';
 import 'onboarding_hero_banner.dart';
 
+/// First slide of the onboarding flow: Language Selection & Welcoming.
+/// Formatted with high-contrast accessibility tokens, elderly-friendly touch
+/// targets (>= 56dp), and responsive layout adaptation.
 class OnboardingSlideLanguage extends StatelessWidget {
   final int activeIndex;
 
@@ -16,249 +20,228 @@ class OnboardingSlideLanguage extends StatelessWidget {
   Widget build(BuildContext context) {
     final settings = Get.find<AppSettingsController>();
     final colors = context.hc;
+    final isDark = colors.isDark;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
-      ),
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: colors.border),
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            OnboardingHeroBanner(
-              badgeText: context.tr('onboarding.elderlyAccess'),
-              stageText: context.tr('onboardingStage1'),
-              title: context.tr('onboarding.chooseLanguageTitle'),
-              icon: Icons.mosque,
-            ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final textScale = MediaQuery.textScalerOf(context).scale(1);
+        final isShortScreen = constraints.maxHeight < 680;
+        final heroHeight = isShortScreen ? 148.0 : 175.0;
 
-            const SizedBox(height: AppSpacing.lg),
-
-            // Stepper indicator
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: colors.surfaceSand,
-                borderRadius: BorderRadius.circular(18),
+        return SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.xs,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Hero Banner with Kaaba Velvet & Gold Trim
+              OnboardingHeroBanner(
+                badgeText: context.tr('onboarding.elderlyAccess'),
+                stageText: context.tr('onboardingStage1'),
+                title: context.tr('onboarding.chooseLanguageTitle'),
+                icon: Icons.mosque_rounded,
+                height: heroHeight,
               ),
-              child: _buildStepper(
-                context: context,
-                activeIndex: activeIndex,
-                label: context.tr('onboarding.stage1Of3'),
-              ),
-            ),
 
-            const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.md),
 
-            // Section intro header
-            _buildLanguageHeader(context),
+              // Section Header
+              _buildSectionHeader(context),
 
-            const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.sm),
 
-            Padding(
-              padding: const EdgeInsets.only(left: 5),
-              child: Text(
-                context.tr('onboarding.chooseLanguageDesc'),
-                style: context.text.bodySmall.copyWith(
-                  color: colors.textSecondary,
+              // Explanatory Subtitle
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  context.tr('onboarding.chooseLanguageDesc'),
+                  style: context.text.bodyMedium.copyWith(
+                    color: colors.textSecondary,
+                    height: 1.4,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
-            ),
 
-            const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.md),
 
-            // 2x2 Language Grid
-            Obx(() {
-              final currentCode = settings.currentLocale.languageCode;
-              final textScale = MediaQuery.textScalerOf(context).scale(1);
-              final dynamicAspectRatio = textScale > 1.35
-                  ? 1.05
-                  : (textScale > 1.15 ? 1.18 : 1.35);
+              // 2x2 Language Grid (Adaptive Aspect Ratio & Columns)
+              Obx(() {
+                final currentCode = settings.currentLocale.languageCode;
+                final isNarrow = constraints.maxWidth < 320;
+                final crossAxisCount = isNarrow ? 1 : 2;
+                final dynamicAspectRatio = isNarrow
+                    ? 2.8
+                    : (textScale > 1.35
+                          ? 1.05
+                          : (textScale > 1.15 ? 1.18 : 1.35));
 
-              final languages = [
-                (
-                  'id',
-                  'Indonesia',
-                  context.tr('onboarding.indonesiaSubtitle'),
-                  context.tr('onboarding.mainLanguage'),
+                final languages = [
+                  (
+                    'id',
+                    'Indonesia',
+                    context.tr('onboarding.indonesiaSubtitle'),
+                    context.tr('onboarding.mainLanguage'),
+                  ),
+                  (
+                    'jv',
+                    'Basa Jawi',
+                    context.tr('onboarding.jawiSubtitle'),
+                    context.tr('onboarding.regionalLanguage'),
+                  ),
+                  (
+                    'su',
+                    'Basa Sunda',
+                    context.tr('onboarding.sundaSubtitle'),
+                    context.tr('onboarding.regionalLanguage'),
+                  ),
+                  (
+                    'en',
+                    'English',
+                    context.tr('onboarding.englishSubtitle'),
+                    context.tr('onboarding.globalLanguage'),
+                  ),
+                ];
+
+                return GridView.builder(
+                  itemCount: languages.length,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    crossAxisSpacing: AppSpacing.sm,
+                    mainAxisSpacing: AppSpacing.sm,
+                    childAspectRatio: dynamicAspectRatio,
+                  ),
+                  itemBuilder: (context, index) {
+                    final lang = languages[index];
+                    final isSelected = currentCode == lang.$1;
+
+                    return _buildLanguageCard(
+                      context: context,
+                      title: lang.$2,
+                      subtitle: lang.$3,
+                      type: lang.$4,
+                      isSelected: isSelected,
+                      onTap: () => settings.setLocale(Locale(lang.$1)),
+                    );
+                  },
+                );
+              }),
+
+              const SizedBox(height: AppSpacing.md),
+
+              // Audio Guide & Accessibility Hint Footer
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: 12,
                 ),
-                (
-                  'jv',
-                  'Basa Jawi',
-                  context.tr('onboarding.jawiSubtitle'),
-                  context.tr('onboarding.regionalLanguage'),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF1B2B20)
+                      : const Color(0xFFEFF7F1),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                  border: Border.all(
+                    color: isDark
+                        ? const Color(0xFF2E543B)
+                        : const Color(0xFFBCE3CA),
+                    width: 1.2,
+                  ),
                 ),
-                (
-                  'su',
-                  'Basa Sunda',
-                  context.tr('onboarding.sundaSubtitle'),
-                  context.tr('onboarding.regionalLanguage'),
-                ),
-                (
-                  'en',
-                  'English',
-                  context.tr('onboarding.englishSubtitle'),
-                  context.tr('onboarding.globalLanguage'),
-                ),
-              ];
-
-              return GridView.builder(
-                itemCount: languages.length,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: AppSpacing.sm,
-                  mainAxisSpacing: AppSpacing.sm,
-                  childAspectRatio: dynamicAspectRatio,
-                ),
-                itemBuilder: (context, index) {
-                  final lang = languages[index];
-                  final isSelected = currentCode == lang.$1;
-
-                  return _buildLanguageCard(
-                    context: context,
-                    title: lang.$2,
-                    subtitle: lang.$3,
-                    type: lang.$4,
-                    isSelected: isSelected,
-                    onTap: () {
-                      settings.setLocale(Locale(lang.$1));
-                    },
-                  );
-                },
-              );
-            }),
-
-            const SizedBox(height: AppSpacing.xl),
-
-            // Accessibility hint footer
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: colors.successContainer.withValues(alpha: .35),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: colors.success.withValues(alpha: .25),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.volume_up_rounded, color: colors.success),
-
-                  const SizedBox(width: 12),
-
-                  Expanded(
-                    child: Text(
-                      context.tr('onboarding.audioGuideHint'),
-                      style: context.text.bodySmall.copyWith(
-                        color: colors.textSecondary,
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: colors.islamic.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.volume_up_rounded,
+                        color: colors.islamic,
+                        size: 20,
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStepper({
-    required BuildContext context,
-    required int activeIndex,
-    required String label,
-  }) {
-    final colors = context.hc;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm2),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Row(
-            children: List.generate(3, (index) {
-              final isActive = activeIndex == index;
-
-              return Padding(
-                padding: EdgeInsets.only(right: index < 2 ? 8 : 0),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  width: isActive ? 32 : 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: isActive ? colors.primary : colors.borderStrong,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        context.tr('onboarding.audioGuideHint'),
+                        style: context.text.bodySmall.copyWith(
+                          color: isDark
+                              ? const Color(0xFFE2F0E7)
+                              : const Color(0xFF1E462F),
+                          fontWeight: FontWeight.w600,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              );
-            }),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Flexible(
-            child: Text(
-              label,
-              textAlign: TextAlign.end,
-              style: context.text.labelSmall.copyWith(
-                color: colors.textSecondary,
               ),
-            ),
+
+              const SizedBox(height: AppSpacing.sm),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildLanguageHeader(BuildContext context) {
+  Widget _buildSectionHeader(BuildContext context) {
     final colors = context.hc;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: colors.surfaceSand,
-        borderRadius: BorderRadius.circular(20),
+        color: colors.surfaceSubtle,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: colors.border, width: 1.0),
       ),
       child: Row(
         children: [
           Container(
-            width: 56,
-            height: 56,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: colors.surface,
+              color: colors.accent.withValues(alpha: 0.16),
               shape: BoxShape.circle,
+              border: Border.all(
+                color: colors.accent.withValues(alpha: 0.40),
+                width: 1.2,
+              ),
             ),
-            child: Icon(Icons.translate, size: 26, color: colors.primary),
+            child: Icon(
+              Icons.translate_rounded,
+              size: 22,
+              color: colors.accentText,
+            ),
           ),
-
-          const SizedBox(width: 16),
-
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   context.tr('onboarding.introTitle'),
-                  style: context.text.titleLarge.copyWith(
-                    fontWeight: FontWeight.w700,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.text.titleMedium.copyWith(
+                    fontWeight: FontWeight.w800,
                     color: colors.textPrimary,
                   ),
                 ),
-
-                const SizedBox(height: 4),
-
+                const SizedBox(height: 2),
                 Text(
                   context.tr('onboarding.introDesc'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: context.text.bodySmall.copyWith(
                     color: colors.textSecondary,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
@@ -278,101 +261,127 @@ class OnboardingSlideLanguage extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     final colors = context.hc;
+    final isDark = colors.isDark;
     final textScale = MediaQuery.textScalerOf(context).scale(1);
-    final cardPadding = textScale > 1.15 ? 12.0 : AppSpacing.cardPadding;
+    final cardPadding = textScale > 1.15 ? 10.0 : 12.0;
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.card),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.all(cardPadding),
-        decoration: BoxDecoration(
-          color: colors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border.all(
-            color: isSelected ? colors.primary : colors.border,
-            width: isSelected ? 2.0 : 1.0,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isSelected
-                  ? colors.primary.withValues(alpha: 0.12)
-                  : colors.shadow,
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+    // Card background: Warm Sand in Selected, Neutral Surface in Unselected
+    final cardBg = isSelected
+        ? (isDark ? const Color(0xFF2C2016) : const Color(0xFFFBF5ED))
+        : colors.surface;
+
+    // Card border: Vivid Gold accent in Selected, BorderStrong in Unselected
+    final cardBorder = isSelected
+        ? (isDark ? const Color(0xFFE2C499) : const Color(0xFFB08A57))
+        : colors.borderStrong;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: EdgeInsets.all(cardPadding),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            border: Border.all(
+              color: cardBorder,
+              width: isSelected ? 2.0 : 1.0,
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Flexible(
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: textScale > 1.15 ? 6 : 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? colors.primaryContainer.withValues(alpha: 0.35)
-                          : colors.surfaceSand,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                    ),
-                    child: Text(
-                      type,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: context.text.labelSmall.copyWith(
+            boxShadow: [
+              BoxShadow(
+                color: isSelected
+                    ? colors.accent.withValues(alpha: isDark ? 0.28 : 0.16)
+                    : colors.shadow.withValues(alpha: isDark ? 0.25 : 0.05),
+                blurRadius: isSelected ? 12 : 6,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Badge & Radio Indicator
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
                         color: isSelected
-                            ? colors.primary
-                            : colors.textSecondary,
-                        fontWeight: FontWeight.w700,
+                            ? colors.accent.withValues(alpha: 0.22)
+                            : colors.surfaceSand,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      child: Text(
+                        type,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.text.labelSmall.copyWith(
+                          color: isSelected
+                              ? colors.accentText
+                              : colors.textSecondary,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 10.5,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 4),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  child: isSelected
-                      ? Icon(
-                          Icons.check_circle_rounded,
-                          key: const ValueKey(true),
-                          color: colors.success,
-                          size: 20,
-                        )
-                      : Icon(
-                          Icons.radio_button_unchecked_rounded,
-                          key: const ValueKey(false),
-                          color: colors.borderStrong,
-                          size: 20,
-                        ),
-                ),
-              ],
-            ),
-            const Spacer(),
-            Text(
-              title,
-              style: context.text.titleMedium.copyWith(
-                fontWeight: FontWeight.w800,
-                color: colors.textPrimary,
+                  const SizedBox(width: 6),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: isSelected
+                        ? Icon(
+                            Icons.check_circle_rounded,
+                            key: const ValueKey(true),
+                            color: colors.accent,
+                            size: 22,
+                          )
+                        : Icon(
+                            Icons.radio_button_unchecked_rounded,
+                            key: const ValueKey(false),
+                            color: colors.borderStrong,
+                            size: 22,
+                          ),
+                  ),
+                ],
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 3),
-            Text(
-              subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: context.text.bodySmall.copyWith(
-                color: colors.textSecondary,
+              const Spacer(),
+              // Title
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.text.titleMedium.copyWith(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                  color: isSelected
+                      ? (isDark
+                            ? const Color(0xFFFAF7F2)
+                            : const Color(0xFF2A1C12))
+                      : colors.textPrimary,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 2),
+              // Subtitle
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.text.bodySmall.copyWith(
+                  color: colors.textSecondary,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

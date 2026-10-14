@@ -70,6 +70,7 @@ class AdminRoomController extends GetxController {
       (roomList) {
         rooms.value = roomList;
         isLoading.value = false;
+        _sanitizeAndApplySosList();
       },
       onError: (e) {
         debugPrint('[AdminRoomController] Error fetching rooms: $e');
@@ -92,8 +93,7 @@ class AdminRoomController extends GetxController {
     _sosSub?.cancel();
     _sosSub = _roomService.getActiveSosEventsStream().listen(
       (sosList) {
-        activeSosList.value = sosList;
-        activeSosCount.value = sosList.length;
+        _sanitizeAndApplySosList(sosList);
       },
       onError: (e) {
         debugPrint('[AdminRoomController] Error fetching SOS events: $e');
@@ -124,22 +124,45 @@ class AdminRoomController extends GetxController {
             .length;
 
         // Auto-heal ghost SOS: if user has sosActive == true but has no activeRoomId,
-        // clear sosActive in Firestore so database state is completely clean
+        // clear sosActive on user doc and cancel lingering sos_events in Firestore
         for (final u in userList) {
-          if (u['sosActive'] == true) {
-            final rId = (u['activeRoomId'] as String?)?.trim();
-            if (rId == null || rId.isEmpty) {
-              final uid = (u['id'] ?? u['uid'])?.toString();
-              if (uid != null && uid.isNotEmpty) {
-                FirebaseFirestore.instance
-                    .collection('users')
-                    .doc(uid)
-                    .update({'sosActive': false})
-                    .catchError((_) {});
-              }
+          final rId = (u['activeRoomId'] as String?)?.trim();
+          final uid = (u['id'] ?? u['uid'])?.toString();
+          if (uid != null && uid.isNotEmpty) {
+            if (u['sosActive'] == true && (rId == null || rId.isEmpty)) {
+              FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(uid)
+                  .update({'sosActive': false})
+                  .catchError((_) {});
+
+              FirebaseFirestore.instance
+                  .collection('sos_events')
+                  .where('userId', isEqualTo: uid)
+                  .where(
+                    'status',
+                    whereIn: const ['active', 'baru', 'direspons'],
+                  )
+                  .get()
+                  .then((snap) {
+                    for (final doc in snap.docs) {
+                      doc.reference
+                          .set({
+                            'status': 'cancelled',
+                            'cancelledReason': 'auto_healed_user_left_room',
+                            'resolvedAt': FieldValue.serverTimestamp(),
+                            'resolvedBy': 'system_cleanup',
+                            'cancelledAt': FieldValue.serverTimestamp(),
+                            'cancelledBy': 'system_cleanup',
+                          }, SetOptions(merge: true))
+                          .catchError((_) {});
+                    }
+                  })
+                  .catchError((_) {});
             }
           }
         }
+        _sanitizeAndApplySosList();
       },
       onError: (e) {
         debugPrint('[AdminRoomController] Error fetching all users: $e');
@@ -217,6 +240,71 @@ class AdminRoomController extends GetxController {
       }
       return u['isGpsActive'] == false;
     }).toList();
+  }
+
+  List<Map<String, dynamic>> _rawSosList = [];
+
+  void _sanitizeAndApplySosList([List<Map<String, dynamic>>? incoming]) {
+    if (incoming != null) {
+      _rawSosList = incoming;
+    }
+
+    final validList = <Map<String, dynamic>>[];
+    for (final sos in _rawSosList) {
+      final uId = (sos['userId'] ?? sos['jamaahId'])?.toString().trim();
+      final rId = (sos['roomId'] ?? sos['activeRoomId'])?.toString().trim();
+      final eventId = sos['id']?.toString().trim();
+
+      if (uId == null || uId.isEmpty || rId == null || rId.isEmpty) {
+        if (eventId != null && eventId.isNotEmpty) {
+          _autoHealGhostSos(eventId, 'missing_required_ids');
+        }
+        continue;
+      }
+
+      // 1. If user is found in allUsers, check if they are still registered to this room
+      final user = allUsers.firstWhereOrNull(
+        (u) => (u['id'] ?? u['uid'])?.toString() == uId,
+      );
+      if (user != null) {
+        final userRoomId = (user['activeRoomId'] as String?)?.trim();
+        // If user has no active room or belongs to a different room, this SOS is orphaned
+        if (userRoomId == null || userRoomId.isEmpty || userRoomId != rId) {
+          if (eventId != null && eventId.isNotEmpty) {
+            _autoHealGhostSos(eventId, 'user_left_room');
+          }
+          continue;
+        }
+      }
+
+      // 2. If room list is populated, check if the room still exists and is active
+      if (rooms.isNotEmpty && !rooms.any((r) => r.id == rId)) {
+        if (eventId != null && eventId.isNotEmpty) {
+          _autoHealGhostSos(eventId, 'room_not_found');
+        }
+        continue;
+      }
+
+      validList.add(sos);
+    }
+
+    activeSosList.value = validList;
+    activeSosCount.value = validList.length;
+  }
+
+  void _autoHealGhostSos(String eventId, String reason) {
+    FirebaseFirestore.instance
+        .collection('sos_events')
+        .doc(eventId)
+        .set({
+          'status': 'cancelled',
+          'cancelledReason': 'auto_healed_$reason',
+          'resolvedAt': FieldValue.serverTimestamp(),
+          'resolvedBy': 'system_cleanup',
+          'cancelledAt': FieldValue.serverTimestamp(),
+          'cancelledBy': 'system_cleanup',
+        }, SetOptions(merge: true))
+        .catchError((_) {});
   }
 
   int getRoomJamaahCount(String roomId) =>

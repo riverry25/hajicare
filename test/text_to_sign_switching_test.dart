@@ -102,5 +102,55 @@ void main() {
       expect(controller.activePlayingVideoId, isNull);
       expect(controller.selectedLanguage.value, 'bisindo');
     });
+
+    test(
+      'Playback speed controls operate correctly and respect boundaries',
+      () async {
+        // 1. Initial speed is 1.0
+        expect(controller.playbackSpeed.value, 1.0);
+        expect(controller.canSlowDown, isTrue);
+        expect(controller.canSpeedUp, isTrue);
+
+        // 2. Slow down to 0.75
+        controller.slowDown();
+        expect(controller.playbackSpeed.value, 0.75);
+        expect(controller.speedOverlayText.value, '0.75x');
+        expect(controller.showSpeedOverlay.value, isTrue);
+
+        // 3. Slow down to 0.5 (minimum boundary)
+        controller.slowDown();
+        expect(controller.playbackSpeed.value, 0.5);
+        expect(controller.canSlowDown, isFalse);
+
+        // Calling slowDown at 0.5 does nothing further
+        controller.slowDown();
+        expect(controller.playbackSpeed.value, 0.5);
+
+        // 4. Speed up sequentially
+        controller.speedUp();
+        expect(controller.playbackSpeed.value, 0.75);
+
+        controller.speedUp();
+        expect(controller.playbackSpeed.value, 1.0);
+
+        controller.speedUp();
+        expect(controller.playbackSpeed.value, 1.25);
+
+        controller.speedUp();
+        expect(controller.playbackSpeed.value, 1.5);
+
+        controller.speedUp();
+        expect(controller.playbackSpeed.value, 2.0);
+        expect(controller.canSpeedUp, isFalse);
+
+        // Calling speedUp at 2.0 does nothing further
+        controller.speedUp();
+        expect(controller.playbackSpeed.value, 2.0);
+
+        // 5. Directly setting arbitrary speed via setPlaybackSpeed
+        await controller.setPlaybackSpeed(0.75);
+        expect(controller.playbackSpeed.value, 0.75);
+      },
+    );
   });
 }

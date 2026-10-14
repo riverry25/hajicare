@@ -60,9 +60,13 @@ class SignSearchVoiceBar extends StatelessWidget {
                     ),
                     decoration: InputDecoration(
                       hintText: hintText,
+                      filled: false,
+                      fillColor: Colors.transparent,
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
                       focusedBorder: InputBorder.none,
+                      errorBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
                       isDense: true,
                       contentPadding: const EdgeInsets.symmetric(vertical: 10),
                       hintStyle: textTheme.bodySmall.copyWith(

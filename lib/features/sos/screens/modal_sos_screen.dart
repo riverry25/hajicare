@@ -1487,9 +1487,10 @@ class _ModalSosScreenState extends State<ModalSosScreen>
             Text(
               'Tombol SOS darurat dinonaktifkan karena Anda belum masuk ke room pantau rombongan. Bergabunglah ke rombongan Anda agar pendamping dan petugas dapat memantau lokasi dan menerima sinyal darurat.',
               textAlign: TextAlign.center,
-              style: typography.bodySmall.copyWith(
-                color: bodyColor.withValues(alpha: 0.85),
-                height: 1.45,
+              style: typography.bodyMedium.copyWith(
+                color: colors.textSecondary,
+                fontWeight: FontWeight.w400,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: AppSpacing.xl),
@@ -1499,7 +1500,7 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                 backgroundColor: colors.primary,
                 foregroundColor: colors.onPrimary,
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
+                  horizontal: 26,
                   vertical: 14,
                 ),
                 shape: RoundedRectangleBorder(
@@ -1507,10 +1508,15 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                 ),
                 elevation: 2,
               ),
-              icon: const Icon(Icons.group_add_rounded, size: 20),
+              icon: Icon(
+                Icons.group_add_rounded,
+                size: 20,
+                color: colors.onPrimary,
+              ),
               label: Text(
                 context.tr('sosJoinMonitoringRoom'),
                 style: typography.labelLarge.copyWith(
+                  color: colors.onPrimary,
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
                 ),
@@ -1626,9 +1632,9 @@ class _ModalSosScreenState extends State<ModalSosScreen>
                       ? context.tr('sosTapToCancelCountdown')
                       : context.tr('sosUsagePrompt')),
             textAlign: TextAlign.center,
-            style: typography.bodySmall.copyWith(
-              color: bodyColor.withValues(alpha: 0.85),
-              height: 1.4,
+            style: typography.bodyMedium.copyWith(
+              color: colors.textSecondary,
+              height: 1.45,
             ),
           ),
           const SizedBox(height: AppSpacing.xl),

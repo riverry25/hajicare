@@ -224,7 +224,9 @@ class RoomQueryService {
           .where((item) {
             final st = (item['status'] as String?)?.trim().toLowerCase();
             final rId = (item['roomId'] as String?)?.trim();
+            final uId = (item['userId'] ?? item['jamaahId'])?.toString().trim();
             if (rId == null || rId.isEmpty) return false;
+            if (uId == null || uId.isEmpty) return false;
             return activeStatuses.contains(st);
           })
           .toList();

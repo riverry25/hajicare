@@ -284,10 +284,7 @@ async function leaveRoom(db, auth, data) {
       db.collection('active_sos').doc(auth.uid),
     );
     if (activeSosSnapshot.exists) {
-      throw new BackendError(
-        'failed-precondition',
-        'Akhiri status SOS sebelum keluar dari rombongan.',
-      );
+      transaction.delete(db.collection('active_sos').doc(auth.uid));
     }
 
     const updates = {
@@ -370,6 +367,30 @@ async function leaveRoom(db, auth, data) {
       role: member.role,
     };
   });
+
+  // Auto-cancel active SOS events in Firestore for the leaving member
+  try {
+    const sosEventsSnap = await db.collection('sos_events')
+      .where('userId', '==', auth.uid)
+      .where('status', 'in', ['active', 'baru', 'direspons'])
+      .get();
+    if (!sosEventsSnap.empty) {
+      const sosBatch = db.batch();
+      for (const doc of sosEventsSnap.docs) {
+        sosBatch.set(doc.ref, {
+          status: 'cancelled',
+          cancelledReason: 'member_left_room',
+          resolvedAt: FieldValue.serverTimestamp(),
+          resolvedBy: auth.uid,
+          cancelledAt: FieldValue.serverTimestamp(),
+          cancelledBy: auth.uid,
+        }, {merge: true});
+      }
+      await sosBatch.commit();
+    }
+  } catch (err) {
+    console.error('Failed to cancel active SOS events on leaveRoom:', err);
+  }
 
   await logActivity(db, {
     type: 'member_left',
@@ -579,10 +600,7 @@ async function removeJamaah(db, auth, data) {
     }
     const activeSosSnapshot = await transaction.get(db.collection('active_sos').doc(jamaahUid));
     if (activeSosSnapshot.exists) {
-      throw new BackendError(
-        'failed-precondition',
-        'Selesaikan SOS jamaah sebelum mengeluarkannya.',
-      );
+      transaction.delete(db.collection('active_sos').doc(jamaahUid));
     }
     const userRef = db.collection('users').doc(jamaahUid);
     const userSnapshot = await transaction.get(userRef);
@@ -611,6 +629,31 @@ async function removeJamaah(db, auth, data) {
       createdAt: FieldValue.serverTimestamp(),
     });
   });
+
+  // Auto-cancel active SOS events in Firestore for the removed jamaah
+  try {
+    const sosEventsSnap = await db.collection('sos_events')
+      .where('userId', '==', jamaahUid)
+      .where('status', 'in', ['active', 'baru', 'direspons'])
+      .get();
+    if (!sosEventsSnap.empty) {
+      const sosBatch = db.batch();
+      for (const doc of sosEventsSnap.docs) {
+        sosBatch.set(doc.ref, {
+          status: 'cancelled',
+          cancelledReason: 'member_removed_from_room',
+          resolvedAt: FieldValue.serverTimestamp(),
+          resolvedBy: auth.uid,
+          cancelledAt: FieldValue.serverTimestamp(),
+          cancelledBy: auth.uid,
+        }, {merge: true});
+      }
+      await sosBatch.commit();
+    }
+  } catch (err) {
+    console.error('Failed to cancel active SOS events on removeJamaah:', err);
+  }
+
   return {roomId, jamaahUid};
 }
 
@@ -828,13 +871,10 @@ async function deleteRoom(db, auth, data) {
       throw new BackendError('permission-denied', 'Hanya pembuat room yang dapat menghapusnya.');
     }
     const activeSos = await transaction.get(
-      db.collection('active_sos').where('roomId', '==', roomId).limit(1),
+      db.collection('active_sos').where('roomId', '==', roomId).limit(50),
     );
-    if (!activeSos.empty) {
-      throw new BackendError(
-        'failed-precondition',
-        'Selesaikan semua SOS aktif sebelum menghapus rombongan.',
-      );
+    for (const doc of activeSos.docs) {
+      transaction.delete(doc.ref);
     }
     roomData = authorization.room;
     transaction.update(roomRef, {

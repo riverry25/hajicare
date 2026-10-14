@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
 import '../../../core/locales/app_localizations.dart';
@@ -326,6 +327,74 @@ class SignVideoPlayerWidget extends StatelessWidget {
                       size: 36,
                     ),
                   ),
+
+                // Floating Speed Indicator Overlay (Top Right of video)
+                Positioned(
+                  top: AppSpacing.sm,
+                  right: AppSpacing.sm,
+                  child: Obx(() {
+                    final show = controller.showSpeedOverlay.value;
+                    final text = controller.speedOverlayText.value;
+                    final speed = controller.playbackSpeed.value;
+                    final isCustom = speed != 1.0;
+
+                    return AnimatedOpacity(
+                      opacity: show ? 1.0 : (isCustom ? 0.85 : 0.0),
+                      duration: const Duration(milliseconds: 200),
+                      child: IgnorePointer(
+                        ignoring: !show && !isCustom,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 9,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.72),
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                            border: Border.all(
+                              color: isCustom
+                                  ? colors.accent.withValues(alpha: 0.85)
+                                  : Colors.white24,
+                              width: 1,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.25),
+                                blurRadius: 6,
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.speed_rounded,
+                                size: 13,
+                                color: isCustom
+                                    ? colors.accent
+                                    : Colors.white70,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                text.isNotEmpty
+                                    ? text
+                                    : (speed == speed.toInt()
+                                          ? '${speed.toInt()}.0x'
+                                          : '${speed}x'),
+                                style: textTheme.labelSmall.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 10,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
               ],
             ),
           ),
@@ -366,7 +435,7 @@ class SignVideoPlayerWidget extends StatelessWidget {
                   ),
                 ),
 
-                // Action controls row
+                // Action controls row (Play, Replay, Speed Capsule, Duration)
                 Row(
                   children: [
                     IconButton(
@@ -377,7 +446,10 @@ class SignVideoPlayerWidget extends StatelessWidget {
                         color: colors.textPrimary,
                         size: 28,
                       ),
-                      onPressed: controller.togglePlayPause,
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        controller.togglePlayPause();
+                      },
                       tooltip: isPlaying
                           ? context.tr('sign.pause')
                           : context.tr('sign.play'),
@@ -388,9 +460,18 @@ class SignVideoPlayerWidget extends StatelessWidget {
                         color: colors.textPrimary,
                         size: 22,
                       ),
-                      onPressed: controller.replay,
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        controller.replay();
+                      },
                       tooltip: context.tr('sign.replay'),
                     ),
+
+                    const Spacer(),
+
+                    // Speed Controller Capsule (Slow Down, Speed, Speed Up)
+                    _buildSpeedCapsule(context),
+
                     const Spacer(),
 
                     // Duration display (e.g. 00:02 / 00:05)
@@ -521,5 +602,409 @@ class SignVideoPlayerWidget extends StatelessWidget {
     final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
     final seconds = d.inSeconds.remainder(60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
+  }
+
+  // ── SPEED CONTROLS ─────────────────────────────────────────────────────────
+
+  Widget _buildSpeedCapsule(BuildContext context) {
+    final colors = context.hc;
+    final textTheme = context.text;
+
+    return Obx(() {
+      final currentSpeed = controller.playbackSpeed.value;
+      final isCustomSpeed = currentSpeed != 1.0;
+      final canSlow = controller.canSlowDown;
+      final canFast = controller.canSpeedUp;
+      final speedLabel = currentSpeed == currentSpeed.toInt()
+          ? '${currentSpeed.toInt()}.0x'
+          : '${currentSpeed}x';
+
+      return Container(
+        decoration: BoxDecoration(
+          color: isCustomSpeed
+              ? colors.accent.withValues(alpha: 0.12)
+              : colors.surfaceSand,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          border: Border.all(
+            color: isCustomSpeed
+                ? colors.accent.withValues(alpha: 0.5)
+                : colors.border,
+            width: 1,
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Slow down button (-)
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                onTap: canSlow
+                    ? () {
+                        HapticFeedback.lightImpact();
+                        controller.slowDown();
+                      }
+                    : null,
+                child: Tooltip(
+                  message: context.tr('sign.slowDown'),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 6,
+                    ),
+                    child: Icon(
+                      Icons.remove_rounded,
+                      size: 16,
+                      color: canSlow
+                          ? colors.textPrimary
+                          : colors.textTertiary.withValues(alpha: 0.3),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Speed Display & Sheet Trigger (e.g. ⚡ 1.0x)
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  _showSpeedSelectorSheet(context);
+                },
+                child: Tooltip(
+                  message: context.tr('sign.playbackSpeed'),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 5,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.speed_rounded,
+                          size: 15,
+                          color: isCustomSpeed
+                              ? colors.accent
+                              : colors.textSecondary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          speedLabel,
+                          style: textTheme.labelSmall.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: isCustomSpeed
+                                ? colors.accentText
+                                : colors.textPrimary,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Speed up button (+)
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                onTap: canFast
+                    ? () {
+                        HapticFeedback.lightImpact();
+                        controller.speedUp();
+                      }
+                    : null,
+                child: Tooltip(
+                  message: context.tr('sign.speedUp'),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 6,
+                    ),
+                    child: Icon(
+                      Icons.add_rounded,
+                      size: 16,
+                      color: canFast
+                          ? colors.textPrimary
+                          : colors.textTertiary.withValues(alpha: 0.3),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  void _showSpeedSelectorSheet(BuildContext context) {
+    final colors = context.hc;
+    final textTheme = context.text;
+
+    final speeds = TextToSignController.supportedPlaybackSpeeds;
+
+    final speedMetadata = <double, Map<String, dynamic>>{
+      0.5: {
+        'title': '0.5x',
+        'badge': context.tr('sign.speedVerySlow'),
+        'desc': 'Sangat lambat, amati posisi & lekuk jari secara teliti',
+        'icon': Icons.slow_motion_video_rounded,
+      },
+      0.75: {
+        'title': '0.75x',
+        'badge': context.tr('sign.speedSlow'),
+        'desc': 'Lambat, kecepatan ideal bagi pemula untuk menirukan gerakan',
+        'icon': Icons.slow_motion_video_rounded,
+      },
+      1.0: {
+        'title': '1.0x',
+        'badge': context.tr('sign.speedNormal'),
+        'desc': 'Kecepatan alami bahasa isyarat sehari-hari',
+        'icon': Icons.play_circle_outline_rounded,
+      },
+      1.25: {
+        'title': '1.25x',
+        'badge': context.tr('sign.speedFast'),
+        'desc': 'Sedikit lebih cepat untuk latihan kelancaran pemahaman',
+        'icon': Icons.fast_forward_rounded,
+      },
+      1.5: {
+        'title': '1.5x',
+        'badge': context.tr('sign.speedVeryFast'),
+        'desc': 'Cepat, efektif untuk pengulangan kosakata yang sudah dihafal',
+        'icon': Icons.fast_forward_rounded,
+      },
+      2.0: {
+        'title': '2.0x',
+        'badge': context.tr('sign.speedUltraFast'),
+        'desc': 'Sangat cepat untuk pratinjau kilat',
+        'icon': Icons.fast_forward_rounded,
+      },
+    };
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: colors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.sheet),
+        ),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.md,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Drag handle
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colors.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+
+                // Header
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: colors.accent.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.speed_rounded,
+                        color: colors.accent,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            ctx.tr('sign.playbackSpeed'),
+                            style: textTheme.titleMedium.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            ctx.tr('sign.playbackSpeedDesc'),
+                            style: textTheme.bodySmall.copyWith(
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Divider(height: 1, color: colors.border),
+                const SizedBox(height: AppSpacing.sm),
+
+                // Options list
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: speeds.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(height: AppSpacing.xs),
+                    itemBuilder: (context, index) {
+                      final speed = speeds[index];
+                      final info = speedMetadata[speed]!;
+
+                      return Obx(() {
+                        final isSelected =
+                            controller.playbackSpeed.value == speed;
+
+                        return Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              controller.setPlaybackSpeed(speed);
+                              Navigator.pop(ctx);
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.md,
+                                vertical: AppSpacing.sm,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? colors.accent.withValues(alpha: 0.12)
+                                    : colors.surface,
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? colors.accent
+                                      : colors.border.withValues(alpha: 0.5),
+                                  width: isSelected ? 1.5 : 1,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    info['icon'] as IconData,
+                                    size: 20,
+                                    color: isSelected
+                                        ? colors.accent
+                                        : colors.textSecondary,
+                                  ),
+                                  const SizedBox(width: AppSpacing.md),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Text(
+                                              info['title'] as String,
+                                              style: textTheme.titleSmall
+                                                  .copyWith(
+                                                    fontWeight: FontWeight.bold,
+                                                    color: isSelected
+                                                        ? colors.accentText
+                                                        : colors.textPrimary,
+                                                  ),
+                                            ),
+                                            const SizedBox(
+                                              width: AppSpacing.sm,
+                                            ),
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 6,
+                                                    vertical: 2,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: isSelected
+                                                    ? colors.accent.withValues(
+                                                        alpha: 0.2,
+                                                      )
+                                                    : colors.surfaceSand,
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                      AppRadius.pill,
+                                                    ),
+                                              ),
+                                              child: Text(
+                                                info['badge'] as String,
+                                                style: textTheme.labelSmall
+                                                    .copyWith(
+                                                      fontSize: 10,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: isSelected
+                                                          ? colors.accentText
+                                                          : colors
+                                                                .textSecondary,
+                                                    ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          info['desc'] as String,
+                                          style: textTheme.bodySmall.copyWith(
+                                            color: colors.textTertiary,
+                                            fontSize: 11,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (isSelected)
+                                    Icon(
+                                      Icons.check_circle_rounded,
+                                      color: colors.accent,
+                                      size: 20,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 }

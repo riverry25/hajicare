@@ -1053,6 +1053,27 @@ class HajiCareController extends GetxController {
           _self?.name ?? _firebaseAuth.currentUser?.displayName ?? 'Jamaah';
       final rName = activeRoom.value?.name;
 
+      // Cancel own active SOS before leaving room so it never lingers or gets orphaned
+      if (_self?.sosActive == true || _activeSosEventId != null) {
+        try {
+          await _roomService.resolveSos(
+            userId: uid,
+            roomId: roomId,
+            eventId: _activeSosEventId,
+            resolvedByUid: uid,
+          );
+        } catch (_) {}
+        _activeSosEventId = null;
+        if (_self != null) {
+          _self!.sosActive = false;
+          _self!.refresh();
+        }
+        activeSosEvents.removeWhere(
+          (e) => e['userId'] == uid || e['jamaahId'] == uid,
+        );
+        activeSosCount.value = activeSosEvents.length;
+      }
+
       await _roomService.leaveRoom(
         roomId: roomId,
         uid: uid,
@@ -1192,6 +1213,42 @@ class HajiCareController extends GetxController {
           _self!.refresh();
         }
         return false;
+      }
+
+      // Verify that the room document exists and is active
+      try {
+        final roomDoc = await _firestore.collection('rooms').doc(roomId).get();
+        if (!roomDoc.exists ||
+            roomDoc.data()?['isActive'] == false ||
+            roomDoc.data()?['status'] == 'deleting') {
+          AppLogger.warn(
+            'Cannot trigger SOS: room $roomId is not active or deleted',
+            tag: 'HajiCareController',
+          );
+          await clearActiveRoomSession();
+          return false;
+        }
+
+        // Verify user is an active member in this room
+        final memberDoc = await _firestore
+            .collection('rooms')
+            .doc(roomId)
+            .collection('members')
+            .doc(user.uid)
+            .get();
+        if (!memberDoc.exists) {
+          AppLogger.warn(
+            'Cannot trigger SOS: user ${user.uid} is not an active member of room $roomId',
+            tag: 'HajiCareController',
+          );
+          await clearActiveRoomSession();
+          return false;
+        }
+      } catch (e) {
+        AppLogger.warn(
+          'Error checking room membership during triggerSos: $e',
+          tag: 'HajiCareController',
+        );
       }
 
       final roomName = activeRoom.value?.name ?? 'Rombongan';

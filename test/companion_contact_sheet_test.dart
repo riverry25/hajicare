@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:hajicare/core/locales/app_localizations.dart';
 import 'package:hajicare/core/state/hajicare_controller.dart';
+import 'package:hajicare/core/theme/app_theme.dart';
 import 'package:hajicare/features/dashboard/services/assistance_request_service.dart';
 import 'package:hajicare/features/dashboard/widgets/companion_contact_sheet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -25,9 +26,14 @@ void main() {
     Get.reset();
   });
 
-  Widget buildApp({Size size = const Size(390, 844), double textScale = 1}) {
+  Widget buildApp({
+    Size size = const Size(390, 844),
+    double textScale = 1,
+    ThemeData? theme,
+  }) {
     return MaterialApp(
       locale: const Locale('id'),
+      theme: theme ?? AppTheme.lightTheme,
       supportedLocales: AppTranslations.supportedLocales,
       localizationsDelegates: const [
         AppLocalizations.delegate,
@@ -180,4 +186,24 @@ void main() {
     expect(find.byType(SingleChildScrollView), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'berfungsi dan ter-render dengan kontras tinggi dalam dark mode tanpa error',
+    (tester) async {
+      await tester.pumpWidget(buildApp(theme: AppTheme.darkTheme));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Hubungi Pendamping'), findsOneWidget);
+      expect(find.text('Apa yang terjadi?'), findsOneWidget);
+      expect(find.byKey(const Key('companion_send_button')), findsOneWidget);
+      expect(find.byKey(const Key('companion_kind_lostWay')), findsOneWidget);
+
+      // Pastikan memilih jenis bantuan lain di dark mode bekerja tanpa error
+      await tester.tap(find.byKey(const Key('companion_kind_separated')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Saya terpisah dari rombongan'), findsWidgets);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
