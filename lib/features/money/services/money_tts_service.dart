@@ -1,13 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
+import '../../../core/services/app_tts_service.dart';
 import '../models/currency_code.dart';
 import '../models/money_detection.dart';
 import 'currency_rate_service.dart';
 import 'money_aggregator.dart';
 import 'money_currency_helper.dart';
 
-/// Service responsible for managing Indonesian Text-to-Speech (TTS)
+/// Service responsible for managing multi-language Text-to-Speech (TTS)
 /// for multi-currency money detection with debounce, stabilization, and accessibility.
 class MoneyTtsService {
   final FlutterTts _tts = FlutterTts();
@@ -23,9 +24,7 @@ class MoneyTtsService {
   Future<void> init() async {
     if (_isInitialized) return;
     try {
-      await _tts.setLanguage('id-ID');
-      await _tts.setSpeechRate(speechRate);
-      await _tts.setPitch(1.0);
+      await AppTtsService.configureEngine(_tts, speechRate: speechRate);
       _isInitialized = true;
     } catch (e) {
       debugPrint('[MoneyTTS] init error: $e');
@@ -53,10 +52,13 @@ class MoneyTtsService {
   ]) async {
     if (!isVoiceEnabled || !_isInitialized) return;
 
+    final lang = AppTtsService.resolveLanguageCode();
+
     if (detections.isEmpty) {
-      await speak(
-        'Belum ada uang terdeteksi. Pastikan uang terlihat jelas dan coba foto lagi.',
-      );
+      final emptyMessage = lang == 'en'
+          ? 'No banknote detected. Please make sure the money is clearly visible and try taking a photo again.'
+          : 'Belum ada uang terdeteksi. Pastikan uang terlihat jelas dan coba foto lagi.';
+      await speak(emptyMessage, languageCode: lang);
       return;
     }
 
@@ -75,24 +77,29 @@ class MoneyTtsService {
         targetCurrency: CurrencyCode.idr,
         conversionService: conversionService,
         isConversionAvailable: true,
+        languageCode: lang,
       );
 
-      await speak(sentence);
+      await speak(sentence, languageCode: lang);
     } catch (e) {
       debugPrint('[MoneyTTS] speakResults error (non-fatal): $e');
     }
   }
 
-  /// Builds a natural Indonesian speech sentence for single or multi-currency detections.
+  /// Builds a natural speech sentence for single or multi-currency detections
+  /// in either Indonesian ('id') or English ('en').
   String buildSpeechSentence({
     required List<MoneyDetection> detections,
     required Map<CurrencyCode, double> totalsByCurrency,
     CurrencyCode targetCurrency = CurrencyCode.idr,
     CurrencyConversionService? conversionService,
     bool isConversionAvailable = true,
+    String? languageCode,
   }) {
     if (detections.isEmpty) return '';
 
+    final lang = AppTtsService.resolveLanguageCode(languageCode);
+    final isEn = lang == 'en';
     final conv = conversionService ?? CurrencyRateService.instance;
     final isMixed = MoneyAggregator.hasMixedCurrencies(detections);
 
@@ -102,8 +109,9 @@ class MoneyTtsService {
     if (!isMixed) {
       final currency = detections.first.currency;
       final totalAmount = totalsByCurrency[currency] ?? 0.0;
-      final countWords = MoneySpeechFormatter.numberToIndonesianWords(
+      final countWords = MoneySpeechFormatter.numberToWords(
         detections.length,
+        languageCode: lang,
       );
 
       // Determine the other two currencies for equivalent announcement
@@ -119,44 +127,87 @@ class MoneyTtsService {
         final eq1 = conv.convert(amount: totalAmount, from: currency, to: c1);
         final eq2 = conv.convert(amount: totalAmount, from: currency, to: c2);
 
-        final s1 = MoneySpeechFormatter.amountToSpoken(eq1, c1);
-        final s2 = MoneySpeechFormatter.amountToSpoken(eq2, c2);
+        final s1 = MoneySpeechFormatter.amountToSpoken(
+          eq1,
+          c1,
+          languageCode: lang,
+        );
+        final s2 = MoneySpeechFormatter.amountToSpoken(
+          eq2,
+          c2,
+          languageCode: lang,
+        );
 
-        conversionSentence = ' Setara sekitar $s1 dan $s2.';
+        conversionSentence = isEn
+            ? ' Equivalent to approximately $s1 and $s2.'
+            : ' Setara sekitar $s1 dan $s2.';
       }
 
       if (detections.length == 1) {
         final item = detections.first;
-        return 'Terdeteksi satu uang, ${item.spokenName}.$conversionSentence';
+        final itemSpoken = isEn
+            ? MoneySpeechFormatter.amountToSpokenEn(item.amount, item.currency)
+            : item.spokenName;
+
+        return isEn
+            ? 'Detected one banknote, $itemSpoken.$conversionSentence'
+            : 'Terdeteksi satu uang, ${item.spokenName}.$conversionSentence';
       }
 
       final itemsSpoken = MoneySpeechFormatter.joinNaturalSpoken(
-        detections.map((d) => d.spokenName).toList(),
+        detections
+            .map(
+              (d) => isEn
+                  ? MoneySpeechFormatter.amountToSpokenEn(d.amount, d.currency)
+                  : d.spokenName,
+            )
+            .toList(),
+        languageCode: lang,
       );
       final totalSpoken = MoneySpeechFormatter.amountToSpoken(
         totalAmount,
         currency,
+        languageCode: lang,
       );
 
-      return 'Terdeteksi $countWords uang. $itemsSpoken. Total $totalSpoken.$conversionSentence';
+      return isEn
+          ? 'Detected $countWords banknotes. $itemsSpoken. Total $totalSpoken.$conversionSentence'
+          : 'Terdeteksi $countWords uang. $itemsSpoken. Total $totalSpoken.$conversionSentence';
     }
 
     // -------------------------------------------------------------------------
     // MIXED CURRENCY SCENARIOS
     // -------------------------------------------------------------------------
-    final countWords = MoneySpeechFormatter.numberToIndonesianWords(
+    final countWords = MoneySpeechFormatter.numberToWords(
       detections.length,
+      languageCode: lang,
     );
     final itemsSpoken = MoneySpeechFormatter.joinNaturalSpoken(
-      detections.map((d) => d.spokenName).toList(),
+      detections
+          .map(
+            (d) => isEn
+                ? MoneySpeechFormatter.amountToSpokenEn(d.amount, d.currency)
+                : d.spokenName,
+          )
+          .toList(),
+      languageCode: lang,
     );
 
-    // Format totals per currency: "A, B, dan C"
+    // Format totals per currency
     final activeTotals = totalsByCurrency.entries
         .where((e) => e.value > 0)
-        .map((e) => MoneySpeechFormatter.amountToSpoken(e.value, e.key))
+        .map(
+          (e) => MoneySpeechFormatter.amountToSpoken(
+            e.value,
+            e.key,
+            languageCode: lang,
+          ),
+        )
         .toList();
-    final totalsSpoken = MoneySpeechFormatter.joinNaturalSpoken(activeTotals);
+    final totalsSpoken = MoneySpeechFormatter.joinNaturalSpoken(
+      activeTotals,
+      languageCode: lang,
+    );
 
     if (isConversionAvailable) {
       final grandTotal = MoneyAggregator.grandTotalIn(
@@ -167,16 +218,25 @@ class MoneyTtsService {
       final grandTotalSpoken = MoneySpeechFormatter.amountToSpoken(
         grandTotal,
         targetCurrency,
+        languageCode: lang,
       );
-      final targetName = targetCurrency.spokenName;
+      final targetName = targetCurrency.spokenNameIn(lang);
 
-      return 'Terdeteksi $countWords uang. $itemsSpoken. '
-          'Total per mata uang: $totalsSpoken. '
-          'Jika seluruhnya dikonversikan ke $targetName, total setara sekitar $grandTotalSpoken.';
+      return isEn
+          ? 'Detected $countWords banknotes. $itemsSpoken. '
+                'Total per currency: $totalsSpoken. '
+                'If entirely converted to $targetName, total is equivalent to approximately $grandTotalSpoken.'
+          : 'Terdeteksi $countWords uang. $itemsSpoken. '
+                'Total per mata uang: $totalsSpoken. '
+                'Jika seluruhnya dikonversikan ke $targetName, total setara sekitar $grandTotalSpoken.';
     } else {
-      return 'Terdeteksi $countWords uang. '
-          'Total: $totalsSpoken. '
-          'Konversi mata uang sedang tidak tersedia.';
+      return isEn
+          ? 'Detected $countWords banknotes. '
+                'Total: $totalsSpoken. '
+                'Currency conversion is currently unavailable.'
+          : 'Terdeteksi $countWords uang. '
+                'Total: $totalsSpoken. '
+                'Konversi mata uang sedang tidak tersedia.';
     }
   }
 
@@ -191,8 +251,9 @@ class MoneyTtsService {
     final totals =
         totalsByCurrency ?? MoneyAggregator.totalsByCurrency(detections);
     final sortedItems = detections.map((d) => d.displayName).toList()..sort();
+    final lang = AppTtsService.resolveLanguageCode();
     final currentSignature =
-        '${detections.length}_${totals.entries.map((e) => "${e.key.code}:${e.value}").join("|")}_${sortedItems.join(",")}';
+        '${lang}_${detections.length}_${totals.entries.map((e) => "${e.key.code}:${e.value}").join("|")}_${sortedItems.join(",")}';
 
     final bool signatureChanged = currentSignature != _lastSpokenSignature;
     final bool cooldownPassed = (now - _lastSpeakTime) >= cooldownMs;
@@ -201,17 +262,20 @@ class MoneyTtsService {
       final sentence = buildSpeechSentence(
         detections: detections,
         totalsByCurrency: totals,
+        languageCode: lang,
       );
-      await speak(sentence);
+      await speak(sentence, languageCode: lang);
       _lastSpokenSignature = currentSignature;
       _lastSpeakTime = now;
     }
   }
 
-  /// Speaks immediate text (interrupts previous utterance safely).
-  Future<void> speak(String text) async {
+  /// Speaks immediate text with dynamic language configuration.
+  Future<void> speak(String text, {String? languageCode}) async {
     if (!isVoiceEnabled || !_isInitialized || text.trim().isEmpty) return;
     try {
+      final engineLocale = AppTtsService.resolveEngineLocale(languageCode);
+      await _tts.setLanguage(engineLocale);
       await _tts.stop();
       await _tts.speak(text);
     } catch (e) {

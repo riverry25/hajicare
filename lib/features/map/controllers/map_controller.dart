@@ -27,6 +27,7 @@ import '../services/poi_repository.dart';
 import '../services/poi_service.dart';
 import '../services/route_service.dart';
 import '../services/navigation_voice_service.dart';
+import '../../../core/services/app_tts_service.dart';
 
 /// Explicit application modes for map interaction.
 enum MapMode { normal, navigationStarting, navigating, arrived }
@@ -1607,10 +1608,11 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
 
     // Announce start of navigation via voice guidance
     voiceService.setMuted(!isVoiceGuidanceEnabled.value);
-    voiceService.speak(
-      'Memulai navigasi menuju ${destinationTitle.value}',
-      force: true,
-    );
+    final lang = AppTtsService.resolveLanguageCode();
+    final startPrompt = lang == 'en'
+        ? 'Starting navigation to ${destinationTitle.value}'
+        : 'Memulai navigasi menuju ${destinationTitle.value}';
+    voiceService.speak(startPrompt, force: true);
 
     // Instant zero-lag transition from normal map to full navigation
     await Future.delayed(Duration.zero);

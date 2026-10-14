@@ -54,9 +54,18 @@ class CurrencyFormatter {
   }
 }
 
-/// Generates natural Indonesian spoken text for Text-to-Speech (TTS).
+/// Generates natural Indonesian and English spoken text for Text-to-Speech (TTS).
 class MoneySpeechFormatter {
   MoneySpeechFormatter._();
+
+  /// Converts an integer number into natural spoken words based on [languageCode] ('id' or 'en').
+  static String numberToWords(int number, {String? languageCode}) {
+    final lang = languageCode?.toLowerCase() ?? 'id';
+    if (lang == 'en') {
+      return numberToEnglishWords(number);
+    }
+    return numberToIndonesianWords(number);
+  }
 
   /// Converts an integer number into natural Indonesian spoken words.
   static String numberToIndonesianWords(int number) {
@@ -112,12 +121,88 @@ class MoneySpeechFormatter {
     return number.toString();
   }
 
-  /// Converts a numeric amount to natural Indonesian spoken sentence for the given currency.
+  /// Converts an integer number into natural English spoken words.
+  static String numberToEnglishWords(int number) {
+    if (number == 0) return 'zero';
+
+    final units = [
+      '',
+      'one',
+      'two',
+      'three',
+      'four',
+      'five',
+      'six',
+      'seven',
+      'eight',
+      'nine',
+      'ten',
+      'eleven',
+      'twelve',
+      'thirteen',
+      'fourteen',
+      'fifteen',
+      'sixteen',
+      'seventeen',
+      'eighteen',
+      'nineteen',
+    ];
+    final tens = [
+      '',
+      '',
+      'twenty',
+      'thirty',
+      'forty',
+      'fifty',
+      'sixty',
+      'seventy',
+      'eighty',
+      'ninety',
+    ];
+
+    if (number < 20) {
+      return units[number];
+    } else if (number < 100) {
+      final t = number ~/ 10;
+      final r = number % 10;
+      return '${tens[t]}${r > 0 ? '-${units[r]}' : ''}';
+    } else if (number < 1000) {
+      final h = number ~/ 100;
+      final r = number % 100;
+      return '${units[h]} hundred${r > 0 ? ' and ${numberToEnglishWords(r)}' : ''}';
+    } else if (number < 1000000) {
+      final th = number ~/ 1000;
+      final r = number % 1000;
+      return '${numberToEnglishWords(th)} thousand${r > 0 ? ' ${numberToEnglishWords(r)}' : ''}';
+    } else if (number < 1000000000) {
+      final m = number ~/ 1000000;
+      final r = number % 1000000;
+      return '${numberToEnglishWords(m)} million${r > 0 ? ' ${numberToEnglishWords(r)}' : ''}';
+    } else if (number < 1000000000000) {
+      final b = number ~/ 1000000000;
+      final r = number % 1000000000;
+      return '${numberToEnglishWords(b)} billion${r > 0 ? ' ${numberToEnglishWords(r)}' : ''}';
+    }
+
+    return number.toString();
+  }
+
+  /// Converts a numeric amount to natural spoken sentence for the given currency.
   static String amountToSpoken(
     double amount,
     CurrencyCode currency, {
     bool includeCurrencyName = true,
+    String? languageCode,
   }) {
+    final lang = languageCode?.toLowerCase() ?? 'id';
+    if (lang == 'en') {
+      return amountToSpokenEn(
+        amount,
+        currency,
+        includeCurrencyName: includeCurrencyName,
+      );
+    }
+
     switch (currency) {
       case CurrencyCode.sar:
         return _sarToSpoken(amount, includeName: includeCurrencyName);
@@ -125,6 +210,22 @@ class MoneySpeechFormatter {
         return _idrToSpoken(amount, includeName: includeCurrencyName);
       case CurrencyCode.usd:
         return _usdToSpoken(amount, includeName: includeCurrencyName);
+    }
+  }
+
+  /// Converts a numeric amount to natural English spoken sentence.
+  static String amountToSpokenEn(
+    double amount,
+    CurrencyCode currency, {
+    bool includeCurrencyName = true,
+  }) {
+    switch (currency) {
+      case CurrencyCode.sar:
+        return _sarToSpokenEn(amount, includeName: includeCurrencyName);
+      case CurrencyCode.idr:
+        return _idrToSpokenEn(amount, includeName: includeCurrencyName);
+      case CurrencyCode.usd:
+        return _usdToSpokenEn(amount, includeName: includeCurrencyName);
     }
   }
 
@@ -150,6 +251,28 @@ class MoneySpeechFormatter {
     return wholeWords;
   }
 
+  static String _sarToSpokenEn(double amount, {bool includeName = true}) {
+    if (amount <= 0) {
+      return includeName ? 'zero Saudi Riyal' : 'zero';
+    }
+
+    final whole = amount.floor();
+    final halala = ((amount - whole) * 100).round();
+
+    if (whole == 0 && halala > 0) {
+      return '${numberToEnglishWords(halala)} Halala';
+    }
+
+    final wholeWords = includeName
+        ? '${numberToEnglishWords(whole)} Saudi Riyal'
+        : numberToEnglishWords(whole);
+
+    if (halala > 0) {
+      return '$wholeWords and ${numberToEnglishWords(halala)} Halala';
+    }
+    return wholeWords;
+  }
+
   static String _idrToSpoken(double amount, {bool includeName = true}) {
     final int rounded = amount.round();
     if (rounded <= 0) {
@@ -157,6 +280,15 @@ class MoneySpeechFormatter {
     }
     final words = numberToIndonesianWords(rounded);
     return includeName ? '$words Rupiah' : words;
+  }
+
+  static String _idrToSpokenEn(double amount, {bool includeName = true}) {
+    final int rounded = amount.round();
+    if (rounded <= 0) {
+      return includeName ? 'zero Indonesian Rupiah' : 'zero';
+    }
+    final words = numberToEnglishWords(rounded);
+    return includeName ? '$words Indonesian Rupiah' : words;
   }
 
   static String _usdToSpoken(double amount, {bool includeName = true}) {
@@ -177,13 +309,33 @@ class MoneySpeechFormatter {
     return wholeWords;
   }
 
-  /// Connects items with commas and "dan" in Indonesian:
-  /// e.g. ["A", "B", "C"] -> "A, B, dan C"
-  static String joinNaturalSpoken(List<String> items) {
+  static String _usdToSpokenEn(double amount, {bool includeName = true}) {
+    if (amount <= 0) {
+      return includeName ? 'zero US Dollar' : 'zero';
+    }
+
+    final whole = amount.floor();
+    final cents = ((amount - whole) * 100).round();
+
+    final wholeWords = includeName
+        ? '${numberToEnglishWords(whole)} US Dollar'
+        : numberToEnglishWords(whole);
+
+    if (cents > 0) {
+      return '$wholeWords and ${numberToEnglishWords(cents)} cents';
+    }
+    return wholeWords;
+  }
+
+  /// Connects items with commas and "dan" (ID) or "and" (EN):
+  /// e.g. ["A", "B", "C"] -> "A, B, dan C" or "A, B, and C"
+  static String joinNaturalSpoken(List<String> items, {String? languageCode}) {
     if (items.isEmpty) return '';
     if (items.length == 1) return items.first;
-    if (items.length == 2) return '${items[0]} dan ${items[1]}';
+    final isEn = languageCode?.toLowerCase() == 'en';
+    final conjunction = isEn ? 'and' : 'dan';
+    if (items.length == 2) return '${items[0]} $conjunction ${items[1]}';
     final leading = items.sublist(0, items.length - 1).join(', ');
-    return '$leading, dan ${items.last}';
+    return '$leading, $conjunction ${items.last}';
   }
 }
