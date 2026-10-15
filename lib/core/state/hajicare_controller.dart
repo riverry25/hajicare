@@ -749,40 +749,38 @@ class HajiCareController extends GetxController {
   // ── REAL GPS LOCATION TRACKING (NO DUMMY DATA) ─────────────────────────────
 
   /// Starts real device GPS tracking and broadcasts position to Firestore.
-  Future<void> startLocationTracking(String uid) async {
+  Future<void> startLocationTracking([String? uid]) async {
+    final effectiveUid = uid ?? currentUid;
     final generation = _sessionGeneration;
     _gpsStreamSub?.cancel();
 
-    // 1. Initial Position check
+    // 1. Fast Initial Position: Check OS last known position first (instant 0ms response)
     try {
-      final result = await _locationService.getCurrentPosition();
-      if (isClosed || generation != _sessionGeneration || currentUid != uid) {
-        return;
-      }
-      if (result.isSuccess && result.position != null) {
-        myCurrentPosition.value = result.position;
+      final lastKnown = await _locationService.getLastKnownPosition();
+      if (!isClosed && generation == _sessionGeneration && lastKnown != null) {
+        myCurrentPosition.value = lastKnown;
         isMyGpsActive.value = true;
-        _broadcastLocationToFirestore(uid, result.position!);
-      } else {
-        isMyGpsActive.value = false;
+        if (effectiveUid != null) {
+          _broadcastLocationToFirestore(effectiveUid, lastKnown);
+        }
+        _recalculateRealDistance();
       }
     } catch (e) {
-      AppLogger.warn('Initial GPS fetch error: $e', tag: 'HajiCareController');
-      isMyGpsActive.value = false;
+      debugPrint('[HajiCareController] Fast lastKnown check: $e');
     }
 
-    // 2. Realtime continuous stream
+    // 2. Start continuous GPS stream immediately (distanceFilter: 0 for instant stationary & movement updates)
     try {
-      if (isClosed || generation != _sessionGeneration || currentUid != uid) {
-        return;
-      }
+      if (isClosed || generation != _sessionGeneration) return;
       _gpsStreamSub = _locationService
-          .getPositionStream(distanceFilter: 2, accuracy: LocationAccuracy.high)
+          .getPositionStream(distanceFilter: 0, accuracy: LocationAccuracy.high)
           .listen(
             (position) {
               myCurrentPosition.value = position;
               isMyGpsActive.value = true;
-              _broadcastLocationToFirestore(uid, position);
+              if (effectiveUid != null) {
+                _broadcastLocationToFirestore(effectiveUid, position);
+              }
               _recalculateRealDistance();
             },
             onError: (e) {
@@ -796,6 +794,24 @@ class HajiCareController extends GetxController {
         tag: 'HajiCareController',
       );
       isMyGpsActive.value = false;
+    }
+
+    // 3. Concurrently fetch fresh initial position in background (timeout 5s)
+    try {
+      final result = await _locationService.getCurrentPosition(
+        timeout: const Duration(seconds: 5),
+      );
+      if (isClosed || generation != _sessionGeneration) return;
+      if (result.isSuccess && result.position != null) {
+        myCurrentPosition.value = result.position;
+        isMyGpsActive.value = true;
+        if (effectiveUid != null) {
+          _broadcastLocationToFirestore(effectiveUid, result.position!);
+        }
+        _recalculateRealDistance();
+      }
+    } catch (e) {
+      AppLogger.warn('Initial GPS fetch error: $e', tag: 'HajiCareController');
     }
   }
 
@@ -1461,12 +1477,8 @@ class HajiCareController extends GetxController {
 
   /// Re-triggers GPS location tracking (e.g. after user enables GPS from settings).
   Future<bool> refreshLocation() async {
-    final uid = currentUid;
-    if (uid != null) {
-      await startLocationTracking(uid);
-      return isMyGpsActive.value;
-    }
-    return false;
+    await startLocationTracking(currentUid);
+    return isMyGpsActive.value;
   }
 
   @override

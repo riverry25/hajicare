@@ -1,19 +1,19 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/theme_context.dart';
 
-/// An elegant, atmospheric hero banner for HajiCare onboarding slides.
-/// Inspired by the prestigious Kaaba Kiswah aesthetic: deep espresso velvet,
-/// warm desert gold calligraphy accents, and high-contrast typography (WCAG AAA).
+/// An elegant, atmospheric visual frame for HajiCare onboarding slides.
+/// Inspired by the warm desert aesthetic (WanderWise / Family App reference),
+/// providing a soft ambient glow, subtle border, and high-contrast tokens.
 class OnboardingHeroBanner extends StatelessWidget {
   final String badgeText;
   final String stageText;
   final String title;
   final IconData icon;
-  final double height;
+  final double? height;
   final double borderRadius;
+  final Widget? child;
 
   const OnboardingHeroBanner({
     super.key,
@@ -22,7 +22,8 @@ class OnboardingHeroBanner extends StatelessWidget {
     required this.title,
     required this.icon,
     this.height = 175,
-    this.borderRadius = AppRadius.xl,
+    this.borderRadius = AppRadius.xxl,
+    this.child,
   });
 
   @override
@@ -30,8 +31,82 @@ class OnboardingHeroBanner extends StatelessWidget {
     final colors = context.hc;
     final isDark = colors.isDark;
 
-    // Deep, reverent espresso velvet gradient guaranteed to have >12:1 contrast
-    // with warm white and gold typography in both light and dark modes.
+    if (child != null) {
+      return SizedBox(
+        height: height,
+        width: double.infinity,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // Soft warm ambient gold aura in the center
+            Positioned(
+              top: -30,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  width: 270,
+                  height: 270,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        (isDark
+                                ? const Color(0xFFB08A57)
+                                : const Color(0xFFD4B896))
+                            .withValues(alpha: isDark ? 0.22 : 0.32),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Decorative celestial sparkles (Family App reference aesthetic)
+            Positioned(
+              top: 14,
+              right: 18,
+              child: Text(
+                '✦',
+                style: TextStyle(
+                  color: colors.accent.withValues(alpha: isDark ? 0.50 : 0.65),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 12,
+              left: 16,
+              child: Text(
+                '✧',
+                style: TextStyle(
+                  color: colors.accent.withValues(alpha: isDark ? 0.40 : 0.55),
+                  fontSize: 11,
+                ),
+              ),
+            ),
+            Positioned(
+              top: 36,
+              left: 14,
+              child: Text(
+                '✦',
+                style: TextStyle(
+                  color: colors.accent.withValues(alpha: isDark ? 0.30 : 0.45),
+                  fontSize: 8.5,
+                ),
+              ),
+            ),
+
+            // Embedded custom visual scene
+            child!,
+          ],
+        ),
+      );
+    }
+
+    // Default Fallback Banner (for backward compatibility)
     final gradientColors = isDark
         ? const [Color(0xFF2C1B11), Color(0xFF1E120A), Color(0xFF140C07)]
         : const [Color(0xFF382315), Color(0xFF26160C), Color(0xFF1A0E08)];
@@ -43,9 +118,11 @@ class OnboardingHeroBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withValues(alpha: isDark ? 0.45 : 0.16),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.50)
+                : colors.shadow.withValues(alpha: 0.14),
+            blurRadius: isDark ? 24 : 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -53,7 +130,6 @@ class OnboardingHeroBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(borderRadius),
         child: Stack(
           children: [
-            // Deep Velvet Canvas
             Positioned.fill(
               child: DecoratedBox(
                 decoration: BoxDecoration(
@@ -65,180 +141,53 @@ class OnboardingHeroBanner extends StatelessWidget {
                 ),
               ),
             ),
-
-            // Islamic Geometric Arch Watermark
-            Positioned.fill(
-              child: CustomPaint(
-                painter: _IslamicArchWatermarkPainter(
-                  goldColor: const Color(0xFFD4B07B),
-                ),
-              ),
-            ),
-
-            // Subtle Ambient Gold Glow Top-Right
-            Positioned(
-              top: -30,
-              right: -30,
-              child: Container(
-                width: 160,
-                height: 160,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFFE5C28A).withValues(alpha: 0.18),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // Floating Sacred Icon Card
             Positioned(
               right: 18,
               top: 18,
               child: Container(
-                width: 60,
-                height: 60,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1D120A).withValues(alpha: 0.65),
+                  color: const Color(0xFF1D120A).withValues(alpha: 0.70),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: const Color(0xFFE2C499).withValues(alpha: 0.50),
+                    color: const Color(0xFFE2C499).withValues(alpha: 0.55),
                     width: 1.5,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFD4AF37).withValues(alpha: 0.15),
-                      blurRadius: 16,
-                      spreadRadius: 2,
-                    ),
-                  ],
                 ),
-                child: Icon(icon, color: const Color(0xFFF7DEB4), size: 28),
+                child: Icon(icon, color: const Color(0xFFF7DEB4), size: 24),
               ),
             ),
-
-            // Top Pill Badge (Elderly/Safety Category)
             Positioned(
-              top: 18,
-              left: 18,
-              right: 90,
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF150D08).withValues(alpha: 0.85),
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                    border: Border.all(
-                      color: const Color(0xFFD4B07B).withValues(alpha: 0.40),
-                      width: 1.0,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 7,
-                        height: 7,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF4EBA75), // Vibrant emerald dot
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 7),
-                      Flexible(
-                        child: Text(
-                          badgeText.toUpperCase(),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: context.text.labelSmall.copyWith(
-                            color: const Color(0xFFFAF7F2),
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.6,
-                            fontSize: 10.5,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // Bottom Content Area (Stage badge + Bold Title)
-            Positioned(
-              left: 18,
-              right: 18,
-              bottom: 18,
+              left: 20,
+              bottom: 20,
+              right: 20,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 3.5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE2C499).withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      border: Border.all(
-                        color: const Color(0xFFE2C499).withValues(alpha: 0.35),
-                        width: 1.0,
-                      ),
-                    ),
-                    child: Text(
-                      stageText,
-                      style: context.text.labelSmall.copyWith(
-                        color: const Color(0xFFF7DEB4),
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.5,
-                        fontSize: 11,
-                      ),
+                  Text(
+                    stageText.toUpperCase(),
+                    style: const TextStyle(
+                      color: Color(0xFFE2C499),
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.2,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   Text(
                     title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: context.text.titleLarge.copyWith(
-                      color: const Color(0xFFFFFFFF),
-                      fontWeight: FontWeight.w800,
-                      fontSize: 21,
-                      letterSpacing: -0.3,
-                      height: 1.18,
-                      shadows: const [
-                        Shadow(
-                          color: Color(0x99000000),
-                          blurRadius: 8,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      height: 1.2,
                     ),
                   ),
                 ],
-              ),
-            ),
-
-            // Subtle Gold Border Outline
-            Positioned.fill(
-              child: IgnorePointer(
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(borderRadius),
-                    border: Border.all(
-                      color: const Color(0xFFD4B07B).withValues(alpha: 0.30),
-                      width: 1.2,
-                    ),
-                  ),
-                ),
               ),
             ),
           ],
@@ -246,37 +195,4 @@ class OnboardingHeroBanner extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Custom painter for subtle, elegant Islamic geometric arches.
-class _IslamicArchWatermarkPainter extends CustomPainter {
-  final Color goldColor;
-
-  const _IslamicArchWatermarkPainter({required this.goldColor});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = goldColor.withValues(alpha: 0.065)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-
-    // Draw concentric Islamic arches anchored at bottom-center-right
-    final center = Offset(size.width * 0.85, size.height * 0.7);
-    final maxRadius = math.min(size.width, size.height) * 0.95;
-
-    for (double r = 35; r <= maxRadius; r += 24) {
-      canvas.drawCircle(center, r, paint);
-    }
-
-    // Additional subtle arc at top-left
-    final leftCenter = Offset(size.width * 0.15, -10);
-    for (double r = 40; r <= 140; r += 28) {
-      canvas.drawCircle(leftCenter, r, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _IslamicArchWatermarkPainter oldDelegate) =>
-      oldDelegate.goldColor != goldColor;
 }

@@ -21,15 +21,14 @@ void main() {
       translations: AppTranslations(),
       locale: const Locale('id'),
       fallbackLocale: const Locale('id'),
-      home: Scaffold(
-        body: child,
-      ),
+      home: Scaffold(body: child),
     );
   }
 
   group('ActiveAdhanDashboardBanner Tests', () {
-    testWidgets('Renders SizedBox.shrink when adhan is not playing',
-        (tester) async {
+    testWidgets('Renders SizedBox.shrink when adhan is not playing', (
+      tester,
+    ) async {
       final audioService = Get.put(AdhanAudioService());
       audioService.isPlaying.value = false;
 
@@ -41,22 +40,26 @@ void main() {
     });
 
     testWidgets(
-        'Renders banner with prayer name and "Matikan Adzan" button when adhan is playing',
-        (tester) async {
-      final audioService = Get.put(AdhanAudioService());
-      audioService.currentPrayerName.value = 'Dzuhur';
-      audioService.isPlaying.value = true;
+      'Renders banner with prayer name and "Matikan Adzan" button when adhan is playing',
+      (tester) async {
+        final audioService = Get.put(AdhanAudioService());
+        audioService.currentPrayerName.value = 'Dzuhur';
+        audioService.isPlaying.value = true;
 
-      await tester.pumpWidget(buildTestApp(const ActiveAdhanDashboardBanner()));
-      await tester.pump(const Duration(milliseconds: 100));
+        await tester.pumpWidget(
+          buildTestApp(const ActiveAdhanDashboardBanner()),
+        );
+        await tester.pump(const Duration(milliseconds: 100));
 
-      expect(find.textContaining('Berkumandang'), findsOneWidget);
-      expect(find.text('Matikan Adzan'), findsOneWidget);
-      expect(find.byIcon(Icons.volume_off_rounded), findsOneWidget);
-    });
+        expect(find.textContaining('Berkumandang'), findsOneWidget);
+        expect(find.text('Matikan Adzan'), findsOneWidget);
+        expect(find.byIcon(Icons.volume_off_rounded), findsOneWidget);
+      },
+    );
 
-    testWidgets('Tapping "Matikan Adzan" stops playback and dismisses banner',
-        (tester) async {
+    testWidgets('Tapping "Matikan Adzan" stops playback and dismisses banner', (
+      tester,
+    ) async {
       final audioService = Get.put(AdhanAudioService());
       audioService.currentPrayerName.value = 'Ashar';
       audioService.isPlaying.value = true;
@@ -74,8 +77,9 @@ void main() {
       expect(find.text('Matikan Adzan'), findsNothing);
     });
 
-    testWidgets('Adapts to compact screens (<360px) without overflow',
-        (tester) async {
+    testWidgets('Adapts to compact screens (<360px) without overflow', (
+      tester,
+    ) async {
       final audioService = Get.put(AdhanAudioService());
       audioService.currentPrayerName.value = 'Subuh';
       audioService.isPlaying.value = true;
@@ -89,10 +93,7 @@ void main() {
 
       await tester.pumpWidget(
         buildTestApp(
-          const SizedBox(
-            width: 310,
-            child: ActiveAdhanDashboardBanner(),
-          ),
+          const SizedBox(width: 310, child: ActiveAdhanDashboardBanner()),
         ),
       );
       await tester.pump(const Duration(milliseconds: 100));

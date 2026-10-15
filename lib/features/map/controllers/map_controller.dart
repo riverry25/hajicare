@@ -613,6 +613,9 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       if (state.myCurrentPosition.value != null) {
         _applyPosition(state.myCurrentPosition.value!, publishToRoom: false);
         isLocationLoading.value = false;
+        if (!state.isMyGpsActive.value) {
+          state.startLocationTracking();
+        }
         return;
       }
     }
@@ -680,17 +683,22 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
       }
 
       // 3. Direct position fetch if state not registered or still pending
-      final firstPosition = await Geolocator.getCurrentPosition(
+      Position? firstPosition;
+      try {
+        firstPosition = await Geolocator.getLastKnownPosition();
+      } catch (_) {}
+
+      firstPosition ??= await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 10),
+          timeLimit: Duration(seconds: 5),
         ),
       );
       if (isClosed || generation != _lifecycleGeneration) return;
 
       _applyPosition(firstPosition, publishToRoom: state == null);
       isLocationLoading.value = false;
-      if (state == null) {
+      if (state == null || !state.isMyGpsActive.value) {
         _startPositionStream();
       }
     } catch (e) {
@@ -724,7 +732,7 @@ class MapController extends GetxController with GetTickerProviderStateMixin {
         Geolocator.getPositionStream(
           locationSettings: const LocationSettings(
             accuracy: LocationAccuracy.high,
-            distanceFilter: 2,
+            distanceFilter: 0,
           ),
         ).listen(
           (pos) {

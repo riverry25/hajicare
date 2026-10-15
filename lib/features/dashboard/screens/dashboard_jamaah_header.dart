@@ -389,17 +389,6 @@ extension _DashboardJamaahHeader on DashboardJamaahScreen {
                             borderRadius: const BorderRadius.horizontal(
                               right: Radius.circular(26),
                             ),
-                            boxShadow: hasSos
-                                ? [
-                                    BoxShadow(
-                                      color: context.hc.danger.withValues(
-                                        alpha: 0.4,
-                                      ),
-                                      blurRadius: 10,
-                                      spreadRadius: 1,
-                                    ),
-                                  ]
-                                : null,
                           ),
                           child: Center(
                             child: Row(
